@@ -52,6 +52,15 @@ class Simmo(object):
         self.debug = debug
         self.EM_AC = 'EM'
 
+		def neff(self, m): return self.Eig_values[m]*self.wl_m/(2*pi)
+				""" Return effective index of EM mode m"""
+
+		def kz_EM(self, m): return self.Eig_values[m]
+				""" Return wavevector of EM mode m in 1/m"""
+
+		def nu_AC(self, m): return self.Eig_values[m]/(2*pi)
+				""" Return frequency of AC mode in Hz"""
+
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
 
