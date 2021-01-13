@@ -50,6 +50,7 @@ class Simmo(object):
         self.calc_EM_mode_energy = calc_EM_mode_energy
         self.calc_AC_mode_power = calc_AC_mode_power
         self.debug = debug
+        self.EM_AC = 'EM'
 
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
@@ -63,6 +64,8 @@ class Simmo(object):
         EM_mode_power: the power in the optical modes. Note this power is negative for modes travelling in the negative
                        z-direction, eg the Stokes wave in backward SBS.
         """
+        self.EM_AC = 'EM'
+
         self.d_in_m = self.structure.unitcell_x*1e-9
         n_list = []
         n_list_tmp = np.array([self.structure.material_bkg.n, 
@@ -232,6 +235,8 @@ class Simmo(object):
 
         AC_mode_energy_elastic: the elastic power in the acoutic modes.
         """
+        self.EM_AC = 'AC'
+
         self.d_in_m = self.structure.inc_a_x*1e-9
 
         el_conv_table = {}
