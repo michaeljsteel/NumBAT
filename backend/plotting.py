@@ -509,7 +509,7 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
 
 
 	decorator = plps['decorator']
-	ax.set_xlim(0,1)
+	ax.set_xlim(-.5,1)
 	ax.set_ylim(0,9)
 	ax.axis('off')
 	fs=decorator.get_font_size('ax_label')
@@ -530,15 +530,20 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
 		ax.text(0,8,r'$\omega/(2\pi)$ [THz]: {0:.4f}'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs)
 		ax.text(0,7,r'Mode index: {0}'.format(ival), fontsize=fs)
 		ax.text(0,6,r'$k$ [1/m]: {0:.2f}'.format(sim_wguide.Eig_values[ival]), fontsize=fs)
+		ax.text(0,5,r'$neff$ [1/m]: {0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs)
 	else:
 		ax.text(0,8,r'$q$ [1/m] {0:.2f}'.format(sim_wguide.k_AC), fontsize=fs)
 		ax.text(0,7,r'Mode index: {0}'.format(ival), fontsize=fs)
 		ax.text(0,6,r'$\Omega/(2\pi)$ [GHz]: {0:.2f}'.format(sim_wguide.Eig_values[ival]*1e-12), fontsize=fs)
+		ax.text(0,5,r'$v_p$ [m/s]: {0:.4f}'.format(sim_wguide.vp_AC(ival)), fontsize=fs)
 
-	ax.text(0,5,r'$f_x:$ {0:.3f}'.format(f_x), fontsize=fs)
-	ax.text(0,4,r'$f_y:$ {0:.3f}'.format(f_y), fontsize=fs)
-	ax.text(0,3,r'$f_t:$ {0:.3f}'.format(f_t), fontsize=fs)
-	ax.text(0,2,r'$f_z:$ {0:.3f}'.format(f_z), fontsize=fs)
+	ax.text(0,4,r'$f_x:$ {0:.3f}'.format(f_x), fontsize=fs)
+	ax.text(0,3,r'$f_y:$ {0:.3f}'.format(f_y), fontsize=fs)
+	ax.text(0,2,r'$f_t:$ {0:.3f}'.format(f_t), fontsize=fs)
+	ax.text(0,1,r'$f_z:$ {0:.3f}'.format(f_z), fontsize=fs)
+	sc = sim_wguide.symmetry_classification(ival)
+	if len(sc): ax.text(0,0,r'Sym: {0}'.format(sc), fontsize=fs)
+
 
 def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plps, sim_wguide, ival):
   decorator = plps['decorator']

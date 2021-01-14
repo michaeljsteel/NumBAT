@@ -432,7 +432,7 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
             sigma_x_print = -1
         else:
             sigma_x_print = 1
-        sym_list.append([C_2_print, sigma_y_print, sigma_x_print])
+        sym_list.append((C_2_print, sigma_y_print, sigma_x_print))
 
         # v_plots = [np.real(m_Ex_ymirror),np.real(m_Ey_ymirror),np.real(m_Ez_ymirror),
         #     np.imag(m_Ex_ymirror),np.imag(m_Ey_ymirror),np.imag(m_Ez_ymirror)]
