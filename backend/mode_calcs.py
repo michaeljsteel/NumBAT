@@ -24,8 +24,22 @@ import copy
 sys.path.append("../backend/")
 
 import plotting
+import integration
 from fortran import NumBAT
 
+from enum import IntEnum, auto
+
+class PointGroup(IntEnum):
+  Unknown = 1
+  C2V = auto()
+  C3V = auto()
+  C6V = auto()
+class SymRep(IntEnum):
+#E = 1
+  A = 0
+  B1 = auto()
+  B2 = auto()
+  B3 = auto()
 
 class Simmo(object):
     """ Calculates the modes of a ``Struct`` object at a wavelength of wl_nm.
@@ -51,30 +65,79 @@ class Simmo(object):
         self.calc_AC_mode_power = calc_AC_mode_power
         self.debug = debug
         self.EM_AC = 'EM'
+        self.sym_reps = None
+        self.point_group = PointGroup.Unknown
 
-		def neff(self, m): return np.real(self.Eig_values[m]*self.wl_m/(2*pi))
-				""" Return effective index of EM mode m"""
+    def is_EM(self): return self.EM_AC == 'EM'
+    def is_AC(self): return self.EM_AC != 'EM'
 
-		def kz_EM(self, m): return self.Eig_values[m]
-				""" Return wavevector of EM mode m in 1/m"""
+    def symmetry_classification(self, m):
+      if self.point_group == PointGroup.Unknown: return ''
+      return '{0}:{1}'.format(self.point_group.name, self.sym_reps[m].name)
 
-		def nu_AC(self, m): return self.Eig_values[m]
-				""" Return frequency of AC mode m in Hz"""
+    def neff(self, m): 
+      """ Return effective index of EM mode m""" 
+      assert(self.is_EM())
 
-		def om_AC(self, m): return self.Eig_values[m]
-				""" Return angular frequency of AC mode m in 1/s"""
+      return np.real(self.Eig_values[m]*self.wl_m/(2*np.pi))
 
-		def neff_all(self): return np.real(self.Eig_values*self.wl_m/(2*pi))
-				""" Return effective index of all EM modes """
+    def kz_EM(self, m): 
+      """ Return wavevector of EM mode m in 1/m""" 
+      assert(self.is_EM())
+      return self.Eig_values[m]
 
-		def kz_EM_all(self): return self.Eig_values
-				""" Return wavevector of all EM modes in 1/m"""
+    def nu_AC(self, m): 
+      """ Return frequency of AC mode m in Hz"""
+      assert(self.is_AC())
+      return self.Eig_values[m]
 
-		def nu_AC_all(self): return self.Eig_values
-				""" Return frequency of all AC modes in Hz"""
+    def om_AC(self, m): 
+      """ Return angular frequency of AC mode m in 1/s"""
+      return self.Eig_values[m]
 
-		def om_AC_all(self, m): return self.Eig_values
-				""" Return angular frequency of all AC mode in 1/s"""
+    def neff_all(self): 
+      """ Return effective index of all EM modes """
+      assert(self.is_EM())
+      return np.real(self.Eig_values*self.wl_m/(2*np.pi))
+
+    def kz_EM_all(self): 
+      """ Return wavevector of all EM modes in 1/m"""
+      assert(self.is_EM())
+      return self.Eig_values
+
+    def nu_AC_all(self): 
+      """ Return frequency of all AC modes in Hz"""
+      assert(self.is_AC())
+      return self.Eig_values
+
+    def om_AC_all(self, m): 
+      """ Return angular frequency of all AC modes in 1/s"""
+      assert(self.is_AC())
+      return self.Eig_values*2*np.pi
+
+    def vp_AC(self, m): 
+      """ Return phase velocity of all AC modes in m/s"""
+      assert(self.is_AC())
+      return self.Eig_values[m]/self.k_AC
+
+    def vp_AC_all(self): 
+      """ Return phase velocity of all AC modes in m/s"""
+      assert(self.is_AC())
+      return self.Eig_values/self.k_AC
+
+    def analyse_symmetries(self, ptgrp):
+      self.point_group=ptgrp
+      symlist = integration.symmetries(self)
+      self.sym_reps = []
+      if ptgrp == PointGroup.C2V:
+        for m, sym in enumerate(symlist):
+          if sym == (1,1,1):     self.sym_reps.append(SymRep.A)
+          elif sym == (-1,1,-1): self.sym_reps.append(SymRep.B1)
+          elif sym == (1,-1,-1): self.sym_reps.append(SymRep.B2)
+          elif sym == (-1,-1,1): self.sym_reps.append(SymRep.B3)
+
+      else:
+        print("unknown symmetry properties in mode_calcs")
 
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
