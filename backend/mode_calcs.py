@@ -51,8 +51,11 @@ class Simmo(object):
         self.wl_m = wl_nm*1e-9
         self.n_eff = n_eff
         self.shift_Hz = shift_Hz
+
         self.k_AC = k_AC
+        self.Omega_AC = None
         self.EM_sim = EM_sim
+
         self.num_modes = num_modes
         self.Stokes = Stokes
         self.mode_pol = None
@@ -67,6 +70,10 @@ class Simmo(object):
         self.EM_AC = 'EM'
         self.sym_reps = None
         self.point_group = PointGroup.Unknown
+        self.Q_method = 'fixed' # 'fixed' or 'eta'
+        self.ac_alpha_t = None   # temporal acoustic loss [1/s]
+        self.ac_linewidth = None   # acoustic linewidth [Hz]
+        self.ac_Qmech = None   # acoustic mechanical Q [dimless]
 
     def is_EM(self): return self.EM_AC == 'EM'
     def is_AC(self): return self.EM_AC != 'EM'
@@ -118,12 +125,44 @@ class Simmo(object):
     def vp_AC(self, m): 
       """ Return phase velocity of all AC modes in m/s"""
       assert(self.is_AC())
-      return self.Eig_values[m]/self.k_AC
+      return np.real(self.Eig_values[m])/self.k_AC
 
     def vp_AC_all(self): 
       """ Return phase velocity of all AC modes in m/s"""
       assert(self.is_AC())
-      return self.Eig_values/self.k_AC
+      return np.real(self.Eig_values)/self.k_AC
+
+    def alpha_t_AC(self, m): 
+      assert(self.is_AC())
+      return self.ac_alpha_t[m]
+
+    def alpha_t_AC_all(self): 
+      assert(self.is_AC())
+      return self.ac_alpha_t
+
+    def alpha_s_AC(self, m): # spatial loss [1/m]
+      assert(self.is_AC())
+      return self.alpha_t_AC(m)/self.vp_AC(m)
+
+    def alpha_s_AC_all(self): # spatial loss [1/m]
+      assert(self.is_AC())
+      return self.alpha_t_AC_all/self.vp_AC_all
+
+    def Qmech_AC(self, m): 
+      assert(self.is_AC())
+      return self.ac_Qmech[m]
+
+    def Qmech_AC_all(self):
+      assert(self.is_AC())
+      return self.ac_Qmech
+
+    def linewidth_AC(self, m):
+      assert(self.is_AC())
+      return self.ac_linewidth[m]
+
+    def linewidth_AC_all(self):
+      assert(self.is_AC())
+      return self.ac_linewidth
 
     def analyse_symmetries(self, ptgrp):
       self.point_group=ptgrp
@@ -138,6 +177,51 @@ class Simmo(object):
 
       else:
         print("unknown symmetry properties in mode_calcs")
+
+    def calc_acoustic_losses(self, fixed_Q=None):
+      alpha = None
+      if fixed_Q is None: 
+        self.Q_method='eta'
+
+        # Calc alpha (loss) Eq. 45
+        print("Acoustic loss calc")
+        nnodes=6 # TODO: is this right?
+        try:
+            if self.EM_sim.structure.inc_shape in self.EM_sim.structure.linear_element_shapes:
+                alpha = NumBAT.ac_alpha_int_v2(self.num_modes,
+                    self.n_msh_el, self.n_msh_pts, nnodes,
+                    self.table_nod, self.type_el, self.x_arr,
+                    self.structure.nb_typ_el_AC, self.structure.eta_tensor,
+                    self.k_AC, self.Omega_AC, self.sol1,
+                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
+                    self.AC_mode_energy_elastic) # appropriate for alpha in [1/s]
+            else:
+                if self.EM_sim.structure.inc_shape not in self.EM_sim.structure.curvilinear_element_shapes:
+                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
+                        "\n using slow quadrature integration by default.\n\n")
+                alpha = NumBAT.ac_alpha_int(self.num_modes,
+                    self.n_msh_el, self.n_msh_pts, nnodes,
+                    self.table_nod, self.type_el, self.x_arr,
+                    self.structure.nb_typ_el_AC, self.structure.eta_tensor,
+                    self.k_AC, self.Omega_AC, self.sol1,
+                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
+                    self.AC_mode_energy_elastic, Fortran_debug) # appropriate for alpha in [1/s]
+        except KeyboardInterrupt:
+            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
+        self.ac_alpha_t = np.real(alpha)
+        # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+        self.ac_Qmech = 0.5*(np.real(self.Omega_AC)/self.ac_alpha_t)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
+      else:
+        self.Q_method='fixed'
+        # factor of a 1/2 because alpha is for power!
+        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
+        # alpha [1/s] = vg * alpha [1/m]
+        # alpha [1/s] = Omega_AC/(2*fixed_Q)
+        # alpha = 0.5*(k_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+        self.ac_Qmech = fixed_Q*np.ones(self.num_modes)
+        self.ac_alpha_t = 0.5*(np.real(self.Omega_AC)/fixed_Q)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
+
+      self.ac_linewidth = self.ac_alpha_t/np.pi # SBS linewidth of each resonance in [Hz]
 
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
