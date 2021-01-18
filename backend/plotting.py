@@ -508,41 +508,48 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
 def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data summary
 
 
-	decorator = plps['decorator']
-	ax.set_xlim(-.5,1)
-	ax.set_ylim(0,9)
-	ax.axis('off')
-	fs=decorator.get_font_size('ax_label')
-	plt.title('Mode data', fontsize=decorator.get_font_size('subplot_title'))
+  decorator = plps['decorator']
+  ax.set_xlim(-.5,1)
+  ax.set_ylim(0,9)
+  ax.axis('off')
+  fs=decorator.get_font_size('ax_label')
+  plt.title('Mode data', fontsize=decorator.get_font_size('subplot_title'))
 
-	#  Beward that this is a very coarse measure of component fraction and is not consistent with energy fraction
-	[m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=v_plots
-	s_Ex=np.sum(np.sum(m_ReEx*m_ReEx+m_ImEx*m_ImEx))
-	s_Ey=np.sum(np.sum(m_ReEy*m_ReEy+m_ImEy*m_ImEy)) 
-	s_Ez=np.sum(np.sum(m_ReEz*m_ReEz+m_ImEz*m_ImEz)) 
-	s_E=s_Ex+s_Ey+s_Ez
-	f_x=s_Ex/s_E
-	f_y=s_Ey/s_E
-	f_t=f_x+f_y
-	f_z=s_Ez/s_E
+  #  Beward that this is a very coarse measure of component fraction and is not consistent with energy fraction
+  [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=v_plots
+  s_Ex=np.sum(np.sum(m_ReEx*m_ReEx+m_ImEx*m_ImEx))
+  s_Ey=np.sum(np.sum(m_ReEy*m_ReEy+m_ImEy*m_ImEy)) 
+  s_Ez=np.sum(np.sum(m_ReEz*m_ReEz+m_ImEz*m_ImEz)) 
+  s_E=s_Ex+s_Ey+s_Ez
+  f_x=s_Ex/s_E
+  f_y=s_Ey/s_E
+  f_t=f_x+f_y
+  f_z=s_Ez/s_E
 
-	if sim_wguide.EM_AC=='EM':
-		ax.text(0,8,r'$\omega/(2\pi)$ [THz]: {0:.4f}'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs)
-		ax.text(0,7,r'Mode index: {0}'.format(ival), fontsize=fs)
-		ax.text(0,6,r'$k$ [1/m]: {0:.2f}'.format(sim_wguide.Eig_values[ival]), fontsize=fs)
-		ax.text(0,5,r'$neff$ [1/m]: {0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs)
-	else:
-		ax.text(0,8,r'$q$ [1/m] {0:.2f}'.format(sim_wguide.k_AC), fontsize=fs)
-		ax.text(0,7,r'Mode index: {0}'.format(ival), fontsize=fs)
-		ax.text(0,6,r'$\Omega/(2\pi)$ [GHz]: {0:.2f}'.format(sim_wguide.Eig_values[ival]*1e-12), fontsize=fs)
-		ax.text(0,5,r'$v_p$ [m/s]: {0:.4f}'.format(sim_wguide.vp_AC(ival)), fontsize=fs)
+  r=8
+  x0=-.25
+  if sim_wguide.EM_AC=='EM':
+    ax.text(x0,r,r'$\omega/(2\pi)$ [THz]: {0:.4f}'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
+    ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
+    ax.text(x0,r,r'$k$ [1/m]: {0:.2f}'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\bar{n}$: {0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1
+  else:
+    ax.text(x0,r,r'$q$ [1/m] {0:.4e}'.format(sim_wguide.k_AC), fontsize=fs); r-=1
+    ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\Omega/(2\pi)$ [GHz]: {0:.4f}'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
+    ax.text(x0,r,r'$v_p$ [m/s]: {0:.2f}'.format(sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\alpha$: {0:.3e}[1/s], {1:.2f}[1/cm], {2:.2f}[dB/cm]'.format(
+          sim_wguide.alpha_t_AC(ival),
+          sim_wguide.alpha_s_AC(ival)/100.,
+          sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
+          ), fontsize=fs); r-=1
+    ax.text(x0,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\Delta\Omega/(2\pi)$ [MHz]: {0:.4f}'.format(1.e-6*sim_wguide.linewidth_AC(ival)), fontsize=fs); r-=1
 
-	ax.text(0,4,r'$f_x:$ {0:.3f}'.format(f_x), fontsize=fs)
-	ax.text(0,3,r'$f_y:$ {0:.3f}'.format(f_y), fontsize=fs)
-	ax.text(0,2,r'$f_t:$ {0:.3f}'.format(f_t), fontsize=fs)
-	ax.text(0,1,r'$f_z:$ {0:.3f}'.format(f_z), fontsize=fs)
-	sc = sim_wguide.symmetry_classification(ival)
-	if len(sc): ax.text(0,0,r'Sym: {0}'.format(sc), fontsize=fs)
+  ax.text(x0,r,r'$f_x:$ {0:.3f}, $f_y$: {1:.3f}'.format(f_x, f_y), fontsize=fs); r-=1
+  ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), fontsize=fs); r-=1
+  sc = sim_wguide.symmetry_classification(ival)
+  if len(sc): ax.text(x0,r,r'Sym: {0}'.format(sc), fontsize=fs); r-=1
 
 
 def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plps, sim_wguide, ival):

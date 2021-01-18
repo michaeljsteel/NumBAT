@@ -104,7 +104,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
                            The comment about negative gain (see SBS_gain above) holds here also.
                            Dimensions = [num_modes_EM_Stokes,num_modes_EM_pump,num_modes_AC].
 
-            alpha  : The acoustic loss for each mode. Dimensions = [num_modes_AC].
+            alpha  : The acoustic power loss for each mode in [1/s]. Dimensions = [num_modes_AC].
     """
 
     # Notes about internals of fortran integration
@@ -163,50 +163,55 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
         if el_typ+1 in sim_AC.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
 
-    print("\n-----------------------------------------------")
-    if fixed_Q is None:
-        # Calc alpha (loss) Eq. 45
-        print("Acoustic loss calc")
-        start = time.time()
-        try:
-            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
-                alpha = NumBAT.ac_alpha_int_v2(sim_AC.num_modes,
-                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
-                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
-                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
-                    sim_AC.AC_mode_energy_elastic) # appropriate for alpha in [1/s]
-            else:
-                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
-                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
-                        "\n using slow quadrature integration by default.\n\n")
-                alpha = NumBAT.ac_alpha_int(sim_AC.num_modes,
-                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
-                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
-                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
-                    sim_AC.AC_mode_energy_elastic, Fortran_debug) # appropriate for alpha in [1/s]
-        except KeyboardInterrupt:
-            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
-        alpha = np.real(alpha)
-        # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
-        end = time.time()
-        print("     time (sec.)", (end - start))
-    else:
-        # factor of a 1/2 because alpha is for power!
-        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
-        # alpha [1/s] = vg * alpha [1/m]
-        # alpha [1/s] = Omega_AC/(2*fixed_Q)
-        # alpha = 0.5*(k_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
-        Q_factors = fixed_Q*np.ones(num_modes_AC)
-
-    linewidth_Hz = alpha/np.pi # SBS linewidth of each resonance in [Hz]
+    sim_AC.calc_acoustic_losses(fixed_Q)
+#print("\n-----------------------------------------------")
+#    if fixed_Q is None:
+#        # Calc alpha (loss) Eq. 45
+#        print("Acoustic loss calc")
+#        start = time.time()
+#        try:
+#            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
+#                alpha = NumBAT.ac_alpha_int_v2(sim_AC.num_modes,
+#                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
+#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+#                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
+#                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
+#                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
+#                    sim_AC.AC_mode_energy_elastic) # appropriate for alpha in [1/s]
+#            else:
+#                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
+#                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
+#                        "\n using slow quadrature integration by default.\n\n")
+#                alpha = NumBAT.ac_alpha_int(sim_AC.num_modes,
+#                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
+#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+#                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
+#                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
+#                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
+#                    sim_AC.AC_mode_energy_elastic, Fortran_debug) # appropriate for alpha in [1/s]
+#        except KeyboardInterrupt:
+#            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
+#        alpha = np.real(alpha)
+#        # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+#        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
+#        end = time.time()
+#        print("     time (sec.)", (end - start))
+#        print("remove me alpha", alpha)
+#        print("remove me Qs", Q_factors)
+#    else:
+#        # factor of a 1/2 because alpha is for power!
+#        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
+#        # alpha [1/s] = vg * alpha [1/m]
+#        # alpha [1/s] = Omega_AC/(2*fixed_Q)
+#        # alpha = 0.5*(k_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+#        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
+#        Q_factors = fixed_Q*np.ones(num_modes_AC)
+#        print("fixed q:", alpha, Q_factors)
+#
+#    linewidth_Hz = alpha/np.pi # SBS linewidth of each resonance in [Hz]
 
     # Calc Q_photoelastic Eq. 33
+    alpha = sim_AC.alpha_t_AC_all()
     print("Photoelastic calc")
     start = time.time()
     try:
@@ -278,7 +283,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
     SBS_gain_PE = np.real(gain_PE/normal_fact)
     SBS_gain_MB = np.real(gain_MB/normal_fact)
 
-    return SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha
+    return SBS_gain, SBS_gain_PE, SBS_gain_MB, sim_AC.linewidth_AC_all(), sim_AC.Qmech_AC_all(), sim_AC.alpha_t_AC_all()
 
 
 #### Categorise modes by their symmetries #############################################

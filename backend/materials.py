@@ -20,6 +20,8 @@
 
 import os
 import numpy as np
+import sys
+import traceback
 from scipy.interpolate import interp1d
 import matplotlib
 matplotlib.use('pdf')
@@ -65,7 +67,12 @@ class Material(object):
             s_in = ''.join(fin.readlines())
             s_in = re.sub(r'//.*\n','\n', s_in)
 
-            self._params = json.loads(s_in)
+            try:
+              self._params = json.loads(s_in)
+            except Exception as err:
+              print('JSON parsing error: {0}'.format(err)) 
+              traceback.print_exc()
+              sys.exit(1)
 
             self.file_name = self._params['file_name']  # Name of this file, will be used as identifier
             self.chemical = self._params['chemical']  # Chemical composition
