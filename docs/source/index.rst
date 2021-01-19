@@ -10,6 +10,7 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :numbered: 
 
 
 ==================
@@ -45,7 +46,7 @@ Examples and Tutorials
 ====================================
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 5
 
     tutorial
 
