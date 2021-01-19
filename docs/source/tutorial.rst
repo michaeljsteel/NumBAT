@@ -13,8 +13,8 @@ The full Python interface is documented in :ref:`chap-pythonbackend-label`.
 
 
 
-Basic SBS Gain Calculation
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 1 -- Basic SBS Gain Calculation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This example, contained in ``tutorials/simo-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
 
 The sequence of operations (annotated in the source code below as Step 1, Step 2, etc) is
@@ -37,9 +37,9 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
     \clearpage
 
 
-SBS Gain Spectra
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-This example, contained in ``tutorials/simo-tut_02-gain_spectra-npsave.py`` considers the same structure
+Tutorial 2 -- SBS Gain Spectra
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, contained in ``tutorials/simo-tut_02-gain_spectra-npsave.py`` considers the same silicon-in-air structure
 but adds plotting of fields, gain spectra and techniques for saving and reusing data from earlier
 calculations. 
 
@@ -96,8 +96,9 @@ This example also generates gain spectra.
     \clearpage
 
 
-Investigating Dispersion and np.save/np.load
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 3a -- Investigating Dispersion and np.save/np.load
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, contained in ``tutorials/simo-tut_03_1-dispersion-npload.py`` calculates the acoustic dispersion diagram for the problem in the previous tutorial and classifies the modes according to the point group symmetry class.
 
 .. literalinclude:: ../../tutorials/simo-tut_03_1-dispersion-npload.py
     :lines: 0-
@@ -114,8 +115,9 @@ Investigating Dispersion and np.save/np.load
 
 
 
-Investigating Dispersion and multiprocessing
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 3b -- Investigating Dispersion and multiprocessing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in ``tutorials/simo-tut_03_2-dispersion-multicore.py`` continues the study of acoustic dispersion and demonstrates the use of Python multiprocessor calls to increase speed.
 
 .. literalinclude:: ../../tutorials/simo-tut_03_2-dispersion-multicore.py
     :lines: 0-
@@ -131,8 +133,9 @@ Investigating Dispersion and multiprocessing
     \clearpage
 
 
-Parameter Scan of Widths
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 4 -- Parameter Scan of Widths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in ``tutorials/simo-tut_04_scan_widths.py`` demonstrates use of a parameter scan, in this case of the width of the silicon rectangular waveguide, to understand the behaviour of the Brillouin gain.
 
 .. literalinclude:: ../../tutorials/simo-tut_04-scan_widths.py
     :lines: 0-
@@ -148,8 +151,9 @@ Parameter Scan of Widths
     \clearpage
 
 
-Convergence Study
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 5 -- Convergence Study
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in ``tutorials/simo-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our standard silicon-in-air problem to test the convergence of the calculation results.
 
 .. literalinclude:: ../../tutorials/simo-tut_05-convergence_study.py
     :lines: 0-
@@ -189,8 +193,9 @@ Convergence Study
     \clearpage
 
 
-Silica Nanowire 
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 6 -- Silica Nanowire 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In this tutorial, contained in ``tutorials/simo-tut_06_silica_nanowire.py`` we start to explore some different structures, in this case a silica nanowire surrounded by vacuum.
 
 .. literalinclude:: ../../tutorials/simo-tut_06-silica_nanowire.py
     :lines: 0-
@@ -206,8 +211,9 @@ Silica Nanowire
     \clearpage
 
 
-Slot Waveguide
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 7 -- Slot Waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_07-slot.py`` examines backward SBS in a more complex structure: chalcogenide soft glass (:math:`\text{As}_2\text{S}_3`) embedded in a silicon slot waveguide on a silica slab. 
 
 .. literalinclude:: ../../tutorials/simo-tut_07-slot.py
     :lines: 0-
@@ -223,8 +229,9 @@ Slot Waveguide
     \clearpage
 
 
-Slot Waveguide Scan Covering
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 8 -- Slot Waveguide Scan Covering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by examining the thickness dependence of a silica capping layer.
 
 .. literalinclude:: ../../tutorials/simo-tut_08-slot_coated-scan.py
     :lines: 0-
@@ -240,8 +247,9 @@ Slot Waveguide Scan Covering
     \clearpage
 
 
-Anisotropic Elastic Materials 
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 9 -- Anisotropic Elastic Materials 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_09-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
 
 .. literalinclude:: ../../tutorials/simo-tut_09-anisotropy.py
 
@@ -251,10 +259,35 @@ Anisotropic Elastic Materials
     \clearpage
 
 
-Multilayered 'Onion'
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+Tutorial 10 -- Multilayered 'Onion'
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_10-onion.py`` shows how to create multi-layered circular structures.
 
 .. literalinclude:: ../../tutorials/simo-tut_10-onion.py
+
+
+.. raw:: latex
+
+    \clearpage
+
+
+Tutorial 11 -- Two-layered 'Onion'
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_11a-onion2.py`` demonstrates use of the two layered onion structure which generates a more efficient mesh than the full onion template.
+
+.. literalinclude:: ../../tutorials/simo-tut_11a-onion2.py
+
+
+.. raw:: latex
+
+    \clearpage
+
+
+Tutorial 12 -- SMF-28 fibre
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This tutorial, contained in, ``tutorials/simo-tut_12-smf28.py`` models backward SBS in the standard SMF28 fibre using the onion2 template.
+
+.. literalinclude:: ../../tutorials/simo-tut_11a-onion2.py
 
 
 .. raw:: latex
@@ -282,7 +315,7 @@ The simulation scripts and resultant mode fields are shown below.
 
 
 BSBS - Circular Waveguide - Silica
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-BSBS-1umcylwg-SiO2.py
     :lines: 0-
@@ -324,7 +357,7 @@ BSBS - Circular Waveguide - Silica
 
 
 BSBS - Rectangular Waveguide - Silicon
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-BSBS-450x200nmrectwg-Si.py
     :lines: 0-
@@ -377,7 +410,7 @@ Let's also calculate the acoustic dispersion relation for this structure.
 
 
 FSBS - Circular Waveguide - Silica
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-FSBS-1umcylwg-SiO2.py
     :lines: 0-
@@ -420,7 +453,7 @@ FSBS - Circular Waveguide - Silica
 
 
 FSBS - Rectangular Waveguide - Silicon
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-FSBS-450x200nmrectwg-Si.py
     :lines: 0-
@@ -463,7 +496,7 @@ FSBS - Rectangular Waveguide - Silicon
 
 
 IFSBS - Circular Waveguide - Silica
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-IFSBS-1umcylwg-SiO2.py
     :lines: 0-
@@ -523,7 +556,7 @@ IFSBS - Circular Waveguide - Silica
 
 
 IFSBS - Rectangular Waveguide - Silicon
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. literalinclude:: ../../JOSAB_tutorial/simo-josab-IFSBS-450x200nmrectwg-Si.py
     :lines: 0-
@@ -590,15 +623,15 @@ Literature Examples
 ---------------------
 
 Having become somewhat familiar with NumBAT, we now set out to replicate a number of examples 
-from the recent literature.
+from the recent literature located in the ``lit_examples`` directory.
 The examples are presented in chronological order. 
 We note the particular importance of examples 5-8 which include experimental and numerical results that are in good agreement.
 
 
-2013 - Laude - AIP Adv - BSBS - Rectangular Waveguide - Silica
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-
-This example is based on the calculation of backward SBS
+LitEx 1 -- Laude and Beugnot, *AIP Advances* (2013): BSBS in a silica rectangular waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example ``simo-lit_01-Laude-AIPAdv_2013-silica.py``
+is based on the calculation of backward SBS
 in a small rectangular silica waveguide described in V. Laude and J.-C. Beugnot, 
 `Generation of phonons from electrostriction in small-core optical waveguides 
 <http://dx.doi.org/10.1063/1.4801936>`_, *AIP Advances* **3**, 042109 (2013).
@@ -645,11 +678,10 @@ without changing their preferred material values for their own samples and exper
 
     \clearpage
 
-2013 - Laude - AIP Adv - BSBS - Rectangular Waveguide - Silicon
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 2 -- Laude and Beungot, *AIP Advances* (2013): BSBS in a rectangular silicon waveguide 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example again follows the paper of
-V. Laude and J.-C. Beugnot, 
+This example in ``simo-lit_02-Laude-AIPAdv_2013-silicon.py`` again follows the paper of V. Laude and J.-C. Beugnot, 
 `Generation of phonons from electrostriction in small-core optical waveguides 
 <http://dx.doi.org/10.1063/1.4801936>`_, *AIP Advances* **3**, 042109 (2013),
 but this time looks at the *silicon* waveguide case.
@@ -673,10 +705,11 @@ but this time looks at the *silicon* waveguide case.
 
     \clearpage
 
-2014 - Beugnot - Nat Comm - BSBS - Tapered Fibre - Scanning Widths
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 3 -- Beugnot *et al*, *Nature Communications* (2014): BSBS in a tapered fibre - scanning widths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example is based on the calculation of backward SBS
+This example, in ``simo-lit_03-Beugnot-NatComm_2014.py``,
+is based on the calculation of backward SBS
 in a micron scale optical fibre described in J.-C. Beugnot *et al.*, 
 `Brillouin light scattering from surface acoustic waves in a subwavelength-diameter optical fibre
 <http://dx.doi.org/10.1038/ncomms6242>`_, *Nature Communications* **5**, 5242 (2014).
@@ -694,16 +727,17 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
 
     \clearpage
 
-2015 - Van Laer - Nat Phot - FSBF - Waveguide on a Pedestal
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-This example is based on the calculation of forward SBS
+LitEx 4 -- Van Laer *et al*, *Nature Photonics (2015): FSBF in a waveguide on a pedestal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, in ``simo-lit_04-pillar-Van_Laer-NatPhot_2015.py``, 
+is based on the calculation of forward SBS
 in a pedestal silicon waveguide described in R. Van Laer *et al.*, 
 `Interaction between light and highly confined hypersound in a silicon photonic nanowire 
 <http://dx.doi.org/10.1038/ncomms6242>`_, *Nature Photonics* **9**, 199 (2015).
 
 Note that the absence of an absorptive boundary in the acoustic model 
 causes a problem where the slab layer significantly distorting acoustic modes.
-Adding this feature is a priority for the next release of NumBAT.
+Adding this feature is a priority for a future release of NumBAT.
 The following example shows an approximate way to avoid the problem for now.
 
 .. literalinclude:: ../../lit_examples/simo-lit_04-pillar-Van_Laer-NatPhot_2015.py
@@ -741,10 +775,11 @@ Which gives good agreement for the gain spectrum.
 
     \clearpage
 
-2015 - Van Laer - New J Phys - FSBF - Waveguide without Pedestal
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 5 -- 2015 - Van Laer *et al*, *New Journal of Physics* (2015): FSBF in a waveguide without a pedestal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example continues  the study of forward SBS
+This example, in ``simo-lit_05-Van_Laer-NJP_2015.py``, continues  
+the study of forward SBS
 in a pedestal silicon waveguide described in R. Van Laer *et al.*, 
 `Interaction between light and highly confined hypersound in a silicon photonic nanowire 
 <http://dx.doi.org/10.1038/ncomms6242>`_, *Nature Photonics* **9**, 199 (2015).
@@ -773,10 +808,11 @@ energy being excessively concentrated in the substrate.
 
     \clearpage
 
-2016 - Florez - Nat Comm - BSBS - Tapered Fibre - Self Cancel - d = 550 nm
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 6 -- Florez *et al*, *Nature Communications* (2016): BSBS self-cancellation in a tapered fibre (:math:`d = 550` nm)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example looks at the phenomenon of Brillouin "self-cancellation" due to 
+This example, in ``simo-lit_06_1-Florez-NatComm_2016-d550nm.py``,
+    looks at the phenomenon of Brillouin "self-cancellation" due to 
 the electrostrictive and radiation pressure effects acting with opposite sign. 
 This was described in O. Florez *et al.*, `Brillouin self-cancellation 
 <http://dx.doi.org/10.1038/ncomms11759>`_, *Nature Communications* **7**, 11759 (2016).
@@ -821,10 +857,10 @@ This was described in O. Florez *et al.*, `Brillouin self-cancellation
 
     \clearpage
 
-2016 - Florez - Nat Comm - BSBS - Tapered Fibre - Self Cancel - d = 1160 nm
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-
-This example again looks at the paper 
+LitEx 6b -- Florez *et al*, *Nature Communications* (2016): BSBS self-cancellation in a tapered fibre (:math:`d = 1160` nm)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, in ``simo-lit_06_2-Florez-NatComm_2016-1160nm.py``, 
+    again looks at the paper 
  O. Florez *et al.*, `Brillouin self-cancellation <http://dx.doi.org/10.1038/ncomms11759>`_, *Nature Communications* **7**, 11759 (2016),
 but now for a wider core.
 
@@ -848,13 +884,13 @@ but now for a wider core.
 
     \clearpage
 
-2016 - Kittlaus - Nat Phot - FSBF - Rib Waveguide
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 7 -- Kittlaus *et al*,  *Nature Photonics (2016), FSBF in a silicon rib waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This examples explores a first geometry showing large forward SBS in silicon
+This example, in ``../../lit_examples/simo-lit_07-Kittlaus-NatPhot_2016.py``,
+explores a first geometry showing large forward SBS in silicon
 as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon 
 <http://dx.doi.org/10.1038/nphoton.2016.112>`_, *Nature Photonics* **10**, 463 (2016).
-
 
 
 .. literalinclude:: ../../lit_examples/simo-lit_07-Kittlaus-NatPhot_2016.py
@@ -883,8 +919,9 @@ as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
 
     \clearpage
 
-2017 - Kittlaus - Nat Comm - FSBF - Intermode
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 8 -- Kittlaus *et al*, *Nature Communications* (2017): Intermodal FSBF in a silicon waveguide 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example (``simo-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale group,  examines intermode forward Brillouin scattering in silicon.
 
 .. literalinclude:: ../../lit_examples/simo-lit_08-Kittlaus-NatComm_2017.py
     :lines: 0-
@@ -918,8 +955,9 @@ as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
     \clearpage
 
 
-2017 - Morrison - Optica - BSBS - Chalcogenide Rib Waveguide
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+LitEx 9 -- Morrison *et al*, *Optica* (2017):  BSBS in a chalcogenide rib waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, in ``simo-lit_09-Morrison-Optica_2017.py``, from the Sydney group examines backward SBS in a chalcogenide rib waveguide.
 
 .. literalinclude:: ../../lit_examples/simo-lit_09-Morrison-Optica_2017.py
     :lines: 0-
