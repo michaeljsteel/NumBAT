@@ -25,21 +25,9 @@ sys.path.append("../backend/")
 
 import plotting
 import integration
+from nbtypes import *
 from fortran import NumBAT
 
-from enum import IntEnum, auto
-
-class PointGroup(IntEnum):
-  Unknown = 1
-  C2V = auto()
-  C3V = auto()
-  C6V = auto()
-class SymRep(IntEnum):
-#E = 1
-  A = 0
-  B1 = auto()
-  B2 = auto()
-  B3 = auto()
 
 class Simmo(object):
     """ Calculates the modes of a ``Struct`` object at a wavelength of wl_nm.
@@ -70,7 +58,7 @@ class Simmo(object):
         self.EM_AC = 'EM'
         self.sym_reps = None
         self.point_group = PointGroup.Unknown
-        self.Q_method = 'fixed' # 'fixed' or 'eta'
+        self.Q_method = QAcMethod.NotSet
         self.ac_alpha_t = None   # temporal acoustic loss [1/s]
         self.ac_linewidth = None   # acoustic linewidth [Hz]
         self.ac_Qmech = None   # acoustic mechanical Q [dimless]
@@ -125,12 +113,12 @@ class Simmo(object):
     def vp_AC(self, m): 
       """ Return phase velocity of all AC modes in m/s"""
       assert(self.is_AC())
-      return np.real(self.Eig_values[m])/self.k_AC
+      return np.pi*2*np.real(self.Eig_values[m])/self.k_AC
 
     def vp_AC_all(self): 
       """ Return phase velocity of all AC modes in m/s"""
       assert(self.is_AC())
-      return np.real(self.Eig_values)/self.k_AC
+      return np.pi*2*np.real(self.Eig_values)/self.k_AC
 
     def alpha_t_AC(self, m): 
       assert(self.is_AC())
@@ -165,23 +153,32 @@ class Simmo(object):
       return self.ac_linewidth
 
     def analyse_symmetries(self, ptgrp):
+      print ('analysing syms')
       self.point_group=ptgrp
       symlist = integration.symmetries(self)
       self.sym_reps = []
       if ptgrp == PointGroup.C2V:
+        print ('as1,symlist length', len(symlist))
         for m, sym in enumerate(symlist):
           if sym == (1,1,1):     self.sym_reps.append(SymRep.A)
           elif sym == (-1,1,-1): self.sym_reps.append(SymRep.B1)
           elif sym == (1,-1,-1): self.sym_reps.append(SymRep.B2)
           elif sym == (-1,-1,1): self.sym_reps.append(SymRep.B3)
+          else: 
+            print('Warning: Unknown symmetry pattern', sym)
+            self.sym_reps.append(SymRep.Unknown)
+
+
+        print ('as2', sym)
 
       else:
+        print ('as3')
         print("unknown symmetry properties in mode_calcs")
 
-    def calc_acoustic_losses(self, fixed_Q=None):
+    def calc_acoustic_losses(self, fixed_Q=None): # TODO: make sure this is not done more than once on the same Simmo
       alpha = None
       if fixed_Q is None: 
-        self.Q_method='eta'
+        self.Q_method=QAcMethod.Intrinsic
 
         # Calc alpha (loss) Eq. 45
         print("Acoustic loss calc")
@@ -212,7 +209,7 @@ class Simmo(object):
         # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
         self.ac_Qmech = 0.5*(np.real(self.Omega_AC)/self.ac_alpha_t)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
       else:
-        self.Q_method='fixed'
+        self.Q_method=QAcMethod.Fixed
         # factor of a 1/2 because alpha is for power!
         # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
         # alpha [1/s] = vg * alpha [1/m]
