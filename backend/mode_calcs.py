@@ -184,6 +184,7 @@ class Simmo(object):
         print("Acoustic loss calc")
         nnodes=6 # TODO: is this right?
         try:
+            print('acoustic losses, linear elements')
             if self.EM_sim.structure.inc_shape in self.EM_sim.structure.linear_element_shapes:
                 alpha = NumBAT.ac_alpha_int_v2(self.num_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
@@ -196,6 +197,9 @@ class Simmo(object):
                 if self.EM_sim.structure.inc_shape not in self.EM_sim.structure.curvilinear_element_shapes:
                     print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
+                print('acoustic losses, curvilinear elements')
+                Fortran_debug=0
+                overlap=np.zeros(self.num_modes, dtype=complex)  # not sure why this is needed by ac_alpha_int
                 alpha = NumBAT.ac_alpha_int(self.num_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
                     self.table_nod, self.type_el, self.x_arr,

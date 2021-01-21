@@ -514,7 +514,7 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
   ax.set_ylim(0,9)
   ax.axis('off')
   fs=decorator.get_font_size('ax_label')
-  plt.title('Mode data', fontsize=decorator.get_font_size('subplot_title'))
+  plt.title('Mode {0}'.format(ival), fontsize=decorator.get_font_size('subplot_title'))
 
   #  Beward that this is a very coarse measure of component fraction and is not consistent with energy fraction
   [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=v_plots
@@ -528,30 +528,35 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
   f_z=s_Ez/s_E
 
   r=8
-  x0=-.25
+  x0=-.45
   if sim_wguide.EM_AC=='EM':
-    ax.text(x0,r,r'$\omega/(2\pi)$ [THz]: {0:.4f}'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
-    ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
-    ax.text(x0,r,r'$k$ [1/m]: {0:.2f}'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\omega/(2\pi)$: {0:.4f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$k$: {0:.2f} m$^{{-1}}$'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
     ax.text(x0,r,r'$\bar{n}$: '+'{0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1
   else:
-    ax.text(x0,r,r'$q$: {0:.4e} [1/m], $\lambda:$ {1:.4f} [$\mu$m]'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e-6), fontsize=fs); r-=1
-    ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\Omega/(2\pi)$ [GHz]: {0:.4f}'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
-    ax.text(x0,r,r'$v_p$ [m/s]: {0:.2f}'.format(sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
-    if sim_wguide.Q_method != QAcMethod.NotSet:
-      ax.text(x0,r,r'$\alpha$: {0:.3e}[1/s], {1:.2f}[1/cm], {2:.2f}[dB/cm]'.format(
-           sim_wguide.alpha_t_AC(ival),
-           sim_wguide.alpha_s_AC(ival)/100.,
-           sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
-           ), fontsize=fs); r-=1
-      ax.text(x0,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), fontsize=fs); r-=1
-      ax.text(x0,r,r'$\Delta\Omega/(2\pi)$ [MHz]: {0:.4f}'.format(1.e-6*sim_wguide.linewidth_AC(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$q$: {0:.4e} m$^{{-1}}$, $\lambda:$ {1:.4f} $\mu$m'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e6), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.4f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
+    ax.text(x0,r,r'$v_p$: {0:.2f} m/s'.format(sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
 
   ax.text(x0,r,r'$f_x:$ {0:.3f}, $f_y$: {1:.3f}'.format(f_x, f_y), fontsize=fs); r-=1
   ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), fontsize=fs); r-=1
   sc = sim_wguide.symmetry_classification(ival)
   if len(sc): ax.text(x0,r,r'Sym: {0}'.format(sc), fontsize=fs); r-=1
+
+  if sim_wguide.EM_AC=='AC' and sim_wguide.Q_method != QAcMethod.NotSet:
+      if sim_wguide.Q_method==QAcMethod.Intrinsic:
+        ax.text(x0,r,'Losses (intrinsic):', fontsize=fs); r-=1
+      else:
+        ax.text(x0,r,'Losses (fixed Q):', fontsize=fs); r-=1
+
+      ax.text(x0+.1,r,r'$\alpha$: {0:.3e} s$^{{-1}}$, {1:.2f} cm$^{{-1}}$, {2:.2f} dB/cm'.format(
+           sim_wguide.alpha_t_AC(ival),
+           sim_wguide.alpha_s_AC(ival)/100.,
+           sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
+           ), fontsize=fs); r-=1
+      ax.text(x0+.1,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), fontsize=fs); r-=1
+      ax.text(x0+.1,r,r'$\Delta\Omega/(2\pi)$: {0:.4f} MHz'.format(1.e-6*sim_wguide.linewidth_AC(ival)), fontsize=fs); r-=1
+
 
 
 def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plps, sim_wguide, ival):

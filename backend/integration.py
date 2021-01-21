@@ -163,7 +163,9 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
         if el_typ+1 in sim_AC.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
 
+    print('integration: doing calc_acoustic_losses')
     sim_AC.calc_acoustic_losses(fixed_Q)
+    print('integration: done calc_acoustic_losses')
 #print("\n-----------------------------------------------")
 #    if fixed_Q is None:
 #        # Calc alpha (loss) Eq. 45
