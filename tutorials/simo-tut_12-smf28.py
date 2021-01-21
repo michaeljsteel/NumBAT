@@ -37,7 +37,12 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'tut_12a-'
+if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
+  prefix_str = 'ftut_12-'
+  refine_fac=1
+else:
+  prefix_str = 'tut_12-'
+  refine_fac=4
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Struct(unitcell_x,inc_a_x,inc_shape=inc_shape,
@@ -46,7 +51,7 @@ wguide = objects.Struct(unitcell_x,inc_a_x,inc_shape=inc_shape,
                         material_bkg=materials.materials_dict["Vacuum"],
                         material_a=materials.materials_dict["SiO2GeO2_smf28"],
                         material_b=materials.materials_dict["SiO2_smf28"],
-                        lc_bkg=.5, lc_refine_1=4, lc_refine_2=100, plt_mesh=True)
+                        lc_bkg=.5, lc_refine_1=1.0*refine_fac, lc_refine_2=20*refine_fac, plt_mesh=True)
 
 
 # Expected effective index of fundamental guided mode.
