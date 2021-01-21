@@ -30,6 +30,7 @@ import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import ticker
 
+from nbtypes import *
 from fortran import NumBAT
 
 try: 
@@ -532,19 +533,20 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
     ax.text(x0,r,r'$\omega/(2\pi)$ [THz]: {0:.4f}'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
     ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
     ax.text(x0,r,r'$k$ [1/m]: {0:.2f}'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\bar{n}$: {0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\bar{n}$: '+'{0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1
   else:
-    ax.text(x0,r,r'$q$ [1/m] {0:.4e}'.format(sim_wguide.k_AC), fontsize=fs); r-=1
+    ax.text(x0,r,r'$q$: {0:.4e} [1/m], $\lambda:$ {1:.4f} [$\mu$m]'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e-6), fontsize=fs); r-=1
     ax.text(x0,r,r'Mode index: {0}'.format(ival), fontsize=fs); r-=1
     ax.text(x0,r,r'$\Omega/(2\pi)$ [GHz]: {0:.4f}'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
     ax.text(x0,r,r'$v_p$ [m/s]: {0:.2f}'.format(sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\alpha$: {0:.3e}[1/s], {1:.2f}[1/cm], {2:.2f}[dB/cm]'.format(
-          sim_wguide.alpha_t_AC(ival),
-          sim_wguide.alpha_s_AC(ival)/100.,
-          sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
-          ), fontsize=fs); r-=1
-    ax.text(x0,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\Delta\Omega/(2\pi)$ [MHz]: {0:.4f}'.format(1.e-6*sim_wguide.linewidth_AC(ival)), fontsize=fs); r-=1
+    if sim_wguide.Q_method != QAcMethod.NotSet:
+      ax.text(x0,r,r'$\alpha$: {0:.3e}[1/s], {1:.2f}[1/cm], {2:.2f}[dB/cm]'.format(
+           sim_wguide.alpha_t_AC(ival),
+           sim_wguide.alpha_s_AC(ival)/100.,
+           sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
+           ), fontsize=fs); r-=1
+      ax.text(x0,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), fontsize=fs); r-=1
+      ax.text(x0,r,r'$\Delta\Omega/(2\pi)$ [MHz]: {0:.4f}'.format(1.e-6*sim_wguide.linewidth_AC(ival)), fontsize=fs); r-=1
 
   ax.text(x0,r,r'$f_x:$ {0:.3f}, $f_y$: {1:.3f}'.format(f_x, f_y), fontsize=fs); r-=1
   ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), fontsize=fs); r-=1
@@ -626,7 +628,7 @@ def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v
 
      # Flip y order as imshow has origin at top left
      del_mat = np.array([del_x_Ex[:,::-1].real, del_x_Ey[:,::-1].real, del_x_Ez[:,::-1].real, del_x_Ex[:,::-1].imag, del_x_Ey[:,::-1].imag, del_x_Ez[:,::-1].imag, del_y_Ex[:,::-1].real, del_y_Ey[:,::-1].real, del_y_Ez[:,::-1].real, del_y_Ex[:,::-1].imag, del_y_Ey[:,::-1].imag, del_y_Ez[:,::-1].imag, del_z_Ex[:,::-1].real, del_z_Ey[:,::-1].real, del_z_Ez[:,::-1].real, del_z_Ex[:,::-1].imag, del_z_Ey[:,::-1].imag, del_z_Ez[:,::-1].imag])
-     v_labels = ["Re($S_{xx}$)","Re($S_{xy}$)","Re($S_{xz}$)","Im($S_{xx}$)","Im($S_{xy}$)","Im($S_{xz}$)","Re($S_{yx}$)","Re($S_{yy}$)","Re($S_{yz}$)","Im($S_{yx}$)","Im($S_{yy}$)","Im($S_{yz}$)","Re($S_{zx}$)","Re($S_{zy}$)","Re($S_{zz}$)","Im($S_{zx}$)","Im($S_{zy}$)","Im($S_{zz}$)"]
+     v_labels = ["Re($S_{xx}$)","Re($S_{xy}$)","Re($S_{xz}$)", "Im($S_{xx}$)","Im($S_{xy}$)","Im($S_{xz}$)","Re($S_{yx}$)","Re($S_{yy}$)","Re($S_{yz}$)","Im($S_{yx}$)","Im($S_{yy}$)","Im($S_{yz}$)","Re($S_{zx}$)","Re($S_{zy}$)","Re($S_{zz}$)","Im($S_{zx}$)","Im($S_{zy}$)","Im($S_{zz}$)"]
 
      # stress field plots
      plt.clf()
@@ -756,8 +758,11 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
             suffix_str  (str): Add a string to end of file name.
     """
 
+
     if EM_AC != 'EM_E' and EM_AC != 'EM_H' and EM_AC != 'AC':
         raise ValueError("EM_AC must be either 'AC', 'EM_E' or 'EM_H'.")
+
+#if EM_AC == 'AC': sim_wguide.calc_acoustic_losses()
 
     # Calculate the magnetic field from the electric field
     if EM_AC == 'EM_H':
@@ -891,15 +896,15 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
         # Flip y order as imshow has origin at top left
         #v_plots = [m_ReEx[:,::-1],m_ReEy[:,::-1],m_ReEz[:,::-1],m_ImEx[:,::-1],m_ImEy[:,::-1],m_ImEz[:,::-1],m_AbsE[:,::-1]]
 
-        v_plots = [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]
+        v_plots = [m_ReEx, m_ReEy, m_ImEz, m_ImEx, m_ImEy, m_ReEz, m_AbsE]
         vq_plots = [m_ReEx_q, m_ReEy_q, m_ImEx_q, m_ImEy_q]
 
         if EM_AC=='EM_E':
-            v_labels = [r"Re($E_x$)",r"Re($E_y$)",r"Re($E_z$)",r"Im($E_x$)",r"Im($E_y$)",r"Im($E_z$)",r"$|E|$"]
+            v_labels = [r"Re($E_x$)",r"Re($E_y$)",r"Im($E_z$)",r"Im($E_x$)",r"Im($E_y$)",r"Re($E_z$)",r"$|E|$"]
         elif EM_AC == 'EM_H':
-            v_labels = [r"Re($H_x$)",r"Re($H_y$)",r"Re($H_z$)",r"Im($H_x$)",r"Im($H_y$)",r"Im($H_z$)",r"$|H|$"]
+            v_labels = [r"Re($H_x$)",r"Re($H_y$)",r"Im($H_z$)",r"Im($H_x$)",r"Im($H_y$)",r"Re($H_z$)",r"$|H|$"]
         else:
-            v_labels = [r"Re($u_x$)",r"Re($u_y$)",r"Re($u_z$)",r"Im($u_x$)",r"Im($u_y$)",r"Im($u_z$)",r"$|u|$"]
+            v_labels = [r"Re($u_x$)",r"Re($u_y$)",r"Im($u_z$)",r"Im($u_x$)",r"Im($u_y$)",r"Re($u_z$)",r"$|u|$"]
 
 
 
@@ -920,17 +925,17 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
           for comp in comps:
             if   comp=='Ex'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
             elif comp=='Ey'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='Ez'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[5], v_labels[5], plot_params, sim_wguide, ival, comp)
+            elif comp=='Ez'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
             elif comp=='Eabs' and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
             elif comp=='Et'   and EM_AC=='EM_E': plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(E_x,E_y)$', plot_params, sim_wguide, ival, comp)
             elif comp=='Hx'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
             elif comp=='Hy'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='Hz'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[5], v_labels[5], plot_params, sim_wguide, ival, comp)
+            elif comp=='Hz'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
             elif comp=='Habs' and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
             elif comp=='Ht'   and EM_AC=='EM_H': plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(H_x,H_y)$', plot_params, sim_wguide, ival, comp)
             elif comp=='ux'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
             elif comp=='uy'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='uz'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[5], v_labels[5], plot_params, sim_wguide, ival, comp)
+            elif comp=='uz'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
             elif comp=='uabs' and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
             elif comp=='ut'   and EM_AC=='AC':   plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(u_x, u_y)$', plot_params, sim_wguide, ival, comp)
      
