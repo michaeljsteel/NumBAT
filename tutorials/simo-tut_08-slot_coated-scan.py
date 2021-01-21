@@ -43,7 +43,12 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'tut_08-'
+if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
+  prefix_str = 'ftut_08-'
+  refine_fac=1
+else:
+  prefix_str = 'tut_08-'
+  refine_fac=4
 
 # Function to return ac freqs for given coating thickness
 def ac_mode_freqs(coat_y):
@@ -57,7 +62,7 @@ def ac_mode_freqs(coat_y):
                             material_b=materials.materials_dict["SiO2_2013_Laude"],     # slab
                             material_c=materials.materials_dict["Si_2016_Smith"],       # walls of slot
                             material_d=materials.materials_dict["SiO2_2013_Laude"],     # coating
-                            lc_bkg=1, lc_refine_1=400.0, lc_refine_2=200.0)
+                            lc_bkg=1, lc_refine_1=100.0*refine_fac, lc_refine_2=50.0*refine_fac)
 
     # Expected effective index of fundamental guided mode.
     n_eff = wguide.material_a.n-0.1
