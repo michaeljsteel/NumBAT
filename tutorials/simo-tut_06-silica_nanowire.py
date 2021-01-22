@@ -43,9 +43,11 @@ AC_ival = 'All'
 if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
   prefix_str = 'ftut_06-'
   refine_fac=1
+  print('\n\nCommencing NumBAT tutorial 6 - fast mode')
 else:
   prefix_str = 'tut_06-'
   refine_fac=5
+  print('\n\nCommencing NumBAT tutorial 6')
 
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.materials_dict["Vacuum"],

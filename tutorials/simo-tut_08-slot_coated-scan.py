@@ -46,9 +46,11 @@ AC_ival = 'All'
 if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
   prefix_str = 'ftut_08-'
   refine_fac=1
+  print('\n\nCommencing NumBAT tutorial 8 - fast mode')
 else:
   prefix_str = 'tut_08-'
   refine_fac=4
+  print('\n\nCommencing NumBAT tutorial 8')
 
 # Function to return ac freqs for given coating thickness
 def ac_mode_freqs(coat_y):

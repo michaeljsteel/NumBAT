@@ -21,6 +21,7 @@ from fortran import NumBAT
 
 
 start = time.time()
+print('\n\nCommencing NumBAT tutorial 3a')
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550

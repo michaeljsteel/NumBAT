@@ -23,6 +23,7 @@ from fortran import NumBAT
 # k_AC: acoustic wavevector
 
 start = time.time()
+print('\n\nCommencing NumBAT tutorial 1')
 
 # Step 2
 # Geometric Parameters - all in nm.

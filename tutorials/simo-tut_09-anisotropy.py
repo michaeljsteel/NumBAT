@@ -36,9 +36,11 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
+  print('\n\nCommencing NumBAT tutorial 9 - fast mode')
   prefix_str = 'ftut_09-'
   refine_fac=1
 else:
+  print('\n\nCommencing NumBAT tutorial 9')
   prefix_str = 'tut_09-'
   refine_fac=5
 
