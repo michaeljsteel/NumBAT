@@ -36,6 +36,7 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 prefix_str = 'tut_05-'
+print('\n\nCommencing NumBAT tutorial 5')
 
 # Warning: The fine grids in this list will take considerable time to run!
 lc_list = [20,100,500,1000,1500,2000,2500]

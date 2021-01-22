@@ -38,13 +38,20 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'tut_03_2-'
+if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
+  prefix_str = 'ftut_03-2-'
+  refine_fac=1
+  print('\n\nCommencing NumBAT tutorial 3b - fast mode')
+else:
+  prefix_str = 'tut_03-2-'
+  refine_fac=5
+  print('\n\nCommencing NumBAT tutorial 3b')
 
 # Note that this mesh is quite fine, may not be required if purely using dispersive sims
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.materials_dict["Vacuum"],
                         material_a=materials.materials_dict["Si_2016_Smith"],
-                        lc_bkg=1, lc_refine_1=600.0, lc_refine_2=300.0)
+                        lc_bkg=1, lc_refine_1=120.0*refine_fac, lc_refine_2=60.0*refine_fac)
 
 # Estimated effective index of fundamental guided mode.
 n_eff = wguide.material_a.n-0.1

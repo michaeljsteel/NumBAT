@@ -37,9 +37,11 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
+  print('\n\nCommencing NumBAT tutorial 11a - fast mode')
   prefix_str = 'ftut_11a-'
   refine_fac=1
 else:
+  print('\n\nCommencing NumBAT tutorial 11a')
   prefix_str = 'tut_11a-'
   refine_fac=5
 
@@ -60,7 +62,7 @@ new_calcs=True
 
 # Calculate Electromagnetic modes.
 if new_calcs:
-  sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
+  sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff, calc_EM_mode_energy=True)
   np.savez('wguide_data', sim_EM_pump=sim_EM_pump)
 
   sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
@@ -71,8 +73,13 @@ else:
   npzfile = np.load('wguide_data2.npz', allow_pickle=True)
   sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-# Print the wavevectors of EM modes.
-print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
+print('EM modes:\n')
+kz_EM_mu =np.real(sim_EM_pump.kz_EM_all())*1e-6
+neff_EM =sim_EM_pump.neff_all()
+ng_EM =sim_EM_pump.ngroup_all()
+print('m    |   k_z [1/micron]  | neff  | ng')
+for m in range(num_modes_EM_pump):
+  print('{0:4d}  {1:12.6f}  {2:12.6f}  {3:12.6f}'.format(m, kz_EM_mu[m], neff_EM[m], ng_EM[m]))
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.Eig_values[0]*((wl_nm*1e-9)/(2.*np.pi)))
@@ -94,16 +101,22 @@ k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[E
 
 # Calculate Acoustic modes.
 if new_calcs:
-  sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
+  sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump, calc_AC_mode_power=True)
   np.savez('wguide_data_AC', sim_AC=sim_AC)
 else:
   npzfile = np.load('wguide_data_AC.npz', allow_pickle=True)
   sim_AC = npzfile['sim_AC'].tolist()
 
-# Print the frequencies of AC modes.
-print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
+print('AC mode properties (GHz) \n')
+nu_AC = np.real(sim_AC.nu_AC_all())*1e-9
+vp_AC = np.real(sim_AC.vp_AC_all())
+vg_AC = np.real(sim_AC.vg_AC_all())
+print('m    |   nu [GHz]  | vp [m/s]  | vg [m/s]')
+for m in range(num_modes_AC):
+  print('{0:4d}  {1:12.6f}  {2:12.2f}  {3:12.2f}'.format(m, nu_AC[m], vp_AC[m], vg_AC[m]))
 
 sim_AC.calc_acoustic_losses()
+
 plotting.plt_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
                          prefix_str=prefix_str, ticks=True, ivals=[0], quiver_steps=20)
 
