@@ -163,9 +163,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
         if el_typ+1 in sim_AC.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
 
-    print('integration: doing calc_acoustic_losses')
     sim_AC.calc_acoustic_losses(fixed_Q)
-    print('integration: done calc_acoustic_losses')
+
 #print("\n-----------------------------------------------")
 #    if fixed_Q is None:
 #        # Calc alpha (loss) Eq. 45
@@ -179,7 +178,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 #                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
 #                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
-#                    sim_AC.AC_mode_energy_elastic) # appropriate for alpha in [1/s]
+#                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
 #            else:
 #                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
 #                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
@@ -190,7 +189,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 #                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
 #                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
-#                    sim_AC.AC_mode_energy_elastic, Fortran_debug) # appropriate for alpha in [1/s]
+#                    sim_AC.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
 #        except KeyboardInterrupt:
 #            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
 #        alpha = np.real(alpha)
@@ -279,7 +278,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
             P2 = sim_EM_pump.EM_mode_power[j]
             for k in range(num_modes_AC):
                 # P3 = sim_AC.AC_mode_power[k]
-                P3 = sim_AC.AC_mode_energy_elastic[k]
+                P3 = sim_AC.AC_mode_energy[k]
                 normal_fact[i, j, k] = P1*P2*P3*alpha[k]
     SBS_gain = np.real(gain/normal_fact)
     SBS_gain_PE = np.real(gain_PE/normal_fact)

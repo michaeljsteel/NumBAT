@@ -29,6 +29,8 @@ from nbtypes import *
 from fortran import NumBAT
 
 
+VacCSpeed=299792458
+
 class Simmo(object):
     """ Calculates the modes of a ``Struct`` object at a wavelength of wl_nm.
     """
@@ -54,6 +56,10 @@ class Simmo(object):
         self.omega_EM = 2*np.pi*speed_c/self.wl_m # Angular freq in units of Hz
         self.calc_EM_mode_energy = calc_EM_mode_energy
         self.calc_AC_mode_power = calc_AC_mode_power
+
+        self.EM_mode_energy = None
+        self.EM_mode_power = None
+
         self.debug = debug
         self.EM_AC = 'EM'
         self.sym_reps = None
@@ -75,6 +81,25 @@ class Simmo(object):
       assert(self.is_EM())
 
       return np.real(self.Eig_values[m]*self.wl_m/(2*np.pi))
+
+    def ngroup_EM(self, m):
+      if self.EM_mode_energy is None or self.EM_mode_power is None:
+        print ('emme', self.EM_mode_energy, 'emmp', self.EM_mode_power)
+        print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
+               Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simmo''')
+        return 0
+      vg= np.real(self.EM_mode_power[m]/self.EM_mode_energy[m])
+      ng=VacCSpeed/vg
+      return ng
+
+    def ngroup_EM_all(self):
+      if self.EM_mode_energy is None or self.EM_mode_power is None:
+        print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
+               Set calc_EM_mode_energy=True in call to calc_EM_modes''')
+        return np.zeros(len(self.Eig_values), dtype=float)
+      vg= np.real(self.EM_mode_power/self.EM_mode_energy)
+      ng=VacCSpeed/vg
+      return ng
 
     def kz_EM(self, m): 
       """ Return wavevector of EM mode m in 1/m""" 
@@ -120,6 +145,26 @@ class Simmo(object):
       assert(self.is_AC())
       return np.pi*2*np.real(self.Eig_values)/self.k_AC
 
+    def vg_AC(self, m): 
+      """ Return group velocity of AC mode m in m/s"""
+      if self.AC_mode_energy is None or self.AC_mode_power is None:
+        print('''AC group velocity requires calculation of mode energy and mode power when calculating AC modes. 
+               Set calc_AC_mode_power=True in call to calc_AC_modes''')
+        return np.zeros(len(self.Eig_values), dtype=float)
+      vg= np.real(self.AC_mode_power[m]/self.AC_mode_energy[m])
+      return vg
+
+    def vg_AC_all(self): 
+      """ Return group velocity of all AC modes in m/s"""
+      if self.AC_mode_energy is None or self.AC_mode_power is None:
+        print('''AC group velocity requires calculation of mode energy and mode power when calculating AC modes. 
+               Set calc_AC_mode_power=True in call to calc_AC_modes''')
+        return np.zeros(len(self.Eig_values), dtype=float)
+      vg= np.real(self.AC_mode_power/self.AC_mode_energy)
+      return vg
+
+
+
     def alpha_t_AC(self, m): 
       assert(self.is_AC())
       return self.ac_alpha_t[m]
@@ -153,12 +198,10 @@ class Simmo(object):
       return self.ac_linewidth
 
     def analyse_symmetries(self, ptgrp):
-      print ('analysing syms')
       self.point_group=ptgrp
       symlist = integration.symmetries(self)
       self.sym_reps = []
       if ptgrp == PointGroup.C2V:
-        print ('as1,symlist length', len(symlist))
         for m, sym in enumerate(symlist):
           if sym == (1,1,1):     self.sym_reps.append(SymRep.A)
           elif sym == (-1,1,-1): self.sym_reps.append(SymRep.B1)
@@ -169,10 +212,7 @@ class Simmo(object):
             self.sym_reps.append(SymRep.Unknown)
 
 
-        print ('as2', sym)
-
       else:
-        print ('as3')
         print("unknown symmetry properties in mode_calcs")
 
     def calc_acoustic_losses(self, fixed_Q=None): # TODO: make sure this is not done more than once on the same Simmo
@@ -192,7 +232,7 @@ class Simmo(object):
                     self.structure.nb_typ_el_AC, self.structure.eta_tensor,
                     self.k_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
-                    self.AC_mode_energy_elastic) # appropriate for alpha in [1/s]
+                    self.AC_mode_energy) # appropriate for alpha in [1/s]
             else:
                 if self.EM_sim.structure.inc_shape not in self.EM_sim.structure.curvilinear_element_shapes:
                     print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
@@ -206,7 +246,7 @@ class Simmo(object):
                     self.structure.nb_typ_el_AC, self.structure.eta_tensor,
                     self.k_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
-                    self.AC_mode_energy_elastic, Fortran_debug) # appropriate for alpha in [1/s]
+                    self.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
         except KeyboardInterrupt:
             print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
         self.ac_alpha_t = np.real(alpha)
@@ -366,10 +406,14 @@ class Simmo(object):
                 #         print("Warning: em_mode_e_energy_int - not sure if mesh contains curvi-linear elements", 
                 #             "\n using slow quadrature integration by default.\n\n")
                 # # Integration by quadrature. Slowest.
-                    self.EM_mode_power_energy = NumBAT.em_mode_e_energy_int(
+                    self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
                         self.num_modes, self.n_msh_el, self.n_msh_pts, nnodes,
                         self.table_nod, self.type_el, self.structure.nb_typ_el, self.n_list,
                         self.x_arr, self.sol1)
+                else:
+                  print("\n\n FEM routine em_mode_e_energy_int needs work for this structure .\n\n")
+                  self.EM_mode_energy=np.zeros(self.num_modes, dtype=float)
+                  
             except KeyboardInterrupt:
                 print("\n\n FEM routine em_mode_e_energy_int interrupted by keyboard.\n\n")
 
@@ -395,6 +439,20 @@ class Simmo(object):
         # self.EM_mode_power = self.EM_mode_power*area
 
 
+#def calc_EM_mode_energy(self):  # these require extraction of numerical props from Fortran. Clean that up first.
+#      assert(self.is_EM())
+#      if not self.EM_mode_energy is None: return  # nothing to do
+
+#    def calc_EM_mode_power(self):
+#      assert(self.is_EM())
+#      if not self.EM_mode_power is None: return  # nothing to do
+
+#    def calc_EM_mode_power_and_energy(self):
+#      assert(self.is_EM())
+#      self.calc_EM_mode_power()
+#      self.calc_EM_mode_energy()
+
+
     def calc_AC_modes(self):
         """ Run a Fortran FEM calculation to find the acoustic modes.
 
@@ -405,7 +463,7 @@ class Simmo(object):
         sol1: the associated Eigenvectors, ie. the fields, stored as
                [field comp, node nu on element, Eig value, el nu]
 
-        AC_mode_energy_elastic: the elastic power in the acoutic modes.
+        AC_mode_energy: the elastic power in the acoutic modes.
         """
         self.EM_AC = 'AC'
 
@@ -639,7 +697,7 @@ class Simmo(object):
             nnodes = 6
             if self.structure.inc_shape in self.structure.linear_element_shapes:
             # Semi-analytic integration. Fastest!
-                self.AC_mode_energy_elastic = NumBAT.ac_mode_elastic_energy_int_v4(
+                self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int_v4(
                     self.num_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod, self.type_el, self.x_arr,
                     self.structure.nb_typ_el_AC, self.structure.rho,
@@ -649,7 +707,7 @@ class Simmo(object):
                     print("Warning: ac_mode_elastic_energy_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
             # Integration by quadrature. Slowest.
-                self.AC_mode_energy_elastic = NumBAT.ac_mode_elastic_energy_int(
+                self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int(
                     self.num_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod, self.type_el, self.x_arr,
                     self.structure.nb_typ_el_AC, self.structure.rho,

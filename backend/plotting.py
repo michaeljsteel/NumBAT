@@ -33,6 +33,8 @@ from matplotlib import ticker
 from nbtypes import *
 from fortran import NumBAT
 
+keep_plots_open=false  # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
+
 try: 
     plt.style.use('NumBATstyle')
 except (ValueError, IOError, AttributeError): print("Preferred matplotlib style file not found.")
@@ -228,7 +230,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             plt.savefig('%(pre)sgain_spectra-mode_comps%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
         elif pdf_png=='pdf':
             plt.savefig('%(pre)sgain_spectra-mode_comps%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        # plt.close()
+        if not keep_plots_open: plt.close()
 
 
     interp_values = np.zeros(num_interp_pts)
@@ -268,7 +270,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             plt.savefig('%(pre)sgain_spectra-MB_PE_comps%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
         elif pdf_png=='pdf':
             plt.savefig('%(pre)sgain_spectra-MB_PE_comps%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-    # plt.close()
+        if not keep_plots_open: plt.close()
 
     if save_txt:
         save_array = (interp_grid, interp_values)
@@ -301,7 +303,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             plt.savefig('%(pre)sgain_spectra-dB%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
         elif pdf_png=='pdf':
             plt.savefig('%(pre)sgain_spectra-dB%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        # plt.close()
+        if not keep_plots_open: plt.close()
 
         if save_txt:
             save_array = (interp_grid, 10*np.log10(np.exp(abs(interp_values)*dB_const)))
@@ -325,7 +327,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             plt.savefig('%(pre)sgain_spectra-MB_PE_comps-logy%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
         elif pdf_png=='pdf':
             plt.savefig('%(pre)sgain_spectra-MB_PE_comps-logy%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        # plt.close()
+        if not keep_plots_open: plt.close()
 
     return return_interp_values
 
@@ -532,11 +534,12 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
   if sim_wguide.EM_AC=='EM':
     ax.text(x0,r,r'$\omega/(2\pi)$: {0:.4f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
     ax.text(x0,r,r'$k$: {0:.2f} m$^{{-1}}$'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\bar{n}$: '+'{0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$\bar{n}:' + ' {0:.6f}, $n_g$: {1:.6f}'.format(sim_wguide.neff(ival), sim_wguide.ngroup_EM(ival)), fontsize=fs); r-=1  # TODO: why is latex code failing here?
   else:
     ax.text(x0,r,r'$q$: {0:.4e} m$^{{-1}}$, $\lambda:$ {1:.4f} $\mu$m'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e6), fontsize=fs); r-=1
     ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.4f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
-    ax.text(x0,r,r'$v_p$: {0:.2f} m/s'.format(sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$v_p$: {0:.2f} m/s, $v_g$: {1:.2f}'.format( sim_wguide.vp_AC(ival), sim_wguide.vg_AC(ival)), fontsize=fs); r-=1
+    ax.text(x0,r,r'$v_g$: {0:.2f} m/s'.format(sim_wguide.vg_AC(ival)), fontsize=fs); r-=1
 
   ax.text(x0,r,r'$f_x:$ {0:.3f}, $f_y$: {1:.3f}'.format(f_x, f_y), fontsize=fs); r-=1
   ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), fontsize=fs); r-=1
@@ -590,7 +593,7 @@ def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v
   figfile=plot_filename(plps, ival)
   save_figure(plt, figfile)
 
-  # plt.close()
+  if not keep_plots_open: plt.close()
 
 
   if plps['EM_AC']=='AC' and plps['stress_fields']:
@@ -694,7 +697,7 @@ def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v
      elif pdf_png=='pdf':
          plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
              {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str}, bbox_inches='tight')
-     # plt.close()
+     if not keep_plots_open: plt.close()
 
 
 def save_figure(plt, figfile):
@@ -718,7 +721,7 @@ def plot_component(v_x, v_y, v_XX, v_YY, plot, label, plps, sim_wguide, ival, co
 
   figfile=plot_filename(plps, ival, comp)
   save_figure(plt, figfile)
-  # plt.close()
+  if not keep_plots_open: plt.close()
 
 
 #### Standard plotting of spectra #############################################
@@ -966,7 +969,7 @@ def plot_msh(x_arr, prefix_str='', suffix_str=''):
     ax.set_aspect('equal')
     plt.savefig('%(pre)smsh_%(add)s.pdf' %
         {'pre' : prefix_str, 'add' : suffix_str}, bbox_inches='tight')
-    # plt.close()
+    if not keep_plots_open: plt.close()
 
 
 
@@ -983,4 +986,4 @@ def plot_msh(x_arr, prefix_str='', suffix_str=''):
 #     plt.plot(x, y, 'o')
 #     plt.text(x+0.001, y+0.001, str(i))
 # plt.savefig('triangle_%i.png' %el)
-plt.close()
+if not keep_plots_open: plt.close()
