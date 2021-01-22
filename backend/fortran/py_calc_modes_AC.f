@@ -418,7 +418,7 @@ C     Assemble the coefficient matrix K and M of the finite element equations
      *  c(kp_mat1_re), c(kp_mat1_im), b(jp_mat2), a(ip_work), 
      *  symmetry_flag, debug)
       call cpu_time(time2)
-      write(ui,*) '    assembly time (sec.)  = ', (time2-time1)
+      write(ui,'(A,F6.2)') '    assembly time (sec.)  = ', (time2-time1)
 C
 C       if (debug .eq. 1) then
 C         write(ui,*) "py_calc_modes_AC: call to valpr"
@@ -433,7 +433,8 @@ C       endif
      *  c(kp_lhs_re), c(kp_lhs_im), n_conv, ls_data,
      *  numeric, filenum, status, control, info_umf, debug)
       call cpu_time(time2)
-      write(ui,*) '    eigensolver time (sec.)  = ', (time2-time1)
+      write(ui,'(A,F6.2)') '    eigensolver time (sec.)  = ', 
+     *  (time2-time1)
 
       if (n_conv .ne. nval) then
          write(ui,*) "py_calc_modes_AC: convergence problem in valpr_64"
