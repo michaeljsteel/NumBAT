@@ -60,6 +60,9 @@ class Simmo(object):
         self.EM_mode_energy = None
         self.EM_mode_power = None
 
+        self.AC_mode_energy = None
+        self.AC_mode_power = None
+
         self.debug = debug
         self.EM_AC = 'EM'
         self.sym_reps = None
@@ -82,9 +85,11 @@ class Simmo(object):
 
       return np.real(self.Eig_values[m]*self.wl_m/(2*np.pi))
 
+    def ngroup_EM_available(self): return not(self.EM_mode_energy is None or self.EM_mode_power is None)
+    def vgroup_AC_available(self): return not(self.AC_mode_energy is None or self.AC_mode_power is None)
+
     def ngroup_EM(self, m):
       if self.EM_mode_energy is None or self.EM_mode_power is None:
-        print ('emme', self.EM_mode_energy, 'emmp', self.EM_mode_power)
         print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
                Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simmo''')
         return 0
@@ -224,7 +229,6 @@ class Simmo(object):
         print("Acoustic loss calc")
         nnodes=6 # TODO: is this right?
         try:
-            print('acoustic losses, linear elements')
             if self.EM_sim.structure.inc_shape in self.EM_sim.structure.linear_element_shapes:
                 alpha = NumBAT.ac_alpha_int_v2(self.num_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
@@ -237,7 +241,6 @@ class Simmo(object):
                 if self.EM_sim.structure.inc_shape not in self.EM_sim.structure.curvilinear_element_shapes:
                     print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
-                print('acoustic losses, curvilinear elements')
                 Fortran_debug=0
                 overlap=np.zeros(self.num_modes, dtype=complex)  # not sure why this is needed by ac_alpha_int
                 alpha = NumBAT.ac_alpha_int(self.num_modes,

@@ -33,7 +33,7 @@ from matplotlib import ticker
 from nbtypes import *
 from fortran import NumBAT
 
-keep_plots_open=false  # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
+keep_plots_open=False  # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 
 try: 
     plt.style.use('NumBATstyle')
@@ -534,13 +534,17 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival):  # mode data 
   if sim_wguide.EM_AC=='EM':
     ax.text(x0,r,r'$\omega/(2\pi)$: {0:.4f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), fontsize=fs); r-=1
     ax.text(x0,r,r'$k$: {0:.2f} m$^{{-1}}$'.format(sim_wguide.kz_EM(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$\bar{n}:' + ' {0:.6f}, $n_g$: {1:.6f}'.format(sim_wguide.neff(ival), sim_wguide.ngroup_EM(ival)), fontsize=fs); r-=1  # TODO: why is latex code failing here?
+    if sim_wguide.ngroup_EM_available():
+      ax.text(x0,r,r'$\bar{{n}}$: {0:.6f}, $n_g$: {1:.6f}'.format(sim_wguide.neff(ival), sim_wguide.ngroup_EM(ival)), fontsize=fs); r-=1  # TODO: 
+    else:
+      ax.text(x0,r,r'$\bar{{n}}$: {0:.6f}'.format(sim_wguide.neff(ival)), fontsize=fs); r-=1  
   else:
     ax.text(x0,r,r'$q$: {0:.4e} m$^{{-1}}$, $\lambda:$ {1:.4f} $\mu$m'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e6), fontsize=fs); r-=1
     ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.4f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), fontsize=fs); r-=1
-    ax.text(x0,r,r'$v_p$: {0:.2f} m/s, $v_g$: {1:.2f}'.format( sim_wguide.vp_AC(ival), sim_wguide.vg_AC(ival)), fontsize=fs); r-=1
-    ax.text(x0,r,r'$v_g$: {0:.2f} m/s'.format(sim_wguide.vg_AC(ival)), fontsize=fs); r-=1
-
+    if sim_wguide.vgroup_AC_available():
+      ax.text(x0,r,r'$v_p$: {0:.2f} m/s, $v_g$: {1:.2f} m/s'.format( sim_wguide.vp_AC(ival), sim_wguide.vg_AC(ival)), fontsize=fs); r-=1
+    else:
+      ax.text(x0,r,r'$v_p$: {0:.2f} m/s'.format( sim_wguide.vp_AC(ival)), fontsize=fs); r-=1
   ax.text(x0,r,r'$f_x:$ {0:.3f}, $f_y$: {1:.3f}'.format(f_x, f_y), fontsize=fs); r-=1
   ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), fontsize=fs); r-=1
   sc = sim_wguide.symmetry_classification(ival)
