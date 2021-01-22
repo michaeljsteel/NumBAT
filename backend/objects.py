@@ -952,10 +952,12 @@ class Struct(object):
             Returns:
                 ``Simmo`` object
         """
-        simmo = Simmo(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug)
+#simmo = Simmo(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug)
+        simmo = Simmo(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug, **args)
 
         print("Calculating EM modes")
-        simmo.calc_EM_modes(**args)
+#simmo.calc_EM_modes(**args)
+        simmo.calc_EM_modes()
         return simmo
 
 
@@ -983,11 +985,11 @@ class Struct(object):
             Returns:
                 ``Simmo`` object
         """
-        simmo_AC = Simmo(self, num_modes=num_modes,
-                         k_AC=k_AC, shift_Hz=shift_Hz,
-                         EM_sim=EM_sim, debug=debug)
+#simmo_AC = Simmo(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug)
+        simmo_AC = Simmo(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
 
-        simmo_AC.calc_AC_modes(**args)
+#simmo_AC.calc_AC_modes(**args)
+        simmo_AC.calc_AC_modes()
         return simmo_AC
 
 
