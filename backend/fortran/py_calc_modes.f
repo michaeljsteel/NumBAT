@@ -621,7 +621,7 @@ C       endif
      *  c(kp_mat1_im), b(jp_mat2), a(ip_work))
       call cpu_time(time2_asmbl)
       call cpu_time(time2)
-      write(ui,*) '    assembly time (sec.)  = ', (time2-time1)
+      write(ui,'(A,F6.2)') '    assembly time (sec.)  = ', (time2-time1)
 C
 C     factorization of the globale matrice
 C     -----------------------------------
@@ -644,8 +644,9 @@ C       endif
      *  c(kp_lhs_re), c(kp_lhs_im), n_conv, ls_data,
      *  numeric, filenum, status, control, info_umf, debug)
       call cpu_time(time2)
-      write(ui,*) '    eigensolver time (sec.)  = ', (time2-time1)
-c
+      write(ui,'(A,F6.2)') '    eigensolver time (sec.)  = ', 
+     *  (time2-time1)
+c   
       if (n_conv .ne. nval) then
          write(ui,*) "py_calc_modes.f: convergence problem in valpr_64"
          write(ui,*) "You should probably increase resolution of mesh!"
