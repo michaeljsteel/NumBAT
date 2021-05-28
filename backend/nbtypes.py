@@ -37,3 +37,13 @@ class QAcMethod(IntEnum):
   NotSet=1
   Fixed=auto()
   Intrinsic=auto()
+
+class CrystalGroup(IntEnum):
+  Isotropic=1
+  Unknown = auto()
+  Trigonal = auto()
+  Cubic = auto()
+  GeneralAnisotropic = auto()
+
+
+

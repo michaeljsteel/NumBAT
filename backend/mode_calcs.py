@@ -22,6 +22,7 @@ import sys
 import os
 import copy
 sys.path.append("../backend/")
+from math import *
 
 import plotting
 import integration
@@ -30,6 +31,113 @@ from fortran import NumBAT
 
 
 VacCSpeed=299792458
+
+class Mode(object):
+  def __init__(self, simmo, m):
+    self.mode_num=m
+    self.owning_sim=simmo
+    self.fracs=[]  # fx, fy, ft, fz
+    self.r0=None  # centre of mass
+    self.w2=None  # second moment width
+    self.r0_offset=(0.0, 0.0)
+    self.extra_data={}
+    self.analysed = False
+
+  def add_mode_data(self, d): self.extra_data.update(d)
+  def get_mode_data(self): return self.extra_data
+  def field_fracs(self): 
+    if not self.analysed: print('mode has not being analysed')
+    return self.fracs
+
+  def __str__(self): 
+    s='Abstract mode class'
+    return s
+
+  def is_poln_ex(self):
+    polthresh=.7
+    return self.fracs[0]>polthresh
+  def is_poln_ey(self):
+    polthresh=.7
+    return self.fracs[1]>polthresh
+  def is_poln_indeterminate(self):
+    return not (self.is_poln_ex() or self.is_poln_ey())
+
+  def is_EM(self):return self.owning_simmo.is_EM()
+  def is_AC(self):return self.owning_simmo.is_AC()
+  def center_of_mass(self): return self.r0-self.r0_offset
+  def second_moment_widths(self): return self.w2
+  def x0(self): return self.r0[0]-self.r0_offset[0]
+  def y0(self): return self.r0[1]-self.r0_offset[1]
+  def wx(self): return self.w2[0]
+  def wy(self): return self.w2[1]
+  def w0(self): return self.w2[2]
+  def set_r0_offset(self, x0, y0):
+    self.r0_offset=(x0, y0)
+
+  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    self.analysed = True
+    s_fx=np.sum(np.sum(m_Refx*m_Refx+m_Imfx*m_Imfx))
+    s_fy=np.sum(np.sum(m_Refy*m_Refy+m_Imfy*m_Imfy)) 
+    s_fz=np.sum(np.sum(m_Refz*m_Refz+m_Imfz*m_Imfz)) 
+    s_f=s_fx+s_fy+s_fz
+    f_x=s_fx/s_f
+    f_y=s_fy/s_f
+    f_t=f_x+f_y
+    f_z=s_fz/s_f
+    self.fracs=[f_x, f_y, f_t, f_z]
+#print('vs', v_x[0], v_x[1], v_x[-1], v_y[0], v_y[1], v_y[-1])
+    [m_x, m_y]=np.meshgrid(v_x, v_y, indexing='ij') # TODO: IS THIS RIGHT?
+#    print('sh', len(v_x), len(v_y), m_Refx.shape, m_x.shape)
+#    print('m_xa', m_x[0,:5])
+#    print('m_xb', m_x[:5,0])
+#    print('m_xb', m_x[-5:,0])
+#    print('m_ya', m_y[0,:5])
+#    print('m_yb', m_y[0,-5:])
+#    print('m_yc', m_y[:5,0])
+
+
+    m_mod= m_Refx*m_Refx+m_Imfx*m_Imfx+m_Refy*m_Refy+m_Imfy*m_Imfy+m_Refz*m_Refz+m_Imfz*m_Imfz
+    m_xmod= m_x * m_mod  # could do this by broadcasting without meshgrid?
+    m_ymod= m_y * m_mod
+    x0=np.sum(np.sum(m_xmod))/s_f
+    y0=np.sum(np.sum(m_ymod))/s_f
+    m_x2mod= np.power((m_x-x0),2) * m_mod
+    m_y2mod= np.power((m_y-y0),2) * m_mod
+    w2x=sqrt(np.sum(np.sum(m_x2mod))/s_f)
+    w2y=sqrt(np.sum(np.sum(m_y2mod))/s_f)
+    w2=sqrt(w2x*w2x+w2y*w2y)
+#print ('sums', s_f, np.sum(np.sum(m_mod)), w2x, w2y, w2)
+    self.r0=np.array([x0, y0])
+    self.w2=np.array([w2x, w2y, w2])
+
+
+class ModeEM(Mode):
+  def __init__(self, simmo, m):
+    super().__init__(simmo, m)
+
+  def __str__(self): 
+    s='EM mode # {0}'.format(self.mode_num)
+    return s
+
+  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    super().analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+
+
+class ModeAC(Mode):
+  def __init__(self, simmo, m):
+    super().__init__(simmo, m)
+
+    self.gain={}  # { (EM_p_i, EM_s_j): gain}
+    self.gain_PE={}
+    self.gain_MB={}
+
+  def __str__(self): 
+    s='AC mode # {0}'.format(self.mode_num)
+    return s
+
+  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    super().analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+
 
 class Simmo(object):
     """ Calculates the modes of a ``Struct`` object at a wavelength of wl_nm.
@@ -72,8 +180,21 @@ class Simmo(object):
         self.ac_linewidth = None   # acoustic linewidth [Hz]
         self.ac_Qmech = None   # acoustic mechanical Q [dimless]
 
+        self.mode_set=[]
+
     def is_EM(self): return self.EM_AC == 'EM'
     def is_AC(self): return self.EM_AC != 'EM'
+    
+    def get_modes(self):
+      if not len(self.mode_set):
+        for m in range(self.num_modes):
+          if self.is_EM():
+            mode=ModeEM(self, m)
+          else:
+            mode=ModeAC(self, m)
+          self.mode_set.append(mode)
+        
+      return self.mode_set
 
     def symmetry_classification(self, m):
       if self.point_group == PointGroup.Unknown: return ''
@@ -160,6 +281,7 @@ class Simmo(object):
       return vg
 
     def vg_AC_all(self): 
+      assert(self.is_AC())
       """ Return group velocity of all AC modes in m/s"""
       if self.AC_mode_energy is None or self.AC_mode_power is None:
         print('''AC group velocity requires calculation of mode energy and mode power when calculating AC modes. 
