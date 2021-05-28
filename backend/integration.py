@@ -264,15 +264,16 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
     print("     time (sec.)", (end - start))
     print("-----------------------------------------------")
 
-    Q = Q_PE + Q_MB
+    Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?
 
     # Note: sim_EM_pump.omega_EM is the optical angular freq in units of Hz
     # Note: sim_AC.Omega_AC is the acoustic angular freq in units of Hz
     gain = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC*np.real(Q*np.conj(Q))
     gain_PE = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC*np.real(Q_PE*np.conj(Q_PE))
     gain_MB = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC*np.real(Q_MB*np.conj(Q_MB))
+
     normal_fact = np.zeros((num_modes_EM_Stokes, num_modes_EM_pump, num_modes_AC), dtype=complex)
-    for i in range(num_modes_EM_Stokes):
+    for i in range(num_modes_EM_Stokes):  #TODO: express this as some one line outer product?
         P1 = sim_EM_Stokes.EM_mode_power[i]
         for j in range(num_modes_EM_pump):
             P2 = sim_EM_pump.EM_mode_power[j]
