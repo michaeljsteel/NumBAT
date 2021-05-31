@@ -1,4 +1,3 @@
-.. _chap-install-label:
 
 Installation
 ================

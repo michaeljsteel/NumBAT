@@ -23,6 +23,8 @@ Introduction
     intro
 
 
+.. _chap-install-label:
+
 ==================
 Installation
 ==================
@@ -51,8 +53,10 @@ Examples and Tutorials
     tutorial
 
 
+.. _chap-pythonbackend-label:
+
 ==================
-Python Backend
+Python Interface
 ==================
 
 .. toctree::
@@ -64,11 +68,14 @@ Python Backend
     integration
     plotting
 
+
 ==================
-Fortran Backends
+Fortran Backend
 ==================
 
-The intention of NumBAT is that the Fortran FEM routines are essentially black boxes. They are called from mode_calcs.py and return the modal fields. However, there are a few important things to know about the workings of these routines.
+The intention of NumBAT is that the Fortran FEM routines are essentially black boxes. 
+They are called from ``mode_calcs.py`` and return the modal fields. 
+However, there are a few important things to know about the workings of these routines.
 
 .. toctree::
     :maxdepth: 4
