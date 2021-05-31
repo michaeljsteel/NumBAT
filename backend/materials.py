@@ -33,8 +33,6 @@ import re
 from nbtypes import *
 from reporting import *
 
-this_directory = os.path.dirname(os.path.realpath(__file__))
-data_location = os.path.join(this_directory, "material_data", "")
 
 
 class VoigtTensor4(object):
@@ -103,11 +101,11 @@ class Material(object):
             Acoustic loss tensor component [Pa s]
 
     """
-    def __init__(self,data_file):
+    def __init__(self,dataloc, data_file):
 
         self.json_file=data_file+'.json'
         try:
-            self.load_data_file(self.json_file)
+            self.load_data_file(dataloc, self.json_file)
         except FileNotFoundError:
             print('Material data file not found.')
 
@@ -120,13 +118,14 @@ class Material(object):
           Source: {2}
           Date: {3}
           '''.format(
-            self.file_name,
             self.chemical,
+            self.file_name,
             self.author,
             self.date)
+      if len(self.comment): s+='Comment: '+self.comment
       return s
 
-    def load_data_file(self, data_file, alt_path=''):  
+    def load_data_file(self, dataloc, data_file, alt_path=''):  
         """
         Load data from json file.
         
@@ -137,7 +136,7 @@ class Material(object):
         
         """
 
-        with open(data_location+data_file,'r') as fin:
+        with open(dataloc+data_file,'r') as fin:
             s_in = ''.join(fin.readlines())
             s_in = re.sub(r'//.*\n','\n', s_in)
 
@@ -153,6 +152,8 @@ class Material(object):
             self.date = self._params['date']  # Year of data publication/measurement
             self.institution = self._params['institution']  # Source institution
             self.doi = self._params['doi']  # doi or, failing that, the http address
+
+            self.comment = self._params.get('comment', '')  # general comment for any purpose
 
             Re_n = self._params['Re_n']  # Real part of refractive index []
             Im_n = self._params['Im_n']  # Imaginary part of refractive index []
@@ -437,7 +438,27 @@ def isotropic_stiffness(E, v):
 
     return c_11, c_12, c_44
 
+
+g_materials={}
+
+
+def get_material(s):
+  global g_materials
+  if not len(g_materials):
+    this_dir= os.path.dirname(os.path.realpath(__file__))
+    data_loc= os.path.join(this_dir, "material_data", "")
+    for file in os.listdir(data_loc):
+      if file.endswith(".json"):
+        g_materials[file[:-5]] = Material(data_loc, file[:-5])
+
+  return g_materials[s]
+
+# This code is deprecated and will be removed. Use get_material() instead.
+#print('loading materials dict')
 materials_dict = {}
-for file in os.listdir(data_location):
-    if file.endswith(".json"):
-        materials_dict[file[:-5]] = Material(file[:-5])
+#this_directory = os.path.dirname(os.path.realpath(__file__))
+#data_location = os.path.join(this_directory, "material_data", "")
+#for file in os.listdir(data_location):
+#    if file.endswith(".json"):
+#        materials_dict[file[:-5]] = Material(data_location, file[:-5])
+##print('cone loading materials dict')

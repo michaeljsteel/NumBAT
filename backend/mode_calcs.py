@@ -33,6 +33,7 @@ from fortran import NumBAT
 VacCSpeed=299792458
 
 class Mode(object):
+  '''This is a base class for both EM and AC modes.''' 
   def __init__(self, simmo, m):
     self.mode_num=m
     self.owning_sim=simmo
@@ -43,38 +44,145 @@ class Mode(object):
     self.extra_data={}
     self.analysed = False
 
-  def add_mode_data(self, d): self.extra_data.update(d)
-  def get_mode_data(self): return self.extra_data
+  def add_mode_data(self, d): 
+    '''Adds a dictionary of user-defined information about a mode.
+  
+       :param dict d: Dict of (str, data) tuples of user-defined information about a mode.
+  '''
+    self.extra_data.update(d)
+
+  def get_mode_data(self): 
+    '''Return dictionary of user-defined information about the mode.
+       
+       :return: Dictionary of user-defined information about the mode.
+       :rtype: dict(str, obj)
+       '''
+    return self.extra_data
+
   def field_fracs(self): 
+    '''Returns tuple (*fx*, *fy*, *fz*, *ft*) of "fraction" of mode contained in *x*, *y*, *z* or *t* (sum of transverse *x+y*) components.
+
+       Note that *fraction* is defined through a simple overlap integral. It does not necessarily represent the fraction of energy density in the component.
+
+       :return: Tuple of mode fractions
+       :rtype: tuple(float, float, float, float)
+    '''
     if not self.analysed: print('mode has not being analysed')
     return self.fracs
 
   def __str__(self): 
+    '''String representation of the mode.'''
     s='Abstract mode class'
     return s
 
   def is_poln_ex(self):
+    '''Returns true if mode is predominantly x-polarised (ie if *fx*>0.7).
+       
+       :rtype: bool
+       '''
     polthresh=.7
     return self.fracs[0]>polthresh
+
   def is_poln_ey(self):
+    '''Returns true if mode is predominantly y-polarised (ie if *fy*>0.7).
+       
+       :rtype: bool
+       '''
     polthresh=.7
     return self.fracs[1]>polthresh
+
   def is_poln_indeterminate(self):
+    '''Returns true if transverse polarisation is neither predominantly *x* or *y* oriented.
+
+       :rtype: bool
+       '''
     return not (self.is_poln_ex() or self.is_poln_ey())
 
-  def is_EM(self):return self.owning_simmo.is_EM()
-  def is_AC(self):return self.owning_simmo.is_AC()
-  def center_of_mass(self): return self.r0-self.r0_offset
-  def second_moment_widths(self): return self.w2
-  def x0(self): return self.r0[0]-self.r0_offset[0]
-  def y0(self): return self.r0[1]-self.r0_offset[1]
-  def wx(self): return self.w2[0]
-  def wy(self): return self.w2[1]
-  def w0(self): return self.w2[2]
+  def is_EM(self):
+    '''Returns true if the mode is an electromagnetic mode.
+
+       :rtype: bool
+       '''
+    return self.owning_simmo.is_EM()
+
+  def is_AC(self):
+    '''Returns true if the mode is an acoustic mode.
+
+       :rtype: bool
+       '''
+    return self.owning_simmo.is_AC()
+
+  def center_of_mass(self): 
+    '''Returns the centre of mass of the mode relative to the specified origin.
+
+       :rtype: float
+    '''
+    return self.r0-self.r0_offset
+
+  def second_moment_widths(self): 
+    '''Returns the second moment widths :math:`(w_x, w_y, \sqrt{w_x^2+w_y^2})` of the mode relative to the specified origin.
+
+       :rtype: (float, float, float)
+       '''
+    return self.w2
+
+  def center_of_mass_x(self): 
+    '''Returns the $x$ component moment of the centre of mass  of the mode.
+
+       :rtype: float
+       '''
+    return self.r0[0]-self.r0_offset[0]
+
+  def center_of_mass_y(self): 
+    '''Returns the $y$ component moment of the centre of mass  of the mode.
+
+       :rtype: float
+       '''
+    return self.r0[1]-self.r0_offset[1]
+
+  def wx(self): 
+    '''Returns the $x$ component moment of the second moment width.
+
+       :rtype: float
+       '''
+    return self.w2[0]
+
+  def wy(self): 
+    '''Returns the $y$ component moment of the second moment width.
+
+       :rtype: float
+       '''
+    return self.w2[1]
+
+  def w0(self): 
+    '''Returns the combined second moment width :math:`\sqrt{w_x^2+w_y^2}`.
+
+       :rtype: float
+       '''
+    return self.w2[2]
+
   def set_r0_offset(self, x0, y0):
+    '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
+  
+       This can be useful in aligning the FEM coordinate grid with a physically sensible place in the waveguide.
+
+       :param float x0: *x* position of nominal origin.
+       :param float y0: *y* position of nominal origin.
+  '''
     self.r0_offset=(x0, y0)
 
   def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    '''Perform a series of measurements on the mode *f* to determine polarisation fractions, second moment widths etc.
+       
+       :param array v_x: Vector of x points.
+       :param array v_y: Vector of y points.
+       :param array m_Refx: Matrix of real part of fx.
+       :param array m_Refy: Matrix of real part of fy.
+       :param array m_Refz: Matrix of real part of fz.
+       :param array m_Imfx: Matrix of imaginary part of fx.
+       :param array m_Imfy: Matrix of imaginary part of fy.
+       :param array m_Imfz: Matrix of imaginary part of fz.
+       ''' 
     self.analysed = True
     s_fx=np.sum(np.sum(m_Refx*m_Refx+m_Imfx*m_Imfx))
     s_fy=np.sum(np.sum(m_Refy*m_Refy+m_Imfy*m_Imfy)) 
@@ -112,6 +220,7 @@ class Mode(object):
 
 
 class ModeEM(Mode):
+  '''Class representing a single electromagnetic (EM) mode.'''
   def __init__(self, simmo, m):
     super().__init__(simmo, m)
 
@@ -124,6 +233,7 @@ class ModeEM(Mode):
 
 
 class ModeAC(Mode):
+  '''Class representing a single acoustic (AC) mode.'''
   def __init__(self, simmo, m):
     super().__init__(simmo, m)
 
@@ -140,11 +250,28 @@ class ModeAC(Mode):
 
 
 class Simmo(object):
-    """ Calculates the modes of a ``Struct`` object at a wavelength of wl_nm.
-    """
+    '''Class for calculating the electromagnetic and/or acoustic modes of a ``Struct`` object.
+    '''
+
     def __init__(self, structure, num_modes=20, wl_nm=1, n_eff=None, shift_Hz=None, 
                  k_AC=None, EM_sim=None, Stokes=False, 
                  calc_EM_mode_energy=False, calc_AC_mode_power=False, debug=False):
+        '''Sets up the problem for the mode calculation at a given optical wavelength `wl_nm` or acoustic wavenumber `k_AC`.
+
+           For electromagnetic problems, the tool solves for the effective index or wavenumber at a given wavelength.
+           For acoustic problems, the tool solves for the acoustic frequency at a given wavenumber.
+
+             :param Simmo structure: The waveguide structure to be solved.
+             :param int num_modes: The number of modes to be found.
+             :param float wl_nm: For electromagnetic problems, the vacuum wavelength in nanometers.
+             :param float n_eff: For electromagnetic problems, an estimated effective index to begin the eigenvalue search.
+             :param float shift_Hz: For acoustic problems, an estimated frequency offset to begin the eigenvalue search.
+             :param float k_AC: For acoustic problems, the acoustic wavevector of the mode.
+             :param float EM_sim: For acoustic problems, the results of a previously solved EM problem to speed calculations. 
+             :param bool calc_EM_mode_energy: For electromagnetic problems, whether to calculate the optical mode energy.
+             :param bool calc_AC_mode_power: For acoustic problems, whether to calculate the acoustic mode power.
+          '''
+
         self.structure = structure
         self.wl_m = wl_nm*1e-9
         self.n_eff = n_eff
@@ -182,10 +309,19 @@ class Simmo(object):
 
         self.mode_set=[]
 
-    def is_EM(self): return self.EM_AC == 'EM'
-    def is_AC(self): return self.EM_AC != 'EM'
+    def is_EM(self): 
+      '''Returns true if the solver is setup for an electromagnetic problem.'''
+      return self.EM_AC == 'EM'
+
+    def is_AC(self): 
+      '''Returns true if the solver is setup for an acoustic problem.'''
+      return self.EM_AC != 'EM'
     
     def get_modes(self):
+      '''Returns an array of class `Mode` containing the solved electromagnetic or acoustic modes.
+         
+         :rtype: numarray(Mode)
+         '''
       if not len(self.mode_set):
         for m in range(self.num_modes):
           if self.is_EM():
@@ -197,20 +333,39 @@ class Simmo(object):
       return self.mode_set
 
     def symmetry_classification(self, m):
+      '''If the point group of the structure has been specified, returns the symmetry class of the given mode.
+         
+         :param int m: Index of the mode of interest.
+         :rtype: PointGroup
+         '''
       if self.point_group == PointGroup.Unknown: return ''
       return '{0}:{1}'.format(self.point_group.name, self.sym_reps[m].name)
 
     def neff(self, m): 
-      """ Return effective index of EM mode m""" 
+      ''' Returns the effective index of EM mode `m`.
+  
+      :param int m: Index of the mode of interest.
+      :rtype: float
+      ''' 
       assert(self.is_EM())
-
       return np.real(self.Eig_values[m]*self.wl_m/(2*np.pi))
 
-    def ngroup_EM_available(self): return not(self.EM_mode_energy is None or self.EM_mode_power is None)
-    def vgroup_AC_available(self): return not(self.AC_mode_energy is None or self.AC_mode_power is None)
+    def ngroup_EM_available(self): 
+      '''Returns true if a measure of the electromagnetic group index is available.'''
+      return not(self.EM_mode_energy is None or self.EM_mode_power is None)
+
+    def vgroup_AC_available(self): 
+      '''Returns true if a measure of the acoustic group velocity is available.'''
+      return not(self.AC_mode_energy is None or self.AC_mode_power is None)
 
     def ngroup_EM(self, m):
-      if self.EM_mode_energy is None or self.EM_mode_power is None:
+      '''Returns the group index of electromagnetic mode `m`, if available, otherwise returns zero with a warning message.
+         
+         :param int m: Index of the mode of interest.
+         :return: Group index of the mode.
+         :rtype: float
+         '''
+      if not self.ngroup_EM_available():
         print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
                Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simmo''')
         return 0
@@ -219,7 +374,13 @@ class Simmo(object):
       return ng
 
     def ngroup_EM_all(self):
-      if self.EM_mode_energy is None or self.EM_mode_power is None:
+      '''Returns a numpy array of the group index of all electromagnetic modes, if available, 
+         otherwise returns a zero numarray with a warning message.
+         
+         :return: numpy array of  index of the mode.
+         :rtype: array(float)
+         '''
+      if not self.ngroup_EM_available():
         print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
                Set calc_EM_mode_energy=True in call to calc_EM_modes''')
         return np.zeros(len(self.Eig_values), dtype=float)
@@ -228,46 +389,86 @@ class Simmo(object):
       return ng
 
     def kz_EM(self, m): 
-      """ Return wavevector of EM mode m in 1/m""" 
+      '''Returns the wavevector in 1/m of electromagnetic mode `m`.
+         
+         :param int m: Index of the mode of interest.
+         :return: Wavevector k in 1/m.
+         :rtype: float
+         '''
       assert(self.is_EM())
       return self.Eig_values[m]
 
     def nu_AC(self, m): 
-      """ Return frequency of AC mode m in Hz"""
+      '''Returns the frequency in Hz of acoustic mode `m`.
+         
+         :param int m: Index of the mode of interest.
+         :return: Frequency :math:`\\nu` in Hz
+         :rtype: float
+         '''
       assert(self.is_AC())
       return self.Eig_values[m]
 
-    def om_AC(self, m): 
-      """ Return angular frequency of AC mode m in 1/s"""
-      return self.Eig_values[m]
+    def Omega_AC(self, m): 
+      '''Returns the frequency in 1/s of acoustic mode `m`.
+         
+         :param int m: Index of the mode of interest.
+         :return: Angular requency :math:`\\Omega` in Hz
+         :rtype: float
+         '''
+      return self.Eig_values[m]*2*np.pi
 
     def neff_all(self): 
-      """ Return effective index of all EM modes """
+      ''' Return an array of the effective index of all electromagnetic modes.
+
+         :return: numpy array of effective indices
+         :rtype: array(float)
+          '''
       assert(self.is_EM())
       return np.real(self.Eig_values*self.wl_m/(2*np.pi))
 
     def kz_EM_all(self): 
-      """ Return wavevector of all EM modes in 1/m"""
+      ''' Return an array of the wavevector in 1/m of all electromagnetic modes.
+
+         :return: numpy array of wavevectors in 1/m
+         :rtype: array(float)
+          '''
       assert(self.is_EM())
       return self.Eig_values
 
     def nu_AC_all(self): 
-      """ Return frequency of all AC modes in Hz"""
+      ''' Return an array of the frequency in Hz of all acoustic modes.
+
+         :return: numpy array of frequencies in Hz
+         :rtype: array(float)
+         '''
       assert(self.is_AC())
       return self.Eig_values
 
-    def om_AC_all(self, m): 
-      """ Return angular frequency of all AC modes in 1/s"""
+    def Omega_AC_all(self, m): 
+      ''' Return an array of the angular frequency in 1/s of all acoustic modes.
+
+         :return: numpy array of angular frequencies in 1/s
+         :rtype: array(float)
+         '''
       assert(self.is_AC())
       return self.Eig_values*2*np.pi
 
     def vp_AC(self, m): 
       """ Return phase velocity of all AC modes in m/s"""
+      ''' Return the phase velocity in m/s of acoustic mode `m`.
+
+         :return: Phase velocity of acoustic mode `m` in m/s
+         :rtype: float
+         '''
       assert(self.is_AC())
       return np.pi*2*np.real(self.Eig_values[m])/self.k_AC
 
     def vp_AC_all(self): 
-      """ Return phase velocity of all AC modes in m/s"""
+      ''' Return an array of the phase velocity in m/s of all acoustic modes.
+
+         :return: numpy array of elastic phase velocities in m/s
+         :rtype: array(float)
+         '''
       assert(self.is_AC())
       return np.pi*2*np.real(self.Eig_values)/self.k_AC
 
