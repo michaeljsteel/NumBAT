@@ -56,27 +56,28 @@ AC_ival = 'All'
 # Note use of rough mesh for demonstration purposes, and use plt_mesh=True
 # to save the geometry and mesh as png files in backend/fortran/msh/
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.materials_dict["Vacuum"],
-                        material_a=materials.materials_dict["Si_2016_Smith"],
+                        material_bkg=materials.get_material("Vacuum"),
+                        material_a=materials.get_material("Si_2016_Smith"),
                         lc_bkg=1, # in vacuum background
                         lc_refine_1=600.0, # on cylinder surfaces
                         lc_refine_2=300.0, # on cylinder center
                         plt_mesh=False)
 
 # Explicitly remind ourselves what data we're using.
-print('\nUsing %s material data from' % wguide.material_a.chemical)
-print('Author:', wguide.material_a.author)
-print('Year:', wguide.material_a.date)
-print('Ref:', wguide.material_a.doi)
+print('\nUsing material data: ', wguide.material_a)
 
 # Step 5
-# Expected effective index of fundamental guided mode.
+# Estimate expected effective index of fundamental guided mode.
 n_eff = wguide.material_a.n-0.1
 
 # Calculate the Electromagnetic modes of the pump field.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
-# Print the wavevectors of EM modes.
-print('\n k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values),4))
+
+# Display the wavevectors of EM modes.
+v_kz=sim_EM_pump.kz_EM_all()
+print('\n k_z of EM modes [1/m]:')
+for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical 
 # to the pump modes but travel in the opposite direction.
@@ -85,19 +86,24 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # sim_EM_Stokes = wguide.calc_EM_modes(wl_nm, num_modes_EM_Stokes, n_eff, Stokes=True)
 
 # Step 6
-# Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values[0]*((wl_nm*1e-9)/(2.*np.pi)))
+# Find the EM effective index of the waveguide.
+n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("\n Fundamental optical mode ")
 print(" n_eff = ", np.round(n_eff_sim, 4))
+
 # Acoustic wavevector
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+k_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
+
 print('\n AC wavenumber (1/m) = ', np.round(k_AC, 4))
 
 # Step 7
 # Calculate Acoustic modes, using the mesh from the EM calculation.
 sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
+
 # Print the frequencies of AC modes.
-print('\n Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
+v_nu=sim_AC.nu_AC_all()
+print('\n Freq of AC modes (GHz):')
+for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
 # Do not calculate the acoustic loss from our fields, instead set a Q factor.
 set_q_factor = 1000.
@@ -108,10 +114,12 @@ set_q_factor = 1000.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, EM_ival_pump=EM_ival_pump, 
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+
 # Print the Backward SBS gain of the AC modes.
 print("\n SBS_gain [1/(Wm)] PE contribution \n", SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:])
 print("SBS_gain [1/(Wm)] MB contribution \n", SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:])
 print("SBS_gain [1/(Wm)] total \n", SBS_gain[EM_ival_pump,EM_ival_Stokes,:])
+
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
 masked_PE = np.ma.masked_inside(SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)

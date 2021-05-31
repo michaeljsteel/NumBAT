@@ -39,8 +39,8 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.materials_dict["Vacuum"],
-                        material_a=materials.materials_dict["Si_2016_Smith"],
+                        material_bkg=materials.get_material("Vacuum"),
+                        material_a=materials.get_material("Si_2016_Smith"),
                         lc_bkg=1, lc_refine_1=600.0, lc_refine_2=300.0)
 
 # Expected effective index of fundamental guided mode.
@@ -60,7 +60,7 @@ npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
 # Will scan from forward to backward SBS so need to know k_AC of backward SBS.
-k_AC = np.real(sim_EM_pump.Eig_values[0] - sim_EM_Stokes.Eig_values[0])
+k_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
 # Number of wavevectors steps.
 nu_ks = 20
 
@@ -69,7 +69,7 @@ plt.figure(figsize=(10,6))
 ax = plt.subplot(1,1,1)
 for i_ac, q_ac in enumerate(np.linspace(0.0,k_AC,nu_ks)):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_ac, EM_sim=sim_EM_pump)
-    prop_AC_modes = np.array([np.real(x) for x in sim_AC.Eig_values if abs(np.real(x)) > abs(np.imag(x))])
+    prop_AC_modes = np.array([np.real(x) for x in sim_AC.nu_AC_all() if abs(np.real(x)) > abs(np.imag(x))])
     sym_list = integration.symmetries(sim_AC)
 
     for i in range(len(prop_AC_modes)):
