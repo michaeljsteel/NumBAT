@@ -48,9 +48,9 @@ else:
 wguide = objects.Struct(unitcell_x,inc_a_x,inc_shape=inc_shape,
                         inc_b_x=inc_b_x,
                         unitcell_y=unitcell_y,
-                        material_bkg=materials.materials_dict["Vacuum"],
-                        material_a=materials.materials_dict["SiO2GeO2_smf28"],
-                        material_b=materials.materials_dict["SiO2_smf28"],
+                        material_bkg=materials.get_material("Vacuum"),
+                        material_a=materials.get_material("SiO2GeO2_smf28"),
+                        material_b=materials.get_material("SiO2_smf28"),
                         lc_bkg=.5, lc_refine_1=1.0*refine_fac, lc_refine_2=20*refine_fac, plt_mesh=True)
 
 
