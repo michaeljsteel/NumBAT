@@ -24,8 +24,6 @@ import materials
 from mode_calcs import Simmo
 from fortran import NumBAT
 
-this_directory = os.path.dirname(os.path.realpath(__file__))
-msh_location = os.path.join(this_directory, "fortran", "msh", "")
 
 # # Acknowledgments
 # print '\n##################################################################\n'\
@@ -418,6 +416,10 @@ class Struct(object):
             Creates a .geo and .msh file, then uses Fortran conv_gmsh routine
             to convert .msh into .mail, which is used in NumBAT FEM routine.
         """
+
+        this_directory = os.path.dirname(os.path.realpath(__file__))
+        msh_location = os.path.join(this_directory, "fortran", "msh", "")
+
         if self.inc_shape in ['circular', 'rectangular']:
             if self.slab_b_x is not None:
                 raise ValueError("NumBAT doesn't understand your geometry.")
