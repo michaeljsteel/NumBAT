@@ -17,10 +17,10 @@ import objects
 import mode_calcs
 import integration
 import plotting
-from plotting import FieldDecorator
+from plotting import Decorator
 from fortran import NumBAT
 
-class EMDecorator(FieldDecorator):
+class EMDecorator(Decorator):
   def __init__(self):
     super().__init__()
 
@@ -47,7 +47,7 @@ class EMDecorator(FieldDecorator):
 
 emdecorate=EMDecorator()
 
-class ACDecorator(plotting.FieldDecorator):
+class ACDecorator(plotting.Decorator):
   def __init__(self):
     super().__init__()
 
@@ -183,14 +183,14 @@ plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
                          ivals=[EM_ival_pump,EM_ival_Stokes], 
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_E', num_ticks=3,
                          prefix_str=prefix_str, pdf_png='png', ticks=True,
-                         decorator=emdecorate, quiver_steps=20, 
+                         decorator=emdecorate, quiver_points=20, 
                          comps=('Ex','Ey', 'Ez','Eabs','Et'), n_points=2000, colorbar=True)
 
 plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, 
                          ivals=[EM_ival_pump,EM_ival_Stokes], 
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_H', num_ticks=3,
                          prefix_str=prefix_str, pdf_png='png', ticks=True,
-                         decorator=emdecorate, quiver_steps=20, 
+                         decorator=emdecorate, quiver_points=20, 
                          comps=('Hx','Hy', 'Hz','Habs','Ht'), n_points=2000, colorbar=True)
 
 # Print the wavevectors of EM modes.
@@ -220,7 +220,7 @@ print("AC modes selected for field plotting", selected_AC_modes)
 print("plotting acoustic modes")
 plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, ivals=selected_AC_modes,  
                          num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1, 
-                         quiver_steps=20, pdf_png='png',ticks=True, comps=('ux','ut','uz','uabs'),
+                         quiver_points=20, pdf_png='png',ticks=True, comps=('ux','ut','uz','uabs'),
                          decorator=acdecorate, colorbar=True)
 
 

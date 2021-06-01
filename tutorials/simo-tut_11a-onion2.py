@@ -88,13 +88,13 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Plot the E fields of the EM modes fields - specified with EM_AC='EM_E'.
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (ival = 0) mode.
-plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                          ylim_max=0.3, ivals=[0], contours=True, EM_AC='EM_E', 
-                         prefix_str=prefix_str, ticks=True, quiver_steps=20, comps=['Et'])
+                         prefix_str=prefix_str, ticks=True, quiver_points=20, comps=['Et'])
 
-plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                          ylim_max=0.3, ivals=[0], contours=True, EM_AC='EM_H', 
-                         prefix_str=prefix_str, ticks=True, quiver_steps=20, comps=['Ht'])
+                         prefix_str=prefix_str, ticks=True, quiver_points=20, comps=['Ht'])
 
 # Acoustic wavevector
 k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
@@ -117,8 +117,8 @@ for m in range(num_modes_AC):
 
 sim_AC.calc_acoustic_losses()
 
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
-                         prefix_str=prefix_str, ticks=True, ivals=[0], quiver_steps=20)
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
+                         prefix_str=prefix_str, ticks=True, ivals=[0], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined, 

@@ -18,11 +18,11 @@ import objects
 import mode_calcs
 import integration
 import plotting
-from plotting import FieldDecorator
+from plotting import Decorator
 from fortran import NumBAT
 
 # use this class to add or alter features to the final plots
-class EMDecorator(FieldDecorator):
+class EMDecorator(Decorator):
   def __init__(self):
     super().__init__()
 
@@ -37,7 +37,7 @@ class EMDecorator(FieldDecorator):
     ax.add_artist(circle1)
 
 
-class ACDecorator(FieldDecorator):
+class ACDecorator(Decorator):
   def __init__(self):
     super().__init__()
     #title_font=24
@@ -100,7 +100,7 @@ if doem:
   plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=[EM_ival_pump],
                            ylim_min=0.3, ylim_max=0.3, EM_AC='EM_E', 
                            prefix_str=prefix_str, pdf_png='png', ticks=True,
-                           decorator=emdecorate, quiver_steps=20)
+                           decorator=emdecorate, quiver_points=20)
   
   # Print the wavevectors of EM modes.
   print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
@@ -126,7 +126,7 @@ else:
 plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, suffix_str='',
 ticks=True, ivals=[4,5], comps=('ut','uabs'), 
 xlim_min=-.1, ylim_min=-.1, xlim_max=-.1, ylim_max=-.1, 
-decorator=acdecorate, quiver_steps=20, pdf_png='png',colorbar=True)
+decorator=acdecorate, quiver_points=20, pdf_png='png',colorbar=True)
 
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
