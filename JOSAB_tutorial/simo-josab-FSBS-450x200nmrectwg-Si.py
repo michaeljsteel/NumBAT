@@ -52,8 +52,8 @@ prefix_str = 'fsbs-josab-450x200nmSi'
 
 # Use all specified parameters to create a waveguide object
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.materials_dict["Vacuum"],
-                        material_a=materials.materials_dict["Si_2021_Poulton"],
+                        material_bkg=materials.get_material("Vacuum"),
+                        material_a=materials.get_material("Si_2021_Poulton"),
                         lc_bkg=0.05, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
                         lc_refine_1=20.0, # mesh refinement factor near the interface of waveguide, larger = finer along horizontal interface
                         lc_refine_2=30.0, # mesh refinement factor near the origin/centre of waveguide

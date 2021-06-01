@@ -72,8 +72,8 @@ AC_ival='All'
 
 # Use all specified parameters to create a waveguide object.
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.materials_dict["Vacuum"],
-                        material_a=materials.materials_dict["Si_2016_Smith"],
+                        material_bkg=materials.get_material("Vacuum"),
+                        material_a=materials.get_material("Si_2016_Smith"),
                         lc_bkg=1, lc_refine_1=1000.0, lc_refine_2=400.0,
                         make_mesh_now = False, mesh_file='../backend/fortran/msh/4testing.mail')
 

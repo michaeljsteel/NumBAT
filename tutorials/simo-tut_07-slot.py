@@ -51,10 +51,10 @@ else:
 
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
-                        material_bkg=materials.materials_dict["Vacuum"],            # background
-                        material_a=materials.materials_dict["As2S3_2017_Morrison"], # slot
-                        material_b=materials.materials_dict["SiO2_2013_Laude"],     # slab
-                        material_c=materials.materials_dict["Si_2016_Smith"],       # walls of slot
+                        material_bkg=materials.get_material("Vacuum"),            # background
+                        material_a=materials.get_material("As2S3_2017_Morrison"), # slot
+                        material_b=materials.get_material("SiO2_2013_Laude"),     # slab
+                        material_c=materials.get_material("Si_2016_Smith"),       # walls of slot
                         lc_bkg=1, lc_refine_1=200.0*refine_fac, lc_refine_2=100.0*refine_fac, plt_mesh=True)
 
 # Expected effective index of fundamental guided mode.
