@@ -19,12 +19,13 @@
 
 import os
 import sys
+import math
 import numpy as np
 from scipy import sqrt
 import subprocess
 from scipy import interpolate
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')  # TODO: remove if ok
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mplcolors
@@ -48,17 +49,25 @@ mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 # matplotlib.rc('font', **font)
 linesstrength = 2.5
 
-class FieldDecorator(object):
-  def __init__(self):
-    base_font=24
-    self._multiplot_fontsizes= {'title':base_font-2, 'subplot_title':base_font-5, 'ax_label':base_font-12, 
-        'ax_tick':base_font-10, 'cbar_tick':base_font-10}
-    self._multiplot_axesprops={'linewidth':'.75', 'edgecolor':'gray', 'title_pad':5 , 'cbar_size':'5%', 'cbar_pad': '2%'}
+class Decorator(object):
 
-    self._singleplot_fontsizes= {'title':base_font-2, 'ax_label':50, 'subplot_title':50,'cbar_tick':30, 'ax_tick':40 }
+  def __init__(self):
+    mp_base_font=18
+
+    self._multiplot_fontsizes= {'title':mp_base_font-2, 'subplot_title':mp_base_font-5, 
+      'ax_label':mp_base_font-10, 'data_label':mp_base_font-8,
+      'ax_tick':mp_base_font-10, 'cbar_tick':mp_base_font-12}
+    self._multiplot_axesprops={'figsize': (10,8), 
+       'subplots_hspace': .2, 'subplots_wspace': .2, 
+       'linewidth':'.75', 'edgecolor':'gray', 'title_pad':5 , 'cbar_size':'5%', 'cbar_pad': '4%'}
+
+    sp_base_font=24
+#self._singleplot_fontsizes= {'title':base_font-2, 'ax_label':50, 'subplot_title':50,'cbar_tick':30, 'ax_tick':40 }
+    self._singleplot_fontsizes= {'title':sp_base_font-2, 'ax_label':20, 'subplot_title':50,'cbar_tick':30, 'ax_tick':15 }
     self._singleplot_axesprops={'linewidth':'.75', 'edgecolor':'gray', 'title_pad':20, 'cbar_size':'5%', 'cbar_pad': '2%'}
 
     self._is_single=True
+    self._cmap_limits={}
 
   def _fontsizes(self):
     if self._is_single: return self._singleplot_fontsizes
@@ -70,15 +79,26 @@ class FieldDecorator(object):
 
   def _set_for_single(self): 
     self._is_single=True
+
   def _set_for_multi(self):  
     self._is_single=False
+
+  def set_cmap_limits(self,d):
+    '''Specify the lower and upper contour plot limits for a field component plot.
+
+      :param dict d: Dictionary mapping component ('x','y','z') to (zlo, zhi) tuple for contour plots.
+      '''
+    self._cmap_limits.update(d)
+
+  def get_cmap_limits(self, comp):
+    return self._cmap_limits.get(comp)
 
   def get_font_size(self, lab):
     fs=10
     try:
       fs=self._fontsizes()[lab]
     except:
-      print('Warning: unknown fontsize label "{0}" in FieldDecorator::get_font_size()'.format(lab))
+      print('Warning: unknown fontsize label "{0}" in Decorator::get_font_size()'.format(lab))
     return fs
 
   def get_axes_property(self, lab):
@@ -86,24 +106,39 @@ class FieldDecorator(object):
     try:
       prop=self._get_axes_prop()[lab]
     except:
-      print('Warning: unknown axes property label "{0}" in FieldDecorator::get_axes_property()'.format(lab))
+      print('Warning: unknown axes property label "{0}" in Decorator::get_axes_property()'.format(lab))
       print (self._get_axes_prop())
       sys.exit(1)
     return prop
 
-  def is_single_plot(self): return self._is_single
+  def is_single_plot(self): 
+    '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
+       '''
+    return self._is_single
 
-  def set_singleplot_axes_property(self, lab, sz): 
-    self._singleplot_axesprops[lab]=sz
-  def set_multiplot_axes_property(self, lab, sz): 
-    self._multiplot_axesprops[lab]=sz
+  def set_singleplot_axes_property(self, label, prop): 
+    '''Add or override an axes property for a single plot corresponding to the given label.'''
+    self._singleplot_axesprops[label]=prop
 
-  def set_singleplot_fontsize(self, lab, sz): 
-    self._singleplot_fontsizes[lab]=sz
-  def set_multiplot_fontsize(self, lab, sz): 
-    self._multiplot_fontsizes[lab]=sz
+  def set_multiplot_axes_property(self, label, prop): 
+    '''Add or override an axes property for a multiple axes plot corresponding to the given label.'''
+    self._multiplot_axesprops[label]=prop
+
+  def set_singleplot_fontsize(self, label, sz): 
+    '''Override a font size for a single plot corresponding to the given label.'''
+    self._singleplot_fontsizes[label]=sz
+
+  def set_multiplot_fontsize(self, label, sz): 
+    '''Override a font size for a mutiple axes plot corresponding to the given label.'''
+    self._multiplot_fontsizes[label]=sz
 
   def extra_axes_commands(self, ax):
+    '''Function to make additions to a standard plot.
+      
+      This function is called after all other plotting operations are performed.
+      The default implementation does nothing. By subclassing :Decorator: and implementing this function,
+      users may add extra features to a plot.
+      '''
     pass
 
 
@@ -184,7 +219,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             suffix_str  (str): String to be appended to end of file name.
     """
 
-    if decorator is None: decorator = FieldDecorator()
+    if decorator is None: decorator = Decorator()
     decorator._set_for_single()
 
     tune_steps = 50000
@@ -269,6 +304,9 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
         if not show_gains in ('All', 'PE', 'MB', 'Total'): show_gains='All'
 
         lw=decorator.get_axes_property('linewidth')
+        fs=decorator.get_font_size('ax_label')
+        ts=decorator.get_font_size('ax_tick')
+
         if show_gains in ('PE', 'All'):
           ax.plot(interp_grid, np.abs(interp_values_PE), 'r', linewidth=lw, label='PE')
         if show_gains in ('MB', 'All'):
@@ -279,6 +317,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
         ax.legend(loc=0)
         if freq_min and freq_max:
             ax.set_xlim(freq_min,freq_max)
+        print('sizes', lw, fs, ts)
         ax.set_xlabel('Frequency (GHz)',size=decorator.get_font_size('ax_label'))
         ax.set_ylabel('|Gain| (1/Wm)', size=decorator.get_font_size('ax_label'))
 
@@ -365,7 +404,7 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
 
 #TODO: do this much better through knowledge of components, not labels
   signed=True
-  if v_label.startswith('$|'): signed=False
+  if v_label.startswith('$|'): signed=False #kludgy way of finding absolute value field
   if signed:
     cmap=cmap_signed
   else:
@@ -380,25 +419,43 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
   else:
     extents=None
 
+  req_lims=False
+  the_comp=v_label[-3] # if x,y, or z, gets x,y,or z
+
+  if decorator.get_cmap_limits(the_comp)!=None: #User requested specific limits for each component x, y or z
+    req_lims=True
+    (req_zlo, req_zhi)= decorator.get_cmap_limits(the_comp)
+    req_tsnorm=mplcolors.TwoSlopeNorm(vmin=req_zlo, vmax=req_zhi, vcenter=(req_zlo+req_zhi)/2)
+
+  act_zlo=0
+  act_zhi=0
   if np.max(np.abs(plot[~np.isnan(plot)])) < plot_threshold: # if the data is all noise, just plot zeros
       # im = plt.imshow(plot.T,cmap='viridis');
       im = plt.imshow(np.zeros(np.shape(plot.T)), origin='lower', extent=extents, cmap=cmap);
   else:
       interp=None
       #interp='bilinear';
-      if signed: # ensure that zero values get mapped to the right part of the colormap
+      if req_lims:
+        tsnorm=req_tsnorm
+        im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=req_tsnorm)
+        act_zlo=req_zlo
+        act_zhi=req_zhi
+      else: 
         zlo=np.nanmin(plot)
         zhi=np.nanmax(plot)
-        if zlo<0 and zhi >0:
-          if abs(zhi)>abs(zlo):
-            tsnorm=mplcolors.TwoSlopeNorm(vmin=-zhi, vmax=zhi, vcenter=0.0) # The point here is to set vcenter=0
-          else:
-            tsnorm=mplcolors.TwoSlopeNorm(vmin=zlo, vmax=-zlo, vcenter=0.0)
-          im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
-        else: #TODO: quantity is potentially signed but turns out not to be. Should try to make the cmap effectively runs from 0 to max
+        act_zlo=zlo
+        act_zhi=zhi
+        if signed: # ensure that zero values get mapped to the right part of the colormap
+          if zlo<0 and zhi >0:
+            if abs(zhi)>abs(zlo):
+              tsnorm=mplcolors.TwoSlopeNorm(vmin=-zhi, vmax=zhi, vcenter=0.0) # The point here is to set vcenter=0
+            else:
+              tsnorm=mplcolors.TwoSlopeNorm(vmin=zlo, vmax=-zlo, vcenter=0.0)
+            im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+          else: #TODO: quantity is potentially signed but turns out not to be. Should try to make the cmap effectively runs from 0 to max
+            im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
+        else:
           im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
-      else:
-        im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
 
   # limits
   axes = plt.gca()
@@ -434,19 +491,12 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
   if docbar:
     divider = make_axes_locatable(ax)
     #cax = divider.append_axes("right", size="2%", pad=-6)
-    cax = divider.append_axes("right", size=decorator.get_axes_property('cbar_size'), pad=decorator.get_axes_property('cbar_pad'))
+    cax = divider.append_axes("right", size=decorator.get_axes_property('cbar_size'), 
+        pad=decorator.get_axes_property('cbar_pad'))
     cbar = plt.colorbar(im, cax=cax)
-    if plps['num_ticks']:
-        cbarticks = np.linspace(np.min(plot), np.max(plot), num=plps['num_ticks'])                
-    elif plps['ylim_min'] != None and plps['ylim_min'] >0 : # this is very strange logic. what is going on here? probably meant to be saying something different
-        if plps['xlim_min']/plps['ylim_min'] > 3:
-            cbarticks = np.linspace(np.min(plot), np.max(plot), num=3)
-        if plps['xlim_min']/plps['ylim_min'] > 1.5:
-            cbarticks = np.linspace(np.min(plot), np.max(plot), num=5)
-        else:
-            cbarticks = np.linspace(np.min(plot), np.max(plot), num=7)
-    else:
-        cbarticks = np.linspace(np.min(plot), np.max(plot), num=7)
+    nt=plps.get('num_ticks')
+    if nt==None: nt=7
+    cbarticks = np.linspace(act_zlo, act_zhi, nt)
     cbar.set_ticks(cbarticks)
     cbarlabels = ['%.2f' %t for t in cbarticks]
     cbar.set_ticklabels(cbarlabels)
@@ -510,20 +560,27 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
   v_x_q_um-=xm/2
   v_y_q_um-=ym/2
 
-  #TODO: for some reason, the elastic fields make much nicer quiver plots than the E/H fields. why?
-  m_x_q = m_ReEx_q+m_ImEx_q
-  m_y_q = m_ReEy_q+m_ImEy_q
-  plt.quiver(v_x_q_um, v_y_q_um, m_x_q, m_y_q, 
-      np.sqrt(np.real((m_ReEx_q+1j*m_ImEx_q)*(m_ReEx_q-1j*m_ImEx_q)
-      +(m_ReEy_q+1j*m_ImEy_q)*(m_ReEy_q-1j*m_ImEy_q))),  #colour the arrows based on this array
+  #TODO: for some reason, the elastic fields make much nicer quiver plots than the E/H fields. 
+  # why? partially to do with edge effects at corners blowing up?
+
+# Ignore all imaginary values. If there are significant imag values, 
+# then instaneous vector plots don't make much sense anyway
+  plt.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q,
+      np.log(np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q)),  #colour the arrows based on this array
       linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
 
+#  m_x_q = m_ReEx_q+m_ImEx_q
+#  m_y_q = m_ReEy_q+m_ImEy_q
+#  plt.quiver(v_x_q_um, v_y_q_um, m_x_q, m_y_q, 
+#      np.sqrt(np.real((m_ReEx_q+1j*m_ImEx_q)*(m_ReEx_q-1j*m_ImEx_q)
+#      +(m_ReEy_q+1j*m_ImEy_q)*(m_ReEy_q-1j*m_ImEy_q))),  #colour the arrows based on this array
+#      linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
+
   ax.set_aspect('equal')
-  axes = plt.gca()
   ax.set_xlim(v_x_q_um[0,0],v_x_q_um[-1,0]) # this step is needed because quiver doesn't seem
- 
   ax.set_ylim(v_y_q_um[0,0],v_y_q_um[0,-1]) # to use its input x and y vectors to set range limits
                                             # clean this up so as to avoid seemingly circular calls following
+  axes = plt.gca()
   xmin, xmax = axes.get_xlim()
   ymin, ymax = axes.get_ylim()
   width_x = xmax-xmin
@@ -542,6 +599,7 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
     plt.xticks([])
     plt.yticks([])
 
+  return
   if plps['xlim_min'] != None:
       ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
   if plps['ylim_min'] != None:
@@ -564,14 +622,14 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, v
   modeobj=sim_wguide.get_modes()[ival]
   modeobj.analyse_mode(vanilla_v_x, vanilla_v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
 
-  yhi=.95  # try and make these ranges match those of the physical domain?
-  dy=.07
+  yhi=.99  # try and make these ranges match those of the physical domain?
+  dy=.10
   decorator = plps['decorator']
   ax.set_xlim(0,1)
   ax.set_ylim(0,yhi)
   ax.set_aspect('equal')
   ax.axis('off')
-  fs=decorator.get_font_size('ax_label')
+  fs=decorator.get_font_size('data_label')
 #plt.title('Mode {0}'.format(ival), fontsize=decorator.get_font_size('subplot_title'))
 
   #  Beward that this is a very coarse measure of component fraction and is not consistent with energy fraction
@@ -582,7 +640,7 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, v
 
   r=yhi-dy
   x0=.05
-  ax.text(x0-.05,r,r'Mode {0}'.format(ival), transform=ax.transAxes, fontsize=fs+2); r-=dy
+  ax.text(x0-.05,r,r'Mode properties: m={0}'.format(ival), transform=ax.transAxes, fontsize=fs+2); r-=dy
   if sim_wguide.EM_AC=='EM':
     ax.text(x0,r,r'$\omega/(2\pi)$: {0:.4f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), transform=ax.transAxes, fontsize=fs); r-=dy
     ax.text(x0,r,r'$k$: {0:.2f} m$^{{-1}}$'.format(sim_wguide.kz_EM(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
@@ -633,11 +691,17 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, v
 
 def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plps, sim_wguide, ival, suppress_imimre, vanilla_v_x, vanilla_v_y):
   decorator = plps['decorator']
+  figsz=decorator.get_axes_property('figsize')
+  ws=decorator.get_axes_property('subplots_wspace')
+  hs=decorator.get_axes_property('subplots_hspace')
+  lw=decorator.get_axes_property('linewidth')
+  ec=decorator.get_axes_property('edgecolor')
+
   plt.clf()
-  fig = plt.figure(figsize=(15,12))
-  fig.subplots_adjust(wspace=.2, hspace=0.0)
-  plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
-  plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
+  fig = plt.figure(figsize=figsz)
+  fig.subplots_adjust(wspace=ws, hspace=hs)
+  plt.rc('axes', linewidth=lw)
+  plt.rc('axes', edgecolor=ec)
 
   rows=3
   if suppress_imimre: rows=2
@@ -812,8 +876,24 @@ def plot_component(v_x, v_y, v_XX, v_YY, plot, label, plps, sim_wguide, ival, co
   if not keep_plots_open: plt.close()
 
 
-#### Standard plotting of spectra #############################################
+#deprecated spelling.
 def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50, 
+                  xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
+                  EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
+                  stress_fields=False, pdf_png='png', 
+                  prefix_str='', suffix_str='', ticks=False, comps=None, decorator=None, 
+                  suppress_imimre=False, 
+                  modal_gains_PE=None,
+                  modal_gains_MB=None,
+                  modal_gains=None):
+  plot_mode_fields(sim_wguide, ivals, n_points, quiver_steps, 
+                  xlim_min, xlim_max, ylim_min, ylim_max,
+                  EM_AC, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png, 
+                  prefix_str, suffix_str, ticks, comps, decorator, 
+                  suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
+
+#### Standard plotting of spectra #############################################
+def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=20, 
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
@@ -991,6 +1071,7 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
 
         v_x_q = v_x.reshape(n_pts_x,n_pts_y)
         v_y_q = v_y.reshape(n_pts_x,n_pts_y)
+        quiver_steps=int(round(min(n_pts_x,n_pts_y)/quiver_points)) # this could probably be chosen nicer
         v_x_q = v_x_q[0::quiver_steps,0::quiver_steps]
         v_y_q = v_y_q[0::quiver_steps,0::quiver_steps]
         m_ReEx_q = m_ReEx[0::quiver_steps,0::quiver_steps]
@@ -1014,7 +1095,7 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
 
 
 
-        if decorator == None: decorator = FieldDecorator()
+        if decorator == None: decorator = Decorator()
 
         modal_gain={}
         if modal_gains is not None: modal_gain['Tot']=modal_gains[ival]
@@ -1022,11 +1103,11 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
         if modal_gains_MB is not None: modal_gain['MB']=modal_gains_MB[ival]
 
 
-        plot_params={ 'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
+        plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
                      'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
                       'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
-                      'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 'stress_fields':stress_fields, 'decorator': decorator,
-                      'modal_gain':modal_gain }
+                      'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
+                      'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator }
 
         if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
 

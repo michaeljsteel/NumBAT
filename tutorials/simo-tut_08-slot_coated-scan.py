@@ -80,7 +80,7 @@ def ac_mode_freqs(coat_y):
     # Calculate Acoustic modes.
     sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-    # plotting.plt_mode_fields(sim_AC, xlim_min=0.4, xlim_max=0.4, 
+    # plotting.plot_mode_fields(sim_AC, xlim_min=0.4, xlim_max=0.4, 
     #                           ylim_min=0.7, ylim_max=0.0, EM_AC='AC', 
     #                           prefix_str=prefix_str, suffix_str='_%i' %int(coat_y))
 

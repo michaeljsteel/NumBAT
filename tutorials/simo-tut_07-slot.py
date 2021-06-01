@@ -71,7 +71,7 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-# plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, 
+# plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, 
 #                           ylim_min=0.1, ylim_max=0.8, EM_AC='EM_E', 
 #                           prefix_str=prefix_str, suffix_str='slot')
 
@@ -93,7 +93,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # npzfile = np.load('wguide_data_AC.npz', allow_pickle=True)
 # sim_AC = npzfile['sim_AC'].tolist()
 
-# plotting.plt_mode_fields(sim_AC, xlim_min=0.4, xlim_max=0.4, 
+# plotting.plot_mode_fields(sim_AC, xlim_min=0.4, xlim_max=0.4, 
 #                           ylim_min=0.7, ylim_max=0.0, EM_AC='AC', 
 #                           prefix_str=prefix_str, suffix_str='slot')
 

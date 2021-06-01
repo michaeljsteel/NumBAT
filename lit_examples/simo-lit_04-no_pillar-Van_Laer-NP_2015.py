@@ -22,12 +22,12 @@ import objects
 import mode_calcs
 import integration
 import plotting
-from plotting import FieldDecorator
+from plotting import Decorator
 from fortran import NumBAT
 
 
 # use this class to add or alter features to the final plots
-class EMDecorator(FieldDecorator):
+class EMDecorator(Decorator):
   def __init__(self):
     super().__init__()
 
@@ -104,7 +104,7 @@ if doem:
   
   plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump], 
                            ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E', 
-                           n_points=2000, quiver_steps=10, prefix_str=prefix_str, pdf_png='png', 
+                           n_points=2000, quiver_points=10, prefix_str=prefix_str, pdf_png='png', 
                            ticks=True, comps=('Ex', 'Eabs', 'Et'), decorator=emdecorate)
   
   # Print the wavevectors of EM modes.

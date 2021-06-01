@@ -94,7 +94,7 @@ print("Plotting EM fields ")
 plotting.plt_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
-                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_steps=10,
+                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=10,
                          comps=['Et','Eabs'], n_points=1000, colorbar=True)
 
 # Specify an acoustic wavevector that is sufficiently close to zero and print
@@ -131,7 +131,7 @@ maxGainloc=7 ;  #note sometimes its necessary to manually specify as certain val
 print("Plotting acoustic modes")
 
 plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, ivals=[maxGainloc],
-                         num_ticks=3, quiver_steps=40, pdf_png='png',ticks=True, comps=['ut','uabs'], colorbar=True)
+                         num_ticks=3, quiver_points=40, pdf_png='png',ticks=True, comps=['ut','uabs'], colorbar=True)
 
 # Displaying results for the maximum found in the selection
 print("-----------------")
