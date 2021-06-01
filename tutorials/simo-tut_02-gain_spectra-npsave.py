@@ -13,9 +13,9 @@ import time
 import datetime
 import numpy as np
 import sys
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
+#import matplotlib
+#matplotlib.use('pdf')
+#import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
 import materials
@@ -63,7 +63,7 @@ wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
 n_eff = wguide.material_a.n-0.1
 
 recalc_fields=True     # run the calculation from scratch
-recalc_fields=False   # reuse saved fields from previous calculation
+#recalc_fields=False   # reuse saved fields from previous calculation
 
 if recalc_fields:
   # Calculate Electromagnetic modes.
@@ -102,7 +102,6 @@ plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
                          prefix_str=prefix_str, ticks=True, suppress_imimre=True)
 
-sys.exit(1)
 #Repeat this plot in pdf output format
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
@@ -139,7 +138,7 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e
 # which excludes vacuum regions, so no need to restrict area plotted.
 # If we wanted to get pdf files we would set pdf_png='pdf' 
 # (default is png as these are easier to flick through).
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', contours=True, prefix_str=prefix_str)
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=True, prefix_str=prefix_str)
 
 if recalc_fields:
   # Calculate the acoustic loss from our fields.

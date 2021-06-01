@@ -289,7 +289,7 @@ class Struct(object):
                                    material_j, material_k, material_l, 
                                    material_m, material_n, material_o, 
                                    material_p, material_q, material_r]
-        print('symflag', symmetry_flag)
+#print('symflag', symmetry_flag)
         # el_conv_table = {}
         # i = 1; j = 1
         # for matter in acoustic_props:
