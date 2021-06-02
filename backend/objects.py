@@ -25,15 +25,18 @@ from mode_calcs import Simmo
 from fortran import NumBAT
 
 
-# # Acknowledgments
-# print '\n##################################################################\n'\
-#     + 'NumBAT is brought to you by Bjorn Sturmberg, Kokou Dossou, \n' \
-#     + 'and Christian Wolff, with support from the ARC \n' \
-#     + 'Starting NumBAT calculation ...\n' + \
-#       '##################################################################\n'
-
 def is_real_number(x):                
   return isinstance(x, float) or isinstance(x, int)
+
+def dec_float_str(dec_float):
+    """ Convert float with decimal point into string with '_' in place of '.' """
+    if type(dec_float) is float or type(dec_float) is int: 
+        s = '%8.1f' % dec_float
+    else:
+        s = ''
+    s = s.replace('.', '_')
+    s = s.replace(" ", "")
+    return s
 
 class Struct(object):
     """ Represents a structured layer.
@@ -150,22 +153,47 @@ class Struct(object):
                  inc_c_x=None, inc_d_x=None, inc_e_x=None, inc_f_x=None,
                  inc_g_x=None, inc_h_x=None, inc_i_x=None, inc_j_x=None,
                  inc_k_x=None, inc_l_x=None, inc_m_x=None, inc_n_x=None,
-                 inc_o_x=None, material_bkg=materials.get_material("Vacuum"),
-                 material_a=materials.get_material("Vacuum"), material_b=materials.get_material("Vacuum"), 
-                 material_c=materials.get_material("Vacuum"), material_d=materials.get_material("Vacuum"), 
-                 material_e=materials.get_material("Vacuum"), material_f=materials.get_material("Vacuum"), 
-                 material_g=materials.get_material("Vacuum"), material_h=materials.get_material("Vacuum"), 
-                 material_i=materials.get_material("Vacuum"), material_j=materials.get_material("Vacuum"), 
-                 material_k=materials.get_material("Vacuum"), material_l=materials.get_material("Vacuum"), 
-                 material_m=materials.get_material("Vacuum"), material_n=materials.get_material("Vacuum"), 
-                 material_o=materials.get_material("Vacuum"), material_p=materials.get_material("Vacuum"), 
-                 material_q=materials.get_material("Vacuum"), material_r=materials.get_material("Vacuum"), 
+                 inc_o_x=None, 
+                 material_bkg=None,
+                 material_a=None, material_b=None,
+                 material_c=None, material_d=None,
+                 material_e=None, material_f=None,
+                 material_g=None, material_h=None,
+                 material_i=None, material_j=None,
+                 material_k=None, material_l=None,
+                 material_m=None, material_n=None,
+                 material_o=None, material_p=None,
+                 material_q=None, material_r=None,
                  loss=True, symmetry_flag=True,
                  make_mesh_now=True, force_mesh=True,
                  mesh_file='NEED_FILE.mail', check_mesh=False, plt_mesh=False,
                  lc_bkg=0.09, lc_refine_1=1.0, lc_refine_2=1.0, lc_refine_3=1.0, lc_refine_4=1.0, lc_refine_5=1.0,
                  plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0,
                  plot_field_conc=False):
+
+
+        if material_bkg is None: material_bkg=materials.get_material('Vacuum')
+        if material_a is None: material_a=materials.get_material('Vacuum')
+        if material_b is None: material_b=materials.get_material('Vacuum')
+        if material_c is None: material_c=materials.get_material('Vacuum')
+        if material_d is None: material_d=materials.get_material('Vacuum')
+        if material_e is None: material_e=materials.get_material('Vacuum')
+        if material_f is None: material_f=materials.get_material('Vacuum')
+        if material_g is None: material_g=materials.get_material('Vacuum')
+        if material_h is None: material_h=materials.get_material('Vacuum')
+        if material_i is None: material_i=materials.get_material('Vacuum')
+        if material_j is None: material_j=materials.get_material('Vacuum')
+        if material_k is None: material_k=materials.get_material('Vacuum')
+        if material_l is None: material_l=materials.get_material('Vacuum')
+        if material_m is None: material_m=materials.get_material('Vacuum')
+        if material_n is None: material_n=materials.get_material('Vacuum')
+        if material_o is None: material_o=materials.get_material('Vacuum')
+        if material_p is None: material_p=materials.get_material('Vacuum')
+        if material_q is None: material_q=materials.get_material('Vacuum')
+        if material_r is None: material_r=materials.get_material('Vacuum')
+
+
+
         # Structures geometric shapes
         self.unitcell_x = float(unitcell_x)
         self.inc_a_x = inc_a_x
@@ -289,7 +317,7 @@ class Struct(object):
                                    material_j, material_k, material_l, 
                                    material_m, material_n, material_o, 
                                    material_p, material_q, material_r]
-#print('symflag', symmetry_flag)
+          #print('symflag', symmetry_flag)
         # el_conv_table = {}
         # i = 1; j = 1
         # for matter in acoustic_props:
@@ -787,13 +815,3 @@ class Struct(object):
         return simmo_AC
 
 
-def dec_float_str(dec_float):
-    """ Convert float with decimal point into string with '_' in place of '.' """
-    # string = str(dec_float)
-    if type(dec_float) is float or type(dec_float) is int: 
-        string = '%8.1f' % dec_float
-    else:
-        string = ''
-    string = string.replace('.', '_')
-    string = string.replace(" ", "")
-    return string
