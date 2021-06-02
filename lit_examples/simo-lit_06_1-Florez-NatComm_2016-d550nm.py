@@ -97,7 +97,7 @@ if doem:
     sim_EM_pump = npzfile['sim_EM_pump'].tolist()
   sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
   
-  plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=[EM_ival_pump],
+  plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=[EM_ival_pump],
                            ylim_min=0.3, ylim_max=0.3, EM_AC='EM_E', 
                            prefix_str=prefix_str, pdf_png='png', ticks=True,
                            decorator=emdecorate, quiver_points=20)
@@ -123,7 +123,7 @@ else:
   npzfile = np.load('wguide_data_florez_AC.npz', allow_pickle=True)
   sim_AC = npzfile['sim_AC'].tolist()
 
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, suffix_str='',
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, suffix_str='',
 ticks=True, ivals=[4,5], comps=('ut','uabs'), 
 xlim_min=-.1, ylim_min=-.1, xlim_max=-.1, ylim_max=-.1, 
 decorator=acdecorate, quiver_points=20, pdf_png='png',colorbar=True)
