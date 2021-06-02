@@ -65,7 +65,7 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 # npzfile = np.load('wguide_data2.npz')
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-plotting.plt_mode_fields(sim_EM_pump, xlim_min=0.45, xlim_max=0.45, 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.45, xlim_max=0.45, 
                          ivals=[EM_ival_pump], ylim_min=0.45, ylim_max=0.45, 
                          EM_AC='EM_E', n_points=1500, 
                          prefix_str=prefix_str, pdf_png='png')
@@ -89,7 +89,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
 print('Freq of AC modes (GHz) \n', np.round((sim_AC.Eig_values)*1e-9, 4))
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
 
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, pdf_png='png')
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, pdf_png='png')
 
 set_q_factor = 230 # NJP
 
