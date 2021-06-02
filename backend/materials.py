@@ -92,22 +92,46 @@ class VoigtTensor4(object):
     print(self.mat[1:,1:])
 
 class Material(object):
-    """ Represents a material with:
-
-            Refractive index []
-            Density [kg/m3]
-            Stiffness tensor component [Pa]
-            Photoelastic tensor component []
-            Acoustic loss tensor component [Pa s]
+    """Class representing a waveguide material. 
+      
+      Materials include the following properties and corresponding units:
+          -  Refractive index []
+          -  Density [kg/m3]
+          -  Stiffness tensor component [Pa]
+          -  Photoelastic tensor component []
+          -  Acoustic loss tensor component [Pa s]
 
     """
-    def __init__(self,dataloc, data_file):
 
-        self.json_file=data_file+'.json'
+# class level variables
+    _data_loc=''
+    _materials={}
+
+    @classmethod
+    def _set_file_locations(cls):
+      this_dir= os.path.dirname(os.path.realpath(__file__))
+      Material._data_loc= os.path.join(this_dir, "material_data", "")
+
+    @classmethod
+    def _get_material(cls, s):
+      if not len(Material._materials):
+        Material._set_file_locations()
+        for f in os.listdir(Material._data_loc):
+          if f.endswith(".json"):
+            Material._materials[f[:-5]] = Material(f)
+      return Material._materials[s]
+
+    def __init__(self, data_file):
+
+        if not len(Material._data_loc): self.__class__._set_file_locations()
+
+#self.json_file=data_file+'.json'
+        self.json_file=data_file
         try:
-            self.load_data_file(dataloc, self.json_file)
+#self.load_data_file(dataloc, self.json_file)
+            self.load_data_file(Material._data_loc, self.json_file)
         except FileNotFoundError:
-            print('Material data file not found.')
+            report_and_exit('Material data {0} file not found.'.format(self.json_file))
 
 
 
@@ -439,23 +463,26 @@ def isotropic_stiffness(E, v):
     return c_11, c_12, c_44
 
 
-g_materials={}
+#g_materials={}
 
 
 def get_material(s):
-  global g_materials
-  if not len(g_materials):
-    this_dir= os.path.dirname(os.path.realpath(__file__))
-    data_loc= os.path.join(this_dir, "material_data", "")
-    for file in os.listdir(data_loc):
-      if file.endswith(".json"):
-        g_materials[file[:-5]] = Material(data_loc, file[:-5])
+  return Material._get_material(s)
+#  global g_materials
+#  if not len(g_materials):
+#this_dir= os.path.dirname(os.path.realpath(__file__))
+#    data_loc= os.path.join(this_dir, "material_data", "")
+#  for f in os.listdir(data_loc):
+#    if f.endswith(".json"):
+##g_materials[f[:-5]] = Material(data_loc, f[:-5])
+#        print('loading mat', f)
+#        g_materials[f[:-5]] = Material(f)
 
-  return g_materials[s]
+#  return g_materials[s]
 
 # This code is deprecated and will be removed. Use get_material() instead.
 #print('loading materials dict')
-materials_dict = {}
+#materials_dict = {}
 #this_directory = os.path.dirname(os.path.realpath(__file__))
 #data_location = os.path.join(this_directory, "material_data", "")
 #for file in os.listdir(data_location):
