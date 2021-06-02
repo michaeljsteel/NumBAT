@@ -89,7 +89,7 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 # Generate images for the EM modes involved in the calculation
 # note: use EM_AC='EM_H' for magnetic H field
 print("Plotting EM fields ")
-plotting.plt_mode_fields(sim_EM_pump,
+plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
                          prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=10,
@@ -127,7 +127,7 @@ maxGainloc=6 ; #note sometimes its necessary to manually specify as certain valu
 
 print("Plotting acoustic modes")
 
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, ivals=[maxGainloc],
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, ivals=[maxGainloc],
                          num_ticks=3, quiver_points=40, pdf_png='png',ticks=True, comps=['ut','uabs'], colorbar=True)
 
 # Displaying results for the maximum found in the selection
