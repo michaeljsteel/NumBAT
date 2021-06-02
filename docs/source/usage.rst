@@ -61,7 +61,7 @@ Materials
 
 In order to calculate the modes of a structure we must specify the acoustic and optical properties of all constituent materials.
 
-In NumBAT, this data is read in from json files, which are stored in /NumBAT/backend/material_data
+In NumBAT, this data is read in from json files, which are stored in ``<root>/NumBAT/backend/material_data``.
 
 These files not only provide the numerical values for optical and acoustic variables, but record how these variables have been arrived at. Often they are taken from the literature.
 
@@ -72,13 +72,16 @@ At present, the material library contains:
   - Vacuum
   - As2S3_2016_Smith
   - As2S3_2017_Morrison
+  - As2S3_2021_Poulton
   - GaAs_2016_Smith
   - Si_2013_Laude
   - Si_2015_Van_Laer
   - Si_2016_Smith
+  - Si_2021_Poulton
   - SiO2_2013_Laude
   - SiO2_2015_Van_Laer
   - SiO2_2016_Smith
+  - SiO2_2021_Smith
   - Si_test_anisotropic
 
 All available materials are loaded into NumBAT into the materials.materials_dict dictionary, 
@@ -152,7 +155,7 @@ as a series of ``.png`` file.
 
 The parameters ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2``  to be encountered below set the fineness of the FEM mesh. ``lc_bkg`` sets the reference background mesh size, larger ``lc_bkg`` = larger (more coarse) mesh. In NumBAT it is also possible to refine the mesh near interfaces and near select points in the domain, as highlighted in the figures above. This is done using the ``lc_refine_`` commands, which we now discuss. At the interface between materials the mesh is refined to be ``lc_bkg/lc_refine_1``, therefore larger ``lc_refine_1`` = finer mesh at these interfaces. The meshing program automatically adjusts the mesh size to smoothly transition from a point that has one mesh parameter to points that have other meshing parameters. The mesh is typically also refined at the centers of important regions, such as in the center of a waveguide, which is done with ``lc_refine_2``, which analogously to ``lc_refine_1``, refines the mesh size at these points as ``lc_bkg/lc_refine_2``. For definition of ``lc_refine_3+`` parameters see the particular .geo file.
 
-Choosing appropriate values of ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2`` is crucial NumBAT to give accurate results. The values depend strongly on the type of structure being studied, and so it is recommended to carry out a convergence test before delving into new structures (see Tutorial 5) starting from similar parameters as used in the tutorial simulations. In NumBAT the x-dimension of the unit cell is traditionally normalised to unity, in which case there will be ``lc_bkg`` mesh elements along the horizontal outside edge; in other words the outside edge is divided into ``lc_bkg`` elements. 
+Choosing appropriate values of ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2`` is crucial for NumBAT to give accurate results. The values depend strongly on the type of structure being studied, and so it is recommended to carry out a convergence test before delving into new structures (see Tutorial 5) starting from similar parameters as used in the tutorial simulations. In NumBAT the x-dimension of the unit cell is traditionally normalised to unity, in which case there will be ``lc_bkg`` mesh elements along the horizontal outside edge; in other words the outside edge is divided into ``lc_bkg`` elements. 
 
 You can also visually check the resolution of your mesh by setting ``plt_mesh=True`` or ``check_mesh=True`` when you define your ``objects.Struct`` - the first saves a png of the mesh (in NumBAT/backend/fortran/msh/) the second opens mesh in gmsh - (see Tutorial 1). The NumBAT generated .msh file is stored in NumBAT/backend/fortran/msh/ which can be viewed by running the following command ::
     

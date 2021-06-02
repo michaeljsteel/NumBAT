@@ -140,7 +140,7 @@ else:
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
 
-plotting.plt_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
                          prefix_str=prefix_str, ticks=True, ivals=[0], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
