@@ -317,7 +317,6 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
         ax.legend(loc=0)
         if freq_min and freq_max:
             ax.set_xlim(freq_min,freq_max)
-        print('sizes', lw, fs, ts)
         ax.set_xlabel('Frequency (GHz)',size=decorator.get_font_size('ax_label'))
         ax.set_ylabel('|Gain| (1/Wm)', size=decorator.get_font_size('ax_label'))
 
@@ -431,12 +430,15 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
   act_zhi=0
   if np.max(np.abs(plot[~np.isnan(plot)])) < plot_threshold: # if the data is all noise, just plot zeros
       # im = plt.imshow(plot.T,cmap='viridis');
+#print(v_label, 'ims 1')
       im = plt.imshow(np.zeros(np.shape(plot.T)), origin='lower', extent=extents, cmap=cmap);
   else:
+#print(v_label, 'ims 2')
       interp=None
       #interp='bilinear';
       if req_lims:
         tsnorm=req_tsnorm
+#print(v_label, 'ims 3')
         im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=req_tsnorm)
         act_zlo=req_zlo
         act_zhi=req_zhi
@@ -452,10 +454,13 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
             else:
               tsnorm=mplcolors.TwoSlopeNorm(vmin=zlo, vmax=-zlo, vcenter=0.0)
             im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+#print(v_label, 'ims 4')
           else: #TODO: quantity is potentially signed but turns out not to be. Should try to make the cmap effectively runs from 0 to max
             im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
+#print(v_label, 'ims 5')
         else:
           im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
+#print(v_label, 'ims 6')
 
   # limits
   axes = plt.gca()
@@ -506,6 +511,7 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
     if plps['contour_lst']:
         if docbar: cbarticks = plps['contour_lst']
     if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
+#print(v_label, 'cont 7', cbarticks)
         CS2 = ax.contour(v_XX, v_YY, plot.T, levels=cbarticks, colors=mycolors[::-1], linewidths=(1.5,))
         if docbar: cbar.add_lines(CS2)
 
@@ -565,9 +571,16 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
 
 # Ignore all imaginary values. If there are significant imag values, 
 # then instaneous vector plots don't make much sense anyway
-  plt.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q,
-      np.log(np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q)),  #colour the arrows based on this array
+  m_arrcolour= np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q)
+  plt.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, m_arrcolour,
       linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
+
+#alldata= np.transpose([ v_x_q_um.flatten(), v_y_q_um.flatten(), m_ReEx_q.flatten(), m_ReEy_q.flatten(), m_arrcolour.flatten() ])
+#  np.savetxt('alldat.txt', alldata, fmt='%.4e')
+#  print('\n\nmx', m_ReEx_q)
+#  print('\n\nmy', m_ReEy_q)
+#  print('\n\nmc', m_arrcolour)
+#  print('maxpts', np.unravel_index(np.argmax(m_arrcolour, axis=None), m_arrcolour.shape))
 
 #  m_x_q = m_ReEx_q+m_ImEx_q
 #  m_y_q = m_ReEy_q+m_ImEy_q
@@ -599,7 +612,7 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
     plt.xticks([])
     plt.yticks([])
 
-  return
+#return
   if plps['xlim_min'] != None:
       ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
   if plps['ylim_min'] != None:
@@ -877,7 +890,7 @@ def plot_component(v_x, v_y, v_XX, v_YY, plot, label, plps, sim_wguide, ival, co
 
 
 #deprecated spelling.
-def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50, 
+def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50, 
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
@@ -886,14 +899,14 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_steps=50,
                   modal_gains_PE=None,
                   modal_gains_MB=None,
                   modal_gains=None):
-  plot_mode_fields(sim_wguide, ivals, n_points, quiver_steps, 
+  plot_mode_fields(sim_wguide, ivals, n_points, quiver_points, 
                   xlim_min, xlim_max, ylim_min, ylim_max,
                   EM_AC, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png, 
                   prefix_str, suffix_str, ticks, comps, decorator, 
                   suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
 
 #### Standard plotting of spectra #############################################
-def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=20, 
+def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30, 
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
@@ -1071,13 +1084,24 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=20,
 
         v_x_q = v_x.reshape(n_pts_x,n_pts_y)
         v_y_q = v_y.reshape(n_pts_x,n_pts_y)
-        quiver_steps=int(round(min(n_pts_x,n_pts_y)/quiver_points)) # this could probably be chosen nicer
-        v_x_q = v_x_q[0::quiver_steps,0::quiver_steps]
-        v_y_q = v_y_q[0::quiver_steps,0::quiver_steps]
-        m_ReEx_q = m_ReEx[0::quiver_steps,0::quiver_steps]
-        m_ReEy_q = m_ReEy[0::quiver_steps,0::quiver_steps]
-        m_ImEx_q = m_ImEx[0::quiver_steps,0::quiver_steps]
-        m_ImEy_q = m_ImEy[0::quiver_steps,0::quiver_steps]
+
+        #Ensure there are about quiver_points arrows in the visible frame 
+        #TODO: move this quiver manipulatino into the quiver plot functions
+        #TODO: why are xlim_min/max None rather than 0.0 defaults?
+        xlmi, xlma, ylmi, ylma= xlim_min, xlim_max, ylim_min, ylim_max
+        if xlmi is None: xlmi=0
+        if xlma is None: xlma=0
+        if ylmi is None: ylmi=0
+        if ylma is None: ylma=0
+        quiver_steps_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) # this could probably be chosen nicer
+        quiver_steps_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) # this could probably be chosen nicer
+
+        v_x_q = v_x_q[0::quiver_steps_x, 0::quiver_steps_y]
+        v_y_q = v_y_q[0::quiver_steps_x, 0::quiver_steps_y]
+        m_ReEx_q = m_ReEx[0::quiver_steps_x, 0::quiver_steps_y]
+        m_ReEy_q = m_ReEy[0::quiver_steps_x, 0::quiver_steps_y]
+        m_ImEx_q = m_ImEx[0::quiver_steps_x, 0::quiver_steps_y]
+        m_ImEy_q = m_ImEy[0::quiver_steps_x, 0::quiver_steps_y]
 
         ### No longer needed as imshow is using origin=lower
         # Flip y order as imshow has origin at top left

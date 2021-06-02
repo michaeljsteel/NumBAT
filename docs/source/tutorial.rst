@@ -26,8 +26,7 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
   #. Solve the electromagnetic problem. ``mode_calcs.calc_EM_modes()`` returns an object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods.
   #. Display the propagation constants in units of :math:`\text{m}^{-1}` of the EM modes using ``mode_calcs.kz_EM_all()``
   #. Obtain the effective index of the fundamental mode using ``mode_calcs.neff()``
-  #. Identify the desired acoustic wavenumber from the difference of the pump and Stokes propagation constants and solve the acoustic problem. 
-``mode_calcs.calc_AC_modes()`` returns an object containing the acoustic mode profiles, frequencies and potentially other data at the propagation constant ``k_AC``.
+  #. Identify the desired acoustic wavenumber from the difference of the pump and Stokes propagation constants and solve the acoustic problem.  ``mode_calcs.calc_AC_modes()`` returns an object containing the acoustic mode profiles, frequencies and potentially other data at the propagation constant ``k_AC``.
   #. Display the acoustic frequencies in Hz using ``mode_calcs.nu_AC_all()``.
   #. Calculate the total SBS gain, contributions from photoelasticity and moving boundary effects, and the acoustic loss using ``integration.gain_and_qs()``.
 
@@ -51,6 +50,8 @@ Here are some elements to note\:
   #. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of ``EM_AC`` in ``plotting.mode_fields``. These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder. 
   #. By default, plots are exported as ``png`` format. Pass the option ``pdf_png=pdf`` to plot functions to generate a ``pdf`` output.
   #. Plots of both spectra and modes are generated with a best attempt at font sizes, line widths etc, but the range of potential cases make it impossible to find a selection that works in all cases. Most plot functions therefore support the passing of a ``plotting.Decorator`` object that can vary the settings of these parameters and also pass additional commands to write on the plot axes. See the plotting API for details. This should be regarded as a relatively advanced NumBAT feature.
+  #. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[x]`, :math:`\text{Im}[y]` and :math:`\text{Re}[z]` components of the fields which in a lossless non-leaky problem should normally be zero at all points and therefore not useful to plot.
+  #. Vector field plots often require tweaking to get an attractive set of vector arrows.  The ``quiver_points`` option controls the number of arrows drawn along each direction.
   #. The plot functions and the ``Decorator`` class support many options. Consult the API chapter for details on how to fine tune your plots.
 
 .. literalinclude:: ../../tutorials/simo-tut_02-gain_spectra-npsave.py
@@ -61,19 +62,19 @@ The following figures show a selection of electromagnetic and acoustic mode prof
 in this example.
 
 .. figure:: ../../tutorials/tut_02-fields/EM_E_field_0.png
-   :scale: 40 %
+   :scale: 60 %
    
    Fundamental optical mode fields.
 
 
 .. figure:: ../../tutorials/tut_02-fields/AC_field_2.png
-   :scale: 40 %
+   :scale: 60 %
    
    Acoustic mode with high gain due to moving boundary effect.
 
 
 .. figure:: ../../tutorials/tut_02-fields/AC_field_4.png
-   :scale: 40 %
+   :scale: 60 %
    
    Acoustic mode with high gain due to moving boundary effect.
 

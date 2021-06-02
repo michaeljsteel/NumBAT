@@ -62,12 +62,7 @@ Python Interface
 .. toctree::
     :maxdepth: 4
 
-    objects
-    materials
-    mode_calcs
-    integration
-    plotting
-
+    pythonapi
 
 ==================
 Fortran Backend

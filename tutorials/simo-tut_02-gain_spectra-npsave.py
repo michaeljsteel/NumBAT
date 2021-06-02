@@ -13,9 +13,6 @@ import time
 import datetime
 import numpy as np
 import sys
-#import matplotlib
-#matplotlib.use('pdf')
-#import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
 import materials
@@ -63,7 +60,7 @@ wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
 n_eff = wguide.material_a.n-0.1
 
 recalc_fields=True     # run the calculation from scratch
-#recalc_fields=False   # reuse saved fields from previous calculation
+recalc_fields=False   # reuse saved fields from previous calculation
 
 if recalc_fields:
   # Calculate Electromagnetic modes.
@@ -105,12 +102,12 @@ plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
 #Repeat this plot in pdf output format
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
-                         pdf_png='pdf', prefix_str=prefix_str)
+                         pdf_png='pdf', prefix_str=prefix_str, ticks=True, suppress_imimre=True)
 
 # Plot the H fields of the EM modes - specified with EM_AC='EM_H'.
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], EM_AC='EM_H', 
-                         prefix_str=prefix_str)
+                         prefix_str=prefix_str, ticks=True, suppress_imimre=True)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -135,10 +132,10 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e
 
 # Plot the AC modes fields, important to specify this with EM_AC='AC'.
 # The AC modes are calculated on a subset of the full unitcell,
-# which excludes vacuum regions, so no need to restrict area plotted.
-# If we wanted to get pdf files we would set pdf_png='pdf' 
-# (default is png as these are easier to flick through).
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=True, prefix_str=prefix_str)
+# which excludes vacuum regions, so there is usually no need to restrict the area plotted
+# with xlim_min, xlim_max etc.
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=False, prefix_str=prefix_str, 
+    ticks=True, suppress_imimre=True, quiver_points=20, ivals=[0])
 
 if recalc_fields:
   # Calculate the acoustic loss from our fields.
