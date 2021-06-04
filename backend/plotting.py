@@ -31,6 +31,7 @@ import matplotlib.gridspec as gridspec
 import matplotlib.colors as mplcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import ticker
+import copy
 
 from nbtypes import *
 from fortran import NumBAT
@@ -63,7 +64,7 @@ class Decorator(object):
 
     sp_base_font=24
 #self._singleplot_fontsizes= {'title':base_font-2, 'ax_label':50, 'subplot_title':50,'cbar_tick':30, 'ax_tick':40 }
-    self._singleplot_fontsizes= {'title':sp_base_font-2, 'ax_label':20, 'subplot_title':50,'cbar_tick':30, 'ax_tick':15 }
+    self._singleplot_fontsizes= {'title':sp_base_font-2, 'ax_label':20, 'subplot_title':25,'cbar_tick':20, 'ax_tick':20 }
     self._singleplot_axesprops={'linewidth':'.75', 'edgecolor':'gray', 'title_pad':20, 'cbar_size':'5%', 'cbar_pad': '2%'}
 
     self._is_single=True
@@ -149,6 +150,72 @@ Plancks_h      = 6.62607015e-34     # Planck's constant in Js (exact)
 speed_c        = 299792458          # Speed of light in vacuum in m/s (exact)
 charge_e       = 1.602176634e-19    # Charge of an electron in C (exact)
 ###############################################################################
+
+class component_t(object):
+  @staticmethod
+  def Ecomp(c): return component_t('E'+c)
+
+  @staticmethod
+  def Hcomp(c): return component_t('H'+c)
+
+  @staticmethod
+  def ucomp(c): return component_t('u'+c)
+
+  @staticmethod
+  def make_comp(emac, fc): 
+    if emac=='EM_E': 
+      uc = { 'Fxr':'Ex', 'Fxi':'Ex', 'Fyr':'Ey', 'Fyi':'Ey', 'Fzr':'Ez', 'Fzi':'Ez', 'Fabs':'Eabs', 'Ft':'Et'}[fc]
+    elif emac=='EM_H': 
+      uc = { 'Fxr':'Hx', 'Fxi':'Hx', 'Fyr':'Hy', 'Fyi':'Hy', 'Fzr':'Hz', 'Fzi':'Hz', 'Fabs':'Habs', 'Ft':'Ht'}[fc]
+    else:
+      uc = { 'Fxr':'ux', 'Fxi':'ux', 'Fyr':'uy', 'Fyi':'uy', 'Fzr':'uz', 'Fzi':'uz', 'Fabs':'uabs', 'Ft':'ut'}[fc]
+    cc= component_t(uc)
+    cc._f_code=fc
+    return cc
+
+  def __init__(self, uc): #must be an Ex, Ey style, not an EM_AC,Fxr style
+    self._user_code=uc
+    self._E=uc[0] # E, H, or u
+    self._Ei=uc[:2] # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
+    self._xyz=uc[1] # x, y, z, a, t
+    self._Eimaj=self.reim_major(self._Ei)
+    self._Eimin=self.reim_minor(self._Ei)
+
+    #default real/imag given the _E value                          
+    self._f_code= {'Ex':'Fxr', 'Ey':'Fyr', 'Ez':'Fzi', 'Eabs':'Fabs', 'Et':'Ft',
+                'Hx':'Fxr', 'Hy':'Fyr', 'Hz':'Fzi', 'Habs':'Fabs', 'Ht':'Ft',
+                'ux':'Fxr', 'uy':'Fyr', 'uz':'Fzi', 'uabs':'Fabs','ut':'Ft',
+                   }[self._user_code]
+
+
+  def get_label(self):
+    c=self._E
+    lab= { 'Fx':r'Re($E_x$)', 'Fy':r'Re($E_y$)', 'Fz':r'Im($E_z$)', 'Fxr':r'Re($E_x$)',
+              'Fyr':r'Re($E_y$)', 'Fzi':r'Im($E_z$)', 'Fxi':r'Im($E_x$)', 'Fyi':r'Im($E_y$)', 'Fzr':r'Re($E_z$)',
+              'Fabs':r'$|E|$', 'Ft':r'$(E_x, E_y)$'}[self._f_code]
+    return lab.replace('E', c)
+
+  def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
+  def is_transverse(self): return self._user_code.endswith('t')
+  def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
+
+
+  def reim_major(self, fi): 
+    try:
+      return { 'Ex':'Exr', 'Ey':'Eyr', 'Ez':'Ezi', 'Ea':'Ea',
+             'Hx':'Hxr', 'Hy':'Hyr', 'Hz':'Hzi', 'Ha':'Ha',
+             'ux':'uxr', 'uy':'uyr', 'uz':'uzi', 'ua':'ua' }[fi]
+    except KeyError:
+      return fi
+
+  def reim_minor(self, fi): 
+    try:
+      return { 'Ex':'Exi', 'Ey':'Eyi', 'Ez':'Ezr', 'Ea':None,
+             'Hx':'Hxi', 'Hy':'Hyi', 'Hz':'Hyr', 'Ha':None,
+             'ux':'uxi', 'uy':'uyi', 'uz':'uyr', 'ua':None }[fi]
+    except KeyError:
+      return None
+
 
 
 #### Short utility functions ##################################################
@@ -394,75 +461,72 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
 
     return return_interp_values
 
-def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
+def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
   decorator = plps['decorator']
   cmap_signed='seismic'
   cmap_unsigned='OrRd'
 
-  plot_threshold = 1e-4 # set negligible components to explicitly zero
+  plot_threshold = 1e-8 # set negligible components to explicitly zero
 
-#TODO: do this much better through knowledge of components, not labels
-  signed=True
-  if v_label.startswith('$|'): signed=False #kludgy way of finding absolute value field
-  if signed:
-    cmap=cmap_signed
-  else:
-    cmap=cmap_unsigned
+  comp_label=cc.get_label()  # for plotting
+  signed=cc.is_signed_field()
+
+  cmap=cmap_unsigned
+  if signed: cmap=cmap_signed
+
+  field=fields[cc._f_code]
 
 
   if plps['ticks']: #set tick range
-    xm=v_x[-1]+v_x[0]
-    ym=v_y[-1]+v_y[0]
-    extents=np.array([v_x[0]-xm/2, v_x[-1]-xm/2, v_y[0]-ym/2, v_y[-1]-ym/2])*1e6  # Convert to length units in microns
+#xm=v_x[-1]+v_x[0]
+#ym=v_y[-1]+v_y[0]
+#extents=np.array([v_x[0]-xm/2, v_x[-1]-xm/2, v_y[0]-ym/2, v_y[-1]-ym/2])*1e6  # Convert to length units in microns
+    x0=m_X[0,0]
+    x1=m_X[0,-1]
+    y0=m_Y[0,0]
+    y1=m_Y[-1,0]
 
+    xm = x0+x1
+    ym = y0+y1
+    extents=np.array([x0-xm/2, x1-xm/2, y0-ym/2, y1-ym/2])*1e6  # Convert to length units in microns
   else:
     extents=None
 
   req_lims=False
-  the_comp=v_label[-3] # if x,y, or z, gets x,y,or z
 
-  if decorator.get_cmap_limits(the_comp)!=None: #User requested specific limits for each component x, y or z
+  if decorator.get_cmap_limits(cc._xyz)!=None: #User requested specific limits for each component x, y or z
     req_lims=True
-    (req_zlo, req_zhi)= decorator.get_cmap_limits(the_comp)
+    (req_zlo, req_zhi)= decorator.get_cmap_limits(cc._xyz)
     req_tsnorm=mplcolors.TwoSlopeNorm(vmin=req_zlo, vmax=req_zhi, vcenter=(req_zlo+req_zhi)/2)
 
   act_zlo=0
   act_zhi=0
-  if np.max(np.abs(plot[~np.isnan(plot)])) < plot_threshold: # if the data is all noise, just plot zeros
-      # im = plt.imshow(plot.T,cmap='viridis');
-#print(v_label, 'ims 1')
-      im = plt.imshow(np.zeros(np.shape(plot.T)), origin='lower', extent=extents, cmap=cmap);
-  else:
-#print(v_label, 'ims 2')
-      interp=None
-      #interp='bilinear';
-      if req_lims:
-        tsnorm=req_tsnorm
-#print(v_label, 'ims 3')
-        im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=req_tsnorm)
-        act_zlo=req_zlo
-        act_zhi=req_zhi
-      else: 
-        zlo=np.nanmin(plot)
-        zhi=np.nanmax(plot)
-        act_zlo=zlo
-        act_zhi=zhi
-        if signed: # ensure that zero values get mapped to the right part of the colormap
-          if zlo<0 and zhi >0:
-            if abs(zhi)>abs(zlo):
-              tsnorm=mplcolors.TwoSlopeNorm(vmin=-zhi, vmax=zhi, vcenter=0.0) # The point here is to set vcenter=0
-            else:
-              tsnorm=mplcolors.TwoSlopeNorm(vmin=zlo, vmax=-zlo, vcenter=0.0)
-            im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
-#print(v_label, 'ims 4')
-          else: #TODO: quantity is potentially signed but turns out not to be. Should try to make the cmap effectively runs from 0 to max
-            im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
-#print(v_label, 'ims 5')
-        else:
-          im = plt.imshow(plot.T, origin='lower', extent=extents, interpolation=interp, cmap=cmap)
-#print(v_label, 'ims 6')
 
-  # limits
+  field_final=field.T
+
+  # if the data is all noise, just plot zeros
+  if np.max(np.abs(field[~np.isnan(field)])) < plot_threshold: 
+    field_final=np.zeros(np.shape(field.T))
+
+  interp=None   #interp='bilinear';
+  tsnorm=None
+
+  if req_lims:
+    tsnorm=req_tsnorm
+    act_zlo=req_zlo
+    act_zhi=req_zhi
+  else: 
+    zlo=np.nanmin(field)
+    zhi=np.nanmax(field)
+    act_zlo=zlo
+    act_zhi=zhi
+    if signed: # ensure that zero values get mapped to the right part of the colormap
+      if zlo<0 and zhi >0:
+        vma=max(abs(zlo),abs(zhi))
+        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
+
+  im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+
   axes = plt.gca()
   xmin, xmax = axes.get_xlim()
   ymin, ymax = axes.get_ylim()
@@ -488,7 +552,7 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
     plt.yticks([])
 
   plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
-  plt.title(v_label,fontsize=decorator.get_font_size('subplot_title'))
+  plt.title(comp_label,fontsize=decorator.get_font_size('subplot_title'))
 
 
   # colorbar
@@ -510,32 +574,11 @@ def plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_label, plps):
   if plps['contours']:
     if plps['contour_lst']:
         if docbar: cbarticks = plps['contour_lst']
-    if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
-#print(v_label, 'cont 7', cbarticks)
-        CS2 = ax.contour(v_XX, v_YY, plot.T, levels=cbarticks, colors=mycolors[::-1], linewidths=(1.5,))
+    if np.max(np.abs(field[~np.isnan(field)])) > plot_threshold:
+        CS2 = ax.contour(m_X, m_Y, field.T, levels=cbarticks, colors=mycolors[::-1], linewidths=(1.5,))
         if docbar: cbar.add_lines(CS2)
 
   if decorator!=None: decorator.extra_axes_commands(ax)
-
-def plot_supertitle(plps, sim_wguide, ival):
-  if plps['EM_AC']=='EM_E' or plps['EM_AC']=='EM_H':
-     kz=sim_wguide.Eig_values[ival]
-     n_eff = kz * sim_wguide.wl_m / (2*np.pi)
-     if np.imag(kz) < 0:
-         k_str = r'$k_z = %(re_k)f %(im_k)f i$'% {'re_k' : np.real(kz), 'im_k' : np.imag(kz)}
-         n_str = r'$n_{eff} = %(re_k)f %(im_k)f i$'%  {'re_k' : np.real(n_eff), 'im_k' : np.imag(n_eff)}
-     else:
-         k_str = r'$k_z = %(re_k)f + %(im_k)f i$'% {'re_k' : np.real(kz), 'im_k' : np.imag(kz)}
-         n_str = r'$n_{eff} = %(re_k)f + %(im_k)f i$'%  {'re_k' : np.real(n_eff), 'im_k' : np.imag(n_eff)}
-  else:
-     n_str = ''
-     kz=sim_wguide.Eig_values[ival] * 1e-9
-     if np.imag(sim_wguide.Eig_values[ival]) < 0:
-         k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz'% {'re_k' : np.real(kz), 'im_k' : np.imag(kz)} 
-     else:
-         k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz'% {'re_k' : np.real(kz), 'im_k' : np.imag(kz)} 
-  fulltitle='Mode #' + str(ival) + '   ' + k_str + '   ' + n_str+"\n"
-  return fulltitle
 
 def plot_filename(plps, ival, label=None):
   filestart='%(pre)sfields/%(s)s_field_%(i)i%(add)s' % {'pre' : plps['prefix_str'], 
@@ -548,13 +591,29 @@ def plot_filename(plps, ival, label=None):
 
   return fig_filename
 
-def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
+def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
   decorator = plps['decorator']
 
-  m_ReEx_q = vq_plots[0]
-  m_ReEy_q = vq_plots[1]
-  m_ImEx_q = vq_plots[2]
-  m_ImEy_q = vq_plots[3]
+  quiver_points=20
+  xlmi, xlma, ylmi, ylma= plps['xlim_min'], plps['xlim_max'], plps['ylim_min'], plps['ylim_max']
+  n_pts_x=plps['n_pts_x']
+  n_pts_y=plps['n_pts_y']
+  quiver_points=plps['quiver_points']
+
+  if xlmi is None: xlmi=0
+  if xlma is None: xlma=0
+  if ylmi is None: ylmi=0
+  if ylma is None: ylma=0
+  quiver_steps_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) # this could probably be chosen nicer
+  quiver_steps_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) # this could probably be chosen nicer
+
+  v_x_q = m_X.T[0::quiver_steps_x, 0::quiver_steps_y] # is quiver_steps_x and _y around the right way given the .T operation?
+  v_y_q = m_Y.T[0::quiver_steps_x, 0::quiver_steps_y]
+
+  m_ReEx_q = v_fields['Fxr'][0::quiver_steps_x, 0::quiver_steps_y]
+  m_ReEy_q = v_fields['Fyr'][0::quiver_steps_x, 0::quiver_steps_y]
+  m_ImEx_q = v_fields['Fxi'][0::quiver_steps_x, 0::quiver_steps_y]
+  m_ImEy_q = v_fields['Fyi'][0::quiver_steps_x, 0::quiver_steps_y]
 
   # convert to microns
   v_x_q_um=v_x_q*1e6
@@ -566,28 +625,12 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
   v_x_q_um-=xm/2
   v_y_q_um-=ym/2
 
-  #TODO: for some reason, the elastic fields make much nicer quiver plots than the E/H fields. 
-  # why? partially to do with edge effects at corners blowing up?
 
 # Ignore all imaginary values. If there are significant imag values, 
 # then instaneous vector plots don't make much sense anyway
   m_arrcolour= np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q)
   plt.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, m_arrcolour,
       linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
-
-#alldata= np.transpose([ v_x_q_um.flatten(), v_y_q_um.flatten(), m_ReEx_q.flatten(), m_ReEy_q.flatten(), m_arrcolour.flatten() ])
-#  np.savetxt('alldat.txt', alldata, fmt='%.4e')
-#  print('\n\nmx', m_ReEx_q)
-#  print('\n\nmy', m_ReEy_q)
-#  print('\n\nmc', m_arrcolour)
-#  print('maxpts', np.unravel_index(np.argmax(m_arrcolour, axis=None), m_arrcolour.shape))
-
-#  m_x_q = m_ReEx_q+m_ImEx_q
-#  m_y_q = m_ReEy_q+m_ImEy_q
-#  plt.quiver(v_x_q_um, v_y_q_um, m_x_q, m_y_q, 
-#      np.sqrt(np.real((m_ReEx_q+1j*m_ImEx_q)*(m_ReEx_q-1j*m_ImEx_q)
-#      +(m_ReEy_q+1j*m_ImEy_q)*(m_ReEy_q-1j*m_ImEy_q))),  #colour the arrows based on this array
-#      linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
 
   ax.set_aspect('equal')
   ax.set_xlim(v_x_q_um[0,0],v_x_q_um[-1,0]) # this step is needed because quiver doesn't seem
@@ -620,20 +663,20 @@ def plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps):
 
   plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
 
-  if plps['EM_AC']=='EM_E':   plt.title('$(E_x, E_y)$',fontsize=decorator.get_font_size('subplot_title'))
-  elif plps['EM_AC']=='EM_H': plt.title('$(H_x, H_y)$',fontsize=decorator.get_font_size('subplot_title'))
-  elif plps['EM_AC']=='AC':   plt.title('$(u_x, u_y)$',fontsize=decorator.get_font_size('subplot_title'))
+
+  plt.title(cc.get_label(), fontsize=decorator.get_font_size('subplot_title'))
 
   decorator = plps['decorator']
   if decorator!=None: decorator.extra_axes_commands(ax)
 
-def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, vanilla_v_y):  # mode data summary
+def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data summary
 
   #TODO: Move this analysis to a better place                                                                                                 
-  [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=v_plots
+  [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=[ v_fields['Fxr'], v_fields['Fyr'], 
+     v_fields['Fzr'], v_fields['Fxi'], v_fields['Fyi'], v_fields['Fzi'], v_fields['Fabs'] ]
   tms=sim_wguide.get_modes()
   modeobj=sim_wguide.get_modes()[ival]
-  modeobj.analyse_mode(vanilla_v_x, vanilla_v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
+  modeobj.analyse_mode(v_x, v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
 
   yhi=.99  # try and make these ranges match those of the physical domain?
   dy=.10
@@ -702,7 +745,7 @@ def plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, v
 
 
 
-def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plps, sim_wguide, ival, suppress_imimre, vanilla_v_x, vanilla_v_y):
+def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, suppress_imimre, EM_AC):
   decorator = plps['decorator']
   figsz=decorator.get_axes_property('figsize')
   ws=decorator.get_axes_property('subplots_wspace')
@@ -721,40 +764,30 @@ def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v
 
   axi=1
   ax = plt.subplot(rows,3,axi)
-  plot_mode_data(ax, v_x, v_y, v_plots, plps, sim_wguide, ival, vanilla_v_x, vanilla_v_y)  # mode data summary
+  plot_mode_data(ax, v_plots, plps, sim_wguide, ival, v_x, v_y)  # mode data summary
   axi+=1
 
-#DELETE 3 lines
-#[m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE]=v_plots
-#  tms=sim_wguide.get_modes()
-#  modeobj=sim_wguide.get_modes()[ival]
-#  modeobj.analyse_mode(vanilla_v_x, vanilla_v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
+  cc={ 'EM_E':component_t('Eabs'), 'EM_H':component_t('Habs'), 'AC':component_t('uabs')}[EM_AC]
 
   ax = plt.subplot(rows,3,axi)
-  plot_component_axes(ax, v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plps)  # the intensity plot
+  plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the intensity plot
   axi+=1
 
+  cc={ 'EM_E':component_t('Et'), 'EM_H':component_t('Ht'), 'AC':component_t('ut')}[EM_AC]
   ax = plt.subplot(rows,3,axi)
-  plot_component_quiver(ax, v_x_q, v_y_q, vq_plots, plps)  # the transverse vector plot
+  plot_one_component_quiver(ax, m_X, m_Y, v_plots, plps, cc)  # the transverse vector plot
   axi+=1
 
-  for i_p,plot in enumerate(v_plots):
-     if suppress_imimre and (i_p in (3,4,5)): continue 
-     if i_p==6: continue
+  for (flab, field) in v_plots.items():
+     cc=component_t.make_comp(EM_AC, flab)
+
+     if suppress_imimre and not cc.is_dominant() :  continue 
+     if not cc.is_signed_field():continue
      ax = plt.subplot(rows,3,axi)
-     plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, v_labels[i_p], plps)  # the scalar plots
+     plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the scalar plots
      axi+=1
 
    
-#fulltitle=plot_supertitle(plps, sim_wguide, ival)
-#  plt.suptitle(fulltitle, fontsize=decorator.get_font_size('title'))
-
-  # TODO: add get_axes_property() options to play with spacing of these
-  # plt.tight_layout(pad=2.5, w_pad=0.5, h_pad=1.0)
-
-#  fig.set_tight_layout(True)
-
-
   figfile=plot_filename(plps, ival)
   save_figure(plt, figfile)
 
@@ -841,7 +874,7 @@ def plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v
              if contour_lst:
                  cbarticks = contour_lst
              if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
-                 CS2 = ax.contour(v_XX, v_YY, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
+                 CS2 = ax.contour(m_X, m_Y, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
              cbar.add_lines(CS2)
          cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
      fig.set_tight_layout(True)
@@ -870,21 +903,21 @@ def save_figure(plt, figfile):
   else: plt.savefig(figfile, bbox_inches='tight')
 
 
-def plot_component(v_x, v_y, v_XX, v_YY, plot, label, plps, sim_wguide, ival, comp):
+def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc):
   plt.clf()
-  fig = plt.figure(figsize=(15,15))
+  fig = plt.figure(figsize=(12,10))
 
   decorator = plps['decorator']
   plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
   plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
 
   ax = plt.subplot(111)
-  if comp in ('Et', 'Ht', 'ut'):
-    plot_component_quiver(ax, v_x, v_y, plot, plps)
+  if cc.is_transverse():
+    plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc)
   else: 
-    plot_component_axes(ax, v_x, v_y, v_XX, v_YY, plot, label, plps)
+    plot_one_component_axes(ax, m_X, m_Y, v_fields, plps, cc)
 
-  figfile=plot_filename(plps, ival, comp)
+  figfile=plot_filename(plps, ival, cc._user_code)
   save_figure(plt, figfile)
   if not keep_plots_open: plt.close()
 
@@ -894,7 +927,7 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50,
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
-                  prefix_str='', suffix_str='', ticks=False, comps=None, decorator=None, 
+                  prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
                   suppress_imimre=False, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
@@ -910,7 +943,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
-                  prefix_str='', suffix_str='', ticks=False, comps=None, decorator=None, 
+                  prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
                   suppress_imimre=False, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
@@ -980,24 +1013,11 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
     area = abs((x_max-x_min)*(y_max-y_min))
     n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
     n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
-    v_x = np.zeros(n_pts_x*n_pts_y)
-    v_y = np.zeros(n_pts_x*n_pts_y)
-    v_XX=None
-    v_YY=None
-    if contours: #TODO: what is going on here with v_x, v_y, v_XX, v_YY
-        v_XX, v_YY = np.meshgrid(range(n_pts_x), range(n_pts_y))
 
-    vanilla_v_x=np.linspace(x_min,x_max,n_pts_x)
-    vanilla_v_y=np.linspace(y_min,y_max,n_pts_y)
+    v_x=np.linspace(x_min,x_max,n_pts_x)
+    v_y=np.linspace(y_min,y_max,n_pts_y)
 
-    i=0
-    for x in np.linspace(x_min,x_max,n_pts_x):
-        for y in np.linspace(y_min,y_max,n_pts_y):
-            v_x[i] = x
-            v_y[i] = y
-            i+=1
-    v_x = np.array(v_x)
-    v_y = np.array(v_y)
+    m_X, m_Y = np.meshgrid(v_x, v_y)
 
     # unrolling data for the interpolators
     table_nod = sim_wguide.table_nod.T
@@ -1063,61 +1083,27 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
         
         #fields are called Ex, Ey, etc regardless of whether we are plotting E, H, or u/S
 
+
         # building interpolators: triang1p for the finder, triang6p for the values
         #TODO: could be more efficient only interpolating the fields which are ultimately to be used?
+        v_x_flat=m_X.flatten('F')  # There might be a cleaner way of doing this
+        v_y_flat=m_Y.flatten('F')
         finder = matplotlib.tri.TrapezoidMapTriFinder(triang1p)
-        ReEx = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ex6p.real,trifinder=finder)
-        ImEx = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ex6p.imag,trifinder=finder)
-        ReEy = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ey6p.real,trifinder=finder)
-        ImEy = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ey6p.imag,trifinder=finder)
-        ReEz = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ez6p.real,trifinder=finder)
-        ImEz = matplotlib.tri.LinearTriInterpolator(triang6p,v_Ez6p.imag,trifinder=finder)
-        AbsE = matplotlib.tri.LinearTriInterpolator(triang6p,v_E6p,trifinder=finder)
-        # interpolated fields
-        m_ReEx = ReEx(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_ReEy = ReEy(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_ReEz = ReEz(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_ImEx = ImEx(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_ImEy = ImEy(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_ImEz = ImEz(v_x,v_y).reshape(n_pts_x,n_pts_y)
-        m_AbsE = AbsE(v_x,v_y).reshape(n_pts_x,n_pts_y)
+        interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
+             triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(n_pts_x,n_pts_y)
 
-        v_x_q = v_x.reshape(n_pts_x,n_pts_y)
-        v_y_q = v_y.reshape(n_pts_x,n_pts_y)
+        # interpolated fields.  Always need these ones.
+        m_ReEx=interper_f(v_Ex6p.real)
+        m_ReEy=interper_f(v_Ey6p.real)
+        m_ImEz=interper_f(v_Ez6p.imag)
+        m_AbsE=interper_f(v_E6p)
 
-        #Ensure there are about quiver_points arrows in the visible frame 
-        #TODO: move this quiver manipulatino into the quiver plot functions
-        #TODO: why are xlim_min/max None rather than 0.0 defaults?
-        xlmi, xlma, ylmi, ylma= xlim_min, xlim_max, ylim_min, ylim_max
-        if xlmi is None: xlmi=0
-        if xlma is None: xlma=0
-        if ylmi is None: ylmi=0
-        if ylma is None: ylma=0
-        quiver_steps_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) # this could probably be chosen nicer
-        quiver_steps_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) # this could probably be chosen nicer
+        # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
+        m_ImEx=interper_f(v_Ex6p.imag)
+        m_ImEy=interper_f(v_Ey6p.imag)
+        m_ReEz=interper_f(v_Ez6p.real)
 
-        v_x_q = v_x_q[0::quiver_steps_x, 0::quiver_steps_y]
-        v_y_q = v_y_q[0::quiver_steps_x, 0::quiver_steps_y]
-        m_ReEx_q = m_ReEx[0::quiver_steps_x, 0::quiver_steps_y]
-        m_ReEy_q = m_ReEy[0::quiver_steps_x, 0::quiver_steps_y]
-        m_ImEx_q = m_ImEx[0::quiver_steps_x, 0::quiver_steps_y]
-        m_ImEy_q = m_ImEy[0::quiver_steps_x, 0::quiver_steps_y]
-
-        ### No longer needed as imshow is using origin=lower
-        # Flip y order as imshow has origin at top left
-        #v_plots = [m_ReEx[:,::-1],m_ReEy[:,::-1],m_ReEz[:,::-1],m_ImEx[:,::-1],m_ImEy[:,::-1],m_ImEz[:,::-1],m_AbsE[:,::-1]]
-
-        v_plots = [m_ReEx, m_ReEy, m_ImEz, m_ImEx, m_ImEy, m_ReEz, m_AbsE]
-        vq_plots = [m_ReEx_q, m_ReEy_q, m_ImEx_q, m_ImEy_q]
-
-        if EM_AC=='EM_E':
-            v_labels = [r"Re($E_x$)",r"Re($E_y$)",r"Im($E_z$)",r"Im($E_x$)",r"Im($E_y$)",r"Re($E_z$)",r"$|E|$"]
-        elif EM_AC == 'EM_H':
-            v_labels = [r"Re($H_x$)",r"Re($H_y$)",r"Im($H_z$)",r"Im($H_x$)",r"Im($H_y$)",r"Re($H_z$)",r"$|H|$"]
-        else:
-            v_labels = [r"Re($u_x$)",r"Re($u_y$)",r"Im($u_z$)",r"Im($u_x$)",r"Im($u_y$)",r"Re($u_z$)",r"$|u|$"]
-
-
+        v_plots = {'Fxr':m_ReEx, 'Fyr':m_ReEy, 'Fzi':m_ImEz, 'Fxi':m_ImEx, 'Fyi':m_ImEy, 'Fzr':m_ReEz, 'Fabs':m_AbsE}
 
         if decorator == None: decorator = Decorator()
 
@@ -1131,32 +1117,21 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
                      'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
                       'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
                       'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
-                      'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator }
+                      'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
+       'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 'quiver_points': quiver_points }
 
         if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
 
         decorator._set_for_multi()
-        plot_all_components(v_x, v_y, v_x_q, v_y_q, v_XX, v_YY, v_plots, vq_plots, v_labels, plot_params, sim_wguide, ival, suppress_imimre, vanilla_v_x, vanilla_v_y)
+        plot_all_components(v_x, v_y, m_X, m_Y, v_plots, 
+            plot_params, sim_wguide, ival, suppress_imimre, EM_AC)
+
 
         decorator._set_for_single()
-        if comps!=None:
-          for comp in comps:
-            if   comp=='Ex'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
-            elif comp=='Ey'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='Ez'   and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
-            elif comp=='Eabs' and EM_AC=='EM_E': plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
-            elif comp=='Et'   and EM_AC=='EM_E': plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(E_x,E_y)$', plot_params, sim_wguide, ival, comp)
-            elif comp=='Hx'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
-            elif comp=='Hy'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='Hz'   and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
-            elif comp=='Habs' and EM_AC=='EM_H': plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
-            elif comp=='Ht'   and EM_AC=='EM_H': plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(H_x,H_y)$', plot_params, sim_wguide, ival, comp)
-            elif comp=='ux'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[0], v_labels[0], plot_params, sim_wguide, ival, comp)
-            elif comp=='uy'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[1], v_labels[1], plot_params, sim_wguide, ival, comp)
-            elif comp=='uz'   and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[2], v_labels[2], plot_params, sim_wguide, ival, comp)
-            elif comp=='uabs' and EM_AC=='AC':   plot_component(v_x, v_y, v_XX, v_YY, v_plots[6], v_labels[6], plot_params, sim_wguide, ival, comp)
-            elif comp=='ut'   and EM_AC=='AC':   plot_component(v_x_q, v_y_q, v_XX, v_YY, vq_plots, '$(u_x, u_y)$', plot_params, sim_wguide, ival, comp)
-     
+        for comp in comps: #options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut'] 
+          cc=component_t(comp)
+          plot_one_component(m_X, m_Y, v_plots, plot_params, sim_wguide, ival, cc)
+
 
 
 #### Plot mesh #############################################
