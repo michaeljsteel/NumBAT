@@ -323,36 +323,36 @@ The simulation scripts and resultant mode fields are shown below.
 BSBS - Circular Waveguide - Silica
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-BSBS-1umcylwg-SiO2.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-01-BSBS-1umcylwg-SiO2.py
     :lines: 0-
 
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/EM_E_field_1.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/EM_E_field_1.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/EM_E_field_1_Eabs.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/EM_E_field_1_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/EM_E_field_1_Et.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/EM_E_field_1_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/AC_field_28.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/AC_field_28.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/AC_field_28_uabs.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/AC_field_28_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-1umSiO2fields/AC_field_28_ut.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-01-1umSiO2fields/AC_field_28_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
@@ -365,35 +365,35 @@ BSBS - Circular Waveguide - Silica
 BSBS - Rectangular Waveguide - Silicon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-BSBS-450x200nmrectwg-Si.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-02-BSBS-450x200nmrectwg-Si.py
     :lines: 0-
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/EM_E_field_0.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/EM_E_field_0.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/EM_E_field_0_Eabs.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/EM_E_field_0_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/EM_E_field_0_Et.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/EM_E_field_0_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/AC_field_6.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/AC_field_6.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/AC_field_6_uabs.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/AC_field_6_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/bsbs-josab-450x200nmSifields/AC_field_6_ut.png
+.. figure:: ../../JOSAB_tutorial/bsbs-josab-02-450x200nmSifields/AC_field_6_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
@@ -401,7 +401,7 @@ BSBS - Rectangular Waveguide - Silicon
 
 Let's also calculate the acoustic dispersion relation for this structure.
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-BSBS-acbands-450x200nmrectwg-Si.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-02b-BSBS-acbands-450x200nmrectwg-Si.py
     :lines: 0-
 
 .. figure:: ../../JOSAB_tutorial/dispersioncurves_classified.png
@@ -418,36 +418,36 @@ Let's also calculate the acoustic dispersion relation for this structure.
 FSBS - Circular Waveguide - Silica
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-FSBS-1umcylwg-SiO2.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-03-FSBS-1umcylwg-SiO2.py
     :lines: 0-
 
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/EM_E_field_1.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/EM_E_field_1.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/EM_E_field_1_Eabs.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/EM_E_field_1_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/EM_E_field_1_Et.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/EM_E_field_1_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/AC_field_7.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/AC_field_7.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/AC_field_7_uabs.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/AC_field_7_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-1umSiO2fields/AC_field_7_ut.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-03-1umSiO2fields/AC_field_7_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
@@ -461,36 +461,36 @@ FSBS - Circular Waveguide - Silica
 FSBS - Rectangular Waveguide - Silicon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-FSBS-450x200nmrectwg-Si.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-04-FSBS-450x200nmrectwg-Si.py
     :lines: 0-
 
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/EM_E_field_0.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/EM_E_field_0.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/EM_E_field_0_Eabs.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/EM_E_field_0_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/EM_E_field_0_Et.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/EM_E_field_0_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/AC_field_6.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/AC_field_6.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/AC_field_6_uabs.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/AC_field_6_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/fsbs-josab-450x200nmSifields/AC_field_6_ut.png
+.. figure:: ../../JOSAB_tutorial/fsbs-josab-04-450x200nmSifields/AC_field_6_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
@@ -504,53 +504,53 @@ FSBS - Rectangular Waveguide - Silicon
 IFSBS - Circular Waveguide - Silica
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-IFSBS-1umcylwg-SiO2.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-05-IFSBS-1umcylwg-SiO2.py
     :lines: 0-
 
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_0.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_0.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_0_Eabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_0_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_0_Et.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_0_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_1.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_1.png
    :scale: 50 %
 
    Second order optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_1_Eabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_1_Eabs.png
    :scale: 50 %
 
    Second order optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/EM_E_field_1_Et.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/EM_E_field_1_Et.png
    :scale: 50 %
 
    Second order optical mode fields.
 
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/AC_field_6.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/AC_field_6.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/AC_field_6_uabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/AC_field_6_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-1umSiO2fields/AC_field_6_ut.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-05-1umSiO2fields/AC_field_6_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
@@ -564,51 +564,51 @@ IFSBS - Circular Waveguide - Silica
 IFSBS - Rectangular Waveguide - Silicon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. literalinclude:: ../../JOSAB_tutorial/simo-josab-IFSBS-450x200nmrectwg-Si.py
+.. literalinclude:: ../../JOSAB_tutorial/simo-josab-06-IFSBS-450x200nmrectwg-Si.py
     :lines: 0-
 
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0_Eabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0_Eabs.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0_Et.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0_Et.png
    :scale: 50 %
 
    Fundamental optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0.png
    :scale: 50 %
 
    Second order optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0_Eabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0_Eabs.png
    :scale: 50 %
 
    Second order optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/EM_E_field_0_Et.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/EM_E_field_0_Et.png
    :scale: 50 %
 
    Second order optical mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/AC_field_2.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/AC_field_2.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/AC_field_2_uabs.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/AC_field_2_uabs.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
 
-.. figure:: ../../JOSAB_tutorial/ifsbs-josab-450x200nmSifields/AC_field_2_ut.png
+.. figure:: ../../JOSAB_tutorial/ifsbs-josab-06-450x200nmSifields/AC_field_2_ut.png
    :scale: 50 %
 
    Fundamental acoustic mode fields.
