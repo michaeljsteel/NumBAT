@@ -53,13 +53,16 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 # Print EM mode info
-print('\n k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values),4))
-n_eff_sim = np.real(sim_EM_pump.Eig_values[EM_ival_pump]*((wl_nm*1e-9)/(2.*np.pi)))
+v_kz=sim_EM_pump.kz_EM_all()
+print('\n k_z of EM modes [1/m]:')
+for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+
+n_eff_sim = np.real(sim_EM_pump.neff(EM_ival_pump))
 print("\n Fundamental optical mode ")
 print(" n_eff = ", np.round(n_eff_sim, 4))
 
 #   k_AC of backward SBS.
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 # Number of wavevectors steps.
 nu_ks = 50
 

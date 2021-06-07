@@ -73,11 +73,12 @@ n_eff = wguide.material_a.n-0.1
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
 # Print the wavevectors of EM modes.
-k_z = np.round(np.real(sim_EM_pump.Eig_values), 4)
-print('k_z of EM modes \n', k_z)
+v_kz=sim_EM_pump.kz_EM_all()
+print('\n k_z of EM modes [1/m]:')
+for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values*((wl_nm*1e-9)/(2.*np.pi)))
+n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 # A computation interruption if needed
@@ -103,8 +104,9 @@ print('\n AC wavenumber (1/m) = ', np.round(k_AC, 4))
 sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
 
 # Print the frequencies of AC modes.
-AC_freqs_Hz = np.round(np.real(sim_AC.Eig_values)*1e-9, 4)
-print('\n Freq of AC modes (GHz) \n', AC_freqs_Hz)
+AC_freqs_GHz=sim_AC.nu_AC_all()*1e-9
+print('\n Freq of AC modes (GHz):')
+for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(AC_freqs_GHz)))
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions etc
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
