@@ -71,11 +71,13 @@ else:
   npzfile = np.load('wguide_data2.npz', allow_pickle=True)
   sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-# Print the wavevectors of EM modes.
-print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
+# Display the wavevectors of EM modes.
+v_kz=sim_EM_pump.kz_EM_all()
+print('\n k_z of EM modes [1/m]:')
+for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values[0]*((wl_nm*1e-9)/(2.*np.pi)))
+n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
 # # Plot the E fields of the EM modes fields - specified with EM_AC='EM_E'.
@@ -90,7 +92,7 @@ plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                          prefix_str=prefix_str, ticks=True, quiver_points=20, comps=['Ht'])
 
 # Acoustic wavevector
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 # Calculate Acoustic modes.
 if new_calcs:
@@ -101,7 +103,9 @@ else:
   sim_AC = npzfile['sim_AC'].tolist()
 
 # Print the frequencies of AC modes.
-print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
+v_nu=sim_AC.nu_AC_all()
+print('\n Freq of AC modes (GHz):')
+for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
 plotting.plot_mode_fields(sim_AC, EM_AC='AC', pdf_png='png', contours=False, 
                          prefix_str=prefix_str, ticks=True, ivals=[0], quiver_points=20)
@@ -114,8 +118,8 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = np.real(sim_AC.Eig_values[0])*1e-9 - 2  # GHz
-freq_max = np.real(sim_AC.Eig_values[-1])*1e-9 + 2  # GHz
+freq_min = np.real(sim_AC.nu_AC_all()[0])*1e-9 - 2  # GHz
+freq_max = np.real(sim_AC.nu_AC_all()[-1])*1e-9 + 2  # GHz
 plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
     prefix_str=prefix_str)

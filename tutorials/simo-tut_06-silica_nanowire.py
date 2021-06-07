@@ -51,7 +51,7 @@ else:
 
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.get_material("Vacuum"),
-                        material_a=materials.get_maerial("SiO2_2016_Smith"),
+                        material_a=materials.get_material("SiO2_2016_Smith"),
                         lc_bkg=1, lc_refine_1=120.0*refine_fac, lc_refine_2=40.0*refine_fac)
 
 # Expected effective index of fundamental guided mode.
@@ -72,14 +72,17 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-# Print the wavevectors of EM modes.
-print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
+# Display the wavevectors of EM modes.
+v_kz=sim_EM_pump.kz_EM_all()
+print('\n k_z of EM modes [1/m]:')
+for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values*((wl_nm*1e-9)/(2.*np.pi)))
+n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff = ", np.round(n_eff_sim, 4))
 
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+# Acoustic wavevector
+k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 shift_Hz = 4e9
 
@@ -91,7 +94,9 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, suffix_str='NW')
 
 # Print the frequencies of AC modes.
-print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
+v_nu=sim_AC.nu_AC_all()
+print('\n Freq of AC modes (GHz):')
+for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
 set_q_factor = 1000.
 
