@@ -51,7 +51,7 @@ wguide = objects.Struct(unitcell_x,inc_a_x,inc_shape=inc_shape,
                         unitcell_y=unitcell_y,
                         material_bkg=materials.get_material("Vacuum"),
                         material_a=materials.get_material("Si_2016_Smith"),
-                        material_b=materials.get_material("SiO2_2016_Smith")
+                        material_b=materials.get_material("SiO2_2016_Smith"),
                         lc_bkg=1, lc_refine_1=20.0*refine_fac, lc_refine_2=1.0*refine_fac, plt_mesh=True)
 
 
