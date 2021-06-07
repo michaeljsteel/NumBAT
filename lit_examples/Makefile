@@ -25,6 +25,9 @@ lit08:
 	$(PYTHON) simo-lit_08-Kittlaus-NatComm_2017.py
 lit09: 
 	$(PYTHON) simo-lit_09-Morrison-Optica_2017.py
+lit10: 
+#$(PYTHON) simo-lit_10-Wolff-OptExpress-2014.py
+	$(PYTHON) simo-lit_10a-Wolff-OptExpress-2014.py
 
 clean:
 	-rm -rf lit_01-fields

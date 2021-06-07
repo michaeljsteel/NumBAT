@@ -972,3 +972,23 @@ This example, in ``simo-lit_09-Morrison-Optica_2017.py``, from the Sydney group 
    :scale: 50 %
    
    Gain spectra showing gain due to photoelastic effect, gain due to moving boundary effect, and total gain.
+
+LitEx 10 -- Wolff *et al*, *Optics Express* (2014):  SBS in the mid-infrared
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example, in ``simo-lit_10-Wolff-OptExpress-2014.py`` and ``simo-lit_10a-Wolff-OptExpress-2014.py``, by C. Wolff and collaborators examines backward SBS in the mid-infrared using germanium 
+as the core material in a rectangular waveguide with a silicon nitride cladding.
+
+The second of these two files illustrates the rotation of the core material from the [100] orientation to the [110] orientation. The second file prints out the full elastic properties of the germanium material in both orientations which are seen to match the values in the paper by Wolff et al.
+
+.. literalinclude:: ../../lit_examples/simo-lit_10-Wolff-OptExpress-2014.py
+    :lines: 0-
+
+.. literalinclude:: ../../lit_examples/simo-lit_10a-Wolff-OptExpress-2014.py
+    :lines: 0-
+
+
+.. figure:: ../../lit_examples/lit_10-gain_spectra-MB_PE_comps.png
+   :scale: 50 %
+
+.. figure:: ../../lit_examples/lit_10b-gain_spectra-MB_PE_comps.png
+   :scale: 50 %

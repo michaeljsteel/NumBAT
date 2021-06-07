@@ -28,7 +28,7 @@ import matplotlib
 #matplotlib.use('pdf')  # TODO: remove if ok
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import matplotlib.colors as mplcolors
+#import matplotlib.colors as mplcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import ticker
 import copy
