@@ -73,7 +73,7 @@ def ac_mode_freqs(coat_y):
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-    k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+    k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
     shift_Hz = 4e9
 
@@ -91,15 +91,15 @@ def ac_mode_freqs(coat_y):
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
     # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-    freq_min = 4 # np.real(sim_AC.Eig_values[0])*1e-9 - 2  # GHz
-    freq_max = 14 # np.real(sim_AC.Eig_values[-1])*1e-9 + 2  # GHz
+    freq_min = 4 # np.real(sim_AC.nu_AC_all()[0])*1e-9 - 2  # GHz
+    freq_max = 14 # np.real(sim_AC.nu_AC_all()[-1])*1e-9 + 2  # GHz
     
     plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
         EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
         prefix_str=prefix_str, suffix_str='_%i' %int(coat_y))
 
     # Convert to GHz
-    mode_freqs = sim_AC.Eig_values*1.e-9
+    mode_freqs = sim_AC.nu_AC_all()*1.e-9
     # Clear memory
     wguide = sim_EM_pump = sim_EM_Stokes = sim_AC = None
     SBS_gain = SBS_gain_PE = SBS_gain_MB = linewidth_Hz = Q_factors = alpha = None

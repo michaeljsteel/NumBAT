@@ -97,17 +97,18 @@ for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
-                         prefix_str=prefix_str, ticks=True, suppress_imimre=True)
+                         prefix_str=prefix_str, ticks=True, 
+                         comps=['Ex', 'Ey', 'Ez', 'Et'])
 
 #Repeat this plot in pdf output format
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
-                         pdf_png='pdf', prefix_str=prefix_str, ticks=True, suppress_imimre=True)
+                         pdf_png='pdf', prefix_str=prefix_str, ticks=True)
 
 # Plot the H fields of the EM modes - specified with EM_AC='EM_H'.
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                          ylim_max=0.4, ivals=[EM_ival_pump], EM_AC='EM_H', 
-                         prefix_str=prefix_str, ticks=True, suppress_imimre=True)
+                         prefix_str=prefix_str, ticks=True, suppress_imimre=False)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -134,8 +135,8 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e
 # The AC modes are calculated on a subset of the full unitcell,
 # which excludes vacuum regions, so there is usually no need to restrict the area plotted
 # with xlim_min, xlim_max etc.
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=False, prefix_str=prefix_str, 
-    ticks=True, suppress_imimre=True, quiver_points=20, ivals=[0])
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=True, prefix_str=prefix_str, 
+    ticks=True, quiver_points=20, ivals=[0])
 
 if recalc_fields:
   # Calculate the acoustic loss from our fields.
@@ -175,8 +176,8 @@ masked = np.ma.masked_inside(SBS_gain_PE_comsol[EM_ival_pump,EM_ival_Stokes,:], 
 print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = np.real(sim_AC.Eig_values[0])*1e-9 - 2  # GHz
-freq_max = np.real(sim_AC.Eig_values[-1])*1e-9 + 2  # GHz
+freq_min = np.real(sim_AC.nu_AC_all()[0])*1e-9 - 2  # GHz
+freq_max = np.real(sim_AC.nu_AC_all()[-1])*1e-9 + 2  # GHz
 plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
     prefix_str=prefix_str)

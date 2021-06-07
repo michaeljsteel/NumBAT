@@ -82,7 +82,7 @@ for m in range(num_modes_EM_pump):
   print('{0:4d}  {1:12.6f}  {2:12.6f}  {3:12.6f}'.format(m, kz_EM_mu[m], neff_EM[m], ng_EM[m]))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values[0]*((wl_nm*1e-9)/(2.*np.pi)))
+n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
 # # Plot the E fields of the EM modes fields - specified with EM_AC='EM_E'.
@@ -97,7 +97,7 @@ plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                          prefix_str=prefix_str, ticks=True, quiver_points=20, comps=['Ht'])
 
 # Acoustic wavevector
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 # Calculate Acoustic modes.
 if new_calcs:
@@ -128,8 +128,8 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = np.real(sim_AC.Eig_values[0])*1e-9 - 2  # GHz
-freq_max = np.real(sim_AC.Eig_values[-1])*1e-9 + 2  # GHz
+freq_min = np.real(sim_AC.nu_AC_all()[0])*1e-9 - 2  # GHz
+freq_max = np.real(sim_AC.nu_AC_all()[-1])*1e-9 + 2  # GHz
 plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
     prefix_str=prefix_str)

@@ -62,7 +62,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     # Calculate Electromagnetic modes.
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-    k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+    k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
     # Calculate Acoustic modes.
     sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
     # Calculate interaction integrals and SBS gain.
@@ -80,15 +80,15 @@ rel_modes = [3,4,8,10]
 # If you do not know the mode numbers of the significant AC modes you may wish to simply plot them all
 # by uncommenting the line below and check if the modes with large gain have low relative errors.
 # rel_modes = np.linspace(0,num_modes_AC-1,num_modes_AC)
-rel_mode_freq_EM = np.zeros(nu_lcs,dtype=complex)
+rel_mode_kz_EM = np.zeros(nu_lcs,dtype=complex)
 rel_mode_freq_AC = np.zeros((nu_lcs,len(rel_modes)),dtype=complex)
 rel_mode_gain = np.zeros((nu_lcs,len(rel_modes)),dtype=complex)
 rel_mode_gain_MB = np.zeros((nu_lcs,len(rel_modes)),dtype=complex)
 rel_mode_gain_PE = np.zeros((nu_lcs,len(rel_modes)),dtype=complex)
 for i_conv, conv_obj in enumerate(conv_list):
-    rel_mode_freq_EM[i_conv] = conv_obj[0].Eig_values[0]
+    rel_mode_kz_EM[i_conv] = conv_obj[0].kz_EM(0)
     for i_m, rel_mode in enumerate(rel_modes):
-        rel_mode_freq_AC[i_conv,i_m] = conv_obj[1].Eig_values[rel_mode]
+        rel_mode_freq_AC[i_conv,i_m] = conv_obj[1].nu_AC(rel_mode)
         rel_mode_gain[i_conv,i_m] = conv_obj[2][EM_ival_Stokes,EM_ival_pump,rel_mode]
         rel_mode_gain_PE[i_conv,i_m] = conv_obj[3][EM_ival_Stokes,EM_ival_pump,rel_mode]
         rel_mode_gain_MB[i_conv,i_m] = conv_obj[4][EM_ival_Stokes,EM_ival_pump,rel_mode]
@@ -102,7 +102,7 @@ ax1 = fig.add_subplot(1,1,1)
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
-EM_plot_Mk = rel_mode_freq_EM*1e-6
+EM_plot_Mk = rel_mode_kz_EM*1e-6
 error0 = np.abs((np.array(EM_plot_Mk[0:-1])-EM_plot_Mk[-1])/EM_plot_Mk[-1])
 ax2.plot(x_axis[0:-1], error0, 'b-v',label='Mode #%i'%EM_ival_pump)
 ax1.plot(x_axis, np.real(EM_plot_Mk), 'r-.o',label=r'EM k$_z$')
