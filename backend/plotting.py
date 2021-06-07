@@ -63,7 +63,6 @@ class Decorator(object):
        'linewidth':'.75', 'edgecolor':'gray', 'title_pad':5 , 'cbar_size':'5%', 'cbar_pad': '4%'}
 
     sp_base_font=24
-#self._singleplot_fontsizes= {'title':base_font-2, 'ax_label':50, 'subplot_title':50,'cbar_tick':30, 'ax_tick':40 }
     self._singleplot_fontsizes= {'title':sp_base_font-2, 'ax_label':20, 'subplot_title':25,'cbar_tick':20, 'ax_tick':20 }
     self._singleplot_axesprops={'linewidth':'.75', 'edgecolor':'gray', 'title_pad':20, 'cbar_size':'5%', 'cbar_pad': '2%'}
 
@@ -928,7 +927,7 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
                   prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
-                  suppress_imimre=False, 
+                  suppress_imimre=True, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
                   modal_gains=None):
@@ -944,7 +943,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
                   prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
-                  suppress_imimre=False, 
+                  suppress_imimre=True, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
                   modal_gains=None):

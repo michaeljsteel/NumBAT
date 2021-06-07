@@ -119,7 +119,12 @@ class Material(object):
         for f in os.listdir(Material._data_loc):
           if f.endswith(".json"):
             Material._materials[f[:-5]] = Material(f)
-      return Material._materials[s]
+      try:
+        mat= Material._materials[s]
+      except KeyError:
+        report_and_exit('Material data {0} file not found.'.format(s))
+
+      return mat 
 
     def __init__(self, data_file):
 
