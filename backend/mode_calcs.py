@@ -332,6 +332,9 @@ class Simmo(object):
         
       return self.mode_set
 
+    def set_r0_offset(self, rx, ry): # this is clumsy and only works if called after modes have been calced.
+      for m in self.get_modes(): m.set_r0_offset(rx, ry)
+
     def symmetry_classification(self, m):
       '''If the point group of the structure has been specified, returns the symmetry class of the given mode.
          

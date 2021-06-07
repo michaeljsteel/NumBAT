@@ -87,6 +87,11 @@ class VoigtTensor4(object):
     rmat=rotate_tensor(self.mat[1:,1:], theta, rotation_axis)
     self.mat[1:,1:]=rmat
 
+  def __str__(self):
+    s='\nVoigt tensor {0}:\n'.format(self.sym)
+    s+=str(self.mat[1:,1:])
+    return s
+
   def dump(self):
     print('\nVoigt tensor {0}'.format(self.sym))
     print(self.mat[1:,1:])
@@ -152,6 +157,13 @@ class Material(object):
             self.author,
             self.date)
       if len(self.comment): s+='Comment: '+self.comment
+      return s
+
+    def full_str(self):
+      s=self.__str__()
+      s+= str(self.c_tensor)
+      s+= str(self.eta_tensor)
+      s+= str(self.p_tensor)
       return s
 
     def load_data_file(self, dataloc, data_file, alt_path=''):  

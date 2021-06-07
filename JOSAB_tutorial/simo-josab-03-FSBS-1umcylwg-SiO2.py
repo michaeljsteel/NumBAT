@@ -94,7 +94,7 @@ print("Plotting EM fields ")
 plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
-                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=10,
+                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=40,
                          comps=['Et','Eabs'], n_points=1000, colorbar=True)
 
 # Specify an acoustic wavevector that is sufficiently close to zero and print

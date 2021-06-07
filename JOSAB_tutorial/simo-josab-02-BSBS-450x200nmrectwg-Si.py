@@ -83,7 +83,7 @@ print("Plotting EM fields ")
 plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
-                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=10,
+                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=40,
                          comps=['Et','Eabs'], n_points=1000, colorbar=True)
 
 # Calculating the EM effective index of the waveguide.
