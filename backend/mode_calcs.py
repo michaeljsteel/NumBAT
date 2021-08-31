@@ -288,7 +288,7 @@ class Simmo(object):
         # just off normal incidence to avoid degeneracies
         self.k_pll = np.array([1e-16, 1e-16])
         speed_c = 299792458
-        self.omega_EM = 2*np.pi*speed_c/self.wl_m # Angular freq in units of Hz
+        self.omega_EM = 2*np.pi*speed_c/self.wl_m # Angular freq in units of rad/s
         self.calc_EM_mode_energy = calc_EM_mode_energy
         self.calc_AC_mode_power = calc_AC_mode_power
 

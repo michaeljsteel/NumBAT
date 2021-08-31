@@ -28,7 +28,7 @@ import matplotlib
 #matplotlib.use('pdf')  # TODO: remove if ok
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-#import matplotlib.colors as mplcolors
+import matplotlib.colors as mplcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import ticker
 import copy
@@ -522,9 +522,25 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
     if signed: # ensure that zero values get mapped to the right part of the colormap
       if zlo<0 and zhi >0:
         vma=max(abs(zlo),abs(zhi))
-        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
+#        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
+#tsnorm=mplcolors.CenteredNorm()
+      else: # do this anyway, even if zlo and zhi are the same sign
+        vma=max(abs(zlo),abs(zhi))
+#        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
+#tsnorm=mplcolors.CenteredNorm() # Requires mpl > 3.4.2
+    else:
+      vma=max(abs(zlo),abs(zhi))
 
-  im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+
+#TODO: Clean this up!
+#im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+    if req_lims:
+      im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+    else:
+      if signed:
+        im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=-vma, vmax=vma)
+      else:
+        im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=0, vmax=vma)
 
   axes = plt.gca()
   xmin, xmax = axes.get_xlim()
@@ -1118,6 +1134,9 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
                       'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
                       'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
        'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 'quiver_points': quiver_points }
+
+        #TODO: should test that xlim_min + xlim_max < 1 so as some picture survies (and there is no flip)
+        #TODO: should test that ylim_min + ylim_max < 1 so as some picture survies (and there is no flip)
 
         if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
 
