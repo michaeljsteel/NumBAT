@@ -649,11 +649,11 @@ C       endif
 c   
       if (n_conv .ne. nval) then
          write(ui,*) "py_calc_modes.f: convergence problem in valpr_64"
-         write(ui,*) "You should probably increase resolution of mesh!"
+c         write(ui,*) "You should probably increase resolution of mesh!"
          write(ui,*) "py_calc_modes.f: n_conv != nval : ",
      *    n_conv, nval
-         write(ui,*) "n_core(1), n_eff(n_core(1)) = ",
-     *                n_core(1), n_eff(n_core(1))
+c        write(ui,*) "n_core(1), n_eff(n_core(1)) = ",
+c    *                n_core(1), n_eff(n_core(1))
          write(ui,*) "py_calc_modes.f: Aborting..."
          stop
       endif

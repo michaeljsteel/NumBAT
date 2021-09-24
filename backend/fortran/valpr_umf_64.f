@@ -396,10 +396,26 @@ c      ---------------------------------------------------
 
       if (info_32 .gt. 0) then
         write(ui,*)
-        write(ui,*) "VALPR_64: info_32 != 0 : ", info_32
-        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), nval_32
-        write(ui,*) "VALPR_64: number of converged values = ", 
-     *                iparam_32(5)
+        write(ui,*) "VALPR_64: The Arnoldi iteration scheme has failed"
+        write(ui,*) "VALPR_64: The znaupd error flag has the value ",
+     *   "info_32=", info_32
+        if (info_32 .eq. 1) then
+          write(ui,*) "VALPR_64: Max iterations exceeded."
+          write(ui,*) "VALPR_64: Requested eigenvalues = ", iparam_32(5)
+          write(ui,*) "VALPR_64: Converged eigenvalues = ", nval_32
+          write(ui,*) "VALPR_64: You might try:"
+          write(ui,*) "VALPR_64:  1) Increasing the requested number", 
+     *     " of eigenvalues"
+          write(ui,*) "VALPR_64:  2) Increasing the grid resolution"
+        endif
+        if (info_32 .eq. 3) then
+          write(ui,*) "VALPR_64: Shift could not be applied."
+        endif
+        write(ui,*) "VALPR_64: For details on znaupd errors see",
+     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html" 
+c        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), nval_32
+c        write(ui,*) "VALPR_64: number of converged values = ", 
+c     *                iparam_32(5)
         write(ui,*)
       endif
 
@@ -443,8 +459,11 @@ c                   factorization.
 c      ---------------------------------------------------
 
          write(ui,*) 'VALPR_64:'
-         write(ui,*) ' Error with _naupd, info_32 = ', info_32
-         write(ui,*) ' Check the documentation in _naupd.'
+        write(ui,*) "VALPR_64: The Arnoldi iteration scheme has failed."
+        write(ui,*) "VALPR_64: The znaupd error flag has the value ",
+     *   "info_32=", info_32
+         write(ui,*) "VALPR_64: For details on znaupd errors see",
+     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html" 
          write(ui,*) 'Aborting...'
          stop
 
