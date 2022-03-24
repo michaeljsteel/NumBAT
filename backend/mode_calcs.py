@@ -193,8 +193,8 @@ class Mode(object):
     f_t=f_x+f_y
     f_z=s_fz/s_f
     self.fracs=[f_x, f_y, f_t, f_z]
-#print('vs', v_x[0], v_x[1], v_x[-1], v_y[0], v_y[1], v_y[-1])
     [m_x, m_y]=np.meshgrid(v_x, v_y, indexing='ij') # TODO: IS THIS RIGHT?
+# print('vs', v_x[0], v_x[1], v_x[-1], v_y[0], v_y[1], v_y[-1])
 #    print('sh', len(v_x), len(v_y), m_Refx.shape, m_x.shape)
 #    print('m_xa', m_x[0,:5])
 #    print('m_xb', m_x[:5,0])
@@ -504,13 +504,13 @@ class Simmo(object):
       assert(self.is_AC())
       return self.ac_alpha_t
 
-    def alpha_s_AC(self, m): # spatial loss [1/m]
+  def alpha_s_AC(self, m): # spatial loss [1/m]  #TODO: surely this should be the group velocity for scaling between spatial and temporal decays
       assert(self.is_AC())
-      return self.alpha_t_AC(m)/self.vp_AC(m)
+      return self.alpha_t_AC(m)/self.vg_AC(m)
 
     def alpha_s_AC_all(self): # spatial loss [1/m]
       assert(self.is_AC())
-      return self.alpha_t_AC_all/self.vp_AC_all
+      return self.alpha_t_AC_all/self.vg_AC_all
 
     def Qmech_AC(self, m): 
       assert(self.is_AC())
@@ -591,7 +591,9 @@ class Simmo(object):
         self.ac_Qmech = fixed_Q*np.ones(self.num_modes)
         self.ac_alpha_t = 0.5*(np.real(self.Omega_AC)/fixed_Q)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
 
-      self.ac_linewidth = self.ac_alpha_t/np.pi # SBS linewidth of each resonance in [Hz]
+      self.ac_linewidth = self.ac_alpha_t/np.pi # SBS linewidth of each resonance in [Hz]   #TODO: not sure about the 1/pi.  
+                                                                                            #If linewdith should be amplitude rate in Hz, wouldn't it be
+                                                                                            # alpha/(2 * 2pi)  since alpha is a power decay rate
 
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
