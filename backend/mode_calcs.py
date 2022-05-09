@@ -480,7 +480,7 @@ class Simmo(object):
       if self.AC_mode_energy is None or self.AC_mode_power is None:
         print('''AC group velocity requires calculation of mode energy and mode power when calculating AC modes. 
                Set calc_AC_mode_power=True in call to calc_AC_modes''')
-        return np.zeros(len(self.Eig_values), dtype=float)
+        return 0
       vg= np.real(self.AC_mode_power[m]/self.AC_mode_energy[m])
       return vg
 
@@ -504,8 +504,11 @@ class Simmo(object):
       assert(self.is_AC())
       return self.ac_alpha_t
 
-  def alpha_s_AC(self, m): # spatial loss [1/m]  #TODO: surely this should be the group velocity for scaling between spatial and temporal decays
+    def alpha_s_AC(self, m): # spatial loss [1/m]  #TODO: surely this should be the group velocity for scaling between spatial and temporal decays #Which is a problem because it requires knowing vg
       assert(self.is_AC())
+      print('alpha_s:')
+      print(self.alpha_t_AC(m))
+      print(self.vg_AC(m))
       return self.alpha_t_AC(m)/self.vg_AC(m)
 
     def alpha_s_AC_all(self): # spatial loss [1/m]
