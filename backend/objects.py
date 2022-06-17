@@ -278,7 +278,7 @@ class Struct(object):
                 self.nb_typ_el = 2
             else:
                 self.nb_typ_el = 3
-        self.check_mesh = check_mesh
+        self.validate_mesh = check_mesh
         self.plt_mesh = plt_mesh
         self.lc = lc_bkg
         self.lc_refine_1 = lc_refine_1
@@ -447,6 +447,8 @@ class Struct(object):
 
         this_directory = os.path.dirname(os.path.realpath(__file__))
         msh_location = os.path.join(this_directory, "fortran", "msh", "")
+
+        self.msh_location=msh_location
 
         if self.inc_shape in ['circular', 'rectangular']:
             if self.slab_b_x is not None:
@@ -738,26 +740,60 @@ class Struct(object):
             NumBAT.conv_gmsh(msh_location + msh_name)
         self.mesh_file = msh_location + msh_name + '.mail'
 
-        if self.plt_mesh is True:
-            # Automatically create png files of mesh.
-            conv_tmp = open(msh_location + 'geo_to_png.geo', "r").read()
-            conv = conv_tmp.replace('tmp', msh_name + '_g')
-            open(msh_location + msh_name + '.2png', "w").write(conv) 
-            subprocess.Popen(['gmsh', msh_name + '.geo', msh_name + '.2png'], 
-                cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
-            os.wait()
-            conv_tmp = open(msh_location + 'msh_to_png.geo', "r").read()
-            conv = conv_tmp.replace('tmp', msh_name + '_m')
-            open(msh_location + msh_name + '.2png', "w").write(conv) 
-            subprocess.Popen(['gmsh', msh_name + '.msh', msh_name + '.2png'], 
-                cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
-        if self.check_mesh is True:
-            # Automatically show created mesh in gmsh.
-            gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.geo'
-            os.system(gmsh_cmd)
-            gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.msh'
-            os.system(gmsh_cmd)
 
+        self.msh_name=msh_name
+
+        if self.plt_mesh:
+            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
+            #self._plot_mesh()
+            ## Automatically create png files of mesh.
+            #conv_tmp = open(msh_location + 'geo_to_png.geo', "r").read()
+            #conv = conv_tmp.replace('tmp', msh_name + '_g')
+            #open(msh_location + msh_name + '.2png', "w").write(conv) 
+            #subprocess.Popen(['gmsh', msh_name + '.geo', msh_name + '.2png'], 
+            #    cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
+            #os.wait()
+            #conv_tmp = open(msh_location + 'msh_to_png.geo', "r").read()
+            #conv = conv_tmp.replace('tmp', msh_name + '_m')
+            #open(msh_location + msh_name + '.2png', "w").write(conv) 
+            #subprocess.Popen(['gmsh', msh_name + '.msh', msh_name + '.2png'], 
+            #    cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
+        if self.validate_mesh is True:
+            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
+            #self._check_mesh()
+            # Automatically show created mesh in gmsh.
+            #gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.geo'
+            #os.system(gmsh_cmd)
+            #gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.msh'
+            #os.system(gmsh_cmd)
+
+
+    def plot_mesh(self):
+        '''Visualise mesh with gmsh and save to a file.'''
+        msh_location=self.msh_location
+        msh_name=self.msh_name
+
+        # Automatically create png files of mesh.
+        conv_tmp = open(msh_location + 'geo_to_png.geo', "r").read()
+        conv = conv_tmp.replace('tmp', msh_name + '_g')
+        open(msh_location + msh_name + '.2png', "w").write(conv) 
+        subprocess.Popen(['gmsh', msh_name + '.geo', msh_name + '.2png'], 
+        cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
+        os.wait()
+        conv_tmp = open(msh_location + 'msh_to_png.geo', "r").read()
+        conv = conv_tmp.replace('tmp', msh_name + '_m')
+        open(msh_location + msh_name + '.2png', "w").write(conv) 
+        subprocess.Popen(['gmsh', msh_name + '.msh', msh_name + '.2png'], 
+        cwd=os.path.dirname(os.path.realpath(__file__))+'/fortran/msh')
+
+    def check_mesh(self):
+        '''Visualise mesh with gmsh.'''
+        msh_location=self.msh_location
+        msh_name=self.msh_name
+        gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.geo'
+        os.system(gmsh_cmd)
+        gmsh_cmd = 'gmsh '+ msh_location + msh_name + '.msh'
+        os.system(gmsh_cmd)
 
     def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False, 
        **args):
