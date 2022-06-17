@@ -32,6 +32,11 @@ from fortran import NumBAT
 
 VacCSpeed=299792458
 
+class ModePlotHelper(object): # helper class for plotting. factors common info from Simmo that each mode can draw on, but we only need to do once for each Sim
+    def __init__(self):
+
+      self.owning_sim=simmo
+
 class Mode(object):
   '''This is a base class for both EM and AC modes.''' 
   def __init__(self, simmo, m):
@@ -308,6 +313,35 @@ class Simmo(object):
         self.ac_Qmech = None   # acoustic mechanical Q [dimless]
 
         self.mode_set=[]
+
+        # Takes list of all material refractive indices
+        # Discards any that are zero
+        # Set up mapping table for refractive indices
+        # (Why we need this is mystery)
+        # el_conv_table_n maps the number of the material to the position in the nonzero n_list
+        # el_conv_table_n[ith material] = index into n_list  of non-zero refractive indices
+        # Except for zero index materials, 
+        #  it will always be {1:1, 2:2, 3:3, .., num_mats:num_mats}
+        # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
+        n_list = []
+        n_list_tmp = np.array([m.n for m in self.structure.l_materials])
+        self.el_conv_table_n = {}
+        i = 1; j = 1
+        for n in n_list_tmp:
+            if n != 0:
+                n_list.append(n)
+                self.el_conv_table_n[i] = j
+                j += 1
+            i += 1
+        self.n_list = np.array(n_list)
+        n_list = None
+
+        if self.structure.loss is False:
+            self.n_list = self.n_list.real
+
+
+
+
 
     def is_EM(self): 
       '''Returns true if the solver is setup for an electromagnetic problem.'''
@@ -612,32 +646,14 @@ class Simmo(object):
         """
         self.EM_AC = 'EM'
 
-        self.d_in_m = self.structure.unitcell_x*1e-9
-        n_list = []
-        n_list_tmp = np.array([self.structure.material_bkg.n, 
-                               self.structure.material_a.n, self.structure.material_b.n, self.structure.material_c.n,
-                               self.structure.material_d.n, self.structure.material_e.n, self.structure.material_f.n,
-                               self.structure.material_g.n, self.structure.material_h.n, self.structure.material_i.n,
-                               self.structure.material_j.n, self.structure.material_k.n, self.structure.material_l.n,
-                               self.structure.material_m.n, self.structure.material_n.n, self.structure.material_o.n,
-                               self.structure.material_p.n, self.structure.material_q.n, self.structure.material_r.n])
-        self.el_conv_table_n = {}
-        i = 1; j = 1
-        for n in n_list_tmp:
-            if n != 0:
-                n_list.append(n)
-                self.el_conv_table_n[i] = j
-                j += 1
-            i += 1
-        self.n_list = np.array(n_list)
-        n_list = None
+        tstruc=self.structure
+        self.d_in_m = tstruc.unitcell_x*1e-9
 
-        if self.structure.loss is False:
-            self.n_list = self.n_list.real
 
         if self.num_modes < 20:
             self.num_modes = 20
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
+
 
         # Parameters that control how FEM routine runs
         self.E_H_field = 1  # Selected formulation (1=E-Field, 2=H-Field)
@@ -657,8 +673,10 @@ class Simmo(object):
             if not os.path.exists("Output"):
                 os.mkdir("Output")
 
-        with open(self.structure.mesh_file) as f:
+        with open(tstruc.mesh_file) as f: # read in first line giving number of msh points and elements
             self.n_msh_pts, self.n_msh_el = [int(i) for i in f.readline().split()]
+
+        print('Structure has {0} mesh points and {1} mesh elements'.format(self.n_msh_pts, self.n_msh_el))
 
         # Size of Fortran's complex superarray (scales with mesh)
         int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
@@ -668,11 +686,11 @@ class Simmo(object):
         try:
             resm = NumBAT.calc_em_modes(
                 self.wl_m, self.num_modes,
-                EM_FEM_debug, self.structure.mesh_file, self.n_msh_pts,
-                self.n_msh_el, self.structure.nb_typ_el, self.n_list,
+                EM_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
+                self.n_msh_el, tstruc.nb_typ_el, self.n_list,
                 self.k_pll, self.d_in_m, shift, self.E_H_field, i_cond, itermax,
-                self.structure.plotting_fields, self.structure.plot_real,
-                self.structure.plot_imag, self.structure.plot_abs,
+                tstruc.plotting_fields, tstruc.plot_real,
+                tstruc.plot_imag, tstruc.plot_abs,
                 cmplx_max, real_max, int_max)
 
             self.Eig_values, self.sol1, self.mode_pol, self.table_nod, \
@@ -682,10 +700,10 @@ class Simmo(object):
             print("\n\n FEM routine calc_EM_modes",\
             "interrupted by keyboard.\n\n")
 
-        # if not self.structure.plot_field_conc:
+        # if not tstruc.plot_field_conc:
         #     self.mode_pol = None
 
-        # if self.structure.plotting_fields != 1:
+        # if tstruc.plotting_fields != 1:
         #     self.sol1 = None
         #     self.n_list = None
         #     self.E_H_field = None
@@ -695,23 +713,23 @@ class Simmo(object):
         #     self.n_msh_pts = None
         #     self.n_msh_el = None
 
-        if self.structure.plt_mesh:
+        if tstruc.plt_mesh:
             print("Suppressed inefficient matplotlib plotting of mesh...")
-            #plotting.plot_msh(self.x_arr, prefix_str=self.structure.mesh_file, suffix_str='_EM')
+            #plotting.plot_msh(self.x_arr, prefix_str=tstruc.mesh_file, suffix_str='_EM')
 
 
 ### Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         try:
             print("Calculating EM mode powers...")
             nnodes = 6
-            if self.structure.inc_shape in self.structure.linear_element_shapes:
+            if tstruc.inc_shape in tstruc.linear_element_shapes:
             ## Integration using analytically evaluated basis function integrals. Fast.
                 self.EM_mode_power = NumBAT.em_mode_energy_int_v2_ez(
                     self.k_0, self.num_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod,
                     self.x_arr, self.Eig_values, self.sol1)
             else:
-                if self.structure.inc_shape not in self.structure.curvilinear_element_shapes:
+                if tstruc.inc_shape not in tstruc.curvilinear_element_shapes:
                     print("Warning: em_mode_energy_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
             # Integration by quadrature. Slowest.
@@ -733,16 +751,16 @@ class Simmo(object):
                 nnodes = 6
                 # import time
                 # start = time.time()
-                if self.structure.inc_shape in self.structure.linear_element_shapes:
+                if tstruc.inc_shape in tstruc.linear_element_shapes:
                 # # Semi-analytic integration. Fastest!
                 # else:
-                #     if self.structure.inc_shape not in self.structure.curvilinear_element_shapes:
+                #     if tstruc.inc_shape not in tstruc.curvilinear_element_shapes:
                 #         print("Warning: em_mode_e_energy_int - not sure if mesh contains curvi-linear elements", 
                 #             "\n using slow quadrature integration by default.\n\n")
                 # # Integration by quadrature. Slowest.
                     self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
                         self.num_modes, self.n_msh_el, self.n_msh_pts, nnodes,
-                        self.table_nod, self.type_el, self.structure.nb_typ_el, self.n_list,
+                        self.table_nod, self.type_el, tstruc.nb_typ_el, self.n_list,
                         self.x_arr, self.sol1)
                 else:
                   print("\n\n FEM routine em_mode_e_energy_int needs work for this structure .\n\n")
@@ -803,19 +821,26 @@ class Simmo(object):
 
         self.d_in_m = self.structure.inc_a_x*1e-9
 
+        # Build a table of materials only containing elastic properties referencing the original full list in Struct
+        # Needed for restricting meshes to elastic only for example
+        # el_conv_table maps the number of the acoustically active material in original material 
+        # list to the position in the list of acoustically active materials
+        # eg [vacuum, silicon, glass, vacuum, chalc] ->  {2:1,3:2,5:3}
         el_conv_table = {}
         i = 1; j = 1
-        for matter in self.structure.acoustic_props_tmp:
-            if matter.s != None:
+        for mat in self.structure.l_materials:
+            if mat.has_elastic_properties():
                 el_conv_table[i] = j
                 j += 1
             i += 1
-        final_dict = {}
-        for entry in el_conv_table:
-            # print entry, self.EM_sim.el_conv_table_n[entry], el_conv_table[entry]
-            final_dict[self.EM_sim.el_conv_table_n[entry]] = el_conv_table[entry]
-        # print final_dict
-        self.typ_el_AC = final_dict
+
+        self.typ_el_AC = {}
+        for k,v in el_conv_table.items():
+          self.typ_el_AC[self.el_conv_table_n[k]] = v  # now keeps its own rather than take from EM_sim which might not exist
+
+        #print('el_conv_table_n EM', self.el_conv_table_n, self.n_list)
+        #print('el_conv_table, AC', el_conv_table)
+        #print('typ_el_AC', self.typ_el_AC)
 
         if self.num_modes < 20:
             self.num_modes = 20
@@ -938,9 +963,9 @@ class Simmo(object):
             self.n_msh_pts = n_msh_pts_AC
             self.n_msh_el = n_msh_el_AC
         # Default, indicates to use geometry subroutine in FEM routine.
-        else:
+        else: # No EM mesh data supplied
             suplied_geo_flag = 0
-            with open("../backend/fortran/msh/"+self.structure.mesh_file) as f:
+            with open(self.structure.mesh_file) as f:
                 self.n_msh_pts, self.n_msh_el = [int(i) for i in f.readline().split()]
             table_nod_AC = np.zeros((6, self.n_msh_el))
             type_el_AC = np.zeros(self.n_msh_el)

@@ -192,6 +192,33 @@ class Struct(object):
         if material_q is None: material_q=materials.get_material('Vacuum')
         if material_r is None: material_r=materials.get_material('Vacuum')
 
+        # Structures material properties - need to check geometry definition 
+        # to ensure connecting material type with correct surface of geometry
+        self.material_bkg = material_bkg
+        self.material_a = material_a
+        self.material_b = material_b
+        self.material_c = material_c
+        self.material_d = material_d
+        self.material_e = material_e
+        self.material_f = material_f
+        self.material_g = material_g
+        self.material_h = material_h
+        self.material_i = material_i
+        self.material_j = material_j
+        self.material_k = material_k
+        self.material_l = material_l
+        self.material_m = material_m
+        self.material_n = material_n
+        self.material_o = material_o
+        self.material_p = material_p
+        self.material_q = material_q
+        self.material_r = material_r
+
+        # Order must match msh templates!
+        self.l_materials = [material_bkg, material_a, material_b, material_c,
+            material_d, material_e, material_f, material_g, material_h, 
+            material_i, material_j, material_k, material_l, material_m, 
+            material_n, material_o, material_p, material_q, material_r]
 
 
         # Structures geometric shapes
@@ -237,27 +264,6 @@ class Struct(object):
         self.coat2_y = coat2_y
         self.two_inc_sep = two_inc_sep
         self.incs_y_offset = incs_y_offset
-        # Structures material properties - need to check geometry definition 
-        # to ensure connecting material type with correct surface of geometry
-        self.material_bkg = material_bkg
-        self.material_a = material_a
-        self.material_b = material_b
-        self.material_c = material_c
-        self.material_d = material_d
-        self.material_e = material_e
-        self.material_f = material_f
-        self.material_g = material_g
-        self.material_h = material_h
-        self.material_i = material_i
-        self.material_j = material_j
-        self.material_k = material_k
-        self.material_l = material_l
-        self.material_m = material_m
-        self.material_n = material_n
-        self.material_o = material_o
-        self.material_p = material_p
-        self.material_q = material_q
-        self.material_r = material_r
 
         self.loss = loss
         if slab_b_x is not None:
@@ -310,13 +316,6 @@ class Struct(object):
         else:
             self.symmetry_flag = 0
 
-        # Order must match msh templates!
-        self.acoustic_props_tmp = [material_bkg, material_a, material_b, material_c,
-                                   material_d, material_e, material_f, 
-                                   material_g, material_h, material_i, 
-                                   material_j, material_k, material_l, 
-                                   material_m, material_n, material_o, 
-                                   material_p, material_q, material_r]
           #print('symflag', symmetry_flag)
         # el_conv_table = {}
         # i = 1; j = 1
@@ -327,8 +326,12 @@ class Struct(object):
         #     i += 1
         # self.typ_el_AC = el_conv_table
         # print el_conv_table
-        acoustic_props = [x for x in self.acoustic_props_tmp if x.s is not None]
+
+        # construct list of materials with nonzero density, ie with acoustic properties likely defined
+        acoustic_props = [m for m in self.l_materials if m.has_elastic_properties()] 
+
         self.nb_typ_el_AC = len(acoustic_props)
+
         # Any material not given acoustic_props assumed to be vacuum.
         rho = np.zeros(self.nb_typ_el_AC)
         c_tensor = np.zeros((6,6,self.nb_typ_el_AC))   # stiffness tensor in 6x6 Voigt notation
@@ -847,6 +850,8 @@ class Struct(object):
         simmo_AC = Simmo(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
 
 #simmo_AC.calc_AC_modes(**args)
+        print("\n\nCalculating AC modes")
+
         simmo_AC.calc_AC_modes()
         return simmo_AC
 

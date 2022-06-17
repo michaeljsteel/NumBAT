@@ -24,8 +24,9 @@ import sys
 import traceback
 from scipy.interpolate import interp1d
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
+from math import sqrt
 
 import json
 import re
@@ -135,10 +136,8 @@ class Material(object):
 
         if not len(Material._data_loc): self.__class__._set_file_locations()
 
-#self.json_file=data_file+'.json'
         self.json_file=data_file
         try:
-#self.load_data_file(dataloc, self.json_file)
             self.load_data_file(Material._data_loc, self.json_file)
         except FileNotFoundError:
             report_and_exit('Material data {0} file not found.'.format(self.json_file))
@@ -165,6 +164,26 @@ class Material(object):
       s+= str(self.eta_tensor)
       s+= str(self.p_tensor)
       return s
+
+    def vac_longitudinal(self):
+      assert(not self.anisotropic)
+      # lame lambda = c_12
+      # lame mu = c_44
+      #  v = sqrt(c_11/rho)
+      #    =sqrt((c12 + 2c44)/rho)
+      #    =sqrt((lambda + 2mu)/rho)
+      return sqrt(self.c_tensor[1,1]/self.s)
+
+
+    def vac_shear(self):
+      assert(not self.anisotropic)
+      #  v = sqrt(c_44/rho)
+      #    =sqrt((mu)/rho)
+      return sqrt(self.c_tensor[4,4]/self.s)
+
+
+    def has_elastic_properties(self):
+        return self.s is not None
 
     def load_data_file(self, dataloc, data_file, alt_path=''):  
         """
@@ -352,6 +371,9 @@ class Material(object):
     
 
 
+    def set_refractive_index(self, nr, ni=0.0):
+      self.n = nr + 1j*ni
+
     def load_tensors(self): # not do this unless symmetry is off?
 
       self.anisotropic = False
@@ -412,6 +434,7 @@ class Material(object):
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
 to_Voigt = np.array([[0,5,4], [5,1,3], [4,3,2]]) 
+
 
 
 def rotation_matrix_sum(i, j, k, l, tensor_orig, mat_R):
