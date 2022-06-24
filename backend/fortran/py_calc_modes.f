@@ -100,7 +100,7 @@ C  Timing variables
 C  Names and Controls
       character mesh_file*1000, gmsh_file*1000, log_file*1000
       character gmsh_file_pos*1000
-      character overlap_file*1000, dir_name*1000
+      character overlap_file*1000, dir_name*1000, msg*20
       character*1000 tchar
       integer*8 namelength, PrintAll
       integer*8 plot_modes
@@ -599,10 +599,12 @@ C
         sol => sol1
         beta => beta1
         bloch_vec_k = bloch_vec
+        msg = "adjoint solution"
       else
         sol => sol2
         beta => beta2
         bloch_vec_k = -bloch_vec
+        msg = "prime solution"
       endif
 C
 C     Assemble the coefficient matrix A and the right-hand side F of the
@@ -610,7 +612,8 @@ C     finite element equations
 C       if (debug .eq. 1) then
 C         write(ui,*) "py_calc_modes.f: Asmbly: call to asmbly"
 C       endif
-      write(ui,*) "EM FEM, assembling linear system"
+      write(ui,*) "EM FEM: "
+      write(ui,'(A,A)') "      - assembling linear system for ", msg
       call cpu_time(time1_asmbl)
       call cpu_time(time1)
       call asmbly (i_cond, i_base, nel, npt, n_ddl, neq, nnodes,
@@ -621,7 +624,8 @@ C       endif
      *  c(kp_mat1_im), b(jp_mat2), a(ip_work))
       call cpu_time(time2_asmbl)
       call cpu_time(time2)
-      write(ui,'(A,F6.2)') '    assembly time (sec.)  = ', (time2-time1)
+      write(ui,'(A,F6.2,A)') '           time = ', (time2-time1), 
+     *   ' secs.'
 C
 C     factorization of the globale matrice
 C     -----------------------------------
@@ -634,7 +638,7 @@ C
 C       if (debug .eq. 1) then
 C         write(ui,*) "py_calc_modes.f: call to valpr"
 C       endif
-      write(ui,*) "EM FEM, solving linear system"
+      write(ui,*) "     - solving linear system"
       call cpu_time(time1)
       call valpr_64 (i_base, nvect, nval, neq, itermax, ltrav,
      *  tol, nonz, a(ip_row), a(ip_col_ptr), c(kp_mat1_re),
@@ -644,8 +648,8 @@ C       endif
      *  c(kp_lhs_re), c(kp_lhs_im), n_conv, ls_data,
      *  numeric, filenum, status, control, info_umf, debug)
       call cpu_time(time2)
-      write(ui,'(A,F6.2)') '    eigensolver time (sec.)  = ', 
-     *  (time2-time1)
+      write(ui,'(A,F6.2,A)') '           time = ', (time2-time1), 
+     *   ' secs.'
 c   
       if (n_conv .ne. nval) then
          write(ui,*) "py_calc_modes.f: convergence problem in valpr_64"
