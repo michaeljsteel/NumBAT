@@ -103,7 +103,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
 
 # Do not calculate the acoustic loss from our fields, instead set a Q factor.
 set_q_factor = 1000.
@@ -111,25 +111,45 @@ set_q_factor = 1000.
 # Step 8
 # Calculate interaction integrals and SBS gain for PE and MB effects combined, 
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, EM_ival_pump=EM_ival_pump, 
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
+# SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
+# Extract those of interest as a 1D array:
+SBS_gain_PE_ij = SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:]
+SBS_gain_MB_ij = SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:]
+SBS_gain_tot_ij = SBS_gain_tot[EM_ival_pump,EM_ival_Stokes,:]
+
 # Print the Backward SBS gain of the AC modes.
-print("\n SBS_gain [1/(Wm)] PE contribution \n", SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:])
-print("SBS_gain [1/(Wm)] MB contribution \n", SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:])
-print("SBS_gain [1/(Wm)] total \n", SBS_gain[EM_ival_pump,EM_ival_Stokes,:])
+print("\nContributions to SBS gain [1/(WM)]")
+print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
+
+for (m, gpe, gmb, gt) in zip(range(num_modes_AC), SBS_gain_PE_ij, SBS_gain_MB_ij, SBS_gain_tot_ij):
+    print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
+
+#with np.printoptions(formatter={ %    'float': '{: 12.4e}'.format, 'int': '{: 12d}'.format }):
+#    print(np.array([ range(num_modes_AC), SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:],
+#                     SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:], SBS_gain[EM_ival_pump,EM_ival_Stokes,:]]
+#                     ).T)
+
+
+#print("\n SBS_gain [1/(Wm)] PE contribution \n", SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:])
+#print("SBS_gain [1/(Wm)] MB contribution \n", SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:])
+#print("SBS_gain [1/(Wm)] total \n", SBS_gain[EM_ival_pump,EM_ival_Stokes,:])
 
 # Mask negligible gain values to improve clarity of print out.
-threshold = -1e-3
-masked_PE = np.ma.masked_inside(SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
-masked_MB = np.ma.masked_inside(SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
-masked = np.ma.masked_inside(SBS_gain[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
-print("\n Displaying results with negligible components masked out")
-print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
-print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
-print("SBS_gain [1/(Wm)] total \n", masked)
-print("SBS_gain linewidth [Hz] \n", linewidth_Hz)
+threshold = 1e-3
+masked_PE = np.where(np.abs(SBS_gain_PE_ij)>threshold, SBS_gain_PE_ij, 0)
+masked_MB = np.where(np.abs(SBS_gain_MB_ij)>threshold, SBS_gain_MB_ij, 0)
+masked_tot = np.where(np.abs(SBS_gain_tot_ij)>threshold, SBS_gain_tot_ij, 0)
+
+print("\n Displaying gain results with negligible components masked out:")
+
+print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
+for (m, gpe, gmb, gt) in zip( range(num_modes_AC), masked_PE, masked_MB, masked_tot):
+    print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
+
 
 end = time.time()
 print("\n Simulation time (sec.)", (end - start))
