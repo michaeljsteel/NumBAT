@@ -47,7 +47,7 @@ else:
   prefix_str = 'tut_02-'
   refine_fac=5
 
-print('\n\nCommencing NumBAT tutorial 2')
+print('\nCommencing NumBAT tutorial 2\n')
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
@@ -60,23 +60,21 @@ wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
 n_eff = wguide.material_a.n-0.1
 
 recalc_fields=True     # run the calculation from scratch
-recalc_fields=False   # reuse saved fields from previous calculation
+#recalc_fields=False   # reuse saved fields from previous calculation
 
 if recalc_fields:
   # Calculate Electromagnetic modes.
   sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
-  # Save calculated :Simmo: object for EM calculation.
-  np.savez('wguide_data', sim_EM_pump=sim_EM_pump)
   sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-  np.savez('wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
+
+  print('\nSaving EM fields')
+  sim_EM_pump.save_simulation('wguide_data')
+  sim_EM_Stokes.save_simulation('wguide_data2')
 else:
   # Once npz files have been saved from one simulation run,
   # set recalc_fields=True to use the saved data
-  #This provides precisely the same objects  for the remainder of the simulation.
-  npzfile = np.load('wguide_data.npz', allow_pickle=True)
-  sim_EM_pump = npzfile['sim_EM_pump'].tolist()
-  npzfile = np.load('wguide_data2.npz', allow_pickle=True)
-  sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
+  sim_EM_pump = modecalcs.load_simulation('wguide_data')
+  sim_EM_Stokes = modecalcs.load_simulation('wguide_data2')
 
 # Print the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
@@ -95,15 +93,18 @@ for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 #decorator=plotting.Decorator()
 #decorator.set_multiplot_axes_property('subplots_wspace',.4)
 
+#Plot the E field of the pump mode
+print('\nPlotting EM fields')
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
+                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, 
+                         EM_AC='EM_E', 
                          prefix_str=prefix_str, ticks=True, 
                          comps=['Ex', 'Ey', 'Ez', 'Et'])
 
 #Repeat this plot in pdf output format
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, EM_AC='EM_E', 
-                         pdf_png='pdf', prefix_str=prefix_str, ticks=True)
+#plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+#                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, #EM_AC='EM_E', 
+#                         pdf_png='pdf', prefix_str=prefix_str, ticks=True)
 
 # Plot the H fields of the EM modes - specified with EM_AC='EM_H'.
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
@@ -118,13 +119,13 @@ print("n_eff", np.round(n_eff_sim, 4))
 k_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
 
 if recalc_fields:
-  # Calculate Acoustic modes.
+  # Calculate and save acoustic modes.
   sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
-  # # Save calculated :Simmo: object for AC calculation.
-  np.savez('wguide_data_AC', sim_AC=sim_AC)
+
+  print('Saving AC fields')
+  sim_AC.save_simulation('wguide_data_AC')
 else:
-  npzfile = np.load('wguide_data_AC.npz', allow_pickle=True)
-  sim_AC = npzfile['sim_AC'].tolist()
+  sim_AC = Simulation.load_simulation('wguide_data_AC')
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
@@ -135,7 +136,10 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e
 # The AC modes are calculated on a subset of the full unitcell,
 # which excludes vacuum regions, so there is usually no need to restrict the area plotted
 # with xlim_min, xlim_max etc.
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', contours=True, prefix_str=prefix_str, 
+
+print('\nPlotting acoustic modes')
+plotting.plot_mode_fields(sim_AC, #EM_AC='AC', 
+        contours=True, prefix_str=prefix_str, 
     ticks=True, quiver_points=20, ivals=[0])
 
 if recalc_fields:
