@@ -59,8 +59,8 @@ wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
 # Estimate expected effective index of fundamental guided mode.
 n_eff = wguide.material_a.n-0.1
 
-recalc_fields=True     # run the calculation from scratch
-#recalc_fields=False   # reuse saved fields from previous calculation
+#recalc_fields=True     # run the calculation from scratch
+recalc_fields=False   # reuse saved fields from previous calculation
 
 if recalc_fields:
   # Calculate Electromagnetic modes.
@@ -73,8 +73,8 @@ if recalc_fields:
 else:
   # Once npz files have been saved from one simulation run,
   # set recalc_fields=True to use the saved data
-  sim_EM_pump = modecalcs.load_simulation('wguide_data')
-  sim_EM_Stokes = modecalcs.load_simulation('wguide_data2')
+  sim_EM_pump = mode_calcs.load_simulation('wguide_data')
+  sim_EM_Stokes = mode_calcs.load_simulation('wguide_data2')
 
 # Print the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
