@@ -165,6 +165,16 @@ class Material(object):
       s+= str(self.p_tensor)
       return s
 
+    def elastic_properties(self):
+        try:
+            s =  'Material:       {0}'.format(self.file_name)
+            s+='\nDensity:        {0:.3f}'.format(self.s)
+            s+='\nVelocity long.: {0:.3f}'.format( self.vac_longitudinal() )
+            s+='\nVelocity shear: {0:.3f}'.format( self.vac_shear())
+        except:
+            s='Unknown/undefined elastic parameters in material '+self.file_name
+        return s
+
     def vac_longitudinal(self):
       assert(not self.anisotropic)
       # lame lambda = c_12
@@ -172,14 +182,20 @@ class Material(object):
       #  v = sqrt(c_11/rho)
       #    =sqrt((c12 + 2c44)/rho)
       #    =sqrt((lambda + 2mu)/rho)
-      return sqrt(self.c_tensor[1,1]/self.s)
+      if not self.s or self.s == 0: # Catch vacuum cases
+          return 0.
+      else: 
+          return sqrt(self.c_tensor[1,1]/self.s)
 
 
     def vac_shear(self):
       assert(not self.anisotropic)
       #  v = sqrt(c_44/rho)
       #    =sqrt((mu)/rho)
-      return sqrt(self.c_tensor[4,4]/self.s)
+      if not self.s or self.s == 0: # Catch vacuum cases
+          return 0.
+      else: 
+          return sqrt(self.c_tensor[4,4]/self.s)
 
 
     def has_elastic_properties(self):

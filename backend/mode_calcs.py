@@ -24,6 +24,8 @@ import copy
 sys.path.append("../backend/")
 from math import *
 
+import matplotlib
+
 import plotting
 import integration
 from nbtypes import *
@@ -32,22 +34,504 @@ from fortran import NumBAT
 
 VacCSpeed=299792458
 
-class ModePlotHelper(object): # helper class for plotting. factors common info from Simmo that each mode can draw on, but we only need to do once for each Sim
-    def __init__(self):
+def load_simulation(prefix):  # allow this function to be module leve rather than class-level
+    return Simulation.load_simulation(prefix)
 
-      self.owning_sim=simmo
+class ModePlotHelper(object): # helper class for plotting. factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim
+
+    def __init__(self, sim):# , field_type):
+      self.sim=sim
+      self.setup_for_npoints=0
+
+      #self.field_type = field_type  # Enum.FieldType
+      self.plot_params = {}
+
+      self.init_arrays()
+      self.set_plot_params()
+
+
+    def init_arrays(self):
+      self.triang6p = None
+      self.triang1p = None
+      self.interper_f = None
+      self.v_x = None
+      self.v_y = None
+      self.m_X = None
+      self.m_Y = None
+      self.v_x6p = None
+      self.v_y6p = None
+      self.v_Fx6p = None
+      self.v_Fy6p = None
+      self.v_Fz6p = None
+
+    def cleanup(self):
+      # Now that these are part of the sim object,
+      # we need to get rid of them to allow pickling of sim files, as they contain C++ objects
+
+      del self.triang6p
+      del self.triang1p
+      del self.interper_f
+
+      del self.v_x, self.v_y, self.m_X, self.m_Y
+      del self.v_x6p, self.v_y6p
+      del self.v_Fx6p, self.v_Fy6p, self.v_Fz6p
+
+      self.init_arrays()
+
+
+    def set_plot_params(self, #n_points=501, quiver_points=30, 
+                  xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
+                  EM_AC='EM_E', 
+                  quiver_points=30,
+                  num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
+                  suppress_imimre=True, pdf_png='png', 
+                  prefix_str='', suffix_str='', decorator=plotting.Decorator(), ):
+                  #modal_gains_PE=None,
+                  #modal_gains_MB=None,
+                  #modal_gains=None):
+
+      if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
+
+      if type(EM_AC) is type('a'): # aim to get rid of this
+        if self.sim.is_AC():
+            EM_AC=FieldType.AC
+        else:
+          try:
+            EM_AC=FieldType.from_str(EM_AC)  # TODO:ugly that this changes from string to enum
+          except:
+            raise ValueError("EM_AC must be either 'AC', 'EM_E' or 'EM_H'.")
+
+      self.plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
+                 'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
+                  'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
+                  'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
+                 # 'modal_gain':modal_gain, 
+                  'decorator': decorator,
+                  'suppress_imimre':suppress_imimre,
+              # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 
+               'quiver_points': quiver_points 
+               }
+
+      #TODO: these will be used somewhere and need to be replaced
+      #self.plot_params['n_pts_x']=self.n_pts_x   #Thse are data properties, not plot props and don't belong here
+      #self.plot_params['n_pts_y']=self.n_pts_y
+
+      print('done ploparams', decorator)
+
+    def interpolate_mode_i(self, ival, field_type):
+      # self.v_Fx6p etc could propbably be made local to this function
+      # construct the meshed field from fortran solution
+      sim = self.sim
+      i = 0
+      for i_el in np.arange(sim.n_msh_el):
+          for i_node in np.arange(6):
+              if field_type == FieldType.EM_E or field_type == FieldType.AC :
+                  self.v_Fx6p[i] = sim.sol1[0,i_node,ival,i_el]
+                  self.v_Fy6p[i] = sim.sol1[1,i_node,ival,i_el]
+                  self.v_Fz6p[i] = sim.sol1[2,i_node,ival,i_el]
+              if field_type == FieldType.EM_H:
+                  self.v_Fx6p[i] = sim.sol1_H[0,i_node,ival,i_el]
+                  self.v_Fy6p[i] = sim.sol1_H[1,i_node,ival,i_el]
+                  self.v_Fz6p[i] = sim.sol1_H[2,i_node,ival,i_el]
+              i += 1
+
+      self.v_F6p = np.sqrt(np.abs(self.v_Fx6p)**2 + np.abs(self.v_Fy6p)**2 + np.abs(self.v_Fz6p)**2)
+
+      # Construct rectangular  interpolated fields.  
+      # Always need these ones.
+      m_ReFx=self.interper_f(self.v_Fx6p.real)
+      m_ReFy=self.interper_f(self.v_Fy6p.real)
+      m_ImFz=self.interper_f(self.v_Fz6p.imag)
+      m_AbsF=self.interper_f(self.v_F6p)
+
+      # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
+      m_ImFx=self.interper_f(self.v_Fx6p.imag)
+      m_ImFy=self.interper_f(self.v_Fy6p.imag)
+      m_ReFz=self.interper_f(self.v_Fz6p.real)
+
+      return (m_ReFx, m_ImFx, m_ReFy, m_ImFy, m_ReFz, m_ImFz, m_AbsF)
+
+    def setup_plot_grid(self, n_points=501, #quiver_points=30, 
+            #xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None): # these zlim_ points are not actually used here
+            ):
+
+      if self.setup_for_npoints == n_points: return   #only need to repeat if the grid density changes
+      self.setup_for_npoints = n_points
+
+      sim=self.sim
+
+      # field mapping
+      x_tmp = []
+      y_tmp = []
+      for i in np.arange(sim.n_msh_pts):
+          x_tmp.append(sim.x_arr[0,i])
+          y_tmp.append(sim.x_arr[1,i])
+      x_min = np.min(x_tmp); 
+      x_max = np.max(x_tmp)
+      y_min = np.min(y_tmp); 
+      y_max = np.max(y_tmp)
+      area = abs((x_max-x_min)*(y_max-y_min))
+      self.n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
+      self.n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+
+      # unrolling data for the interpolators
+      self.table_nod = sim.table_nod.T
+      self.x_arr = sim.x_arr.T
+
+      # dense triangulation with multiple points
+      self.v_x6p = np.zeros(6*sim.n_msh_el)
+      self.v_y6p = np.zeros(6*sim.n_msh_el)
+      self.v_Fx6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+      self.v_Fy6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+      self.v_Fz6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+      self.v_triang6p = []
+
+
+      #i = 0  # what is this counting?
+      for i_el in np.arange(sim.n_msh_el):
+          # triangles
+          idx = np.arange(6*i_el, 6*(i_el+1))
+          triangles = [[idx[0], idx[3], idx[5]],
+                       [idx[1], idx[4], idx[3]],
+                       [idx[2], idx[5], idx[4]],
+                       [idx[3], idx[4], idx[5]]]
+          self.v_triang6p.extend(triangles)
+
+
+
+      # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
+      # i is the index for the coordinates FIND A BETTER NAME
+      i = 0  
+      for i_el in np.arange(sim.n_msh_el):
+          for i_node in np.arange(6):
+              i_ex = self.table_nod[i_el, i_node]-1
+              # values
+              self.v_x6p[i] = self.x_arr[i_ex, 0]
+              self.v_y6p[i] = self.x_arr[i_ex, 1]    # Fact that this is x_arr and not y_arr seems to be right
+              i += 1
+
+
+      ### Interpolate onto triangular grid - honest to FEM elements
+      # dense triangulation with unique points
+      self.v_triang1p = []
+      for i_el in np.arange(sim.n_msh_el):
+          # triangles
+          table_nod = self.table_nod
+          triangles = [[table_nod[i_el,0]-1,table_nod[i_el,3]-1,table_nod[i_el,5]-1],
+                       [table_nod[i_el,1]-1,table_nod[i_el,4]-1,table_nod[i_el,3]-1],
+                       [table_nod[i_el,2]-1,table_nod[i_el,5]-1,table_nod[i_el,4]-1],
+                       [table_nod[i_el,3]-1,table_nod[i_el,4]-1,table_nod[i_el,5]-1]]
+          self.v_triang1p.extend(triangles)
+
+
+      # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
+      self.triang6p = matplotlib.tri.Triangulation(self.v_x6p, self.v_y6p, self.v_triang6p)
+      self.triang1p = matplotlib.tri.Triangulation(self.x_arr[:,0], self.x_arr[:,1], self.v_triang1p)
+
+      # Now use the coords user would like to think in
+      shiftx, shifty = self.sim.get_xyshift()  # Odd that we are doing this at ModeHelper level?
+
+      self.v_x = np.linspace(x_min, x_max, self.n_pts_x) + shiftx
+      self.v_y = np.linspace(y_min, y_max, self.n_pts_y) + shifty
+      self.m_X, self.m_Y = np.meshgrid(self.v_x, self.v_y)
+
+      #TODO: this would be much more useful *before* the FEM calc
+      print('''
+      Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um), 
+                    mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
+                    '''.format( 
+                        1e6*(self.v_x[0]-shiftx), 
+                        1e6*(self.v_x[-1]-shiftx), 
+                        1e6*(self.v_y[0]-shifty), 1e6*(self.v_y[-1]-shifty),
+          1e6*self.v_x[0], 1e6*self.v_x[-1], 1e6*self.v_y[0], 1e6*self.v_y[-1]))
+
+      # building interpolators: triang1p for the finder, triang6p for the values
+      #TODO: could be more efficient only interpolating the fields which are ultimately to be used?
+      # create rectangular arrays corresponding to the v_x, v_y grids
+
+      v_x_flat=self.m_X.flatten('F') -shiftx  # There might be a cleaner way of doing this
+      v_y_flat=self.m_Y.flatten('F') -shifty
+      finder = matplotlib.tri.TrapezoidMapTriFinder(self.triang1p)
+      self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
+           self.triang6p, x, trifinder=finder)(
+                   v_x_flat, v_y_flat).reshape(self.n_pts_x, self.n_pts_y)
+
+
+    def plot_strain_mode_i(self, ival):
+             #TODO: this interpolation looks very old. Can we get strain directly from fortran?
+     ### Interpolate onto rectangular Cartesian grid
+
+     m_Fx = self.m_ReFx + 1j*self.m_ImFx
+     m_Fy = self.m_ReFy + 1j*self.m_ImFy
+     m_Fz = self.m_ReFz + 1j*self.m_ImFz
+     print('shapes', m_Fx.shape, len(self.v_x))
+     dx=self.v_x[1]-self.v_x[0]
+     dy=self.v_y[1]-self.v_y[0]
+
+
+     print('finding gradients') 
+     #TODO: Check that the axis choice checks out
+     del_x_Fx = np.gradient(m_Fx, dx, axis=0)
+     del_y_Fx = np.gradient(m_Fx, dy, axis=1)
+     del_x_Fy = np.gradient(m_Fy, dx, axis=0)
+     del_y_Fy = np.gradient(m_Fy, dy, axis=1)
+     del_x_Fz = np.gradient(m_Fz, dx, axis=0)
+     del_y_Fz = np.gradient(m_Fz, dy, axis=1)
+     del_z_Fx = 1j*self.sim.k_AC*m_Fx
+     del_z_Fy = 1j*self.sim.k_AC*m_Fy
+     del_z_Fz = 1j*self.sim.k_AC*m_Fz
+
+     
+     return
+
+     self.v_x=np.linspace(x_min, x_max, self.n_pts_x)
+     # For now, get these avlues from v_x already figured out earlier.
+     x_min = self.v_x[0]
+     x_max = self.v_x[-1]
+     n_pts_x = len(self.v_x)
+     y_min = self.v_y[0]
+     y_max = self.v_y[-1]
+     n_pts_y = len(self.v_y)
+
+     xy = list(zip(self.v_x6p, self.v_y6p))
+
+     # This seems to be equivalent  to taking grid_x = self.m_Y, grid_y = self.m_X
+     # CONFIRM!
+     #grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x*1j, y_min:y_max:n_pts_y*1j]  #OLD CODE
+     grid_x, grid_y = self.m_Y, self.m_X                                         #NEW CODE
+
+     m_ReFx = interpolate.griddata(xy, v_Fx6p.real, (grid_x, grid_y), method='linear')
+     m_ReFy = interpolate.griddata(xy, v_Fy6p.real, (grid_x, grid_y), method='linear')
+     m_ReFz = interpolate.griddata(xy, v_Fz6p.real, (grid_x, grid_y), method='linear')
+     m_ImFx = interpolate.griddata(xy, v_Fx6p.imag, (grid_x, grid_y), method='linear')
+     m_ImFy = interpolate.griddata(xy, v_Fy6p.imag, (grid_x, grid_y), method='linear')
+     m_ImFz = interpolate.griddata(xy, v_Fz6p.imag, (grid_x, grid_y), method='linear')
+     m_AbsF = interpolate.griddata(xy, v_F6p.real, (grid_x, grid_y), method='linear')
+
+     dx = grid_x[-1,0] - grid_x[-2,0]
+     dy = grid_y[0,-1] - grid_y[0,-2]
+
+     m_Fx = m_ReFx + 1j*m_ImFx
+     m_Fy = m_ReFy + 1j*m_ImFy
+     m_Fz = m_ReFz + 1j*m_ImFz
+     m_Fx = m_Fx.reshape(n_pts_x,n_pts_y)
+     m_Fy = m_Fy.reshape(n_pts_x,n_pts_y)
+     m_Fz = m_Fz.reshape(n_pts_x,n_pts_y)
+     m_AbsF = m_AbsF.reshape(n_pts_x,n_pts_y)
+
+     m_ReFx = np.real(m_Fx)
+     m_ReFy = np.real(m_Fy)
+     m_ReFz = np.real(m_Fz)
+     m_ImFx = np.imag(m_Fx)
+     m_ImFy = np.imag(m_Fy)
+     m_ImFz = np.imag(m_Fz)
+
+     del_x_Fx = np.gradient(m_Fx, dx, axis=0)
+     del_y_Fx = np.gradient(m_Fx, dy, axis=1)
+     del_x_Fy = np.gradient(m_Fy, dx, axis=0)
+     del_y_Fy = np.gradient(m_Fy, dy, axis=1)
+     del_x_Fz = np.gradient(m_Fz, dx, axis=0)
+     del_y_Fz = np.gradient(m_Fz, dy, axis=1)
+     del_z_Fx = 1j*sim_wguide.k_AC*m_Fx
+     del_z_Fy = 1j*sim_wguide.k_AC*m_Fy
+     del_z_Fz = 1j*sim_wguide.k_AC*m_Fz
+
+     # Flip y order as imshow has origin at top left
+     del_mat = np.array([del_x_Ex[:,::-1].real, del_x_Ey[:,::-1].real, del_x_Ez[:,::-1].real, del_x_Ex[:,::-1].imag, del_x_Ey[:,::-1].imag, del_x_Ez[:,::-1].imag, del_y_Ex[:,::-1].real, del_y_Ey[:,::-1].real, del_y_Ez[:,::-1].real, del_y_Ex[:,::-1].imag, del_y_Ey[:,::-1].imag, del_y_Ez[:,::-1].imag, del_z_Ex[:,::-1].real, del_z_Ey[:,::-1].real, del_z_Ez[:,::-1].real, del_z_Ex[:,::-1].imag, del_z_Ey[:,::-1].imag, del_z_Ez[:,::-1].imag])
+     v_labels = ["Re($S_{xx}$)","Re($S_{xy}$)","Re($S_{xz}$)", "Im($S_{xx}$)","Im($S_{xy}$)","Im($S_{xz}$)","Re($S_{yx}$)","Re($S_{yy}$)","Re($S_{yz}$)","Im($S_{yx}$)","Im($S_{yy}$)","Im($S_{yz}$)","Re($S_{zx}$)","Re($S_{zy}$)","Re($S_{zz}$)","Im($S_{zx}$)","Im($S_{zy}$)","Im($S_{zz}$)"]
+
+     # stress field plots
+     plt.clf()
+     fig = plt.figure(figsize=(15,30))
+     for i_p,plot in enumerate(del_mat):
+         ax = plt.subplot(6,3,i_p+1)
+         im = plt.imshow(plot.T);
+         # no ticks
+         plt.xticks([])
+         plt.yticks([])
+         # limits
+         if xlim_min != None:
+             ax.set_xlim(xlim_min*n_points,(1-xlim_max)*n_points)
+         if ylim_min != None:
+             ax.set_ylim((1-ylim_min)*n_points,ylim_max*n_points)
+         # titles
+         plt.title(v_labels[i_p],fontsize=decorator.get_font_size('subplot_title'))
+         # colorbar
+         divider = make_axes_locatable(ax)
+         cax = divider.append_axes("right", size="5%", pad=0.1)
+         cbar = plt.colorbar(im, cax=cax, format='%.2e')
+         if num_ticks:
+             cbarticks = np.linspace(np.min(plot), np.max(plot), num=num_ticks)                
+         elif ylim_min != None:
+             if xlim_min/ylim_min > 3:
+                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=3)
+             if xlim_min/ylim_min > 1.5:
+                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=5)
+             else:
+                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+         else:
+             cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+         cbar.set_ticks(cbarlabels)
+         cbarlabels = ['%.2f' %t for t in cbarlabels]
+         cbar.set_ticklabels(cbarlabels)
+         if contours:
+             if contour_lst:
+                 cbarticks = contour_lst
+             if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
+                 CS2 = ax.contour(m_X, m_Y, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
+             cbar.add_lines(CS2)
+         cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
+     fig.set_tight_layout(True)
+     n_str = ''
+     if np.imag(sim_wguide.Eig_values[ival]) < 0:
+         k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz'% \
+             {'re_k' : np.real(sim_wguide.Eig_values[ival]*1e-9),
+             'im_k' : np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+     else:
+         k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz'% \
+             {'re_k' : np.real(sim_wguide.Eig_values[ival]*1e-9),
+             'im_k' : np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+     plt.suptitle('Mode #' + str(ival) + '   ' + k_str + '   ' + n_str, fontsize=decorator.get_font_size('title'))
+
+     if pdf_png=='png':
+         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
+             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str})
+     elif pdf_png=='pdf':
+         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
+             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str}, bbox_inches='tight')
+     if not keep_plots_open: plt.close()
+
+
+      
+
+
 
 class Mode(object):
   '''This is a base class for both EM and AC modes.''' 
-  def __init__(self, simmo, m):
+  def __init__(self, sim, m):
     self.mode_num=m
-    self.owning_sim=simmo
+    self.sim=sim
     self.fracs=[]  # fx, fy, ft, fz
     self.r0=None  # centre of mass
     self.w2=None  # second moment width
     self.r0_offset=(0.0, 0.0)
     self.extra_data={}
     self.analysed = False
+    self.interpolated = False
+    self.clear_mode_plot_data()
+
+  def _get_mode_helper(self):
+      return self.sim.get_mode_helper()
+
+  def analyse_mode(self, n_points=501, EM_field=FieldType.EM_E):
+      mh = self._get_mode_helper()
+      mh.setup_plot_grid(n_points=n_points)  # TODO: make all this cleaner. this should happen once for all modes
+      if not self.interpolated:
+
+          self.field_type=FieldType.EM_E  #REMOVE THIS REPEAT WITH plot_mode
+          if self.is_AC(): 
+             self.field_type=FieldType.AC
+          else:
+             self.field_type=EM_field
+
+          self.interpolate_mode(mh)
+      self._analyse_mode(mh.v_x, mh.v_y, 
+              self.m_ReFx, self.m_ReFy, self.m_ReFz, self.m_ImFx, self.m_ImFy, self.m_ImFz, self.m_AbsF)
+
+  def plot_mode(self, comps, EM_field=FieldType.EM_E, ax=None, 
+          n_points=501, decorator=None): #TODO get this random parameters hooked better into mode_helper.plot_params
+
+      self.field_type=FieldType.EM_E
+      if self.is_AC(): 
+          self.field_type=FieldType.AC
+      else:
+          self.field_type=EM_field
+
+      print('p_m1')
+      mh = self._get_mode_helper()
+      mh.setup_plot_grid(n_points=n_points)  # TODO: make all this cleaner. this should happen once for all modes
+
+      mh.set_plot_params() # can delete shortly
+
+      print(mh.plot_params)
+      #print('dec', mh.plot_params['decorator'])
+
+      #FIX ME
+      if decorator is None: 
+          mh.plot_params['decorator']=plotting.Decorator() # don't want to do this.
+      else:
+          mh.plot_params['decorator']=decorator
+      mh.plot_params['decorator'].set_singleplot_axes_property('axes.linewidth',.5)
+      mh.plot_params['quiver_points']=6
+
+      mh.plot_params['colorbar']=False
+      mh.plot_params['add_title']=False
+
+
+      #mh.set_plot_params()
+      print('p_m2')
+      self.interpolate_mode(mh)
+      print('p_m3')
+      self._plot_me(mh, comps, self.field_type, ax)
+      print('p_m4')
+      self.clear_mode_plot_data()
+
+  def plot_mode_H(self, comps): # plot magnetic field for EM modes
+      self.plot_mode(comps, EM_field=FieldType.EM_H)
+
+  def plot_strain(self):
+     if not self.sim.is_AC():
+         print("Doing strain in an EM sim.!")
+     print('doing strain')
+     mode_helper = self._get_mode_helper()
+     mode_helper.plot_strain_mode_i(self.mode_num)
+
+  def clear_mode_plot_data(self):
+      self.m_ReFx = None
+      self.m_ImFx = None
+      self.m_ReFy = None
+      self.m_ImFy = None
+      self.m_ReFz = None
+      self.m_ImFz = None
+      self.m_AbsF = None
+
+
+  def interpolate_mode(self, mode_helper):
+      self.interpolated = True
+      sim=self.sim
+      ival=self.mode_num
+
+      mh = mode_helper
+      
+      (self.m_ReFx, self.m_ImFx, self.m_ReFy, self.m_ImFy, 
+              self.m_ReFz, self.m_ImFz, self.m_AbsF)=mh.interpolate_mode_i(ival, self.field_type)
+
+  def _plot_me(self, mode_helper, comps, field_type, ax=None):
+      v_plots = {'Fxr':self.m_ReFx, 'Fyr':self.m_ReFy, 'Fzi':self.m_ImFz, 
+              'Fxi':self.m_ImFx, 'Fyi':self.m_ImFy, 'Fzr':self.m_ReFz, 'Fabs':self.m_AbsF}
+     
+
+      # TODO: weirdly, we only ax != None when there is one component to plot
+      if not ax is None and len(comps) !=1:
+          print('\nError: when providing an axis to plot on, must specify exactly one modal component.')
+          return
+
+      mh = mode_helper
+      decorator=mh.plot_params['decorator']
+
+      decorator._set_for_multi()
+      mh.plot_params['EM_AC']=field_type # TODO this is a kludgy way of doing this. send it through separately
+
+      if ax is None: # can't do multiplots on a provided axis (would need a provided figure)
+        plotting.plot_all_components(mh.v_x, mh.v_y, mh.m_X, mh.m_Y, v_plots, 
+          mh.plot_params, self.sim, self.mode_num) 
+
+
+      if len(comps):
+        decorator._set_for_single()
+        for comp in comps: #options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut'] 
+          cc=component_t(comp)
+          plotting.plot_one_component(mh.m_X, mh.m_Y, v_plots, mh.plot_params, self.sim, self.mode_num, cc, ax)
 
   def add_mode_data(self, d): 
     '''Adds a dictionary of user-defined information about a mode.
@@ -108,14 +592,14 @@ class Mode(object):
 
        :rtype: bool
        '''
-    return self.owning_simmo.is_EM()
+    return self.sim.is_EM()
 
   def is_AC(self):
     '''Returns true if the mode is an acoustic mode.
 
        :rtype: bool
        '''
-    return self.owning_simmo.is_AC()
+    return self.sim.is_AC()
 
   def center_of_mass(self): 
     '''Returns the centre of mass of the mode relative to the specified origin.
@@ -176,7 +660,7 @@ class Mode(object):
   '''
     self.r0_offset=(x0, y0)
 
-  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+  def _analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
     '''Perform a series of measurements on the mode *f* to determine polarisation fractions, second moment widths etc.
        
        :param array v_x: Vector of x points.
@@ -199,23 +683,25 @@ class Mode(object):
     f_z=s_fz/s_f
     self.fracs=[f_x, f_y, f_t, f_z]
     [m_x, m_y]=np.meshgrid(v_x, v_y, indexing='ij') # TODO: IS THIS RIGHT?
-# print('vs', v_x[0], v_x[1], v_x[-1], v_y[0], v_y[1], v_y[-1])
-#    print('sh', len(v_x), len(v_y), m_Refx.shape, m_x.shape)
-#    print('m_xa', m_x[0,:5])
-#    print('m_xb', m_x[:5,0])
-#    print('m_xb', m_x[-5:,0])
-#    print('m_ya', m_y[0,:5])
-#    print('m_yb', m_y[0,-5:])
-#    print('m_yc', m_y[:5,0])
+    #print('vs', v_x[0], v_x[1], v_x[-1], v_y[0], v_y[1], v_y[-1])
+    #print('sh', len(v_x), len(v_y), m_Refx.shape, m_x.shape)
+    #print('m_xa', m_x[0,:5])
+    #print('m_xb', m_x[:5,0])
+    #print('m_xb', m_x[-5:,0])
+    #print('m_ya', m_y[0,:5])
+    #print('m_yb', m_y[0,-5:])
+    #print('m_yc', m_y[:5,0])
 
 
     m_mod= m_Refx*m_Refx+m_Imfx*m_Imfx+m_Refy*m_Refy+m_Imfy*m_Imfy+m_Refz*m_Refz+m_Imfz*m_Imfz
     m_xmod= m_x * m_mod  # could do this by broadcasting without meshgrid?
-    m_ymod= m_y * m_mod
+    m_yud = np.flipud(m_y)
+    m_ymod= m_yud * m_mod   # Flipping upside down y to get sensible values for r0 position. 
+                            # Should this happen much closer to the extraction from FEM?
     x0=np.sum(np.sum(m_xmod))/s_f
     y0=np.sum(np.sum(m_ymod))/s_f
     m_x2mod= np.power((m_x-x0),2) * m_mod
-    m_y2mod= np.power((m_y-y0),2) * m_mod
+    m_y2mod= np.power((m_yud-y0),2) * m_mod
     w2x=sqrt(np.sum(np.sum(m_x2mod))/s_f)
     w2y=sqrt(np.sum(np.sum(m_y2mod))/s_f)
     w2=sqrt(w2x*w2x+w2y*w2y)
@@ -223,24 +709,23 @@ class Mode(object):
     self.r0=np.array([x0, y0])
     self.w2=np.array([w2x, w2y, w2])
 
-
 class ModeEM(Mode):
   '''Class representing a single electromagnetic (EM) mode.'''
-  def __init__(self, simmo, m):
-    super().__init__(simmo, m)
+  def __init__(self, sim, m):
+    super().__init__(sim, m)
 
   def __str__(self): 
     s='EM mode # {0}'.format(self.mode_num)
     return s
 
-  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
-    super().analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+  def _analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
 
 
 class ModeAC(Mode):
   '''Class representing a single acoustic (AC) mode.'''
-  def __init__(self, simmo, m):
-    super().__init__(simmo, m)
+  def __init__(self, sim, m):
+    super().__init__(sim, m)
 
     self.gain={}  # { (EM_p_i, EM_s_j): gain}
     self.gain_PE={}
@@ -250,11 +735,12 @@ class ModeAC(Mode):
     s='AC mode # {0}'.format(self.mode_num)
     return s
 
-  def analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
-    super().analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+  def _analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
 
+    
 
-class Simmo(object):
+class Simulation(object):
     '''Class for calculating the electromagnetic and/or acoustic modes of a ``Struct`` object.
     '''
 
@@ -266,7 +752,7 @@ class Simmo(object):
            For electromagnetic problems, the tool solves for the effective index or wavenumber at a given wavelength.
            For acoustic problems, the tool solves for the acoustic frequency at a given wavenumber.
 
-             :param Simmo structure: The waveguide structure to be solved.
+             :param Simulation structure: The waveguide structure to be solved.
              :param int num_modes: The number of modes to be found.
              :param float wl_nm: For electromagnetic problems, the vacuum wavelength in nanometers.
              :param float n_eff: For electromagnetic problems, an estimated effective index to begin the eigenvalue search.
@@ -278,6 +764,9 @@ class Simmo(object):
           '''
 
         self.structure = structure
+        self.mode_plot_helper = None
+        self.sim_type = SimType.EM
+
         self.wl_m = wl_nm*1e-9
         self.n_eff = n_eff
         self.shift_Hz = shift_Hz
@@ -304,7 +793,6 @@ class Simmo(object):
         self.AC_mode_power = None
 
         self.debug = debug
-        self.EM_AC = 'EM'
         self.sym_reps = None
         self.point_group = PointGroup.Unknown
         self.Q_method = QAcMethod.NotSet
@@ -313,6 +801,7 @@ class Simmo(object):
         self.ac_Qmech = None   # acoustic mechanical Q [dimless]
 
         self.mode_set=[]
+        self.r0_offset = [0, 0] # passed to modes when created 
 
         # Takes list of all material refractive indices
         # Discards any that are zero
@@ -341,16 +830,47 @@ class Simmo(object):
 
 
 
+    def get_xyshift(self):
+        if self.is_EM():
+            return self.structure.shift_em_x, self.structure.shift_em_y
+        else:
+            return self.structure.shift_ac_x, self.structure.shift_ac_y
 
+    def clean_for_save(self):
+        if self.mode_plot_helper is not None:
+            self.mode_plot_helper.cleanup()
+
+    def save_simulation(self, prefix): 
+        self.clean_for_save()
+
+        # Acoustic sims can contain EM sims which must also be clean for saving
+        if self.EM_sim is not None: self.EM_sim.clean_for_save() 
+
+        np.savez(prefix, simulation = self)  
+
+    @staticmethod
+    def load_simulation(prefix): 
+        npzfile = np.load(prefix+'.npz', allow_pickle=True)
+        return npzfile['simulation'].tolist()
+
+    def get_mode_helper(self):
+        if self.mode_plot_helper is None:
+          self.mode_plot_helper=ModePlotHelper(self)
+
+        return self.mode_plot_helper
 
     def is_EM(self): 
       '''Returns true if the solver is setup for an electromagnetic problem.'''
-      return self.EM_AC == 'EM'
+      return self.sim_type == SimType.EM
 
     def is_AC(self): 
       '''Returns true if the solver is setup for an acoustic problem.'''
-      return self.EM_AC != 'EM'
+      return self.sim_type == SimType.AC
     
+    def analyse_modes(self, n_points=501):
+        modes = self.get_modes()
+        for m in modes: m.analyse_mode(n_points=n_points)
+
     def get_modes(self):
       '''Returns an array of class `Mode` containing the solved electromagnetic or acoustic modes.
          
@@ -362,11 +882,13 @@ class Simmo(object):
             mode=ModeEM(self, m)
           else:
             mode=ModeAC(self, m)
+          mode.set_r0_offset(self.r0_offset[0], self.r0_offset[1])  # awkward and specific to do this here, but might have already been set in the Simulation object befores modes are created
           self.mode_set.append(mode)
         
       return self.mode_set
 
     def set_r0_offset(self, rx, ry): # this is clumsy and only works if called after modes have been calced.
+      self.r0_offset = [rx, ry]
       for m in self.get_modes(): m.set_r0_offset(rx, ry)
 
     def symmetry_classification(self, m):
@@ -404,7 +926,7 @@ class Simmo(object):
          '''
       if not self.ngroup_EM_available():
         print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
-               Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simmo''')
+               Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simulation''')
         return 0
       vg= np.real(self.EM_mode_power[m]/self.EM_mode_energy[m])
       ng=VacCSpeed/vg
@@ -481,7 +1003,7 @@ class Simmo(object):
       assert(self.is_AC())
       return self.Eig_values
 
-    def Omega_AC_all(self, m): 
+    def Omega_AC_all(self): 
       ''' Return an array of the angular frequency in 1/s of all acoustic modes.
 
          :return: numpy array of angular frequencies in 1/s
@@ -583,7 +1105,7 @@ class Simmo(object):
       else:
         print("unknown symmetry properties in mode_calcs")
 
-    def calc_acoustic_losses(self, fixed_Q=None): # TODO: make sure this is not done more than once on the same Simmo
+    def calc_acoustic_losses(self, fixed_Q=None): # TODO: make sure this is not done more than once on the same Simulation
       alpha = None
       if fixed_Q is None: 
         self.Q_method=QAcMethod.Intrinsic
@@ -635,7 +1157,7 @@ class Simmo(object):
     def calc_EM_modes(self):
         """ Run a Fortran FEM calculation to find the optical modes.
 
-        Returns a ``Simmo`` object that has these key values:
+        Returns a ``Simulation`` object that has these key values:
 
         Eig_values: a 1d array of Eigenvalues (propagation constants) in [1/m]
 
@@ -644,7 +1166,7 @@ class Simmo(object):
         EM_mode_power: the power in the optical modes. Note this power is negative for modes travelling in the negative
                        z-direction, eg the Stokes wave in backward SBS.
         """
-        self.EM_AC = 'EM'
+        self.sim_type = SimType.EM
 
         tstruc=self.structure
         self.d_in_m = tstruc.unitcell_x*1e-9
@@ -676,7 +1198,7 @@ class Simmo(object):
         with open(tstruc.mesh_file) as f: # read in first line giving number of msh points and elements
             self.n_msh_pts, self.n_msh_el = [int(i) for i in f.readline().split()]
 
-        print('Structure has {0} mesh points and {1} mesh elements'.format(self.n_msh_pts, self.n_msh_el))
+        print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
 
         # Size of Fortran's complex superarray (scales with mesh)
         int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
@@ -720,7 +1242,7 @@ class Simmo(object):
 
 ### Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         try:
-            print("Calculating EM mode powers...")
+            print("  Calculating EM mode powers...")
             nnodes = 6
             if tstruc.inc_shape in tstruc.linear_element_shapes:
             ## Integration using analytically evaluated basis function integrals. Fast.
@@ -808,7 +1330,7 @@ class Simmo(object):
     def calc_AC_modes(self):
         """ Run a Fortran FEM calculation to find the acoustic modes.
 
-        Returns a ``Simmo`` object that has these key values:
+        Returns a ``Simulation`` object that has these key values:
 
         Eig_values: a 1d array of Eigenvalues (frequencies) in [1/s]
 
@@ -817,7 +1339,7 @@ class Simmo(object):
 
         AC_mode_energy: the elastic power in the acoutic modes.
         """
-        self.EM_AC = 'AC'
+        self.sim_type = SimType.AC
 
         self.d_in_m = self.structure.inc_a_x*1e-9
 
@@ -984,6 +1506,8 @@ class Simmo(object):
         # Size of Fortran's complex superarray (scales with mesh)
         int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
 
+        print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
+
         try:
             resm = NumBAT.calc_ac_modes(
                 self.k_AC, self.num_modes,
@@ -1079,7 +1603,7 @@ def bkwd_Stokes_modes(EM_sim):
     """ Defines the backward travelling Stokes waves as the conjugate
         of the forward travelling pump waves.
 
-    Returns a ``Simmo`` object that has these key values:
+    Returns a ``Simulation`` object that has these key values:
 
     Eig_values: a 1d array of Eigenvalues (propagation constants) in [1/m]
 
@@ -1101,7 +1625,7 @@ def fwd_Stokes_modes(EM_sim):
     """ Defines the forward travelling Stokes waves as a copy
         of the forward travelling pump waves.
 
-    Returns a ``Simmo`` object that has these key values:
+    Returns a ``Simulation`` object that has these key values:
 
     """
     Stokes_modes = copy.deepcopy(EM_sim)

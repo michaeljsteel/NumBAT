@@ -21,7 +21,7 @@ import os
 import subprocess
 import numpy as np
 import materials
-from mode_calcs import Simmo
+from mode_calcs import Simulation
 from fortran import NumBAT
 
 
@@ -171,6 +171,10 @@ class Struct(object):
                  plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0,
                  plot_field_conc=False):
 
+        self.shift_em_x = 0  # user requested offsets to coord-system
+        self.shift_em_y = 0
+        self.shift_ac_x = 0  # user requested offsets to coord-system
+        self.shift_ac_y = 0
 
         if material_bkg is None: material_bkg=materials.get_material('Vacuum')
         if material_a is None: material_a=materials.get_material('Vacuum')
@@ -442,6 +446,15 @@ class Struct(object):
         self.curvilinear_element_shapes = ['circular', 'onion', 'onion2', 'onion3']
 
 
+    def set_xyshift_em(self, x, y):
+        # Sets shift in grid from user perspective in nm
+        self.shift_em_x = x*1e-9
+        self.shift_em_y = y*1e-9
+
+    def set_xyshift_ac(self, x, y):
+        self.shift_ac_x = x*1e-9
+        self.shift_ac_y = y*1e-9
+
     def make_mesh(self):
         """ Take the parameters specified in python and make a Gmsh FEM mesh.
             Creates a .geo and .msh file, then uses Fortran conv_gmsh routine
@@ -455,9 +468,9 @@ class Struct(object):
 
         if self.inc_shape in ['circular', 'rectangular']:
             if self.slab_b_x is not None:
-                raise ValueError("NumBAT doesn't understand your geometry.")
+                raise ValueError("NumBAT doesn't understand your geometry: with shape {0}, I did not expect values for slab_b.".format(self.inc_shape))
             elif self.slab_a_x is not None:
-                raise ValueError("NumBAT doesn't understand your geometry.")
+                raise ValueError("NumBAT doesn't understand your geometry: with shape {0}, I did not expect values for slab_a.".format(self.inc_shape))
             elif self.inc_a_x is not None:
                 if self.coat_y is None and self.inc_b_x is None:
                     msh_template = '1'
@@ -805,21 +818,19 @@ class Struct(object):
             Args:
                 num_modes  (int): Number of EM modes to solve for.
 
-                wl_nm  (float): Wavelength of EM wave in vacuum.
+                wl_nm  (float): Wavelength of EM wave in vacuum in nanometres.
 
                 n_eff  (float): Guesstimated effective index of
                     fundamental mode, will be origin of FEM search.
 
             Returns:
-                ``Simmo`` object
+                ``Simulation`` object
         """
-#simmo = Simmo(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug)
-        simmo = Simmo(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug, **args)
+        sim = Simulation(self, num_modes=num_modes, wl_nm=wl_nm, n_eff=n_eff, Stokes=Stokes, debug=debug, **args)
 
-        print("Calculating EM modes")
-#simmo.calc_EM_modes(**args)
-        simmo.calc_EM_modes()
-        return simmo
+        print("Calculating EM modes:")
+        sim.calc_EM_modes()
+        return sim
 
 
     def calc_AC_modes(self, num_modes, k_AC,
@@ -837,22 +848,21 @@ class Struct(object):
                     an educated guess if shift_Hz=None.
                     (Technically the shift and invert parameter).
 
-                EM_sim  (``Simmo`` object): Typically an acoustic
+                EM_sim  (``Simulation`` object): Typically an acoustic
                     simulation follows on from an optical one.
-                    Supply the EM ``Simmo`` object so the AC FEM mesh
+                    Supply the EM ``Simulation`` object so the AC FEM mesh
                     can be constructed from this.
                     This is done by removing vacuum regions.
 
             Returns:
-                ``Simmo`` object
+                ``Simulation`` object
         """
-#simmo_AC = Simmo(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug)
-        simmo_AC = Simmo(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
 
-#simmo_AC.calc_AC_modes(**args)
+        sim = Simulation(self, num_modes=num_modes, k_AC=k_AC, shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
+
         print("\n\nCalculating AC modes")
 
-        simmo_AC.calc_AC_modes()
-        return simmo_AC
+        sim.calc_AC_modes()
+        return sim
 
 
