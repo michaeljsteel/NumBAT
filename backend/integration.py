@@ -59,11 +59,11 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
   
 
         Args:
-            sim_EM_pump  (``Simmo`` object): Contains all info on pump EM modes
+            sim_EM_pump  (``Simulation`` object): Contains all info on pump EM modes
 
-            sim_EM_Stokes  (``Simmo`` object): Contains all info on Stokes EM modes
+            sim_EM_Stokes  (``Simulation`` object): Contains all info on Stokes EM modes
 
-            sim_AC  (``Simmo`` object): Contains all info on AC modes
+            sim_AC  (``Simulation`` object): Contains all info on AC modes
 
             k_AC  (float): Propagation constant of acoustic modes.
 
@@ -240,7 +240,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
     except KeyboardInterrupt:
         print("\n\n Routine photoelastic_int interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time (sec.)", (end - start))
+    print("     time = {0:2f} sec.".format(end - start))
 
 
     # Calc Q_moving_boundary Eq. 41
@@ -261,7 +261,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
     except KeyboardInterrupt:
         print("\n\n Routine moving_boundary interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time (sec.)", (end - start))
+    print("     time = {0:2f} sec.".format(end - start))
     print("-----------------------------------------------")
 
     Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?

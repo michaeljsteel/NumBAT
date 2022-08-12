@@ -38,9 +38,11 @@ from fortran import NumBAT
 
 keep_plots_open=False  # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 
+#TODO: make this some kind of global numbat setting and get it out of the startup space
 try: 
-    plt.style.use('NumBATstyle')
-except (ValueError, IOError, AttributeError): print("Preferred matplotlib style file not found.")
+    plt.style.use('NumBATstyle')  # Will load from ~/.config/matplotlib/NumBATstyle.mplstyle if found
+except (ValueError, IOError, AttributeError): 
+    print("Preferred NumBAT matplotlib style file not found. Using matplotlib defaults.")
 mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
 
@@ -102,14 +104,15 @@ class Decorator(object):
     return fs
 
   def get_axes_property(self, lab):
-    prop=''
-    try:
-      prop=self._get_axes_prop()[lab]
-    except:
-      print('Warning: unknown axes property label "{0}" in Decorator::get_axes_property()'.format(lab))
-      print (self._get_axes_prop())
-      sys.exit(1)
-    return prop
+    return self._get_axes_prop().get(lab, None)
+    #prop=''
+    #try:
+    #  prop=self._get_axes_prop()[lab]
+    #except:
+    #  print('Warning: unknown axes property label "{0}" in Decorator::get_axes_property()'.format(lab))
+    #  print (self._get_axes_prop())
+    #  sys.exit(1)
+    #return prop
 
   def is_single_plot(self): 
     '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
@@ -149,72 +152,6 @@ Plancks_h      = 6.62607015e-34     # Planck's constant in Js (exact)
 speed_c        = 299792458          # Speed of light in vacuum in m/s (exact)
 charge_e       = 1.602176634e-19    # Charge of an electron in C (exact)
 ###############################################################################
-
-class component_t(object):
-  @staticmethod
-  def Ecomp(c): return component_t('E'+c)
-
-  @staticmethod
-  def Hcomp(c): return component_t('H'+c)
-
-  @staticmethod
-  def ucomp(c): return component_t('u'+c)
-
-  @staticmethod
-  def make_comp(emac, fc): 
-    if emac=='EM_E': 
-      uc = { 'Fxr':'Ex', 'Fxi':'Ex', 'Fyr':'Ey', 'Fyi':'Ey', 'Fzr':'Ez', 'Fzi':'Ez', 'Fabs':'Eabs', 'Ft':'Et'}[fc]
-    elif emac=='EM_H': 
-      uc = { 'Fxr':'Hx', 'Fxi':'Hx', 'Fyr':'Hy', 'Fyi':'Hy', 'Fzr':'Hz', 'Fzi':'Hz', 'Fabs':'Habs', 'Ft':'Ht'}[fc]
-    else:
-      uc = { 'Fxr':'ux', 'Fxi':'ux', 'Fyr':'uy', 'Fyi':'uy', 'Fzr':'uz', 'Fzi':'uz', 'Fabs':'uabs', 'Ft':'ut'}[fc]
-    cc= component_t(uc)
-    cc._f_code=fc
-    return cc
-
-  def __init__(self, uc): #must be an Ex, Ey style, not an EM_AC,Fxr style
-    self._user_code=uc
-    self._E=uc[0] # E, H, or u
-    self._Ei=uc[:2] # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
-    self._xyz=uc[1] # x, y, z, a, t
-    self._Eimaj=self.reim_major(self._Ei)
-    self._Eimin=self.reim_minor(self._Ei)
-
-    #default real/imag given the _E value                          
-    self._f_code= {'Ex':'Fxr', 'Ey':'Fyr', 'Ez':'Fzi', 'Eabs':'Fabs', 'Et':'Ft',
-                'Hx':'Fxr', 'Hy':'Fyr', 'Hz':'Fzi', 'Habs':'Fabs', 'Ht':'Ft',
-                'ux':'Fxr', 'uy':'Fyr', 'uz':'Fzi', 'uabs':'Fabs','ut':'Ft',
-                   }[self._user_code]
-
-
-  def get_label(self):
-    c=self._E
-    lab= { 'Fx':r'Re($E_x$)', 'Fy':r'Re($E_y$)', 'Fz':r'Im($E_z$)', 'Fxr':r'Re($E_x$)',
-              'Fyr':r'Re($E_y$)', 'Fzi':r'Im($E_z$)', 'Fxi':r'Im($E_x$)', 'Fyi':r'Im($E_y$)', 'Fzr':r'Re($E_z$)',
-              'Fabs':r'$|E|$', 'Ft':r'$(E_x, E_y)$'}[self._f_code]
-    return lab.replace('E', c)
-
-  def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
-  def is_transverse(self): return self._user_code.endswith('t')
-  def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
-
-
-  def reim_major(self, fi): 
-    try:
-      return { 'Ex':'Exr', 'Ey':'Eyr', 'Ez':'Ezi', 'Ea':'Ea',
-             'Hx':'Hxr', 'Hy':'Hyr', 'Hz':'Hzi', 'Ha':'Ha',
-             'ux':'uxr', 'uy':'uyr', 'uz':'uzi', 'ua':'ua' }[fi]
-    except KeyError:
-      return fi
-
-  def reim_minor(self, fi): 
-    try:
-      return { 'Ex':'Exi', 'Ey':'Eyi', 'Ez':'Ezr', 'Ea':None,
-             'Hx':'Hxi', 'Hy':'Hyi', 'Hz':'Hyr', 'Ha':None,
-             'ux':'uxi', 'uy':'uyi', 'uz':'uyr', 'ua':None }[fi]
-    except KeyError:
-      return None
-
 
 
 #### Short utility functions ##################################################
@@ -502,6 +439,7 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
   act_zhi=0
 
   field_final=field.T
+  if cc.is_abs(): field_final=np.abs(field_final)**2  # TODO: cleanup: plot |u| as |u|^2
 
   # if the data is all noise, just plot zeros
   if np.max(np.abs(field[~np.isnan(field)])) < plot_threshold: 
@@ -515,8 +453,8 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
     act_zlo=req_zlo
     act_zhi=req_zhi
   else: 
-    zlo=np.nanmin(field)
-    zhi=np.nanmax(field)
+    zlo=np.nanmin(field_final)
+    zhi=np.nanmax(field_final)
     act_zlo=zlo
     act_zhi=zhi
     if signed: # ensure that zero values get mapped to the right part of the colormap
@@ -535,16 +473,19 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
 #TODO: Clean this up!
 #im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
     if req_lims:
-      im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
+      im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
     else:
       if signed:
-        im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=-vma, vmax=vma)
+        im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=-vma, vmax=vma)
       else:
-        im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=0, vmax=vma)
+        im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=0, vmax=vma)
 
-  axes = plt.gca()
-  xmin, xmax = axes.get_xlim()
-  ymin, ymax = axes.get_ylim()
+  #axes = plt.gca()
+  #xmin, xmax = axes.get_xlim()
+  #ymin, ymax = axes.get_ylim()
+  xmin, xmax = ax.get_xlim()
+  ymin, ymax = ax.get_ylim()
+
   width_x = xmax-xmin
   width_y = ymax-ymin
   
@@ -554,8 +495,8 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
       ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
 
   if plps['ticks']:
-    plt.xticks()
-    plt.yticks()
+    #plt.xticks()  # DELETE ME
+    #plt.yticks()  # DELETE ME
     ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
     ax.xaxis.set_tick_params(width=1.0)
     ax.yaxis.set_tick_params(width=1.0)
@@ -563,11 +504,18 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
     ax.set_ylabel('$y$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
     ax.grid(False)
   else:
-    plt.xticks([])
-    plt.yticks([])
+    #plt.xticks([])  # DELETE ME
+    #plt.yticks([])  # DELETE ME
+    ax.set_xticks([])
+    ax.set_yticks([])
 
-  plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
-  plt.title(comp_label,fontsize=decorator.get_font_size('subplot_title'))
+  if decorator.get_axes_property('axes.linewidth') is not None: 
+      plt.setp(ax.spines.values(), linewidth=decorator.get_axes_property('axes.linewidth'))
+  
+  if plps.get('add_title', True):
+      plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
+      plt.title(comp_label,fontsize=decorator.get_font_size('subplot_title'))
+      #self.set_plot_params() (Must be in wrong place!)
 
 
   # colorbar
@@ -590,14 +538,15 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
     if plps['contour_lst']:
         if docbar: cbarticks = plps['contour_lst']
     if np.max(np.abs(field[~np.isnan(field)])) > plot_threshold:
-        CS2 = ax.contour(m_X, m_Y, field.T, levels=cbarticks, colors=mycolors[::-1], linewidths=(1.5,))
+        CS2 = ax.contour(m_X, m_Y, field.T, levels=cbarticks, 
+                colors=mycolors[::-1], linewidths=(1.5,))
         if docbar: cbar.add_lines(CS2)
 
   if decorator!=None: decorator.extra_axes_commands(ax)
 
 def plot_filename(plps, ival, label=None):
   filestart='%(pre)sfields/%(s)s_field_%(i)i%(add)s' % {'pre' : plps['prefix_str'], 
-          's' : plps['EM_AC'], 'i' : ival, 'add' : plps['suffix_str']}
+          's' : plps['EM_AC'].name, 'i' : ival, 'add' : plps['suffix_str']}
   if label!=None: filestart+='_'+label
  
   if plps['pdf_png']=='png': fig_filename=filestart+'.png'
@@ -611,8 +560,9 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
 
   quiver_points=20
   xlmi, xlma, ylmi, ylma= plps['xlim_min'], plps['xlim_max'], plps['ylim_min'], plps['ylim_max']
-  n_pts_x=plps['n_pts_x']
-  n_pts_y=plps['n_pts_y']
+  n_pts_y, n_pts_x = m_X.shape
+  #n_pts_x=plps['n_pts_x']
+  #n_pts_y=plps['n_pts_y']
   quiver_points=plps['quiver_points']
 
   if xlmi is None: xlmi=0
@@ -644,22 +594,25 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
 # Ignore all imaginary values. If there are significant imag values, 
 # then instaneous vector plots don't make much sense anyway
   m_arrcolour= np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q)
-  plt.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, m_arrcolour,
+  ax.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, m_arrcolour,
       linewidths=(0.2,), edgecolors=('k'), pivot='mid', headlength=5) # length of the arrows
 
   ax.set_aspect('equal')
   ax.set_xlim(v_x_q_um[0,0],v_x_q_um[-1,0]) # this step is needed because quiver doesn't seem
   ax.set_ylim(v_y_q_um[0,0],v_y_q_um[0,-1]) # to use its input x and y vectors to set range limits
                                             # clean this up so as to avoid seemingly circular calls following
-  axes = plt.gca()
-  xmin, xmax = axes.get_xlim()
-  ymin, ymax = axes.get_ylim()
+  #axes = plt.gca()
+  #xmin, xmax = axes.get_xlim()
+  #ymin, ymax = axes.get_ylim()
+  xmin, xmax = ax.get_xlim()
+  ymin, ymax = ax.get_ylim()
+
   width_x = xmax-xmin
   width_y = ymax-ymin
 
   if plps['ticks']:
-    plt.xticks()
-    plt.yticks()
+    #plt.xticks()
+    #plt.yticks()
     ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
     ax.xaxis.set_tick_params(width=1.0)
     ax.yaxis.set_tick_params(width=1.0)
@@ -667,8 +620,10 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
     ax.set_ylabel('$y$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
     ax.grid(False)
   else:
-    plt.xticks([])
-    plt.yticks([])
+    #plt.xticks([])  # DELETE ME
+    #plt.yticks([])  # DELETE ME
+    ax.set_xticks([])
+    ax.set_yticks([])
 
 #return
   if plps['xlim_min'] != None:
@@ -676,12 +631,15 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
   if plps['ylim_min'] != None:
       ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
 
-  plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
-
-
-  plt.title(cc.get_label(), fontsize=decorator.get_font_size('subplot_title'))
+  if plps.get('add_title', True):
+      plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
+      plt.title(cc.get_label(), fontsize=decorator.get_font_size('subplot_title'))
 
   decorator = plps['decorator']
+
+  if decorator.get_axes_property('axes.linewidth') is not None: 
+      plt.setp(ax.spines.values(), linewidth=decorator.get_axes_property('axes.linewidth'))
+      
   if decorator!=None: decorator.extra_axes_commands(ax)
 
 def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data summary
@@ -691,7 +649,7 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
      v_fields['Fzr'], v_fields['Fxi'], v_fields['Fyi'], v_fields['Fzi'], v_fields['Fabs'] ]
   tms=sim_wguide.get_modes()
   modeobj=sim_wguide.get_modes()[ival]
-  modeobj.analyse_mode(v_x, v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
+  modeobj._analyse_mode(v_x, v_y, m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE)
 
   yhi=.99  # try and make these ranges match those of the physical domain?
   dy=.10
@@ -712,16 +670,17 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
   r=yhi-dy
   x0=.05
   ax.text(x0-.05,r,r'Mode properties: m={0}'.format(ival), transform=ax.transAxes, fontsize=fs+2); r-=dy
-  if sim_wguide.EM_AC=='EM':
-    ax.text(x0,r,r'$\omega/(2\pi)$: {0:.4f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1e12)), transform=ax.transAxes, fontsize=fs); r-=dy
-    ax.text(x0,r,r'$k$: {0:.2f} m$^{{-1}}$'.format(sim_wguide.kz_EM(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
+  if sim_wguide.is_EM():
+    ax.text(x0,r,r'$\omega/(2\pi)$: {0:.5f} THz'.format(sim_wguide.omega_EM/(2*np.pi*1.e12)), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$k$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$'.format(sim_wguide.kz_EM(ival)/1.e6), transform=ax.transAxes, fontsize=fs); r-=dy
     if sim_wguide.ngroup_EM_available():
       ax.text(x0,r,r'$\bar{{n}}$: {0:.6f}, $n_g$: {1:.6f}'.format(sim_wguide.neff(ival), sim_wguide.ngroup_EM(ival)), transform=ax.transAxes, fontsize=fs); r-=dy  # TODO: 
     else:
       ax.text(x0,r,r'$\bar{{n}}$: {0:.6f}'.format(sim_wguide.neff(ival)), transform=ax.transAxes, fontsize=fs); r-=dy  
   else:
-    ax.text(x0,r,r'$q$: {0:.4e} m$^{{-1}}$, $\lambda:$ {1:.4f} $\mu$m'.format(sim_wguide.k_AC, 2*np.pi/sim_wguide.k_AC*1e6), transform=ax.transAxes, fontsize=fs); r-=dy
-    ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.4f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$q$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$, $\lambda:$ {1:.5f} $\mu$m'.format(sim_wguide.k_AC/1.e6, 2*np.pi/sim_wguide.k_AC*1e6), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$q/2\pi$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$'.format(sim_wguide.k_AC/(2.e6*np.pi)), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.5f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), transform=ax.transAxes, fontsize=fs); r-=dy
     if sim_wguide.vgroup_AC_available():
       ax.text(x0,r,r'$v_p$: {0:.2f} m/s, $v_g$: {1:.2f} m/s'.format( sim_wguide.vp_AC(ival), sim_wguide.vg_AC(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
     else:
@@ -733,7 +692,7 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
   sc = sim_wguide.symmetry_classification(ival)
   if len(sc): ax.text(x0,r,r'Sym: {0}'.format(sc), transform=ax.transAxes, fontsize=fs); r-=dy
 
-  if sim_wguide.EM_AC=='AC' and sim_wguide.Q_method != QAcMethod.NotSet:
+  if sim_wguide.is_EM() and sim_wguide.Q_method != QAcMethod.NotSet:
       if sim_wguide.Q_method==QAcMethod.Intrinsic:
         ax.text(x0,r,'Losses (intrinsic):', transform=ax.transAxes, fontsize=fs); r-=dy
       else:
@@ -744,6 +703,7 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
            sim_wguide.alpha_s_AC(ival)/100.,
            sim_wguide.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
            ), transform=ax.transAxes, fontsize=fs); r-=dy
+
       ax.text(x0+.1,r,r'$Q_m$: {0:.2f}'.format(sim_wguide.Qmech_AC(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
       ax.text(x0+.1,r,r'$\Delta\Omega/(2\pi)$: {0:.4f} MHz'.format(1.e-6*sim_wguide.linewidth_AC(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
       mg_pe=plps['modal_gain'].get('PE',0)
@@ -760,7 +720,7 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
 
 
 
-def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, suppress_imimre, EM_AC):
+def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
   decorator = plps['decorator']
   figsz=decorator.get_axes_property('figsize')
   ws=decorator.get_axes_property('subplots_wspace')
@@ -768,6 +728,7 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, sup
   lw=decorator.get_axes_property('linewidth')
   ec=decorator.get_axes_property('edgecolor')
 
+  EM_AC=plps['EM_AC']
   plt.clf()
   fig = plt.figure(figsize=figsz)
   fig.subplots_adjust(wspace=ws, hspace=hs)
@@ -775,20 +736,20 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, sup
   plt.rc('axes', edgecolor=ec)
 
   rows=3
-  if suppress_imimre: rows=2
+  if plps['suppress_imimre']: rows=2
 
   axi=1
   ax = plt.subplot(rows,3,axi)
   plot_mode_data(ax, v_plots, plps, sim_wguide, ival, v_x, v_y)  # mode data summary
   axi+=1
 
-  cc={ 'EM_E':component_t('Eabs'), 'EM_H':component_t('Habs'), 'AC':component_t('uabs')}[EM_AC]
+  cc={ FieldType.EM_E:component_t('Eabs'), FieldType.EM_H:component_t('Habs'), FieldType.AC:component_t('uabs')}[EM_AC]
 
   ax = plt.subplot(rows,3,axi)
   plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the intensity plot
   axi+=1
 
-  cc={ 'EM_E':component_t('Et'), 'EM_H':component_t('Ht'), 'AC':component_t('ut')}[EM_AC]
+  cc={FieldType.EM_E:component_t('Et'), FieldType.EM_H:component_t('Ht'), FieldType.AC:component_t('ut')}[EM_AC]
   ax = plt.subplot(rows,3,axi)
   plot_one_component_quiver(ax, m_X, m_Y, v_plots, plps, cc)  # the transverse vector plot
   axi+=1
@@ -796,7 +757,7 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, sup
   for (flab, field) in v_plots.items():
      cc=component_t.make_comp(EM_AC, flab)
 
-     if suppress_imimre and not cc.is_dominant() :  continue 
+     if plps['suppress_imimre'] and not cc.is_dominant() :  continue 
      if not cc.is_signed_field():continue
      ax = plt.subplot(rows,3,axi)
      plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the scalar plots
@@ -809,9 +770,9 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival, sup
   if not keep_plots_open: plt.close()
 
 
-  if plps['EM_AC']=='AC' and plps['stress_fields']:
+  if False and plps['EM_AC']==FieldType.AC and plps['stress_fields']:
      ### Interpolate onto rectangular Cartesian grid
-     xy = list(zip(v_x6p, v_y6p))
+     xy = list(zip(v_x6p, v_y6p))  # TODO: connect mgrid with meshgrid picture above
      grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x*1j, y_min:y_max:n_pts_y*1j]
      m_ReEx = interpolate.griddata(xy, v_Ex6p.real, (grid_x, grid_y), method='linear')
      m_ReEy = interpolate.griddata(xy, v_Ey6p.real, (grid_x, grid_y), method='linear')
@@ -918,23 +879,31 @@ def save_figure(plt, figfile):
   else: plt.savefig(figfile, bbox_inches='tight')
 
 
-def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc):
-  plt.clf()
-  fig = plt.figure(figsize=(12,10))
+def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc, axis=None):
 
   decorator = plps['decorator']
-  plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
-  plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
 
-  ax = plt.subplot(111)
+  if axis is None:
+      plt.clf()  # TODO: surely this is not needed
+      fig = plt.figure(figsize=(12,10))
+  
+      plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
+      plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
+  
+      ax = plt.subplot(111)
+  else:
+      ax=axis
+
+
   if cc.is_transverse():
     plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc)
   else: 
     plot_one_component_axes(ax, m_X, m_Y, v_fields, plps, cc)
 
-  figfile=plot_filename(plps, ival, cc._user_code)
-  save_figure(plt, figfile)
-  if not keep_plots_open: plt.close()
+  if axis is None: # If user passed in the axis, they can look after saving.
+      figfile=plot_filename(plps, ival, cc._user_code)
+      save_figure(plt, figfile)
+      if not keep_plots_open: plt.close()
 
 
 #deprecated spelling.
@@ -947,6 +916,8 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50,
                   modal_gains_PE=None,
                   modal_gains_MB=None,
                   modal_gains=None):
+
+  print('Warning: "plt_mode_fields" is deprcated, use "plot_mode_fields"')
   plot_mode_fields(sim_wguide, ivals, n_points, quiver_points, 
                   xlim_min, xlim_max, ylim_min, ylim_max,
                   EM_AC, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png, 
@@ -956,7 +927,8 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50,
 #### Standard plotting of spectra #############################################
 def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30, 
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
-                  EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
+                  EM_AC='EM_E', 
+                  num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
                   prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
                   suppress_imimre=True, 
@@ -1000,155 +972,73 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
             modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
     """
+    
 
-
-    if EM_AC != 'EM_E' and EM_AC != 'EM_H' and EM_AC != 'AC':
+    if sim_wguide.is_AC():
+        EM_AC=FieldType.AC
+    else:
+      try:
+        EM_AC=FieldType.from_str(EM_AC)  # TODO:ugly that this changes from string to enum
+      except:
         raise ValueError("EM_AC must be either 'AC', 'EM_E' or 'EM_H'.")
 
-#if EM_AC == 'AC': sim_wguide.calc_acoustic_losses()
+    # Do this elsewhere by function on Mode
 
     # Calculate the magnetic field from the electric field
-    if EM_AC == 'EM_H':
+    # Move this into plot_mode_H
+    if EM_AC == FieldType.EM_H:
         nnodes = 6
         sim_wguide.sol1_H = NumBAT.h_mode_field_ez(sim_wguide.k_0, sim_wguide.num_modes, 
             sim_wguide.n_msh_el, sim_wguide.n_msh_pts, nnodes, sim_wguide.table_nod, 
             sim_wguide.x_arr, sim_wguide.Eig_values, sim_wguide.sol1)
 
 
-    plt.clf()
-
-    # field mapping
-    x_tmp = []
-    y_tmp = []
-    for i in np.arange(sim_wguide.n_msh_pts):
-        x_tmp.append(sim_wguide.x_arr[0,i])
-        y_tmp.append(sim_wguide.x_arr[1,i])
-    x_min = np.min(x_tmp); x_max=np.max(x_tmp)
-    y_min = np.min(y_tmp); y_max=np.max(y_tmp)
-    area = abs((x_max-x_min)*(y_max-y_min))
-    n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
-    n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
-
-    v_x=np.linspace(x_min,x_max,n_pts_x)
-    v_y=np.linspace(y_min,y_max,n_pts_y)
-
-    m_X, m_Y = np.meshgrid(v_x, v_y)
-
-    # unrolling data for the interpolators
-    table_nod = sim_wguide.table_nod.T
-    x_arr = sim_wguide.x_arr.T
-
+    # assemble desired list of eigenmodes to plot
     if ivals:
         ival_range = ivals
     else:
         ival_range = range(len(sim_wguide.Eig_values))
 
-    for ival in ival_range:
-        # dense triangulation with multiple points
-        v_x6p = np.zeros(6*sim_wguide.n_msh_el)
-        v_y6p = np.zeros(6*sim_wguide.n_msh_el)
-        v_Ex6p = np.zeros(6*sim_wguide.n_msh_el, dtype=np.complex128)
-        v_Ey6p = np.zeros(6*sim_wguide.n_msh_el, dtype=np.complex128)
-        v_Ez6p = np.zeros(6*sim_wguide.n_msh_el, dtype=np.complex128)
-        v_triang6p = []
-
-        i = 0
-        for i_el in np.arange(sim_wguide.n_msh_el):
-            # triangles
-            idx = np.arange(6*i_el, 6*(i_el+1))
-            triangles = [[idx[0], idx[3], idx[5]],
-                         [idx[1], idx[4], idx[3]],
-                         [idx[2], idx[5], idx[4]],
-                         [idx[3], idx[4], idx[5]]]
-            v_triang6p.extend(triangles)
-
-            for i_node in np.arange(6):
-                # index for the coordinates
-                i_ex = table_nod[i_el, i_node]-1
-                # values
-                v_x6p[i] = x_arr[i_ex, 0]
-                v_y6p[i] = x_arr[i_ex, 1]
-
-                if EM_AC == 'EM_E' or EM_AC == 'AC' :
-                    v_Ex6p[i] = sim_wguide.sol1[0,i_node,ival,i_el]
-                    v_Ey6p[i] = sim_wguide.sol1[1,i_node,ival,i_el]
-                    v_Ez6p[i] = sim_wguide.sol1[2,i_node,ival,i_el]
-                if EM_AC == 'EM_H':
-                    v_Ex6p[i] = sim_wguide.sol1_H[0,i_node,ival,i_el]
-                    v_Ey6p[i] = sim_wguide.sol1_H[1,i_node,ival,i_el]
-                    v_Ez6p[i] = sim_wguide.sol1_H[2,i_node,ival,i_el]
-                i += 1
-
-        v_E6p = np.sqrt(np.abs(v_Ex6p)**2 + np.abs(v_Ey6p)**2 + np.abs(v_Ez6p)**2)
-
-        ### Interpolate onto triangular grid - honest to FEM elements
-        # dense triangulation with unique points
-        v_triang1p = []
-        for i_el in np.arange(sim_wguide.n_msh_el):
-            # triangles
-            triangles = [[table_nod[i_el,0]-1,table_nod[i_el,3]-1,table_nod[i_el,5]-1],
-                         [table_nod[i_el,1]-1,table_nod[i_el,4]-1,table_nod[i_el,3]-1],
-                         [table_nod[i_el,2]-1,table_nod[i_el,5]-1,table_nod[i_el,4]-1],
-                         [table_nod[i_el,3]-1,table_nod[i_el,4]-1,table_nod[i_el,5]-1]]
-            v_triang1p.extend(triangles)
-
-        # triangulations
-        triang6p = matplotlib.tri.Triangulation(v_x6p,v_y6p,v_triang6p)
-        triang1p = matplotlib.tri.Triangulation(x_arr[:,0],x_arr[:,1],v_triang1p)
-        
-        #fields are called Ex, Ey, etc regardless of whether we are plotting E, H, or u/S
+    mode_helper=sim_wguide.get_mode_helper()
+    mode_helper.setup_plot_grid(n_points=n_points)  # TODO: this option is now on its own. Should it be in plot-params?
+            #xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max)
 
 
-        # building interpolators: triang1p for the finder, triang6p for the values
-        #TODO: could be more efficient only interpolating the fields which are ultimately to be used?
-        v_x_flat=m_X.flatten('F')  # There might be a cleaner way of doing this
-        v_y_flat=m_Y.flatten('F')
-        finder = matplotlib.tri.TrapezoidMapTriFinder(triang1p)
-        interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
-             triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(n_pts_x,n_pts_y)
+    if decorator == None: decorator = Decorator()
 
-        # interpolated fields.  Always need these ones.
-        m_ReEx=interper_f(v_Ex6p.real)
-        m_ReEy=interper_f(v_Ey6p.real)
-        m_ImEz=interper_f(v_Ez6p.imag)
-        m_AbsE=interper_f(v_E6p)
-
-        # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
-        m_ImEx=interper_f(v_Ex6p.imag)
-        m_ImEy=interper_f(v_Ey6p.imag)
-        m_ReEz=interper_f(v_Ez6p.real)
-
-        v_plots = {'Fxr':m_ReEx, 'Fyr':m_ReEy, 'Fzi':m_ImEz, 'Fxi':m_ImEx, 'Fyi':m_ImEy, 'Fzr':m_ReEz, 'Fabs':m_AbsE}
-
-        if decorator == None: decorator = Decorator()
-
-        modal_gain={}
-        if modal_gains is not None: modal_gain['Tot']=modal_gains[ival]
-        if modal_gains_PE is not None: modal_gain['PE']=modal_gains_PE[ival]
-        if modal_gains_MB is not None: modal_gain['MB']=modal_gains_MB[ival]
+    #TODO: what is this for?
+    modal_gain={}
+    if modal_gains is not None: modal_gain['Tot']=modal_gains[ival]
+    if modal_gains_PE is not None: modal_gain['PE']=modal_gains_PE[ival]
+    if modal_gains_MB is not None: modal_gain['MB']=modal_gains_MB[ival]
 
 
-        plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
-                     'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
-                      'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
-                      'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
-                      'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
-       'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 'quiver_points': quiver_points }
+#    plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
+#                 'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
+#                  'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
+#                  'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
+#                  'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
+#                  'suppress_imimre':suppress_imimre,
+#              # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 
+#               'quiver_points': quiver_points }
+#
+    mode_helper.set_plot_params(xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
+                  EM_AC='EM_E', 
+                  quiver_points = quiver_points,
+                  num_ticks=num_ticks, colorbar=colorbar, contours=contours, contour_lst=contour_lst,
+                  pdf_png=pdf_png,
+                  prefix_str=prefix_str, suffix_str=suffix_str, ticks=ticks, #comps=comps, 
+                  decorator=decorator, 
+                  suppress_imimre=suppress_imimre
+    ) 
+                  #modal_gains_PE=modal_gains_PE, #purpose, can these go elsewhere?
+                  #modal_gains_MB=modal_gains_MB,
+                  #modal_gains=modal_gains)
 
-        #TODO: should test that xlim_min + xlim_max < 1 so as some picture survies (and there is no flip)
-        #TODO: should test that ylim_min + ylim_max < 1 so as some picture survies (and there is no flip)
+    v_modes = sim_wguide.get_modes()
 
-        if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
-
-        decorator._set_for_multi()
-        plot_all_components(v_x, v_y, m_X, m_Y, v_plots, 
-            plot_params, sim_wguide, ival, suppress_imimre, EM_AC)
-
-
-        decorator._set_for_single()
-        for comp in comps: #options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut'] 
-          cc=component_t(comp)
-          plot_one_component(m_X, m_Y, v_plots, plot_params, sim_wguide, ival, cc)
+    for ival in ival_range: 
+        v_modes[ival].plot_mode(comps, EM_AC)
 
 
 
