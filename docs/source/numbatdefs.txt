@@ -1,0 +1,12 @@
+
+.. .. only:: latex
+
+.. |NUMBAT| replace:: NumBAT
+.. |GMSH| replace:: Gmsh
+
+.. .. only:: html
+
+  .. |NUMBATB| replace:: <font face="sans-serif">NumBAT</font>
+  .. |GMSHB| replace:: <font face="sans-serif">Gmsh</font>
+
+
