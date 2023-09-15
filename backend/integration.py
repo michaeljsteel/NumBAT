@@ -31,7 +31,7 @@ import plotting
 from fortran import NumBAT
 
 
-def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
+def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 EM_ival_pump=0, EM_ival_Stokes=0, AC_ival=0, fixed_Q=None, typ_select_out=None):
     r""" Calculate interaction integrals and SBS gain.
 
@@ -65,7 +65,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 
             sim_AC  (``Simulation`` object): Contains all info on AC modes
 
-            k_AC  (float): Propagation constant of acoustic modes.
+            q_AC  (float): Propagation constant of acoustic modes.
 
         Keyword Args:
             EM_ival_pump  (int/string): Specify mode number of EM mode 1 (pump mode)
@@ -150,16 +150,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
                 for ival in range(num_modes_EM_Stokes):
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.sol1[x,n,ival,new_el]
 
-    # sim_EM_pump.sol1 = trimmed_EM_pump_field
-    # sim_EM_pump.n_msh_el = sim_AC.n_msh_el
-    # sim_EM_pump.n_msh_pts = sim_AC.n_msh_pts
-    # sim_EM_pump.type_el = sim_AC.type_el
-    # sim_EM_pump.table_nod = sim_AC.table_nod
-    # sim_EM_pump.x_arr = sim_AC.x_arr
-    # plotting.plt_mode_fields(sim_EM_pump, EM_AC='EM', prefix_str='int_test-', suffix_str='trim')
-
     relevant_eps_effs =[]
-    for el_typ in range(sim_EM_pump.structure.nb_typ_el):
+    for el_typ in range(sim_EM_pump.structure.n_typ_el):
         if el_typ+1 in sim_AC.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
 
@@ -175,8 +167,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 #                alpha = NumBAT.ac_alpha_int_v2(sim_AC.num_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-#                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
-#                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
+#                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.eta_tensor,
+#                    q_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
 #            else:
@@ -186,14 +178,14 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 #                alpha = NumBAT.ac_alpha_int(sim_AC.num_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-#                    sim_AC.structure.nb_typ_el_AC, sim_AC.structure.eta_tensor,
-#                    k_AC, sim_AC.Omega_AC, sim_AC.sol1,
+#                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.eta_tensor,
+#                    q_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
 #        except KeyboardInterrupt:
 #            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
 #        alpha = np.real(alpha)
-#        # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+#        # Q_factors = 0.5*(q_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
 #        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
 #        end = time.time()
 #        print("     time (sec.)", (end - start))
@@ -201,10 +193,10 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
 #        print("remove me Qs", Q_factors)
 #    else:
 #        # factor of a 1/2 because alpha is for power!
-#        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
+#        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
 #        # alpha [1/s] = vg * alpha [1/m]
 #        # alpha [1/s] = Omega_AC/(2*fixed_Q)
-#        # alpha = 0.5*(k_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+#        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
 #        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
 #        Q_factors = fixed_Q*np.ones(num_modes_AC)
 #        print("fixed q:", alpha, Q_factors)
@@ -222,8 +214,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
                 EM_ival_Stokes_fortran, AC_ival_fortran, sim_AC.n_msh_el,
                 sim_AC.n_msh_pts, nnodes,
                 sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-                sim_AC.structure.nb_typ_el_AC, sim_AC.structure.p_tensor,
-                k_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
+                sim_AC.structure.n_typ_el_AC, sim_AC.structure.p_tensor,
+                q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
                 relevant_eps_effs, Fortran_debug)
         else:
             if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
@@ -234,13 +226,13 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
                 EM_ival_Stokes_fortran, AC_ival_fortran, sim_AC.n_msh_el,
                 sim_AC.n_msh_pts, nnodes,
                 sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
-                sim_AC.structure.nb_typ_el_AC, sim_AC.structure.p_tensor,
-                k_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
+                sim_AC.structure.n_typ_el_AC, sim_AC.structure.p_tensor,
+                q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
                 relevant_eps_effs, Fortran_debug)
     except KeyboardInterrupt:
         print("\n\n Routine photoelastic_int interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time = {0:2f} sec.".format(end - start))
+    print("     time = {0:.2f} sec.".format(end - start))
 
 
     # Calc Q_moving_boundary Eq. 41
@@ -255,13 +247,13 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
             AC_ival_fortran, sim_AC.n_msh_el,
             sim_AC.n_msh_pts, nnodes, sim_AC.table_nod, 
             sim_AC.type_el, sim_AC.x_arr,
-            sim_AC.structure.nb_typ_el_AC, typ_select_in, typ_select_out,
+            sim_AC.structure.n_typ_el_AC, typ_select_in, typ_select_out,
             trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
             relevant_eps_effs, Fortran_debug)
     except KeyboardInterrupt:
         print("\n\n Routine moving_boundary interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time = {0:2f} sec.".format(end - start))
+    print("     time = {0:.2f} sec.".format(end - start))
     print("-----------------------------------------------")
 
     Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?
@@ -505,7 +497,7 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
     return sym_list
 
 
-def grad_u(dx, dy, u_mat, k_AC):
+def grad_u(dx, dy, u_mat, q_AC):
     """ Take the gradient of field as well as of conjugate of field.
     """
 
@@ -518,18 +510,18 @@ def grad_u(dx, dy, u_mat, k_AC):
     del_y_uy = np.gradient(m_uy, dy, axis=1)
     del_x_uz = np.gradient(m_uz, dx, axis=0)
     del_y_uz = np.gradient(m_uz, dy, axis=1)
-    del_z_ux = 1j*k_AC*m_ux
-    del_z_uy = 1j*k_AC*m_uy
-    del_z_uz = 1j*k_AC*m_uz
+    del_z_ux = 1j*q_AC*m_ux
+    del_z_uy = 1j*q_AC*m_uy
+    del_z_uz = 1j*q_AC*m_uz
     del_x_ux_star = np.gradient(np.conj(m_ux), dx, axis=0)
     del_y_ux_star = np.gradient(np.conj(m_ux), dy, axis=1)
     del_x_uy_star = np.gradient(np.conj(m_uy), dx, axis=0)
     del_y_uy_star = np.gradient(np.conj(m_uy), dy, axis=1)
     del_x_uz_star = np.gradient(np.conj(m_uz), dx, axis=0)
     del_y_uz_star = np.gradient(np.conj(m_uz), dy, axis=1)
-    del_z_ux_star = -1j*k_AC*np.conj(m_ux)
-    del_z_uy_star = -1j*k_AC*np.conj(m_uy)
-    del_z_uz_star = -1j*k_AC*np.conj(m_uz)
+    del_z_ux_star = -1j*q_AC*np.conj(m_ux)
+    del_z_uy_star = -1j*q_AC*np.conj(m_uy)
+    del_z_uz_star = -1j*q_AC*np.conj(m_uz)
 
     del_u_mat = np.array([[del_x_ux, del_x_uy, del_x_uz], [del_y_ux, del_y_uy, del_y_uz], [del_z_ux, del_z_uy, del_z_uz]])
     del_u_mat_star = np.array([[del_x_ux_star, del_x_uy_star, del_x_uz_star], [del_y_ux_star, del_y_uy_star, del_y_uz_star], [del_z_ux_star, del_z_uy_star, del_z_uz_star]])
@@ -571,7 +563,7 @@ def comsol_fields(data_file, n_points, ival=0):
     return x_coord, y_coord, field_mat
 
 
-def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, n_points,
+def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
               EM_ival_pump=0, EM_ival_Stokes=0, AC_ival=0):
     """ Interpolate fields from FEM mesh to square grid.
     """
@@ -701,7 +693,7 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, n_points,
 
     dx = grid_x[-1,0] - grid_x[-2,0]
     dy = grid_y[0,-1] - grid_y[0,-2]
-    del_u_mat, del_u_mat_star = grad_u(dx, dy, u_mat, k_AC)
+    del_u_mat, del_u_mat_star = grad_u(dx, dy, u_mat, q_AC)
 
     m_Ren = interpolate.griddata(xy, v_n.real, (grid_x, grid_y), method='cubic')
     m_Imn = interpolate.griddata(xy, v_n.imag, (grid_x, grid_y), method='cubic')
@@ -772,7 +764,7 @@ def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
     return energy_py, alpha_py, Q_PE_py
 
 
-def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, comsol_data_file, comsol_ivals=1):
+def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, comsol_ivals=1):
     """ Calculate interaction integrals and SBS gain in python.
         Load in acoustic mode displacement and calculate gain from this also.
     """
@@ -786,7 +778,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, comsol_data_file, coms
     n_points_comsol_data = 100
 
     # relevant_eps_effs =[]
-    # for el_typ in range(sim_EM_pump.structure.nb_typ_el):
+    # for el_typ in range(sim_EM_pump.structure.n_typ_el):
     #     if el_typ+1 in sim_AC.typ_el_AC:
     #         relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
 
@@ -800,7 +792,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, comsol_data_file, coms
     for AC_ival in range(comsol_ivals): # Comsol data only contains some AC modes
         # Interpolate NumBAT FEM fields onto grid
         n_pts_x, n_pts_y, dx, dy, E_mat_p, E_mat_S, u_mat, del_u_mat, del_u_mat_star, m_n = interp_py_fields(
-            sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
+            sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
             n_points, EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
         # Carry out integration
@@ -812,7 +804,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, comsol_data_file, coms
         x_coord, y_coord, u_mat_comsol = comsol_fields(comsol_data_file, n_points_comsol_data, ival=AC_ival)
         dx_comsol = x_coord[-1,0] - x_coord[-2,0]
         dy_comsol = y_coord[0,-1] - y_coord[0,-2]
-        del_u_mat_comsol, del_u_mat_star_comsol = grad_u(dx, dy, u_mat_comsol, k_AC)
+        del_u_mat_comsol, del_u_mat_star_comsol = grad_u(dx, dy, u_mat_comsol, q_AC)
 
         # Carry out integration
         n_pts_x_comsol = n_points_comsol_data
