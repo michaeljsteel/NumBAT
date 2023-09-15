@@ -1,0 +1,5 @@
+General.SmallAxes = 0;
+
+Print "tmp.png";
+Exit;
+

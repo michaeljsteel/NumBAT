@@ -18,6 +18,13 @@
 
 from enum import Enum, IntEnum, auto
 
+#### Natural constants ########################################################
+ASTM15_tot_I   = 900.084            # Integral ASTM 1.5 solar irradiance W/m**2
+Plancks_h      = 6.62607015e-34     # Planck's constant in Js (exact)
+speed_c        = 299792458          # Speed of light in vacuum in m/s (exact)
+charge_e       = 1.602176634e-19    # Charge of an electron in C (exact)
+###############################################################################
+
 class SimType(Enum):
   EM = 'EM'
   AC = 'AC'
@@ -105,7 +112,7 @@ class component_t(object):
     c=self._E
     lab= { 'Fx':r'Re($E_x$)', 'Fy':r'Re($E_y$)', 'Fz':r'Im($E_z$)', 'Fxr':r'Re($E_x$)',
               'Fyr':r'Re($E_y$)', 'Fzi':r'Im($E_z$)', 'Fxi':r'Im($E_x$)', 'Fyi':r'Im($E_y$)', 'Fzr':r'Re($E_z$)',
-              'Fabs':r'$|E|^2$', 'Ft':r'$(E_x, E_y)$'}[self._f_code]  #adjusted so that Fabs gives |F|^2
+              'Fabs':r'$|\vec E|^2$', 'Ft':r'$\vec E_t$'}[self._f_code]  #adjusted so that Fabs gives |F|^2
     return lab.replace('E', c)
 
   def is_abs(self): return self._f_code == 'Fabs'

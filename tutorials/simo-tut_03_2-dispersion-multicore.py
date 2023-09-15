@@ -1,5 +1,5 @@
 """ Calculate a dispersion diagram of the acoustic modes
-    from k_AC ~ 0 (forward SBS) to k_AC = 2*k_EM (backward SBS).
+    from q_AC ~ 0 (forward SBS) to q_AC = 2*k_EM (backward SBS).
     Use python's (embarrassing parallel) multiprocessing package.
 """
 
@@ -8,9 +8,11 @@ import datetime
 import numpy as np
 import sys
 import matplotlib
-matplotlib.use('pdf')
 import matplotlib.pyplot as plt
-from multiprocessing import Pool
+from multiprocessing import Pool 
+import threading
+import os
+
 
 sys.path.append("../backend/")
 import materials
@@ -19,13 +21,14 @@ import mode_calcs
 import integration
 import plotting
 from fortran import NumBAT
+import starter
 
 
 start = time.time()
 
 # Geometric Parameters - all in nm.
-wl_nm = 1550
-unitcell_x = 3.0*wl_nm
+lambda_nm = 1550
+unitcell_x = 3.0*lambda_nm
 unitcell_y = unitcell_x
 inc_a_x = 800.
 inc_a_y = 220.
@@ -38,93 +41,103 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-if len(sys.argv)>1 and sys.argv[1]=='fast=1':  # choose between faster or more accurate calculation
-  prefix_str = 'ftut_03-2-'
-  refine_fac=1
-  print('\n\nCommencing NumBAT tutorial 3b - fast mode')
-else:
-  prefix_str = 'tut_03-2-'
-  refine_fac=5
-  print('\n\nCommencing NumBAT tutorial 3b')
+prefix, refine_fac = starter.read_args(3, sys.argv, 'b')
 
 # Note that this mesh is quite fine, may not be required if purely using dispersive sims
-wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.get_material("Vacuum"),
-                        material_a=materials.get_material("Si_2016_Smith"),
-                        lc_bkg=1, lc_refine_1=120.0*refine_fac, lc_refine_2=60.0*refine_fac)
+wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+                        material_bkg=materials.make_material("Vacuum"),
+                        material_a=materials.make_material("Si_2016_Smith"),
+                        lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
 
+#wguide.check_mesh()
 # Estimated effective index of fundamental guided mode.
-n_eff = wguide.material_a.n-0.1
+n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Calculate Electromagnetic modes.
-sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
+sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-# Will scan from forward to backward SBS so need to know k_AC of backward SBS.
-k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+# Will scan from forward to backward SBS so need to know q_AC of backward SBS.
+q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 # Rather than calculating with a loop we can use pool to do a multi core sim
-def ac_mode_freqs(k_ac):
-    print('Commencing mode calculation for k_ac = %f'% k_ac)
+def solve_ac_mode_freqs(qset):
+    ik, nk, q_AC = qset
+    thread_nm = threading.current_thread().name
+    print('PID: %d, Thread %s: commencing mode calculation for q_AC %d/%d = %f /m'% (
+        os.getpid(), thread_nm, ik+1, nk, q_AC))
 
     # Calculate the modes, grab the output frequencies only and convert to GHz
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, k_ac, EM_sim=sim_EM_pump)
-    prop_AC_modes = np.array([np.real(x) for nu in sim_AC.nu_AC_all() if abs(np.real(nu)) > abs(np.imag(nu))])
-    mode_freqs = prop_AC_modes*1.e-9  # convert to GHz
+    #wguide.set_threadsafe()
+    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+
+    print('PID: %d, Thread %s got ac modes for q_AC = %f'% (
+        os.getpid(), thread_nm, q_AC))
+
+    prop_AC_modes = np.array([np.real(nu) for nu in sim_AC.nu_AC_all() if abs(np.real(nu)) > abs(np.imag(nu))])
+    mode_freqs = np.real(sim_AC.nu_AC_all()) *1.e-9  # convert to GHz
+
     # Clear memory
     sim_AC = None
 
-    print('Completed mode calculation for width a_x = %f'% k_ac)
+    print('PID: %d, Thread %s: completed mode calculation for width a_x = %f'%(
+        os.getpid(), thread_nm, q_AC))
 
-    # Return the frequencies and simulated k_ac value in a list
+    # Return the frequencies and simulated q_AC value in a list
     return mode_freqs
 
 
 # Now we utilise multi-core calculations to perform parallel simulations and speed up the simulation
-test_name = 'dispersion_multicore'
-nu_ks = 5  # start with a low number of k_ac values to get an idea
-acoustic_ks = np.linspace(5., k_AC*1.1, nu_ks)
+n_qs = 50  # start with a low number of q_AC values to get an idea of the scale of the problem
+acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 
-num_cores = 5  # should be appropriate for individual machine/vm, and memory!
-pool = Pool(num_cores)
-pooled_mode_freqs = pool.map(ac_mode_freqs, acoustic_ks)
+# Output the normalisation k value for reference
+print("The acoustic wavevector 2*kp = %f" % q_AC)
+
+multithread = True
+#multithread = False
+
+qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
+
+if multithread:
+    num_cores = os.cpu_count()  # Let OS decide how many processes to run
+    pool = Pool(num_cores)
+    pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 # Note pool.map() doesn't pass errors back from fortran routines very well.
 # It's good practise to run the extrema of your simulation range through map()
-# before launcing full multicore simulation.
+# before launching full multicore simulation.
+else:
+    pooled_mode_freqs = []
+    for ik, nk, nu_k in qsets:
+        pooled_mode_freqs.append(solve_ac_mode_freqs((ik, nk, nu_k)))
 
 # We will pack the above values into a single array for plotting purposes, initialise first
-freq_arr = np.empty((nu_ks, num_modes_AC))
+freq_arr = np.empty((n_qs, num_modes_AC))
 for i_w, sim_freqs in enumerate(pooled_mode_freqs):
     # Set the value to the values in the frequency array
     freq_arr[i_w] = sim_freqs
 
 # Now that we have packed will save to a numpy file for better plotting and reference
-file_name = 'freq_array_200'
-np.save(file_name, freq_arr)
-np.save(file_name+'_qs', acoustic_ks)  # and the q values
+file_name = prefix+'-disp'
+mat=np.transpose([acoustic_qs, freq_arr])  # arrange the data as two columns of wavenumber and frequency
+np.savetxt(file_name, mat)
 
 # Also plot a figure for reference
 plot_range = num_modes_AC
-plt.clf()
-plt.figure(figsize=(10,6))
-ax = plt.subplot(1,1,1)
+fig, ax = plt.subplots()
 for idx in range(plot_range):
     # slicing in the row direction for plotting purposes
     freq_slice = freq_arr[:, idx]
-    plt.plot(acoustic_ks/k_AC, freq_slice, 'r')
+    ax.plot(acoustic_qs/q_AC, freq_slice, 'b.')
 
 # Set the limits and plot axis labels
-ax.set_ylim(0,35)
+ax.set_ylim(0,20)
 ax.set_xlim(0,1.1)
-plt.xlabel(r'Axial wavevector (normalised)')
-plt.ylabel(r'Frequency (GHz)')
-plt.savefig(prefix_str+test_name+'.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+test_name+'.png', bbox_inches='tight')
-plt.close()
+ax.set_xlabel(r'Normalised acoustic wavenumber $q/(2\beta)$')
+ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')
+fig.savefig(prefix+'-dispersion_multicore.png', bbox_inches='tight')
 
-# Output the normalisation k value for reference
-print("The 2kp is: %f" % k_AC)
 
 end = time.time()
-print("\n Simulation time (sec.)", (end - start))
+print("\nSimulation time: {0:10.3f} secs.\n\n".format(end - start))
 

@@ -29,32 +29,34 @@ lc_refine_3 = lc/1; // coat
 
 hy = dy/2 + (slab_h/2) + radius1y; // 
 hx = 0.;
+x0 = -d/2;
+y0 = hy-slab_h;
 
 
-Point(1) = {0, 0, 0, lc};
-Point(2) = {-hx, -dy, 0, lc};
-Point(3) = {-hx+d, -dy, 0, lc};
-Point(4) = {d, 0, 0,lc};
+Point(1) = {x0, y0, 0, lc};
+Point(2) = {x0-hx, y0-dy, 0, lc};
+Point(3) = {x0-hx+d, y0-dy, 0, lc};
+Point(4) = {x0+d, y0, 0,lc};
 
 // Slab
-Point(5) = {d/2-slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(6) = {d/2+slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(13) = {d/2-slab_w/2, -hy, 0, lc_refine_2};
-Point(14) = {d/2+slab_w/2, -hy, 0, lc_refine_2};
+Point(5) = {x0+d/2-slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
+Point(6) = {x0+d/2+slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
+Point(13) = {x0+d/2-slab_w/2,y0 -hy, 0, lc_refine_2};
+Point(14) = {x0+d/2+slab_w/2, y0-hy, 0, lc_refine_2};
 
 // Rib
-Point(7) = {-hx+d/2-radius1, -hy+slab_h, 0, lc_refine_1};
-Point(8) = {-hx+d/2+radius1, -hy+slab_h, 0, lc_refine_1};
-Point(9) = {-hx+d/2-radius1, -hy+2*radius1y+slab_h, 0, lc_refine_1};
-Point(10) = {-hx+d/2+radius1, -hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(7) = {x0-hx+d/2-radius1, y0-hy+slab_h, 0, lc_refine_1};
+Point(8) = {x0-hx+d/2+radius1, y0-hy+slab_h, 0, lc_refine_1};
+Point(9) = {x0-hx+d/2-radius1, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(10) = {x0-hx+d/2+radius1,y0 -hy+2*radius1y+slab_h, 0, lc_refine_1};
 
 // Coat
-Point(15) = {d/2-slab_w/2, -hy+slab_h+coat_h, 0, lc_refine_3};
-Point(16) = {d/2+slab_w/2, -hy+slab_h+coat_h, 0, lc_refine_3};
-Point(17) = {d/2-(radius1+coat_w), -hy+slab_h+coat_h, 0, lc_refine_3};
-Point(18) = {d/2+(radius1+coat_w), -hy+slab_h+coat_h, 0, lc_refine_3};
-Point(19) = {d/2-(radius1+coat_w), -hy+slab_h+coat_h+2*radius1y, 0, lc_refine_3};
-Point(20) = {d/2+(radius1+coat_w), -hy+slab_h+coat_h+2*radius1y, 0, lc_refine_3};
+Point(15) = {x0+d/2-slab_w/2, y0-hy+slab_h+coat_h, 0, lc_refine_3};
+Point(16) = {x0+d/2+slab_w/2, y0-hy+slab_h+coat_h, 0, lc_refine_3};
+Point(17) = {x0+d/2-(radius1+coat_w), y0-hy+slab_h+coat_h, 0, lc_refine_3};
+Point(18) = {x0+d/2+(radius1+coat_w), y0-hy+slab_h+coat_h, 0, lc_refine_3};
+Point(19) = {x0+d/2-(radius1+coat_w), y0-hy+slab_h+coat_h+2*radius1y, 0, lc_refine_3};
+Point(20) = {x0+d/2+(radius1+coat_w), y0-hy+slab_h+coat_h+2*radius1y, 0, lc_refine_3};
 
 Line(1) = {1, 2};
 Line(2) = {2, 3};

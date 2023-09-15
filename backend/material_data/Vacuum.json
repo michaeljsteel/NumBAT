@@ -1,5 +1,5 @@
  {
-  "file_name": "Air",  // Name of this file, will be used as identifier
+  "file_name": "Vacuum",  // Name of this file, will be used as identifier
   "chemical": "Vacuum",  // Chemical composition
   "author": "N/A",  // Author of data
   "date": "N/A",  // Year of data publication/creation
@@ -7,7 +7,7 @@
   "doi": "N/A",  // doi or, failing that, the http address
   "Re_n": 1.0,  // Real part of refractive index []
   "Im_n": 0.0,  // Imaginary part of refractive index []
-  "s": null,  // Density [kg/m3]
+  "s":    null,  // Density [kg/m3]
   "c_11": null,  // Stiffness tensor component [Pa]
   "c_12": null,  // Stiffness tensor component [Pa]
   "c_44": null,  // Stiffness tensor component [Pa]

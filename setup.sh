@@ -6,6 +6,7 @@ function makeBAT() {
   pip3 install matplotlib # safer option than apt-get'ing as will install mpl2.0 without conflicting older versions.
 ## compile Fortran routines
   cd backend/fortran/
+  export FFLAGS=-fallow-argument-mismatch  # handle stricter gfortran rules in GCC10, comment out for earlier
   make
 ## run tests
   echo ''

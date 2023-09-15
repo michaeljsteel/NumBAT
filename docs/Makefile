@@ -2,18 +2,29 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -v -v -v
 SPHINXBUILD   = sphinx-build
-SPHINXBUILD   = /usr/share/sphinx/scripts/python3/sphinx-build -v -v -v # use this if default sphinx is running python 2.7
-PAPER         =
+#SPHINXBUILD   = /usr/share/sphinx/scripts/python3/sphinx-build -v -v -v # use this if default sphinx is running python 2.7
+PAPER         = a4
+#PAPER         = letter
 BUILDDIR      = build
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+#ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(SPHINXOPTS) source
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
+
+.PHONY: mike
+mike: 
+	make clean 
+	make latexpdf
+
+.PHONY: view
+view:
+	evince build/latex/NumBAT.pdf
 
 .PHONY: help
 help:
@@ -130,6 +141,7 @@ epub3:
 .PHONY: latex
 latex:
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
+	echo $(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
@@ -224,3 +236,8 @@ dummy:
 	$(SPHINXBUILD) -b dummy $(ALLSPHINXOPTS) $(BUILDDIR)/dummy
 	@echo
 	@echo "Build finished. Dummy builder generates no files."
+
+
+.PHONY: dummy
+images:
+	make -C source/images

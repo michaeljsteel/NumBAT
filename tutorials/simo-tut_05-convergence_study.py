@@ -8,7 +8,6 @@ import datetime
 import numpy as np
 import sys
 import matplotlib
-matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
@@ -18,11 +17,12 @@ import mode_calcs
 import integration
 import plotting
 from fortran import NumBAT
+import starter
 
 
 # Geometric Parameters - all in nm.
-wl_nm = 1550
-unitcell_x = 2.5*wl_nm
+lambda_nm = 1550
+unitcell_x = 2.5*lambda_nm
 unitcell_y = unitcell_x
 inc_a_x = 300
 inc_a_y = 280
@@ -35,39 +35,43 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'tut_05-'
-print('\n\nCommencing NumBAT tutorial 5')
+prefix, refine_fac = starter.read_args(5, sys.argv)
+
 
 # Warning: The fine grids in this list will take considerable time to run!
-lc_list = [20,100,500,1000,1500,2000,2500]
+#lc_list = [20,100,500,1000,1500,2000,2500]
+lc_list = [4,20,100,200,300,400,500]
 nu_lcs = len(lc_list)
 lc_bkg_list = 1*np.ones(nu_lcs)
 x_axis = lc_list
 conv_list = []
 time_list = []
-# Do not run in parallel, otherwise there are confusions reading the msh files!
+
 for i_lc, lc_ref in enumerate(lc_list):
     start = time.time()
     print("\n Running simulation", i_lc+1, "/", nu_lcs)
     lc_refine_2 = lc_ref/2
     lc_bkg = lc_bkg_list[i_lc]
-    wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,
+    wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,
                             inc_a_y,inc_shape,
-                            material_bkg=materials.get_material("Vacuum"),
-                            material_a=materials.get_material("Si_2016_Smith"),
-                            lc_bkg=lc_bkg, lc_refine_1=lc_ref, lc_refine_2=lc_refine_2, force_mesh=True)
+                            material_bkg=materials.make_material("Vacuum"),
+                            material_a=materials.make_material("Si_2016_Smith"),
+                            lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac, lc_refine_2=lc_refine_2*refine_fac, force_mesh=True)
 
     # Expected effective index of fundamental guided mode.
-    n_eff = wguide.material_a.n-0.1
+    n_eff = wguide.get_material('a').refindex_n-0.1
+
     # Calculate Electromagnetic modes.
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
+    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-    k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+
     # Calculate Acoustic modes.
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
+    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+
     # Calculate interaction integrals and SBS gain.
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-        sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
+        sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
     conv_list.append([sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB])
@@ -77,6 +81,7 @@ for i_lc, lc_ref in enumerate(lc_list):
 # It is crucial that you preselect modes with significant gain!
 # Otherwise you will observe large relative errors similar to dividing by zero.
 rel_modes = [3,4,8,10]
+
 # If you do not know the mode numbers of the significant AC modes you may wish to simply plot them all
 # by uncommenting the line below and check if the modes with large gain have low relative errors.
 # rel_modes = np.linspace(0,num_modes_AC-1,num_modes_AC)
@@ -96,9 +101,7 @@ for i_conv, conv_obj in enumerate(conv_list):
 
 
 xlabel = "Mesh Refinement Factor"
-fig = plt.figure()
-plt.clf()
-ax1 = fig.add_subplot(1,1,1)
+fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
@@ -117,13 +120,9 @@ ax1.set_xlabel(xlabel)
 ax1.set_ylabel(r"EM k$_z$ ($\times 10^6$ 1/m)")
 ax2.set_ylabel(r"Relative Error EM k$_z$")
 ax2.set_yscale('log')#, nonposx='clip')
-plt.savefig(prefix_str+'convergence-freq_EM.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+'convergence-freq_EM.png', bbox_inches='tight')
-plt.close()
+fig.savefig(prefix+'-convergence-freq_EM.png', bbox_inches='tight')
 
-fig = plt.figure()
-plt.clf()
-ax1 = fig.add_subplot(1,1,1)
+fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
@@ -143,13 +142,9 @@ ax1.set_xlabel(xlabel)
 ax1.set_ylabel(r"AC Freq (GHz)")
 ax2.set_ylabel(r"Relative Error AC Freq")
 ax2.set_yscale('log')#, nonposx='clip')
-plt.savefig(prefix_str+'convergence-freq_AC.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+'convergence-freq_AC.png', bbox_inches='tight')
-plt.close()
+fig.savefig(prefix+'-convergence-freq_AC.png', bbox_inches='tight')
 
-fig = plt.figure()
-plt.clf()
-ax1 = fig.add_subplot(1,1,1)
+fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
@@ -169,13 +164,9 @@ ax1.set_xlabel(xlabel)
 ax1.set_ylabel(r"Gain")
 ax2.set_ylabel(r"Relative Error Gain")
 ax2.set_yscale('log')#, nonposx='clip')
-plt.savefig(prefix_str+'convergence-Gain.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+'convergence-Gain.png', bbox_inches='tight')
-plt.close()
+fig.savefig(prefix+'-convergence-gain.png', bbox_inches='tight')
 
-fig = plt.figure()
-plt.clf()
-ax1 = fig.add_subplot(1,1,1)
+fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
@@ -195,13 +186,9 @@ ax1.set_xlabel(xlabel)
 ax1.set_ylabel(r"Gain (PE)")
 ax2.set_ylabel(r"Relative Error Gain (PE)")
 ax2.set_yscale('log')#, nonposx='clip')
-plt.savefig(prefix_str+'convergence-Gain_PE.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+'convergence-Gain_PE.png', bbox_inches='tight')
-plt.close()
+fig.savefig(prefix+'-convergence-gain_PE.png', bbox_inches='tight')
 
-fig = plt.figure()
-plt.clf()
-ax1 = fig.add_subplot(1,1,1)
+fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
 ax2.yaxis.tick_left()
 ax2.yaxis.set_label_position("left")
@@ -221,8 +208,6 @@ ax1.set_xlabel(xlabel)
 ax1.set_ylabel(r"Gain (MB)")
 ax2.set_ylabel(r"Relative Error Gain (MB)")
 ax2.set_yscale('log')#, nonposx='clip')
-plt.savefig(prefix_str+'convergence-Gain_MB.pdf', bbox_inches='tight')
-plt.savefig(prefix_str+'convergence-Gain_MB.png', bbox_inches='tight')
-plt.close()
+fig.savefig(prefix+'-convergence-gain_MB.png', bbox_inches='tight')
 
-print("Calculation time", time_list)
+print("Calculation times (secs.): ", ', '.join(map(lambda x:'%.2f'%x,time_list)))

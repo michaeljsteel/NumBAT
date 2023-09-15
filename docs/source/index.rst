@@ -3,10 +3,11 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to NumBAT's documentation!
-==================================
+.. include:: numbatdefs.txt
 
-Contents:
+
+Contents
+====================================
 
 .. toctree::
    :maxdepth: 2
@@ -44,14 +45,36 @@ Basic Usage
     usage
 
 ====================================
-Examples and Tutorials
+Tutorial
 ====================================
 
 .. toctree::
-    :maxdepth: 5
+    :maxdepth: 4
 
     tutorial
 
+
+.. _chap-josab-label:
+
+====================================
+JOSA-B Tutorial Paper
+====================================
+
+.. toctree::
+    :maxdepth: 4
+
+    josab
+
+.. _chap-literature-label:
+
+====================================
+Literature Examples
+====================================
+
+.. toctree::
+    :maxdepth: 4
+
+    lit_ex
 
 .. _chap-pythonbackend-label:
 
@@ -68,7 +91,7 @@ Python Interface
 Fortran Backend
 ==================
 
-The intention of NumBAT is that the Fortran FEM routines are essentially black boxes. 
+The intention of |NUMBAT| is that the Fortran FEM routines are essentially black boxes. 
 They are called from ``mode_calcs.py`` and return the modal fields. 
 However, there are a few important things to know about the workings of these routines.
 

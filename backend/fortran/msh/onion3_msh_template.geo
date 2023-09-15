@@ -1,58 +1,64 @@
-// Template mesh geometry file for a single suspended inclusion.
-// Inclusion can be circular/elliptical (default), or square/rectangular.
+// Template mesh geometry file for a three layer concentric circle
+// structure plus surrounding background material.
 
 // Force Gmsh to use legacy msh file format v2
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-d_in_nm = 1000;
-dy_in_nm = 1000;
+d_in_nm = 2000;
+dy_in_nm = 2000;
 dy = dy_in_nm/d_in_nm;
-a1 = 20;
-a2 = 20;
-a3 = 20;
-rad1 = (a1/(2*d_in_nm))*d;
-rad2 = ((a1+a2)/(2*d_in_nm))*d;
-rad3 = ((a1+a2+a3)/(2*d_in_nm))*d;
+a1 = 100;
+a2 = 100;
+a3 = 100;
+
+a1r = a1/2; // Radius of central rod
+scale = d/d_in_nm;
+
+rad1 = a1r * scale;
+rad2 = (a1r+a2)*scale;
+rad3 = (a1r+a2+a3)*scale;
+
 lc = 0; // 0.501 0.201 0.0701;
 lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 surfaces
 
+hx = d;
 hy = dy; // Thickness: square profile => hy=d
-hx = 0.;
 
+x0 = -dy/2;
+y0 = dy/2;
 
 //Box part a 
-Point(1) = {0, 0, 0, lc};        // NW
-Point(2) = {-hx, -hy, 0, lc};    // SW
-Point(3) = {-hx+d, -hy, 0, lc};  // SE
-Point(4) = {d, 0, 0,lc};         // E
+Point(1) = {x0,    y0,    0, lc};         // NW
+Point(2) = {x0,    y0-hy, 0, lc};         // SW
+Point(3) = {x0+hx, y0-hy, 0, lc};         // SE
+Point(4) = {x0+hx, y0,    0,lc};          // NE
 
 //Box part b 
-Point(6) = {-hx+d/2, 0, 0, lc};       //N
-Point(7) = {0,-hy/2, 0, lc};          //W
-Point(8) = {-hx+d/2, -hy, 0, lc};     //S
-Point(9) = {d, -hy/2, 0, lc};         //E 
+Point(6) = {x0+hx/2, y0,      0, lc};     // N
+Point(7) = {x0,      y0-hy/2, 0, lc};     // W
+Point(8) = {x0+hx/2, y0-hy,   0, lc};     // S
+Point(9) = {x0+hx,   y0-hy/2, 0, lc};     // E 
 
 // Circle 1 vertices
-Point(10) = {-hx+d/2, -hy/2, 0, lc_refine_2};        //Center
-Point(11) = {-hx+d/2, -hy/2+rad1, 0, lc_refine_2};   //N
-Point(12) = {-hx+d/2-rad1, -hy/2, 0, lc_refine_2};   //W
-Point(13) = {-hx+d/2, -hy/2-rad1, 0, lc_refine_2};   //S
-Point(14) = {-hx+d/2+rad1, -hy/2, 0, lc_refine_2};   //E
+Point(10) = {x0+hx/2,      y0-hy/2,      0, lc_refine_2};   // Center
+Point(11) = {x0+hx/2,      y0-hy/2+rad1, 0, lc_refine_2};   // N
+Point(12) = {x0+hx/2-rad1, y0-hy/2,      0, lc_refine_2};   // W
+Point(13) = {x0+hx/2,      y0-hy/2-rad1, 0, lc_refine_2};   // S
+Point(14) = {x0+hx/2+rad1, y0-hy/2,      0, lc_refine_2};   // E
 
 //Circle 2 vertices
-Point(21) = {-hx+d/2, -hy/2+rad2, 0, lc_refine_1};  //N
-Point(22) = {-hx+d/2-rad2, -hy/2, 0, lc_refine_1};  //W  
-Point(23) = {-hx+d/2, -hy/2-rad2, 0, lc_refine_1};  //S
-Point(24) = {-hx+d/2+rad2, -hy/2, 0, lc_refine_1};  //E
+Point(21) = {x0+hx/2,      y0-hy/2+rad2, 0, lc_refine_2};   // N
+Point(22) = {x0+hx/2-rad2, y0-hy/2,      0, lc_refine_2};   // W
+Point(23) = {x0+hx/2,      y0-hy/2-rad2, 0, lc_refine_2};   // S
+Point(24) = {x0+hx/2+rad2, y0-hy/2,      0, lc_refine_2};   // E
 
 //Circle 3 vertices
-Point(31) = {-hx+d/2, -hy/2+rad3, 0, lc_refine_1};  //N
-Point(32) = {-hx+d/2-rad3, -hy/2, 0, lc_refine_1};  //W  
-Point(33) = {-hx+d/2, -hy/2-rad3, 0, lc_refine_1};  //S
-Point(34) = {-hx+d/2+rad3, -hy/2, 0, lc_refine_1};  //E
-
+Point(31) = {x0+hx/2,      y0-hy/2+rad3, 0, lc_refine_1};   // N
+Point(32) = {x0+hx/2-rad3, y0-hy/2,      0, lc_refine_1};   // W  
+Point(33) = {x0+hx/2,      y0-hy/2-rad3, 0, lc_refine_1};   // S
+Point(34) = {x0+hx/2+rad3, y0-hy/2,      0, lc_refine_1};   // E
 
 // Outer Box
 Line(1) = {1,6};  // top left

@@ -18,6 +18,7 @@
 
 
 import os
+import psutil
 import sys
 import math
 import numpy as np
@@ -29,12 +30,15 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mplcolors
+
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib import ticker
 import copy
 
+
 from nbtypes import *
 from fortran import NumBAT
+import reporting
 
 keep_plots_open=False  # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 
@@ -45,12 +49,22 @@ except (ValueError, IOError, AttributeError):
     print("Preferred NumBAT matplotlib style file not found. Using matplotlib defaults.")
 mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
+def savefig(fig, fname):
+    print('saving', fname)
+    fig.savefig(fname)
+    print('done saving')
 
-# font = {'family' : 'normal',
-#         'weight' : 'bold',
-#         'size'   : 18}
-# matplotlib.rc('font', **font)
-linesstrength = 2.5
+def plot_filename(plps, ival, label=None):
+  filestart='%(pre)s-fields/%(s)s_field_%(i)02i%(add)s' % {'pre' : plps['prefix'], 
+          's' : plps['EM_AC'].name, 'i' : ival, 'add' : plps['suffix']}
+  if label!=None: filestart+='_'+label
+ 
+  if plps['pdf_png']=='png': fig_filename=filestart+'.png'
+  elif plps['pdf_png']=='pdf': fig_filename=filestart+'.pdf'
+  else: raise ValueError("pdf_png must be either 'png' or 'pdf'.")
+
+  return fig_filename
+
 
 class Decorator(object):
 
@@ -70,6 +84,15 @@ class Decorator(object):
 
     self._is_single=True
     self._cmap_limits={}
+    self._title = ''
+    self._frame_drawer=None
+
+  def set_frame_drawer(self, fd):
+    self._frame_drawer=fd
+
+  def add_frame(self, ax):
+      if self._frame_drawer is not None: self._frame_drawer(ax)
+
 
   def _fontsizes(self):
     if self._is_single: return self._singleplot_fontsizes
@@ -135,6 +158,11 @@ class Decorator(object):
     '''Override a font size for a mutiple axes plot corresponding to the given label.'''
     self._multiplot_fontsizes[label]=sz
 
+  def set_title(self, t): self._title = t
+
+  def add_title(self, ax):
+      if len(self._title): ax.set_title(self._title)
+
   def extra_axes_commands(self, ax):
     '''Function to make additions to a standard plot.
       
@@ -146,34 +174,21 @@ class Decorator(object):
 
 
 
-#### Natural constants ########################################################
-ASTM15_tot_I   = 900.084            # Integral ASTM 1.5 solar irradiance W/m**2
-Plancks_h      = 6.62607015e-34     # Planck's constant in Js (exact)
-speed_c        = 299792458          # Speed of light in vacuum in m/s (exact)
-charge_e       = 1.602176634e-19    # Charge of an electron in C (exact)
-###############################################################################
-
-
-#### Short utility functions ##################################################
-def zeros_int_str(zero_int):
-    """ Convert integer into string with '0' in place of ' '. """
-    # if zero_int == 0:
-    #     fmt_string = '0000'
-    # else:
-    #     string = '%4.0f' % zero_int
-    #     fmt_string = string.replace(' ','0')
-    string = '%4.0f' % zero_int
-    fmt_string = string.replace(' ','0')
-    return fmt_string
-
-###############################################################################
-
-
-def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
-                EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min, freq_max, num_interp_pts=3000,
-                save_fig=True, dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
-                pdf_png='png', save_txt=False, prefix_str='', suffix_str='', decorator=None,
+def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
+                EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=0., freq_max=50e9, num_interp_pts=3000,
+                dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
+                pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                 show_gains='All'):
+    reporting.report_and_exit('The function plotting.gain_spectra() is deprecated.\n'
+                    +'Please now use plotting.plot_gain_spectra() and observe the changes in calling convention described in the Release notes.')
+
+
+
+def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+                EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=0., freq_max=50e9, num_interp_pts=3000,
+                dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
+                pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
+                show_gains='All', mark_modes_thresh=0.02):
     r""" Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
             
 
@@ -187,8 +202,6 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
             SBS_gain_MB  (array): Photoelastic gain of modes.
 
             linewidth_Hz  (array): Linewidth of each mode [Hz].
-
-            k_AC  (float): Acoustic wavevector.
 
             EM_ival_pump  (int or 'All'): Which EM pump mode(s) to consider.
 
@@ -211,198 +224,539 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
 
             semilogy  (bool): PLot y-axis on log scale.
 
-            save_fig  (bool): Save figure at all.
-
             pdf_png  (str): Save figures as 'png' or 'pdf'.
 
             save_txt  (bool): Save spectra data to txt file.
 
-            prefix_str  (str): String to be appended to start of file name.
+            prefix  (str): String to be appended to start of file name.
 
-            suffix_str  (str): String to be appended to end of file name.
+            suffix  (str): String to be appended to end of file name.
     """
+
+
+    #TODO: there are a lot of calls to ax.plot() in here to get every resonance on its
+    # own grid and matplotlib leaks badly. Do that now by just plotting the top value
+
+    #TODO: give a no plot option 'calc_gain_spectra'
+
+    #process = psutil.Process()
+    #print ('\n\n\n\nmem pgs 1', process.memory_info().rss)
+
+    pref = '%s-gain_spectra'%prefix
 
     if decorator is None: decorator = Decorator()
     decorator._set_for_single()
 
-    tune_steps = 50000
-    tune_range = 10 # GHz
+    tune_steps = 50000  # This is expensie but helps to get the peaks in most cases. 
+                        # Need to do smarter interpolation to make this number lower
+    tune_range = 10e9 # Hz
     # Construct an odd range of freqs guaranteed to include central resonance frequency.
     detuning_range = np.append(np.linspace(-1*tune_range, 0, tune_steps),
-                       np.linspace(0, tune_range, tune_steps)[1:])*1e9 # GHz
-    interp_grid = np.linspace(freq_min, freq_max, num_interp_pts)
+                       np.linspace(0, tune_range, tune_steps)[1:]) 
+    nu_grid = np.linspace(freq_min, freq_max, num_interp_pts)
+
+    nu_grid_GHz = nu_grid* 1e-9
+    nu_min_GHz=nu_grid_GHz[0]
+    nu_max_GHz=nu_grid_GHz[-1]
+    if freq_min: nu_min_GHz=freq_min * 1e-9
+    if freq_max: nu_max_GHz=freq_max * 1e-9
 
     # Linewidth of Lorentzian is half the FWHM style linewidth.
     linewidth = linewidth_Hz/2
+    num_modes = len(linewidth)
 
     # Plot decomposition of spectra into individual modes.
     interp_values = np.zeros(num_interp_pts)
-    if mode_comps and save_fig:
-        plt.figure()
-        plt.clf()  #Why is this necessary?
-    if AC_ival == 'All':
-        for AC_i in range(len(linewidth)):
-            gain_list = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,AC_i]
-                         *linewidth[AC_i]**2/(linewidth[AC_i]**2 + detuning_range**2))
-            freq_list_GHz = np.real(sim_AC.Eig_values[AC_i] + detuning_range)*1e-9
-            if mode_comps:
-                plt.plot(freq_list_GHz, np.abs(gain_list), linewidth=2)
-                if save_txt:
-                    save_array = (freq_list_GHz, gain_list)
-                    np.savetxt('gain_spectra-mode_comps%(add)s-%(mode)i.csv' 
-                                % {'add' : suffix_str, 'mode' : AC_i}, 
-                                save_array, delimiter=',')
-            # set up an interpolation for summing all the gain peaks
-            interp_spectrum = np.interp(interp_grid, freq_list_GHz, gain_list)
-            interp_values += interp_spectrum
-    else: 
-      raise NotImplementedError("Spectrum plotting for limited AC modes not implemented.")
+
+    fig, ax = plt.subplots()
+
+    lw=decorator.get_axes_property('linewidth')
+    fs=decorator.get_font_size('ax_label')
+    ts=decorator.get_font_size('ax_tick')
+
+    ivals=[]
+    if AC_ival is None or AC_ival =='All':
+        ivals = range(num_modes)
+    else:
+        try:
+            ivals = [i for i in ivals if (0 <= i < num_modes)]
+        except:
+            reporting.report_and_exit('AC_ival in gain_spectra() must be "All" or a list of mode numbers.')
+
+
+    # Total gain via sum over all modes in the vicinity of their peak
+    for m in ivals:
+        # build lorentzian centered on mode m
+        v_nu_loc = np.real(sim_AC.nu_AC(m)+ detuning_range)
+        v_gain_loc = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]
+                     *linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
+ 
+        if mode_comps:
+            ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
+            if save_txt:
+                save_array = np.array([v_nu_loc, v_gain_loc]).T
+                np.savetxt('%(pre)s-mode_comps%(add)s-%(mode)i.csv' 
+                           % {'pre':pref , 'add' : suffix, 'mode' : m}, 
+                            save_array, delimiter=',')
+        # set up an interpolation for summing all the gain peaks
+        interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
+        interp_values += interp_spectrum
 
     return_interp_values = interp_values
+    #print ('\n\n\n\nmem pgs 3', process.memory_info().rss)
+
     if mode_comps:
-        plt.plot(interp_grid, np.abs(interp_values), 'b', linewidth=3, label="Total")
-        plt.legend(loc=0)
-        if freq_min and freq_max:
-            plt.xlim(freq_min,freq_max)
-        plt.xlabel('Frequency (GHz)')
-        plt.ylabel('|Gain| (1/Wm)')
+        ax.plot(nu_grid_GHz, np.abs(interp_values), 'b', linewidth=lw, label="Total")
+        ax.legend(loc=0)
+        ax.set_xlim(nu_min_GHz,nu_max_GHz)
+        ax.set_xlabel('Frequency (GHz)',size=fs)
+        ax.set_ylabel('|Gain| (1/Wm)', size=fs)
+        ax.tick_params(labelsize=ts)
+        decorator.add_title(ax)
+        decorator.extra_axes_commands(ax)
+
+        fig.savefig('%(pre)s-mode_comps%(add)s.%(png)s' % {
+                  'pre' : pref, 'add' : suffix, 'png':pdf_png})
+
         if save_txt:
-            save_array = (interp_grid, interp_values)
-            np.savetxt('gain_spectra-mode_comps%(add)s-Total.csv' 
-                        % {'add' : suffix_str}, save_array, delimiter=',')
-
-    if mode_comps and save_fig:
-        if pdf_png=='png':
-            plt.savefig('%(pre)sgain_spectra-mode_comps%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
-        elif pdf_png=='pdf':
-            plt.savefig('%(pre)sgain_spectra-mode_comps%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        if not keep_plots_open: plt.close()
+            save_array = np.array([nu_grid, interp_values]).T
+            np.savetxt('%(pre)s-mode_comps%(add)s-Total.csv' 
+                       % {'pre': pref, 'add' : suffix}, save_array, delimiter=',')
 
 
-    interp_values = np.zeros(num_interp_pts)
+
+    interp_values_tot = np.zeros(num_interp_pts)
     interp_values_PE = np.zeros(num_interp_pts)
     interp_values_MB = np.zeros(num_interp_pts)
-    plt.figure()
-    plt.clf()
-    ax=plt.gca()
-    if AC_ival == 'All':
-        for AC_i in range(len(linewidth)):
-            gain_list = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,AC_i]
-                         *linewidth[AC_i]**2/(linewidth[AC_i]**2 + detuning_range**2))
-            freq_list_GHz = np.real(sim_AC.Eig_values[AC_i] + detuning_range)*1e-9
-            interp_spectrum = np.interp(interp_grid, freq_list_GHz, gain_list)
-            interp_values += interp_spectrum
 
-            gain_list_PE = np.real(SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,AC_i]
-                         *linewidth[AC_i]**2/(linewidth[AC_i]**2 + detuning_range**2))
-            interp_spectrum_PE = np.interp(interp_grid, freq_list_GHz, gain_list_PE)
+    #print ('\n\n\n\nmem pgs 4', process.memory_info().rss)
+    detran2 = detuning_range**2
+    show_mode_indices=mark_modes_thresh>0.0
+
+    if not show_gains in ('All', 'PE', 'MB', 'Total'): show_gains='All'
+    do_tot = show_gains in ('Total', 'All')
+    do_PE = show_gains in ('PE', 'All')
+    do_MB = show_gains in ('MB', 'All')
+
+    maxG=0 # this should be largest of the plotted gains
+    # only maximise over the freqs that will be plotted
+    mask = np.where((sim_AC.nu_AC_all() > freq_min) * (sim_AC.nu_AC_all() < freq_max), 1, 0)
+
+    gain = np.max(np.abs(np.real(mask*SBS_gain[EM_ival_pump, EM_ival_Stokes, :])))
+    gain_PE = np.max(np.abs(np.real(mask*SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :])))
+    gain_MB = np.max(np.abs(np.real(mask*SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :])))
+
+    if do_tot:
+        maxG=np.max(np.array([gain, gain_PE, gain_MB]))
+    elif do_PE:
+        maxG=gain_PE
+    else:
+        maxG=gain_MB
+
+    fig, ax = plt.subplots()
+
+    first_lab = True
+    first_lab_PE = True
+    first_lab_MB = True
+
+    #print ('nmem pgs 5', process.memory_info().rss)
+    for m in ivals:
+    #    print ('nmem pgs 5o', process.memory_info().rss)
+        nu0_m = np.real(sim_AC.nu_AC(m)) 
+
+        if not freq_min < nu0_m < freq_max: continue 
+        v_nu_loc = nu0_m + detuning_range
+
+        v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
+    #    print ('nmem pgs 5a', process.memory_info().rss)
+
+        if do_tot:
+            gain_m = abs(np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]))
+            v_gain_loc = gain_m * v_Lorentz
+            interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
+            interp_values_tot += interp_spectrum
+            #if first_lab:
+            #    vnl = v_nu_loc*1e-9
+            #    ax.plot(vnl, v_gain_loc, 'b', linewidth=lw, label='Total')
+            #    first_lab=False
+            #else:
+            #    ax.plot(vnl, v_gain_loc, 'b', linewidth=lw)
+            if gain_m> mark_modes_thresh*maxG:
+                ax.plot(nu0_m*1e-9, gain_m, 'ob')
+
+        #print ('nmem pgs 5b', process.memory_info().rss)
+ 
+        if do_PE:
+            gain_PE_m = abs(np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
+            v_gain_loc = gain_PE_m * v_Lorentz
+            interp_spectrum_PE = np.interp(nu_grid, v_nu_loc, v_gain_loc)
             interp_values_PE += interp_spectrum_PE
+            #if first_lab_PE:
+            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'r', linewidth=lw, label='PE')
+            #    first_lab_PE = False
+            #else:
+            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'r', linewidth=lw)
+            if gain_PE_m> mark_modes_thresh*maxG:
+                ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
 
-            gain_list_MB = np.real(SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,AC_i]
-                         *linewidth[AC_i]**2/(linewidth[AC_i]**2 + detuning_range**2))
-            interp_spectrum_MB = np.interp(interp_grid, freq_list_GHz, gain_list_MB)
+        #print ('nmem pgs 5c', process.memory_info().rss)
+        if do_MB: 
+            gain_MB_m = abs(np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
+            v_gain_loc = gain_MB_m * v_Lorentz 
+            interp_spectrum_MB = np.interp(nu_grid, v_nu_loc, v_gain_loc) 
             interp_values_MB += interp_spectrum_MB
-    else: raise NotImplementedError("Spectrum plotting for limited AC modes not implemented.")
-    if save_fig:
-        if not show_gains in ('All', 'PE', 'MB', 'Total'): show_gains='All'
+            #if first_lab_MB:
+            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'g', linewidth=lw, label='MB')
+            #    first_lab_MB = False
+            #else:
+            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'g', linewidth=lw)
+            if gain_MB_m> mark_modes_thresh*maxG:
+                ax.plot(nu0_m*1e-9, gain_MB_m, 'og')
 
-        lw=decorator.get_axes_property('linewidth')
-        fs=decorator.get_font_size('ax_label')
-        ts=decorator.get_font_size('ax_tick')
-
-        if show_gains in ('PE', 'All'):
-          ax.plot(interp_grid, np.abs(interp_values_PE), 'r', linewidth=lw, label='PE')
-        if show_gains in ('MB', 'All'):
-          ax.plot(interp_grid, np.abs(interp_values_MB), 'g', linewidth=lw, label='MB')
-        if show_gains in ('Total', 'All'):
-#ax.plot(interp_grid, np.abs(interp_values), 'b', linewidth=3, label='Total')
-          ax.plot(interp_grid, np.abs(interp_values), 'b', linewidth=lw)
-        ax.legend(loc=0)
-        if freq_min and freq_max:
-            ax.set_xlim(freq_min,freq_max)
-        ax.set_xlabel('Frequency (GHz)',size=decorator.get_font_size('ax_label'))
-        ax.set_ylabel('|Gain| (1/Wm)', size=decorator.get_font_size('ax_label'))
-
-        ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
-#ax.xaxis.set_tick_params(width=1.0)
-#        ax.yaxis.set_tick_params(width=1.0)
-
-        if not decorator is None:
-#ax=plt.gca()
-          decorator.extra_axes_commands(ax)
+        #print ('nmem pgs 5d', process.memory_info().rss)
+        if show_mode_indices: # mark modes with gains larger than 5% of the maximum found
+            Gm = { 'All': max(gain_m, gain_PE_m, gain_MB_m), 
+                  'Total': gain_m, 'PE': gain_PE_m, 'MB': gain_MB_m }[show_gains]
+            xloc = nu0_m*1e-9 + .01*(nu_max_GHz-nu_min_GHz)
+            if Gm> mark_modes_thresh*maxG and nu_min_GHz < xloc < nu_max_GHz: 
+                ax.text(xloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
+                        verticalalignment='top')
 
 
-        if pdf_png=='png':
-            plt.savefig('%(pre)sgain_spectra-MB_PE_comps%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
-        elif pdf_png=='pdf':
-            plt.savefig('%(pre)sgain_spectra-MB_PE_comps%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        if not keep_plots_open: plt.close()
+    #print ('\n\n\n\nmem pgs 6', process.memory_info().rss)
+    if do_PE : ax.plot(nu_grid_GHz, np.abs(interp_values_PE), 'r', linewidth=lw, label='PE')
+    if do_MB : ax.plot(nu_grid_GHz, np.abs(interp_values_MB), 'g', linewidth=lw, label='MB')
+    if do_tot: ax.plot(nu_grid_GHz, np.abs(interp_values_tot), 'b', linewidth=lw, label='Total gain')
 
+
+    ax.legend(loc=0)
+    ax.set_xlim(nu_min_GHz,nu_max_GHz)
+    ax.set_xlabel('Frequency (GHz)',size=fs)
+    ax.set_ylabel('|Gain| (1/Wm)', size=fs)
+    ax.tick_params(labelsize=ts)
+ 
+    decorator.extra_axes_commands(ax)
+    decorator.add_title(ax)
+ 
+ 
+    savefig(fig, '%(pre)s%(add)s.%(png)s' % {'pre': pref, 'add': suffix, 'png':pdf_png})
+    #print ('\n\n\n\nmem pgs 7', process.memory_info().rss)
+ 
+    plt.close(fig)
     if save_txt:
-        save_array = (interp_grid, interp_values)
-        np.savetxt('%(pre)sgain_spectra-MB_PE_comps%(add)s-Total.csv' 
-                    % {'pre' : prefix_str, 'add' : suffix_str}, 
+        save_array = np.array([nu_grid, interp_values]).T
+        np.savetxt('%(pre)s-MB_PE_comps%(add)s-Total.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
-        save_array = (interp_grid, interp_values_PE)
-        np.savetxt('%(pre)sgain_spectra-MB_PE_comps%(add)s-PE.csv' 
-                    % {'pre' : prefix_str, 'add' : suffix_str}, 
+        save_array = np.array([nu_grid, interp_values_PE]).T
+        np.savetxt('%(pre)s-MB_PE_comps%(add)s-PE.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
-        save_array = (interp_grid, interp_values_MB)
-        np.savetxt('%(pre)sgain_spectra-MB_PE_comps%(add)s-MB.csv' 
-                    % {'pre' : prefix_str, 'add' : suffix_str}, 
+        save_array = np.array([nu_grid, interp_values_MB]).T
+        np.savetxt('%(pre)s-MB_PE_comps%(add)s-MB.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
 
-    if dB:
-        plt.figure()
-        plt.clf()
+    #print ('\n\n\n\nmem pgs 8', process.memory_info().rss)
+    if dB: # TODO: add mode labels here
+        fig, ax = plt.subplots()
 
-        max_G = np.max(interp_values)
-        dB_const = dB_peak_amp/(4.34*max_G)
-        plt.plot(interp_grid, np.abs(10*np.log10(np.exp(abs(interp_values)*dB_const))), 'b', linewidth=3, label="Total")
-        plt.legend(loc=0)
-        if freq_min and freq_max:
-            plt.xlim(freq_min,freq_max)
-        plt.xlabel('Frequency (GHz)')
-        plt.ylabel('Amplification (dB)')
+        max_G = np.max(abs(interp_values))
+        Leff = math.log(10**(dB_peak_amp*.1))/max_G
+        #dB_const = dB_peak_amp/(4.34*max_G)
+        #ax.plot(nu_grid_GHz, np.abs(10*np.log10(np.exp(abs(interp_values)*dB_const))), 'b', linewidth=3, label="Total")
+        v_amp = dB_peak_amp*abs(interp_values)*Leff*math.log10(math.exp(1.0))
+        ax.plot(nu_grid_GHz, v_amp, 'b', linewidth=lw, label="Total")
+        ax.legend(loc=0)
+        ax.set_xlim(nu_min_GHz,nu_max_GHz)
+        ax.set_xlabel('Frequency (GHz)',size=fs)
+        ax.set_ylabel('Amplification (dB)', size=fs)
+        ax.tick_params(labelsize=ts)
 
-        if pdf_png=='png':
-            plt.savefig('%(pre)sgain_spectra-dB%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
-        elif pdf_png=='pdf':
-            plt.savefig('%(pre)sgain_spectra-dB%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        if not keep_plots_open: plt.close()
+        fig.savefig('%(pre)s-gain_spectra-dB%(add)s.%(png)s' % {
+                  'pre' : prefix, 'add' : suffix, 'png':pdf_png})
 
         if save_txt:
-            save_array = (interp_grid, 10*np.log10(np.exp(abs(interp_values)*dB_const)))
-            np.savetxt('%(pre)sgain_spectra-dB%(add)s.csv' 
-                        % {'pre' : prefix_str, 'add' : suffix_str}, 
+            save_array = (nu_grid, 10*np.log10(np.exp(abs(interp_values)*dB_const)))
+            np.savetxt('%(pre)s-gain_spectra-dB%(add)s.csv' 
+                        % {'pre' : prefix, 'add' : suffix}, 
                         save_array, delimiter=',')
 
-    if semilogy and save_fig:
-        plt.figure()
-        plt.clf()
-        plt.semilogy(interp_grid, abs(interp_values_PE), 'r', linewidth=3, label="PE")
-        plt.semilogy(interp_grid, abs(interp_values_MB), 'g', linewidth=3, label="MB")
-        plt.semilogy(interp_grid, abs(interp_values), 'b', linewidth=2, label="Total")
-        plt.legend(loc=0)
-        if freq_min and freq_max:
-            plt.xlim(freq_min,freq_max)
-        plt.xlabel('Frequency (GHz)')
-        plt.ylabel('|Gain| (1/Wm)')
+    if semilogy:
+        fig, ax = plt.subplots()
+        ax.semilogy(nu_grid_GHz, abs(interp_values_PE), 'r', linewidth=lw, label="PE")
+        ax.semilogy(nu_grid_GHz, abs(interp_values_MB), 'g', linewidth=lw, label="MB")
+        ax.semilogy(nu_grid_GHz, abs(interp_values), 'b', linewidth=lw, label="Total")
+        ax.legend(loc=0)
+        ax.set_xlim(nu_min_GHz,nu_max_GHz)
+        ax.set_xlabel('Frequency (GHz)',size=fs)
+        ax.set_ylabel('|Gain| (1/Wm)', size=fs)
+        ax.tick_params(labelsize=ts)
 
-        if pdf_png=='png':
-            plt.savefig('%(pre)sgain_spectra-MB_PE_comps-logy%(add)s.png' % {'pre' : prefix_str, 'add' : suffix_str})
-        elif pdf_png=='pdf':
-            plt.savefig('%(pre)sgain_spectra-MB_PE_comps-logy%(add)s.pdf' % {'pre' : prefix_str, 'add' : suffix_str})
-        if not keep_plots_open: plt.close()
+        fig.savefig('%(pre)s-gain_spectra-logy%(add)s.%(png)s' % {
+                  'pre' : prefix, 'add' : suffix, 'png':pdf_png})
+
+    #print ('\n\n\n\nmem pgs 9', process.memory_info().rss)
 
     return return_interp_values
 
-def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
+def plot_set_ticks(ax, plps, decorator):
+  if plps['ticks']:
+    ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
+    ax.xaxis.set_tick_params(width=1.0)
+    ax.yaxis.set_tick_params(width=1.0)
+    ax.set_xlabel('$x$ [μm]', size=decorator.get_font_size('ax_label'))
+    ax.set_xlabel('$y$ [μm]', size=decorator.get_font_size('ax_label'))
+    ax.grid(False)
+  else:
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+
+
+def plot_set_axes_style(ax, plps, decorator):
+  if decorator.get_axes_property('axes.linewidth') is not None: 
+      plt.setp(ax.spines.values(), linewidth=decorator.get_axes_property('axes.linewidth'))
+  
+def plot_set_title(ax, comp_label, plps, decorator):
+  if plps.get('add_title', True):
+      ax.set_title(comp_label, fontsize=decorator.get_font_size('subplot_title'),
+              pad = decorator.get_axes_property('title_pad'))
+
+def get_quiver_skip_range(npts, skip):
+    if npts%2:
+        mid=int((npts-1)/2)
+        j0=(int(round((npts-1)/2)))%skip
+    else:
+        if skip%2==0: skip+=1
+        jk=int(round(npts/2 - (skip+1)/2))
+        j0= jk%skip
+    #delprint('skps rangesw', j0, npts, skip)
+    return np.array(range(j0, npts, skip))
+
+def plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, l_fields, plps, 
+        cc_cont=None, cc_quiver=None):
+
+  do_cont = not cc_cont is None
+  do_quiv = not cc_quiver is None
+
+  decorator = plps['decorator']
+  cmap_signed='seismic'   # This should be a plot_param
+  cmap_unsigned='OrRd'
+
+  # Adjustments to the visible plot domain
+  xlmi = plps.get('xlim_min', 0)
+  xlma = plps.get('xlim_max', 0)
+  ylmi = plps.get('ylim_min', 0)
+  ylma = plps.get('ylim_max', 0)
+
+
+  if do_cont:
+      comp_label=cc_cont.get_label()  
+      if do_quiv: comp_label+=',  '+cc_quiver.get_label()
+  else:
+      comp_label=cc_quiver.get_label() 
+
+  if do_cont:
+      cont_signed=cc_cont.is_signed_field()
+      cmap=cmap_unsigned
+      if cont_signed: cmap=cmap_signed
+
+      # Extract and tidy the field
+      cont_field=(l_fields[cc_cont._f_code]).copy().T  # transpose because arrays
+
+      if cc_cont.is_abs(): cont_field=np.abs(cont_field)**2  # TODO: cleanup: plot |u| as |u|^2
+
+      # if the data is all noise, just plot zeros
+      plot_threshold = 1e-8 
+      if np.max(np.abs(cont_field[~np.isnan(cont_field)])) < plot_threshold: 
+        cont_field=np.zeros(np.shape(cont_field))
+
+
+      if True or plps['ticks']: #set imshow plot (and tick) range to match the input x and y domain
+        x0=m_X[0,0]
+        x1=m_X[0,-1]
+        y0=m_Y[0,0]
+        y1=m_Y[-1,0]
+    
+        xm = x0+x1
+        ym = y0+y1
+        extents=np.array([x0-xm/2, x1-xm/2, y0-ym/2, y1-ym/2])*1e6  # Convert to length units in microns
+      else:
+        extents=None
+    
+      interp=None   
+      #interp='bilinear';
+    
+      if decorator.get_cmap_limits(cc_cont._xyz)!=None: #User requested specific limits for each component x, y or z
+        (act_zlo, act_zhi)= decorator.get_cmap_limits(cc_cont._xyz)
+        tsnorm=mplcolors.TwoSlopeNorm(vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)
+    
+        im = ax.imshow(cont_field, origin='lower', extent=extents, 
+                interpolation=interp, cmap=cmap, norm=tsnorm)
+      else: 
+        act_zlo=np.nanmin(cont_field)
+        act_zhi=np.nanmax(cont_field)
+        vma=max(abs(act_zlo),abs(act_zhi))
+    
+        if cont_signed:
+          vmi=-vma
+        else:
+          vmi=0
+        im = ax.imshow(cont_field, origin='lower', extent=extents, 
+                interpolation=interp, cmap=cmap, vmin=vmi, vmax=vma)
+  
+  if do_quiv:
+      quiver_points=plps.get('quiver_points', 20)
+    
+      # shapes:
+      # m_X and other matrices are stored with y points as rows but upside down
+      # mesh_grid_objects:
+      # m_X =  [[x0, x1, x2, ...]
+      #         [x0, x1, x2, ...]
+      #         [x0, x1, x2, ...]
+      # m_Y =  [[y0, y0, y0, ...]
+      #         [y1, y1, y1, ...]
+      #         [y2, y2, y2, ...]
+      
+
+      n_pts_y, n_pts_x = m_X.shape
+      #delprint('\n\nshape 1', n_pts_x, n_pts_y)
+      #delprint('shape 2', m_X[0,:5])
+      #delprint('shape 2', m_X[1,:5])
+      #delprint('shape 2', m_Y[0,:5])
+      #delprint('shape 2', m_Y[1,:5])
+
+
+      # grid points to skip for each arrow
+      # this could probably be chosen nicer
+      #quiver_skip_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) 
+      #quiver_skip_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) 
+      quiver_skip_x=int(round(n_pts_x/quiver_points *(1-xlmi-xlma) )) 
+      quiver_skip_y=int(round(n_pts_y/quiver_points *(1-ylmi-ylma) )) 
+
+      #delprint('shape 3', quiver_points, quiver_skip_x, quiver_skip_y)
+      # getting a nice symmetric pattern of points to do quivers centred around the middle
+      qrange_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
+      qrange_y = get_quiver_skip_range(n_pts_y, quiver_skip_y) 
+
+    
+      #TODO: ensure the points are symmetric about the centre of the domain
+      # is quiver_skip_x and _y around the right way given the .T operation?
+      v_x_q = m_X.T[qrange_x[:,np.newaxis], qrange_y]
+      v_y_q = m_Y.T[qrange_x[:,np.newaxis], qrange_y]
+      #v_x_q = m_X.T[0::quiver_skip_x, 0::quiver_skip_y] 
+      #v_y_q = m_Y.T[0::quiver_skip_x, 0::quiver_skip_y]
+    
+      # TODO: why no transpose on these fields?
+      #m_ReEx_q = l_fields['Fxr'][0::quiver_skip_x, 0::quiver_skip_y]
+      #m_ReEy_q = l_fields['Fyr'][0::quiver_skip_x, 0::quiver_skip_y]
+      #m_ImEx_q = l_fields['Fxi'][0::quiver_skip_x, 0::quiver_skip_y]
+      #m_ImEy_q = l_fields['Fyi'][0::quiver_skip_x, 0::quiver_skip_y]
+      m_ReEx_q = l_fields['Fxr'][qrange_x[:,np.newaxis], qrange_y]
+      m_ReEy_q = l_fields['Fyr'][qrange_x[:,np.newaxis], qrange_y]
+      m_ImEx_q = l_fields['Fxi'][qrange_x[:,np.newaxis], qrange_y]
+      m_ImEy_q = l_fields['Fyi'][qrange_x[:,np.newaxis], qrange_y]
+    
+      # convert to microns
+      v_x_q_um=v_x_q*1e6
+      v_y_q_um=v_y_q*1e6
+    
+      # centre at zero
+      xm=v_x_q_um[-1,0]+v_x_q_um[0,0]
+      ym=v_y_q_um[0,-1]+v_y_q_um[0,0]
+      v_x_q_um-=xm/2
+      v_y_q_um-=ym/2
+    
+    
+    # Ignore all imaginary values. If there are significant imag values, 
+    # then instaneous vector plots don't make much sense anyway
+
+      if do_cont: # no colours in the quiver
+        ax.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, 
+          linewidths=(0.2,), color='gray',edgecolors=('gray'), pivot='mid', headlength=5) 
+      else:
+        m_arrcolour = np.sqrt(m_ReEx_q*m_ReEx_q +m_ReEy_q*m_ReEy_q) 
+        ax.quiver(v_x_q_um, v_y_q_um, m_ReEx_q, m_ReEy_q, m_arrcolour,
+          linewidths=(0.2,), edgecolors=('gray'), pivot='mid', headlength=5) 
+    
+
+      if not do_cont: 
+          ax.set_aspect('equal') 
+          # this step is needed because quiver doesn't seem
+          # to use its input x and y vectors to set range limits
+          # clean this up so as to avoid seemingly circular calls following 
+          ax.set_xlim(v_x_q_um[0,0], v_x_q_um[-1,0]) 
+          ax.set_ylim(v_y_q_um[0,0], v_y_q_um[0,-1]) 
+
+  if xlmi>0 or xlma>0:
+      xmin, xmax = ax.get_xlim()
+      width_x = xmax-xmin
+      ax.set_xlim(xmin+xlmi*width_x, xmax-xlma*width_x)
+
+  if ylmi>0 or ylma>0:
+      ymin, ymax = ax.get_ylim()
+      width_y = ymax-ymin
+      ax.set_ylim(ymin+ylmi*width_y, ymax-ylma*width_y)
+
+  plot_set_ticks(ax, plps, decorator);
+
+  plot_set_title(ax, comp_label, plps, decorator)
+
+  plot_set_axes_style(ax, plps, decorator)
+
+  decorator.add_frame(ax)
+  #plot_set_contours(ax, plops, decorator)
+
+  if do_cont:
+    # contours and colorbars
+    # colorbar
+    do_cbar = plps['colorbar']
+    do_contours = plps['contours']
+  
+    if do_cbar or do_contours:
+      if plps['contour_lst']: 
+          cbarticks = plps['contour_lst']
+      else:
+          nt=plps.get('num_ticks', 7)
+          if nt is None:
+              cbarticks=None
+          else:
+              cbarticks = np.linspace(act_zlo, act_zhi, nt)
+  
+  
+    if do_cbar:
+      divider = make_axes_locatable(ax)
+      cax = divider.append_axes("right", size=decorator.get_axes_property('cbar_size'), 
+          pad=decorator.get_axes_property('cbar_pad'))
+      cbar = plt.colorbar(im, cax=cax)
+      if not cbarticks is None:
+          cbar.set_ticks(cbarticks)
+          cbarlabels = ['%.2f' %t for t in cbarticks]
+          cbar.set_ticklabels(cbarlabels)
+      cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
+  
+    if do_contours:
+      if np.max(np.abs(cont_field[~np.isnan(cont_field)])) > plot_threshold:
+          CS2 = ax.contour(m_X, m_Y, cont_field, levels=cbarticks, 
+                  colors=mycolors[::-1], linewidths=(1.5,))
+          if do_cbar: cbar.add_lines(CS2)
+  
+  if decorator!=None: decorator.extra_axes_commands(ax)
+
+
+
+
+
+# contour plots a single component specified by cc
+def delme_plot_one_component_axes(ax, m_X, m_Y, l_fields, plps, cc):
   decorator = plps['decorator']
   cmap_signed='seismic'
   cmap_unsigned='OrRd'
 
-  plot_threshold = 1e-8 # set negligible components to explicitly zero
+  # Adjustments to the visible plot domain
+  xlmi = plps.get('xlim_min', 0)
+  xlma = plps.get('xlim_max', 0)
+  ylmi = plps.get('ylim_min', 0)
+  ylma = plps.get('ylim_max', 0)
+
 
   comp_label=cc.get_label()  # for plotting
   signed=cc.is_signed_field()
@@ -410,13 +764,19 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
   cmap=cmap_unsigned
   if signed: cmap=cmap_signed
 
-  field=fields[cc._f_code]
+
+  # Extract and tidy the field
+  field=(l_fields[cc._f_code]).copy().T  # transpose because arrays
+
+  if cc.is_abs(): field=np.abs(field)**2  # TODO: cleanup: plot |u| as |u|^2
+
+  # if the data is all noise, just plot zeros
+  plot_threshold = 1e-8 
+  if np.max(np.abs(field[~np.isnan(field)])) < plot_threshold: 
+    field=np.zeros(np.shape(field))
 
 
-  if plps['ticks']: #set tick range
-#xm=v_x[-1]+v_x[0]
-#ym=v_y[-1]+v_y[0]
-#extents=np.array([v_x[0]-xm/2, v_x[-1]-xm/2, v_y[0]-ym/2, v_y[-1]-ym/2])*1e6  # Convert to length units in microns
+  if True or plps['ticks']: #set imshow plot (and tick) range to match the input x and y domain
     x0=m_X[0,0]
     x1=m_X[0,-1]
     y0=m_Y[0,0]
@@ -428,157 +788,105 @@ def plot_one_component_axes(ax, m_X, m_Y, fields, plps, cc):
   else:
     extents=None
 
-  req_lims=False
+  interp=None   
+  #interp='bilinear';
 
   if decorator.get_cmap_limits(cc._xyz)!=None: #User requested specific limits for each component x, y or z
-    req_lims=True
-    (req_zlo, req_zhi)= decorator.get_cmap_limits(cc._xyz)
-    req_tsnorm=mplcolors.TwoSlopeNorm(vmin=req_zlo, vmax=req_zhi, vcenter=(req_zlo+req_zhi)/2)
+    (act_zlo, act_zhi)= decorator.get_cmap_limits(cc._xyz)
+    tsnorm=mplcolors.TwoSlopeNorm(vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)
 
-  act_zlo=0
-  act_zhi=0
-
-  field_final=field.T
-  if cc.is_abs(): field_final=np.abs(field_final)**2  # TODO: cleanup: plot |u| as |u|^2
-
-  # if the data is all noise, just plot zeros
-  if np.max(np.abs(field[~np.isnan(field)])) < plot_threshold: 
-    field_final=np.zeros(np.shape(field.T))
-
-  interp=None   #interp='bilinear';
-  tsnorm=None
-
-  if req_lims:
-    tsnorm=req_tsnorm
-    act_zlo=req_zlo
-    act_zhi=req_zhi
+    im = ax.imshow(field, origin='lower', extent=extents, 
+            interpolation=interp, cmap=cmap, norm=tsnorm)
   else: 
-    zlo=np.nanmin(field_final)
-    zhi=np.nanmax(field_final)
-    act_zlo=zlo
-    act_zhi=zhi
-    if signed: # ensure that zero values get mapped to the right part of the colormap
-      if zlo<0 and zhi >0:
-        vma=max(abs(zlo),abs(zhi))
-#        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
-#tsnorm=mplcolors.CenteredNorm()
-      else: # do this anyway, even if zlo and zhi are the same sign
-        vma=max(abs(zlo),abs(zhi))
-#        tsnorm=mplcolors.TwoSlopeNorm(vmin=-vma, vmax=vma, vcenter=0.0)
-#tsnorm=mplcolors.CenteredNorm() # Requires mpl > 3.4.2
+    act_zlo=np.nanmin(field)
+    act_zhi=np.nanmax(field)
+    vma=max(abs(act_zlo),abs(act_zhi))
+
+    if signed:
+      vmi=-vma
     else:
-      vma=max(abs(zlo),abs(zhi))
+      vmi=0
+    im = ax.imshow(field, origin='lower', extent=extents, 
+            interpolation=interp, cmap=cmap, vmin=vmi, vmax=vma)
 
 
-#TODO: Clean this up!
-#im = plt.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
-    if req_lims:
-      im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, norm=tsnorm)
-    else:
-      if signed:
-        im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=-vma, vmax=vma)
-      else:
-        im = ax.imshow(field_final, origin='lower', extent=extents, interpolation=interp, cmap=cmap, vmin=0, vmax=vma)
+  if xlmi>0 or xlma>0:
+      xmin, xmax = ax.get_xlim()
+      width_x = xmax-xmin
+      ax.set_xlim(xmin+xlmi*width_x, xmax-xlma*width_x)
 
-  #axes = plt.gca()
-  #xmin, xmax = axes.get_xlim()
-  #ymin, ymax = axes.get_ylim()
-  xmin, xmax = ax.get_xlim()
-  ymin, ymax = ax.get_ylim()
+  if ylmi>0 or ylma>0:
+      ymin, ymax = ax.get_ylim()
+      width_y = ymax-ymin
+      ax.set_ylim(ymin+ylmi*width_y, ymax-ylma*width_y)
 
-  width_x = xmax-xmin
-  width_y = ymax-ymin
-  
-  if plps['xlim_min'] != None:
-      ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
-  if plps['ylim_min'] != None:
-      ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
+  plot_set_ticks(ax, plps, decorator);
 
-  if plps['ticks']:
-    #plt.xticks()  # DELETE ME
-    #plt.yticks()  # DELETE ME
-    ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
-    ax.xaxis.set_tick_params(width=1.0)
-    ax.yaxis.set_tick_params(width=1.0)
-    ax.set_xlabel('$x$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
-    ax.set_ylabel('$y$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
-    ax.grid(False)
-  else:
-    #plt.xticks([])  # DELETE ME
-    #plt.yticks([])  # DELETE ME
-    ax.set_xticks([])
-    ax.set_yticks([])
+  plot_set_title(ax, comp_label, plps, decorator)
 
-  if decorator.get_axes_property('axes.linewidth') is not None: 
-      plt.setp(ax.spines.values(), linewidth=decorator.get_axes_property('axes.linewidth'))
-  
-  if plps.get('add_title', True):
-      plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
-      plt.title(comp_label,fontsize=decorator.get_font_size('subplot_title'))
-      #self.set_plot_params() (Must be in wrong place!)
+  plot_set_axes_style(ax, plps, decorator)
 
+  #plot_set_contours(ax, plops, decorator)
 
+  # contours and colorbars
   # colorbar
-  docbar=plps['colorbar']
-  if docbar:
+  do_cbar = plps['colorbar']
+  do_contours = plps['contours']
+
+  if do_cbar or do_contours:
+    if plps['contour_lst']: 
+        cbarticks = plps['contour_lst']
+    else:
+        nt=plps.get('num_ticks', 7)
+        cbarticks = np.linspace(act_zlo, act_zhi, nt)
+
+
+  if do_cbar:
     divider = make_axes_locatable(ax)
-    #cax = divider.append_axes("right", size="2%", pad=-6)
     cax = divider.append_axes("right", size=decorator.get_axes_property('cbar_size'), 
         pad=decorator.get_axes_property('cbar_pad'))
     cbar = plt.colorbar(im, cax=cax)
-    nt=plps.get('num_ticks')
-    if nt==None: nt=7
-    cbarticks = np.linspace(act_zlo, act_zhi, nt)
     cbar.set_ticks(cbarticks)
     cbarlabels = ['%.2f' %t for t in cbarticks]
     cbar.set_ticklabels(cbarlabels)
     cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
 
-  if plps['contours']:
-    if plps['contour_lst']:
-        if docbar: cbarticks = plps['contour_lst']
+  if do_contours:
     if np.max(np.abs(field[~np.isnan(field)])) > plot_threshold:
         CS2 = ax.contour(m_X, m_Y, field.T, levels=cbarticks, 
                 colors=mycolors[::-1], linewidths=(1.5,))
-        if docbar: cbar.add_lines(CS2)
+        if do_cbar: cbar.add_lines(CS2)
 
   if decorator!=None: decorator.extra_axes_commands(ax)
-
-def plot_filename(plps, ival, label=None):
-  filestart='%(pre)sfields/%(s)s_field_%(i)i%(add)s' % {'pre' : plps['prefix_str'], 
-          's' : plps['EM_AC'].name, 'i' : ival, 'add' : plps['suffix_str']}
-  if label!=None: filestart+='_'+label
- 
-  if plps['pdf_png']=='png': fig_filename=filestart+'.png'
-  elif plps['pdf_png']=='pdf': fig_filename=filestart+'.pdf'
-  else: raise ValueError("pdf_png must be either 'png' or 'pdf'.")
-
-  return fig_filename
 
 def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
   decorator = plps['decorator']
 
-  quiver_points=20
-  xlmi, xlma, ylmi, ylma= plps['xlim_min'], plps['xlim_max'], plps['ylim_min'], plps['ylim_max']
+  quiver_points=plps.get('quiver_points', 20)
+
+  # Adjustments to the visible plot domain
+  xlmi = plps.get('xlim_min', 0)
+  xlma = plps.get('xlim_max', 0)
+  ylmi = plps.get('ylim_min', 0)
+  ylma = plps.get('ylim_max', 0)
+
+
   n_pts_y, n_pts_x = m_X.shape
-  #n_pts_x=plps['n_pts_x']
-  #n_pts_y=plps['n_pts_y']
-  quiver_points=plps['quiver_points']
 
-  if xlmi is None: xlmi=0
-  if xlma is None: xlma=0
-  if ylmi is None: ylmi=0
-  if ylma is None: ylma=0
-  quiver_steps_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) # this could probably be chosen nicer
-  quiver_steps_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) # this could probably be chosen nicer
+  quiver_skip_x=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-xlmi-xlma) )) # this could probably be chosen nicer
+  quiver_skip_y=int(round(min(n_pts_x,n_pts_y)/quiver_points *(1-ylmi-ylma) )) # this could probably be chosen nicer
 
-  v_x_q = m_X.T[0::quiver_steps_x, 0::quiver_steps_y] # is quiver_steps_x and _y around the right way given the .T operation?
-  v_y_q = m_Y.T[0::quiver_steps_x, 0::quiver_steps_y]
+  #TODO: ensure the points are symmetric about the centre of the domain
+  # is quiver_skip_x and _y around the right way given the .T operation?
 
-  m_ReEx_q = v_fields['Fxr'][0::quiver_steps_x, 0::quiver_steps_y]
-  m_ReEy_q = v_fields['Fyr'][0::quiver_steps_x, 0::quiver_steps_y]
-  m_ImEx_q = v_fields['Fxi'][0::quiver_steps_x, 0::quiver_steps_y]
-  m_ImEy_q = v_fields['Fyi'][0::quiver_steps_x, 0::quiver_steps_y]
+  v_x_q = m_X.T[0::quiver_skip_x, 0::quiver_skip_y] 
+  v_y_q = m_Y.T[0::quiver_skip_x, 0::quiver_skip_y]
+
+  # TODO: why no transpose on these fields?
+  m_ReEx_q = v_fields['Fxr'][0::quiver_skip_x, 0::quiver_skip_y]
+  m_ReEy_q = v_fields['Fyr'][0::quiver_skip_x, 0::quiver_skip_y]
+  m_ImEx_q = v_fields['Fxi'][0::quiver_skip_x, 0::quiver_skip_y]
+  m_ImEy_q = v_fields['Fyi'][0::quiver_skip_x, 0::quiver_skip_y]
 
   # convert to microns
   v_x_q_um=v_x_q*1e6
@@ -601,45 +909,29 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
   ax.set_xlim(v_x_q_um[0,0],v_x_q_um[-1,0]) # this step is needed because quiver doesn't seem
   ax.set_ylim(v_y_q_um[0,0],v_y_q_um[0,-1]) # to use its input x and y vectors to set range limits
                                             # clean this up so as to avoid seemingly circular calls following
-  #axes = plt.gca()
-  #xmin, xmax = axes.get_xlim()
-  #ymin, ymax = axes.get_ylim()
-  xmin, xmax = ax.get_xlim()
-  ymin, ymax = ax.get_ylim()
 
-  width_x = xmax-xmin
-  width_y = ymax-ymin
+  plot_set_ticks(ax, plps, decorator);
 
-  if plps['ticks']:
-    #plt.xticks()
-    #plt.yticks()
-    ax.tick_params(labelsize=decorator.get_font_size('ax_tick'))
-    ax.xaxis.set_tick_params(width=1.0)
-    ax.yaxis.set_tick_params(width=1.0)
-    ax.set_xlabel('$x$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
-    ax.set_ylabel('$y$ [$\mathrm{\mu}$m]', size=decorator.get_font_size('ax_label'))
-    ax.grid(False)
-  else:
-    #plt.xticks([])  # DELETE ME
-    #plt.yticks([])  # DELETE ME
-    ax.set_xticks([])
-    ax.set_yticks([])
+  comp_label=cc.get_label()  
+  plot_set_title(ax, comp_label, plps, decorator)
 
-#return
-  if plps['xlim_min'] != None:
-      ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
-  if plps['ylim_min'] != None:
-      ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
+  plot_set_axes_style(ax, plps, decorator)
 
-  if plps.get('add_title', True):
-      plt.rc('axes',titlepad=decorator.get_axes_property('title_pad'))
-      plt.title(cc.get_label(), fontsize=decorator.get_font_size('subplot_title'))
+  #if plps['xlim_min'] != None:
+  #    ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
+  #if plps['ylim_min'] != None:
+  #    ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
 
-  decorator = plps['decorator']
+  if True or xlmi>0 or xlma>0:
+      xmin, xmax = ax.get_xlim()
+      width_x = xmax-xmin
+      ax.set_xlim(xmin+xlmi*width_x, xmax-xlma*width_x)
 
-  if decorator.get_axes_property('axes.linewidth') is not None: 
-      plt.setp(ax.spines.values(), linewidth=decorator.get_axes_property('axes.linewidth'))
-      
+  if True or ylmi>0 or ylma>0:
+      ymin, ymax = ax.get_ylim()
+      width_y = ymax-ymin
+      ax.set_ylim(ymin+ylmi*width_y, ymax-ylma*width_y)
+
   if decorator!=None: decorator.extra_axes_commands(ax)
 
 def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data summary
@@ -659,7 +951,6 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
   ax.set_aspect('equal')
   ax.axis('off')
   fs=decorator.get_font_size('data_label')
-#plt.title('Mode {0}'.format(ival), fontsize=decorator.get_font_size('subplot_title'))
 
   #  Beward that this is a very coarse measure of component fraction and is not consistent with energy fraction
 
@@ -678,9 +969,9 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
     else:
       ax.text(x0,r,r'$\bar{{n}}$: {0:.6f}'.format(sim_wguide.neff(ival)), transform=ax.transAxes, fontsize=fs); r-=dy  
   else:
-    ax.text(x0,r,r'$q$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$, $\lambda:$ {1:.5f} $\mu$m'.format(sim_wguide.k_AC/1.e6, 2*np.pi/sim_wguide.k_AC*1e6), transform=ax.transAxes, fontsize=fs); r-=dy
-    ax.text(x0,r,r'$q/2\pi$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$'.format(sim_wguide.k_AC/(2.e6*np.pi)), transform=ax.transAxes, fontsize=fs); r-=dy
-    ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.5f} GHz'.format(sim_wguide.nu_AC(ival)/1.e9), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$q$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$, $\lambda:$ {1:.5f} $\mu$m'.format(sim_wguide.q_AC/1.e6, 2*np.pi/sim_wguide.q_AC*1e6), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$q/2\pi$: {0:.5f} $\mu\mathrm{{m}}^{{-1}}$'.format(sim_wguide.q_AC/(2.e6*np.pi)), transform=ax.transAxes, fontsize=fs); r-=dy
+    ax.text(x0,r,r'$\Omega/(2\pi)$: {0:.5f} GHz'.format(np.real(sim_wguide.nu_AC(ival))/1.e9), transform=ax.transAxes, fontsize=fs); r-=dy
     if sim_wguide.vgroup_AC_available():
       ax.text(x0,r,r'$v_p$: {0:.2f} m/s, $v_g$: {1:.2f} m/s'.format( sim_wguide.vp_AC(ival), sim_wguide.vg_AC(ival)), transform=ax.transAxes, fontsize=fs); r-=dy
     else:
@@ -689,6 +980,10 @@ def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data
   ax.text(x0,r,r'$f_t:$ {0:.3f}, $f_z$: {1:.3f}'.format(f_t, f_z), transform=ax.transAxes, fontsize=fs); r-=dy
   ax.text(x0,r,r'$\mathbf{{r}}_0:$ ({0:.2f}, {1:.3f}) $\mu$m'.format(r0x, r0y), transform=ax.transAxes, fontsize=fs); r-=dy
   ax.text(x0,r,r'$(w_x, w_y):$ ({0:.2f}, {1:.2f}) $\mu$m'.format(wx, wy), transform=ax.transAxes, fontsize=fs); r-=dy
+
+  if modeobj.field_type == FieldType.EM_H:
+      ax.text(x0,r,r'$H$ field multiplied by $Z_0=376.7\, \Omega$', transform=ax.transAxes, fontsize=fs); r-=dy
+
   sc = sim_wguide.symmetry_classification(ival)
   if len(sc): ax.text(x0,r,r'Sym: {0}'.format(sc), transform=ax.transAxes, fontsize=fs); r-=dy
 
@@ -728,6 +1023,8 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
   lw=decorator.get_axes_property('linewidth')
   ec=decorator.get_axes_property('edgecolor')
 
+  decorator.set_frame_drawer(sim_wguide.structure.mpl_wg_frame_drawer)
+
   EM_AC=plps['EM_AC']
   plt.clf()
   fig = plt.figure(figsize=figsz)
@@ -743,15 +1040,19 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
   plot_mode_data(ax, v_plots, plps, sim_wguide, ival, v_x, v_y)  # mode data summary
   axi+=1
 
-  cc={ FieldType.EM_E:component_t('Eabs'), FieldType.EM_H:component_t('Habs'), FieldType.AC:component_t('uabs')}[EM_AC]
+  cc_cont={ FieldType.EM_E:component_t('Eabs'), FieldType.EM_H:component_t('Habs'), FieldType.AC:component_t('uabs')}[EM_AC]
+  cc_quiv={FieldType.EM_E:component_t('Et'), FieldType.EM_H:component_t('Ht'), FieldType.AC:component_t('ut')}[EM_AC]
 
   ax = plt.subplot(rows,3,axi)
-  plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the intensity plot
+  #plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the intensity plot
+  plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_plots, plps, 
+          cc_cont=cc_cont, cc_quiver=cc_quiv)  # the intensity plot
   axi+=1
 
-  cc={FieldType.EM_E:component_t('Et'), FieldType.EM_H:component_t('Ht'), FieldType.AC:component_t('ut')}[EM_AC]
   ax = plt.subplot(rows,3,axi)
-  plot_one_component_quiver(ax, m_X, m_Y, v_plots, plps, cc)  # the transverse vector plot
+  #plot_one_component_quiver(ax, m_X, m_Y, v_plots, plps, cc)  # the transverse vector plot
+  plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_plots, plps, 
+          cc_quiver=cc_quiv)  # the intensity plot
   axi+=1
 
   for (flab, field) in v_plots.items():
@@ -760,7 +1061,7 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
      if plps['suppress_imimre'] and not cc.is_dominant() :  continue 
      if not cc.is_signed_field():continue
      ax = plt.subplot(rows,3,axi)
-     plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the scalar plots
+     plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_plots, plps, cc_cont=cc)  # the scalar plots
      axi+=1
 
    
@@ -804,9 +1105,9 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
      del_y_Ey = np.gradient(m_Ey, dy, axis=1)
      del_x_Ez = np.gradient(m_Ez, dx, axis=0)
      del_y_Ez = np.gradient(m_Ez, dy, axis=1)
-     del_z_Ex = 1j*sim_wguide.k_AC*m_Ex
-     del_z_Ey = 1j*sim_wguide.k_AC*m_Ey
-     del_z_Ez = 1j*sim_wguide.k_AC*m_Ez
+     del_z_Ex = 1j*sim_wguide.q_AC*m_Ex
+     del_z_Ey = 1j*sim_wguide.q_AC*m_Ey
+     del_z_Ez = 1j*sim_wguide.q_AC*m_Ez
 
      # Flip y order as imshow has origin at top left
      del_mat = np.array([del_x_Ex[:,::-1].real, del_x_Ey[:,::-1].real, del_x_Ez[:,::-1].real, del_x_Ex[:,::-1].imag, del_x_Ey[:,::-1].imag, del_x_Ez[:,::-1].imag, del_y_Ex[:,::-1].real, del_y_Ey[:,::-1].real, del_y_Ez[:,::-1].real, del_y_Ex[:,::-1].imag, del_y_Ey[:,::-1].imag, del_y_Ez[:,::-1].imag, del_z_Ex[:,::-1].real, del_z_Ey[:,::-1].real, del_z_Ez[:,::-1].real, del_z_Ex[:,::-1].imag, del_z_Ey[:,::-1].imag, del_z_Ez[:,::-1].imag])
@@ -867,10 +1168,10 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
 
      if pdf_png=='png':
          plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
-             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str})
+             {'pre' : prefix, 's' : EM_AC, 'i' : ival, 'add' : suffix})
      elif pdf_png=='pdf':
          plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
-             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str}, bbox_inches='tight')
+             {'pre' : prefix, 's' : EM_AC, 'i' : ival, 'add' : suffix}, bbox_inches='tight')
      if not keep_plots_open: plt.close()
 
 
@@ -885,20 +1186,26 @@ def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc, axis=None
 
   if axis is None:
       plt.clf()  # TODO: surely this is not needed
-      fig = plt.figure(figsize=(12,10))
   
       plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
       plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
   
+      fig = plt.figure(figsize=(12,10))
       ax = plt.subplot(111)
   else:
       ax=axis
 
+  EM_AC=plps['EM_AC']
+  cc_cont={ FieldType.EM_E:component_t('Eabs'), FieldType.EM_H:component_t('Habs'), FieldType.AC:component_t('uabs')}[EM_AC]
+  cc_quiv={FieldType.EM_E:component_t('Et'), FieldType.EM_H:component_t('Ht'), FieldType.AC:component_t('ut')}[EM_AC]
 
-  if cc.is_transverse():
-    plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc)
-  else: 
-    plot_one_component_axes(ax, m_X, m_Y, v_fields, plps, cc)
+  #if cc.is_transverse():
+  #  plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc)
+  #else: 
+  #  plot_one_component_axes(ax, m_X, m_Y, v_fields, plps, cc)
+
+  plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_fields, plps, 
+          cc_cont=cc_cont, cc_quiver=cc_quiv)  
 
   if axis is None: # If user passed in the axis, they can look after saving.
       figfile=plot_filename(plps, ival, cc._user_code)
@@ -911,26 +1218,26 @@ def plt_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=50,
                   xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
                   EM_AC='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
-                  prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
+                  prefix='', suffix='', ticks=True, comps=[], decorator=None, 
                   suppress_imimre=True, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
                   modal_gains=None):
 
-  print('Warning: "plt_mode_fields" is deprcated, use "plot_mode_fields"')
+  print('Warning: "plt_mode_fields" is deprecated, use "plot_mode_fields"')
   plot_mode_fields(sim_wguide, ivals, n_points, quiver_points, 
                   xlim_min, xlim_max, ylim_min, ylim_max,
                   EM_AC, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png, 
-                  prefix_str, suffix_str, ticks, comps, decorator, 
+                  prefix, suffix, ticks, comps, decorator, 
                   suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
 
 #### Standard plotting of spectra #############################################
 def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30, 
-                  xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
+                  xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
                   EM_AC='EM_E', 
                   num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                   stress_fields=False, pdf_png='png', 
-                  prefix_str='', suffix_str='', ticks=False, comps=[], decorator=None, 
+                  prefix='', suffix='', ticks=True, comps=[], decorator=None, 
                   suppress_imimre=True, 
                   modal_gains_PE=None,
                   modal_gains_MB=None,
@@ -966,14 +1273,15 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
             pdf_png  (str): File type to save, either 'png' or 'pdf' 
 
-            prefix_str  (str): Add a string to start of file name
+            prefix  (str): Add a string to start of file name
             
-            suffix_str  (str): Add a string to end of file name.
+            suffix  (str): Add a string to end of file name.
 
             modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
     """
     
 
+    #TODO: ft_emac  ,a new var to distinguish EM_AC string and enum
     if sim_wguide.is_AC():
         EM_AC=FieldType.AC
     else:
@@ -994,17 +1302,16 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
 
     # assemble desired list of eigenmodes to plot
-    if ivals:
+    if not ivals is None:
         ival_range = ivals
     else:
         ival_range = range(len(sim_wguide.Eig_values))
 
     mode_helper=sim_wguide.get_mode_helper()
-    mode_helper.setup_plot_grid(n_points=n_points)  # TODO: this option is now on its own. Should it be in plot-params?
-            #xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max)
+    mode_helper.setup_plot_grid(n_points=n_points)  
 
 
-    if decorator == None: decorator = Decorator()
+    if decorator is None: decorator = Decorator()
 
     #TODO: what is this for?
     modal_gain={}
@@ -1016,7 +1323,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 #    plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
 #                 'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
 #                  'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
-#                  'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
+#                  'prefix': prefix, 'suffix': suffix, 'pdf_png': pdf_png, 
 #                  'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
 #                  'suppress_imimre':suppress_imimre,
 #              # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 
@@ -1027,7 +1334,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
                   quiver_points = quiver_points,
                   num_ticks=num_ticks, colorbar=colorbar, contours=contours, contour_lst=contour_lst,
                   pdf_png=pdf_png,
-                  prefix_str=prefix_str, suffix_str=suffix_str, ticks=ticks, #comps=comps, 
+                  prefix=prefix, suffix=suffix, ticks=ticks, #comps=comps, 
                   decorator=decorator, 
                   suppress_imimre=suppress_imimre
     ) 
@@ -1037,13 +1344,22 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
     v_modes = sim_wguide.get_modes()
 
+    modetype = 'em'
+    if EM_AC == FieldType.AC: modetype='acoustic'
+
+    if len(ival_range)>1:
+        print('Plotting {} modes m={} to {}.'.format(modetype, ival_range[0], ival_range[-1]))
+    else:
+        print('Plotting {} mode m={}.'.format(modetype, ival_range[0]))
+
+    #TODO: mode drawing and especially saving is very slow. could do this in threads?
     for ival in ival_range: 
         v_modes[ival].plot_mode(comps, EM_AC)
 
 
 
 #### Plot mesh #############################################
-def plot_msh(x_arr, prefix_str='', suffix_str=''):
+def plot_msh(x_arr, prefix='', suffix=''):
     """ Plot EM mode fields.
 
         Args:
@@ -1054,14 +1370,17 @@ def plot_msh(x_arr, prefix_str='', suffix_str=''):
                 interpolate the field onto.
     """
 
-    plt.clf()
-    plt.figure(figsize=(13,13))
-    ax = plt.subplot(1,1,1)
+    #plt.clf()
+    #plt.figure(figsize=(13,13))
+    #ax = plt.subplot(1,1,1)
+    fig, ax = plt.subplots()
     for node in range(np.shape(x_arr)[1]):
         plt.plot(x_arr[0,node], x_arr[1,node], 'og')
     ax.set_aspect('equal')
-    plt.savefig('%(pre)smsh_%(add)s.pdf' %
-        {'pre' : prefix_str, 'add' : suffix_str}, bbox_inches='tight')
+    #plt.savefig('%(pre)smsh_%(add)s.pdf' %
+     #   {'pre' : prefix, 'add' : suffix}, bbox_inches='tight')
+    fig.savefig('%(pre)smsh_%(add)s.pdf' %
+        {'pre' : prefix, 'add' : suffix}, bbox_inches='tight')
     if not keep_plots_open: plt.close()
 
 

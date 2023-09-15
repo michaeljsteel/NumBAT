@@ -1,39 +1,99 @@
+
+.. include:: numbatdefs.txt
+
+
 .. _chap-usage-label:
 
-Simulation Procedure
+A First Calculation
+------------------------------------------------
+We're now ready to start using |NUMBAT|.
+
+Let's jump straight in and run a simple calculation. Later in the chapter, we go deeper
+into some of the details that we will encounter in this first example.
+
+
+Tutorial 1 -- Basic SBS Gain Calculation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Simulations with |NUMBAT| are generally carried out using a python script file.
+
+This example, contained in ``<NumBAT>tutorials/simo-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
+
+Move into the tutorials directory and then run the script by entering::
+
+    $ python3 simo-tut_01-first_calc.py
+
+
+After a short while, you should see some values for the SBS gain printed to the screen. 
+In many more tutorials in the subsequent chapters, we will meet much more convenient forms of output, but for now let's focus on the steps involved in this basic calculation.
+
+The sequence of operations (annotated in the source code below as Step 1, Step 2, etc) is:
+
+  #. Add the |NUMBAT| install directory to Python's module search path and then import 
+       the |NUMBAT| python modules.
+  #. Set parameters to define the structure shape and dimensions.
+  #. Set parameters determining the range of electromagnetic and elastic modes to be solved.
+  #. Construct the waveguide with ``objects.Structure`` out of a number of ``materials.Material`` objects. The generated mesh  is shown in the figure below.
+
+  #. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``mode_calcs.calc_EM_modes()`` returns an object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods.
+  #. Display the propagation constants in units of :math:`\text{m}^{-1}` of the EM modes using ``mode_calcs.kz_EM_all()``
+  #. Obtain the effective index of the fundamental mode using ``mode_calcs.neff()``
+  #. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``mode_calcs.calc_AC_modes()`` returns an object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
+  #. Display the elastic frequencies in Hz using ``mode_calcs.nu_AC_all()``.
+  #. Calculate the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss using ``integration.gain_and_qs()``, and print them to the screen.
+
+Note from this description that the eigenproblems for the
+electromagnetic and acoustic problems are framed in opposite senses. The
+electromagnetic problem finds the wavenumbers :math:`k_{z,n}(\omega)` (or
+equivalently the effective indices) of the modes at a given free space
+wavelength (ie. at a specified frequency :math:`\omega=2\pi c/\lambda`). The
+elastic solver, however, works in the opposite direction, finding the elastic modal
+frequencies :math:`\nu_n(q_0)` at a given elastic propagation constant
+:math:`q_0`. While this might seem odd at first, it is actually the natural way to frame SBS
+calculations. 
+
+We emphasise again, that for convenience, the physical dimensions of waveguides are 
+specified in nanometres.  All other quantities in |NUMBAT| are expressed 
+in the standard SI base units.
+
+.. figure::  images/tut01_mesh.png 
+   :scale: 30 %
+
+   Generated mesh for this example as displayed by ``guide.check_mesh()``.
+
+Here's the full source code for this tutorial:
+
+.. literalinclude:: ../../tutorials/simo-tut_01-first_calc.py
+    :lines: 0-
+
+
+In the next three chapters, we meet many more examples that show the different
+capabilities of |NUMBAT| and provided comparisons against analytic and
+experimental results from the literature. 
+
+For the remainder of this chapter, we will explore some of the details involved
+in specifying a wide range of waveguide structures.
+
+
+General Simulation Procedures
 ------------------------------------------------
 
-Simulations with NumBAT are generally carried out using a python script file.
-This file is kept in its own directory which is placed in the NumBAT directory.
-All results of the simulation are automatically created within this directory. This directory then serves as a complete record of the calculation. Often, we will also save the simulation objects within this folder for future inspection, manipulation, plotting, etc.
+Simulations with |NUMBAT| are generally carried out using a python script file.
+This file is kept in its own directory which may or may not be within your |NUMBAT| tree.
+All results of the simulation are automatically created within this directory. This directory then serves as a complete record of the calculation. Often, we will also save the simulation objects within this directory for future inspection, manipulation, plotting, etc.
 
-Throughout the tutorial the script file will be called simo.py.
+These files can be edited using your choice of text editor (for instance ``nano`` or ``vim``) or an IDE (for instance MS Visual Code or ``pycharm``) which allow you to run and debug code within the IDE.
 
-These files can be edited using your choice of text editor (for instance running the following in the terminal ``$ nano simo.py``) or an IDE (for instance pycharm) which allow you to run and debug code within the IDE.
+To save the results from a simulation that are displayed upon execution (the print statements in your script) use::
 
-To start a simulation open a terminal and change into the directory containing the ``simo.py`` file.
+    $ python3 ./simo-tut_01-first_calc.py | tee log-simo.log
 
-To start we run an example simulation from the tutorials directory. To move to this directory in the terminal enter::
 
-    $ cd <path to installation>/NumBAT/tutorials
+To have direct access to the simulation objects upon the completion of a script use::
 
-To run this script execute::
+    $ python3 -i ``simo.py``
 
-    $ python3 simo.py
-
-To save the results from the simulation that are displayed upon execution (the print statements in simo.py) use::
-
-    $ python3 ./simo.py | tee log-simo.log
-
-This may require you to update the permissions for the simo.py file to make it executable. This is done in the terminal as::
-
-    $ chmod +x simo.py
-
-To have direct access to the simulation objects upon the completion of the script use::
-
-    $ python3 -i simo.py
-
-This will execute the simo.py script and then return you into an interactive python session within the terminal. This terminal session provides the user experience of an ipython type shell where the python environment and all the simulation objects are as in the simo.py script. In this session you can access the docstrings of objects, classes and methods. For example::
+This will execute the ``simo.py`` script and then return you into an interactive python session within the terminal. This terminal session provides the user experience of an ipython type shell where the python environment and all the simulation objects are as in the simo.py script. In this session you can access the docstrings of objects, classes and methods. For example::
 
     >>> from pydoc import help
     >>> help(objects.Struct)
@@ -44,16 +104,14 @@ where we have accessed the docstring of the Struct class from ``objects.py``.
 Script Structure
 ----------------------------
 
-As will be seen in the tutorials below, most NumBAT scripts proceed with a standard
-structure: 
-  - defining materials
-  - defining waveguide geometries and associating them with material properties
-  - solving electromagnetic and acoustic modes 
-  - calculating gain and other derived quantities
+As with our first example above, most |NUMBAT| scripts proceed with a standard structure: 
+ * importing |NUMBAT| modules
+ * defining materials
+ * defining waveguide geometries and associating them with material properties
+ * solving electromagnetic and acoustic modes 
+ * calculating gain and other derived quantities
 
-The following section provides some information about specifying material properties and waveguide
-structures, as well as the key parameters for controlling the finite-element meshing.
-Information on how to add new structures to NumBAT is provided in :ref:`sec-newmesh-label`.
+The following section provides some information about specifying material properties and waveguide structures, as well as the key parameters for controlling the finite-element meshing.  Information on how to add new structures to |NUMBAT| is provided in :ref:`sec-newmesh-label`.
 
 
 Materials
@@ -61,214 +119,224 @@ Materials
 
 In order to calculate the modes of a structure we must specify the acoustic and optical properties of all constituent materials.
 
-In NumBAT, this data is read in from json files, which are stored in ``<root>/NumBAT/backend/material_data``.
+In |NUMBAT|, this data is read in from human-readable ``.json`` files, which are stored in the directory ``<NumBAT>/backend/material_data``.
 
-These files not only provide the numerical values for optical and acoustic variables, but record how these variables have been arrived at. Often they are taken from the literature.
+These files not only provide the numerical values for optical and acoustic variables, but provide links to the origin of the data. Often they are taken from the literature and the naming convention allows users to select from different parameter values chosen by different authors for the same nominal material.
 
 The intention of this arrangement is to create a library of materials that can we hope can form a standard amongst the research community. 
 They also allow users to check the sensitivity of their results on particular parameters for a given material.
 
-At present, the material library contains:
-  - Vacuum
-  - As2S3_2016_Smith
-  - As2S3_2017_Morrison
-  - As2S3_2021_Poulton
-  - GaAs_2016_Smith
-  - Si_2013_Laude
-  - Si_2015_Van_Laer
-  - Si_2016_Smith
-  - Si_2021_Poulton
-  - SiO2_2013_Laude
-  - SiO2_2015_Van_Laer
-  - SiO2_2016_Smith
-  - SiO2_2021_Smith
-  - Si_test_anisotropic
+At present, the library contains the following materials:
+  - Vacuum (or air)
+      - ``Vacuum``
+  - The chalcogenide glass Arsenic tri-sulfide 
+      - ``As2S3_2016_Smith``
+      - ``As2S3_2017_Morrison``
+      - ``As2S3_2021_Poulton``
+  - Fused silica 
+      - ``SiO2_2013_Laude``
+      - ``SiO2_2015_Van_Laer``
+      - ``SiO2_2016_Smith``
+      - ``SiO2_2021_Smith``
+      - ``SiO2_smf28.json``
+      - ``SiO2GeO2_smf28.json``
+  - Silicon 
+      - ``Si_2012_Rakich``
+      - ``Si_2013_Laude``
+      - ``Si_2015_Van_Laer``
+      - ``Si_2016_Smith``
+      - ``Si_2021_Poulton``
+      - ``Si_test_anisotropic``
+  - Silicon nitride
+      - ``Si3N4_2014_Wolff``
+      - ``Si3N4_2021_Steel``
+  - Gallium arsenide
+      - ``GaAs_2016_Smith``
+  - Germanium 
+      - ``Ge_cubic_2014_Wolff``
+  - Lithium niobate 
+      - ``LiNbO3_2021_Steel``
+      - ``LiNbO3aniso_2021_Steel``
 
-All available materials are loaded into NumBAT into the materials.materials_dict dictionary, 
-whose keys are the json file names. 
-Materials can easily be added to this by copying any of these files as a template and 
-modifying the properties to suit. The Si_test_anisotropic file contains all the variables
-that NumBAT is setup to read. We ask that stable parameters (particularly those used
-for published results) be added to the NumBAT git repository using the same naming convention.
+Materials can easily be added to this library by copying any of these files as a template and 
+modifying the properties to suit. The ``Si_test_anisotropic`` file contains all the variables
+that |NUMBAT| is setup to read. We ask that stable parameters (particularly those used
+for published results) be added to the |NUMBAT| git repository using the same naming convention.
 
 
 Waveguide Geometries
 ----------------------
 
-The following figures give some examples of how material types and physical 
-dimensions are represented in the mesh geometries. These can also be found in the directory::
+|NUMBAT| encodes different waveguide structures through finite element meshes constructed using
+the ``.geo`` language used by the open source tool ``Gmsh``. Most users will find they can construct all waveguides of interest using the existing templates. However, new templates can be added by adding a new ``.geo`` file to the ``<NumBAT>/backend/fortran/msh`` directory and adding a small quantity of python code to ``<NumBAT>/backend/objects.py``. Interested users can get in touch with <michael.steel@mq.edu.au>.
 
-    >>>  NumBAT/docs/msh_type_lib 
+The following figures give some examples of how material types and physical
+dimensions are represented in the mesh geometries. In particular, for each
+structure template, they identify the interpretation of the dimensional
+parameters (``inc_a_x``, ``slab_b_y``, etc), material labels (``material_a``,
+``material_b`` etc), and the grid refinement parameters (``lc_bkg``,
+``lc_refine_1``, ``lc_refine_2``, etc).  The captions for each structure also
+identify the mesh geometry template files in the directory
+``<NumBAT>/backend/fortran/msh`` with filenames of the form
+``<prefix>_msh_template.geo`` which define the structures and can give ideas
+for developing new structure files.
 
-as a series of ``.png`` file.
 
-.. figure:: ../msh_type_lib/1.png
+The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/docs/source/images/make_meshfigs.py``.
+
+.. figure:: images/rect_wg-mesh-annotated.png 
    :scale: 30 %
 
-   Rectangular waveguide.
+   Rectangular waveguide using shape ``rectangular`` (template ``oneincl_msh``).
 
-.. figure:: ../msh_type_lib/1_circular.png
-   :scale: 15 %
-
-   Elliptical waveguide.
-
-.. figure:: ../msh_type_lib/2.png
+.. figure:: images/circ_wg-mesh-annotated.png
    :scale: 30 %
 
-   Coupled rectangular waveguides.
+   Elliptical waveguide using shape ``circular`` (template ``oneincl_msh``).
 
-.. figure:: ../msh_type_lib/rib.png
+
+.. figure::  images/twoincl_rect_wg_mesh_both.png 
    :scale: 30 %
 
-   A conventional rib waveguide.
+   Coupled rectangular waveguides using shape ``rectangular`` (template ``twoincl_msh``).
 
-.. figure:: ../msh_type_lib/rib_coated.png
+.. figure::  images/twoincl_circ_wg_mesh_both.png 
    :scale: 30 %
 
-   A coated rib waveguide.
+   Coupled circular waveguides using shape ``circular`` (template ``twoincl_msh``).
+   There appers to be a bug here!
 
-.. figure:: ../msh_type_lib/rib_double_coated.png
+.. figure::  images/rib_wg-mesh-annotated.png 
    :scale: 30 %
 
-   A rib waveguide on two substrates.
+   A conventional rib waveguide using shape ``rib`` (template ``rib``).
 
-.. figure:: ../msh_type_lib/slot.png
+.. figure:: images/rib_coated_wg-mesh-annotated.png
    :scale: 30 %
 
-   A slot waveguide (``material_a`` is low index).
+   A coated rib waveguide using shape ``rib_coated`` (template ``rib_coated``).
 
-.. figure:: ../msh_type_lib/slot_coated.png
+.. figure:: images/rib_double_coated_wg_mesh_both.png
    :scale: 30 %
 
-   A coated slot waveguide (``material_a`` is low index).
+   A rib waveguide on two substrates using shape ``rib_double_coated`` (template ``rib_double_coated``).
 
-.. figure:: ../msh_type_lib/onion.png
+.. .. figure:: images/slot_wg-mesh-annotated.png
+.. figure:: images/slot_wg_mesh_both.png
    :scale: 30 %
 
-   A concentric layered structure.
+   A slot waveguide using shape ``slot`` (``material_a`` is low index) (template ``slot``).
+
+.. .. figure:: images/slot_coated_wg-mesh-annotated.png
+.. figure:: images/slot_coated_wg_mesh_both.png
+   :scale: 30 %
+
+   A coated slot waveguide using shape ``slot_coated`` (``material_a`` is low index) (template ``slot_coated``).
+
+.. figure:: images/onion_wg_mesh_both.png
+   :scale: 30 %
+
+   A many-layered concentric structure using shape ``onion`` (template ``onion``).
+
+.. figure:: images/onion2_wg-mesh.png
+   :scale: 30 %
+
+   A two-layered concentric structure with background using shape ``onion2`` (template ``onion2``).
+
+.. figure:: images/onion3_wg-mesh.png
+   :scale: 30 %
+
+   A three-layered concentric structure with background using shape ``onion3`` (template ``onion3``).
+
+.. figure:: images/circ_onion_wg-mesh.png
+   :scale: 30 %
+
+   A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
+.. figure:: images/circ_onion3_wg-mesh.png
+   :scale: 30 %
+
+   A two-layered concentric structure with a circular outer boundary using shape ``circ_onion2`` (template ``circ_onion2``).
+
+.. figure:: images/circ_onion3_wg-mesh.png
+   :scale: 30 %
+
+   A three-layered concentric structure with a circular outer boundary using shape ``circ_onion3`` (template ``circ_onion3``).
+
+
+
+
+.. figure:: images/trapezoidal_rib_wg_mesh_both.png
+   :scale: 30 %
+
+   A trapezoidal rib structure using shape ``trapezoidal_rib``.
+
+.. figure:: images/pedestal_wg_mesh_both.png
+   :scale: 30 %
+
+   A supported pedestal structure using shape ``pedestal``.
 
 .. raw:: latex
 
     \clearpage
 
 
+Structure parameters
+----------------------
 
-The parameters ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2``  to be encountered below set the fineness of the FEM mesh. ``lc_bkg`` sets the reference background mesh size, larger ``lc_bkg`` = larger (more coarse) mesh. In NumBAT it is also possible to refine the mesh near interfaces and near select points in the domain, as highlighted in the figures above. This is done using the ``lc_refine_`` commands, which we now discuss. At the interface between materials the mesh is refined to be ``lc_bkg/lc_refine_1``, therefore larger ``lc_refine_1`` = finer mesh at these interfaces. The meshing program automatically adjusts the mesh size to smoothly transition from a point that has one mesh parameter to points that have other meshing parameters. The mesh is typically also refined at the centers of important regions, such as in the center of a waveguide, which is done with ``lc_refine_2``, which analogously to ``lc_refine_1``, refines the mesh size at these points as ``lc_bkg/lc_refine_2``. For definition of ``lc_refine_3+`` parameters see the particular .geo file.
+The parameters ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2`` labelled in the above figures
+control the fineness of the FEM mesh and are set when constructing the waveguide, as discussed in the next chapter. 
+The first parameter ``lc_bkg`` sets the reference background mesh size, typically as a fraction of the length of the outer boundary edge. 
+A larger ``lc_bkg`` yields a coarser mesh. Reasonable starting values are ``lc_bkg=0.1`` (10 mesh points on the outer boundary) to ``lc_bkg=0.05`` (20 mesh points on the outer boundary). 
+   
+As well as setting the overall mesh scale with ``lc_bkg``, one can also refine 
+the mesh near interfaces and near select points
+in the domain, as may be observed in the figures in the previous section. 
+This helps to increase the mesh resolution in regions where there 
+the electromagnetic and acoustic fields are likely to be strong and/or rapidly varying.
+This is achieved using the
+``lc_refine_n`` parameters as follows. At the interface between
+materials, the mesh is refined to have characteristic length ``lc_bkg/lc_refine_1``, 
+therefore a *larger* ``lc_refine_1`` gives a *finer* mesh by a factor of ``lc_refine_1`` 
+at these interfaces.  The meshing program ``Gmsh``
+automatically adjusts the mesh size to smoothly transition from a point that
+has one mesh parameter to points that have other meshing parameters. The mesh
+is typically also refined in the vicinity of important regions, such as in the
+center of a waveguide, which is done with ``lc_refine_2``, which analogously to
+``lc_refine_1``, refines the mesh size at these points as
+``lc_bkg/lc_refine_2``. 
 
-Choosing appropriate values of ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2`` is crucial for NumBAT to give accurate results. The values depend strongly on the type of structure being studied, and so it is recommended to carry out a convergence test before delving into new structures (see Tutorial 5) starting from similar parameters as used in the tutorial simulations. In NumBAT the x-dimension of the unit cell is traditionally normalised to unity, in which case there will be ``lc_bkg`` mesh elements along the horizontal outside edge; in other words the outside edge is divided into ``lc_bkg`` elements. 
+For more complicated structures, there are additional ``lc_refine_<n>`` parameters.
+To see their exact function, look for these expressions in the particular .geo file.
 
-You can also visually check the resolution of your mesh by setting ``plt_mesh=True`` or ``check_mesh=True`` when you define your ``objects.Struct`` - the first saves a png of the mesh (in NumBAT/backend/fortran/msh/) the second opens mesh in gmsh - (see Tutorial 1). The NumBAT generated .msh file is stored in NumBAT/backend/fortran/msh/ which can be viewed by running the following command ::
+Choosing appropriate values of ``lc_bkg``, ``lc_refine_1``, ``lc_refine_2`` is
+crucial for |NUMBAT| to give accurate results. The appropriate values depend strongly on the type of structure being studied, and so we strongly recommended carrying out a convergence test before delving into new structures (see Tutorial 5 for an example) starting
+from similar parameters as used in the tutorial simulations. 
+
+As will as giving low accuracy, a structure with too coarse a mesh is often the cause of the eigensolver failing to converge in which case |NUMBAT| will terminate with an error. 
+If you encounter such an error, try the calculation again with a slightly smaller value for ``lc_bkg``, or slightly higher values  for the ``lc_refine_n`` parameters.
+
+On the other hand, it is wise to begin with relatively coarse meshes. It will be apparent that the number of  elements scales roughly *quadratically* with the ``lc_refine`` parameters and so the run-time increases rapidly as the mesh becomes finer.
+For each problem,  some initial experimentation to identify a mesh resolution that gives reasonable convergence in acceptable simulation is usually worthwhile.
+
+
+Viewing the mesh 
+----------------------
+When |NUMBAT| constructs a waveguide, the template ``geo`` file is converted to a concrete instatiation with the ``lc_refine`` and geometric parameters adjusted to the requested values. This file is then converted into a ``gmsh``  ``.msh`` file. When exploring new structures and their convergence behaviour, it is a very good idea to view the generated mesh frequently.
+
+You can examine the resolution of your mesh by calling the
+``plot_mesh(<prefix>)`` or ``check_mesh()`` methods on a waveguide ``Structure`` object.
+The first of these functions saves a pair of images of the mesh to a ``<prefix>-mesh.png`` file in the local directory which can be viewed with your preferred image viewer;
+the second opens the mesh in a ``gmsh`` window (see Tutorial 1 above).
+
+In addition, the ``.msh`` file generated by |NUMBAT| in any calculation is stored 
+in ``<NumBAT>/backend/fortran/msh/build`` and can be viewed by running the command ::
     
-    NumBAT/backend/fortran/msh$ gmsh <msh_name>.msh
+    gmsh <msh_filename>.msh
 
-Users on WSL will need to first run an X listener (such as XMING) in Windows in order for the "plt_mesh=True" feature to work.
-Once the X listener is running, execute the following in the terminal::
+In some error situations, |NUMBAT| will explicitly suggest viewing the mesh and will print out the required command to do so.
 
-    $ sudo apt-get install x11-apps
-    $ export DISPLAY=:0
-    $ xclock
 
-where the last command is simply to check the setup. Once this is confirmed to be operating smoothly, the "plt_mesh=True" command will then run as anticipated and generate two png files (one for the geometry and one for the mesh) in NumBAT/backend/fortran/msh/. Note the X windows that open must be manually closed for the calculation to continue, and after unexpected restarts the X window may no longer display output but the png files will contain the necessary features.
-
-In the remainder of this chapter we go through a number of example ``simo.py`` files. But before we do, another quick tip about running simulations within screen sessions, which allow you to disconnect from servers leaving them to continue your processes.
-
-.. raw:: latex
+.. .. raw:: latex
 
     \clearpage
-
-Screen Sessions
-------------------------------------------------
-::
-
-    screen
-
-is an extremely useful little linux command. In the context of long-ish calculations it has two important applications; ensuring your calculation is unaffected if your connection to a remote machine breaks, and terminating calculations that have hung without closing the terminal.
-For more information see the manual::
-
-    $ man screen
-
-or see online discussions `here <http://www.howtoforge.com/linux_screen>`_, `and here <http://www.rackaid.com/blog/linux-screen-tutorial-and-how-to/>`_.
-
-
-The screen session or also called screen instance looks just like your regular terminal/putty, but you can disconnect from it (close putty, turn off your computer etc.) and later reconnect to the screen session and everything inside of this will have kept running. You can also reconnect to the session from a different computer via ssh.
-
-Basic Usage
-,,,,,,,,,,,,,,,,,,,,,
-
-To install screen::
-
-    $ sudo apt-get install screen
-
-To open a new screen session::
-
-    $ screen
-
-We can start a new calculation here::
-
-    $ cd NumBAT/tutorials/
-    $ python simo-tut_01-first_calc.py
-
-We can then detach from the session (leaving everything in the screen running) by typing::
-
-    Ctrl +a
-    Ctrl +d
-
-We can now monitor the processes in that session::
-
-    $ top
-
-Where we note the numerous running python processes that NumBAT has started. Watching the number of processes is useful for checking if a long simulation is near completion (which is indicated by the number of processes dropping to less than the specified num_cores).
-
-We could now start another screen and run some more calculations in this terminal (or do anything else).
-If we want to access the first session we 'reattach' by typing::
-
-    Ctrl +a +r
-
-Or entering the following into the terminal::
-
-    $ screen -r
-
-If there are multiple sessions use::
-
-    $ screen -ls
-
-to get a listing of the sessions and their ID numbers. To reattach to a particular screen, with ID 1221::
-
-    $ screen -r 1221
-
-To terminate a screen from within type::
-
-    Ctrl+d
-
-Or, taking the session ID from the previous example::
-
-    screen -X -S 1221 kill
-
-
-
-Terminating NumBAT simulations
-,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-
-If a simulation hangs, we can kill all python instances upon the machine::
-
-    $ pkill python3
-
-If a calculation hangs from within a screen session one must first detach from that session then kill python, or if it affects multiple instances, you can kill screen. A more targeted way to kill processes is using their PID::
-
-    $ kill PID
-
-Or if this does not suffice be a little more forceful::
-
-    $ kill -9 PID
-
-The PID is found from one of two ways::
-
-    $ top
-    $ ps -fe | grep username
-
-
-.. raw:: latex
-
-    \clearpage
-
 

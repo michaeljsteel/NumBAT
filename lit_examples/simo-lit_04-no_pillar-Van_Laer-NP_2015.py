@@ -12,7 +12,6 @@ import datetime
 import numpy as np
 import sys
 import matplotlib
-matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import copy
 
@@ -24,6 +23,8 @@ import integration
 import plotting
 from plotting import Decorator
 from fortran import NumBAT
+
+import starter
 
 
 # use this class to add or alter features to the final plots
@@ -68,79 +69,84 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'fig6-'
+prefix, refine_fac = starter.read_args(4, sys.argv, sub='a')
+
 
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
-Si_110 = copy.deepcopy(materials.get_material("Si_2016_Smith")
+Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 # Si_110 = copy.deepcopy(materials.materials_dict["Si_2015_Van_Laer"])
 Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.get_material("Vacuum"),
+wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+                        material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110, symmetry_flag=False,
-                        lc_bkg=.25, lc_refine_1=200.0, lc_refine_2=200.0)
+                        lc_bkg=.1, lc_refine_1=10.0*refine_fac, lc_refine_2=10.0*refine_fac)
+
+wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.
-n_eff = wguide.material_a.n-0.1
+n_eff = wguide.get_material('a').refindex_n-0.1
 
 
 doem=True
 doac=True
-new_calcs=False
+new_calcs=True
 
 if doem:
   # Calculate Electromagnetic Modes
   if new_calcs:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-    np.savez(prefix_str+'wguide_data', sim_EM_pump=sim_EM_pump)
+    np.savez(prefix+'-wguide_data', sim_EM_pump=sim_EM_pump)
   else:
-    npzfile = np.load(prefix_str+'wguide_data.npz', allow_pickle=True)
+    npzfile = np.load(prefix+'-wguide_data.npz', allow_pickle=True)
     sim_EM_pump = npzfile['sim_EM_pump'].tolist()
   
   sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
-  np.savez(prefix_str+'wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
-  #npzfile = np.load(prefix_str+'wguide_data2.npz', allow_pickle=True)
+  np.savez(prefix+'-wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
+  #npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
   #sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
   
   plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump], 
                            ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E', 
-                           n_points=2000, quiver_points=10, prefix_str=prefix_str, pdf_png='png', 
-                           ticks=True, comps=('Ex', 'Eabs', 'Et'), decorator=emdecorate)
+                           n_points=2000, quiver_points=10, prefix=prefix, decorator=emdecorate)
   
   # Print the wavevectors of EM modes.
-  print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
+  print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
   
   # Calculate the EM effective index of the waveguide.
-  n_eff_sim = np.real(sim_EM_pump.Eig_values*((wl_nm*1e-9)/(2.*np.pi)))
-  print("n_eff = ", np.round(n_eff_sim, 4))
+  print("n_eff = ", np.round(sim_EM_pump.neff_all(), 4))
   
 
 if doac:
-  k_AC = 5 # close but not quite zero
+  q_AC = 5 # close but not quite zero
   
   # Calculate Acoustic Modes
   if new_calcs:
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
-    np.savez(prefix_str+'wguide_data_AC', sim_AC=sim_AC)
+    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+    #np.savez(prefix+'-wguide_data_AC', sim_AC=sim_AC)  # Pickle problem
   else:
-    npzfile = np.load(prefix_str+'wguide_data_AC.npz', allow_pickle=True)
+    npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
     sim_AC = npzfile['sim_AC'].tolist()
   
-  # Print the frequencies of AC modes.
-  print('Freq of AC modes (GHz) \n', np.round((sim_AC.Eig_values)*1e-9, 4))
-  #print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
-  
-  plotting.plot_mode_fields(sim_AC, ivals=(7,), EM_AC='AC', prefix_str=prefix_str, 
-                           pdf_png='png', comps=('ux','uy','ut','uabs'), ticks=True,
-                           xlim_min=-0.05, ylim_min=-.05, xlim_max=-0.05, ylim_max=-.05) 
+  plotting.plot_mode_fields(sim_AC, ivals=range(20), prefix=prefix)
   
 set_q_factor = 306
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined, 
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, EM_ival_pump=EM_ival_pump, 
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump, 
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+
+# Print the frequencies and gains of AC modes.
+nus = sim_AC.nu_AC_all()
+gains = SBS_gain[EM_ival_pump, EM_ival_Stokes, :]
+
+print('Acoustic modes')
+print('m      Freq (GHz)      Total gain (1/(Wm))')
+for m in range(len(nus)):
+    print('{0:3d}    {1:12.6f}   {2:8.4f}'.format(m, np.real(nus[m])*1e-9, gains[m]))
+
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
@@ -154,11 +160,12 @@ print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
 print("SBS_gain [1/(Wm)] total \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = 9.1 # GHz
-freq_max = 9.3 # GHz
-plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
+freq_min =5e9 # 9.1e9 # Hz
+freq_max = 50e9 # 9.3e9 # Hz
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix_str=prefix_str, suffix_str='', pdf_png='png')
+    prefix=prefix)
 
 end = time.time()
 print("\n Simulation time (sec.)", (end - start))
+print("--------------------------------------------------------------------\n\n\n")

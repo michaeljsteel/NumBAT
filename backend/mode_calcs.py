@@ -29,8 +29,9 @@ import matplotlib
 import plotting
 import integration
 from nbtypes import *
-from fortran import NumBAT
+from reporting import *
 
+from fortran import NumBAT
 
 VacCSpeed=299792458
 
@@ -47,7 +48,7 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
       self.plot_params = {}
 
       self.init_arrays()
-      self.set_plot_params()
+      self.set_plot_params(prefix='')
 
 
     def init_arrays(self):
@@ -79,18 +80,24 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
       self.init_arrays()
 
 
+#    def make_picklable(self): #before this object can be copied or saved it needs internal C++ objects removed. They are rebuilt when needed.
+#        if not self.triang6p is None: del self.triang6p._cpp_triangulation
+#        if not self.triang1p is None: del self.triang1p._cpp_triangulation
+
     def set_plot_params(self, #n_points=501, quiver_points=30, 
-                  xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
+                  xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
                   EM_AC='EM_E', 
                   quiver_points=30,
                   num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
                   suppress_imimre=True, pdf_png='png', 
-                  prefix_str='', suffix_str='', decorator=plotting.Decorator(), ):
+                  prefix='tmp', suffix='', decorator=plotting.Decorator(), ):
                   #modal_gains_PE=None,
                   #modal_gains_MB=None,
                   #modal_gains=None):
 
-      if not os.path.exists("%sfields" % prefix_str): os.mkdir("%sfields" % prefix_str)
+
+      if len(prefix) and not os.path.exists("%s-fields" % prefix): 
+          os.mkdir("%s-fields" % prefix)
 
       if type(EM_AC) is type('a'): # aim to get rid of this
         if self.sim.is_AC():
@@ -101,22 +108,17 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
           except:
             raise ValueError("EM_AC must be either 'AC', 'EM_E' or 'EM_H'.")
 
+
       self.plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min, 
                  'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
                   'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'EM_AC':EM_AC,
-                  'prefix_str': prefix_str, 'suffix_str': suffix_str, 'pdf_png': pdf_png, 
+                  'prefix': prefix, 'suffix': suffix, 'pdf_png': pdf_png, 
                  # 'modal_gain':modal_gain, 
                   'decorator': decorator,
                   'suppress_imimre':suppress_imimre,
               # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y, 
                'quiver_points': quiver_points 
                }
-
-      #TODO: these will be used somewhere and need to be replaced
-      #self.plot_params['n_pts_x']=self.n_pts_x   #Thse are data properties, not plot props and don't belong here
-      #self.plot_params['n_pts_y']=self.n_pts_y
-
-      print('done ploparams', decorator)
 
     def interpolate_mode_i(self, ival, field_type):
       # self.v_Fx6p etc could propbably be made local to this function
@@ -237,8 +239,8 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
 
       #TODO: this would be much more useful *before* the FEM calc
       print('''
-      Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um), 
-                    mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
+  Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um), 
+                mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
                     '''.format( 
                         1e6*(self.v_x[0]-shiftx), 
                         1e6*(self.v_x[-1]-shiftx), 
@@ -264,7 +266,6 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
      m_Fx = self.m_ReFx + 1j*self.m_ImFx
      m_Fy = self.m_ReFy + 1j*self.m_ImFy
      m_Fz = self.m_ReFz + 1j*self.m_ImFz
-     print('shapes', m_Fx.shape, len(self.v_x))
      dx=self.v_x[1]-self.v_x[0]
      dy=self.v_y[1]-self.v_y[0]
 
@@ -277,9 +278,9 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
      del_y_Fy = np.gradient(m_Fy, dy, axis=1)
      del_x_Fz = np.gradient(m_Fz, dx, axis=0)
      del_y_Fz = np.gradient(m_Fz, dy, axis=1)
-     del_z_Fx = 1j*self.sim.k_AC*m_Fx
-     del_z_Fy = 1j*self.sim.k_AC*m_Fy
-     del_z_Fz = 1j*self.sim.k_AC*m_Fz
+     del_z_Fx = 1j*self.sim.q_AC*m_Fx
+     del_z_Fy = 1j*self.sim.q_AC*m_Fy
+     del_z_Fz = 1j*self.sim.q_AC*m_Fz
 
      
      return
@@ -332,9 +333,9 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
      del_y_Fy = np.gradient(m_Fy, dy, axis=1)
      del_x_Fz = np.gradient(m_Fz, dx, axis=0)
      del_y_Fz = np.gradient(m_Fz, dy, axis=1)
-     del_z_Fx = 1j*sim_wguide.k_AC*m_Fx
-     del_z_Fy = 1j*sim_wguide.k_AC*m_Fy
-     del_z_Fz = 1j*sim_wguide.k_AC*m_Fz
+     del_z_Fx = 1j*sim_wguide.q_AC*m_Fx
+     del_z_Fy = 1j*sim_wguide.q_AC*m_Fy
+     del_z_Fz = 1j*sim_wguide.q_AC*m_Fz
 
      # Flip y order as imshow has origin at top left
      del_mat = np.array([del_x_Ex[:,::-1].real, del_x_Ey[:,::-1].real, del_x_Ez[:,::-1].real, del_x_Ex[:,::-1].imag, del_x_Ey[:,::-1].imag, del_x_Ez[:,::-1].imag, del_y_Ex[:,::-1].real, del_y_Ey[:,::-1].real, del_y_Ez[:,::-1].real, del_y_Ex[:,::-1].imag, del_y_Ey[:,::-1].imag, del_y_Ez[:,::-1].imag, del_z_Ex[:,::-1].real, del_z_Ey[:,::-1].real, del_z_Ez[:,::-1].real, del_z_Ex[:,::-1].imag, del_z_Ey[:,::-1].imag, del_z_Ez[:,::-1].imag])
@@ -350,9 +351,9 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
          plt.xticks([])
          plt.yticks([])
          # limits
-         if xlim_min != None:
+         if xlim_min >0 :
              ax.set_xlim(xlim_min*n_points,(1-xlim_max)*n_points)
-         if ylim_min != None:
+         if ylim_min >0 :
              ax.set_ylim((1-ylim_min)*n_points,ylim_max*n_points)
          # titles
          plt.title(v_labels[i_p],fontsize=decorator.get_font_size('subplot_title'))
@@ -362,7 +363,7 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
          cbar = plt.colorbar(im, cax=cax, format='%.2e')
          if num_ticks:
              cbarticks = np.linspace(np.min(plot), np.max(plot), num=num_ticks)                
-         elif ylim_min != None:
+         elif ylim_min != 0:
              if xlim_min/ylim_min > 3:
                  cbarlabels = np.linspace(np.min(plot), np.max(plot), num=3)
              if xlim_min/ylim_min > 1.5:
@@ -395,10 +396,10 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
 
      if pdf_png=='png':
          plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
-             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str})
+             {'pre' : prefix, 's' : EM_AC, 'i' : ival, 'add' : suffix})
      elif pdf_png=='pdf':
          plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
-             {'pre' : prefix_str, 's' : EM_AC, 'i' : ival, 'add' : suffix_str}, bbox_inches='tight')
+             {'pre' : prefix, 's' : EM_AC, 'i' : ival, 'add' : suffix}, bbox_inches='tight')
      if not keep_plots_open: plt.close()
 
 
@@ -428,7 +429,7 @@ class Mode(object):
       mh.setup_plot_grid(n_points=n_points)  # TODO: make all this cleaner. this should happen once for all modes
       if not self.interpolated:
 
-          self.field_type=FieldType.EM_E  #REMOVE THIS REPEAT WITH plot_mode
+          #self.field_type=FieldType.EM_E  #REMOVE THIS REPEAT WITH plot_mode
           if self.is_AC(): 
              self.field_type=FieldType.AC
           else:
@@ -447,33 +448,31 @@ class Mode(object):
       else:
           self.field_type=EM_field
 
-      print('p_m1')
       mh = self._get_mode_helper()
+
       mh.setup_plot_grid(n_points=n_points)  # TODO: make all this cleaner. this should happen once for all modes
 
-      mh.set_plot_params() # can delete shortly
+      #mh.set_plot_params() # can delete shortly
 
-      print(mh.plot_params)
+      #print(mh.plot_params)
       #print('dec', mh.plot_params['decorator'])
 
       #FIX ME
-      if decorator is None: 
+      if not decorator is None: 
+          mh.plot_params['decorator']=decorator 
+      elif mh.plot_params['decorator'] is None:
           mh.plot_params['decorator']=plotting.Decorator() # don't want to do this.
-      else:
-          mh.plot_params['decorator']=decorator
-      mh.plot_params['decorator'].set_singleplot_axes_property('axes.linewidth',.5)
-      mh.plot_params['quiver_points']=6
-
-      mh.plot_params['colorbar']=False
-      mh.plot_params['add_title']=False
 
 
-      #mh.set_plot_params()
-      print('p_m2')
+      ## Just for now
+      #mh.plot_params['decorator'].set_singleplot_axes_property('axes.linewidth',.5)
+      #mh.plot_params['quiver_points']=6
+      #mh.plot_params['colorbar']=False
+      #mh.plot_params['add_title']=False
+
+
       self.interpolate_mode(mh)
-      print('p_m3')
       self._plot_me(mh, comps, self.field_type, ax)
-      print('p_m4')
       self.clear_mode_plot_data()
 
   def plot_mode_H(self, comps): # plot magnetic field for EM modes
@@ -505,6 +504,19 @@ class Mode(object):
       
       (self.m_ReFx, self.m_ImFx, self.m_ReFy, self.m_ImFy, 
               self.m_ReFz, self.m_ImFz, self.m_AbsF)=mh.interpolate_mode_i(ival, self.field_type)
+
+      if self.field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
+          mu0 = 1.25663706212e-6
+          eps0 =  8.8541878128e-12
+          Z0 = sqrt(mu0/eps0)
+          self.m_ReFx *= Z0
+          self.m_ReFy *= Z0
+          self.m_ReFz *= Z0
+          self.m_ImFx *= Z0
+          self.m_ImFy *= Z0
+          self.m_ImFz *= Z0
+          self.m_AbsF *= Z0
+
 
   def _plot_me(self, mode_helper, comps, field_type, ax=None):
       v_plots = {'Fxr':self.m_ReFx, 'Fyr':self.m_ReFy, 'Fzi':self.m_ImFz, 
@@ -745,9 +757,9 @@ class Simulation(object):
     '''
 
     def __init__(self, structure, num_modes=20, wl_nm=1, n_eff=None, shift_Hz=None, 
-                 k_AC=None, EM_sim=None, Stokes=False, 
+                 q_AC=None, EM_sim=None, Stokes=False, 
                  calc_EM_mode_energy=False, calc_AC_mode_power=False, debug=False):
-        '''Sets up the problem for the mode calculation at a given optical wavelength `wl_nm` or acoustic wavenumber `k_AC`.
+        '''Sets up the problem for the mode calculation at a given optical wavelength `wl_nm` or acoustic wavenumber `q_AC`.
 
            For electromagnetic problems, the tool solves for the effective index or wavenumber at a given wavelength.
            For acoustic problems, the tool solves for the acoustic frequency at a given wavenumber.
@@ -757,7 +769,7 @@ class Simulation(object):
              :param float wl_nm: For electromagnetic problems, the vacuum wavelength in nanometers.
              :param float n_eff: For electromagnetic problems, an estimated effective index to begin the eigenvalue search.
              :param float shift_Hz: For acoustic problems, an estimated frequency offset to begin the eigenvalue search.
-             :param float k_AC: For acoustic problems, the acoustic wavevector of the mode.
+             :param float q_AC: For acoustic problems, the acoustic wavevector of the mode.
              :param float EM_sim: For acoustic problems, the results of a previously solved EM problem to speed calculations. 
              :param bool calc_EM_mode_energy: For electromagnetic problems, whether to calculate the optical mode energy.
              :param bool calc_AC_mode_power: For acoustic problems, whether to calculate the acoustic mode power.
@@ -767,22 +779,22 @@ class Simulation(object):
         self.mode_plot_helper = None
         self.sim_type = SimType.EM
 
-        self.wl_m = wl_nm*1e-9
+        self.lambda_m = wl_nm*1e-9
         self.n_eff = n_eff
         self.shift_Hz = shift_Hz
 
-        self.k_AC = k_AC
+        self.q_AC = q_AC
         self.Omega_AC = None
         self.EM_sim = EM_sim
 
         self.num_modes = num_modes
         self.Stokes = Stokes
         self.mode_pol = None
-        self.k_0 = 2 * np.pi / self.wl_m
+        self.k_0 = 2 * np.pi / self.lambda_m
         # just off normal incidence to avoid degeneracies
         self.k_pll = np.array([1e-16, 1e-16])
         speed_c = 299792458
-        self.omega_EM = 2*np.pi*speed_c/self.wl_m # Angular freq in units of rad/s
+        self.omega_EM = 2*np.pi*speed_c/self.lambda_m # Angular freq in units of rad/s
         self.calc_EM_mode_energy = calc_EM_mode_energy
         self.calc_AC_mode_power = calc_AC_mode_power
 
@@ -803,6 +815,15 @@ class Simulation(object):
         self.mode_set=[]
         self.r0_offset = [0, 0] # passed to modes when created 
 
+
+        self.n_msh_pts = 0   # number of points in .msh mesh file
+        self.n_msh_el = 0    # number of elements in .msh mesh file
+        self.table_nod = None
+        self.type_el = None
+        self.type_nod = None
+        self.x_arr = None
+        self.ls_material = None
+
         # Takes list of all material refractive indices
         # Discards any that are zero
         # Set up mapping table for refractive indices
@@ -813,7 +834,7 @@ class Simulation(object):
         #  it will always be {1:1, 2:2, 3:3, .., num_mats:num_mats}
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
         n_list = []
-        n_list_tmp = np.array([m.n for m in self.structure.l_materials])
+        n_list_tmp = np.array([m.refindex_n for m in self.structure.d_materials.values()])
         self.el_conv_table_n = {}
         i = 1; j = 1
         for n in n_list_tmp:
@@ -827,8 +848,6 @@ class Simulation(object):
 
         if self.structure.loss is False:
             self.n_list = self.n_list.real
-
-
 
     def get_xyshift(self):
         if self.is_EM():
@@ -907,7 +926,7 @@ class Simulation(object):
       :rtype: float
       ''' 
       assert(self.is_EM())
-      return np.real(self.Eig_values[m]*self.wl_m/(2*np.pi))
+      return np.real(self.Eig_values[m]*self.lambda_m/(2*np.pi))
 
     def ngroup_EM_available(self): 
       '''Returns true if a measure of the electromagnetic group index is available.'''
@@ -924,12 +943,18 @@ class Simulation(object):
          :return: Group index of the mode.
          :rtype: float
          '''
+
       if not self.ngroup_EM_available():
         print('''EM group index requires calculation of mode energy and mode power when calculating EM modes. 
                Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simulation''')
-        return 0
-      vg= np.real(self.EM_mode_power[m]/self.EM_mode_energy[m])
-      ng=VacCSpeed/vg
+        ng = 0
+
+      if abs(self.EM_mode_energy[m]) > 0.0:
+        vg= np.real(self.EM_mode_power[m]/self.EM_mode_energy[m])
+        ng=VacCSpeed/vg
+      else:
+        ng = 0
+
       return ng
 
     def ngroup_EM_all(self):
@@ -983,7 +1008,7 @@ class Simulation(object):
          :rtype: array(float)
           '''
       assert(self.is_EM())
-      return np.real(self.Eig_values*self.wl_m/(2*np.pi))
+      return np.real(self.Eig_values*self.lambda_m/(2*np.pi))
 
     def kz_EM_all(self): 
       ''' Return an array of the wavevector in 1/m of all electromagnetic modes.
@@ -1020,7 +1045,7 @@ class Simulation(object):
          :rtype: float
          '''
       assert(self.is_AC())
-      return np.pi*2*np.real(self.Eig_values[m])/self.k_AC
+      return np.pi*2*np.real(self.Eig_values[m])/self.q_AC
 
     def vp_AC_all(self): 
       ''' Return an array of the phase velocity in m/s of all acoustic modes.
@@ -1029,7 +1054,7 @@ class Simulation(object):
          :rtype: array(float)
          '''
       assert(self.is_AC())
-      return np.pi*2*np.real(self.Eig_values)/self.k_AC
+      return np.pi*2*np.real(self.Eig_values)/self.q_AC
 
     def vg_AC(self, m): 
       """ Return group velocity of AC mode m in m/s"""
@@ -1118,8 +1143,8 @@ class Simulation(object):
                 alpha = NumBAT.ac_alpha_int_v2(self.num_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
                     self.table_nod, self.type_el, self.x_arr,
-                    self.structure.nb_typ_el_AC, self.structure.eta_tensor,
-                    self.k_AC, self.Omega_AC, self.sol1,
+                    self.structure.n_typ_el_AC, self.structure.eta_tensor,
+                    self.q_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
                     self.AC_mode_energy) # appropriate for alpha in [1/s]
             else:
@@ -1131,22 +1156,22 @@ class Simulation(object):
                 alpha = NumBAT.ac_alpha_int(self.num_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
                     self.table_nod, self.type_el, self.x_arr,
-                    self.structure.nb_typ_el_AC, self.structure.eta_tensor,
-                    self.k_AC, self.Omega_AC, self.sol1,
+                    self.structure.n_typ_el_AC, self.structure.eta_tensor,
+                    self.q_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
                     self.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
         except KeyboardInterrupt:
             print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
         self.ac_alpha_t = np.real(alpha)
-        # Q_factors = 0.5*(k_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+        # Q_factors = 0.5*(q_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
         self.ac_Qmech = 0.5*(np.real(self.Omega_AC)/self.ac_alpha_t)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
       else:
         self.Q_method=QAcMethod.Fixed
         # factor of a 1/2 because alpha is for power!
-        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = k_AC/fixed_Q
+        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
         # alpha [1/s] = vg * alpha [1/m]
         # alpha [1/s] = Omega_AC/(2*fixed_Q)
-        # alpha = 0.5*(k_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
+        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
         self.ac_Qmech = fixed_Q*np.ones(self.num_modes)
         self.ac_alpha_t = 0.5*(np.real(self.Omega_AC)/fixed_Q)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
 
@@ -1169,7 +1194,7 @@ class Simulation(object):
         self.sim_type = SimType.EM
 
         tstruc=self.structure
-        self.d_in_m = tstruc.unitcell_x*1e-9
+        self.d_in_m = tstruc.unitcell_x*1e-9   # TODO: don't think fortran really needs this. Why does it not care about y dimension?
 
 
         if self.num_modes < 20:
@@ -1185,7 +1210,7 @@ class Simulation(object):
 
         # Calculate where to center the Eigenmode solver around.
         # (Shift and invert FEM method)
-        shift = self.n_eff**2 * self.k_0**2
+        shift_ksqr = self.n_eff**2 * self.k_0**2
 
         if EM_FEM_debug == 1:
             if not os.path.exists("Normed"):
@@ -1195,32 +1220,41 @@ class Simulation(object):
             if not os.path.exists("Output"):
                 os.mkdir("Output")
 
-        with open(tstruc.mesh_file) as f: # read in first line giving number of msh points and elements
-            self.n_msh_pts, self.n_msh_el = [int(i) for i in f.readline().split()]
-
+        
+        # mesh sizes is at top of mail file    #TODO: would these values be better as part of tstruc?
+        self.n_msh_pts, self.n_msh_el = map(int, tstruc.get_mail_data()[0].split())
+            
         print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
 
         # Size of Fortran's complex superarray (scales with mesh)
-        int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
-        if EM_FEM_debug == 1:
-          print("Mesh calculated: %d nodes."%self.n_msh_el)
+        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
+        #if EM_FEM_debug == 1:
+        #  print("Mesh calculated: %d nodes."%self.n_msh_el)
 
-        try:
-            resm = NumBAT.calc_em_modes(
-                self.wl_m, self.num_modes,
-                EM_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
-                self.n_msh_el, tstruc.nb_typ_el, self.n_list,
-                self.k_pll, self.d_in_m, shift, self.E_H_field, i_cond, itermax,
-                tstruc.plotting_fields, tstruc.plot_real,
-                tstruc.plot_imag, tstruc.plot_abs,
-                cmplx_max, real_max, int_max)
+        EM_FEM_debug = 0
+#        try:
+        fort_err = 0
 
-            self.Eig_values, self.sol1, self.mode_pol, self.table_nod, \
-            self.type_el, self.type_nod, self.x_arr, self.ls_material = resm
+        resm = NumBAT.calc_em_modes(
+            self.lambda_m, self.num_modes,
+            EM_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
+            self.n_msh_el, tstruc.n_typ_el, self.n_list,
+            self.k_pll, self.d_in_m, shift_ksqr, i_cond, itermax,
+            self.E_H_field, tstruc.plotting_fields, tstruc.plot_real, tstruc.plot_imag, tstruc.plot_abs)
+    #        cmplx_max, real_max, int_max)
 
-        except KeyboardInterrupt:
-            print("\n\n FEM routine calc_EM_modes",\
-            "interrupted by keyboard.\n\n")
+        self.Eig_values, self.sol1, self.mode_pol, self.table_nod, \
+        self.type_el, self.type_nod, self.x_arr, self.ls_material, fort_err, fort_mesg = resm
+
+        if fort_err != 0:
+            fort_mesg = str(fort_mesg, 'utf-8')  # fort_mesg comes back as a byte string.
+            report_and_exit('Fortran error in solving for electromagnetic modes: \n'
+                            ' NumBAT Fortran error code = %d. \n Message: \n %s'%(fort_err, fort_mesg))
+
+#        except KeyboardInterrupt:
+#            print("\n\n FEM routine calc_EM_modes",\
+#            "interrupted by keyboard.\n\n")
+
 
         # if not tstruc.plot_field_conc:
         #     self.mode_pol = None
@@ -1235,9 +1269,9 @@ class Simulation(object):
         #     self.n_msh_pts = None
         #     self.n_msh_el = None
 
-        if tstruc.plt_mesh:
-            print("Suppressed inefficient matplotlib plotting of mesh...")
-            #plotting.plot_msh(self.x_arr, prefix_str=tstruc.mesh_file, suffix_str='_EM')
+        #if tstruc.plt_mesh:
+        #    print("Suppressed inefficient matplotlib plotting of mesh...")
+            #plotting.plot_msh(self.x_arr, prefix=tstruc.mesh_file, suffix='_EM')
 
 
 ### Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
@@ -1282,10 +1316,10 @@ class Simulation(object):
                 # # Integration by quadrature. Slowest.
                     self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
                         self.num_modes, self.n_msh_el, self.n_msh_pts, nnodes,
-                        self.table_nod, self.type_el, tstruc.nb_typ_el, self.n_list,
+                        self.table_nod, self.type_el, tstruc.n_typ_el, self.n_list,
                         self.x_arr, self.sol1)
                 else:
-                  print("\n\n FEM routine em_mode_e_energy_int needs work for this structure .\n\n")
+                  print("\n\n FEM routine em_mode_e_energy_int is not implemented for this structure. Can't find group index. \n\n")
                   self.EM_mode_energy=np.zeros(self.num_modes, dtype=float)
                   
             except KeyboardInterrupt:
@@ -1327,7 +1361,7 @@ class Simulation(object):
 #      self.calc_EM_mode_energy()
 
 
-    def calc_AC_modes(self):
+    def calc_AC_modes(self, bcs=None):
         """ Run a Fortran FEM calculation to find the acoustic modes.
 
         Returns a ``Simulation`` object that has these key values:
@@ -1350,7 +1384,7 @@ class Simulation(object):
         # eg [vacuum, silicon, glass, vacuum, chalc] ->  {2:1,3:2,5:3}
         el_conv_table = {}
         i = 1; j = 1
-        for mat in self.structure.l_materials:
+        for mat in self.structure.d_materials.values():
             if mat.has_elastic_properties():
                 el_conv_table[i] = j
                 j += 1
@@ -1369,7 +1403,11 @@ class Simulation(object):
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
 
         # Parameters that control how FEM routine runs
-        i_cond = 1  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        i_cond = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        if bcs == 'Open': 
+            print('Attempting open elastic boundary conditions.')
+            icond=1  # TODO: DO THIS ACTUILLY WORK?
+
         itermax = 30  # Maximum number of iterations for convergence
         AC_FEM_debug = 0  # Fortran routines will display & save add. info
         ARPACK_tol = 1e-10  # ARPACK accuracy (0.0 for machine precision)
@@ -1379,18 +1417,18 @@ class Simulation(object):
         if self.shift_Hz is None:
             # For AC problem shift is a frequency; [shift] = s^-1.
             v_list = []
-            for el in range(self.structure.nb_typ_el_AC):
+            for el in range(self.structure.n_typ_el_AC):
                 # Using acoustic velocity of longitudinal mode pg 215 Auld vol 1.
                 v_list.append(np.sqrt(self.structure.c_tensor[0,0][el]/self.structure.rho[el]))
                 # # Using acoustic velocity of shear mode pg 215 Auld vol 1.
                 # v_list.append(np.sqrt(self.structure.c_tensor[3,3][el]/self.structure.rho[el]))
             AC_velocity = np.real(v_list).min()
-            shift = np.real(AC_velocity*self.k_AC/(2.*np.pi))
+            shift = np.real(AC_velocity*self.q_AC/(2.*np.pi))
             # print "shift", shift
-            shift = 0.9*shift
+            shift_nu = 0.9*shift
             # print "shift", shift
         else:
-            shift = self.shift_Hz
+            shift_nu = self.shift_Hz
 
         # Take existing msh from EM FEM and manipulate mesh to exclude vacuum areas.
         if self.EM_sim:
@@ -1408,8 +1446,8 @@ class Simulation(object):
             el_convert_tbl = {}
             el_convert_tbl_inv = {}
             node_convert_tbl = {}
-            if self.structure.plt_mesh:
-                plotting.plot_msh(x_arr, prefix_str=self.structure.mesh_file, suffix_str='_AC-orig')
+            #if self.structure.plot_mesh: #TODO turn this back on
+            #    plotting.plot_msh(x_arr, prefix=self.structure.mesh_file, suffix='_AC-orig')
 
             for el in range(n_msh_el):
                 # print type_el[el]
@@ -1495,7 +1533,7 @@ class Simulation(object):
             type_nod_AC = np.zeros(self.n_msh_pts)
 
         if AC_FEM_debug == 1:
-            print('shift', shift)
+            print('shift_nu', shift_nu)
             if not os.path.exists("Normed"):
                 os.mkdir("Normed")
             if not os.path.exists("Output"):
@@ -1504,22 +1542,31 @@ class Simulation(object):
                 os.mkdir("Matrices")
 
         # Size of Fortran's complex superarray (scales with mesh)
-        int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
+        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
 
         print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
 
         try:
+            fort_err = 0
+
+            tstruc=self.structure
+
             resm = NumBAT.calc_ac_modes(
-                self.k_AC, self.num_modes,
-                AC_FEM_debug, self.structure.mesh_file, self.n_msh_pts,
-                self.n_msh_el, self.structure.nb_typ_el_AC,
-                self.structure.c_tensor, self.structure.rho,
-                self.d_in_m, shift, i_cond, itermax, ARPACK_tol,
-                self.structure.plotting_fields,
-                cmplx_max, real_max, int_max, suplied_geo_flag, type_nod_AC, 
-                self.structure.symmetry_flag, table_nod_AC, type_el_AC, x_arr_AC)
+                self.q_AC, self.num_modes,
+                AC_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
+                self.n_msh_el, tstruc.n_typ_el_AC, tstruc.c_tensor, tstruc.rho,
+                self.d_in_m, shift_nu, i_cond, itermax, ARPACK_tol,
+                tstruc.plotting_fields,
+                suplied_geo_flag, type_nod_AC, 
+                tstruc.symmetry_flag, table_nod_AC, type_el_AC, x_arr_AC)
+
             table_nod_out, type_el_out, x_arr_out, \
-            self.Eig_values, self.sol1, self.mode_pol = resm
+            self.Eig_values, self.sol1, self.mode_pol, fort_err, fort_mesg = resm
+
+            if fort_err != 0:
+                fort_mesg = str(fort_mesg, 'utf-8')  # fort_mesg comes back as a byte string.
+                report_and_exit('Fortran error in solving for acoustic modes: \n'
+                                ' NumBAT Fortran error code = %d. \n Message: \n %s'%(fort_err, fort_mesg))
 
             # FEM Eigenvalue is frequency, rather than angular frequency Omega
             self.Omega_AC = self.Eig_values*2*np.pi
@@ -1529,14 +1576,14 @@ class Simulation(object):
             "interrupted by keyboard.\n\n")
 
         # Retrieve the material properties of each mesh point.
-        self.ls_material = NumBAT.array_material_ac(self.n_msh_pts, self.n_msh_el,
-             self.structure.nb_typ_el_AC, type_el_AC,
+        self.ls_material = NumBAT.array_material_ac(
+                self.n_msh_el, self.structure.n_typ_el_AC, type_el_AC,
              self.structure.rho, self.structure.c_tensor, 
              self.structure.p_tensor, self.structure.eta_tensor)
 
-        if self.structure.plt_mesh:
-            plotting.plot_msh(x_arr_AC, prefix_str=self.structure.mesh_file, suffix_str='_AC-in')
-            plotting.plot_msh(x_arr_out, prefix_str=self.structure.mesh_file, suffix_str='_AC-out')
+        #if self.structure.plt_mesh:  #TODO re-enable
+        #    plotting.plot_msh(x_arr_AC, prefix=self.structure.mesh_file, suffix='_AC-in')
+        #    plotting.plot_msh(x_arr_out, prefix=self.structure.mesh_file, suffix='_AC-out')
 
         # if self.EM_sim is None:
         #     table_nod_out = None
@@ -1559,8 +1606,8 @@ class Simulation(object):
                     self.AC_mode_power = NumBAT.ac_mode_power_int_v4(
                         self.num_modes, self.n_msh_el, self.n_msh_pts,
                         nnodes, self.table_nod, self.type_el, self.x_arr,
-                        self.structure.nb_typ_el_AC, self.structure.c_tensor,
-                        self.k_AC, self.Omega_AC, self.sol1)
+                        self.structure.n_typ_el_AC, self.structure.c_tensor,
+                        self.q_AC, self.Omega_AC, self.sol1)
                 else:
                     if self.structure.inc_shape not in self.structure.curvilinear_element_shapes:
                         print("Warning: ac_mode_power_int - not sure if mesh contains curvi-linear elements", 
@@ -1569,8 +1616,8 @@ class Simulation(object):
                     self.AC_mode_power = NumBAT.ac_mode_power_int(
                         self.num_modes, self.n_msh_el, self.n_msh_pts,
                         nnodes, self.table_nod, self.type_el, self.x_arr,
-                        self.structure.nb_typ_el_AC, self.structure.c_tensor_z,
-                        self.k_AC, self.Omega_AC, self.sol1, AC_FEM_debug)
+                        self.structure.n_typ_el_AC, self.structure.c_tensor_z,
+                        self.q_AC, self.Omega_AC, self.sol1, AC_FEM_debug)
             except KeyboardInterrupt:
                 print("\n\n FEM routine AC_mode_energy_int interrupted by keyboard.\n\n")
 
@@ -1583,7 +1630,7 @@ class Simulation(object):
                 self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int_v4(
                     self.num_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod, self.type_el, self.x_arr,
-                    self.structure.nb_typ_el_AC, self.structure.rho,
+                    self.structure.n_typ_el_AC, self.structure.rho,
                     self.Omega_AC, self.sol1)
             else:
                 if self.structure.inc_shape not in self.structure.curvilinear_element_shapes:
@@ -1593,7 +1640,7 @@ class Simulation(object):
                 self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int(
                     self.num_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod, self.type_el, self.x_arr,
-                    self.structure.nb_typ_el_AC, self.structure.rho,
+                    self.structure.n_typ_el_AC, self.structure.rho,
                     self.Omega_AC, self.sol1, AC_FEM_debug)
         except KeyboardInterrupt:
             print("\n\n FEM routine AC_mode_elastic_energy_int interrupted by keyboard.\n\n")
@@ -1613,6 +1660,9 @@ def bkwd_Stokes_modes(EM_sim):
     EM_mode_power: the power in the Stokes modes. Note this power is negative because the modes 
                    are travelling in the negative z-direction.
     """
+
+    EM_sim.clean_for_save()
+
     Stokes_modes = copy.deepcopy(EM_sim)
     Stokes_modes.sol1 = np.conj(Stokes_modes.sol1)
     Stokes_modes.Eig_values = -1.0*Stokes_modes.Eig_values
@@ -1628,5 +1678,8 @@ def fwd_Stokes_modes(EM_sim):
     Returns a ``Simulation`` object that has these key values:
 
     """
+
+    EM_sim.clean_for_save()
+
     Stokes_modes = copy.deepcopy(EM_sim)
     return Stokes_modes

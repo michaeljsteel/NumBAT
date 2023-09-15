@@ -1,0 +1,31 @@
+{
+ "file_name": "LiNbO3_2021_Steel",  // Name of this file, will be used as identifier
+ "chemical": "LiNbO3",  // Chemical composition
+ "author": "Steel",  // Author of data
+ "date": "2021",  // Year of data publication/creation
+ "institution": "Lviv Polytechnic Nat University",  // Source institution
+ "doi": "dx.doi.org/10.1063/1.3238507",  // doi or, failing that, the http address
+ "Re_n": 2.30,  // Real part of refractive index (n_o) []
+ "_Re_no": 2.30,  // Real part of refractive index (n_e) []
+ "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 4650,  // Density [kg/m3]
+ "c_11": 199.2e9,  // Stiffness tensor component [Pa]
+ "c_12": 54.7e9,  // Stiffness tensor component [Pa]
+ "c_13": 70.0e9,  // Stiffness tensor component [Pa]
+ "c_14": 7.9e9,  // Stiffness tensor component [Pa]
+ "c_33": 240.0e9,  // Stiffness tensor component [Pa]
+ "c_44": 59.9e9,  // Stiffness tensor component [Pa]
+ "c_66": 72.2e9,  // Stiffness tensor component [Pa]
+ "p_11": -0.021,  // Photoelastic tensor component []
+ "p_12": 0.060,  // Photoelastic tensor component []
+ "p_13": 0.172,  // Photoelastic tensor component []
+ "p_31": 0.141,  // Photoelastic tensor component []
+ "p_33": 0.118,  // Photoelastic tensor component []
+ "p_14": -0.052,  // Photoelastic tensor component []
+ "p_41": -0.109,  // Photoelastic tensor component []
+ "p_44": 0.121,  // Photoelastic tensor component []
+ "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.62e-3  // Acoustic loss tensor component [Pa s]
+}
