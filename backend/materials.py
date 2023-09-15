@@ -37,6 +37,8 @@ from reporting import *
 
 
 class VoigtTensor4(object):
+  '''A class for representing rank 4 tensors in the compact Voigt representation.'''
+
   def __init__(self, sym, src_dict, src_file):
     self.mat=np.zeros([7,7],dtype=float)  # unit indexing
     self.sym = sym  # eg 'c', 'p', 'eta'
@@ -119,7 +121,7 @@ class Material(object):
       Material._data_loc= os.path.join(this_dir, "material_data", "")
 
     @classmethod
-    def _get_material(cls, s):
+    def _make_material(cls, s):
       if not len(Material._materials):
         Material._set_file_locations()
         for f in os.listdir(Material._data_loc):
@@ -166,44 +168,48 @@ class Material(object):
       return s
 
     def elastic_properties(self):
+        '''Returns a string containing key elastic properties of the material.'''
         try:
             s =  'Material:       {0}'.format(self.file_name)
-            s+='\nDensity:        {0:.3f}'.format(self.s)
-            s+='\nVelocity long.: {0:.3f}'.format( self.vac_longitudinal() )
-            s+='\nVelocity shear: {0:.3f}'.format( self.vac_shear())
+            s+='\nDensity:        {0:.3f}'.format(self.rho)
+            s+='\nVelocity long.: {0:.3f}'.format( self.Vac_longitudinal() )
+            s+='\nVelocity shear: {0:.3f}'.format( self.Vac_shear())
         except:
             s='Unknown/undefined elastic parameters in material '+self.file_name
         return s
 
-    def vac_longitudinal(self):
+    def Vac_longitudinal(self):
+      '''For an isotropic material, returns the longitudinal (P-wave) elastic phase velocity.'''
       assert(not self.anisotropic)
       # lame lambda = c_12
       # lame mu = c_44
       #  v = sqrt(c_11/rho)
       #    =sqrt((c12 + 2c44)/rho)
       #    =sqrt((lambda + 2mu)/rho)
-      if not self.s or self.s == 0: # Catch vacuum cases
+      if not self.rho or self.rho == 0: # Catch vacuum cases
           return 0.
       else: 
-          return sqrt(self.c_tensor[1,1]/self.s)
+          return sqrt(self.c_tensor[1,1]/self.rho)
 
 
-    def vac_shear(self):
+    def Vac_shear(self):
+      '''For an isotropic material, returns the shear (S-wave) elastic phase velocity.'''
       assert(not self.anisotropic)
       #  v = sqrt(c_44/rho)
       #    =sqrt((mu)/rho)
-      if not self.s or self.s == 0: # Catch vacuum cases
+      if not self.rho or self.rho == 0: # Catch vacuum cases
           return 0.
       else: 
-          return sqrt(self.c_tensor[4,4]/self.s)
+          return sqrt(self.c_tensor[4,4]/self.rho)
 
 
     def has_elastic_properties(self):
-        return self.s is not None
+        '''Returns true if the material has at least some elastic properties defined.'''
+        return self.rho is not None
 
     def load_data_file(self, dataloc, data_file, alt_path=''):  
         """
-        Load data from json file.
+        Load material data from json file.
         
         Args:
             data_file  (str): name of data file located in NumBAT/backend/material_data
@@ -233,8 +239,8 @@ class Material(object):
 
             Re_n = self._params['Re_n']  # Real part of refractive index []
             Im_n = self._params['Im_n']  # Imaginary part of refractive index []
-            self.n = (Re_n + 1j*Im_n)  # Complex refractive index []
-            self.s = self._params['s']  # Density [kg/m3]
+            self.refindex_n = (Re_n + 1j*Im_n)  # Complex refractive index []
+            self.rho = self._params['s']  # Density [kg/m3]
 
 #self.c_11 = self._params['c_11']  # Stiffness tensor component [Pa]
 #            self.c_12 = self._params['c_12']  # Stiffness tensor component [Pa]
@@ -258,6 +264,10 @@ class Material(object):
 
             self.load_tensors()
 
+
+    def is_vacuum(self): 
+        '''Returns True if the material is the vacuum.'''
+        return self.chemical == 'Vacuum'
 
     def load_cubic_crystal(self): #(don't really need this as isotropic materials are the same)
 
@@ -388,7 +398,7 @@ class Material(object):
 
 
     def set_refractive_index(self, nr, ni=0.0):
-      self.n = nr + 1j*ni
+      self.refindex_n = nr + 1j*ni
 
     def load_tensors(self): # not do this unless symmetry is off?
 
@@ -522,8 +532,8 @@ def isotropic_stiffness(E, v):
 #g_materials={}
 
 
-def get_material(s):
-  return Material._get_material(s)
+def make_material(s): return Material._make_material(s)
+
 #  global g_materials
 #  if not len(g_materials):
 #this_dir= os.path.dirname(os.path.realpath(__file__))

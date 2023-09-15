@@ -1,8 +1,20 @@
 
 PYTHON=python3
 
-all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut06 tut07 tut08 tut09 tut10 tut11a 
-allfast: tut01 tut02 tut03a tut03b tut04 tut05 ftut06 ftut06 ftut07 ftut08 ftut09 ftut10 ftut11a 
+all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
+				tut08 tut09 tut10 tut11a  tut11b tut12 tut12 tut13 tut14
+
+allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
+				ftut08 ftut09 ftut10 ftut11a  ftut12a ftut12b tut13 tut14
+	
+slow1: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07   # REMOVE
+slow2: tut08 tut09 tut10 tut11a  tut11b tut12 tut13 tut14
+
+#fast1: tut01 ftut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 
+fast1: ftut02 ftut03a ftut03b ftut04 ftut05 ftut06 ftut07 
+fast2: ftut08 ftut09 ftut10 ftut11a  ftut11b ftut12 ftut14
+fast3: ftut10 ftut11a  ftut11b 
+	#ftut12 ftut14
 
 
 tut01: 
@@ -10,18 +22,28 @@ tut01:
   
 tut02: 
 	$(PYTHON) simo-tut_02-gain_spectra-npsave.py 
+ftut02: 
+	$(PYTHON) simo-tut_02-gain_spectra-npsave.py  fast=1
 
 tut03a: 
 	$(PYTHON) simo-tut_03_1-dispersion-npload.py 
+ftut03a: 
+	$(PYTHON) simo-tut_03_1-dispersion-npload.py  fast=1
 
 tut03b: 
 	$(PYTHON) simo-tut_03_2-dispersion-multicore.py 
+ftut03b: 
+	$(PYTHON) simo-tut_03_2-dispersion-multicore.py fast=1
 
 tut04: 
 	$(PYTHON) simo-tut_04-scan_widths.py 
+ftut04: 
+	$(PYTHON) simo-tut_04-scan_widths.py fast=1
 
 tut05: 
 	$(PYTHON) simo-tut_05-convergence_study.py 
+ftut05: 
+	$(PYTHON) simo-tut_05-convergence_study.py fast=1
 
 tut06: 
 	$(PYTHON) simo-tut_06-silica_nanowire.py 
@@ -59,10 +81,20 @@ ftut11b:
 	$(PYTHON) simo-tut_11b-onion3.py fast=1
 
 tut12: 
-	$(PYTHON) simo-tut_12-smf28.py
+	$(PYTHON) simo-tut_12.py
 ftut12: 
-	$(PYTHON) simo-tut_12-smf28.py fast=1
+	$(PYTHON) simo-tut_12.py fast=1
+
+tut13: 
+	$(PYTHON) simo-tut_13.py
+ftut13: 
+	$(PYTHON) simo-tut_13.py fast=1
+
+tut14: 
+	$(PYTHON) simo-tut_14-multilayer-fibre.py
+ftut14: 
+	$(PYTHON) simo-tut_14-multilayer-fibre.py fast=1
 
 clean:
-	rm *.png *.npz
-	rm -rf tut*fields ftut*fields
+	-rm *.png *.npz
+	-rm -rf tut*fields ftut*fields

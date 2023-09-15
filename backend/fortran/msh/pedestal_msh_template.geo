@@ -8,9 +8,12 @@ d_in_nm = 100;
 dy_in_nm = 50;
 dy = dy_in_nm/d_in_nm;
 a1 = 20;
+a1top = 15;
 a1y = 10;
-radius1 = (a1/(2*d_in_nm))*d;
-radius1y = (a1y/(2*d_in_nm))*d;
+
+rib_whalf = (a1/(2*d_in_nm))*d;
+rib_hhalf = (a1y/(2*d_in_nm))*d;
+rib_wtophalf = (a1top/(2*d_in_nm))*d;
 
 slabx = 80;
 slaby = 10;
@@ -26,40 +29,45 @@ lc = 0; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 
-hy = dy/2 + (slab_h/2) + radius1y; // 
+hy = dy/2 + (slab_h/2) + rib_hhalf; // 
 hx = 0.;
 
-
-Point(1) = {0, 0, 0, lc};
-Point(2) = {-hx, -dy, 0, lc};
-Point(3) = {-hx+d, -dy, 0, lc};
-Point(4) = {d, 0, 0,lc};
+//Border
+Point(1) = {-d/2,    dy/2, 0, lc};     // NW
+Point(2) = {-hx-d/2, -dy/2, 0, lc};    // SW
+Point(3) = {-hx+d/2, -dy/2, 0, lc};    // SE
+Point(4) = {d/2,     dy/2, 0,lc};      // NE
 
 // Slab
-Point(5) = {d/2-slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(6) = {d/2+slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(13) = {d/2-slab_w/2, -hy, 0, lc_refine_2};
-Point(14) = {d/2+slab_w/2, -hy, 0, lc_refine_2};
+Point(5) = {-slab_w/2, -hy+slab_h+dy/2, 0, lc_refine_2};
+Point(6) = {+slab_w/2, -hy+slab_h+dy/2, 0, lc_refine_2};
+Point(13) = {-slab_w/2, -hy+dy/2,       0, lc_refine_2};
+Point(14) = {+slab_w/2, -hy+dy/2,       0, lc_refine_2};
 
-// Rib
-Point(7) = {-hx+d/2-radius1, -hy+slab_h+p_h, 0, lc_refine_1};
-Point(8) = {-hx+d/2+radius1, -hy+slab_h+p_h, 0, lc_refine_1};
-Point(9) = {-hx+d/2-radius1, -hy+2*radius1y+slab_h+p_h, 0, lc_refine_1};
-Point(10) = {-hx+d/2+radius1, -hy+2*radius1y+slab_h+p_h, 0, lc_refine_1};
+// Supported rib
+Point(7) = {-hx-rib_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(8) = {-hx+rib_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(9) = {-hx-rib_wtophalf, -hy+2*rib_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(10) = {-hx+rib_wtophalf, -hy+2*rib_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
 
-Point(19) = {-hx+d/2-p_w, -hy+slab_h, 0, lc_refine_2};
-Point(20) = {-hx+d/2+p_w, -hy+slab_h, 0, lc_refine_2};
-Point(21) = {-hx+d/2-p_w, -hy+slab_h+p_h, 0, lc_refine_1};
-Point(22) = {-hx+d/2+p_w, -hy+slab_h+p_h, 0, lc_refine_1};
-Point(23) = {-hx+d/2-radius1, -hy+slab_h, 0, lc_refine_1};
-Point(24) = {-hx+d/2+radius1, -hy+slab_h, 0, lc_refine_1};
+// Pillar
+Point(19) = {-hx-p_w, -hy+slab_h+dy/2, 0, lc_refine_2};
+Point(20) = {-hx+p_w, -hy+slab_h+dy/2, 0, lc_refine_2};
+Point(21) = {-hx-p_w, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(22) = {-hx+p_w, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
 
-Point(11) = {0, -hy+slab_h, 0, lc};
-Point(12) = {d, -hy+slab_h, 0, lc};
-Point(15) = {-hx+d/2+radius1, 0, 0, lc};
-Point(16) = {-hx+d/2-radius1, 0, 0, lc};
-Point(17) = {-hx+d/2+radius1, -dy, 0, lc};
-Point(18) = {-hx+d/2-radius1, -dy, 0, lc};
+// Pillar surrounds (air)
+Point(23) = {-hx-rib_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
+Point(24) = {-hx+rib_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
+
+// X-axis
+Point(11) = {-d/2,       -hy+slab_h+dy/2, 0, lc};
+Point(12) = {d/2,        -hy+slab_h+dy/2, 0, lc};
+
+Point(15) = {-hx+rib_whalf, dy/2, 0, lc};
+Point(16) = {-hx-rib_whalf, dy/2, 0, lc};
+Point(17) = {-hx+rib_whalf, -dy/2, 0, lc};
+Point(18) = {-hx-rib_whalf, -dy/2, 0, lc};
 
 Line(6) = {7, 9};
 Line(8) = {10, 8};

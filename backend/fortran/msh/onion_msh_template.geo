@@ -1,28 +1,27 @@
-// Template mesh geometry file for a single suspended inclusion.
-// Inclusion can be circular/elliptical (default), or square/rectangular.
+// Template mesh geometry file for multiple concentric circular inclusions.
 
 // Force Gmsh to use legacy msh file format v2
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-d_in_nm = 1000;
-dy_in_nm = 1000;
+d_in_nm = 2000;
+dy_in_nm = 2000;
 dy = dy_in_nm/d_in_nm;
-a1 = 20;
-a2 = 20;
-a3 = 20;
-a4 = 20;
-a5 = 20;
-a6 = 20;
-a7 = 20;
-a8 = 20;
-a9 = 20;
-a10 = 20;
-a11 = 20;
-a12 = 20;
-a13 = 20;
-a14 = 20;
-a15 = 20;
+a1 = 100;
+a2 = 100;
+a3 = 100;
+a4 = 100;
+a5 = 100;
+a6 = 100;
+a7 = 100;
+a8 = 100;
+a9 = 100;
+a10 = 100;
+a11 = 100;
+a12 = 100;
+a13 = 100;
+a14 = 100;
+a15 = 100;
 rad1 = (a1/(2*d_in_nm))*d;
 rad2 = ((a1+a2)/(2*d_in_nm))*d;
 rad3 = ((a1+a2+a3)/(2*d_in_nm))*d;
@@ -38,86 +37,120 @@ rad12 = ((a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12)/(2*d_in_nm))*d;
 rad13 = ((a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12+a13)/(2*d_in_nm))*d;
 rad14 = ((a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12+a13+a14)/(2*d_in_nm))*d;
 rad15 = ((a1+a2+a3+a4+a5+a6+a7+a8+a9+a10+a11+a12+a13+a14+a15)/(2*d_in_nm))*d;
-lc = 0; // 0.501 0.201 0.0701;
+lc = 0.1; 
 lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 centres
 
 hy = dy; // Thickness: square profile => hy=d
-hx = 0.;
+hx = d;
+
+x0 = -dy/2;
+y0 = dy/2;
+
+//Box part a 
+Point(1) = {x0,     y0,    0, lc};
+Point(2) = {x0,     y0-hy, 0, lc};
+Point(3) = {x0+hx,  y0-hy, 0, lc};
+Point(4) = {x0+hx,  y0,    0, lc};
+
+//Box part b 
+Point(10) = {x0+hx/2, y0,      0, lc};     // N
+Point(11) = {x0,      y0-hy/2, 0, lc};     // W
+Point(12) = {x0+hx/2, y0-hy,   0, lc};     // S
+Point(13) = {x0+hx,   y0-hy/2, 0, lc};     // E 
+
+// Circle 1 vertices
+Point(5) = {x0+hx/2,      y0-hy/2,      0, lc_refine_2};   // Center
+Point(6) = {x0+hx/2,      y0-hy/2+rad1, 0, lc_refine_2};   // N
+Point(7) = {x0+hx/2-rad1, y0-hy/2,      0, lc_refine_2};   // W
+Point(8) = {x0+hx/2,      y0-hy/2-rad1, 0, lc_refine_2};   // S
+Point(9) = {x0+hx/2+rad1, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 2 vertices
+Point(26) = {x0+hx/2,      y0-hy/2+rad2, 0, lc_refine_2};   // N
+Point(27) = {x0+hx/2-rad2, y0-hy/2,      0, lc_refine_2};   // W
+Point(28) = {x0+hx/2,      y0-hy/2-rad2, 0, lc_refine_2};   // S
+Point(29) = {x0+hx/2+rad2, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 3 vertices
+Point(36) = {x0+hx/2,      y0-hy/2+rad3, 0, lc_refine_2};   // N
+Point(37) = {x0+hx/2-rad3, y0-hy/2,      0, lc_refine_2};   // W
+Point(38) = {x0+hx/2,      y0-hy/2-rad3, 0, lc_refine_2};   // S
+Point(39) = {x0+hx/2+rad3, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 4 vertices
+Point(46) = {x0+hx/2,      y0-hy/2+rad4, 0, lc_refine_2};   // N
+Point(47) = {x0+hx/2-rad4, y0-hy/2,      0, lc_refine_2};   // W
+Point(48) = {x0+hx/2,      y0-hy/2-rad4, 0, lc_refine_2};   // S
+Point(49) = {x0+hx/2+rad4, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 5 vertices
+Point(56) = {x0+hx/2,      y0-hy/2+rad5, 0, lc_refine_2};   // N
+Point(57) = {x0+hx/2-rad5, y0-hy/2,      0, lc_refine_2};   // W
+Point(58) = {x0+hx/2,      y0-hy/2-rad5, 0, lc_refine_2};   // S
+Point(59) = {x0+hx/2+rad5, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 6 vertices
+Point(66) = {x0+hx/2,      y0-hy/2+rad6, 0, lc_refine_2};   // N
+Point(67) = {x0+hx/2-rad6, y0-hy/2,      0, lc_refine_2};   // W
+Point(68) = {x0+hx/2,      y0-hy/2-rad6, 0, lc_refine_2};   // S
+Point(69) = {x0+hx/2+rad6, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 7 vertices
+Point(76) = {x0+hx/2,      y0-hy/2+rad7, 0, lc_refine_2};   // N
+Point(77) = {x0+hx/2-rad7, y0-hy/2,      0, lc_refine_2};   // W
+Point(78) = {x0+hx/2,      y0-hy/2-rad7, 0, lc_refine_2};   // S
+Point(79) = {x0+hx/2+rad7, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 8 vertices
+Point(86) = {x0+hx/2,      y0-hy/2+rad8, 0, lc_refine_2};   // N
+Point(87) = {x0+hx/2-rad8, y0-hy/2,      0, lc_refine_2};   // W
+Point(88) = {x0+hx/2,      y0-hy/2-rad8, 0, lc_refine_2};   // S
+Point(89) = {x0+hx/2+rad8, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 9 vertices
+Point(96) = {x0+hx/2,      y0-hy/2+rad9, 0, lc_refine_2};   // N
+Point(97) = {x0+hx/2-rad9, y0-hy/2,      0, lc_refine_2};   // W
+Point(98) = {x0+hx/2,      y0-hy/2-rad9, 0, lc_refine_2};   // S
+Point(99) = {x0+hx/2+rad9, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 10 vertices
+Point(106) = {x0+hx/2,       y0-hy/2+rad10, 0, lc_refine_2};   // N
+Point(107) = {x0+hx/2-rad10, y0-hy/2,      0, lc_refine_2};   // W
+Point(108) = {x0+hx/2,       y0-hy/2-rad10, 0, lc_refine_2};   // S
+Point(109) = {x0+hx/2+rad10, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 11 vertices
+Point(116) = {x0+hx/2,       y0-hy/2+rad11, 0, lc_refine_2};   // N
+Point(117) = {x0+hx/2-rad11, y0-hy/2,      0, lc_refine_2};   // W
+Point(118) = {x0+hx/2,       y0-hy/2-rad11, 0, lc_refine_2};   // S
+Point(119) = {x0+hx/2+rad11, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 12 vertices
+Point(126) = {x0+hx/2,       y0-hy/2+rad12, 0, lc_refine_2};   // N
+Point(127) = {x0+hx/2-rad12, y0-hy/2,      0, lc_refine_2};   // W
+Point(128) = {x0+hx/2,       y0-hy/2-rad12, 0, lc_refine_2};   // S
+Point(129) = {x0+hx/2+rad12, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 13 vertices
+Point(136) = {x0+hx/2,       y0-hy/2+rad13, 0, lc_refine_2};   // N
+Point(137) = {x0+hx/2-rad13, y0-hy/2,      0, lc_refine_2};   // W
+Point(138) = {x0+hx/2,       y0-hy/2-rad13, 0, lc_refine_2};   // S
+Point(139) = {x0+hx/2+rad13, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 14 vertices
+Point(146) = {x0+hx/2,       y0-hy/2+rad14, 0, lc_refine_2};   // N
+Point(147) = {x0+hx/2-rad14, y0-hy/2,      0, lc_refine_2};   // W
+Point(148) = {x0+hx/2,       y0-hy/2-rad14, 0, lc_refine_2};   // S
+Point(149) = {x0+hx/2+rad14, y0-hy/2,      0, lc_refine_2};   // E
+
+// Circle 15 vertices
+Point(156) = {x0+hx/2,       y0-hy/2+rad15, 0, lc_refine_2};   // N
+Point(157) = {x0+hx/2-rad15, y0-hy/2,      0, lc_refine_2};   // W
+Point(158) = {x0+hx/2,       y0-hy/2-rad15, 0, lc_refine_2};   // S
+Point(159) = {x0+hx/2+rad15, y0-hy/2,      0, lc_refine_2};   // E
 
 
-Point(1) = {0, 0, 0, lc};
-Point(2) = {-hx, -hy, 0, lc};
-Point(3) = {-hx+d, -hy, 0, lc};
-Point(4) = {d, 0, 0,lc};
-
-// Vertices
-Point(5) = {-hx+d/2, -hy/2, 0, lc_refine_2};
-Point(6) = {-hx+d/2, -hy/2+rad1, 0, lc_refine_1};
-Point(7) = {-hx+d/2-rad1, -hy/2, 0, lc_refine_1};
-Point(8) = {-hx+d/2, -hy/2-rad1, 0, lc_refine_1};
-Point(9) = {-hx+d/2+rad1, -hy/2, 0, lc_refine_1};
-Point(26) = {-hx+d/2, -hy/2+rad2, 0, lc_refine_1};
-Point(27) = {-hx+d/2-rad2, -hy/2, 0, lc_refine_1};
-Point(28) = {-hx+d/2, -hy/2-rad2, 0, lc_refine_1};
-Point(29) = {-hx+d/2+rad2, -hy/2, 0, lc_refine_1};
-Point(36) = {-hx+d/2, -hy/2+rad3, 0, lc_refine_1};
-Point(37) = {-hx+d/2-rad3, -hy/2, 0, lc_refine_1};
-Point(38) = {-hx+d/2, -hy/2-rad3, 0, lc_refine_1};
-Point(39) = {-hx+d/2+rad3, -hy/2, 0, lc_refine_1};
-Point(46) = {-hx+d/2, -hy/2+rad4, 0, lc_refine_1};
-Point(47) = {-hx+d/2-rad4, -hy/2, 0, lc_refine_1};
-Point(48) = {-hx+d/2, -hy/2-rad4, 0, lc_refine_1};
-Point(49) = {-hx+d/2+rad4, -hy/2, 0, lc_refine_1};
-Point(56) = {-hx+d/2, -hy/2+rad5, 0, lc_refine_1};
-Point(57) = {-hx+d/2-rad5, -hy/2, 0, lc_refine_1};
-Point(58) = {-hx+d/2, -hy/2-rad5, 0, lc_refine_1};
-Point(59) = {-hx+d/2+rad5, -hy/2, 0, lc_refine_1};
-Point(66) = {-hx+d/2, -hy/2+rad6, 0, lc_refine_1};
-Point(67) = {-hx+d/2-rad6, -hy/2, 0, lc_refine_1};
-Point(68) = {-hx+d/2, -hy/2-rad6, 0, lc_refine_1};
-Point(69) = {-hx+d/2+rad6, -hy/2, 0, lc_refine_1};
-Point(76) = {-hx+d/2, -hy/2+rad7, 0, lc_refine_1};
-Point(77) = {-hx+d/2-rad7, -hy/2, 0, lc_refine_1};
-Point(78) = {-hx+d/2, -hy/2-rad7, 0, lc_refine_1};
-Point(79) = {-hx+d/2+rad7, -hy/2, 0, lc_refine_1};
-Point(86) = {-hx+d/2, -hy/2+rad8, 0, lc_refine_1};
-Point(87) = {-hx+d/2-rad8, -hy/2, 0, lc_refine_1};
-Point(88) = {-hx+d/2, -hy/2-rad8, 0, lc_refine_1};
-Point(89) = {-hx+d/2+rad8, -hy/2, 0, lc_refine_1};
-Point(96) = {-hx+d/2, -hy/2+rad9, 0, lc_refine_1};
-Point(97) = {-hx+d/2-rad9, -hy/2, 0, lc_refine_1};
-Point(98) = {-hx+d/2, -hy/2-rad9, 0, lc_refine_1};
-Point(99) = {-hx+d/2+rad9, -hy/2, 0, lc_refine_1};
-Point(106) = {-hx+d/2, -hy/2+rad10, 0, lc_refine_1};
-Point(107) = {-hx+d/2-rad10, -hy/2, 0, lc_refine_1};
-Point(108) = {-hx+d/2, -hy/2-rad10, 0, lc_refine_1};
-Point(109) = {-hx+d/2+rad10, -hy/2, 0, lc_refine_1};
-Point(116) = {-hx+d/2, -hy/2+rad11, 0, lc_refine_1};
-Point(117) = {-hx+d/2-rad11, -hy/2, 0, lc_refine_1};
-Point(118) = {-hx+d/2, -hy/2-rad11, 0, lc_refine_1};
-Point(119) = {-hx+d/2+rad11, -hy/2, 0, lc_refine_1};
-Point(126) = {-hx+d/2, -hy/2+rad12, 0, lc_refine_1};
-Point(127) = {-hx+d/2-rad12, -hy/2, 0, lc_refine_1};
-Point(128) = {-hx+d/2, -hy/2-rad12, 0, lc_refine_1};
-Point(129) = {-hx+d/2+rad12, -hy/2, 0, lc_refine_1};
-Point(136) = {-hx+d/2, -hy/2+rad13, 0, lc_refine_1};
-Point(137) = {-hx+d/2-rad13, -hy/2, 0, lc_refine_1};
-Point(138) = {-hx+d/2, -hy/2-rad13, 0, lc_refine_1};
-Point(139) = {-hx+d/2+rad13, -hy/2, 0, lc_refine_1};
-Point(146) = {-hx+d/2, -hy/2+rad14, 0, lc_refine_1};
-Point(147) = {-hx+d/2-rad14, -hy/2, 0, lc_refine_1};
-Point(148) = {-hx+d/2, -hy/2-rad14, 0, lc_refine_1};
-Point(149) = {-hx+d/2+rad14, -hy/2, 0, lc_refine_1};
-Point(156) = {-hx+d/2, -hy/2+rad15, 0, lc_refine_1};
-Point(157) = {-hx+d/2-rad15, -hy/2, 0, lc_refine_1};
-Point(158) = {-hx+d/2, -hy/2-rad15, 0, lc_refine_1};
-Point(159) = {-hx+d/2+rad15, -hy/2, 0, lc_refine_1};
-
-Point(10) = {-hx+d/2, 0, 0, lc};
-Point(11) = {0,-hy/2, 0, lc};
-Point(12) = {-hx+d/2, -hy, 0, lc};
-Point(13) = {d, -hy/2, 0, lc};
 Line(1) = {1,10};
 Line(2) = {10,4};
 Line(3) = {2,12};
@@ -386,20 +419,20 @@ Plane Surface(1029) = {1028};
 Line Loop(1030) = {27, 307, -67, -403};
 Plane Surface(1031) = {1030};
 
+Physical Surface(1) = {906,908,910,912};      // Outer space, mat_bkg
+Physical Surface(2) = {948, 950, 952, 954};   // Center, mat_a, r<rad1
+Physical Surface(3) = {946, 956, 989, 1008};  // Ring 1, mat_b, rad1<r<rad2
+Physical Surface(4) = {944, 958, 1007, 1010}; // Ring 2, mat_c
+Physical Surface(5) = {942, 960, 1005, 1032}; // Ring 3, mat_d
+Physical Surface(6) = {1031, 940, 962, 1003}; // Ring 4, mat_e
+Physical Surface(7) = {964, 1001, 1029, 938}; // Ring 5, mat_f
+Physical Surface(8) = {936, 1027, 999, 966};  // Ring 6, mat_g
+Physical Surface(9) = {968, 997, 1025, 934};  // Ring 7, mat_h
+Physical Surface(10) = {932, 1023, 995, 970}; // Ring 8, mat_i
+Physical Surface(11) = {972, 993, 1021, 930}; // Ring 9, mat_j
+Physical Surface(12) = {928, 1019, 991, 974}; // Ring 10, mat_k
+Physical Surface(13) = {980, 986, 1017, 926}; // Ring 11, mat_l
+Physical Surface(14) = {924, 1015, 984, 979}; // Ring 12, mat_m
+Physical Surface(15) = {977, 982, 1013, 922}; // Ring 13, mat_n
+Physical Surface(16) = {914, 920, 918, 916};  // Ring 14, mat_o
 
-Physical Surface(1) = {906,908,910,912};
-Physical Surface(2) = {948, 950, 952, 954};
-Physical Surface(3) = {946, 956, 989, 1008};
-Physical Surface(4) = {944, 958, 1007, 1010};
-Physical Surface(5) = {942, 960, 1005, 1032};
-Physical Surface(6) = {1031, 940, 962, 1003};
-Physical Surface(7) = {964, 1001, 1029, 938};
-Physical Surface(8) = {936, 1027, 999, 966};
-Physical Surface(9) = {968, 997, 1025, 934};
-Physical Surface(10) = {932, 1023, 995, 970};
-Physical Surface(11) = {972, 993, 1021, 930};
-Physical Surface(12) = {928, 1019, 991, 974};
-Physical Surface(13) = {980, 986, 1017, 926};
-Physical Surface(14) = {924, 1015, 984, 979};
-Physical Surface(15) = {977, 982, 1013, 922};
-Physical Surface(16) = {914, 920, 918, 916};

@@ -1,0 +1,20 @@
+{
+ "file_name": "Si3N4_2021_Steel",  // Name of this file, will be used as identifier
+ "chemical": "Si3N4",  // Chemical composition
+ "author": "Wolff",  // Author of data
+ "date": "2014",  // Year of data publication/creation
+ "institution": "UTS",  // Source institution
+ "doi": "dx.doi.org/10.1364/OE.22.030735",  // doi or, failing that, the http address
+ "Re_n": 1.95959,  // Real part of refractive index []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 3290,  // Density [kg/m3]
+ "c_11": 387.0e9,  // Stiffness tensor component [Pa]
+ "c_12": 143.0e9,  // Stiffness tensor component [Pa]
+ "c_44": 122.0e9,  // Stiffness tensor component [Pa]
+ "p_11": 0.0,  // Photoelastic tensor component []
+ "p_12": 0.0,  // Photoelastic tensor component []
+ "p_44": 0.0,  // Photoelastic tensor component []
+ "eta_11": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.0e-3  // Acoustic loss tensor component [Pa s]
+}

@@ -16,10 +16,12 @@ import integration
 import plotting
 from fortran import NumBAT
 
+import starter
+
 # Naming conventions
 # AC: acoustic
 # EM: electromagnetic
-# k_AC: acoustic wavevector
+# q_AC: acoustic wavevector
 
 start = time.time()
 
@@ -44,27 +46,25 @@ EM_ival_Stokes = EM_ival_pump
 # The AC mode(s) for which to calculate interaction with EM modes.
 AC_ival = 'All'
 
-# Output files are generated in a folder with the following prefix
-prefix_str = 'bsbs-josab-01-1umSiO2'
+
+prefix, refine_fac = starter.read_args(1, sys.argv)
 
 # Use all specified parameters to create a waveguide object
-wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.get_material("Vacuum"),
-                        material_a=materials.get_material("SiO2_2021_Poulton"),
+wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+                        material_bkg=materials.make_material("Vacuum"),
+                        material_a=materials.make_material("SiO2_2021_Poulton"),
                         lc_bkg=0.05,  # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
-                        lc_refine_1=20.0, # mesh refinement factor near the interface of waveguide, larger lc2 = finer along horizontal interface
-                        lc_refine_2=30.0, # mesh refinement factor near the origin/centre of waveguide
-                        plt_mesh=False, # creates png file of geometry and mesh in backend/fortran/msh/
-                        check_mesh=False)   # note requires x-windows configuration to work
+                        lc_refine_1=4.*refine_fac, # mesh refinement factor near the interface of waveguide, larger lc2 = finer along horizontal interface
+                        lc_refine_2=5.*refine_fac) # mesh refinement factor near the origin/centre of waveguide
 
 # Print information on material data in terminal
-print('\nUsing %s material data from' % wguide.material_a.chemical)
-print('Author:', wguide.material_a.author)
-print('Year:', wguide.material_a.date)
-print('Ref:', wguide.material_a.doi)
+print('\nUsing %s material data from' % wguide.get_material('a').chemical)
+print('Author:', wguide.get_material('a').author)
+print('Year:', wguide.get_material('a').date)
+print('Ref:', wguide.get_material('a').doi)
 
 # Initial guess for the EM effective index of the waveguide
-n_eff = wguide.material_a.n-0.1
+n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Calculate the Electromagnetic modes of the pump field.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
@@ -85,8 +85,7 @@ print("Plotting EM fields ")
 plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
-                         prefix_str=prefix_str, pdf_png='png', ticks=True, quiver_points=40,
-                         comps=['Et','Eabs'], n_points=1000, colorbar=True)
+                         prefix=prefix, quiver_points=40, n_points=1000, colorbar=True)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -94,19 +93,19 @@ print("\n Fundamental optical mode ")
 print(" n_eff = ", np.round(n_eff_sim, 4))
 
 # Calculate the acoustic wavevector
-k_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
-print('\n AC wavenumber (1/m) = ', np.round(k_AC, 4))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+print('\n AC wavenumber (1/m) = ', np.round(q_AC, 4))
 
 # Calculate Acoustic modes, using the mesh from the EM calculation.
-sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump)
+sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 AC_freqs_GHz=sim_AC.nu_AC_all()*1e-9
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(AC_freqs_GHz)))
+for (i, nu) in enumerate(AC_freqs_GHz): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)))
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions, as
 # well as other important quantities
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC, EM_ival_pump=EM_ival_pump,
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Mask negligible gain values to improve clarity of print out.
@@ -124,8 +123,8 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=np.argmax(abs(masked.data)) ;
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, ivals=[maxGainloc],
-                         num_ticks=3, quiver_points=40, pdf_png='png',ticks=True, comps=['ut','uabs'], colorbar=True)
+plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=[maxGainloc],
+                         num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
 print("-----------------")

@@ -1,0 +1,21 @@
+{
+ "file_name": "Ge_2014_Wolff",  // Name of this file, will be used as identifier
+ "chemical": "Ge [100]",  // Chemical composition
+ "author": "Wolff",  // Author of data
+ "date": "2014",  // Year of data publication/creation
+ "institution": "CUDOS, UTS, U. Sydney,  U. Mass",  // Source institution
+ "doi": "dx.doi.org/10.1364/OE.22.030735",  // doi or, failing that, the http address
+ "Re_n": 4.025,  // Real part of refractive index []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 5323,  // Density [kg/m3]
+ "crystal_class": "Cubic",
+ "c_11": 129.0e9,  // Stiffness tensor component [Pa]
+ "c_12": 47.9e9,  // Stiffness tensor component [Pa]
+ "c_44": 67.0e9,  // Stiffness tensor component [Pa]
+ "p_11": -0.151,  // Photoelastic tensor component []
+ "p_12": -0.128,  // Photoelastic tensor component []
+ "p_44": -0.072,  // Photoelastic tensor component []
+ "eta_11": 9.06e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 8.57e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.71e-3  // Acoustic loss tensor component [Pa s]
+}

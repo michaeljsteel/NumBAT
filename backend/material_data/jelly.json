@@ -1,0 +1,20 @@
+ {
+  "file_name": "Super soft jelly (PMMA/10)",  // Name of this file, will be used as identifier
+  "chemical": "Poly (methyl methacrylate)",  // Chemical composition
+  "author": "XX",  // Author of data
+  "date": "XX",  // Year of data publication/creation
+  "institution": "XX",  // Source institution
+  "doi": "XX",
+  "Re_n": 1.492,  // Real part of refractive index []
+  "Im_n": 0.0,  // Imaginary part of refractive index []
+  "s": 1170,  // Density [kg/m3]
+  "c_11": 4.012e8,  // Stiffness tensor component [Pa]  Young's mod 2500 MPa, Poisson .35-0.4, mod Elas 2944 MPa
+  "c_12": 2.16e8,  // Stiffness tensor component [Pa]
+  "c_44": 0.926e8,  // Stiffness tensor component [Pa]
+  "p_11": 0.0,  // Photoelastic tensor component []
+  "p_12": 0.0,  // Photoelastic tensor component []
+  "p_44": 0.0,  // Photoelastic tensor component []
+  "eta_11": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_12": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_44": 0.0e-3  // Acoustic loss tensor component [Pa s] 
+}

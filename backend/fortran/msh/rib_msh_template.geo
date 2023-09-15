@@ -23,31 +23,33 @@ lc_refine_2 = lc/1; // slab
 
 hy = dy/2 + (slab_h/2) + radius1y; // 
 hx = 0.;
+x0 = -d/2;
+y0 = hy-slab_h;
 
 
-Point(1) = {0, 0, 0, lc};
-Point(2) = {-hx, -dy, 0, lc};
-Point(3) = {-hx+d, -dy, 0, lc};
-Point(4) = {d, 0, 0,lc};
+Point(1) = {x0, y0, 0, lc};
+Point(2) = {x0-hx, y0-dy, 0, lc};
+Point(3) = {x0-hx+d,y0-dy, 0, lc};
+Point(4) = {x0+d, y0, 0,lc};
 
 // Slab
-Point(5) = {d/2-slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(6) = {d/2+slab_w/2, -hy+slab_h, 0, lc_refine_2};
-Point(13) = {d/2-slab_w/2, -hy, 0, lc_refine_2};
-Point(14) = {d/2+slab_w/2, -hy, 0, lc_refine_2};
+Point(5) = {x0+d/2-slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
+Point(6) = {x0+d/2+slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
+Point(13) = {x0+d/2-slab_w/2,y0 -hy, 0, lc_refine_2};
+Point(14) = {x0+d/2+slab_w/2, y0-hy, 0, lc_refine_2};
 
 // Rib
-Point(7) = {-hx+d/2-radius1, -hy+slab_h, 0, lc_refine_1};
-Point(8) = {-hx+d/2+radius1, -hy+slab_h, 0, lc_refine_1};
-Point(9) = {-hx+d/2-radius1, -hy+2*radius1y+slab_h, 0, lc_refine_1};
-Point(10) = {-hx+d/2+radius1, -hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(7) = {x0-hx+d/2-radius1, y0-hy+slab_h, 0, lc_refine_1};
+Point(8) = {x0-hx+d/2+radius1, y0-hy+slab_h, 0, lc_refine_1};
+Point(9) = {x0-hx+d/2-radius1, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(10) = {x0-hx+d/2+radius1,y0 -hy+2*radius1y+slab_h, 0, lc_refine_1};
 
-Point(11) = {0, -hy+slab_h, 0, lc};
-Point(12) = {d, -hy+slab_h, 0, lc};
-Point(15) = {-hx+d/2+radius1, 0, 0, lc};
-Point(16) = {-hx+d/2-radius1, 0, 0, lc};
-Point(17) = {-hx+d/2+radius1, -dy, 0, lc};
-Point(18) = {-hx+d/2-radius1, -dy, 0, lc};
+Point(11) = {x0+0, y0-hy+slab_h, 0, lc};
+Point(12) = {x0+d, y0-hy+slab_h, 0, lc};
+Point(15) = {x0-hx+d/2+radius1, y0, 0, lc};
+Point(16) = {x0-hx+d/2-radius1, y0, 0, lc};
+Point(17) = {x0-hx+d/2+radius1, y0-dy, 0, lc};
+Point(18) = {x0-hx+d/2-radius1, y0-dy, 0, lc};
 
 Line(5) = {5, 7};
 Line(6) = {7, 9};
@@ -95,3 +97,4 @@ Physical Line(47) = {44, 45, 46};
 Physical Surface(1) = {38, 40, 42, 49};
 Physical Surface(2) = {26};
 Physical Surface(3) = {28};
+

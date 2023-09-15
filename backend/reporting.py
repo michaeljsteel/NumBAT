@@ -14,7 +14,7 @@ def report(msg):
 
 def report_and_exit(msg):
   if g_logger is None: init_logger()
-  g_logger.error('\nFatal error:  '+msg + '\n')
+  g_logger.error('\nFatal error:\n'+msg + '\n')
 #g_logger.error('from logger')
   sys.exit(1)
 

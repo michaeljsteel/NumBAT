@@ -13,7 +13,6 @@ import datetime
 import numpy as np
 import sys
 import matplotlib
-matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
@@ -24,6 +23,7 @@ import integration
 import plotting
 from fortran import NumBAT
 
+import starter
 
 start = time.time()
 
@@ -38,18 +38,21 @@ inc_shape = 'rectangular'
 # Optical Parameters
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
-num_modes_AC = 800
+#num_modes_AC = 800
+num_modes_AC = 300
 EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix_str = 'lit_02-'
+
+prefix, refine_fac = starter.read_args(2, sys.argv)
 
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.get_material("Vacuum"),
-                        material_a=materials.get_material("Si_2013_Laude"),
-                        lc_bkg=1, lc_refine_1=400.0, lc_refine_2=50.0)
+wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+                        material_bkg=materials.make_material("Vacuum"),
+                        material_a=materials.make_material("Si_2013_Laude"),
+                        lc_bkg=.1, lc_refine_1=8*refine_fac, lc_refine_2=8.0*refine_fac)
+wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.
 n_eff = 3.4
@@ -59,41 +62,42 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
-                         ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', 
-                         prefix_str=prefix_str, pdf_png='png')
+                         ylim_min=0.2, ylim_max=0.2, prefix=prefix)
 
 # Print the wavevectors of EM modes.
-print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.Eig_values), 4))
+kzs = sim_EM_pump.kz_EM_all()
+print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.Eig_values*((wl_nm*1e-9)/(2.*np.pi)))
-print("n_eff = ", np.round(n_eff_sim, 4))
+print("n_eff = ", np.round(sim_EM_pump.neff_all(), 4))
 
-k_AC = np.real(sim_EM_pump.Eig_values[EM_ival_pump] - sim_EM_Stokes.Eig_values[EM_ival_Stokes])
+q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
+print(q_AC)
 
 shift_Hz = 31e9
 
 # Calculate Acoustic modes.
-sim_AC = wguide.calc_AC_modes(num_modes_AC, k_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
+sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix_str=prefix_str, pdf_png='png')
+plotting.plot_mode_fields(sim_AC, prefix=prefix)
 
 # Print the frequencies of AC modes.
-print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
+print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined, 
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, k_AC,
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = 20  # GHz
-freq_max = 45  # GHz
-plotting.gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, k_AC,
+freq_min = 20e9 
+freq_max = 45e9
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    semilogy=True, prefix_str=prefix_str, pdf_png='png')
+    semilogy=True, prefix=prefix)
 
 end = time.time()
 print("\n Simulation time (sec.)", (end - start))
 
+print("--------------------------------------------------------------------\n\n\n")

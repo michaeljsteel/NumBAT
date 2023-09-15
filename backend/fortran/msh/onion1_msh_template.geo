@@ -9,38 +9,40 @@ d_in_nm = 1000;
 dy_in_nm = 1000;
 dy = dy_in_nm/d_in_nm;
 a1 = 100;
-a2 = 200;
-a3 = 300;
+a2 = 100;
+a3 = 100;
 rad1 = (a1/(2*d_in_nm))*d;
 rad2 = ((a1+a2)/(2*d_in_nm))*d;
 rad3 = ((a1+a2+a3)/(2*d_in_nm))*d;
-lc = 0; // 0.501 0.201 0.0701;
+lc = 0.1; 
 lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 surfaces
 
 hy = dy; // Thickness: square profile => hy=d
-hx = 0.;
+hx = d;
+
+x0 = -dy/2;
+y0 = dy/2;
 
 
 //Box part a 
-Point(1) = {0, 0, 0, lc};        // NW
-Point(2) = {-hx, -hy, 0, lc};    // SW
-Point(3) = {-hx+d, -hy, 0, lc};  // SE
-Point(4) = {d, 0, 0,lc};         // E
+Point(1) = {x0,    y0,    0, lc};         // NW
+Point(2) = {x0,    y0-hy, 0, lc};         // SW
+Point(3) = {x0+hx, y0-hy, 0, lc};         // SE
+Point(4) = {x0+hx, y0,    0,lc};          // NE
 
 //Box part b 
-Point(6) = {-hx+d/2, 0, 0, lc};       //N
-Point(7) = {0,-hy/2, 0, lc};          //W
-Point(8) = {-hx+d/2, -hy, 0, lc};     //S
-Point(9) = {d, -hy/2, 0, lc};         //E 
+Point(6) = {x0+hx/2, y0,      0, lc};     // N
+Point(7) = {x0,      y0-hy/2, 0, lc};     // W
+Point(8) = {x0+hx/2, y0-hy,   0, lc};     // S
+Point(9) = {x0+hx,   y0-hy/2, 0, lc};     // E 
 
 // Circle 1 vertices
-Point(10) = {-hx+d/2, -hy/2, 0, ls_refine_2};        //Center
-Point(11) = {-hx+d/2, -hy/2+rad1, 0, lc_refine_2};   //N
-Point(12) = {-hx+d/2-rad1, -hy/2, 0, lc_refine_2};   //W
-Point(13) = {-hx+d/2, -hy/2-rad1, 0, lc_refine_2};   //S
-Point(14) = {-hx+d/2+rad1, -hy/2, 0, lc_refine_2};   //E
-
+Point(10) = {x0+hx/2,      y0-hy/2,      0, lc_refine_2};   // Center
+Point(11) = {x0+hx/2,      y0-hy/2+rad1, 0, lc_refine_2};   // N
+Point(12) = {x0+hx/2-rad1, y0-hy/2,      0, lc_refine_2};   // W
+Point(13) = {x0+hx/2,      y0-hy/2-rad1, 0, lc_refine_2};   // S
+Point(14) = {x0+hx/2+rad1, y0-hy/2,      0, lc_refine_2};   // E
 
 // Outer Box
 Line(1) = {1,6};  // top left
@@ -104,8 +106,8 @@ Physical Line(2) = {3,4};  // Bottom
 Physical Line(3) = {5,6};  // Left
 Physical Line(4) = {7,8};  // Right
 
-Physical Surface(1) = {507,506,509,508};     //Outer region
-Physical Surface(2) = {517, 516, 519, 518};  //Circle 1
+Physical Surface(1) = {507,506,509,508};     //Outer region, mat_bkg, r>rad_1
+Physical Surface(2) = {517, 516, 519, 518};  //Circle 1, mat_a, r<rad_1
 
 
 
