@@ -252,7 +252,7 @@ The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/
    :scale: 30 %
 
    A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
-.. figure:: images/circ_onion3_wg-mesh.png
+.. figure:: images/circ_onion2_wg-mesh.png
    :scale: 30 %
 
    A two-layered concentric structure with a circular outer boundary using shape ``circ_onion2`` (template ``circ_onion2``).
