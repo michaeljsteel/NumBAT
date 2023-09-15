@@ -94,7 +94,7 @@ for width in waveguide_widths:
 
     l_wguides.append((width, wguide))
 
-    wguide.plot_mesh(prefix+'_%d'%int(width))
+    #wguide.plot_mesh(prefix+'_%d'%int(width))
 
 new_calcs=True 
 if new_calcs:
@@ -125,10 +125,9 @@ for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
     width, sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz = width_obj
 
-    plotting.plot_mode_fields(sim_EM_pump, prefix=prefix, suffix='_wid_%d'%i_w,
-                              ivals=range(5))
-    plotting.plot_mode_fields(sim_AC, prefix=prefix, suffix='_wid_%d'%i_w,
-                              ivals=range(20))
+    plotting.plot_mode_fields(sim_EM_pump, prefix=prefix, suffix='_wid_%d'%i_w, ivals=range(5))
+
+    plotting.plot_mode_fields(sim_AC, prefix=prefix, suffix='_wid_%d'%i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
     n_eff_sim = sim_EM_pump.neff(0) #np.round(np.real((q_AC/2.)*((lambda_nm*1e-9)/(2.*np.pi))), 4)
