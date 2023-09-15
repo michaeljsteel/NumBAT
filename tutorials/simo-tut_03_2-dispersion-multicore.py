@@ -10,7 +10,6 @@ import sys
 import matplotlib
 import matplotlib.pyplot as plt
 from multiprocessing import Pool 
-import threading
 import os
 
 
@@ -63,16 +62,13 @@ q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Sto
 # Rather than calculating with a loop we can use pool to do a multi core sim
 def solve_ac_mode_freqs(qset):
     ik, nk, q_AC = qset
-    thread_nm = threading.current_thread().name
-    print('PID: %d, Thread %s: commencing mode calculation for q_AC %d/%d = %f /m'% (
-        os.getpid(), thread_nm, ik+1, nk, q_AC))
+    print('\nPID: %d  commencing mode calculation for q_AC %d/%d = %f /m'% (
+        os.getpid(), ik+1, nk, q_AC))
 
     # Calculate the modes, grab the output frequencies only and convert to GHz
-    #wguide.set_threadsafe()
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
-    print('PID: %d, Thread %s got ac modes for q_AC = %f'% (
-        os.getpid(), thread_nm, q_AC))
+    print('PID: %d got ac modes for q_AC = %f'% (os.getpid(), q_AC))
 
     prop_AC_modes = np.array([np.real(nu) for nu in sim_AC.nu_AC_all() if abs(np.real(nu)) > abs(np.imag(nu))])
     mode_freqs = np.real(sim_AC.nu_AC_all()) *1.e-9  # convert to GHz
@@ -80,8 +76,8 @@ def solve_ac_mode_freqs(qset):
     # Clear memory
     sim_AC = None
 
-    print('PID: %d, Thread %s: completed mode calculation for width a_x = %f'%(
-        os.getpid(), thread_nm, q_AC))
+    print('PID: %d completed mode calculation for width a_x = %f'%(
+        os.getpid(), q_AC))
 
     # Return the frequencies and simulated q_AC value in a list
     return mode_freqs
@@ -94,13 +90,14 @@ acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 # Output the normalisation k value for reference
 print("The acoustic wavevector 2*kp = %f" % q_AC)
 
-multithread = True
-#multithread = False
+multiproc = True
 
+# make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
 qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
 
-if multithread:
+if multiproc:  #TODO: seems not stall right now.
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
+    num_cores = 4
     pool = Pool(num_cores)
     pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 # Note pool.map() doesn't pass errors back from fortran routines very well.
@@ -112,26 +109,27 @@ else:
         pooled_mode_freqs.append(solve_ac_mode_freqs((ik, nk, nu_k)))
 
 # We will pack the above values into a single array for plotting purposes, initialise first
-freq_arr = np.empty((n_qs, num_modes_AC))
+freq_arr = np.zeros((n_qs, num_modes_AC+1))
 for i_w, sim_freqs in enumerate(pooled_mode_freqs):
     # Set the value to the values in the frequency array
-    freq_arr[i_w] = sim_freqs
+    freq_arr[i_w,0] = acoustic_qs[i_w]
+    freq_arr[i_w,1:] = sim_freqs
 
 # Now that we have packed will save to a numpy file for better plotting and reference
 file_name = prefix+'-disp'
-mat=np.transpose([acoustic_qs, freq_arr])  # arrange the data as two columns of wavenumber and frequency
-np.savetxt(file_name, mat)
+#mat=np.transpose([acoustic_qs, freq_arr])  # arrange the data as two columns of wavenumber and frequency
+np.savetxt(file_name, freq_arr)
 
 # Also plot a figure for reference
 plot_range = num_modes_AC
 fig, ax = plt.subplots()
 for idx in range(plot_range):
     # slicing in the row direction for plotting purposes
-    freq_slice = freq_arr[:, idx]
+    freq_slice = freq_arr[:, 1+idx]
     ax.plot(acoustic_qs/q_AC, freq_slice, 'b.')
 
 # Set the limits and plot axis labels
-ax.set_ylim(0,20)
+ax.set_ylim(0,25)
 ax.set_xlim(0,1.1)
 ax.set_xlabel(r'Normalised acoustic wavenumber $q/(2\beta)$')
 ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')
