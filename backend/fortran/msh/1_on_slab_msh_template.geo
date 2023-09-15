@@ -1,4 +1,4 @@
-// Template mesh geometry file for a single inclusion on a slab.
+// Template mesh geometry file for a single uncoated inclusion on a slab.
 // Inclusion can be circular/elliptical (default), or square/rectangular.
 
 // Force Gmsh to use legacy msh file format v2
