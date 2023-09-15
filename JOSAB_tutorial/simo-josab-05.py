@@ -109,6 +109,11 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
+freq_min = 2.5e9
+freq_max = 3.0e9
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
+
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
 masked_PE = np.ma.masked_inside(SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
@@ -124,7 +129,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=6; #note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=[maxGainloc],
+plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(15),
                           num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection

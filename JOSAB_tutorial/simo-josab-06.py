@@ -44,7 +44,7 @@ num_modes_AC = 100 # Number of acoustic modes to solve for.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
 EM_ival_pump = 0
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 1
+EM_ival_Stokes = 2
 # The AC mode(s) for which to calculate interaction with EM modes.
 AC_ival = 'All'
 prefix, refine_fac = starter.read_args(6, sys.argv)
@@ -106,8 +106,8 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-freq_min=1e9
-freq_max=30e9
+freq_min=2.75e9
+freq_max=3e9
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
         EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
 
@@ -127,7 +127,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=np.argmax(abs(masked.data)) ;
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(5),
+plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(15),
                          num_ticks=3, quiver_points=40, ticks=True, colorbar=True)
 
 # Displaying results for the maximum found in the selection

@@ -56,6 +56,7 @@ wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         lc_bkg=0.05,  # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
                         lc_refine_1=4.*refine_fac, # mesh refinement factor near the interface of waveguide, larger lc2 = finer along horizontal interface
                         lc_refine_2=5.*refine_fac) # mesh refinement factor near the origin/centre of waveguide
+wguide.check_mesh()
 
 # Print information on material data in terminal
 print('\nUsing %s material data from' % wguide.get_material('a').chemical)
@@ -74,18 +75,13 @@ v_kz=sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
-# A computation interruption if needed
-# sys.exit("We interrupt your regularly scheduled computation to bring you ... for now")
-
 # Calculate the Electromagnetic modes of the Stokes field.
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 print("Plotting EM fields ")
 
-plotting.plot_mode_fields(sim_EM_pump,
-                         ivals=[EM_ival_pump],
-                         EM_AC='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
-                         prefix=prefix, quiver_points=40, n_points=1000, colorbar=True)
+plotting.plot_mode_fields(sim_EM_pump, ivals=[EM_ival_pump], EM_AC='EM_E', num_ticks=3,
+                          xlim_min=0.1, xlim_max=0.1, ylim_min=0.1, ylim_max=0.1, prefix=prefix)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -107,6 +103,12 @@ for (i, nu) in enumerate(AC_freqs_GHz): print('{0:3d}  {1:.4e}'.format(i, np.rea
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+
+freq_min = .01e9
+freq_max = 20e9
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
+
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
