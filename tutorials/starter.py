@@ -7,7 +7,7 @@ def read_args(enum, argv, sub='', dflt_refine=5):
 
     if len(argv)>1 and argv[1]=='fast=1':  # choose between faster or more accurate calculation
         refine_fac=1 
-        #prefix = 'f'+prefix_str
+        prefix = 'f'+prefix_str
         s_fmode = ' - fast mode'
     else: 
         s_fmode = ''

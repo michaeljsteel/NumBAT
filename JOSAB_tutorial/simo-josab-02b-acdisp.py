@@ -93,7 +93,7 @@ plt.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc
 
 plt.xlabel(r'Axial wavevector (normalised)')
 plt.ylabel(r'Frequency (GHz)')
-plt.savefig(prefix+'-dispersion.png', bbox_inches='tight')
+plt.savefig(prefix+'-disp-qnu.png', bbox_inches='tight')
 plt.close()
 
 end = time.time()
