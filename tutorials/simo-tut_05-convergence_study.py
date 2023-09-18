@@ -39,8 +39,7 @@ prefix, refine_fac = starter.read_args(5, sys.argv)
 
 
 # Warning: The fine grids in this list will take considerable time to run!
-#lc_list = [20,100,500,1000,1500,2000,2500]
-lc_list = [4,20,100,200,300,400,500]
+lc_list = [4,10,20,50,100,200,300,400]
 nu_lcs = len(lc_list)
 lc_bkg_list = 1*np.ones(nu_lcs)
 x_axis = lc_list

@@ -237,9 +237,9 @@ class CalcProcess(multiprocessing.Process):
                 #  some miss out on getting access and decide to give up.
                 # Better would be that nothing quits until it actually measures a qsize()=0
                 #  or else, we wait to acquire a lock on the queue, before testing get_nowait()
-                task = self.q_work.get(5)  
+                task = self.q_work.get(block=True, timeout=5)  
 
-            except queue.Empty:
+            except queue.Empty as err:
                 if self.verbose: print('{0} out of work, wrapping up.'.format(self.name))
                 break
             
@@ -248,7 +248,7 @@ class CalcProcess(multiprocessing.Process):
             try:
                 res = self.f_work(task)   # Here is the main piece of work
 
-                if self.verbose: print('{0} produced outcome:'.format(self.name), res)
+                #if self.verbose: print('{0} produced outcome:'.format(self.name), res)
 
                 self.q_result.put(res)
 
@@ -267,7 +267,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
 
     #TODO: avoid separate thread if num_processes = 1
     report_progress = True
-    verbose=True
+    #verbose=True
 
     total_tasks = q_work.qsize()
 
@@ -301,17 +301,22 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
                 if pause < pause_max:  # Early on, we report frequently, then less often over time
                     pause *= 1.25
 
-                tasks_done = total_tasks - q_work.qsize() 
                 tm_cu = time.time()
-                frac_done=tasks_done/total_tasks
-                if frac_done>0:
-                    tm_togo = (tm_cu-tm_st)*(1-frac_done)/frac_done
-                    tm_togo_s = datetime.timedelta(seconds=round(tm_togo))
 
-                    print(f'\nTasks completed: {tasks_done}/{total_tasks} = {frac_done*100:.1f} %.',
-                        f'  Estimated time remaining: {tm_togo_s}.')
+                tasks_started = total_tasks - q_work.qsize() 
+                tasks_completed = q_result.qsize()
+                frac_started=tasks_started/total_tasks
+                frac_completed=tasks_completed/total_tasks
+
+                print(f'\nTasks commenced: {tasks_started}/{total_tasks} = {frac_started*100:.1f} %;',
+                    f' completed: {tasks_completed}/{total_tasks} = {frac_completed*100:.1f} %;', end='')
+
+                if frac_completed>0:
+                    tm_togo = (tm_cu-tm_st)*(1-frac_completed)/frac_completed
+                    tm_togo_s = datetime.timedelta(seconds=round(tm_togo))
+                    print(f'  Estimated time remaining: {tm_togo_s}.')
                 else:
-                    print(f'(\nTasks completed: 0/{total_tasks}.')
+                    print('\n')
 
 
             if not pr.is_alive():
