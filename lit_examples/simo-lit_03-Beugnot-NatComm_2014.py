@@ -113,7 +113,7 @@ ax1.xaxis.set_ticks_position('bottom')
 ax1.set_xticks(np.linspace(0,(num_widths-1),num_xticks))
 ax1.set_yticks(np.linspace((num_interp_pts-1),0,num_yticks))
 ax1.set_xticklabels(["%4.0f" % w for w in np.linspace(width_min,width_max,num_xticks)])
-ax1.set_yticklabels(["%4.0f" % nu*1e-9 for nu in np.linspace(freq_min,freq_max,num_yticks)])
+ax1.set_yticklabels(["%4.0f" % (nu*1e-9) for nu in np.linspace(freq_min,freq_max,num_yticks)])
 
 ax1.set_xlabel(r'Width (nm)')
 ax1.set_ylabel('Frequency (GHz)')
