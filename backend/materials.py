@@ -24,7 +24,6 @@ import sys
 import traceback
 from scipy.interpolate import interp1d
 import matplotlib
-#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 from math import sqrt
 
@@ -87,8 +86,8 @@ class VoigtTensor4(object):
     self.mat[k[0], k[1]]=v
 
   def rotate(self, theta, rotation_axis):
-    rmat=rotate_tensor(self.mat[1:,1:], theta, rotation_axis)
-    self.mat[1:,1:]=rmat
+    rmat = _rotate_Voigt_tensor(self.mat[1:,1:], theta, rotation_axis)
+    self.mat[1:,1:] = rmat
 
   def __str__(self):
     s='\nVoigt tensor {0}:\n'.format(self.sym)
@@ -125,7 +124,7 @@ class Material(object):
       if not len(Material._materials):
         Material._set_file_locations()
         for f in os.listdir(Material._data_loc):
-          if f.endswith(".json"):
+          if f.endswith(".json"): # TODO:add check to make sure this is actually a material file
             Material._materials[f[:-5]] = Material(f)
       try:
         mat= Material._materials[s]
@@ -262,7 +261,10 @@ class Material(object):
             self.p_tensor.load_isotropic()
             self.eta_tensor.load_isotropic()
 
+            print('bef cc', self.file_name, self.crystal)
             self.load_tensors()
+            print('aft cc', self.file_name, self.crystal)
+            
 
 
     def is_vacuum(self): 
@@ -318,6 +320,7 @@ class Material(object):
         report_and_exit('Failed to load cubic crystal class in material data file {0}'.format(self.json_file))
 
     def load_trigonal_crystal(self):
+      print('ltc: ', self.file_name)
       try:
         for (i,j) in [(1,1), (1,2), (1,3), (1,4), (3,3), (4,4), (6,6)]:
           self.c_tensor.read(i,j)
@@ -405,14 +408,14 @@ class Material(object):
       self.anisotropic = False
 
       self.crystal=CrystalGroup.Unknown
-
+      
       if not 'crystal_class' in self._params: return
 
       try:
         self.crystal = CrystalGroup[self._params['crystal_class']]
       except ValueError:
         print('Unknown crystal class in material data file')
-        sys.exit(1)
+        sys.exit(1)  #TODO: exit properly
 
 
       if self.crystal==CrystalGroup.Isotropic: return
@@ -451,6 +454,7 @@ class Material(object):
         self.c_tensor.rotate(theta, rotate_axis)
         self.p_tensor.rotate(theta, rotate_axis)
         self.eta_tensor.rotate(theta, rotate_axis)
+
         if save_rotated_tensors:
             np.savetxt('rotated_c_tensor.csv', self.c_tensor.mat, delimiter=',')
             np.savetxt('rotated_p_tensor.csv', self.p_tensor.mat, delimiter=',')
@@ -463,51 +467,90 @@ to_Voigt = np.array([[0,5,4], [5,1,3], [4,3,2]])
 
 
 
-def rotation_matrix_sum(i, j, k, l, tensor_orig, mat_R):
-    """
-    Inner loop of rotation matrix summation.
-    """
-    tensor_prime_comp = 0
+def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
+    '''
+    Calculates the element ijkl of the rotated tensor T' from the original 
+    rank-4 tensor T_PQ in 6x6 Voigt notation under the rotation specified by the 3x3 matrix R.
+    '''
+
+    Tp_ijkl = 0
+
     for q in range(3):
         for r in range(3):
             V1 = to_Voigt[q,r]
             for s in range(3):
                 for t in range(3):
                     V2 = to_Voigt[s,t]
-                    tensor_prime_comp += mat_R[i,q] * mat_R[j,r] * mat_R[k,s] * mat_R[l,t] * tensor_orig[V1,V2]
+                    Tp_ijkl += mat_R[i,q] * mat_R[j,r] * mat_R[k,s] * mat_R[l,t] * T_PQ[V1,V2]
 
-    return tensor_prime_comp
+    return Tp_ijkl 
 
 
-def rotate_tensor(tensor_orig, theta, rotation_axis):
+def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
     """
-    Rotate all acoustic material tensor by theta radians around chosen
-    rotation_axis.
+    Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
+    T_PQ is a rank-4 tensor expressed in 6x6 Voigt notation.
+
+    The complete operation in 3x3x3x3 notation is 
+    T'_ijkl  = sum_{pqrs} R_ip R_jq R_kr R_ls  T_pqrs.
+
+    The result T'_ijkl is returned in Voigt format T'_PQ.
 
     Args:
-        tensor_orig  (array): Tensor to be rotated.
+        T_PQ  (array): Tensor to be rotated.
 
         theta  (float): Angle to rotate by in radians.
 
         rotation_axis  (str): Axis around which to rotate.
     """
-    if rotation_axis == 'x-axis':
-        mat_R = np.array([[1,0,0], [0,np.cos(theta),-np.sin(theta)], [0,np.sin(theta),np.cos(theta)]])
-    if rotation_axis == 'y-axis':
-        mat_R = np.array([[np.cos(theta),0,np.sin(theta)], [0,1,0], [-np.sin(theta),0,np.cos(theta)]])
-    if rotation_axis == 'z-axis':
-        mat_R = np.array([[np.cos(theta),-np.sin(theta),0], [np.sin(theta),np.cos(theta),0], [0,0,1]])
 
-    tensor_prime = np.zeros((6,6))
+    if type(rotation_axis) == type('axis'):
+        if rotation_axis == 'x-axis':
+            mat_R = np.array([[1,0,0], [0,np.cos(theta),-np.sin(theta)], [0,np.sin(theta),np.cos(theta)]])
+        elif rotation_axis == 'y-axis':
+            mat_R = np.array([[np.cos(theta),0,np.sin(theta)], [0,1,0], [-np.sin(theta),0,np.cos(theta)]])
+        elif rotation_axis == 'z-axis':
+            mat_R = np.array([[np.cos(theta),-np.sin(theta),0], [np.sin(theta),np.cos(theta),0], [0,0,1]])
+    else:
+        emsg = f"Can't convert {rotation_axis} to a 3-element unit vector."
+        try:
+            if isinstance(rotation_axis, list): # try to convert to numpy
+                uvec = np.array(rotation_axis)
+            elif isinstance(rotation_axis, np.ndarray): 
+                uvec = rotation_axis
+            else:
+                report_and_exit(emsg)
+        except:
+            report_and_exit(emsg)
+
+        # uvec is now a numpy array of some length
+        if len(uvec) != 3 or np.abs(uvec) == 0.0 :    
+            report_and_exit(emsg)
+
+        # normlise u 
+        uvec = uvec / np.abs(uvec)
+        ct = math.cos(theta)
+        st = math.sin(theta)
+        omct = 1-ct
+        ux,uy,uz = uvec[:]
+
+        mat_R =  np.array([
+            [ct + ux**2*omct,  ux*uy*omct-uz*st, ux*uz*omct+uy*st ],
+            [uy*ux*omct+uz*st, ct + uy**2*omct,  uy*uz*omct-ux*st ],
+            [uz*ux*omct-uy*st, uz*uy*omct+ux*st, ct+uz**2*omct]
+            ])
+
+
+    Tp_PQ = np.zeros((6,6))
     for i in range(3):
         for j in range(3):
             V1 = to_Voigt[i,j]
             for k in range(3):
                 for l in range(3):
                     V2 = to_Voigt[k,l]
-                    tensor_prime[V1,V2] = rotation_matrix_sum(i,j,k,l,tensor_orig,mat_R)
+                    Tp_PQ[V1,V2] = rotate_tensor_elt(i,j,k,l, T_PQ, mat_R)
 
-    return tensor_prime
+    return Tp_PQ
 
 
 def isotropic_stiffness(E, v):
@@ -532,7 +575,8 @@ def isotropic_stiffness(E, v):
 #g_materials={}
 
 
-def make_material(s): return Material._make_material(s)
+def make_material(s): 
+    return Material._make_material(s)
 
 #  global g_materials
 #  if not len(g_materials):

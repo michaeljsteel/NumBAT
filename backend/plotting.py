@@ -286,6 +286,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     # Total gain via sum over all modes in the vicinity of their peak
     for m in ivals:
+        print('dealing with gain', m, np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]))
         # build lorentzian centered on mode m
         v_nu_loc = np.real(sim_AC.nu_AC(m)+ detuning_range)
         v_gain_loc = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]
@@ -440,9 +441,8 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
  
  
     savefig(fig, '%(pre)s%(add)s.%(png)s' % {'pre': pref, 'add': suffix, 'png':pdf_png})
-    #print ('\n\n\n\nmem pgs 7', process.memory_info().rss)
- 
     plt.close(fig)
+
     if save_txt:
         save_array = np.array([nu_grid, interp_values]).T
         np.savetxt('%(pre)s-MB_PE_comps%(add)s-Total.csv' % {'pre' : pref, 'add' : suffix}, 
@@ -472,6 +472,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
         fig.savefig('%(pre)s-gain_spectra-dB%(add)s.%(png)s' % {
                   'pre' : prefix, 'add' : suffix, 'png':pdf_png})
+        plt.close(fig)
 
         if save_txt:
             save_array = (nu_grid, 10*np.log10(np.exp(abs(interp_values)*dB_const)))
@@ -492,10 +493,11 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
         fig.savefig('%(pre)s-gain_spectra-logy%(add)s.%(png)s' % {
                   'pre' : prefix, 'add' : suffix, 'png':pdf_png})
+        plt.close(fig)
 
     #print ('\n\n\n\nmem pgs 9', process.memory_info().rss)
 
-    return return_interp_values
+    return interp_values, interp_values_PE, interp_values_MB
 
 def plot_set_ticks(ax, plps, decorator):
   if plps['ticks']:
@@ -503,7 +505,7 @@ def plot_set_ticks(ax, plps, decorator):
     ax.xaxis.set_tick_params(width=1.0)
     ax.yaxis.set_tick_params(width=1.0)
     ax.set_xlabel('$x$ [μm]', size=decorator.get_font_size('ax_label'))
-    ax.set_xlabel('$y$ [μm]', size=decorator.get_font_size('ax_label'))
+    ax.set_ylabel('$y$ [μm]', size=decorator.get_font_size('ax_label'))
     ax.grid(False)
   else:
     ax.set_xticks([])
