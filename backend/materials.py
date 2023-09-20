@@ -33,6 +33,8 @@ import re
 from nbtypes import *
 from reporting import *
 
+class BadMaterialFileError(Exception):
+    pass
 
 
 class VoigtTensor4(object):
@@ -121,15 +123,24 @@ class Material(object):
 
     @classmethod
     def _make_material(cls, s):
-      if not len(Material._materials):
+      if not len(Material._materials):  # first time through, we load all the materials
         Material._set_file_locations()
         for f in os.listdir(Material._data_loc):
-          if f.endswith(".json"): # TODO:add check to make sure this is actually a material file
-            Material._materials[f[:-5]] = Material(f)
+            if f.endswith(".json"):
+                try:
+                    new_mat = Material(f)
+                except BadMaterialFileError as err:
+                    report_and_exit(str(err))
+
+                if new_mat.material_name in Material._materials: # two mats have the same name  TODO: file_name is actually a mat_name
+                    raise report_and_exit(f"Material file {f} has the same name as an existing material {new_mat.material_name}.")
+            #Material._materials[f[:-5]] 
+                Material._materials[new_mat.material_name] = new_mat
+
       try:
         mat= Material._materials[s]
       except KeyError:
-        report_and_exit('Material data {0} file not found.'.format(s))
+        report_and_exit(f'Material {s} not found in material_data folder.')
 
       return mat 
 
@@ -139,7 +150,7 @@ class Material(object):
 
         self.json_file=data_file
         try:
-            self.load_data_file(Material._data_loc, self.json_file)
+            self._load_data_file(Material._data_loc, self.json_file)
         except FileNotFoundError:
             report_and_exit('Material data {0} file not found.'.format(self.json_file))
 
@@ -153,7 +164,7 @@ class Material(object):
           Date: {3}
           '''.format(
             self.chemical,
-            self.file_name,
+            self.material_name,
             self.author,
             self.date)
       if len(self.comment): s+='Comment: '+self.comment
@@ -169,12 +180,12 @@ class Material(object):
     def elastic_properties(self):
         '''Returns a string containing key elastic properties of the material.'''
         try:
-            s =  'Material:       {0}'.format(self.file_name)
+            s =  'Material:       {0}'.format(self.material_name)
             s+='\nDensity:        {0:.3f}'.format(self.rho)
             s+='\nVelocity long.: {0:.3f}'.format( self.Vac_longitudinal() )
             s+='\nVelocity shear: {0:.3f}'.format( self.Vac_shear())
         except:
-            s='Unknown/undefined elastic parameters in material '+self.file_name
+            s='Unknown/undefined elastic parameters in material '+self.material_name
         return s
 
     def Vac_longitudinal(self):
@@ -206,7 +217,7 @@ class Material(object):
         '''Returns true if the material has at least some elastic properties defined.'''
         return self.rho is not None
 
-    def load_data_file(self, dataloc, data_file, alt_path=''):  
+    def _load_data_file(self, dataloc, data_file, alt_path=''):  
         """
         Load material data from json file.
         
@@ -227,7 +238,18 @@ class Material(object):
               traceback.print_exc()
               report_and_exit('JSON parsing error: {0} for file {1}'.format(err, self.json_file))
 
-            self.file_name = self._params['file_name']  # Name of this file, will be used as identifier
+            self.material_name = self._params.get('material_name', 'NOFILENAME')  # Name of this file, will be used as identifier and must be present
+            if self.material_name == 'NOFILENAME':
+                raise BadMaterialFileError(f"Material file {data_file} has no 'material_name' field.")
+
+            self.format = self._params.get('format', 'NOFORMAT')  
+            if self.format == 'NOFORMAT':
+                raise BadMaterialFileError(f"Material file {data_file} has no 'format' field.")
+
+            if self.format != 'NumBATMaterial-fmt-2.0':
+                raise BadMaterialFileError(f"Material file {data_file} must be in format 'NumBATMaterial-Fmt-2.0'.")
+
+
             self.chemical = self._params['chemical']  # Chemical composition
             self.author = self._params['author']  # Author of data
             self.date = self._params['date']  # Year of data publication/measurement
@@ -251,6 +273,15 @@ class Material(object):
 #            self.eta_12 = self._params['eta_12']  # Acoustic loss tensor component [Pa s]
 #            self.eta_44 = self._params['eta_44']  # Acoustic loss tensor component [Pa s]
 
+
+            if not 'crystal_class' in self._params:
+                raise BadMaterialFileError(f"Material file {data_file} has no 'crystal_class' field.")
+            try:
+                self.crystal = CrystalGroup[self._params['crystal_class']]
+            except ValueError:
+                print('Unknown crystal class in material data file')
+                raise BadMaterialFileError(f"Unknown crystal class in material data file {data_file}")
+
             self.crystal = CrystalGroup.Isotropic
 
             self.c_tensor=VoigtTensor4('c', self._params, self.json_file)
@@ -261,9 +292,9 @@ class Material(object):
             self.p_tensor.load_isotropic()
             self.eta_tensor.load_isotropic()
 
-            print('bef cc', self.file_name, self.crystal)
+            print('bef cc', self.material_name, self.crystal)
             self.load_tensors()
-            print('aft cc', self.file_name, self.crystal)
+            print('aft cc', self.material_name, self.crystal)
             
 
 
@@ -320,7 +351,7 @@ class Material(object):
         report_and_exit('Failed to load cubic crystal class in material data file {0}'.format(self.json_file))
 
     def load_trigonal_crystal(self):
-      print('ltc: ', self.file_name)
+      print('ltc: ', self.material_name)
       try:
         for (i,j) in [(1,1), (1,2), (1,3), (1,4), (3,3), (4,4), (6,6)]:
           self.c_tensor.read(i,j)

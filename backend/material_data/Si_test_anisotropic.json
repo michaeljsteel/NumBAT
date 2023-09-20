@@ -1,5 +1,6 @@
  {
-  "file_name": "Si_test_anisotropic",  // Name of this file, will be used as identifier
+  "format": "NumBATMaterial-fmt-2.0",
+  "material_name": "Si_test_anisotropic",  // Name of this file, will be used as identifier
   "chemical": "Si",  // Chemical composition
   "author": "N/A",  // Author of data
   "date": "N/A",  // Year of data publication/creation
@@ -17,8 +18,8 @@
   "p_44": -0.051,  // Photoelastic tensor component []
   "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
   "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
-  "eta_44": 0.62e-3,  // Acoustic loss tensor component [Pa s] 
-// Enter all components of tensors 
+  "eta_44": 0.62e-3,  // Acoustic loss tensor component [Pa s]
+// Enter all components of tensors
 // (the chosen values reproduce the isotropic Si_2016_Smith material)
 "c_13": 63.9e9,
 "c_14": 0.0,

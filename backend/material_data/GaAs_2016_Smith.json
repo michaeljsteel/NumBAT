@@ -1,5 +1,6 @@
  {
-  "file_name": "GaAs_2016_Smith",  // Name of this file, will be used as identifier
+  "format": "NumBATMaterial-fmt-2.0",
+   "material_name": "GaAs_2016_Smith",  // Name of this file, will be used as identifier
   "chemical": "GaAs",  // Chemical composition
   "author": "Smith",  // Author of data
   "date": "2016",  // Year of data publication/creation
@@ -8,6 +9,7 @@
   "Re_n": 3.37,  // Real part of refractive index []
   "Im_n": 0.0,  // Imaginary part of refractive index []
   "s": 5320,  // Density [kg/m3]
+  "crystal_class": "Isotropic",
   "c_11": 119e9,  // Stiffness tensor component [Pa]
   "c_12": 53.4e9,  // Stiffness tensor component [Pa]
   "c_44": 59.6e9,  // Stiffness tensor component [Pa]
@@ -16,5 +18,5 @@
   "p_44": -0.072,  // Photoelastic tensor component []
   "eta_11": 7.49e-3,  // Acoustic loss tensor component [Pa s]
   "eta_12": 0.72e-3,  // Acoustic loss tensor component [Pa s]
-  "eta_44": 0.72e-3  // Acoustic loss tensor component [Pa s] 
+  "eta_44": 0.72e-3  // Acoustic loss tensor component [Pa s]
 }

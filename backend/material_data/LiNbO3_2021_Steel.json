@@ -1,5 +1,6 @@
 {
- "file_name": "LiNbO3_2021_Steel",  // Name of this file, will be used as identifier
+    "format": "NumBATMaterial-fmt-2.0",
+    "material_name": "LiNbO3_2021_Steel",  // Name of this file, will be used as identifier
  "chemical": "LiNbO3",  // Chemical composition
  "author": "Steel",  // Author of data
  "date": "2021",  // Year of data publication/creation
