@@ -31,6 +31,97 @@ import plotting
 from fortran import NumBAT
 
 
+class Gain (object):
+
+    @staticmethod 
+    def _set_allowed_ms(l, m_allow):
+        if type(m_allow) == type(1):
+            l.extend((m_allow,)) 
+        else:
+            l.extend(m_allow) 
+
+    def __init__(self):
+        self._allowed_pumps_m = []
+        self._allowed_Stokes_m = []
+        self._allowed_ac_m = []   # Needed?
+        self._gain_tot = None
+        self._gain_PE = None
+        self._gain_MB = None
+        self.def_m_pump = 0
+        self.def_m_Stokes = 0
+        self.linewidth_Hz = None
+        self.alpha = None
+        self.Q_factor = None
+        self.sim_AC = None
+
+    def _set_sim_AC(self, sac): self.sim_AC = sac
+
+    def set_allowed_EM_pumps(self, m_allow):  Gain._set_allowed_ms(self._allowed_pumps_m, m_allow)
+    def set_allowed_EM_Stokes(self, m_allow): Gain._set_allowed_ms(self._allowed_Stokes_m, m_allow)
+    def set_allowed_AC(self, m_allow):        Gain._set_allowed_ms(self._allowed_ac_m, m_allow)
+
+    def set_EM_modes(self, mP, mS):
+        self.def_m_pump = mP
+        self.def_m_Stokes = mS
+
+    def gain_total(self, m_AC): return self._gain_tot[self.def_m_pump, self.def_m_Stokes, m_AC]
+    def gain_PE(self, m_AC):    return self._gain_PE[self.def_m_pump, self.def_m_Stokes, m_AC]
+    def gain_MB(self, m_AC):    return self._gain_MB[self.def_m_pump, self.def_m_Stokes, m_AC]
+
+    def gain_total_all(self):   return self._gain_tot[self.def_m_pump, self.def_m_Stokes, :]
+    def gain_PE_all(self):      return self._gain_PE[self.def_m_pump, self.def_m_Stokes, :]
+    def gain_MB_all(self):      return self._gain_MB[self.def_m_pump, self.def_m_Stokes, :]
+    def alpha_all(self):        return self.alpha[self.def_m_pump, self.def_m_Stokes, :]
+    def Q_factor_all(self):     return self.Q_factor[self.def_m_pump, self.def_m_Stokes, :]
+    def linewidth_Hz_all(self): return self.linewidth_Hz[self.def_m_pump, self.def_m_Stokes, :]
+
+    def gain_total_raw(self):   return self._gain_tot
+    def gain_PE_raw(self):      return self._gain_PE
+    def gain_MB_raw(self):      return self._gain_MB
+    def alpha_raw(self):        return self.alpha
+    def Q_factor_raw(self):     return self.Q_factor
+    def linewidth_Hz_raw(self): return self.linewidth_Hz
+
+    def _set_gain_tot(self,g):        self._gain_tot=g
+    def _set_gain_PE(self,g):         self._gain_PE=g
+    def _set_gain_MB(self,g):         self._gain_MB=g
+    def _set_alpha(self,a):           self.alphas=a
+    def _set_linewidth_Hz(self,lwhz): self.linewidth_Hz=lwhz
+    def _set_Q_factor(self,qf):       self.Q_factor=qf
+
+    def plot_spectra(self, freq_min=0., freq_max=50e9, num_interp_pts=3000,
+                dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
+                pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
+                     show_gains='All', mark_modes_thresh=0.02):
+    
+        return plotting.plot_gain_spectra(self.sim_AC, self._gain_tot, self._gain_PE, self._gain_MB, 
+                                   self.linewidth_Hz, 
+                                   self._allowed_pumps_m, self._allowed_Stokes_m, self._allowed_ac_m,
+                                   freq_min, freq_max, num_interp_pts, dB, dB_peak_amp, mode_comps, 
+                                   semilogy, pdf_png, save_txt, prefix, suffix, decorator, show_gains, mark_modes_thresh)
+
+def get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+                EM_ival_pump=0, EM_ival_Stokes=0, AC_ival=0, fixed_Q=None, typ_select_out=None):
+    
+    SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
+            sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump, EM_ival_Stokes, AC_ival, fixed_Q, typ_select_out)
+
+    gain = Gain()
+    gain._set_sim_AC(sim_AC)
+    gain._set_gain_tot(SBS_gain)
+    gain._set_gain_PE(SBS_gain_PE)
+    gain._set_gain_MB(SBS_gain_MB)
+    gain._set_alpha(alpha)
+    gain._set_linewidth_Hz(linewidth_Hz)
+    gain._set_Q_factor(Q_factors)
+
+    gain.set_allowed_EM_pumps(EM_ival_pump)
+    gain.set_allowed_EM_Stokes(EM_ival_Stokes)
+    gain.set_allowed_AC(AC_ival)
+
+    return gain
+
+
 def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 EM_ival_pump=0, EM_ival_Stokes=0, AC_ival=0, fixed_Q=None, typ_select_out=None):
     r""" Calculate interaction integrals and SBS gain.
