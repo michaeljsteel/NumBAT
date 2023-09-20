@@ -405,7 +405,7 @@ Other parameters allow selecting only one type of gain (PE or MB), changing the 
 It is important to remember that the total gain is not the simple sum of the photoelastic
 (PE) and moving boundary (MB) gains. Rather it is the coupling terms :math:`Q_\text{PE}` and :math:`Q_\text{MB}` which are added before squaring to give the total gain.  Indeed the two effects may have opposite sign giving net gains smaller than either contribution.
 
-.. figure:: ../../tutorials/tut_06-gain_spectra_SiO2_NW.png
+.. figure:: ../../tutorials/tut_06-gain_spectra_SiO2.png
    :scale: 50 %
    
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving 

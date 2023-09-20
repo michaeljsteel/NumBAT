@@ -21,46 +21,49 @@ in a small rectangular silica waveguide described in V. Laude and J.-C. Beugnot,
 
 Observe the use of a material named ``SiO2_2013_Laude``
 specifically modelled on the parameters in this paper.
-This technique allows users to easily compare exactly to other authors
-without changing their preferred material values for their own samples and experiments.
+This naming scheme for materials allows several different
+versions of nominally the same material to be selected,so that users can easily 
+compare calculations to other authors's exact parameter choices, without changing their preferred material values for their own samples and experiments.
+
+In this paper, Laude and Beugnot plot a spectrum of the elastic energy density, which is
+not directly measureable. Howver the peaks show very close alignment with the gain
+spectrum for the same structure as is apparent in the second plot.
+
+The modal profiles for the peaks marked C and D can also be compared in the following plots.
+The most direct comparison comes from looking at the |NUMBAT| contour plots for the transverse
+and longitudinal elastic fields. Note that the transverse and axial plots for mode D in the paper are inconsistent. The axial plot is the correct one for this mode.
 
 .. .. literalinclude:: ../../lit_examples/simo-lit_01-Laude-AIPAdv_2013-silica.py
     :lines: 0-
 
 .. figure:: images/laude_aip_advances_bsbs_1.png
-   :scale: 200 %
+   :scale: 300 %
 
    Spectrum of elastic mode energy and mode profiles calculated in 
-   Laude and Beugnot.
+   Laude and Beugnot for backward SBS in a silica waveguide.
+
+.. figure:: ../../lit_examples/lit_01-gain_spectra-logy.png
+   :scale: 40 %
+   
+   |NUMBAT| gain spectrum on semilogy axis.
 
 .. figure:: ../../lit_examples/lit_01-fields/EM_E_field_00.png
-   :scale: 50 %
+   :scale: 40 %
    
-   Fundamental optical mode fields.
+   Fundamental optical mode profiles.
 
 
 .. figure:: ../../lit_examples/lit_01-fields/AC_field_04.png
-   :scale: 50 %
+   :scale: 40 %
    
    High gain elastic mode, marked as C in paper.
 
 
 .. figure:: ../../lit_examples/lit_01-fields/AC_field_55.png
-   :scale: 50 %
+   :scale: 40 %
    
    High gain elastic mode, marked as D in paper.
 
-
-.. figure:: ../../lit_examples/lit_01-gain_spectra-logy.png
-   :scale: 50 %
-   
-   Gain spectra on semilogy axis.
-   
-
-.. .. figure:: ../../lit_examples/lit_01-gain_spectra-zoom.png
-   :scale: 50 %
-   
-   Gain spectra zoomed in on mode D.
 
 .. raw:: latex
 
@@ -74,20 +77,34 @@ This example in ``simo-lit_02-Laude-AIPAdv_2013-silicon.py`` again follows the p
 <http://dx.doi.org/10.1063/1.4801936>`_, *AIP Advances* **3**, 042109 (2013),
 but this time looks at the *silicon* waveguide case.
 
-.. .. literalinclude:: ../../lit_examples/simo-lit_02-Laude-AIPAdv_2013-silicon.py
-    :lines: 0-
 
+Once again, the plots from the orignal paper are shown in the first figure.
+In this case, with a very large number of modes of different shear wave order, 
+the precise mode profile for highest gain depends very sensitively on the 
+simulation parameters.
 
-.. figure:: ../../lit_examples/lit_02-fields/AC_field_04.png
+.. figure:: images/laude_aip_advances_bsbs_2.png
+   :scale: 200 %
+
+   Spectrum of elastic mode energy and mode profiles calculated in 
+   Laude and Beugnot for backward SBS in a silicon waveguide.
+
+.. figure:: ../../lit_examples/lit_02-gain_spectra-logy.png
+   :scale: 40 %
+   
+   |NUMBAT| gain spectrum on semilogy axis.
+
+.. figure:: ../../lit_examples/lit_02-fields/AC_field_23.png
    :scale: 50 %
    
    High gain elastic mode, marked as G in paper.
 
-
-.. figure:: ../../lit_examples/lit_02-gain_spectra-logy.png
+.. figure:: ../../lit_examples/lit_02-fields/AC_field_296.png
    :scale: 50 %
    
-   Gain spectra on semilogy axis.
+   High gain elastic mode, marked as H in paper.
+
+
 
 .. raw:: latex
 
@@ -105,11 +122,55 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
 .. .. literalinclude:: ../../lit_examples/simo-lit_03-Beugnot-NatComm_2014.py
     :lines: 0-
 
+.. figure:: images/beugnot_exp_gain.png
+   :scale: 100 %
 
-.. figure:: ../../lit_examples/lit_03-gain_width_scan.png
-   :scale: 50 %
+   Measured gain spectrum for a 1 μm micron silica nanowire in J.-C. Beugnot *et al.*
+   
+.. figure:: ../../lit_examples/lit_03-gain_spectra-logy_w1000.png
+   :scale: 40 %
+
+   |NUMBAT| calculated gain spectrum for the 1 μm silica nanowire.
+
+.. figure:: images/beugnot_gain_disp.png
+   :scale: 100 %
+
+   Calculated dispersion of gain spectrum with nanowire width in J.-C. Beugnot *et al.*
+
+
+.. figure:: ../../lit_examples/lit_03-gain_diam_scan.png
+   :scale: 40 %
    
    Full elastic wave spectrum for silica microwire, as per Fig. 4a in paper.
+
+
+.. figure:: images/beugnot_elastic_fields.png
+   :scale: 80 %
+
+   Calculated elastic mode profiles for the 1 micron nanowire in J.-C. Beugnot *et al.*
+
+.. figure:: ../../lit_examples/lit_03-diam-1000-fields/EM_E_field_00.png
+
+.. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_02.png
+   :scale: 40%
+   Radial shear mode.
+
+.. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_05.png
+   :scale: 40 %
+
+   Azimuthal shear mode.
+
+.. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_21.png
+   :scale: 40 %
+
+   Azimuthal shear mode.
+
+.. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_28.png
+   :scale: 40 %
+
+   Azimuthal shear mode.
+
+
 
 .. raw:: latex
 
