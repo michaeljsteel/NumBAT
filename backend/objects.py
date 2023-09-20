@@ -794,7 +794,7 @@ class Structure(object):
         # slab_a_y - height of the buried part of the rib
         
         msh_template = 'trapezoidal_rib'
-        self.nb_typ_el = 4
+        self.n_typ_el = 4
         msh_name = self._make_mesh_name(msh_template, 
                 (self.unitcell_x, self.inc_a_x, self.inc_a_y, self.slab_a_x, self.slab_a_y))
     
