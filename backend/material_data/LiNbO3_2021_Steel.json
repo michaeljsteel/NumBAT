@@ -10,6 +10,7 @@
  "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
  "Im_n": 0.0,  // Imaginary part of refractive index []
  "s": 4650,  // Density [kg/m3]
+ "crystal_class": "Trigonal",
  "c_11": 199.2e9,  // Stiffness tensor component [Pa]
  "c_12": 54.7e9,  // Stiffness tensor component [Pa]
  "c_13": 70.0e9,  // Stiffness tensor component [Pa]
@@ -25,7 +26,14 @@
  "p_14": -0.052,  // Photoelastic tensor component []
  "p_41": -0.109,  // Photoelastic tensor component []
  "p_44": 0.121,  // Photoelastic tensor component []
- "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
- "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
- "eta_44": 0.62e-3  // Acoustic loss tensor component [Pa s]
+ "eta_11": 0.6547e-3,  // Acoustic loss tensor component [Pa s] taken from Bajak et al 1981, doi.org/10.1121/1.385588
+ "eta_12": 0.2275e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_13": 0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_14":-0.0687e-3,  // Acoustic loss tensor component [Pa s]
+
+
+ "eta_33": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
+
+ "eta_66": 0.2136e-3  // Acoustic loss tensor component [Pa s]
 }

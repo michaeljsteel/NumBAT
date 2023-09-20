@@ -1,6 +1,6 @@
 {
- "file_name": "LiNbO3iso_2021_Steel",  // Name of this file, will be used as identifier
- "chemical": "LiNbO3iso",  // Chemical composition
+ "file_name": "LiNbO3aniso_2021_Steel",  // Name of this file, will be used as identifier
+ "chemical": "LiNbO3aniso",  // Chemical composition
  "author": "Steel",  // Author of data
  "date": "2021",  // Year of data publication/creation
  "institution": "Lviv Polytechnic Nat University",  // Source institution
