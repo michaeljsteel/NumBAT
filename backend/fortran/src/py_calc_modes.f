@@ -1,3 +1,6 @@
+c     include "numbat_decl.h"
+#define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
+       
       subroutine calc_EM_modes(
 c     Explicit inputs
      *    lambda, num_modes,
@@ -8,7 +11,7 @@ c     Explicit inputs
 c     Outputs
      *    beta1, sol1, mode_pol,
      *    table_nod, type_el, type_nod, x_arr, ls_material,
-     *    errno_arpack, emsg_arpack)
+     *    errco, emsg)
 
 C************************************************************************
 C
@@ -34,9 +37,9 @@ C     !  b(cmplx_max)
       complex*16, dimension(:), allocatable :: b
 C     !  c(real_max)
       double precision, dimension(:), allocatable :: c
-      integer :: allocate_status=0
-      integer*8 errno_arpack
-      character emsg_arpack*2048 
+      integer :: stat=0
+      integer*8 errco
+      character*2048 emsg
 C
 C  Declare the pointers of the integer super-vector
       integer*8 ip_table_E, ip_table_N_E_F, ip_visite
@@ -158,8 +161,8 @@ Cf2py depend(n_eff) n_typ_el
 Cf2py intent(out) beta1, type_nod, ls_material
 Cf2py intent(out) sol1, mode_pol, table_nod, type_el, x_arr
 
-Cf2py intent(out) errno_arpack
-Cf2py intent(out) emsg_arpack
+Cf2py intent(out) errco
+Cf2py intent(out) emsg
 
 
 C      n_64 = 2
@@ -189,69 +192,33 @@ C       ly=1.0 ! NOTE: currently requires ly=lx, ie rectangular unit cell.
       lx = d_in_m
       ly = d_in_m
 
-      errno_arpack= 0
-      emsg_arpack = ""
+      errco= 0
+      emsg = ""
 
-      call array_size(n_msh_el, num_modes,
-     *     int_max, cmplx_max, real_max)
+      call array_size(n_msh_pts, n_msh_el, num_modes,
+     *     int_max, cmplx_max, real_max, errco, emsg)
+      RETONERROR(errco) 
 
-      if (debug .eq. 1) then
-        write(*,*) "WELCOME TO DEBUG MODE, py_calc_modes.f"
-      endif
+      allocate(b(cmplx_max), STAT=stat)
+      call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+      RETONERROR(errco) 
 
-      allocate(b(cmplx_max), STAT=allocate_status)
-      if (allocate_status /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "Not enough memory for the complex array b"
-        write(*,*) "cmplx_max = ", cmplx_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
+      allocate(c(real_max), STAT=stat)
+      call check_alloc(stat, real_max, "c", -1, errco, emsg)
+      RETONERROR(errco) 
 
-      allocate(c(real_max), STAT=allocate_status)
-      if (allocate_status /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "Not enough memory for the real array c"
-        write(*,*) "real_max = ", real_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
+      allocate(a(int_max), STAT=stat)
+      call check_alloc(stat, int_max, "a", -1, errco, emsg)
+      RETONERROR(errco) 
 
-      allocate(a(int_max), STAT=allocate_status)
-      if (allocate_status /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "Not enough memory for the integer array a"
-        write(*,*) "int_max = ", int_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
+      allocate(overlap_L(num_modes,num_modes), STAT=stat)
+      call check_alloc(stat, num_modes*num_modes, 
+     *   "overlap_L", -1, errco, emsg)
+      RETONERROR(errco) 
 
-      allocate(overlap_L(num_modes,num_modes), STAT=allocate_status)
-      if (allocate_status /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "Not enough memory for overlap_L"
-        write(*,*) "num_modes = ", num_modes
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
-      allocate(iindex(num_modes), STAT=allocate_status)
-      if (allocate_status /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "Not enough memory for iindex"
-        write(*,*) "num_modes = ", num_modes
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
+      allocate(iindex(num_modes), STAT=stat)
+      call check_alloc(stat, num_modes, "iindex", -1, errco, emsg)
+      RETONERROR(errco) 
 
 
 CCCCCCCCCCCCCCCCC POST F2PY CCCCCCCCCCCCCCCCCCCCCCCCC
@@ -308,7 +275,7 @@ C
      *    int_max
          write(ui,*) "py_calc_modes.f: increase the size of int_max"
          write(ui,*) "py_calc_modes.f: Aborting..."
-         errno_arpack = -15
+         errco = -15
          return 
       endif
       if ((7*n_msh_pts) .gt. cmplx_max) then
@@ -316,7 +283,7 @@ C
      *    (7*n_msh_pts), cmplx_max
          write(ui,*) "py_calc_modes.f: increase the size of cmplx_max"
          write(ui,*) "py_calc_modes.f: Aborting..."
-         errno_arpack = -16
+         errco = -16
          return 
       endif
 C
@@ -410,7 +377,7 @@ C
         write(ui,*) "py_calc_modes.f: i_bnd_cdns has value : ",
      *       i_bnd_cdns
         write(ui,*) "py_calc_modes.f: Aborting..."
-        errno_arpack = -10
+        errco = -10
         return 
       endif
 C
@@ -454,7 +421,7 @@ c      ip = ip_col_ptr + neq + 1 + nonz_max
          write(ui,*) "py_calc_modes.f: nonz_max = ", nonz_max
          write(ui,*) "py_calc_modes.f: increase the size of int_max"
          write(ui,*) "py_calc_modes.f: Aborting..."
-        errno_arpack = -11
+        errco = -11
         return 
       endif
 c
@@ -488,7 +455,7 @@ c     sorting csr ...
         write(ui,*) 'integer super-vec: int_max  = ', int_max
         write(ui,*) 'integer super-vec: int_used = ', int_used
         write(ui,*) 'Aborting...'
-        errno_arpack = -12
+        errco = -12
         return 
       endif
 c
@@ -516,7 +483,7 @@ C
          write(ui,*) 'real super-vec: cmplx_max  = ', cmplx_max
          write(ui,*) 'real super-vec: cmplx_used = ', cmplx_used
          write(ui,*) 'Aborting...'
-        errno_arpack = -13
+        errco = -13
         return 
       endif
 c
@@ -535,7 +502,7 @@ c
         write(ui,*) 'real super-vec: real_max  = ', real_max
         write(ui,*) 'real super-vec: real_used = ', real_used
         write(ui,*) 'Aborting...'
-        errno_arpack = -14
+        errco = -14
         return 
       endif
 c
@@ -593,7 +560,7 @@ C  Check that the layer is not in fact homogeneous
      *              "FEM routine cannot handle homogeneous layers."
           write(ui,*) "Define layer as object.ThinFilm"
           write(ui,*) "Aborting..."
-         errno_arpack = -17
+         errco = -17
          return 
         endif
 C Parameter for shift-and-invert method - now given as input from python
@@ -625,7 +592,7 @@ C
         write(ui,*) "py_calc_modes.f: action indef. avec E_H_field = ",
      *                  E_H_field
         write(ui,*) "Aborting..."
-         errno_arpack = -18
+         errco = -18
          return 
       endif
 C
@@ -689,14 +656,14 @@ C       endif
      *  b(jp_workd), b(jp_resid), b(jp_vschur), beta,
      *  b(jp_trav), b(jp_vp), c(kp_rhs_re), c(kp_rhs_im),
      *  c(kp_lhs_re), c(kp_lhs_im), n_conv, ls_data,
-     *  numeric, control, info_umf, debug, errno_arpack, emsg_arpack)
+     *  numeric, control, info_umf, debug, errco, emsg)
       call get_clocks(stime2, time2)
       write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), 
      *   ' secs.'
       write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1), 
      *   ' secs.'
 c   
-      if (errno_arpack .ne. 0) then
+      if (errco .ne. 0) then
           return
       endif
 
@@ -708,7 +675,7 @@ c         write(ui,*) "You should probably increase resolution of mesh!"
 c        write(ui,*) "n_core(1), n_eff(n_core(1)) = ",
 c    *                n_core(1), n_eff(n_core(1))
          write(ui,*) "py_calc_modes.f: Aborting..."
-         errno_arpack = -19
+         errco = -19
          return 
       endif
 c
@@ -908,7 +875,7 @@ C    *         100*(time1_asmbl-time1)/(time2-time1),"%"
           write(ui,*) "MAIN (B): action indef. avec E_H_field = ",
      *                 E_H_field
           write(ui,*) "Aborting..."
-         errno_arpack = -20
+         errco = -20
          return 
         endif
         write(26,*) "   bloch_vec = ", bloch_vec

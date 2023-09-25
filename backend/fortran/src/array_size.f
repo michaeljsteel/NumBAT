@@ -1,16 +1,15 @@
 
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-
+c  Estimates the work space sizes that will be needed
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-      subroutine array_size (nel, nval, 
-     *     int_size, cmplx_size, real_size)
+      subroutine array_size (n_msh_pts, n_msh_el, nval, 
+     * int_size, cmplx_size, real_size, errco, emsg)
 
       implicit none
-      integer*8 nel
+      integer*8 n_msh_el, n_msh_pts
       integer*8 int_size, cmplx_size, real_size
 c      integer*8 
 
@@ -54,8 +53,10 @@ c     Declare the pointers of for sparse matrix storage
       integer*8 jp_mat2
       integer*8 ip_work, ip_work_sort, ip_work_sort2
 
+      integer*8 errco
+      character*2048 emsg
 
-Cf2py intent(in)  nel, nval
+Cf2py intent(in)  n_msh_el, nval
 
 Cf2py intent(out)  int_size, cmplx_size, real_size
 
@@ -66,22 +67,22 @@ c
       ordre_ls = 0
 c
 c     For most of the FEM meshes I have used, I have observed that:
-c     npt is approximately equal to nel * 2.1
+c     npt is approximately equal to n_msh_el * 2.1
 c
-      npt = nel * 3
-      n_edge = (npt + nel) / 2
-      npt_p3 = npt + n_edge + nel
+      npt = n_msh_el * 3
+      n_edge = (npt + n_msh_el) / 2
+      npt_p3 = npt + n_edge + n_msh_el
       nvect = 2*nval + nval/2 +3
 
 c     Euler's polyhedron formula (no holes):
 c     V - E + F = 2
 c     V, E, and F are respectively the numbers of vertices (corners), edges and faces (triangles) 
 c
-c     Since V - E = 2 - nel and V + E = npt, we have E = n_edge = (npt+nel-2)/2
+c     Since V - E = 2 - n_msh_el and V + E = npt, we have E = n_edge = (npt+n_msh_el-2)/2
 c
 
-      n_ddl = n_edge + nel + npt_p3
-      neq = 3 * (n_edge + nel) + npt_p3
+      n_ddl = n_edge + n_msh_el + npt_p3
+      neq = 3 * (n_edge + n_msh_el) + npt_p3
       neq_PW = (2*ordre_ls+1)**2
 c     For most of the FEM meshes I have used, I have observed that:
 c     nonz = 34.25 * neq
@@ -94,11 +95,11 @@ cccccc
       ip_type_nod = 1
       ip_type_el = ip_type_nod + npt
 C       ! pointer to FEM connectivity table
-      ip_table_nod = ip_type_el + nel 
-      ip_table_N_E_F = ip_table_nod + nnodes*nel
+      ip_table_nod = ip_type_el + n_msh_el 
+      ip_table_N_E_F = ip_table_nod + nnodes*n_msh_el
 
-      n_ddl_max = npt + nel
-      ip_visite =  ip_table_N_E_F  + 14*nel 
+      n_ddl_max = npt + n_msh_el
+      ip_visite =  ip_table_N_E_F  + 14*n_msh_el 
       ip_table_E = ip_visite + n_ddl_max
 
       ip_type_N_E_F = ip_table_E + 4*n_edge
@@ -134,11 +135,11 @@ c     jp_rhs will also be used (in gmsh_post_process) to store a solution
       jp_resid = jp_workd + 3*neq
 
       jp_sol1 = jp_resid + neq
-      jp_sol1b = jp_sol1 + 3*(nnodes+7)*nval*nel
-      jp_sol2 = jp_sol1b + 3*(nnodes+7)*nval*nel
-      jp_sol1_H = jp_sol2 + 3*(nnodes+7)*nval*nel
-      jp_sol1b_H = jp_sol1_H + 3*nnodes*nval*nel
-      jp_eigenval1 = jp_sol1b_H + 3*nnodes*nval*nel
+      jp_sol1b = jp_sol1 + 3*(nnodes+7)*nval*n_msh_el
+      jp_sol2 = jp_sol1b + 3*(nnodes+7)*nval*n_msh_el
+      jp_sol1_H = jp_sol2 + 3*(nnodes+7)*nval*n_msh_el
+      jp_sol1b_H = jp_sol1_H + 3*nnodes*nval*n_msh_el
+      jp_eigenval1 = jp_sol1b_H + 3*nnodes*nval*n_msh_el
       jp_eigenval2 = jp_eigenval1 + nval + 1
 C       ! Eigenvectors
       jp_vschur = jp_eigenval2 + nval + 1     
@@ -200,7 +201,7 @@ C         write(26,*) "cmplx_size = ", cmplx_size
 C         write(26,*) "real_size = ", real_size
 C         write(26,*) "int_size_32 = ", int_size_32
 C         write(26,*)
-C         write(26,*) "nel = ", nel
+C         write(26,*) "n_msh_el = ", n_msh_el
 C         write(26,*) "nval = ", nval
 C         write(26,*) "nvect = ", nvect
 C         write(26,*) "ordre_ls = ", ordre_ls
@@ -216,5 +217,30 @@ C         write(26,*) "nonz = ", nonz
 C         write(26,*) "max_row_len = ", max_row_len
 C       close(26)
 c
+c
+
+
+
+c     Dimension checking, can this actually happen?
+
+      if ((3*n_msh_pts+n_msh_el+nnodes*n_msh_el) .gt. int_size) then
+         write(emsg,*) "py_calc_modes(_AC): ",
+     *   "(3*n_msh_pts+n_msh_el+nnodes*n_msh_el) + ",
+     *   "n_msh_pts > int_max : ",
+     *    (3*n_msh_pts+n_msh_el+nnodes*n_msh_el), int_size,
+     *   "increase the size of int_max"
+         errco = -2
+         return
+      endif
+
+      if ((7*n_msh_pts) .gt. cmplx_size) then
+         write(emsg,*) "py_calc_modes_AC: (7*n_msh_pts) > cmplx_max : ",
+     *    (7*n_msh_pts), cmplx_size,
+     *   "increase the size of cmplx_max"
+         errco = -2
+         return
+      endif
+
+
       end subroutine array_size
 

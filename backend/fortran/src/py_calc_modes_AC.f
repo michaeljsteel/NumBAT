@@ -1,7 +1,10 @@
+#define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
+
+
       subroutine calc_AC_modes(
 c     Explicit inputs
      *    q_ac, num_modes,
-     *    debug, mesh_file, n_msh_pts, n_msh_el,
+     *    debug, show_mem_est, mesh_file, n_msh_pts, n_msh_el,
      *    n_typ_el, c_tensor, rho, d_in_m, shift_nu,
      *    i_bnd_cdns, itermax, tol,
      *    plot_modes, 
@@ -10,7 +13,7 @@ c    *    cmplx_max, real_max, int_max,
 c     Inputs and outputs
      *    table_nod, type_el, x_arr,
 c     Outputs
-     *    v_nu_out, sol1, mode_pol, errno_arpack, emsg_arpack)
+     *    v_nu_out, sol1, mode_pol, errco, emsg)
 
 c         q_ac :   acoustic wave number (q_ac)
 c         num_modes:  desired number of solved acoustic modes
@@ -42,10 +45,10 @@ C       ! Propagation constant
       complex*16 q_ac 
       integer*8 int_max, cmplx_max, int_used, cmplx_used
       integer*8 real_max, real_used, plot_modes
-      integer*8 errno_arpack
-      character*2048 emsg_arpack
+      integer*8 errco
+      character*2048 emsg
 
-      integer :: alloc_stat=0
+      integer :: stat=0
 C       !  (int_max)
       integer*8, dimension(:), allocatable :: a   
 C       !  (cmplx_max)
@@ -78,7 +81,7 @@ c     Declare the pointers of for sparse matrix storage
       complex*16 rho(n_typ_el)
 
       integer*8 i, j, ip
-      integer*8 nnodes, ui, debug, namelength
+      integer*8 nnodes, ui, debug, show_mem_est, namelength
       integer*8 n_msh_el, n_msh_pts, i_bnd_cdns, neq
 
 C     ! Number of nodes per element
@@ -96,12 +99,9 @@ C     ! Number of nodes per element
 
 C  Variable used by valpr
       integer*8 ltrav, n_conv
-      double precision ls_data(10)
       complex*16 z_beta, z_tmp, z_tmp0
       integer*8, dimension(:), allocatable :: iindex
 c     variable used by UMFPACK
-      double precision control (20), info_umf (90)
-      integer*8 numeric
 
       double precision time1, time2
       double precision stime1, stime2
@@ -146,8 +146,8 @@ Cf2py depend(x_arr) n_msh_pts
 Cf2py intent(out) v_nu_out
 Cf2py intent(out) sol1, mode_pol, table_nod, type_el, x_arr
 
-Cf2py intent(out) errno_arpack
-Cf2py intent(out) emsg_arpack
+Cf2py intent(out) errco
+Cf2py intent(out) emsg
 
 C
 CCCCCCCCCCCCCCCCCCCC  Start Program - get parameters  CCCCCCCCCCCCCCCCCC
@@ -158,7 +158,6 @@ C       !ui = Unite dImpression
       ui = 6     
 C      nnodes = 6 ! Number of nodes per element
       pi = 3.141592653589793d0
-c     ii = sqrt(-1)
       ii = cmplx(0.0d0, 1.0d0, 8)
 
 C       nvect = 2*num_modes + num_modes/2 +3
@@ -166,55 +165,36 @@ C       nvect = 2*num_modes + num_modes/2 +3
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
-      errno_arpack= 0
-      emsg_arpack = ""
+
+      errco= 0
+      emsg = ""
 c
-      call array_size(n_msh_el, num_modes, int_max, cmplx_max, real_max)
+c     Declare work space arrays
 
-      allocate(b(cmplx_max), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "The allocation is unsuccesfull"
-        write(*,*) "alloc_stat = ", alloc_stat
-        write(*,*) "Not enough memory for the complex array b"
-        write(*,*) "cmplx_max = ", cmplx_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
 
-      allocate(c(real_max), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "The allocation is unsuccesfull"
-        write(*,*) "alloc_stat = ", alloc_stat
-        write(*,*) "Not enough memory for the real array c"
-        write(*,*) "real_max = ", real_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
 
-      allocate(a(int_max), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "The allocation is unseccesfull"
-        write(*,*) "alloc_stat = ", alloc_stat
-        write(*,*) "Not enough memory for the integer array a"
-        write(*,*) "int_max = ", int_max
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
 
-      allocate(iindex(num_modes), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "The allocation is unsuccessful"
-        write(*,*) "alloc_stat = ", alloc_stat
-        write(*,*) "Not enough memory for iindex"
-        write(*,*) "num_modes = ", num_modes
-        write(*,*) "Aborting..."
-        errno_arpack = -1
-        return 
-      endif
-c
+      call array_size(n_msh_pts, n_msh_el, num_modes, 
+     *  int_max, cmplx_max, real_max, emsg, errco)
+      RETONERROR(errco) 
+
+
+      allocate(a(int_max), STAT=stat)
+      call check_alloc(stat, int_max, "a", -1, errco, emsg)
+      RETONERROR(errco) 
+
+      allocate(b(cmplx_max), STAT=stat)
+      call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+      RETONERROR(errco) 
+
+      allocate(c(real_max), STAT=stat)
+      call check_alloc(stat, real_max, "c", -1, errco, emsg)
+      RETONERROR(errco) 
+
+      allocate(iindex(num_modes), STAT=stat)
+      call check_alloc(stat, num_modes, "iindex", -1, errco, emsg)
+      RETONERROR(errco) 
+
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 C     clean mesh_format
@@ -250,24 +230,6 @@ C
         write(ui,*)
       endif
 C
-      if ((3*n_msh_pts+n_msh_el+nnodes*n_msh_el) .gt. int_max) then
-         write(ui,*) "py_calc_modes_AC: "
-         write(ui,*) "(3*n_msh_pts+n_msh_el+nnodes*n_msh_el) + ", 
-     *      "n_msh_pts > int_max : ",
-     *    (3*n_msh_pts+n_msh_el+nnodes*n_msh_el), int_max
-         write(ui,*) "py_calc_modes_AC: increase the size of int_max"
-         write(ui,*) "py_calc_modes_AC: Aborting..."
-         errno_arpack = -2
-         return 
-      endif
-      if ((7*n_msh_pts) .gt. cmplx_max) then
-         write(ui,*) "py_calc_modes_AC: (7*n_msh_pts) > cmplx_max : ",
-     *    (7*n_msh_pts), cmplx_max
-         write(ui,*) "py_calc_modes_AC: increase the size of cmplx_max"
-         write(ui,*) "py_calc_modes_AC: Aborting..."
-         errno_arpack = -2
-         return 
-      endif
 
 C       ! pointer to FEM connectivity table
       ip_visite = 1 
@@ -277,8 +239,8 @@ C
       if (supplied_geo_flag .eq. 0) then
         call geometry (n_msh_el, n_msh_pts, nnodes, n_typ_el,
      *     lx, ly, type_nod, type_el, table_nod,
-     *     x_arr, mesh_file, errno_arpack, emsg_arpack)
-        if (errno_arpack .ne. 0) then
+     *     x_arr, mesh_file, errco, emsg)
+        if (errco .ne. 0) then
             return
         endif
       endif
@@ -336,7 +298,7 @@ c     Sparse matrix storage
          write(ui,*) "py_calc_modes_AC: nonz_max = ", nonz_max
          write(ui,*) "py_calc_modes_AC: increase the size of int_max"
          write(ui,*) "py_calc_modes_AC: Aborting..."
-         errno_arpack = -3
+         errco = -3
          return 
       endif
 c
@@ -370,7 +332,7 @@ c     sorting csr ...
         write(ui,*) "integer super-vec: int_max  = ", int_max
         write(ui,*) "integer super-vec: int_used = ", int_used
         write(ui,*) "Aborting..."
-        errno_arpack = -4
+        errco = -4
         return 
       endif
 
@@ -396,7 +358,7 @@ C       ! Eigenvectors
          write(ui,*) "real super-vec: cmplx_max  = ", cmplx_max
          write(ui,*) "real super-vec: cmplx_used = ", cmplx_used
          write(ui,*) "Aborting..."
-         errno_arpack = -5
+         errco = -5
          return 
       endif
 
@@ -418,7 +380,7 @@ c
         write(ui,*) "real super-vec: real_max  = ", real_max
         write(ui,*) "real super-vec: real_used = ", real_used
         write(ui,*) "Aborting..."
-        errno_arpack = -6
+        errco = -6
         return 
       endif
 
@@ -478,15 +440,18 @@ C       endif
       call get_clocks(stime1, time1)
 
 
+      write(ui,*) "      - into valpr_64_AC "
       call valpr_64_AC (i_base, nvect, num_modes, neq, itermax, ltrav,
      *  tol, nonz, a(ip_row), a(ip_col_ptr), c(kp_mat1_re),
-     *  c(kp_mat1_im), b(jp_mat2), b(jp_vect1), b(jp_vect2),
-     *  b(jp_workd), b(jp_resid), b(jp_vschur), v_nu_out,
-     *  b(jp_trav), b(jp_vp), c(kp_rhs_re), c(kp_rhs_im),
-     *  c(kp_lhs_re), c(kp_lhs_im), n_conv, ls_data,
-     *  numeric, control, info_umf, debug, errno_arpack, emsg_arpack)
+     *  c(kp_mat1_im), b(jp_mat2), 
+     *  b(jp_vect1), b(jp_vect2), b(jp_workd), b(jp_resid), 
+     *     b(jp_vschur), v_nu_out, b(jp_trav), b(jp_vp), 
+     *  c(kp_rhs_re), c(kp_rhs_im), c(kp_lhs_re), c(kp_lhs_im), n_conv, 
+     *  debug, show_mem_est, errco, emsg)
 
-      if (errno_arpack .ne. 0) then
+      write(ui,*) "      - out of valpr_64_AC "
+
+      if (errco .ne. 0) then
           return
       endif
 
@@ -498,10 +463,10 @@ C       endif
 
 
       if (n_conv .ne. num_modes) then
-         write(emsg_arpack, '(A,I5,I5)') 
+         write(emsg, '(A,I5,I5)') 
      *    "py_calc_modes_AC: convergence problem " //
      *    "in valpr_64: n_conv != num_modes  ", n_conv, num_modes
-         errno_arpack = -7
+         errco = -7
          return 
       endif
 C
@@ -605,3 +570,4 @@ C
       deallocate(a,b,c,iindex)
 
       end subroutine calc_AC_modes
+
