@@ -10,7 +10,7 @@ c     Parametres d'entree:
 c     --------------------
 c
 c     nvect (I)              : dimension de l'espace de Krylov
-c     nval (I)               : nombre de valeurs propres desirees.
+c     n_modes (I)               : nombre de valeurs propres desirees.
 c     neq (I)                : nombre d'equations
 c     workd (DP)             : matrice de travail pour dnaupd, 
 c                              taille  3 neq 
@@ -40,7 +40,7 @@ c     imag (DP)              : parties imaginaires, taille nvect
 c     
 c     ------------------------------------------------------------------
 c
-      subroutine valpr_64 (i_base, nvect, nval, neq, itermax, ltrav, 
+      subroutine valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, 
      *  tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
      *  vect1, vect2, workd, resid, v, d, trav, vp,   
      *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv, ls_data,
@@ -64,11 +64,11 @@ c
       double precision control (20), info_umf (90)
       integer*8 numeric, symbolic, sys
 c
-      integer*8 itermax, nvect, nval, i, j, ltrav
+      integer*8 itermax, nvect, n_modes, i, j, ltrav
       integer*8 compteur
       complex*16 resid(neq), v(neq,nvect), workd(3*neq)
       complex*16 vect1(neq), vect2(neq), trav(ltrav)
-      complex*16 d(nval+1), shift2, vp(neq,nval)
+      complex*16 d(n_modes+1), shift2, vp(neq,n_modes)
 c
       double precision tol
 c
@@ -89,7 +89,7 @@ C       !  (max_nvect)
 
 c     Local variables
 c     32-bit integers for ARPACK
-      integer*4 neq_32, nval_32, nvect_32
+      integer*4 neq_32, n_modes_32, nvect_32
       integer*4 ido_32, info_32, ierr_32, iparam_32(11)
       integer*4 ipntr_32(14), ltrav_32
 c
@@ -137,7 +137,7 @@ c
 c
       shift2 = (0.0d0,0.0d0)
 c
-      do i=1,nval
+      do i=1,n_modes
         d(i) = 0.0d0
       enddo
 c
@@ -297,13 +297,14 @@ c     | a partir de la matrice projetee et conformement au critere |
 c     | "which".                                                   |
 c      ------------------------------------------------------------
 
-      neq_32 = neq
-      nval_32 = nval
-      nvect_32 = nvect
-      ltrav_32 = ltrav
+      neq_32 = int(neq, 4)
+      n_modes_32 = int(n_modes, 4)
+      nvect_32 = int(nvect, 4)
+      ltrav_32 = int(ltrav, 4)
+
       ido_32 = 0 
       iparam_32(1) = 1
-      iparam_32(3) = itermax
+      iparam_32(3) = int(itermax, 4)
 c      iparam_32(7) = 3
       iparam_32(7) = 1
       info_32 = 0
@@ -320,7 +321,7 @@ c
 c
 20    continue
 c
-      call znaupd (ido_32, bmat, neq_32, which, nval_32, tol, 
+      call znaupd (ido_32, bmat, neq_32, which, n_modes_32, tol, 
      *             resid, nvect_32, v, neq_32, iparam_32, 
      *             ipntr_32, workd, trav, ltrav_32, rwork, info_32)
 c
@@ -407,19 +408,19 @@ c      ---------------------------------------------------
      *   "info_32=", info_32
         if (info_32 .eq. 1) then
           write(ui,*) "VALPR_64: Max iterations exceeded."
-          write(ui,*) "VALPR_64: Requested eigenvalues = ", iparam_32(5)
-          write(ui,*) "VALPR_64: Converged eigenvalues = ", nval_32
-          write(ui,*) "VALPR_64: You might try:"
-          write(ui,*) "VALPR_64:  1) Increasing the requested number", 
-     *     " of eigenvalues"
-          write(ui,*) "VALPR_64:  2) Increasing the grid resolution"
+          write(ui,*) " Requested eigen_modesues = ", iparam_32(5)
+          write(ui,*) " Converged eigen_modesues = ", n_modes_32
+          write(ui,*) " You might try:"
+          write(ui,*) "  1) Increasing the requested number", 
+     *     " of eigen_modesues"
+          write(ui,*) "  2) Increasing the grid resolution"
         endif
         if (info_32 .eq. 3) then
           write(ui,*) "VALPR_64: Shift could not be applied."
         endif
         write(ui,*) "VALPR_64: For details on znaupd errors see",
      *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html" 
-c        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), nval_32
+c        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), n_modes_32
 c        write(ui,*) "VALPR_64: number of converged values = ", 
 c     *                iparam_32(5)
         write(ui,*)
@@ -437,7 +438,7 @@ c                          possibly from a previous run.
 c          Error flag on output.
 c          =  0: Normal exit.
 c          =  1: Maximum number of iterations taken.
-c                All possible eigenvalues of OP has been found. IPARAM(5)  
+c                All possible eigen_modesues of OP has been found. IPARAM(5)  
 c                returns the number of wanted converged Ritz values.
 c          =  2: No longer an informational error. Deprecated starting
 c                with release 2 of ARPACK.
@@ -453,7 +454,7 @@ c                must be greater than zero.
 c          = -5: WHICH must be one of 'LM', 'SM', 'LR', 'SR', 'LI', 'SI'
 c          = -6: BMAT must be one of 'I' or 'G'.
 c          = -7: Length of private work array is not sufficient.
-c          = -8: Error return from LAPACK eigenvalue calculation;
+c          = -8: Error return from LAPACK eigen_modesue calculation;
 c          = -9: Starting vector is zero.
 c          = -10: IPARAM(7) must be 1,2,3,4.
 c          = -11: IPARAM(7) = 1 and BMAT = 'G' are incompatable.
@@ -482,14 +483,14 @@ c      -------------------------------------
          rvec = .true.
 
          call zneupd (rvec, 'A', select, d, v, neq_32, shift2, 
-     *                workev, bmat, neq_32, which, nval_32, tol, 
+     *                workev, bmat, neq_32, which, n_modes_32, tol, 
      *                resid, nvect_32, v, neq_32, iparam_32, ipntr_32, 
      *                workd, trav, ltrav_32, rwork, ierr_32)        
 c      ------------------------------------------------------------
 c     | La partie reelle d'une valeur propre se trouve dans la     |
 c     | premiere colonne du tableau D, la partie imaginaire est    |
 c     | dans la seconde.                                           |
-c     | Les vecteurs propres sont dans les premieres nval_32 colonnes |
+c     | Les vecteurs propres sont dans les premieres n_modes_32 colonnes |
 c     | du tableau V, lorsque demande (rvec=.true.). Sinon, on y   |
 c     | trouve une base orthogonale de l'espace propre.            |
 c      ------------------------------------------------------------
@@ -507,7 +508,7 @@ c      -----------------------------------------------------
             stop
 
          else
-           do i = 1, nval
+           do i = 1, n_modes
              do j = 1, neq
                vp(j,i) = v(j,i)
              enddo
@@ -522,7 +523,7 @@ c
       ls_data(4) = time2_arpack
 c
 c      if (debug .eq. 1) then
-c        do i=1,nval
+c        do i=1,n_modes
 c          write (*,*) "i, d(i) = ", i, d(i)
 c        enddo
 c      endif

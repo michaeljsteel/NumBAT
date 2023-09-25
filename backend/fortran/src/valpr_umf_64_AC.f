@@ -1,96 +1,57 @@
 c     ------------------------------------------------------------------
 c
-c                    sous-routine VALPR_64.
+c     VALPR_64.
 c                                 ------
-c     gere l'utilisation de ARPACK
+c     Manages the use of ARPACK
 c
 c     ------------------------------------------------------------------
-c
-c     Parametres d'entree:
-c     --------------------
-c
-c     nvect (I)              : dimension de l'espace de Krylov
-c     nval (I)               : nombre de valeurs propres desirees.
-c     neq (I)                : nombre d'equations
-c     workd (DP)             : matrice de travail pour dnaupd, 
-c                              taille  3 neq 
-c     resid   (DP)           : vecteur de trvail pour dnaupd,
-c                              taille neq
-c     v (DP)                 : matrice des vecteurs de Schur,
-c                              taille neq*nvect
-c     asup,ainf,adiag (DP)   : stockage de la matrice tangente.
-c     msup,minf,mdiag (DP)   : stockage de la matrice masse.
-c     kld (I)                : vecteur de localisation des debuts de
-c                              colonnes
-c     vect1,vect2,vect3 (DP) : vecteurs de travail,
-c                              taille neq
-c     long (I)               : longueur des super-vecteurs pour
-c                              les matrices.
-c     ddot (DP)              : fonction appelee pour calculer
-c                              le produit scalaire
-c     trav(DP)               : espace de travail pour dnaupd, 
-c                              taille ltrav>= 3*nvect^2+6*nvect
-c     action                 : 0: redemarrage avec un vecteur aleatoire
-c                              1: lire une vecteur initial                                 c
-c     Parametres de sortie:
-c     ---------------------
-c
-c     reel (DP)              : parties reelles, taille nvect
-c     imag (DP)              : parties imaginaires, taille nvect
-c     
+ 
+      subroutine valpr_64_AC (i_base, nvect, n_modes, neq, itermax, 
+     *  ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
+     *  vect1, vect2, workd, resid, vschur, nu_out, trav, vp,   
+     *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv, 
+     *  debug, show_mem_est, errno_arp, emsg_arp)
+ 
 c     ------------------------------------------------------------------
-c
-      subroutine valpr_64_AC (i_base, nvect, nval, neq, itermax, ltrav, 
-     *  tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
-     *  vect1, vect2, workd, resid, v, d, trav, vp,   
-     *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv, ls_data,
-     *  numeric, control, info_umf, debug, errno_arpack, emsg_arpack)
-c
-c     ------------------------------------------------------------------
-c
+ 
       implicit none
 c
       integer*8 neq, nonz, n_conv, i_base
       integer*8 row_ind(nonz), col_ptr(neq+1)
-      complex*16 mat2(nonz)
+
       double precision mat1_re(nonz), mat1_im(nonz)
       double precision rhs_re(neq), rhs_im(neq)
       double precision lhs_re(neq), lhs_im(neq)
-      double precision ls_data(10)
+
+      complex*16 mat2(nonz)
+      complex*16 resid(neq), vschur(neq,nvect), workd(3*neq)
+      complex*16 vect1(neq), vect2(neq), trav(ltrav)
+      complex*16 nu_out(n_modes+1), shift2, vp(neq,n_modes)
 c
       double precision time1_fact, time2_fact
-      double precision time1_arpack, time2_arpack
 c
       double precision control (20), info_umf (90)
       integer*8 numeric, symbolic, sys
 c
-      integer*8 itermax, nvect, nval, i, j, ltrav
+      integer*8 itermax, nvect, n_modes, i, j, ltrav
       integer*8 compteur
-      complex*16 resid(neq), v(neq,nvect), workd(3*neq)
-      complex*16 vect1(neq), vect2(neq), trav(ltrav)
-      complex*16 d(nval+1), shift2, vp(neq,nval)
 
-      integer*8 errno_arpack
-      character*2048 emsg_arpack
+
+      integer*8 errno_arp
+      character*2048 emsg_arp
 
 c
       double precision tol
 c
-c      integer*8 max_nvect
-c      parameter(max_nvect=3000) ! previously 1500
-c
       integer alloc_stat
-C       !  (3*max_nvect), 
       complex*16, dimension(:), allocatable :: workev 
-C       !  (max_nvect)
       double precision, dimension(:), allocatable :: rwork  
-C       !  (max_nvect)
-      logical, dimension(:), allocatable :: select  
+      logical, dimension(:), allocatable :: selecto  
 
 
 c     Local variables
 c     32-bit integers for ARPACK
-      integer*4 neq_32, nval_32, nvect_32
+      integer*4 neq_32, n_modes_32, nvect_32
       integer*4 ido_32, info_32, ierr_32, iparam_32(11)
       integer*4 ipntr_32(14), ltrav_32
 c
@@ -103,144 +64,97 @@ c      data which/'SM'/
       data bmat/'I'/
       data which/'LM'/
 c
-      integer*8 ui, debug
+      integer*8 ui, debug, show_mem_est
 c      common/imp/ui, debug
 c
 c     ------------------------------------------------------------------
 c
       ui = 6
-c
-c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-      errno_arpack = 0
-      emsg_arpack = ""
+      errno_arp = 0
+      emsg_arp = ""
 
-      alloc_stat = 0
-      allocate(workev(3*nvect), rwork(nvect), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "VALPR_64: Mem. allocation is unseccesfull"
-        write(*,*) "for the arrays workev, rwork"
-        write(*,*) "alloc_stat, nvect = ", alloc_stat, nvect
-        write(*,*) "Aborting..."
-        emsg_arpack = "Memory allocation problem."
-        errno_arpack = -100
-        return 
-      endif
+      call cpu_time(time1_fact)
 
-      allocate(select(nvect), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "VALPR_64: Mem. allocation is unseccesfull"
-        write(*,*) "for the array select"
-        write(*,*) "alloc_stat, nvect = ", alloc_stat, nvect
-        write(*,*) "Aborting..."
-        emsg_arpack = "Memory allocation problem."
-        errno_arpack = -101
-        return 
-      endif
-
-c
-      shift2 = (0.0d0,0.0d0)
-c
-      do i=1,nval
-        d(i) = 0.0d0
-      enddo
-c
-c       ##################################################################
-c
-      if (i_base .ne. 0) then
-        write(ui,*) "valpr_64: i_base != 0 : ", i_base
-        write(ui,*) "valpr_64: UMFPACK requires 0-based indexing"
-        write(ui,*) "valpr_64l: Aborting..."
-        emsg_arpack = "Indexing problem."
-        errno_arpack = -102
-      endif
-c
 c       ----------------------------------------------------------------
-c       factor the matrix and save to a file
+c       factor the matrix as A = LU and save to a file
 c       ----------------------------------------------------------------
 c
       if (debug .eq. 1) then
         write(ui,*) "valpr_64: factorisation (UMFPACK)"
       endif
-      call cpu_time(time1_fact)
-      ls_data(1) = time1_fact
-c
-c       set default parameters
-        call umf4zdef (control)
 
-c
+c     set default parameters
+      call umf4zdef (control)
+
 c     umfpack * report status (print level = control(1)) :
 c     print level = 0 or less : No output, even when an error occurs.
 c     print level = 1 (default value) : then error messages are printed, 
 c                      and nothing is printed if the status is UMFPACK OK.
 c     print level = 2 or more : then the status is always printed.
-c
-c       print control parameters.  set control (1) to 1 to print
-c       error messages only
-        control (1) = 1
-        call umf4zpcon (control)
+      control (1) = 1
+      call umf4zpcon (control)
 
-c       pre-order and symbolic analysis
-        call umf4zsym (neq, neq, col_ptr, row_ind, 
-     *         mat1_re, mat1_im, symbolic, control, info_umf)
-c
-c       print statistics computed so far
-c       call umf4zpinf (control, info_umf) could also be done.
-      if (debug .eq. 1) then
-        write(ui,80) info_umf (1), info_umf (16),
-     $      (info_umf (21) * info_umf (4)) / 2**20,
-     $      (info_umf (22) * info_umf (4)) / 2**20,
-     $      info_umf (23), info_umf (24), info_umf (25)
-80      format ('  symbolic analysis:',/,
-     $      '   status:  ', f5.0, /,
-     $      '   time:    ', e10.2, ' (sec)'/,
-     $      '   estimates (upper bound) for numeric LU:', /,
-     $      '   size of LU:    ', f12.2, ' (MB)', /,
-     $      '   memory needed: ', f12.2, ' (MB)', /,
-     $      '   flop count:    ', e12.2, /
-     $      '   nnz (L):       ', f12.0, /
-     $      '   nnz (U):       ', f12.0)
+c     pre-order and symbolic analysis
+      call umf4zsym (neq, neq, col_ptr, row_ind, 
+     *       mat1_re, mat1_im, symbolic, control, info_umf)
+ 
+c     print statistics computed so far
+c     call umf4zpinf (control, info_umf) could also be done.
+      call report_stats_umf4zsym(debug, show_mem_est, info_umf)
+      if (info_umf (1) .lt. 0) then
+          write(emsg_arp,*) 'Error occurred in umf4zsym: ', info_umf (1)
+          errno_arp = -104
+          return
       endif
 
-c       check umf4zsym error condition
-        if (info_umf (1) .lt. 0) then
-            write(ui,*) 'Error occurred in umf4zsym: ', info_umf (1)
-            emsg_arpack = "umf4zsym problem."
-            errno_arpack = -104
-            return
-        endif
 
-c       numeric factorization
-c       TODO: This call does not appear to be thread safe! Breaks tutorial 3 B in thread mode
-        call umf4znum (col_ptr, row_ind, mat1_re, 
+c     numeric factorization
+c     TODO: This call does not appear to be thread safe! Breaks tutorial 3 B in thread mode
+      call umf4znum (col_ptr, row_ind, mat1_re, 
      *         mat1_im, symbolic, numeric, control, info_umf)
 
-c       print statistics for the numeric factorization
-c       call umf4zpinf (control, info_umf) could also be done.
-      if (debug .eq. 1) then
-        write(ui,90) info_umf (1), info_umf (66),
-     $      (info_umf (41) * info_umf (4)) / 2**20,
-     $      (info_umf (42) * info_umf (4)) / 2**20,
-     $      info_umf (43), info_umf (44), info_umf (45)
-90      format ('  numeric factorization:',/,
-     $      '   status:  ', f5.0, /,
-     $      '   time:    ', e10.2, /,
-     $      '   actual numeric LU statistics:', /,
-     $      '   size of LU:    ', f12.2, ' (MB)', /,
-     $      '   memory needed: ', f12.2, ' (MB)', /,
-     $      '   flop count:    ', e12.2, /
-     $      '   nnz (L):       ', f12.0, /
-     $      '   nnz (U):       ', f12.0)
+c     call umf4zpinf (control, info_umf) could also be done.
+      call report_stats_umf4znum(debug, show_mem_est, info_umf)
+
+      if (info_umf (1) .lt. 0) then
+        write(emsg_arp,*) 'Error occurred in umf4znum: ', info_umf(1)
+        errno_arp = -105
+        return
       endif
 
-c       check umf4znum error condition
-        if (info_umf (1) .lt. 0) then
-            write(ui,*) 'Error occurred in umf4znum: ', info_umf (1)
-            emsg_arpack = "umf4num problem."
-            errno_arpack = -105
-            return
-        endif
+      alloc_stat = 0
+      allocate(workev(3*nvect), rwork(nvect), STAT=alloc_stat)
+      if (alloc_stat /= 0) then
+        write(emsg_arp,*) "VALPR_64: Mem. allocation is unsuccessfull ",
+     *  "for the arrays workev, rwork", 
+     *  "alloc_stat, nvect = ", alloc_stat, nvect
+        errno_arp = -100
+        return 
+      endif
+
+      allocate(selecto(nvect), STAT=alloc_stat)
+      if (alloc_stat /= 0) then
+        write(emsg_arp,*) "VALPR_64: Mem. allocation is unsuccessfull ",
+     *  "for the array selecto",
+     *  "alloc_stat, nvect = ", alloc_stat, nvect
+        errno_arp = -101
+        return 
+      endif
+
+c
+c
+      do i=1,n_modes
+        nu_out(i) = 0.0d0
+      enddo
+c
+c       ##################################################################
+c
+      if (i_base .ne. 0) then
+        write(emsg_arp,*) "valpr_64: i_base != 0 : ", i_base,
+     *   "valpr_64: UMFPACK requires 0-based indexing"
+        errno_arp = -102
+      endif
+c
 
 c       save the symbolic analysis to the file s42.umf
 c       note that this is not needed until another matrix is
@@ -266,7 +180,6 @@ cc       free the numeric factorization
 c        call umf4zfnum (numeric)
 c
       call cpu_time(time2_fact)
-      ls_data(2) = time2_fact
       if (debug .eq. 1) then
         write(ui,*) "valpr_64: factorisation completed"
         write(ui,*) "LU factorisation : CPU time = ",  
@@ -308,13 +221,14 @@ c     | a partir de la matrice projetee et conformement au critere |
 c     | "which".                                                   |
 c      ------------------------------------------------------------
 
-      neq_32 = neq
-      nval_32 = nval
-      nvect_32 = nvect
-      ltrav_32 = ltrav
+      neq_32 = int(neq, 4)
+      n_modes_32 = int(n_modes, 4)
+      nvect_32 = int(nvect, 4)
+      ltrav_32 = int(ltrav, 4)
+
       ido_32 = 0 
       iparam_32(1) = 1
-      iparam_32(3) = itermax
+      iparam_32(3) = int(itermax, 4)
 c      iparam_32(7) = 3
       iparam_32(7) = 1
       info_32 = 0
@@ -326,26 +240,24 @@ c      ----------------------------------------------------
 c     | Boucle principale en mode de communication inverse | 
 c      ----------------------------------------------------
 c
-      call cpu_time(time1_arpack)
-      ls_data(3) = time1_arpack
 c
 20    continue
 c
 c     Test for dimesnion conditions in znaupd (err code = -3)
-c     Test for N=neq_32, NEV=nval_32, NCV=nvect_32
-c     Need 0<nval_32<neq_32-1, 1<= nvect_32-nval_32, nvect_32<=neq_32
-      if ((neq_32-1 .le. nval_32)  .or. (nvect_32-nval_32 .lt. 1) 
+c     Test for N=neq_32, NEV=n_modes_32, NCV=nvect_32
+c     Need 0<n_modes_32<neq_32-1, 1<= nvect_32-n_modes_32, nvect_32<=neq_32
+      if ((neq_32-1 .le. n_modes_32) .or. (nvect_32-n_modes_32 .lt. 1) 
      *    .or.  nvect_32 > neq_32) then
-        write(emsg_arpack,'(A,A)') 'ARPACK eigensolver dimensional'//
+        write(emsg_arp,'(A,A)') 'ARPACK eigensolver dimensional'//
      *   ' conditions failed (would generate ARPACK znaupd error ' //
      *   'code of -3).' // NEW_LINE('A'),
      *   'You should probably increase the grid resolution.'
-         errno_arpack = -106
+         errno_arp = -106
           return
       endif
 
-      call znaupd (ido_32, bmat, neq_32, which, nval_32, tol, 
-     *             resid, nvect_32, v, neq_32, iparam_32, 
+      call znaupd (ido_32, bmat, neq_32, which, n_modes_32, tol, 
+     *             resid, nvect_32, vschur, neq_32, iparam_32, 
      *             ipntr_32, workd, trav, ltrav_32, rwork, info_32)
 c
       compteur = compteur + 1
@@ -374,8 +286,8 @@ c       solve Ax=b, without iterative refinement
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-            emsg_arpack = 'Error occurred in umf4zsol: '
-            errno_arpack = -107
+            emsg_arp = 'Error occurred in umf4zsol: '
+            errno_arp = -107
             return
         endif
         do i=1,neq
@@ -410,8 +322,8 @@ c       solve Ax=b, without iterative refinement
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-            emsg_arpack = 'Error occurred in umf4zsol: '
-            errno_arpack = -108
+            emsg_arp = 'Error occurred in umf4zsol: '
+            errno_arp = -108
             return
         endif
         do i=1,neq
@@ -431,7 +343,7 @@ c      ---------------------------------------------------
       if (info_32 .gt. 0) then
         write(ui,*)
         write(ui,*) "VALPR_64: info_32 != 0 : ", info_32
-        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), nval_32
+        write(ui,*) "VALPR_64: iparam_32(5)=", iparam_32(5), n_modes_32
         write(ui,*) "VALPR_64: number of converged values = ", 
      *                iparam_32(5)
         write(ui,*)
@@ -449,7 +361,7 @@ c                          possibly from a previous run.
 c          Error flag on output.
 c          =  0: Normal exit.
 c          =  1: Maximum number of iterations taken.
-c                All possible eigenvalues of OP has been found. IPARAM(5)  
+c                All possible eigen_modesues of OP has been found. IPARAM(5)  
 c                returns the number of wanted converged Ritz values.
 c          =  2: No longer an informational error. Deprecated starting
 c                with release 2 of ARPACK.
@@ -465,7 +377,7 @@ c                must be greater than zero.
 c          = -5: WHICH must be one of 'LM', 'SM', 'LR', 'SR', 'LI', 'SI'
 c          = -6: BMAT must be one of 'I' or 'G'.
 c          = -7: Length of private work array is not sufficient.
-c          = -8: Error return from LAPACK eigenvalue calculation;
+c          = -8: Error return from LAPACK eigen_modesue calculation;
 c          = -9: Starting vector is zero.
 c          = -10: IPARAM(7) must be 1,2,3,4.
 c          = -11: IPARAM(7) = 1 and BMAT = 'G' are incompatable.
@@ -476,7 +388,7 @@ c                   factorization.
 
 c      ---------------------------------------------------
 
-         write(emsg_arpack, '(A,I5,/,A)') 'Error occurred in _naupd:'//
+         write(emsg_arp, '(A,I5,/,A)') 'Error occurred in _naupd:'//
      *       ' ARPACK error code = ', info_32, 
      *       ' You should probably increase the grid resolution.'
 
@@ -489,59 +401,113 @@ c      -------------------------------------
 c     | Ici on recupere les valeurs propres |
 c      -------------------------------------
 
-         rvec = .true.
+      rvec = .true.
+      shift2 = (0.0d0,0.0d0)
 
-         call zneupd (rvec, 'A', select, d, v, neq_32, shift2, 
-     *                workev, bmat, neq_32, which, nval_32, tol, 
-     *                resid, nvect_32, v, neq_32, iparam_32, ipntr_32, 
-     *                workd, trav, ltrav_32, rwork, ierr_32)        
+      call zneupd (rvec, 'A', selecto, nu_out, vschur, neq_32, shift2, 
+     *  workev, bmat, neq_32, which, n_modes_32, tol, 
+     *  resid, nvect_32, vschur, neq_32, iparam_32, ipntr_32, 
+     *  workd, trav, ltrav_32, rwork, ierr_32)        
 c      ------------------------------------------------------------
 c     | La partie reelle d'une valeur propre se trouve dans la     |
 c     | premiere colonne du tableau D, la partie imaginaire est    |
 c     | dans la seconde.                                           |
-c     | Les vecteurs propres sont dans les premieres nval_32 colonnes |
+c     | Les vecteurs propres sont dans les premieres n_modes_32 colonnes |
 c     | du tableau V, lorsque demande (rvec=.true.). Sinon, on y   |
 c     | trouve une base orthogonale de l'espace propre.            |
 c      ------------------------------------------------------------
 
-         if (ierr_32.ne.0) then
+      if (ierr_32.ne.0) then
+         write(emsg_arp,*) 'VALPR_64:' ,
+     *     ' Error with _neupd, info_32 = ', ierr_32,
+     *     ' Check the documentation of zneupd. ',
+     *     ' This error can occur if the mesh is too coarse.'
+         errno_arp = -109
+         return
 
-c      -----------------------------------------------------
-c     | Error condition: Check the documentation of DNEUPD. |
-c      -----------------------------------------------------
-
-            write(ui,*) 'VALPR_64:' 
-            write(ui,*) ' Error with _neupd, info_32 = ', ierr_32
-            write(ui,*) ' Check the documentation of _neupd. '
-            write(ui,*) 'Aborting...'
-             emsg_arpack = 'Error occurred in _neupd: ' //
-     *        ' This error can occur if the mesh is too coarse.'
-            errno_arpack = -109
-            return
-
-         else
-           do i = 1, nval
+      else
+           do i = 1, n_modes
              do j = 1, neq
-               vp(j,i) = v(j,i)
+               vp(j,i) = vschur(j,i)
              enddo
            enddo
          endif
       endif
 c
-c       free the numeric factorization
-        call umf4zfnum (numeric)
+c     free the numeric factorization
+      call umf4zfnum (numeric)
 c
-      call cpu_time(time2_arpack)
-      ls_data(4) = time2_arpack
 c
 c      if (debug .eq. 1) then
-c        do i=1,nval
-c          write (*,*) "i, d(i) = ", i, d(i)
+c        do i=1,n_modes
+c          write (*,*) "i, nu_out(i) = ", i, nu_out(i)
 c        enddo
 c      endif
 c
       deallocate(workev, rwork, STAT=alloc_stat)
-      deallocate(select)
+      deallocate(selecto)
 c
       return 
+      end
+
+c------------------------------------------------------------------------
+c------------------------------------------------------------------------
+
+      subroutine report_stats_umf4zsym(debug, show_mem_est, info_umf)
+
+      implicit none
+
+      double precision info_umf (90)
+      integer*8 ui, debug, show_mem_est
+
+      ui = 6
+
+      if (debug .eq. 1 .or. show_mem_est .eq. 1) then
+        write(ui,80) info_umf (1), info_umf (16),
+     $      (info_umf (21) * info_umf (4)) / 2**20,
+     $      (info_umf (22) * info_umf (4)) / 2**20,
+     $      info_umf (23), info_umf (24), info_umf (25)
+80      format ('  symbolic analysis:',/,
+     $      '   status:  ', f5.0, /,
+     $      '   time:    ', e10.2, ' (sec)'/,
+     $      '   estimates (upper bound) for numeric LU:', /,
+     $      '   size of LU:    ', f12.2, ' (MB)', /,
+     $      '   memory needed: ', f12.2, ' (MB)', /,
+     $      '   flop count:    ', e12.2, /
+     $      '   nnz (L):       ', f12.0, /
+     $      '   nnz (U):       ', f12.0)
+      endif
+
+      end
+
+c------------------------------------------------------------------------
+c------------------------------------------------------------------------
+
+      subroutine report_stats_umf4znum(debug, show_mem_est, info_umf)
+
+      implicit none
+
+      double precision info_umf (90)
+      integer*8 ui, debug, show_mem_est
+
+      ui = 6
+
+      if (debug .eq. 1 .or. show_mem_est .eq. 1) then
+
+        write(ui,90) info_umf (1), info_umf (66),
+     $      (info_umf (41) * info_umf (4)) / 2**20,
+     $      (info_umf (42) * info_umf (4)) / 2**20,
+     $      info_umf (43), info_umf (44), info_umf (45)
+90      format ('  numeric factorization:',/,
+     $      '   status:  ', f5.0, /,
+     $      '   time:    ', e10.2, /,
+     $      '   actual numeric LU statistics:', /,
+     $      '   size of LU:    ', f12.2, ' (MB)', /,
+     $      '   memory needed: ', f12.2, ' (MB)', /,
+     $      '   flop count:    ', e12.2, /
+     $      '   nnz (L):       ', f12.0, /
+     $      '   nnz (U):       ', f12.0)
+
+      endif
+
       end
