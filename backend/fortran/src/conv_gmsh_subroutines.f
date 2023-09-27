@@ -26,23 +26,28 @@ c      print*, '?? type_arete: Resultat negatif'
 c      print*, 'i1, i2 = ', i1, i2
 c      stop
 c
-      return
       end
-c
+ 
 
 
-c
+ 
 c###############################################
-c
+ 
 
 
-c
-      subroutine renumerote(n_pts, ne, idfn, nu, x, y, ui)
-c
+ 
+      subroutine renumerote(n_pts, n_elts, v_nd_imat, v_elt_nodes, 
+     *     vx, vy, errco, emsg)
+ 
       implicit none
-      integer ne, n_pts, ui
-      integer nu(6,ne), idfn(n_pts)
-      double precision x(n_pts), y(n_pts)
+      integer n_elts, n_pts
+      integer v_elt_nodes(6,n_elts), v_nd_imat(n_pts)
+      double precision vx(n_pts), vy(n_pts)
+
+      integer errco
+      integer ui
+      character emsg*1024
+
 c
       integer i, j, k, i1, ip(2,3)
       integer long_adj
@@ -55,39 +60,35 @@ c      xadj(n_pts+1),
       integer nut(6)
       character file_ui*100
       common/imp_file/file_ui
-c
+ 
 c ip(1,i) = i+1 MOD 3
 c ip(2,i) = i+2 MOD 3
-c
+ 
       ip(1,1) = 2
       ip(1,2) = 3
       ip(1,3) = 1
-c
+ 
       ip(2,1) = 3
       ip(2,2) = 1
       ip(2,3) = 2
 
 c      From earlier tests, this should never happen
       if(n_pts_max .lt. n_pts) then
-        open (unit=ui,file=file_ui)
-        write(*,*) 'Renumerote (in conv_gmsh.f): ',
+        write(emsg,*) 'Renumerote (in conv_gmsh.f): ',
      *    ' n_pts_max < n_pts ', n_pts_max, n_pts
-        close(ui)
-        stop
+        errco = -10
+        return 
       endif
-c
+ 
       do i = 1,n_pts
         visite(i) = 0
-      enddo
-c
-      do i = 1,n_pts
         lb(i)=0
       enddo
-c
-      do j = 1,ne   ! for all elements (of 6 node type)
-c
-        do i=1,6              ! copy 6 elements
-          nut(i) = nu(i,j)
+ 
+      do j = 1,n_elts   ! for all elements (of 6 node type)
+ 
+        do i=1,6              ! copy the 6 nodes for this element
+          nut(i) = v_elt_nodes(i,j)
         enddo
 
         do i=1,6               ! accumulate the number nodes connected to k in lb(k) ?
@@ -119,17 +120,16 @@ c
 c      print*, 'renumerote: long_adj = ', long_adj
 c
       if(long_adj_max .lt. long_adj) then
-        open (unit=ui,file=file_ui)
-        write(*,*) 'Renumerote (in conv_gmsh.f): ',
+        write(emsg,*) 'Renumerote (in conv_gmsh.f): ',
      *      'long_adj_max < long_adj ',
      *      long_adj_max, long_adj
-        close(ui)
-        stop
+        errco=-11
+        return 
       endif
 c
 c      print*, 'Appel de mat_ad'
-      call mat_adj(n_pts, ne, long_adj, nu,
-     *      xadj, adjncy, x, y, idfn, ui)
+      call mat_adj(n_pts, n_elts, long_adj, v_elt_nodes,
+     *      xadj, adjncy, vx, vy, v_nd_imat, ui)
 c
       return
       end

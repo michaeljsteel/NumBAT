@@ -234,7 +234,7 @@ c     Dimension checking, can this actually happen?
       endif
 
       if ((7*n_msh_pts) .gt. cmplx_size) then
-         write(emsg,*) "py_calc_modes_AC: (7*n_msh_pts) > cmplx_max : ",
+         write(emsg,*) "py_calc_modes(_AC): (7*n_msh_pts)>cmplx_max : ",
      *    (7*n_msh_pts), cmplx_size,
      *   "increase the size of cmplx_max"
          errco = -2
