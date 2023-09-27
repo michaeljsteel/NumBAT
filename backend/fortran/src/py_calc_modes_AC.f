@@ -1,4 +1,4 @@
-#define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
+#include "numbat_decl.h"
 
 
       subroutine calc_AC_modes(
@@ -81,19 +81,19 @@ c     Declare the pointers of for sparse matrix storage
       complex*16 rho(n_typ_el)
 
       integer*8 i, j, ip
-      integer*8 nnodes, ui, debug, show_mem_est, namelength
+      integer*8 nodes_per_el, ui, debug, show_mem_est, namelength
       integer*8 n_msh_el, n_msh_pts, i_bnd_cdns, neq
 
 C     ! Number of nodes per element
-      parameter(nnodes=6)
+      parameter(nodes_per_el=6)
       integer*8 type_nod(n_msh_pts), type_el(n_msh_el) 
-      integer*8 table_nod(nnodes, n_msh_el)
+      integer*8 table_nod(nodes_per_el, n_msh_el)
 
       double precision pi
       double precision lat_vecs(2,2)
       double precision lx, ly, d_in_m
 
-      complex*16 shift_nu
+      complex*16 shift_nu, shift_omsq
       integer*8  i_base
       complex*16 ii
 
@@ -119,8 +119,8 @@ C  Names and Controls
 
 c     new breed of variables to prise out of a, b and c
       double precision x_arr(2,n_msh_pts)
-C       complex*16, target :: sol1(3,nnodes+7,num_modes,n_msh_el)
-      complex*16, target :: sol1(3,nnodes,num_modes,n_msh_el)
+C       complex*16, target :: sol1(3,nodes_per_el+7,num_modes,n_msh_el)
+      complex*16, target :: sol1(3,nodes_per_el,num_modes,n_msh_el)
       complex*16, target :: v_nu_out(num_modes)
       complex*16 mode_pol(4,num_modes)
 
@@ -139,7 +139,7 @@ C  independent variables that they depend on in the function call!
 Cf2py depend(c_tensor) n_typ_el
 Cf2py depend(rho) n_typ_el
 Cf2py depend(type_nod) n_msh_pts
-Cf2py depend(table_nod) nnodes, n_msh_el
+Cf2py depend(table_nod) nodes_per_el, n_msh_el
 Cf2py depend(type_el) n_msh_el
 Cf2py depend(x_arr) n_msh_pts
 
@@ -156,7 +156,7 @@ C     Set parameter for the super-vectors of integer and real numbers
 C
 C       !ui = Unite dImpression
       ui = 6     
-C      nnodes = 6 ! Number of nodes per element
+C      nodes_per_el = 6 ! Number of nodes per element
       pi = 3.141592653589793d0
       ii = cmplx(0.0d0, 1.0d0, 8)
 
@@ -168,16 +168,12 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       errco= 0
       emsg = ""
-c
+ 
 c     Declare work space arrays
-
-
-
 
       call array_size(n_msh_pts, n_msh_el, num_modes, 
      *  int_max, cmplx_max, real_max, emsg, errco)
       RETONERROR(errco) 
-
 
       allocate(a(int_max), STAT=stat)
       call check_alloc(stat, int_max, "a", -1, errco, emsg)
@@ -217,18 +213,10 @@ C      ly=1.0 ! NOTE: currently requires ly=lx, ie rectangular unit cell
 C     ToDo: sort out what's going on here - in EM lx=ly=1
       lx = d_in_m
       ly = d_in_m
-      shift _nu= (2*pi*shift_nu)**2
+      shift_omsq= (2*pi*shift_nu)**2
+
 C
 C####################  Start FEM PRE-PROCESSING  #######################
-C
-      if (debug .eq. 1) then
-        write(ui,*)
-        write(ui,*) "lx,ly = ", lx, ly
-        write(ui,*) "n_msh_pts, n_msh_el, nnodes = ", n_msh_pts, 
-     *      n_msh_el, nnodes
-        write(ui,*) "mesh_file = ", mesh_file
-        write(ui,*)
-      endif
 C
 
 C       ! pointer to FEM connectivity table
@@ -237,7 +225,7 @@ C       ! pointer to FEM connectivity table
       jp_x = 1
 C
       if (supplied_geo_flag .eq. 0) then
-        call geometry (n_msh_el, n_msh_pts, nnodes, n_typ_el,
+        call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el,
      *     lx, ly, type_nod, type_el, table_nod,
      *     x_arr, mesh_file, errco, emsg)
         if (errco .ne. 0) then
@@ -257,14 +245,14 @@ C         write(64,*)
 C         write(64,*)
 C         write(64,*)
 C         do i=1,n_msh_el
-C           do j=1,nnodes
+C           do j=1,nodes_per_el
 C             write(64,*) i, j, table_nod(j,i)
 C           enddo
 C         enddo
 C         write(64,*)
 C         write(64,*)
 C         write(64,*)
-C         do j=1,nnodes
+C         do j=1,nodes_per_el
 C           write(64,*) j, type_nod(j)
 C         enddo
 C       close(63)
@@ -288,24 +276,23 @@ c
 c     Sparse matrix storage
       ip_col_ptr = ip_eq + 3*n_msh_pts
 
-      call csr_max_length_AC (n_msh_el, n_msh_pts, neq, nnodes,
+      call csr_max_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el,
      *  table_nod, a(ip_eq), a(ip_col_ptr), nonz_max)
 
       ip = ip_col_ptr + neq + 1
       if (ip .gt. int_max) then
-         write(ui,*) "py_calc_modes_AC: ip > int_max : ",
-     *    ip, int_max
-         write(ui,*) "py_calc_modes_AC: nonz_max = ", nonz_max
-         write(ui,*) "py_calc_modes_AC: increase the size of int_max"
-         write(ui,*) "py_calc_modes_AC: Aborting..."
+         write(emsg,*) "py_calc_modes_AC: ip > int_max : ",
+     *    ip, int_max,
+     *    "py_calc_modes_AC: nonz_max = ", nonz_max,
+     *    "py_calc_modes_AC: increase the size of int_max"
          errco = -3
          return 
       endif
 c
       ip_row = ip_col_ptr + neq + 1
 
-      call csr_length_AC (n_msh_el, n_msh_pts, neq, nnodes, table_nod,
-     *  a(ip_eq), a(ip_row), a(ip_col_ptr), nonz_max,
+      call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, 
+     *  table_nod, a(ip_eq), a(ip_row), a(ip_col_ptr), nonz_max,
      *  nonz, max_row_len, ip, int_max, debug)
 
       ip_work = ip_row + nonz
@@ -327,11 +314,9 @@ c     sorting csr ...
       int_used = ip_work_sort2 + max_row_len
 
       if (int_max .lt. int_used) then
-        write(ui,*)
-        write(ui,*) "The size of the integer supervector is too small"
-        write(ui,*) "integer super-vec: int_max  = ", int_max
-        write(ui,*) "integer super-vec: int_used = ", int_used
-        write(ui,*) "Aborting..."
+        write(emsg,*)"The size of the integer supervector is too small",
+     *   "integer super-vec: int_max  = ", int_max,
+     *   "integer super-vec: int_used = ", int_used
         errco = -4
         return 
       endif
@@ -343,7 +328,7 @@ c     jp_rhs will also be used (in gmsh_post_process) to store a solution
       jp_vect2 = jp_vect1 + neq
       jp_workd = jp_vect2 + neq
       jp_resid = jp_workd + 3*neq
-      jp_eigenum_modes_tmp = jp_resid + 3*nnodes*num_modes*n_msh_el
+      jp_eigenum_modes_tmp = jp_resid+3*nodes_per_el*num_modes*n_msh_el
 C       ! Eigenvectors
       jp_vschur = jp_eigenum_modes_tmp + num_modes + 1     
       jp_eigen_pol = jp_vschur + neq*nvect
@@ -354,10 +339,9 @@ C       ! Eigenvectors
       cmplx_used = jp_vp + neq*num_modes
 
       if (cmplx_max .lt. cmplx_used)  then
-         write(ui,*) "The size of the real supervector is too small"
-         write(ui,*) "real super-vec: cmplx_max  = ", cmplx_max
-         write(ui,*) "real super-vec: cmplx_used = ", cmplx_used
-         write(ui,*) "Aborting..."
+        write(emsg,*)"The size of the complex supervector is too small",
+     *   "complex super-vec: cmplx_max  = ", cmplx_max,
+     *   "complex super-vec: cmplx_used = ", cmplx_used
          errco = -5
          return 
       endif
@@ -379,7 +363,12 @@ c
         write(ui,*) "2*nonz  = ", 2*nonz
         write(ui,*) "real super-vec: real_max  = ", real_max
         write(ui,*) "real super-vec: real_used = ", real_used
-        write(ui,*) "Aborting..."
+
+        write(emsg,*)"The size of the real supervector is too small",
+     *   "2*nonz  = ", 2*nonz,
+     *    "real super-vec: real_max  = ", real_max,
+     *    "real super-vec: real_used = ", real_used
+
         errco = -6
         return 
       endif
@@ -420,8 +409,8 @@ C     Assemble the coefficient matrix K and M of the finite element equations
 
       call get_clocks(stime1, time1)
 
-      call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, nnodes,
-     *  shift_nu, q_ac, n_typ_el, rho, c_tensor,
+      call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, nodes_per_el,
+     *  shift_omsq, q_ac, n_typ_el, rho, c_tensor,
      *  table_nod, type_el, a(ip_eq),
      *  x_arr, nonz, a(ip_row), a(ip_col_ptr),
      *  c(kp_mat1_re), c(kp_mat1_im), b(jp_mat2), a(ip_work), 
@@ -472,7 +461,7 @@ C       endif
 C
       do i=1,num_modes
         z_tmp0 = v_nu_out(i)
-        z_tmp = 1.0d0/z_tmp0+shift_nu
+        z_tmp = 1.0d0/z_tmp0+shift_omsq
         z_beta = sqrt(z_tmp) / (2.0d0 * pi)
 C       Frequency (z_beta) should always be positive.
         if (dble(z_beta) .lt. 0) z_beta = -z_beta
@@ -487,9 +476,9 @@ C                 using the permutation vector iindex
       if (debug .eq. 1) then
         write(ui,*) "py_calc_modes_AC: call to array_sol"
       endif
-        call array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq, nnodes,
-     *   iindex, table_nod, type_el, a(ip_eq), x_arr, v_nu_out,
-     *   b(jp_eigenum_modes_tmp), mode_pol, b(jp_vp), sol1)
+        call array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq, 
+     *   nodes_per_el, iindex, table_nod, type_el, a(ip_eq), x_arr, 
+     *   v_nu_out,  b(jp_eigenum_modes_tmp), mode_pol, b(jp_vp), sol1)
 
       if (debug .eq. 1) then
         write(ui,*) "py_calc_modes_AC: array_sol returns call"
@@ -501,7 +490,7 @@ C
       if(debug .eq. 1) then
         write(ui,*)
 C         write(ui,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
-C         write(ui,*) "sqrt(shift_nu)/(2*pi) = ", sqrt(shift_nu) / (2.0d0 * pi)
+C         write(ui,*) "sqrt(shift_omsq)/(2*pi) = ", sqrt(omsq) / (2.0d0 * pi)
         do i=1,num_modes
           write(ui,"(i4,2(g22.14),2(g18.10))") i, v_nu_out(i)
         enddo
@@ -510,16 +499,16 @@ C         write(ui,*) "sqrt(shift_nu)/(2*pi) = ", sqrt(shift_nu) / (2.0d0 * pi)
 C    Save Original solution
       if (plot_modes .eq. 1) then
         dir_name = "AC_fields"
-C        call write_sol_AC (num_modes, n_msh_el, nnodes, lambda,
+C        call write_sol_AC (num_modes, n_msh_el, nodes_per_el, lambda,
 C      *       v_nu_out, sol1, mesh_file, dir_name)
 C        call write_param (lambda, n_msh_pts, n_msh_el, i_bnd_cdns,
-C    *       num_modes, nvect, itermax, tol, shift_nu, lx, ly,
+C    *       num_modes, nvect, itermax, tol, shift_omsq, lx, ly,
 C    *       mesh_file, n_conv, dir_name)
         tchar = "AC_fields/All_plots_png_abs2_eE.geo"
         open (unit=34,file=tchar)
           do i=1,num_modes
             call gmsh_post_process_AC (i, num_modes, n_msh_el, 
-     *         n_msh_pts, nnodes, table_nod, type_el,
+     *         n_msh_pts, nodes_per_el, table_nod, type_el,
      *         x_arr, v_nu_out, sol1, b(jp_rhs), a(ip_visite),
      *         gmsh_file_pos, dir_name, d_in_m, debug)
           enddo
@@ -546,10 +535,10 @@ C
         write(26,*) "Total CPU time (sec.) = ",  (time2-time1)
         write(26,*)
         write(26,*) "q_ac = ", q_ac
-        write(26,*) "shift_nu= ", shift_nu
+        write(26,*) "shift_omsq= ", shift_omsq
         write(26,*)
-        write(26,*) "n_msh_pts, n_msh_el, nnodes  = ", n_msh_pts, 
-     *               n_msh_el, nnodes
+        write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, 
+     *               n_msh_el, nodes_per_el
         write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
         write(26,*) " lat_vecs:  = "
         write(26,"(2(f18.10))") lat_vecs
