@@ -95,14 +95,14 @@ for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 print('\nPlotting EM fields')
 #Plot the E field of the pump mode
-#plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-#                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, 
-#                          EM_AC='EM_E', prefix=prefix, ticks=True) 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, 
+                          EM_AC='EM_E', prefix=prefix, ticks=True) 
 
 #Plot the H field of the pump mode
-#plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-#                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, 
-#                          EM_AC='EM_H', prefix=prefix, ticks=True) 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+                         ylim_max=0.4, ivals=[EM_ival_pump], contours=True, 
+                          EM_AC='EM_H', prefix=prefix, ticks=True) 
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -130,8 +130,8 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-#plotting.plot_mode_fields(sim_AC, contours=True, prefix=prefix, 
-#    ticks=True, quiver_points=20, ivals=range(10))
+plotting.plot_mode_fields(sim_AC, contours=True, prefix=prefix, 
+    ticks=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:
   # Calculate the acoustic loss from our fields.

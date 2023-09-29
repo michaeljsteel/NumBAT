@@ -29,24 +29,35 @@ import csv
 
 import plotting
 from fortran import NumBAT
+import reporting
 
 
 class Gain (object):
 
-    @staticmethod 
-    def _set_allowed_ms(l, m_allow):
-        if type(m_allow) == type(1):
-            l.extend((m_allow,)) 
+    @staticmethod
+    def _set_allowed_ms(l, m_allow, maxm):
+        if m_allow == 'All':
+            l = range(maxm)
+        elif type(m_allow) == type(1):
+            l[:]=[m_allow]
         else:
-            l.extend(m_allow) 
+            l[:]=m_allow
+        if max(l)>=maxm:
+            reporting.report_and_exit('Requested mode range too large in Gain object: ', m_allow)
 
     def __init__(self):
+        self._max_pumps_m = 1
+        self._max_Stokes_m = 1
+        self._max_ac_m = 1
+
         self._allowed_pumps_m = []
         self._allowed_Stokes_m = []
-        self._allowed_ac_m = []   # Needed?
+        self._allowed_ac_m = []
+
         self._gain_tot = None
         self._gain_PE = None
         self._gain_MB = None
+
         self.def_m_pump = 0
         self.def_m_Stokes = 0
         self.linewidth_Hz = None
@@ -54,11 +65,21 @@ class Gain (object):
         self.Q_factor = None
         self.sim_AC = None
 
+        # these choices guaranteed to work
+        self.set_allowed_EM_pumps(0)
+        self.set_allowed_EM_Stokes(0)
+        self.set_allowed_AC(0)
+
     def _set_sim_AC(self, sac): self.sim_AC = sac
 
-    def set_allowed_EM_pumps(self, m_allow):  Gain._set_allowed_ms(self._allowed_pumps_m, m_allow)
-    def set_allowed_EM_Stokes(self, m_allow): Gain._set_allowed_ms(self._allowed_Stokes_m, m_allow)
-    def set_allowed_AC(self, m_allow):        Gain._set_allowed_ms(self._allowed_ac_m, m_allow)
+    def set_allowed_EM_pumps(self, m_allow):  
+        self._set_allowed_ms(self._allowed_pumps_m, m_allow, self._max_pumps_m)
+
+    def set_allowed_EM_Stokes(self, m_allow): 
+        self._set_allowed_ms(self._allowed_Stokes_m, m_allow, self._max_Stokes_m)
+
+    def set_allowed_AC(self, m_allow):        
+        self._set_allowed_ms(self._allowed_ac_m, m_allow, self._max_ac_m)
 
     def set_EM_modes(self, mP, mS):
         self.def_m_pump = mP
@@ -82,9 +103,21 @@ class Gain (object):
     def Q_factor_raw(self):     return self.Q_factor
     def linewidth_Hz_raw(self): return self.linewidth_Hz
 
-    def _set_gain_tot(self,g):        self._gain_tot=g
-    def _set_gain_PE(self,g):         self._gain_PE=g
-    def _set_gain_MB(self,g):         self._gain_MB=g
+    def _set_gain_tot(self,g):        
+        self._gain_tot=g
+        (self._max_pumps_m , self._max_Stokes_m , self._max_ac_m) = self._gain_tot.shape
+
+        # some reasonable default choices
+        self.set_allowed_EM_pumps(0)
+        self.set_allowed_EM_Stokes(0)
+        self.set_allowed_AC(range(self._max_ac_m))
+
+    def _set_gain_PE(self,g):         
+        self._gain_PE=g
+
+    def _set_gain_MB(self,g):         
+        self._gain_MB=g
+
     def _set_alpha(self,a):           self.alphas=a
     def _set_linewidth_Hz(self,lwhz): self.linewidth_Hz=lwhz
     def _set_Q_factor(self,qf):       self.Q_factor=qf
@@ -94,9 +127,13 @@ class Gain (object):
                 pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                      show_gains='All', mark_modes_thresh=0.02):
     
+        #TODO: this needs work
+
+        em_pump_m = self._allowed_pumps_m[0]
+        em_Stokes_m = self._allowed_Stokes_m[0]
+
         return plotting.plot_gain_spectra(self.sim_AC, self._gain_tot, self._gain_PE, self._gain_MB, 
-                                   self.linewidth_Hz, 
-                                   self._allowed_pumps_m, self._allowed_Stokes_m, self._allowed_ac_m,
+                                   self.linewidth_Hz, em_pump_m, em_Stokes_m, self._allowed_ac_m,
                                    freq_min, freq_max, num_interp_pts, dB, dB_peak_amp, mode_comps, 
                                    semilogy, pdf_png, save_txt, prefix, suffix, decorator, show_gains, mark_modes_thresh)
 
@@ -185,17 +222,17 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                         Note this will be negative for backwards SBS because gain is expressed as 
                         gain in power as move along z-axis in positive direction, but the Stokes
                         waves experience gain as they propagate in the negative z-direction.
-                        Dimensions = [num_modes_EM_Stokes,num_modes_EM_pump,num_modes_AC].
+                        Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
 
             SBS_gain_PE  : The SBS gain for only the photoelastic effect.
                            The comment about negative gain (see SBS_gain above) holds here also.
-                           Dimensions = [num_modes_EM_Stokes,num_modes_EM_pump,num_modes_AC].
+                           Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
             
             SBS_gain_MB  : The SBS gain for only the moving boundary effect. 
                            The comment about negative gain (see SBS_gain above) holds here also.
-                           Dimensions = [num_modes_EM_Stokes,num_modes_EM_pump,num_modes_AC].
+                           Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
 
-            alpha  : The acoustic power loss for each mode in [1/s]. Dimensions = [num_modes_AC].
+            alpha  : The acoustic power loss for each mode in [1/s]. Dimensions = [n_modes_AC].
     """
 
     # Notes about internals of fortran integration
@@ -226,25 +263,25 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     Fortran_debug = 0
     ncomps = 3
     nnodes = 6
-    num_modes_EM_pump = sim_EM_pump.num_modes
-    num_modes_EM_Stokes = sim_EM_Stokes.num_modes
-    num_modes_AC = sim_AC.num_modes
+    n_modes_EM_pump = sim_EM_pump.n_modes
+    n_modes_EM_Stokes = sim_EM_Stokes.n_modes
+    n_modes_AC = sim_AC.n_modes
     n_msh_el_AC = sim_AC.n_msh_el
-    trimmed_EM_pump_field = np.zeros((ncomps,nnodes,num_modes_EM_pump,n_msh_el_AC), dtype=complex)
-    trimmed_EM_Stokes_field = np.zeros((ncomps,nnodes,num_modes_EM_Stokes,n_msh_el_AC), dtype=complex)
+    trimmed_EM_pump_field = np.zeros((ncomps,nnodes,n_modes_EM_pump,n_msh_el_AC), dtype=complex)
+    trimmed_EM_Stokes_field = np.zeros((ncomps,nnodes,n_modes_EM_Stokes,n_msh_el_AC), dtype=complex)
     for el in range(n_msh_el_AC):
         new_el = sim_AC.el_convert_tbl[el]
         for n in range(nnodes):
             for x in range(ncomps):
-                for ival in range(num_modes_EM_pump):
+                for ival in range(n_modes_EM_pump):
                     trimmed_EM_pump_field[x,n,ival,el] = sim_EM_pump.sol1[x,n,ival,new_el]
-                for ival in range(num_modes_EM_Stokes):
+                for ival in range(n_modes_EM_Stokes):
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.sol1[x,n,ival,new_el]
 
     relevant_eps_effs =[]
     for el_typ in range(sim_EM_pump.structure.n_typ_el):
         if el_typ+1 in sim_AC.typ_el_AC:
-            relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
+            relevant_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
 
     sim_AC.calc_acoustic_losses(fixed_Q)
 
@@ -255,9 +292,9 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
 #        start = time.time()
 #        try:
 #            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
-#                alpha = NumBAT.ac_alpha_int_v2(sim_AC.num_modes,
+#                alpha = NumBAT.ac_alpha_int_v2(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
 #                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.eta_tensor,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
@@ -266,9 +303,9 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
 #                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
 #                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
 #                        "\n using slow quadrature integration by default.\n\n")
-#                alpha = NumBAT.ac_alpha_int(sim_AC.num_modes,
+#                alpha = NumBAT.ac_alpha_int(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+#                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
 #                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.eta_tensor,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.sol1,
 #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
@@ -276,8 +313,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
 #        except KeyboardInterrupt:
 #            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
 #        alpha = np.real(alpha)
-#        # Q_factors = 0.5*(q_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-#        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
+#        # Q_factors = 0.5*(q_AC/alpha)*np.ones(n_modes_AC) # appropriate for alpha in [1/m]
+#        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(n_modes_AC) # appropriate for alpha in [1/s]
 #        end = time.time()
 #        print("     time (sec.)", (end - start))
 #        print("remove me alpha", alpha)
@@ -287,9 +324,9 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
 #        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
 #        # alpha [1/s] = vg * alpha [1/m]
 #        # alpha [1/s] = Omega_AC/(2*fixed_Q)
-#        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-#        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/s]
-#        Q_factors = fixed_Q*np.ones(num_modes_AC)
+#        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(n_modes_AC) # appropriate for alpha in [1/m]
+#        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(n_modes_AC) # appropriate for alpha in [1/s]
+#        Q_factors = fixed_Q*np.ones(n_modes_AC)
 #        print("fixed q:", alpha, Q_factors)
 #
 #    linewidth_Hz = alpha/np.pi # SBS linewidth of each resonance in [Hz]
@@ -301,10 +338,10 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     try:
         if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
             Q_PE = NumBAT.photoelastic_int_v2(
-                sim_EM_pump.num_modes, sim_EM_Stokes.num_modes, sim_AC.num_modes, EM_ival_pump_fortran,
+                sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes, EM_ival_pump_fortran,
                 EM_ival_Stokes_fortran, AC_ival_fortran, sim_AC.n_msh_el,
                 sim_AC.n_msh_pts, nnodes,
-                sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+                sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
                 sim_AC.structure.n_typ_el_AC, sim_AC.structure.p_tensor,
                 q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
                 relevant_eps_effs, Fortran_debug)
@@ -313,10 +350,10 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 print("Warning: photoelastic_int - not sure if mesh contains curvi-linear elements", 
                     "\n using slow quadrature integration by default.\n\n")
             Q_PE = NumBAT.photoelastic_int(
-                sim_EM_pump.num_modes, sim_EM_Stokes.num_modes, sim_AC.num_modes, EM_ival_pump_fortran,
+                sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes, EM_ival_pump_fortran,
                 EM_ival_Stokes_fortran, AC_ival_fortran, sim_AC.n_msh_el,
                 sim_AC.n_msh_pts, nnodes,
-                sim_AC.table_nod, sim_AC.type_el, sim_AC.x_arr,
+                sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
                 sim_AC.structure.n_typ_el_AC, sim_AC.structure.p_tensor,
                 q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
                 relevant_eps_effs, Fortran_debug)
@@ -333,11 +370,11 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     print("Moving boundary calc")
     start = time.time()
     try:
-        Q_MB = NumBAT.moving_boundary(sim_EM_pump.num_modes, sim_EM_Stokes.num_modes,
-            sim_AC.num_modes, EM_ival_pump_fortran, EM_ival_Stokes_fortran,
+        Q_MB = NumBAT.moving_boundary(sim_EM_pump.n_modes, sim_EM_Stokes.n_modes,
+            sim_AC.n_modes, EM_ival_pump_fortran, EM_ival_Stokes_fortran,
             AC_ival_fortran, sim_AC.n_msh_el,
             sim_AC.n_msh_pts, nnodes, sim_AC.table_nod, 
-            sim_AC.type_el, sim_AC.x_arr,
+            sim_AC.type_el, sim_AC.mesh_xy,
             sim_AC.structure.n_typ_el_AC, typ_select_in, typ_select_out,
             trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
             relevant_eps_effs, Fortran_debug)
@@ -355,12 +392,12 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     gain_PE = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC*np.real(Q_PE*np.conj(Q_PE))
     gain_MB = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC*np.real(Q_MB*np.conj(Q_MB))
 
-    normal_fact = np.zeros((num_modes_EM_Stokes, num_modes_EM_pump, num_modes_AC), dtype=complex)
-    for i in range(num_modes_EM_Stokes):  #TODO: express this as some one line outer product?
+    normal_fact = np.zeros((n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex)
+    for i in range(n_modes_EM_Stokes):  #TODO: express this as some one line outer product?
         P1 = sim_EM_Stokes.EM_mode_power[i]
-        for j in range(num_modes_EM_pump):
+        for j in range(n_modes_EM_pump):
             P2 = sim_EM_pump.EM_mode_power[j]
-            for k in range(num_modes_AC):
+            for k in range(n_modes_AC):
                 # P3 = sim_AC.AC_mode_power[k]
                 P3 = sim_AC.AC_mode_energy[k]
                 normal_fact[i, j, k] = P1*P2*P3*alpha[k]
@@ -389,8 +426,8 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
     x_tmp = []
     y_tmp = []
     for i in np.arange(sim_wguide.n_msh_pts):
-        x_tmp.append(sim_wguide.x_arr[0,i])
-        y_tmp.append(sim_wguide.x_arr[1,i])
+        x_tmp.append(sim_wguide.mesh_xy[0,i])
+        y_tmp.append(sim_wguide.mesh_xy[1,i])
     x_min = np.min(x_tmp); x_max=np.max(x_tmp)
     y_min = np.min(y_tmp); y_max=np.max(y_tmp)
     area = abs((x_max-x_min)*(y_max-y_min))
@@ -409,7 +446,7 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
 
     # unrolling data for the interpolators
     table_nod = sim_wguide.table_nod.T
-    x_arr = sim_wguide.x_arr.T
+    mesh_xy = sim_wguide.mesh_xy.T
 
     sym_list = []
 
@@ -436,8 +473,8 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
                 # index for the coordinates
                 i_ex = table_nod[i_el, i_node]-1
                 # values
-                v_x6p[i] = x_arr[i_ex, 0]
-                v_y6p[i] = x_arr[i_ex, 1]
+                v_x6p[i] = mesh_xy[i_ex, 0]
+                v_y6p[i] = mesh_xy[i_ex, 1]
                 v_Ex6p[i] = mode_fields[0,i_node,ival,i_el]
                 v_Ey6p[i] = mode_fields[1,i_node,ival,i_el]
                 i += 1
@@ -454,7 +491,7 @@ def symmetries(sim_wguide, n_points=10, negligible_threshold=1e-5):
 
         # triangulations
         triang6p = matplotlib.tri.Triangulation(v_x6p,v_y6p,v_triang6p)
-        triang1p = matplotlib.tri.Triangulation(x_arr[:,0],x_arr[:,1],v_triang1p)
+        triang1p = matplotlib.tri.Triangulation(mesh_xy[:,0],mesh_xy[:,1],v_triang1p)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         finder = matplotlib.tri.TrapezoidMapTriFinder(triang1p)
@@ -660,8 +697,8 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
     """
 
     # Trim EM fields to non-vacuum area where AC modes are defined
-    num_modes_EM = sim_EM_pump.num_modes
-    num_modes_AC = sim_AC.num_modes
+    n_modes_EM = sim_EM_pump.n_modes
+    n_modes_AC = sim_AC.n_modes
     n_msh_el_AC = sim_AC.n_msh_el
     ncomps = 3
     nnodes = 6
@@ -680,8 +717,8 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
     x_tmp = []
     y_tmp = []
     for i in np.arange(sim_AC.n_msh_pts):
-        x_tmp.append(sim_AC.x_arr[0,i])
-        y_tmp.append(sim_AC.x_arr[1,i])
+        x_tmp.append(sim_AC.mesh_xy[0,i])
+        y_tmp.append(sim_AC.mesh_xy[1,i])
     x_min = np.min(x_tmp); x_max=np.max(x_tmp)
     y_min = np.min(y_tmp); y_max=np.max(y_tmp)
     area = abs((x_max-x_min)*(y_max-y_min))
@@ -700,7 +737,7 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
 
     # unrolling data for the interpolators
     table_nod = sim_AC.table_nod.T
-    x_arr = sim_AC.x_arr.T
+    mesh_xy = sim_AC.mesh_xy.T
 
     # dense triangulation with multiple points
     v_x6p = np.zeros(6*sim_AC.n_msh_el)
@@ -723,8 +760,8 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
             # index for the coordinates
             i_ex = table_nod[i_el, i_node]-1
             # values
-            v_x6p[i] = x_arr[i_ex, 0]
-            v_y6p[i] = x_arr[i_ex, 1]
+            v_x6p[i] = mesh_xy[i_ex, 0]
+            v_y6p[i] = mesh_xy[i_ex, 1]
             v_ux6p[i] = sim_AC.sol1[0,i_node,AC_ival,i_el]
             v_uy6p[i] = sim_AC.sol1[1,i_node,AC_ival,i_el]
             v_uz6p[i] = sim_AC.sol1[2,i_node,AC_ival,i_el]
@@ -860,8 +897,8 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
         Load in acoustic mode displacement and calculate gain from this also.
     """
 
-    num_modes_EM = sim_EM_pump.num_modes
-    num_modes_AC = sim_AC.num_modes
+    n_modes_EM = sim_EM_pump.n_modes
+    n_modes_AC = sim_AC.n_modes
     EM_ival_pump = 0
     EM_ival_Stokes = 0
 
@@ -871,7 +908,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
     # relevant_eps_effs =[]
     # for el_typ in range(sim_EM_pump.structure.n_typ_el):
     #     if el_typ+1 in sim_AC.typ_el_AC:
-    #         relevant_eps_effs.append(sim_EM_pump.n_list[el_typ]**2)
+    #         relevant_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
 
     energy_py = np.zeros(comsol_ivals, dtype=np.complex128)
     alpha_py = np.zeros(comsol_ivals)
@@ -907,12 +944,12 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
 
     # Note this is only the PE contribution to gain.
     gain_PE_py = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[:comsol_ivals]*np.real(Q_PE_py*np.conj(Q_PE_py))
-    normal_fact_py = np.zeros((num_modes_EM, num_modes_EM, comsol_ivals), dtype=complex)
+    normal_fact_py = np.zeros((n_modes_EM, n_modes_EM, comsol_ivals), dtype=complex)
     gain_PE_comsol = 2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[:comsol_ivals]*np.real(Q_PE_comsol*np.conj(Q_PE_comsol))
-    normal_fact_comsol = np.zeros((num_modes_EM, num_modes_EM, comsol_ivals), dtype=complex)
-    for i in range(num_modes_EM):
+    normal_fact_comsol = np.zeros((n_modes_EM, n_modes_EM, comsol_ivals), dtype=complex)
+    for i in range(n_modes_EM):
         P1 = sim_EM_pump.EM_mode_power[i]
-        for j in range(num_modes_EM):
+        for j in range(n_modes_EM):
             P2 = sim_EM_Stokes.EM_mode_power[j]
             for k in range(comsol_ivals):
                 P3_py = energy_py[k]

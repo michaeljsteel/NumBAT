@@ -90,14 +90,14 @@ acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 # Output the normalisation k value for reference
 print("The acoustic wavevector 2*kp = %f" % q_AC)
 
-multiproc = True
+multiproc = False
 
 # make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
 qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
 
-if multiproc:  #TODO: seems not stall right now.
+if multiproc:  #TODO: seems to stall right now.
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
-    num_cores = 4
+    num_cores = 2
     pool = Pool(num_cores)
     pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 # Note pool.map() doesn't pass errors back from fortran routines very well.

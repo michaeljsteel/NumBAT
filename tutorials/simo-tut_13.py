@@ -564,7 +564,7 @@ def do_main():
 
     start = time.time()
 
-    pref0, refine_fac = starter.read_args(13, sys.argv)
+    pref0, refine_fac = starter.read_args(13, sys.argv, refine=4)
 
     # Geometric Parameters - all in nm.
 
@@ -609,7 +609,7 @@ def do_main():
                             unitcell_y=unitcell_y, inc_b_x  =rcore*.1,
                             material_bkg=mat_bkg,
                             material_a=mat_core,
-                            lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4*refine_fac)
+                            lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
 
     prefix =pref0
     #wguide.plot_mesh(prefix)

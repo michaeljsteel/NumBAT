@@ -166,8 +166,8 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
       x_tmp = []
       y_tmp = []
       for i in np.arange(sim.n_msh_pts):
-          x_tmp.append(sim.x_arr[0,i])
-          y_tmp.append(sim.x_arr[1,i])
+          x_tmp.append(sim.mesh_xy[0,i])
+          y_tmp.append(sim.mesh_xy[1,i])
       x_min = np.min(x_tmp); 
       x_max = np.max(x_tmp)
       y_min = np.min(y_tmp); 
@@ -178,7 +178,7 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
 
       # unrolling data for the interpolators
       self.table_nod = sim.table_nod.T
-      self.x_arr = sim.x_arr.T
+      self.mesh_xy = sim.mesh_xy.T
 
       # dense triangulation with multiple points
       self.v_x6p = np.zeros(6*sim.n_msh_el)
@@ -208,8 +208,8 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
           for i_node in np.arange(6):
               i_ex = self.table_nod[i_el, i_node]-1
               # values
-              self.v_x6p[i] = self.x_arr[i_ex, 0]
-              self.v_y6p[i] = self.x_arr[i_ex, 1]    # Fact that this is x_arr and not y_arr seems to be right
+              self.v_x6p[i] = self.mesh_xy[i_ex, 0]
+              self.v_y6p[i] = self.mesh_xy[i_ex, 1]    # Fact that this is mesh_xy and not y_arr seems to be right
               i += 1
 
 
@@ -228,7 +228,7 @@ class ModePlotHelper(object): # helper class for plotting. factors common info f
 
       # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
       self.triang6p = matplotlib.tri.Triangulation(self.v_x6p, self.v_y6p, self.v_triang6p)
-      self.triang1p = matplotlib.tri.Triangulation(self.x_arr[:,0], self.x_arr[:,1], self.v_triang1p)
+      self.triang1p = matplotlib.tri.Triangulation(self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
 
       # Now use the coords user would like to think in
       shiftx, shifty = self.sim.get_xyshift()  # Odd that we are doing this at ModeHelper level?
@@ -787,12 +787,12 @@ class Simulation(object):
         self.Omega_AC = None
         self.EM_sim = EM_sim
 
-        self.num_modes = num_modes
+        self.n_modes = num_modes
         self.Stokes = Stokes
         self.mode_pol = None
         self.k_0 = 2 * np.pi / self.lambda_m
         # just off normal incidence to avoid degeneracies
-        self.k_pll = np.array([1e-16, 1e-16])
+        self.k_perp = np.array([1e-16, 1e-16])
         speed_c = 299792458
         self.omega_EM = 2*np.pi*speed_c/self.lambda_m # Angular freq in units of rad/s
         self.calc_EM_mode_energy = calc_EM_mode_energy
@@ -821,33 +821,33 @@ class Simulation(object):
         self.table_nod = None
         self.type_el = None
         self.type_nod = None
-        self.x_arr = None
+        self.mesh_xy = None
         self.ls_material = None
 
         # Takes list of all material refractive indices
         # Discards any that are zero
         # Set up mapping table for refractive indices
         # (Why we need this is mystery)
-        # el_conv_table_n maps the number of the material to the position in the nonzero n_list
-        # el_conv_table_n[ith material] = index into n_list  of non-zero refractive indices
+        # el_conv_table_n maps the number of the material to the position in the nonzero v_refindexn
+        # el_conv_table_n[ith material] = index into v_refindexn  of non-zero refractive indices
         # Except for zero index materials, 
         #  it will always be {1:1, 2:2, 3:3, .., num_mats:num_mats}
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
-        n_list = []
-        n_list_tmp = np.array([m.refindex_n for m in self.structure.d_materials.values()])
+        v_refindexn = []
+        v_refindexn_tmp = np.array([m.refindex_n for m in self.structure.d_materials.values()])
         self.el_conv_table_n = {}
         i = 1; j = 1
-        for n in n_list_tmp:
+        for n in v_refindexn_tmp:
             if n != 0:
-                n_list.append(n)
+                v_refindexn.append(n)
                 self.el_conv_table_n[i] = j
                 j += 1
             i += 1
-        self.n_list = np.array(n_list)
-        n_list = None
+        self.v_refindexn = np.array(v_refindexn)
+        v_refindexn = None
 
         if self.structure.loss is False:
-            self.n_list = self.n_list.real
+            self.v_refindexn = self.v_refindexn.real
 
     def get_xyshift(self):
         if self.is_EM():
@@ -896,7 +896,7 @@ class Simulation(object):
          :rtype: numarray(Mode)
          '''
       if not len(self.mode_set):
-        for m in range(self.num_modes):
+        for m in range(self.n_modes):
           if self.is_EM():
             mode=ModeEM(self, m)
           else:
@@ -1140,9 +1140,9 @@ class Simulation(object):
         nnodes=6 # TODO: is this right?
         try:
             if self.EM_sim.structure.inc_shape in self.EM_sim.structure.linear_element_shapes:
-                alpha = NumBAT.ac_alpha_int_v2(self.num_modes,
+                alpha = NumBAT.ac_alpha_int_v2(self.n_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
-                    self.table_nod, self.type_el, self.x_arr,
+                    self.table_nod, self.type_el, self.mesh_xy,
                     self.structure.n_typ_el_AC, self.structure.eta_tensor,
                     self.q_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
@@ -1152,10 +1152,10 @@ class Simulation(object):
                     print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
                 Fortran_debug=0
-                overlap=np.zeros(self.num_modes, dtype=complex)  # not sure why this is needed by ac_alpha_int
-                alpha = NumBAT.ac_alpha_int(self.num_modes,
+                overlap=np.zeros(self.n_modes, dtype=complex)  # not sure why this is needed by ac_alpha_int
+                alpha = NumBAT.ac_alpha_int(self.n_modes,
                     self.n_msh_el, self.n_msh_pts, nnodes,
-                    self.table_nod, self.type_el, self.x_arr,
+                    self.table_nod, self.type_el, self.mesh_xy,
                     self.structure.n_typ_el_AC, self.structure.eta_tensor,
                     self.q_AC, self.Omega_AC, self.sol1,
                     # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
@@ -1163,17 +1163,17 @@ class Simulation(object):
         except KeyboardInterrupt:
             print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
         self.ac_alpha_t = np.real(alpha)
-        # Q_factors = 0.5*(q_AC/alpha)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-        self.ac_Qmech = 0.5*(np.real(self.Omega_AC)/self.ac_alpha_t)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
+        # Q_factors = 0.5*(q_AC/alpha)*np.ones(n_modes) # appropriate for alpha in [1/m]
+        self.ac_Qmech = 0.5*(np.real(self.Omega_AC)/self.ac_alpha_t)*np.ones(self.n_modes) # appropriate for alpha in [1/s]
       else:
         self.Q_method=QAcMethod.Fixed
         # factor of a 1/2 because alpha is for power!
         # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
         # alpha [1/s] = vg * alpha [1/m]
         # alpha [1/s] = Omega_AC/(2*fixed_Q)
-        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(num_modes_AC) # appropriate for alpha in [1/m]
-        self.ac_Qmech = fixed_Q*np.ones(self.num_modes)
-        self.ac_alpha_t = 0.5*(np.real(self.Omega_AC)/fixed_Q)*np.ones(self.num_modes) # appropriate for alpha in [1/s]
+        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(n_modes) # appropriate for alpha in [1/m]
+        self.ac_Qmech = fixed_Q*np.ones(self.n_modes)
+        self.ac_alpha_t = 0.5*(np.real(self.Omega_AC)/fixed_Q)*np.ones(self.n_modes) # appropriate for alpha in [1/s]
 
       self.ac_linewidth = self.ac_alpha_t/np.pi # SBS linewidth of each resonance in [Hz]   #TODO: not sure about the 1/pi.  
                                                                                             #If linewdith should be amplitude rate in Hz, wouldn't it be
@@ -1197,17 +1197,18 @@ class Simulation(object):
         self.d_in_m = tstruc.unitcell_x*1e-9   # TODO: don't think fortran really needs this. Why does it not care about y dimension?
 
 
-        if self.num_modes < 20:
-            self.num_modes = 20
+        if self.n_modes < 20:
+            self.n_modes = 20
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
 
 
         # Parameters that control how FEM routine runs
         self.E_H_field = 1  # Selected formulation (1=E-Field, 2=H-Field)
-        i_cond = 2  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        bnd_cdn_i = 2  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
         itermax = 30  # Maximum number of iterations for convergence
         EM_FEM_debug = self.debug  # Fortran routines will display & save add. info
 
+        print(' Boundary conditions: %s'% {0:'Dirichlet', 1:'Neumann', 2:'Periodic'}[bnd_cdn_i])
         # Calculate where to center the Eigenmode solver around.
         # (Shift and invert FEM method)
         shift_ksqr = self.n_eff**2 * self.k_0**2
@@ -1227,7 +1228,7 @@ class Simulation(object):
         print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
 
         # Size of Fortran's complex superarray (scales with mesh)
-        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
+        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.n_modes)
         #if EM_FEM_debug == 1:
         #  print("Mesh calculated: %d nodes."%self.n_msh_el)
 
@@ -1235,16 +1236,16 @@ class Simulation(object):
 #        try:
         fort_err = 0
 
-        resm = NumBAT.calc_em_modes(
-            self.lambda_m, self.num_modes,
-            EM_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
-            self.n_msh_el, tstruc.n_typ_el, self.n_list,
-            self.k_pll, self.d_in_m, shift_ksqr, i_cond, itermax,
-            self.E_H_field, tstruc.plotting_fields, tstruc.plot_real, tstruc.plot_imag, tstruc.plot_abs)
+        resm = NumBAT.calc_em_modes( self.lambda_m, self.d_in_m, tstruc.mesh_file, 
+            self.n_modes, self.n_msh_pts, self.n_msh_el, 
+            tstruc.n_typ_el, self.v_refindexn,
+            self.k_perp, shift_ksqr, bnd_cdn_i, itermax, self.E_H_field, EM_FEM_debug,
+            # TODO: these are all obselete, remove.
+            tstruc.plotting_fields, tstruc.plot_real, tstruc.plot_imag, tstruc.plot_abs) 
     #        cmplx_max, real_max, int_max)
 
         self.Eig_values, self.sol1, self.mode_pol, self.table_nod, \
-        self.type_el, self.type_nod, self.x_arr, self.ls_material, fort_err, fort_mesg = resm
+        self.type_el, self.type_nod, self.mesh_xy, self.ls_material, fort_err, fort_mesg = resm
 
         if fort_err != 0:
             fort_mesg = str(fort_mesg, 'utf-8')  # fort_mesg comes back as a byte string.
@@ -1261,17 +1262,17 @@ class Simulation(object):
 
         # if tstruc.plotting_fields != 1:
         #     self.sol1 = None
-        #     self.n_list = None
+        #     self.v_refindexn = None
         #     self.E_H_field = None
         #     self.table_nod = None
         #     self.type_el = None
-        #     self.x_arr = None
+        #     self.mesh_xy = None
         #     self.n_msh_pts = None
         #     self.n_msh_el = None
 
         #if tstruc.plt_mesh:
         #    print("Suppressed inefficient matplotlib plotting of mesh...")
-            #plotting.plot_msh(self.x_arr, prefix=tstruc.mesh_file, suffix='_EM')
+            #plotting.plot_msh(self.mesh_xy, prefix=tstruc.mesh_file, suffix='_EM')
 
 
 ### Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
@@ -1281,18 +1282,18 @@ class Simulation(object):
             if tstruc.inc_shape in tstruc.linear_element_shapes:
             ## Integration using analytically evaluated basis function integrals. Fast.
                 self.EM_mode_power = NumBAT.em_mode_energy_int_v2_ez(
-                    self.k_0, self.num_modes, self.n_msh_el, self.n_msh_pts,
+                    self.k_0, self.n_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod,
-                    self.x_arr, self.Eig_values, self.sol1)
+                    self.mesh_xy, self.Eig_values, self.sol1)
             else:
                 if tstruc.inc_shape not in tstruc.curvilinear_element_shapes:
                     print("Warning: em_mode_energy_int - not sure if mesh contains curvi-linear elements", 
                         "\n using slow quadrature integration by default.\n\n")
             # Integration by quadrature. Slowest.
                 self.EM_mode_power = NumBAT.em_mode_energy_int_ez(
-                    self.k_0, self.num_modes, self.n_msh_el, self.n_msh_pts,
+                    self.k_0, self.n_modes, self.n_msh_el, self.n_msh_pts,
                     nnodes, self.table_nod,
-                    self.x_arr, self.Eig_values, self.sol1)
+                    self.mesh_xy, self.Eig_values, self.sol1)
             # Bring Kokou's def into line with CW formulation.
             self.EM_mode_power = 2.0*self.EM_mode_power
 
@@ -1315,12 +1316,12 @@ class Simulation(object):
                 #             "\n using slow quadrature integration by default.\n\n")
                 # # Integration by quadrature. Slowest.
                     self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
-                        self.num_modes, self.n_msh_el, self.n_msh_pts, nnodes,
-                        self.table_nod, self.type_el, tstruc.n_typ_el, self.n_list,
-                        self.x_arr, self.sol1)
+                        self.n_modes, self.n_msh_el, self.n_msh_pts, nnodes,
+                        self.table_nod, self.type_el, tstruc.n_typ_el, self.v_refindexn,
+                        self.mesh_xy, self.sol1)
                 else:
                   print("\n\n FEM routine em_mode_e_energy_int is not implemented for this structure. Can't find group index. \n\n")
-                  self.EM_mode_energy=np.zeros(self.num_modes, dtype=float)
+                  self.EM_mode_energy=np.zeros(self.n_modes, dtype=float)
                   
             except KeyboardInterrupt:
                 print("\n\n FEM routine em_mode_e_energy_int interrupted by keyboard.\n\n")
@@ -1338,8 +1339,8 @@ class Simulation(object):
         # x_tmp = []
         # y_tmp = []
         # for i in np.arange(self.n_msh_pts):
-        #     x_tmp.append(self.x_arr[0,i])
-        #     y_tmp.append(self.x_arr[1,i])
+        #     x_tmp.append(self.mesh_xy[0,i])
+        #     y_tmp.append(self.mesh_xy[1,i])
         # x_min = np.min(x_tmp); x_max=np.max(x_tmp)
         # y_min = np.min(y_tmp); y_max=np.max(y_tmp)
         # area = abs((x_max-x_min)*(y_max-y_min))
@@ -1369,7 +1370,7 @@ class Simulation(object):
         Eig_values: a 1d array of Eigenvalues (frequencies) in [1/s]
 
         sol1: the associated Eigenvectors, ie. the fields, stored as
-               [field comp, node nu on element, Eig value, el nu]
+               [field comp, node num on element, Eig value, el num]
 
         AC_mode_energy: the elastic power in the acoutic modes.
         """
@@ -1394,16 +1395,16 @@ class Simulation(object):
         for k,v in el_conv_table.items():
           self.typ_el_AC[self.el_conv_table_n[k]] = v  # now keeps its own rather than take from EM_sim which might not exist
 
-        #print('el_conv_table_n EM', self.el_conv_table_n, self.n_list)
+        #print('el_conv_table_n EM', self.el_conv_table_n, self.v_refindexn)
         #print('el_conv_table, AC', el_conv_table)
         #print('typ_el_AC', self.typ_el_AC)
 
-        if self.num_modes < 20:
-            self.num_modes = 20
+        if self.n_modes < 20:
+            self.n_modes = 20
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
 
         # Parameters that control how FEM routine runs
-        i_cond = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        bnd_cdn_i = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
         if bcs == 'Open': 
             print('Attempting open elastic boundary conditions.')
             icond=1  # TODO: DO THIS ACTUILLY WORK?
@@ -1438,7 +1439,7 @@ class Simulation(object):
             type_el = self.EM_sim.type_el
             type_nod = self.EM_sim.type_nod
             table_nod = self.EM_sim.table_nod
-            x_arr = self.EM_sim.x_arr
+            mesh_xy = self.EM_sim.mesh_xy
             n_el_kept = 0
             n_msh_pts_AC = 0
             type_el_AC = []
@@ -1447,7 +1448,7 @@ class Simulation(object):
             el_convert_tbl_inv = {}
             node_convert_tbl = {}
             #if self.structure.plot_mesh: #TODO turn this back on
-            #    plotting.plot_msh(x_arr, prefix=self.structure.mesh_file, suffix='_AC-orig')
+            #    plotting.plot_msh(mesh_xy, prefix=self.structure.mesh_file, suffix='_AC-orig')
 
             for el in range(n_msh_el):
                 # print type_el[el]
@@ -1481,11 +1482,11 @@ class Simulation(object):
                     el_tbl.append(node_convert_tbl[table_nod_AC_tmp[i][el]]+1)
                 table_nod_AC.append(el_tbl)
             # Find the coordinates of chosen nodes.
-            x_arr_AC = np.zeros((2,n_msh_pts_AC))
+            mesh_xy_AC = np.zeros((2,n_msh_pts_AC))
             for node in unique_nodes:
-                # Note x_arr needs to be adjust back to fortran indexing
-                x_arr_AC[0,node_convert_tbl[node]] = (x_arr[0,node-1])
-                x_arr_AC[1,node_convert_tbl[node]] = (x_arr[1,node-1])
+                # Note mesh_xy needs to be adjust back to fortran indexing
+                mesh_xy_AC[0,node_convert_tbl[node]] = (mesh_xy[0,node-1])
+                mesh_xy_AC[1,node_convert_tbl[node]] = (mesh_xy[1,node-1])
 
             self.el_convert_tbl = el_convert_tbl
             self.el_convert_tbl_inv = el_convert_tbl_inv
@@ -1516,8 +1517,8 @@ class Simulation(object):
             # ax = plt.subplot(1,1,1)
             # for node in unique_nodes:
             #     if node in interface_nodes:
-            #         type_nod_AC[node_convert_tbl[node]] = i_cond
-            #         plt.plot(x_arr_AC[0,node_convert_tbl[node]], x_arr_AC[1,node_convert_tbl[node]], 'ok')
+            #         type_nod_AC[node_convert_tbl[node]] = bnd_cdn_i
+            #         plt.plot(mesh_xy_AC[0,node_convert_tbl[node]], mesh_xy_AC[1,node_convert_tbl[node]], 'ok')
             # ax.set_aspect('equal')
             # plt.savefig('boundary.pdf', bbox_inches='tight')
             self.n_msh_pts = n_msh_pts_AC
@@ -1529,7 +1530,7 @@ class Simulation(object):
                 self.n_msh_pts, self.n_msh_el = [int(i) for i in f.readline().split()]
             table_nod_AC = np.zeros((6, self.n_msh_el))
             type_el_AC = np.zeros(self.n_msh_el)
-            x_arr_AC = np.zeros((2,self.n_msh_pts))
+            mesh_xy_AC = np.zeros((2,self.n_msh_pts))
             type_nod_AC = np.zeros(self.n_msh_pts)
 
         if AC_FEM_debug == 1:
@@ -1542,7 +1543,7 @@ class Simulation(object):
                 os.mkdir("Matrices")
 
         # Size of Fortran's complex superarray (scales with mesh)
-        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.num_modes)
+        #int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.n_modes)
 
         print('\n Structure has {0} mesh points and {1} mesh elements.'.format(self.n_msh_pts, self.n_msh_el))
 
@@ -1550,17 +1551,18 @@ class Simulation(object):
             fort_err = 0
 
             tstruc=self.structure
+            show_mem_est = True
 
             resm = NumBAT.calc_ac_modes(
-                self.q_AC, self.num_modes,
-                AC_FEM_debug, tstruc.mesh_file, self.n_msh_pts,
+                self.q_AC, self.n_modes,
+                AC_FEM_debug, show_mem_est, tstruc.mesh_file, self.n_msh_pts,
                 self.n_msh_el, tstruc.n_typ_el_AC, tstruc.c_tensor, tstruc.rho,
-                self.d_in_m, shift_nu, i_cond, itermax, ARPACK_tol,
+                self.d_in_m, shift_nu, bnd_cdn_i, itermax, ARPACK_tol,
                 tstruc.plotting_fields,
                 suplied_geo_flag, type_nod_AC, 
-                tstruc.symmetry_flag, table_nod_AC, type_el_AC, x_arr_AC)
+                tstruc.symmetry_flag, table_nod_AC, type_el_AC, mesh_xy_AC)
 
-            table_nod_out, type_el_out, x_arr_out, \
+            table_nod_out, type_el_out, mesh_xy_out, \
             self.Eig_values, self.sol1, self.mode_pol, fort_err, fort_mesg = resm
 
             if fort_err != 0:
@@ -1582,20 +1584,20 @@ class Simulation(object):
              self.structure.p_tensor, self.structure.eta_tensor)
 
         #if self.structure.plt_mesh:  #TODO re-enable
-        #    plotting.plot_msh(x_arr_AC, prefix=self.structure.mesh_file, suffix='_AC-in')
-        #    plotting.plot_msh(x_arr_out, prefix=self.structure.mesh_file, suffix='_AC-out')
+        #    plotting.plot_msh(mesh_xy_AC, prefix=self.structure.mesh_file, suffix='_AC-in')
+        #    plotting.plot_msh(mesh_xy_out, prefix=self.structure.mesh_file, suffix='_AC-out')
 
         # if self.EM_sim is None:
         #     table_nod_out = None
         #     type_el_out = None
-        #     x_arr_out = None
+        #     mesh_xy_out = None
         #     self.table_nod = table_nod_AC
         #     self.type_el = type_el_AC
-        #     self.x_arr = x_arr_AC
+        #     self.mesh_xy = mesh_xy_AC
         # else:
         self.table_nod = table_nod_out
         self.type_el = type_el_out
-        self.x_arr = x_arr_out
+        self.mesh_xy = mesh_xy_out
 
 ### Calc unnormalised power in each AC mode - PRA Eq. 18.
         if self.calc_AC_mode_power is True:
@@ -1604,8 +1606,8 @@ class Simulation(object):
                 if self.structure.inc_shape in self.structure.linear_element_shapes:
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                     self.AC_mode_power = NumBAT.ac_mode_power_int_v4(
-                        self.num_modes, self.n_msh_el, self.n_msh_pts,
-                        nnodes, self.table_nod, self.type_el, self.x_arr,
+                        self.n_modes, self.n_msh_el, self.n_msh_pts,
+                        nnodes, self.table_nod, self.type_el, self.mesh_xy,
                         self.structure.n_typ_el_AC, self.structure.c_tensor,
                         self.q_AC, self.Omega_AC, self.sol1)
                 else:
@@ -1614,8 +1616,8 @@ class Simulation(object):
                             "\n using slow quadrature integration by default.\n\n")
                 # Integration by quadrature. Slowest.
                     self.AC_mode_power = NumBAT.ac_mode_power_int(
-                        self.num_modes, self.n_msh_el, self.n_msh_pts,
-                        nnodes, self.table_nod, self.type_el, self.x_arr,
+                        self.n_modes, self.n_msh_el, self.n_msh_pts,
+                        nnodes, self.table_nod, self.type_el, self.mesh_xy,
                         self.structure.n_typ_el_AC, self.structure.c_tensor_z,
                         self.q_AC, self.Omega_AC, self.sol1, AC_FEM_debug)
             except KeyboardInterrupt:
@@ -1628,8 +1630,8 @@ class Simulation(object):
             if self.structure.inc_shape in self.structure.linear_element_shapes:
             # Semi-analytic integration. Fastest!
                 self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int_v4(
-                    self.num_modes, self.n_msh_el, self.n_msh_pts,
-                    nnodes, self.table_nod, self.type_el, self.x_arr,
+                    self.n_modes, self.n_msh_el, self.n_msh_pts,
+                    nnodes, self.table_nod, self.type_el, self.mesh_xy,
                     self.structure.n_typ_el_AC, self.structure.rho,
                     self.Omega_AC, self.sol1)
             else:
@@ -1638,8 +1640,8 @@ class Simulation(object):
                         "\n using slow quadrature integration by default.\n\n")
             # Integration by quadrature. Slowest.
                 self.AC_mode_energy= NumBAT.ac_mode_elastic_energy_int(
-                    self.num_modes, self.n_msh_el, self.n_msh_pts,
-                    nnodes, self.table_nod, self.type_el, self.x_arr,
+                    self.n_modes, self.n_msh_el, self.n_msh_pts,
+                    nnodes, self.table_nod, self.type_el, self.mesh_xy,
                     self.structure.n_typ_el_AC, self.structure.rho,
                     self.Omega_AC, self.sol1, AC_FEM_debug)
         except KeyboardInterrupt:
