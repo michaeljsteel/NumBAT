@@ -1,7 +1,9 @@
 
 PYTHON=python3
 
-all: lit01 lit02 lit03 lit04-1 lit04-2 lit05 lit06a lit06b lit07 lit08 lit09 lit10
+all: lit01 lit02 lit03 lit04a lit04b lit05 lit06a lit06b lit07 lit08 lit09 lit10
+slow: lit04a lit04b lit05 lit06a lit06b lit07 lit08 lit09 lit10
+
 #allfast: flit01 flit02 flit03 flit04-1 flit04-2 flit05 flit06a flit06b flit07 flit08 flit09 flit10
 allfast: flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
 fast1: flit06a flit06b flit07 flit08 flit09 flit10

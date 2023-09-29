@@ -25,11 +25,31 @@ from fortran import NumBAT
 
 import starter
 
+def make_gain_plot(m_gain, extents, pref):
+    L=0.08  # 8 cm nanowire
+    Pp=0.001
+    m_gaindB = 10*np.log10(np.abs(m_gain)*L*Pp + 1e-300)
+
+
+    fig, ax1 = plt.subplots()
+    im = ax1.imshow(m_gaindB.T, aspect='auto', interpolation='none',
+                extent=extents, cmap='jet', origin='lower')
+    for axis in ['top', 'bottom','left','right']:
+     ax1.spines[axis].set_linewidth(1)
+
+    cb=fig.colorbar(im, ax=ax1)
+    cb.outline.set_visible(False)
+
+    ax1.set_ylabel('Microwire diameter (μm)')
+    ax1.set_xlabel('Acoustic frequency (GHz)')
+    fig.savefig(pref+'-diam_scan.png')
+
+
 
 start = time.time()
 
 # Select the number of CPUs to use in simulation.
-num_cores = 1
+num_cores = 4
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -47,29 +67,30 @@ AC_ival = 'All'
 # Expected effective index of fundamental guided mode.
 n_eff = 1.18
 
-freq_min = 4e9
-freq_max = 12e9
+freq_min = 5e9
+freq_max = 11e9
 
-#width_min = 600
-#width_max = 1200
-#num_widths = 301
-width_min = 900
-width_max = 1300
-num_widths = 21
-num_widths = 11
-
-v_widths = np.linspace(width_min, width_max, num_widths)
+diam_0  =  1000
+diam_min = 950
+diam_max = 1300
+diam_steps = 20
+# find a d_diam that will give v_diams hitting 1000 exactly, with about 20 diam_steps total across (diam_max-diam_min)
+d_diam = (diam_0-diam_min)/round((diam_0-diam_min)/((diam_max-diam_min)/diam_steps))
+v_diams = np.arange(diam_min, diam_max, d_diam) # make sure that 1000 nm is included.
+num_diams = len(v_diams)
 num_interp_pts = 2000
 
 prefix, refine_fac = starter.read_args(3, sys.argv)
 
-def modes_n_gain(inc_a_x):
-    inc_a_y = inc_a_x
+def modes_n_gain(diam):
+    inc_a_x = diam
+    inc_a_y = diam
     # Use all specified parameters to create a waveguide object.
     wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                             material_bkg=materials.make_material("Vacuum"),
                             material_a=materials.make_material("SiO2_2016_Smith"),
-                            lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
+                            #lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
+                            lc_bkg=.1, lc_refine_1=2.0, lc_refine_2=2.0)
     #wguide.plot_mesh(prefix+'_%3d'%int(inc_a_x))
 
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
@@ -81,55 +102,50 @@ def modes_n_gain(inc_a_x):
     shift_Hz = 4e9
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-    #plotting.plot_mode_fields(sim_AC, ivals=range(5), prefix=prefix)
 
 
     set_q_factor = 600.
-    SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+    gainbox = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)#, fixed_Q=set_q_factor)
-    interp_values = plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                                               EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min, freq_max,
-                                               num_interp_pts=num_interp_pts, semilogy=True, dB=True,
-                                               prefix = prefix, suffix='_w%i' %int(inc_a_x))
 
-    return interp_values
+    gainbox.set_allowed_EM_pumps(EM_ival_pump)
+    gainbox.set_allowed_EM_Stokes(EM_ival_Stokes)
+    (nu_gain_tot, nu_gain_PE, nu_gain_MB) = gainbox.plot_spectra(freq_min, freq_max, 
+                                                                 num_interp_pts=num_interp_pts, semilogy=True, dB=True, 
+                                                                 prefix = prefix, suffix='_w%i' %int(inc_a_x))
 
-# Run widths in parallel across num_cores CPUs using multiprocessing package.
+    if abs(diam - 1000)<1e-10:  # print fields for 1 micron guide
+        plotting.plot_mode_fields(sim_EM_pump, EM_AC = 'EM_E', ivals=range(5), prefix=prefix+'-diam-1000')
+        plotting.plot_mode_fields(sim_AC, ivals=range(40), prefix=prefix+'-diam-1000')
+        for m in range(num_modes_AC):
+            print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gainbox.gain_total(m):.3e}, ',
+                 f'{gainbox.gain_PE(m):.4e}, {gainbox.gain_MB(m):.4e}')
+
+
+    return (nu_gain_tot, nu_gain_PE, nu_gain_MB) 
+
+# Run diams in parallel across num_cores CPUs using multiprocessing package.
 pool = Pool(num_cores)
-width_objs = pool.map(modes_n_gain, v_widths)
-# Note pool.map() doesn't pass errors back from fortran routines very well.
-# It's good practise to run the extrema of your simulation range through map()
-# before launcing full multicore simulation.
+gain_specs = pool.map(modes_n_gain, v_diams)
 
 
-m_gain= np.zeros((num_interp_pts, num_widths))
-m_gaindB = np.zeros((num_interp_pts, num_widths))
-for w, width_interp in enumerate(width_objs):
-    m_gain[:,w] = width_interp[::1]
+m_gain_tot= np.zeros((num_interp_pts, num_diams))
+m_gain_PE= np.zeros((num_interp_pts, num_diams))
+m_gain_MB= np.zeros((num_interp_pts, num_diams))
+m_gaindB = np.zeros((num_interp_pts, num_diams))
 
-L=0.08  # 8 cm nanowire
-Pp=0.001
-m_gaindB = 10*np.log10(m_gaindB*L*Pp + 1e-30)
+for idiam, gains in enumerate(gain_specs):
+    (nu_gain_tot, nu_gain_PE, nu_gain_MB)  = gains
+    m_gain_tot[:,idiam] = nu_gain_tot
+    m_gain_PE[:,idiam] = nu_gain_PE
+    m_gain_MB[:,idiam] = nu_gain_MB 
 
-fig, ax1 = plt.subplots()
-im = ax1.imshow(m_gaindB.T, aspect='auto', interpolation='none',
-                #vmin=-60, vmax=0,
-                extent=[freq_min, freq_max, v_widths[0], v_widths[-1]],
-                cmap='jet', origin='lower')
-
-num_xticks = 5
-num_yticks = 5
-#ax1.xaxis.set_ticks_position('bottom')
-#ax1.set_yticks(np.linspace(0,(num_widths-1),num_xticks))
-#ax1.set_xticks(np.linspace((num_interp_pts-1),0,num_yticks))
-#ax1.set_yticklabels(["%4.0f" % (w*0.001) for w in np.linspace(width_min,width_max,num_xticks)])
-#ax1.set_xticklabels(["%4.0f" % (nu*1e-9) for nu in np.linspace(freq_min,freq_max,num_yticks)])
-ax1.set_xlim(5,11)
-
-ax1.set_ylabel(r'Microwire diameter (um)')
-ax1.set_xlabel('Acoustic frequency (GHz)')
-fig.savefig(prefix+'-gain_width_scan.png')
+# label axes in GHz and microns
+extents=(freq_min*1e-9, freq_max*1e-9, v_diams[0]*1e-3, v_diams[-1]*1e-3)
+make_gain_plot(m_gain_tot, extents, prefix+'-gain_tot')
+make_gain_plot(m_gain_PE, extents, prefix+'-gain_PE')
+make_gain_plot(m_gain_MB, extents, prefix+'-gain_MB')
 
 end = time.time()
 print("\n Simulation time (sec.)", (end - start))

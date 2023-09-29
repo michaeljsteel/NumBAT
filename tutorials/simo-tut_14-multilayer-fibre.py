@@ -349,7 +349,7 @@ def do_main():
 
     start = time.time()
 
-    prefix, refine_fac = starter.read_args(14, sys.argv)
+    prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
 
     # Geometric Parameters - all in nm.
 
@@ -370,7 +370,6 @@ def do_main():
     inc_shape = 'circ_onion'
     unitcell_x = rcore*7  # system size in nm
 
-    refine_fac = 2
     wguide = objects.Structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
                                inc_b_x=rn, inc_c_x=rn, inc_d_x=rn, inc_e_x=rn,
                                inc_f_x=rn, inc_g_x=rn, inc_h_x=rn, inc_i_x=rn,
@@ -381,7 +380,7 @@ def do_main():
                                material_f=mat_b, material_g=mat_a, material_h=mat_b, material_i=mat_a,
                                material_j=mat_b, material_k=mat_a, material_l=mat_b, material_m=mat_a,
                                material_n=mat_b, material_o=mat_a,
-                            lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4*refine_fac)
+                            lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
 
     #wguide.plot_mesh(prefix)
     #wguide.check_mesh()

@@ -44,7 +44,7 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix, refine_fac = starter.read_args(4, sys.argv, dflt_refine=3)
+prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
 # Width previous simo's done for, with known meshing params
 known_geo = 315.

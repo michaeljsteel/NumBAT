@@ -28,7 +28,7 @@ UMFPACK_OBJ = umf4_f77zwrapper64.o
 UMFPACK_WRAPPER = $(SS_WRAP)/$(UMFPACK_OBJ)
 #SSP_VER=3.7.1
 #SSP_VER=4.2.0
-SS_VER=7.1.0
+SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 MATH_PLAT="inteloneapi"
@@ -71,8 +71,9 @@ PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/
 
 
 #Flags come in a Distribution object passed through as attributes
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -ffixed-form -fno-second-underscore -O3
-CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops -ffixed-form 
+#F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -ffixed-form -fno-second-underscore -O3 -cpp
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp
+CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops 
 
 #F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops 
 #CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv 

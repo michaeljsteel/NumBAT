@@ -2,13 +2,16 @@
 PYTHON=python3
 
 all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
-				tut08 tut09 tut10 tut11a  tut11b tut12 tut12 tut13 tut14
+				tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
-				ftut08 ftut09 ftut10 ftut11a  ftut12a ftut12b tut13 tut14
+				ftut08 ftut09 ftut11a  ftut12a ftut12b tut13 tut14
+
+broken: tut10
+
+slow: tut04 tut05 tut06 tut07 \
+				tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 	
-slow1: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07   # REMOVE
-slow2: tut08 tut09 tut10 tut11a  tut11b tut12 tut13 tut14
 
 #fast1: tut01 ftut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 
 fast1: ftut02 ftut03a ftut03b ftut04 ftut05 ftut06 ftut07 

@@ -26,7 +26,6 @@ from scipy import sqrt
 import subprocess
 from scipy import interpolate
 import matplotlib
-#matplotlib.use('pdf')  # TODO: remove if ok
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mplcolors
@@ -50,9 +49,7 @@ except (ValueError, IOError, AttributeError):
 mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
 def savefig(fig, fname):
-    print('saving', fname)
     fig.savefig(fname)
-    print('done saving')
 
 def plot_filename(plps, ival, label=None):
   filestart='%(pre)s-fields/%(s)s_field_%(i)02i%(add)s' % {'pre' : plps['prefix'], 
@@ -185,7 +182,8 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
 
 
 def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
-                EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=0., freq_max=50e9, num_interp_pts=3000,
+                EM_ival_pump, EM_ival_Stokes, AC_ival='All', 
+                      freq_min=0., freq_max=50e9, num_interp_pts=3000,
                 dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
                 pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                 show_gains='All', mark_modes_thresh=0.02):
@@ -240,7 +238,6 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     #TODO: give a no plot option 'calc_gain_spectra'
 
     #process = psutil.Process()
-    #print ('\n\n\n\nmem pgs 1', process.memory_info().rss)
 
     pref = '%s-gain_spectra'%prefix
 
@@ -250,9 +247,12 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     tune_steps = 50000  # This is expensie but helps to get the peaks in most cases. 
                         # Need to do smarter interpolation to make this number lower
     tune_range = 10e9 # Hz
+
     # Construct an odd range of freqs guaranteed to include central resonance frequency.
-    detuning_range = np.append(np.linspace(-1*tune_range, 0, tune_steps),
-                       np.linspace(0, tune_range, tune_steps)[1:]) 
+    if tune_steps%2 == 0: tune_steps+=1
+    detuning_range = np.linspace(-tune_range, tune_range, tune_steps)
+    detran2 = detuning_range**2
+
     nu_grid = np.linspace(freq_min, freq_max, num_interp_pts)
 
     nu_grid_GHz = nu_grid* 1e-9
@@ -266,7 +266,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     num_modes = len(linewidth)
 
     # Plot decomposition of spectra into individual modes.
-    interp_values = np.zeros(num_interp_pts)
+    v_gain_global = np.zeros(num_interp_pts)
 
     fig, ax = plt.subplots()
 
@@ -279,18 +279,16 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         ivals = range(num_modes)
     else:
         try:
-            ivals = [i for i in ivals if (0 <= i < num_modes)]
+            ivals = [i for i in AC_ival if (0 <= i < num_modes)]
         except:
             reporting.report_and_exit('AC_ival in gain_spectra() must be "All" or a list of mode numbers.')
 
-
     # Total gain via sum over all modes in the vicinity of their peak
-    for m in ivals:
-        print('dealing with gain', m, np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]))
+    for m in ivals: #TODO: this is same as top of next big loop? DELETE?
         # build lorentzian centered on mode m
         v_nu_loc = np.real(sim_AC.nu_AC(m)+ detuning_range)
-        v_gain_loc = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]
-                     *linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
+        v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
+        v_gain_loc = np.real(SBS_gain[EM_ival_pump,EM_ival_Stokes,m]) * v_Lorentz
  
         if mode_comps:
             ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
@@ -300,14 +298,12 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                            % {'pre':pref , 'add' : suffix, 'mode' : m}, 
                             save_array, delimiter=',')
         # set up an interpolation for summing all the gain peaks
-        interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
-        interp_values += interp_spectrum
+        v_gain_global += np.interp(nu_grid, v_nu_loc, v_gain_loc)
 
-    return_interp_values = interp_values
-    #print ('\n\n\n\nmem pgs 3', process.memory_info().rss)
+    return_interp_values = v_gain_global
 
-    if mode_comps:
-        ax.plot(nu_grid_GHz, np.abs(interp_values), 'b', linewidth=lw, label="Total")
+    if mode_comps:  #TODO: delete this as no longer important?
+        ax.plot(nu_grid_GHz, np.abs(v_gain_global), 'b', linewidth=lw, label="Total")
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz,nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)',size=fs)
@@ -320,18 +316,16 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                   'pre' : pref, 'add' : suffix, 'png':pdf_png})
 
         if save_txt:
-            save_array = np.array([nu_grid, interp_values]).T
+            save_array = np.array([nu_grid, v_gain_global]).T
             np.savetxt('%(pre)s-mode_comps%(add)s-Total.csv' 
                        % {'pre': pref, 'add' : suffix}, save_array, delimiter=',')
 
 
 
-    interp_values_tot = np.zeros(num_interp_pts)
-    interp_values_PE = np.zeros(num_interp_pts)
-    interp_values_MB = np.zeros(num_interp_pts)
+    v_gain_global_tot = np.zeros(num_interp_pts)
+    v_gain_global_PE = np.zeros(num_interp_pts)
+    v_gain_global_MB = np.zeros(num_interp_pts)
 
-    #print ('\n\n\n\nmem pgs 4', process.memory_info().rss)
-    detran2 = detuning_range**2
     show_mode_indices=mark_modes_thresh>0.0
 
     if not show_gains in ('All', 'PE', 'MB', 'Total'): show_gains='All'
@@ -356,65 +350,40 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     fig, ax = plt.subplots()
 
-    first_lab = True
-    first_lab_PE = True
-    first_lab_MB = True
+    modelabs = []
+    modelabs_logy = []
 
-    #print ('nmem pgs 5', process.memory_info().rss)
     for m in ivals:
-    #    print ('nmem pgs 5o', process.memory_info().rss)
         nu0_m = np.real(sim_AC.nu_AC(m)) 
 
         if not freq_min < nu0_m < freq_max: continue 
         v_nu_loc = nu0_m + detuning_range
 
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
-    #    print ('nmem pgs 5a', process.memory_info().rss)
 
         if do_tot:
             gain_m = abs(np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_m * v_Lorentz
             interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            interp_values_tot += interp_spectrum
-            #if first_lab:
-            #    vnl = v_nu_loc*1e-9
-            #    ax.plot(vnl, v_gain_loc, 'b', linewidth=lw, label='Total')
-            #    first_lab=False
-            #else:
-            #    ax.plot(vnl, v_gain_loc, 'b', linewidth=lw)
+            v_gain_global_tot += interp_spectrum
             if gain_m> mark_modes_thresh*maxG:
                 ax.plot(nu0_m*1e-9, gain_m, 'ob')
 
-        #print ('nmem pgs 5b', process.memory_info().rss)
  
         if do_PE:
             gain_PE_m = abs(np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_PE_m * v_Lorentz
-            interp_spectrum_PE = np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            interp_values_PE += interp_spectrum_PE
-            #if first_lab_PE:
-            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'r', linewidth=lw, label='PE')
-            #    first_lab_PE = False
-            #else:
-            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'r', linewidth=lw)
+            v_gain_global_PE += np.interp(nu_grid, v_nu_loc, v_gain_loc)
             if gain_PE_m> mark_modes_thresh*maxG:
                 ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
 
-        #print ('nmem pgs 5c', process.memory_info().rss)
         if do_MB: 
             gain_MB_m = abs(np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_MB_m * v_Lorentz 
-            interp_spectrum_MB = np.interp(nu_grid, v_nu_loc, v_gain_loc) 
-            interp_values_MB += interp_spectrum_MB
-            #if first_lab_MB:
-            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'g', linewidth=lw, label='MB')
-            #    first_lab_MB = False
-            #else:
-            #    ax.plot(v_nu_loc*1e-9, v_gain_loc, 'g', linewidth=lw)
+            v_gain_global_MB += np.interp(nu_grid, v_nu_loc, v_gain_loc) 
             if gain_MB_m> mark_modes_thresh*maxG:
                 ax.plot(nu0_m*1e-9, gain_MB_m, 'og')
 
-        #print ('nmem pgs 5d', process.memory_info().rss)
         if show_mode_indices: # mark modes with gains larger than 5% of the maximum found
             Gm = { 'All': max(gain_m, gain_PE_m, gain_MB_m), 
                   'Total': gain_m, 'PE': gain_PE_m, 'MB': gain_MB_m }[show_gains]
@@ -422,12 +391,14 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             if Gm> mark_modes_thresh*maxG and nu_min_GHz < xloc < nu_max_GHz: 
                 ax.text(xloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
                         verticalalignment='top')
+                modelabs.append((xloc, Gm, m))
+            if Gm> mark_modes_thresh*maxG/1000 and nu_min_GHz < xloc < nu_max_GHz:  # keep extra small ones for the log display
+                modelabs_logy.append((xloc, Gm, m))
 
 
-    #print ('\n\n\n\nmem pgs 6', process.memory_info().rss)
-    if do_PE : ax.plot(nu_grid_GHz, np.abs(interp_values_PE), 'r', linewidth=lw, label='PE')
-    if do_MB : ax.plot(nu_grid_GHz, np.abs(interp_values_MB), 'g', linewidth=lw, label='MB')
-    if do_tot: ax.plot(nu_grid_GHz, np.abs(interp_values_tot), 'b', linewidth=lw, label='Total gain')
+    if do_PE : ax.plot(nu_grid_GHz, np.abs(v_gain_global_PE), 'r', linewidth=lw, label='PE')
+    if do_MB : ax.plot(nu_grid_GHz, np.abs(v_gain_global_MB), 'g', linewidth=lw, label='MB')
+    if do_tot: ax.plot(nu_grid_GHz, np.abs(v_gain_global_tot), 'b', linewidth=lw, label='Total gain')
 
 
     ax.legend(loc=0)
@@ -444,60 +415,67 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     plt.close(fig)
 
     if save_txt:
-        save_array = np.array([nu_grid, interp_values]).T
+        save_array = np.array([nu_grid, v_gain_global_tot]).T
         np.savetxt('%(pre)s-MB_PE_comps%(add)s-Total.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
-        save_array = np.array([nu_grid, interp_values_PE]).T
+        save_array = np.array([nu_grid, v_gain_global_PE]).T
         np.savetxt('%(pre)s-MB_PE_comps%(add)s-PE.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
-        save_array = np.array([nu_grid, interp_values_MB]).T
+        save_array = np.array([nu_grid, v_gain_global_MB]).T
         np.savetxt('%(pre)s-MB_PE_comps%(add)s-MB.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
 
-    #print ('\n\n\n\nmem pgs 8', process.memory_info().rss)
     if dB: # TODO: add mode labels here
         fig, ax = plt.subplots()
 
-        max_G = np.max(abs(interp_values))
+        max_G = np.max(abs(v_gain_global_tot))
         Leff = math.log(10**(dB_peak_amp*.1))/max_G
         #dB_const = dB_peak_amp/(4.34*max_G)
         #ax.plot(nu_grid_GHz, np.abs(10*np.log10(np.exp(abs(interp_values)*dB_const))), 'b', linewidth=3, label="Total")
-        v_amp = dB_peak_amp*abs(interp_values)*Leff*math.log10(math.exp(1.0))
-        ax.plot(nu_grid_GHz, v_amp, 'b', linewidth=lw, label="Total")
+        v_scale = dB_peak_amp* Leff*math.log10(math.exp(1.0))
+        v_amp = v_scale * abs(v_gain_global_tot)
+        if do_PE: ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_PE),  'r', linewidth=lw, label="PE")
+        if do_MB: ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_MB),  'g', linewidth=lw, label="MB")
+        if do_tot:ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz,nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)',size=fs)
         ax.set_ylabel('Amplification (dB)', size=fs)
         ax.tick_params(labelsize=ts)
+        for (nuloc, Gm, m) in modelabs:
+            ax.text(nuloc, abs(Gm)*v_scale, m, fontsize=fs, horizontalalignment='left',
+                        verticalalignment='top')
 
         fig.savefig('%(pre)s-gain_spectra-dB%(add)s.%(png)s' % {
                   'pre' : prefix, 'add' : suffix, 'png':pdf_png})
         plt.close(fig)
 
         if save_txt:
-            save_array = (nu_grid, 10*np.log10(np.exp(abs(interp_values)*dB_const)))
+            save_array = (nu_grid, 10*np.log10(np.exp(abs(v_gain_global_tot)*dB_const)))
             np.savetxt('%(pre)s-gain_spectra-dB%(add)s.csv' 
                         % {'pre' : prefix, 'add' : suffix}, 
                         save_array, delimiter=',')
 
     if semilogy:
         fig, ax = plt.subplots()
-        ax.semilogy(nu_grid_GHz, abs(interp_values_PE), 'r', linewidth=lw, label="PE")
-        ax.semilogy(nu_grid_GHz, abs(interp_values_MB), 'g', linewidth=lw, label="MB")
-        ax.semilogy(nu_grid_GHz, abs(interp_values), 'b', linewidth=lw, label="Total")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz,nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)',size=fs)
         ax.set_ylabel('|Gain| (1/Wm)', size=fs)
         ax.tick_params(labelsize=ts)
+        for (nuloc, Gm, m) in modelabs_logy:
+            ax.text(nuloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
+                        verticalalignment='top')
 
         fig.savefig('%(pre)s-gain_spectra-logy%(add)s.%(png)s' % {
                   'pre' : prefix, 'add' : suffix, 'png':pdf_png})
         plt.close(fig)
 
-    #print ('\n\n\n\nmem pgs 9', process.memory_info().rss)
 
-    return interp_values, interp_values_PE, interp_values_MB
+    return v_gain_global, v_gain_global_PE, v_gain_global_MB
 
 def plot_set_ticks(ax, plps, decorator):
   if plps['ticks']:
@@ -530,7 +508,6 @@ def get_quiver_skip_range(npts, skip):
         if skip%2==0: skip+=1
         jk=int(round(npts/2 - (skip+1)/2))
         j0= jk%skip
-    #delprint('skps rangesw', j0, npts, skip)
     return np.array(range(j0, npts, skip))
 
 def plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, l_fields, plps, 
@@ -1298,9 +1275,9 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
     # Move this into plot_mode_H
     if EM_AC == FieldType.EM_H:
         nnodes = 6
-        sim_wguide.sol1_H = NumBAT.h_mode_field_ez(sim_wguide.k_0, sim_wguide.num_modes, 
+        sim_wguide.sol1_H = NumBAT.h_mode_field_ez(sim_wguide.k_0, sim_wguide.n_modes, 
             sim_wguide.n_msh_el, sim_wguide.n_msh_pts, nnodes, sim_wguide.table_nod, 
-            sim_wguide.x_arr, sim_wguide.Eig_values, sim_wguide.sol1)
+            sim_wguide.mesh_xy, sim_wguide.Eig_values, sim_wguide.sol1)
 
 
     # assemble desired list of eigenmodes to plot
@@ -1361,7 +1338,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
 
 #### Plot mesh #############################################
-def plot_msh(x_arr, prefix='', suffix=''):
+def plot_msh(mesh_xy, prefix='', suffix=''):
     """ Plot EM mode fields.
 
         Args:
@@ -1376,8 +1353,8 @@ def plot_msh(x_arr, prefix='', suffix=''):
     #plt.figure(figsize=(13,13))
     #ax = plt.subplot(1,1,1)
     fig, ax = plt.subplots()
-    for node in range(np.shape(x_arr)[1]):
-        plt.plot(x_arr[0,node], x_arr[1,node], 'og')
+    for node in range(np.shape(mesh_xy)[1]):
+        plt.plot(mesh_xy[0,node], mesh_xy[1,node], 'og')
     ax.set_aspect('equal')
     #plt.savefig('%(pre)smsh_%(add)s.pdf' %
      #   {'pre' : prefix, 'add' : suffix}, bbox_inches='tight')
@@ -1393,10 +1370,10 @@ def plot_msh(x_arr, prefix='', suffix=''):
 # plt.clf()
 # for i in range(0,6):
 #     print table_nod[i][el] - 1
-#     x = x_arr[0,table_nod[i][el] - 1]
-#     y = x_arr[1,table_nod[i][el] - 1]
-#     print 'x1 = ', x_arr[0,table_nod[i][el] - 1]
-#     print 'y1 = ', x_arr[1,table_nod[i][el] - 1]
+#     x = mesh_xy[0,table_nod[i][el] - 1]
+#     y = mesh_xy[1,table_nod[i][el] - 1]
+#     print 'x1 = ', mesh_xy[0,table_nod[i][el] - 1]
+#     print 'y1 = ', mesh_xy[1,table_nod[i][el] - 1]
 #     plt.plot(x, y, 'o')
 #     plt.text(x+0.001, y+0.001, str(i))
 # plt.savefig('triangle_%i.png' %el)

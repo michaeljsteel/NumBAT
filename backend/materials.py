@@ -292,9 +292,7 @@ class Material(object):
             self.p_tensor.load_isotropic()
             self.eta_tensor.load_isotropic()
 
-            print('bef cc', self.material_name, self.crystal)
             self.load_tensors()
-            print('aft cc', self.material_name, self.crystal)
             
 
 
@@ -351,7 +349,6 @@ class Material(object):
         report_and_exit('Failed to load cubic crystal class in material data file {0}'.format(self.json_file))
 
     def load_trigonal_crystal(self):
-      print('ltc: ', self.material_name)
       try:
         for (i,j) in [(1,1), (1,2), (1,3), (1,4), (3,3), (4,4), (6,6)]:
           self.c_tensor.read(i,j)
