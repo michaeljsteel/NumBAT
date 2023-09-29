@@ -822,10 +822,13 @@ class Structure(object):
         print('Building mesh')
 
         this_directory = os.path.dirname(os.path.realpath(__file__))       # full path to backend directory that this code file is in 
-        msh_location_in = os.path.join(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
+        #msh_location_in = os.path.join(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
+        msh_location_in = os.path.join(this_directory, 'msh', '')  # msh directory inside backend
 
         self.msh_location_in = msh_location_in
         self.msh_location_out = os.path.join(msh_location_in, 'build', '')
+
+        if not os.path.exists(self.msh_location_out): os.mkdir(self.msh_location_out)
 
         if self.inc_shape in ['circular', 'rectangular', 'twoincl']:
             msh_template, msh_name, subs = self._make_geo_circular_rectangular(self.inc_shape, d_materials)
