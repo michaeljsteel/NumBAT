@@ -25,6 +25,7 @@ import copy
 import numbers
 import uuid
 import tempfile
+import shutil
 
 import matplotlib.patches as mplpatches
 import matplotlib.collections as mplcollections
@@ -859,6 +860,12 @@ class Structure(object):
             raise NotImplementedError("\n Selected inc_shape = '%s' " \
             'is not currently implemented. \nPlease make a mesh with gmsh and ' \
             'consider contributing this to NumBAT via github.' % self.inc_shape)
+
+        #check for gmsh install
+
+        if shutil.which('gmsh') is None:
+            reporting.report_and_exit('Gmsh does not seem to be installed.')
+
 
         if self._build_new_mesh():
             geo = self._apply_geo_subs(msh_template, subs)
