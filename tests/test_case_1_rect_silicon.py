@@ -71,28 +71,29 @@ EM_ival_Stokes = 0
 AC_ival='All'
 
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Struct(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.get_material("Vacuum"),
-                        material_a=materials.get_material("Si_2016_Smith"),
-                        lc_bkg=1, lc_refine_1=1000.0, lc_refine_2=400.0)
+wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+                        material_bkg=materials.make_material("Vacuum"),
+                        material_a=materials.make_material("Si_2016_Smith"),
+                        lc_bkg=.1, lc_refine_1=20.0, lc_refine_2=20.0)
+#make_mesh_now = False, mesh_file='../backend/msh/4testing.mail') # TODO: Should also try this mode which seems to be broken
 
 # Expected effective index of fundamental guided mode.
-n_eff = wguide.material_a.n-0.1
+n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Calculate Electromagnetic Modes
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-k_AC = np.real(sim_EM_pump.Eig_values[0] - sim_EM_Stokes.Eig_values[0])
+q_AC = np.real(sim_EM_pump.Eig_values[0] - sim_EM_Stokes.Eig_values[0])
 
 # Calculate Acoustic Modes
-sim_AC_wguide = wguide.calc_AC_modes(num_AC_modes, k_AC=k_AC, EM_sim=sim_EM_pump)
+sim_AC_wguide = wguide.calc_AC_modes(num_AC_modes, q_AC=q_AC, EM_sim=sim_EM_pump)
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined, 
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC_wguide, k_AC,
+    sim_EM_pump, sim_EM_Stokes, sim_AC_wguide, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-9
