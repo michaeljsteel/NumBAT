@@ -509,7 +509,7 @@ def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
             for s in range(3):
                 for t in range(3):
                     V2 = to_Voigt[s,t]
-                    Tp_ijkl += mat_R[i,q] * mat_R[j,r] * mat_R[k,s] * mat_R[l,t] * T_PQ[V1,V2]
+                    Tp_ijkl += mat_R[i,q] * mat_R[j,r] * mat_R[k,s] * mat_R[l,t] * T_pqrs[V1,V2]
 
     return Tp_ijkl 
 
