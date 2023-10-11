@@ -1551,7 +1551,7 @@ class Simulation(object):
             fort_err = 0
 
             tstruc=self.structure
-            show_mem_est = True
+            show_mem_est = False
 
             resm = NumBAT.calc_ac_modes(
                 self.q_AC, self.n_modes,

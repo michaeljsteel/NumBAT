@@ -168,7 +168,13 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
         return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
 
 
-    num_cores = os.cpu_count()
+    # Multiprocessing here is for the demonstration of how to do it
+    # It's probably not actually improving performance
+
+    # Choose a reasonable number of processes to test the system 
+    # without grinding the computer to a halt
+    num_cores = max(2,int(os.cpu_count()/4))  
+
     manager = multiprocessing.Manager()
     q_work = multiprocessing.JoinableQueue()        # for assigning the work
     q_result = manager.Queue()      # for returning the answers
@@ -225,7 +231,8 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
 
         return (ik, tk, neff_k)
 
-    num_cores = os.cpu_count() 
+    num_cores = max(2,int(os.cpu_count()/4))
+    num_cores=1
     launch_worker_processes_and_wait(num_cores, emcalc_caller, q_result, q_work)
 
 
@@ -349,6 +356,7 @@ def do_main():
     start = time.time()
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
+    pref0 ='tmp_'+pref0
 
     # Geometric Parameters - all in nm.
 
@@ -403,10 +411,9 @@ def do_main():
                             material_bkg=mat_bkg,
                             material_a=mat_core,
                             material_b=mat_clad,
-                            lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4*refine_fac)
+                            lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
 
-    wguide.plot_mesh(prefix)
-    #wguide.check_mesh()
+    #wguide.plot_mesh(prefix)
 
     solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad)
 

@@ -31,7 +31,7 @@ clean:
 		make -C backend/fortran clean
 		make -C tutorials clean
 		make -C lit_examples clean
-		make -C JOSAB_tutorial clean
+		make -C josab_tutorial clean
 		make -C docs clean
 
 cleanmesh:
