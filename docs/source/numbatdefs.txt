@@ -4,6 +4,8 @@
 .. |NUMBAT| replace:: NumBAT
 .. |GMSH| replace:: Gmsh
 
+.. |figwidth| replace:: 10cm
+
 .. .. only:: html
 
   .. |NUMBATB| replace:: <font face="sans-serif">NumBAT</font>

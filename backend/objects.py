@@ -308,9 +308,11 @@ class Structure(object):
 
         if make_mesh_now:
             self.make_mesh(self.d_materials)
-        else:
+        else:  #TODO: this seems to be broken. But also not really worth supporting? Mesh construction is not hard
             print("Using mesh from existing file '{}'.".format(mesh_file))
             self.mesh_file = mesh_file
+            with open(self.mesh_file) as f: # read in first line giving number of msh points and elements
+                self.mail_data = f.readlines()
 
         if plotting_fields:  # TODO: This is for internal fortran plotting. Should have a less appealing name
             self.plotting_fields = 1

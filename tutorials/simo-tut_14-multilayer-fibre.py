@@ -383,7 +383,7 @@ def do_main():
                             lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
 
     #wguide.plot_mesh(prefix)
-    #wguide.check_mesh()
+    wguide.check_mesh()
 
     solve_em_dispersion(prefix, wguide, ncore, nclad, rcore)
 

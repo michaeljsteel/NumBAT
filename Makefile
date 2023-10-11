@@ -7,8 +7,13 @@ build:
 	cd backend/fortran && make 
 
 installdeps:
-	apt-get install -y python3-numpy python3-dev python3-scipy python3-nose python3-pip gfortran make gmsh libatlas-base-dev libblas-dev liblapack-dev libsuitesparse-dev
-	pip3 install matplotlib 
+	#apt-get install -y python3-numpy python3-dev python3-scipy python3-nose python3-pip gfortran make gmsh libatlas-base-dev libblas-dev liblapack-dev libsuitesparse-dev
+	#pip3 install matplotlib 
+	# 
+	# arpack-ng
+	# suitesparse umfpack
+	# gmsh
+	# sphinx
 
 examples:
 	cd tutorials && make 

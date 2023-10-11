@@ -1,6 +1,6 @@
 {
     "format": "NumBATMaterial-fmt-2.0",
-    "material_name": "Ge_2014_Wolff",  // Name of this file, will be used as identifier
+    "material_name": "Ge_cubic_2014_Wolff",  // Name of this file, will be used as identifier
  "chemical": "Ge [100]",  // Chemical composition
  "author": "Wolff",  // Author of data
  "date": "2014",  // Year of data publication/creation
