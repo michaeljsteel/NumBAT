@@ -134,7 +134,7 @@ for idx in range(min(15,num_modes_AC)):
 ax.set_xlim(coat_min,coat_max)
 ax.set_xlabel(r'Coating Thickness (nm)')
 ax.set_ylabel(r'Frequency (GHz)')
-ax.set_ylim(0, 15)
+ax.set_ylim(2.5, 9)
 fig.savefig(prefix+'-acdisp_coating.png', bbox_inches='tight')
 
 

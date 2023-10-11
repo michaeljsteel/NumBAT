@@ -291,8 +291,10 @@ increasing the number of :math:`q` points sampled through the value of the
 variable ``n_qs``, limited only by your patience.
 
 The multiprocessing library runs each task as a completely separate process on the computer. 
+Depending on the nature and number of your CPU, this may improve the performance considerably.
+This can also be easily extended to multiple node systems which will certainly improve performance.
 A very similar procedure using the ``threading``  library allows the different tasks
-to run as separate threads within the one process.
+to run as separate threads within the one process. However, due to the existence of the Python Global Interpreter Lock (GIL) which constrains what kinds of operations may run in parallel within Python , multiple threads will typically not improve the performance of |NUMBAT|.
 
 This tutorial also  shows an example of saving data, in this case the array
 of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` routine 
