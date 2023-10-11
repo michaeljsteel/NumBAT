@@ -356,7 +356,6 @@ def do_main():
     start = time.time()
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
-    pref0 ='tmp_'+pref0
 
     # Geometric Parameters - all in nm.
 

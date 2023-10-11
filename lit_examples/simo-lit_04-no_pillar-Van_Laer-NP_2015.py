@@ -80,7 +80,7 @@ Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110, symmetry_flag=False,
-                        lc_bkg=.1, lc_refine_1=10.0*refine_fac, lc_refine_2=10.0*refine_fac)
+                        lc_bkg=.1, lc_refine_1=20.0*refine_fac, lc_refine_2=20.0*refine_fac)
 
 wguide.plot_mesh(prefix)
 

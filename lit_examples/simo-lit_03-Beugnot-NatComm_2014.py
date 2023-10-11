@@ -73,16 +73,17 @@ freq_max = 11e9
 diam_0  =  1000
 diam_min = 950
 diam_max = 1300
-diam_steps = 20
+diam_steps = 50
 # find a d_diam that will give v_diams hitting 1000 exactly, with about 20 diam_steps total across (diam_max-diam_min)
 d_diam = (diam_0-diam_min)/round((diam_0-diam_min)/((diam_max-diam_min)/diam_steps))
-v_diams = np.arange(diam_min, diam_max, d_diam) # make sure that 1000 nm is included.
+v_diams = np.arange(diam_min, diam_max, d_diam).round().astype(int) # make sure that 1000 nm is included.
 num_diams = len(v_diams)
 num_interp_pts = 2000
 
 prefix, refine_fac = starter.read_args(3, sys.argv)
 
 def modes_n_gain(diam):
+    print('Handling diam', diam)
     inc_a_x = diam
     inc_a_y = diam
     # Use all specified parameters to create a waveguide object.

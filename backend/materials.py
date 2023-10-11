@@ -138,9 +138,9 @@ class Material(object):
                 Material._materials[new_mat.material_name] = new_mat
 
       try:
-        mat= Material._materials[s]
+          mat= Material._materials[s]
       except KeyError:
-        report_and_exit(f'Material {s} not found in material_data folder.')
+          report_and_exit(f'Material {s} not found in material_data folder.\nEither the material file is missing or the name field in the material file has been incorrectly specified.')
 
       return mat 
 

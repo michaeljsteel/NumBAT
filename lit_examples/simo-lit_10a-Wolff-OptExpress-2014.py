@@ -53,8 +53,6 @@ EM_ival_Stokes = 0
 # The AC mode(s) for which to calculate interaction with EM modes.
 AC_ival = 'All'
 
-prefix = 'lit_10b-'
-
 #reuse_fields=True   # use saved data
 reuse_fields=False  # calculate from scratch
 

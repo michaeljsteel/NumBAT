@@ -47,7 +47,8 @@ rectangular :math:`450x200` nm silicon waveguide.
 The corresponding results generated with ``simo-josab-02.py`` are as follows:
 
 
-.. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
+.. figure:: ../../josab_tutorial/josab_02a-gain_spectra.png
+.. .. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
    :scale: 50 %
 
 
@@ -66,7 +67,7 @@ The fields and gain parameters are as follows:
 We can reproduce Fig. 13 showing the elastic dispersion of this waveguide
 silicon waveguide using ``simo-josab-02b-acdisp.py``.
 
-.. figure:: ../../josab_tutorial/josab_02b-dispersion.png
+.. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
    :scale: 50 %
    
    Acoustic dispersion diagram with modes categorised by symmetry as in Table 1 of "Formal selection rules for Brillouin scattering in integrated waveguides and structured fibers" by C. Wolff, M. J. Steel, and C. G. Poulton ``https://doi.org/10.1364/OE.22.032489``

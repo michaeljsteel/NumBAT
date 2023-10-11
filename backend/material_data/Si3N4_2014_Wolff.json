@@ -1,6 +1,6 @@
 {
  "format": "NumBATMaterial-fmt-2.0",
- "material_name": "Si3N4_2021_Wolff",  // Name of this file, will be used as identifier
+ "material_name": "Si3N4_2014_Wolff",  // Name of this file, will be used as identifier
  "chemical": "Si3N4",  // Chemical composition
  "author": "Wolff",  // Author of data
  "date": "2014",  // Year of data publication/creation

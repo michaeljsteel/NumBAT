@@ -65,7 +65,7 @@ wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_a=materials.make_material("Ge_cubic_2014_Wolff"), # waveguide
                         lc_bkg=.1, lc_refine_1=5.0, lc_refine_2=5.0)
 #wguide.plot_mesh(prefix)
-wguide.check_mesh()
+#wguide.check_mesh()
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1

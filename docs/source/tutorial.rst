@@ -136,7 +136,7 @@ to see this image:
 .. _fig-gainspec1-label:
 
 .. figure:: ../../tutorials/tut_02-gain_spectra.png
-   :scale: 30 %
+   :width: 10cm
    
    Gain spectrum in ``tut_02-gain_spectra.png`` showing gain due to the photoelastic effect, gain due to moving boundary effect, and the total gain. The numbers near the main peaks identify the acoustic mode associated with the resonance.
 
@@ -160,12 +160,12 @@ on :math:`\log` and dB scales:
 
 
 .. figure:: ../../tutorials/tut_02-gain_spectra_zoom.png
-   :scale: 30 %
+   :width: 10cm
    
    Zoom-in of the gain spectrum in the previous figure in the file ``tut_02-gain_spectra_zoom.png`` .
 
 .. figure:: ../../tutorials/tut_02-gain_spectra-logy.png
-   :scale: 30 %
+   :width: 10cm
    
    Gain spectrum viewed on a log scale in the field ``tut_02-gain_spectra-logy.png`` .
 
@@ -180,19 +180,19 @@ profile. These parameters can also be extracted using a range of function calls 
 ``Mode`` object (see the API docs).
 
 .. figure:: ../../tutorials/tut_02-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 10cm
    
    Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_field_00.png``. The figures shows the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the
    mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
 
 .. figure:: ../../tutorials/tut_02-fields/EM_H_field_00.png
-   :scale: 50 %
+   :width: 10cm
    
    Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.  Note that the :math:`H_z` component is :math:`\pi/2` out of phase with the transverse components. 
 
 
 .. figure:: ../../tutorials/tut_02-fields/AC_field_03.png
-   :scale: 50 %
+   :width: 10cm
    
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=3` acoustic mode with gain 
    dominated by the moving boundary effect (green curve in gain spectra). 
@@ -201,7 +201,7 @@ profile. These parameters can also be extracted using a range of function calls 
 
 
 .. figure:: ../../tutorials/tut_02-fields/AC_field_04.png
-   :scale: 50 %
+   :width: 10cm
    
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=4` acoustic mode with gain dominated by the photo-elastic effect (red curve in gain spectra).
    Note that the frequency of :math:`\Omega/(2\pi)=13.45` GHz corresponds to the second peak in the gain spectrum.
@@ -266,7 +266,7 @@ to the relevant files in the ``<NumBAT>/tutorials`` directory.
 
 
 .. figure:: ../../tutorials/tut_03a-dispersion_symmetrised.png
-   :scale: 70 %
+   :width: 10cm
    
    Acoustic dispersion diagram with modes categorised by symmetry as in Table 1 of Wolff et al. 
    *Opt. Express.* **22**, 32489 (2014).
@@ -299,7 +299,7 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 ``np.savetxt`` for later analysis.
 
 .. figure:: ../../tutorials/tut_03b-dispersion_multicore.png
-   :scale: 70 %
+   :width: 10cm
    
    Acoustic dispersion diagram. The elastic wave number :math:`q` is scaled by the phase-matched SBS wavenumber :math:`2\beta` where :math:`\beta` is the propagation constant of the optical pump mode.
 
@@ -320,7 +320,7 @@ width rather than just 6.
 
 
 .. figure:: ../../tutorials/tut_04-gain_spectra-waterfall.png
-   :scale: 60 %
+   :width: 10cm
    
    Gain spectra as function of waveguide width.
 
@@ -348,7 +348,7 @@ results before reporting them.
 
 
 .. figure:: ../../tutorials/tut_05-convergence-freq_EM.png
-   :scale: 40 %
+   :width: 10cm
    
    Convergence of relative (blue) and absolute (red) optical wavenumbers :math:`k_{z,i}`.
    The left axis displays the relative error :math:`(k_{z,i}-k_{z,0})/k_{z,0}`.
@@ -356,14 +356,14 @@ results before reporting them.
 
 
 .. figure:: ../../tutorials/tut_05-convergence-freq_AC.png
-   :scale: 40 %
+   :width: 10cm
    
    Convergence of relative (solid, left) and absolute (chain, right) 
    elastic mode frequencies :math:`\nu_{i}`.
 
 
 .. figure:: ../../tutorials/tut_05-convergence-gain_PE.png
-   :scale: 40 %
+   :width: 10cm
    
    Convergence of photoelastic gain :math:`G^\text{PE}`. The absolute gain on the right hand side 
    increases  down the page because of the convention that |NUMBAT| associates backward SBS 
@@ -371,13 +371,13 @@ results before reporting them.
 
 
 .. figure:: ../../tutorials/tut_05-convergence-gain_MB.png
-   :scale: 40 %
+   :width: 10cm
    
    Absolute and relative convergence of moving boundary gain :math:`G^\text{MB}`.
 
 
 .. figure:: ../../tutorials/tut_05-convergence-gain.png
-   :scale: 40 %
+   :width: 10cm
    
    Absolute and relative convergence of total gain :math:`G`.
 
@@ -405,26 +405,26 @@ Other parameters allow selecting only one type of gain (PE or MB), changing the 
 It is important to remember that the total gain is not the simple sum of the photoelastic
 (PE) and moving boundary (MB) gains. Rather it is the coupling terms :math:`Q_\text{PE}` and :math:`Q_\text{MB}` which are added before squaring to give the total gain.  Indeed the two effects may have opposite sign giving net gains smaller than either contribution.
 
-.. figure:: ../../tutorials/tut_06-gain_spectra_SiO2.png
-   :scale: 50 %
+.. figure:: ../../tutorials/tut_06-gain_spectra.png
+   :width: 10cm
    
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving 
    boundary effect (PB), and the net gain (Total).
 
 .. figure:: ../../tutorials/tut_06-fields/EM_E_field_00.png
-   :scale: 40 %
+   :width: 10cm
    
    Electromagnetic mode profile of the pump and Stokes field in the :math:`x`-polarised 
    fundamental mode of the waveguide.
 
 
 .. figure:: ../../tutorials/tut_06-fields/AC_field_05.png
-   :scale: 40 %
+   :width: 10cm
    
    Mode profiles for acoustic mode 5 which is visible as a MB-dominated peak in the gain spectrum.
   
 .. figure:: ../../tutorials/tut_06-fields/AC_field_08.png
-   :scale: 40 %
+   :width: 10cm
   
    Mode profiles for acoustic mode 8 which is visible as a PE-dominated peak in the gain spectrum.
 
@@ -446,34 +446,34 @@ pump EM profile, it is apparent that the field overlap is favourable, where as
 the :math:`m=1` mode gives zero gain due to its anti-symmetry relative to the pump field.
 
 
-.. figure:: ../../tutorials/tut_07-gain_spectra_slot.png
-   :scale: 50 %
+.. figure:: ../../tutorials/tut_07-gain_spectra.png
+   :width: 10cm
    
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving 
    boundary effect (PB), and the net gain (Total).
 
 .. figure:: ../../tutorials/tut_07-fields/EM_E_field_00.png
-   :scale: 40 %
+   :width: 10cm
    
    Electromagnetic mode profile of the pump and Stokes field.
 
 .. figure:: ../../tutorials/tut_07-fields/AC_field_00.png
-   :scale: 40 %
+   :width: 10cm
    
    Acoustic mode profiles for mode 0.
 
 .. figure:: ../../tutorials/tut_07-fields/AC_field_02.png
-   :scale: 40 %
+   :width: 10cm
 
    Acoustic mode profiles for mode 2.
   
 .. figure:: ../../tutorials/tut_07-fields/AC_field_01.png
-   :scale: 40 %
+   :width: 10cm
   
    Acoustic mode profiles for mode 1.
 
 .. figure:: ../../tutorials/tut_07-fields/AC_field_05.png
-   :scale: 40 %
+   :width: 10cm
   
    Acoustic mode profiles for mode 5.
 
@@ -493,24 +493,24 @@ The lowest mode, for instance, is noticeably unaffected.
 
 
 .. figure:: ../../tutorials/tut_08-acdisp_coating.png
-   :scale: 40 %
+   :width: 10cm
    
    Acoustic frequencies as function of covering layer thickness.
 
    
 .. figure:: ../../tutorials/tut_08-fields/AC_field_00_20.png
-   :scale: 40 %
+   :width: 10cm
 
    Modal profiles of lowest acoustic mode.
 
 
 .. figure:: ../../tutorials/tut_08-fields/AC_field_01_20.png
-   :scale: 40 %
+   :width: 10cm
 
    Modal profiles of second acoustic mode.
 
 .. figure:: ../../tutorials/tut_08-fields/AC_field_02_20.png
-   :scale: 40 %
+   :width: 10cm
 
    Modal profiles of third acoustic mode.
 
@@ -529,12 +529,12 @@ The results are very similar but the isotropic model shows two smaller peaks at 
 frequency.
 
 .. figure:: ../../tutorials/tut_09-gain_spectra.png
-   :scale: 40 %
+   :width: 10cm
    
    Gain spectrum with anisotropic stiffness model of silicon.
 
 .. figure:: ../../tutorials/tut_02-gain_spectra.png
-   :scale: 40 %
+   :width: 10cm
    
    Gain spectrum from Tutorial 2 with  isotropic stiffness model of silicon.
 
@@ -560,48 +560,48 @@ The accompanying tutorial ``simo-tut_11b-onion3.py`` introduces one additional l
 
 
 .. figure:: ../../tutorials/tut_11a-gain_spectra.png
-   :scale: 50 %
+   :width: 10cm
 
    Gain spectrum for the two-layer structure in ``tut_11a``.
 
 .. figure:: ../../tutorials/tut_11a-fields/EM_E_field_00.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for fundamental optical mode.
 
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_17.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 17.
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_32.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 32.
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_39.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 39.
 
 .. figure:: ../../tutorials/tut_11b-gain_spectra.png
-   :scale: 50 %
+   :width: 10cm
 
    Gain spectrum for the three-layer structure in ``tut_11b``.
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_44.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 44.
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_66.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 66.
 
 .. figure:: ../../tutorials/tut_11a-fields/AC_field_69.png
-   :scale: 40 %
+   :width: 10cm
 
    Mode profile for acoustic mode 66.
 
@@ -641,34 +641,34 @@ use parallel processing techniques. However, in this case we demonstrate the use
 Threads are light-weight and can be started more efficiently than separate processes. However, as all threads share the same memory space, some care is needed to prevent two threads reading or writing to the same data structure simultaneously. This is dealt with using the helper functions and class in the `numbattools.py` module.
 
 .. figure:: ../../tutorials/tut_12-smf28-emdisp_Vneff.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical effective index as a function of normalised frequency for SMF-28 fibre.
 
 .. figure:: ../../tutorials/tut_12-smf28-emdisp_Vb.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical normalised waveguide parameter as a function of normalised frequency for SMF-28 fibre.
 
 .. figure:: ../../tutorials/tut_12-smf28-emdisp_ng.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical group index :math:`n_g=\bar{n} + V \frac{d\bar{n}}{dV}` as a function of normalised frequency for SMF-28 fibre.
 
 
 
 .. figure:: ../../tutorials/tut_12-sil-emdisp_Vneff.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical effective index as a function of normalised frequency for silicon rod in silica.
 
 .. figure:: ../../tutorials/tut_12-sil-emdisp_Vb.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical normalised waveguide parameter as a function of normalised frequency for silicon rod in silica.
 
 .. figure:: ../../tutorials/tut_12-sil-emdisp_ng.png
-   :scale: 30 %
+   :width: 10cm
 
    Optical group index :math:`n_g=\bar{n} + V \frac{d\bar{n}}{dV}` as a function of normalised frequency for silicon rod in silica.
 
@@ -705,14 +705,14 @@ partner state at a nearby frequency.
 
 
 
-.. figure:: ../../tutorials/tut_13-ac-disp_qnu.png
-   :scale: 30 %
+.. figure:: ../../tutorials/tut_13-acdisp_qnu.png
+   :width: 10cm
 
    Elastic frequency as a function of normalised wavenumber for a chalcogenide rod 
    in vacuum.
 
-.. figure:: ../../tutorials/tut_13-ac-disp_qneff.png
-   :scale: 30 %
+.. figure:: ../../tutorials/tut_13-acdisp_qneff.png
+   :width: 10cm
 
    Elastic "effective index" defined as the ratio of the bulk shear velocity to the phase velocity 
    :math:`n_\text{eff}=V_s/V`,
@@ -740,17 +740,17 @@ two-layer fibres.
 .. .. literalinclude:: ../../tutorials/simo-tut_10-onion.py
 
 .. figure:: ../../tutorials/tut_14_0-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 10cm
 
    Fundamental electromagnetic mode profile for the concentric Bragg fibre.
 
 .. .. figure:: ../../tutorials/tut_14-fields/AC_field_00.png
-   :scale: 50 %
+   :width: 10cm
 
    Fundamental acoustic mode profile for the concentric Bragg fibre.
 
 .. .. figure:: ../../tutorials/tut_14-gain_spectra.png
-   :scale: 50 %
+   :width: 10cm
 
    Gain spectrum for the concentric Bragg fibre.
 

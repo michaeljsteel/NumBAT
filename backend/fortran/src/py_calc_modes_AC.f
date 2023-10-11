@@ -429,7 +429,6 @@ C       endif
       call get_clocks(stime1, time1)
 
 
-      write(ui,*) "      - into valpr_64_AC "
       call valpr_64_AC (i_base, nvect, num_modes, neq, itermax, ltrav,
      *  tol, nonz, a(ip_row), a(ip_col_ptr), c(kp_mat1_re),
      *  c(kp_mat1_im), b(jp_mat2), 
@@ -438,7 +437,6 @@ C       endif
      *  c(kp_rhs_re), c(kp_rhs_im), c(kp_lhs_re), c(kp_lhs_im), n_conv, 
      *  debug, show_mem_est, errco, emsg)
 
-      write(ui,*) "      - out of valpr_64_AC "
 
       if (errco .ne. 0) then
           return

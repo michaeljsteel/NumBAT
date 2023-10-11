@@ -59,7 +59,8 @@ and longitudinal elastic fields. Note that the transverse and axial plots for mo
    High gain elastic mode, marked as C in paper.
 
 
-.. figure:: ../../lit_examples/lit_01-fields/AC_field_55.png
+.. .. figure:: ../../lit_examples/lit_01-fields/AC_field_55.png
+.. figure:: ../../lit_examples/lit_01-fields/AC_field_52.png
    :scale: 40 %
    
    High gain elastic mode, marked as D in paper.
@@ -125,12 +126,12 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
 .. figure:: images/beugnot_exp_gain.png
    :scale: 100 %
 
-   Measured gain spectrum for a 1 μm micron silica nanowire in J.-C. Beugnot *et al.*
+   Measured gain spectrum for a 1 micron silica nanowire in J.-C. Beugnot *et al.*
    
 .. figure:: ../../lit_examples/lit_03-gain_spectra-logy_w1000.png
    :scale: 40 %
 
-   |NUMBAT| calculated gain spectrum for the 1 μm silica nanowire.
+   |NUMBAT| calculated gain spectrum for the 1 micron silica nanowire.
 
 .. figure:: images/beugnot_gain_disp.png
    :scale: 100 %
@@ -138,7 +139,7 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
    Calculated dispersion of gain spectrum with nanowire width in J.-C. Beugnot *et al.*
 
 
-.. figure:: ../../lit_examples/lit_03-gain_diam_scan.png
+.. figure:: ../../lit_examples/lit_03-gain_tot-diam_scan.png
    :scale: 40 %
    
    Full elastic wave spectrum for silica microwire, as per Fig. 4a in paper.
