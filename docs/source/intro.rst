@@ -49,6 +49,10 @@ University of Technology Sydney, and the University of Sydney.
 
 We thank Christian Wolff, Mike Smith and Mikolaj Schmidt for contributions.
 
+Contributing to NumBAT
+================================
+NumBAT is open source software licensed under the GPL with all source and documentation available
+at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
 
 
 Support

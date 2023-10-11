@@ -410,6 +410,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     decorator.extra_axes_commands(ax)
     decorator.add_title(ax)
  
+    #fig.tight_layout()
  
     savefig(fig, '%(pre)s%(add)s.%(png)s' % {'pre': pref, 'add': suffix, 'png':pdf_png})
     plt.close(fig)
@@ -425,7 +426,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         np.savetxt('%(pre)s-MB_PE_comps%(add)s-MB.csv' % {'pre' : pref, 'add' : suffix}, 
                     save_array, delimiter=',')
 
-    if dB: # TODO: add mode labels here
+    if dB: 
         fig, ax = plt.subplots()
 
         max_G = np.max(abs(v_gain_global_tot))
