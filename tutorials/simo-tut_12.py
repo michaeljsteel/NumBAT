@@ -23,6 +23,7 @@ import materials
 import objects
 import plotting
 from numbattools import launch_worker_processes_and_wait
+from nbanalytic import TwoLayerFiberEM, EMPoln
 
 import starter
 
@@ -57,114 +58,24 @@ def plot_and_label (ax, vx, mat, sty, lab, col=None):
 #
 
 
-def chareq_em_fib2_TE_m(neff, m, k, rco, ncore, nclad):
-    # m is un-used (TE is m=0)
-    u = rco*k*np.sqrt(ncore**2-neff**2)
-    w = rco*k*np.sqrt(neff**2-nclad**2)
-
-    return sp.jv(1,u)/(sp.jv(0,u)*u) + sp.kv(1,w)/(sp.kv(0,w)*w)
-
-def chareq_em_fib2_TM_m(neff, m, k, rco, ncore, nclad):
-    # m is un-used (TM is m=0)
-    u = rco*k*np.sqrt(ncore**2-neff**2)
-    w = rco*k*np.sqrt(neff**2-nclad**2)
-
-    n2rat = (nclad/ncore)**2
-
-    fac1 = np.real(sp.jv(1,u)/(sp.jv(0,u)*u) )
-    fac2 = np.real(sp.kv(1,w)/(sp.kv(0,w)*w) )
-
-    return fac1 + n2rat * fac2
-
-def chareq_em_fib2_hy_m(neff, m, k, rco, ncore, nclad):
-    u = rco*k*np.sqrt(ncore**2-neff**2)
-    w = rco*k*np.sqrt(neff**2-nclad**2)
-
-    n2rat = (nclad/ncore)**2
-
-    invu2 = 1.0/u**2
-    invw2 = 1.0/w**2
-    jrat =  sp.jvp(m,u)/(sp.jv(m,u)*u)
-    krat =  sp.kvp(m,w)/(sp.kv(m,w)*w)
-    fac1 =  jrat + krat
-    fac2 =  jrat + n2rat * krat
-    fac3 = m*m*(invu2 + invw2)*(invu2 + n2rat*invw2)
-    return fac1*fac2-fac3
-
-
-def plot_em_chareq_at_k(k, rcore, ncore, nclad):
-    nbrack = 500
-    dn = ncore-nclad
-    v_neff = np.linspace(ncore-dn/nbrack, nclad+dn/nbrack, nbrack)
-    v_dr_TE = np.zeros(nbrack, float)
-    v_dr_TM = np.zeros(nbrack, float)
-    v_dr_hy = np.zeros(nbrack, float)
-
-    fig, axs = plt.subplots(1,3, figsize=(20,6))
-    for m in range(5):
-        for i,neff in enumerate(v_neff):
-            v_dr_TE[i] = chareq_em_fib2_TE_m(neff, m, k, rcore, ncore, nclad)+.1
-            v_dr_TM[i] = chareq_em_fib2_TM_m(neff, m, k, rcore, ncore, nclad)
-            v_dr_hy[i] = chareq_em_fib2_hy_m(neff, m, k, rcore, ncore, nclad)
-        axs[0].plot(v_neff, v_dr_TE)
-        axs[1].plot(v_neff, v_dr_TM)
-        axs[2].plot(v_neff, v_dr_hy)
-    for i in range(3):
-        axs[i].set_ylim(-20,20)
-    fig.savefig('tut_12-em_chareq.png')
-
-def solve_chareq_em_fib2_disprel(f_disprel, family, k, nmodes, mlo, mhi, rco, ncore, nclad):
-    # solves for modes with azimuthal order in [mlo, mhi] inclusive
-
-    nbrack = 500
-    dn = ncore-nclad
-
-    # look for up to nmodes in [nclad, ncore]
-    neff = np.linspace(ncore-dn/nbrack, nclad+dn/nbrack, nbrack)
-    sol_neff = np.zeros(nmodes, dtype=np.float64)
-    imode = 0
-    for m in range(mlo, mhi+1):
-
-        last_neff = neff[0]
-        last_res = f_disprel(last_neff, m, k, rco, ncore, nclad)
-
-        nobrack = True # if we find no roots with a given m, there will be no higher m roots and we can give up
-        ineff = 1
-        while imode < nmodes and ineff < nbrack:
-            t_neff = neff[ineff]
-            t_res = f_disprel(t_neff, m, k, rco, ncore, nclad)
-
-            if ((family == 'Hy' and last_res * t_res < 0) # Hybrid eig curves are smooth
-                 or (last_res<0 and t_res>0)): # TE and TM curves have +inf to -inf breaks which are not brackets
-                # a bracket! go find the root
-                nobrack = False
-                #root, rootres
-                root  = sciopt.brentq(f_disprel, last_neff, t_neff,
-                                     args=(m, k, rco, ncore, nclad))
-                sol_neff[imode] = root
-                imode += 1
-
-            last_neff = t_neff
-            last_res  = t_res
-            ineff+=1
-
-        if nobrack: break # exhausted all roots at this k
-
-
-    return sol_neff
-
-
 # Solve the analytic dispersion relation using worker processes
 def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
+
+    fib_em = TwoLayerFiberEM(ncore, nclad, rco)
 
     # The worker function passed to CalcThread to do one task 
     def solemrod_caller(args):
         (ik, k) = args # Matches queues passed to CalcThread
+        
         mhy_lo = 1
         mhy_hi = 5
-        v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
-        v_neff_TM = solve_chareq_em_fib2_disprel(chareq_em_fib2_TM_m, 'TM', k, nmodes, 0, 0, rco, ncore, nclad)
-        v_neff_hy = solve_chareq_em_fib2_disprel(chareq_em_fib2_hy_m, 'Hy', k, nmodes, mhy_lo, mhy_hi, rco, ncore, nclad) # m in [1,5)
+        #v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
+        #v_neff_TM = solve_chareq_em_fib2_disprel(chareq_em_fib2_TM_m, 'TM', k, nmodes, 0, 0, rco, ncore, nclad)
+        #v_neff_hy = solve_chareq_em_fib2_disprel(chareq_em_fib2_hy_m, 'Hy', k, nmodes, mhy_lo, mhy_hi, rco, ncore, nclad) # m in [1,5)
+        v_neff_TE = fib_em.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
+        v_neff_TM = fib_em.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
+        v_neff_hy = fib_em.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
+
         return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
 
 

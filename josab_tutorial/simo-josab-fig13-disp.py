@@ -46,7 +46,7 @@ wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a= mat_core, lc_bkg=.05, lc_refine_1=2.0*refine_fac, lc_refine_2=2.0*refine_fac)
 
-wguide.check_mesh()
+#wguide.check_mesh()
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1

@@ -29,46 +29,76 @@ In this paper, Laude and Beugnot plot a spectrum of the elastic energy density, 
 not directly measureable. Howver the peaks show very close alignment with the gain
 spectrum for the same structure as is apparent in the second plot.
 
-The modal profiles for the peaks marked C and D can also be compared in the following plots.
+The modal profiles for the peaks marked C and D can also be compared with those from the paper in the subsequent plots.
 The most direct comparison comes from looking at the |NUMBAT| contour plots for the transverse
 and longitudinal elastic fields. Note that the transverse and axial plots for mode D in the paper are inconsistent. The axial plot is the correct one for this mode.
 
-.. .. literalinclude:: ../../lit_examples/simo-lit_01-Laude-AIPAdv_2013-silica.py
-    :lines: 0-
+.. raw:: latex
 
-.. figure:: images/laude_aip_advances_bsbs_1.png
-   :scale: 300 %
+    \clearpage
 
-   Spectrum of elastic mode energy and mode profiles calculated in 
+
+.. figure:: images/laude_aip_advances_bsbs_1_spec.png
+   :width: 10cm
+
+   Spectrum of elastic mode energy  calculated in 
    Laude and Beugnot for backward SBS in a silica waveguide.
 
 .. figure:: ../../lit_examples/lit_01-gain_spectra-logy.png
-   :scale: 40 %
+   :width: 10cm
    
    |NUMBAT| gain spectrum on semilogy axis.
 
+
 .. figure:: ../../lit_examples/lit_01-fields/EM_E_field_00.png
-   :scale: 40 %
+   :width: 10cm
    
-   Fundamental optical mode profiles.
+   Fundamental optical mode profiles calculated in |NUMBAT|.
+
+.. raw:: latex
+
+    \clearpage
+
+
+
+.. figure:: images/laude_aip_advances_bsbs_1_modeC.png
+   :width: 13cm
+
+   Elastic mode profiles calculated in 
+   Laude and Beugnot for backward SBS in a silica waveguide. Mode  C  corresponds to the peak marked in the spectrum above.
 
 
 .. figure:: ../../lit_examples/lit_01-fields/AC_field_04.png
-   :scale: 40 %
+   :width: 13cm
    
-   High gain elastic mode, marked as C in paper.
-
-
-.. .. figure:: ../../lit_examples/lit_01-fields/AC_field_55.png
-.. figure:: ../../lit_examples/lit_01-fields/AC_field_52.png
-   :scale: 40 %
-   
-   High gain elastic mode, marked as D in paper.
+   |NUMBAT| calculation of high gain elastic mode, marked as C in paper.
 
 
 .. raw:: latex
 
     \clearpage
+
+
+.. figure:: images/laude_aip_advances_bsbs_1_modeD.png
+   :width: 13cm
+
+   Elastic mode profiles calculated in 
+   Laude and Beugnot for backward SBS in a silica waveguide. Mode D corresponds to the peak marked in the spectrum above.
+
+
+
+.. .. figure:: ../../lit_examples/lit_01-fields/AC_field_55.png
+.. figure:: ../../lit_examples/lit_01-fields/AC_field_52.png
+   :width: 13cm
+   
+   |NUMBAT| calculation of high gain elastic mode, marked as D in paper.
+
+
+.. raw:: latex
+
+    \clearpage
+
+
 
 Example 2 -- BSBS in a rectangular silicon waveguide 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -84,26 +114,41 @@ In this case, with a very large number of modes of different shear wave order,
 the precise mode profile for highest gain depends very sensitively on the 
 simulation parameters.
 
-.. figure:: images/laude_aip_advances_bsbs_2.png
-   :scale: 200 %
+.. figure:: images/laude_aip_advances_bsbs_2_spec.png
+   :width: 12cm
 
-   Spectrum of elastic mode energy and mode profiles calculated in 
+   Spectrum of elastic mode energy  calculated in 
    Laude and Beugnot for backward SBS in a silicon waveguide.
 
 .. figure:: ../../lit_examples/lit_02-gain_spectra-logy.png
-   :scale: 40 %
+   :width: 12cm
    
    |NUMBAT| gain spectrum on semilogy axis.
 
+
+.. figure:: images/laude_aip_advances_bsbs_2_modeG.png
+   :width: 12cm
+
+   Field profiles for mode G  calculated in 
+   Laude and Beugnot for backward SBS in a silicon waveguide.
+
 .. figure:: ../../lit_examples/lit_02-fields/AC_field_23.png
-   :scale: 50 %
+   :width: 12cm 
    
-   High gain elastic mode, marked as G in paper.
+   High gain elastic mode calculated by |NUMBAT|, marked as G in paper.
+
+
+.. figure:: images/laude_aip_advances_bsbs_2_modeH.png
+   :width: 12cm
+
+   Field profiles for mode H  calculated in 
+   Laude and Beugnot for backward SBS in a silicon waveguide.
+
 
 .. figure:: ../../lit_examples/lit_02-fields/AC_field_296.png
-   :scale: 50 %
+   :width: 12cm 
    
-   High gain elastic mode, marked as H in paper.
+   High gain elastic  mode calculated by |NUMBAT|, marked as H in paper.
 
 
 
@@ -124,50 +169,50 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
     :lines: 0-
 
 .. figure:: images/beugnot_exp_gain.png
-   :scale: 100 %
+   :width: 12cm
 
    Measured gain spectrum for a 1 micron silica nanowire in J.-C. Beugnot *et al.*
    
 .. figure:: ../../lit_examples/lit_03-gain_spectra-logy_w1000.png
-   :scale: 40 %
+   :width: 12cm
 
    |NUMBAT| calculated gain spectrum for the 1 micron silica nanowire.
 
 .. figure:: images/beugnot_gain_disp.png
-   :scale: 100 %
+   :width: 12cm
 
    Calculated dispersion of gain spectrum with nanowire width in J.-C. Beugnot *et al.*
 
 
 .. figure:: ../../lit_examples/lit_03-gain_tot-diam_scan.png
-   :scale: 40 %
+   :width: 12cm
    
    Full elastic wave spectrum for silica microwire, as per Fig. 4a in paper.
 
 
 .. figure:: images/beugnot_elastic_fields.png
-   :scale: 80 %
+   :width: 12cm
 
    Calculated elastic mode profiles for the 1 micron nanowire in J.-C. Beugnot *et al.*
 
 .. figure:: ../../lit_examples/lit_03-diam-1000-fields/EM_E_field_00.png
 
 .. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_02.png
-   :scale: 40%
+   :width: 12cm
    Radial shear mode.
 
 .. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_05.png
-   :scale: 40 %
+   :width: 12cm
 
    Azimuthal shear mode.
 
 .. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_21.png
-   :scale: 40 %
+   :width: 12cm
 
    Azimuthal shear mode.
 
 .. figure:: ../../lit_examples/lit_03-diam-1000-fields/AC_field_28.png
-   :scale: 40 %
+   :width: 12cm
 
    Azimuthal shear mode.
 
@@ -195,13 +240,13 @@ The following example shows an approximate way to avoid the problem for now.
 
 
 .. figure:: ../../lit_examples/lit_04b-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 12cm %
    
    Fundamental optical mode fields.
 
 
 .. figure:: ../../lit_examples/lit_04b-fields/AC_field_38.png
-   :scale: 50 %
+   :width: 12cm %
    
    Dominant high gain elastic mode.
    Note how the absence of an absorptive boundary on the SiO2 slab causes this layer to significantly distorted the elastic modes.
@@ -212,7 +257,7 @@ which gives good agreement for the gain spectrum:
 
 
 .. figure:: ../../lit_examples/lit_04a-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectrum for the simplified case of a waveguide surrounded by vacuum.
 
@@ -239,13 +284,13 @@ energy being excessively concentrated in the substrate.
 
 
 .. figure:: ../../lit_examples/lit_05-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 12cm %
    
    Fundamental optical mode fields.
 
 
 .. figure:: ../../lit_examples/lit_05-fields/AC_field_06.png
-   :scale: 50 %
+   :width: 12cm %
    
    Dominant high gain elastic mode.
 
@@ -268,34 +313,34 @@ This was described in O. Florez *et al.*, `Brillouin self-cancellation
 
 
 .. figure:: ../../lit_examples/lit_06a-fields/AC_field_04.png
-   :scale: 50 %
+   :width: 12cm %
    
    :math:`TR_{21}` elastic mode fields of a nanowire with diameter 550 nm.
 
 
 .. figure:: ../../lit_examples/lit_06a-fields/AC_field_05.png
-   :scale: 50 %
+   :width: 12cm %
    
    :math:`R_{01}` elastic mode fields of a nanowire with diameter 550 nm.
 
 
 .. figure:: ../../lit_examples/lit_06a-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra of a nanowire with diameter 550 nm, matching blue curve of Fig. 3b in paper.
 
 
 .. figure:: ../../lit_examples/lit_06a-gain_spectra-5.png
-   :scale: 50 %
+   :width: 12cm %
 
 .. figure:: ../../lit_examples/lit_06a-gain_spectra-6.png
-   :scale: 50 %
+   :width: 12cm %
 
 .. figure:: ../../lit_examples/lit_06a-gain_spectra-8.png
-   :scale: 50 %
+   :width: 12cm %
 
 .. figure:: ../../lit_examples/lit_06a-gain_spectra-11.png
-   :scale: 50 %
+   :width: 12cm %
    
    Zoomed in gain spectra around gain peaks of 550 nm diameter nanowire.
 
@@ -314,13 +359,13 @@ but now for a wider core.
 
 
 .. figure:: ../../lit_examples/lit_06b-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra of a nanowire with diameter 1160 nm, as in Fig. 4 of Florez, showing near perfect cancellation at 5.4 GHz.
 
 
 .. figure:: ../../lit_examples/lit_06b-gain_spectra-logy.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra of a nanowire with diameter 1160 nm, as in Fig. 4 of paper, showing near perfect cancellation at 5.4 GHz.
 
@@ -343,19 +388,19 @@ as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
 
 
 .. figure:: ../../lit_examples/lit_07-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 12cm %
    
    Fundamental optical mode fields.
 
 
 .. figure:: ../../lit_examples/lit_07-fields/AC_field_19.png
-   :scale: 50 %
+   :width: 12cm %
    
    Dominant high gain elastic mode.
 
 
 .. figure:: ../../lit_examples/lit_07-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra showing gain due to photoelastic effect, gain due to moving boundary effect, and total gain.
 
@@ -373,25 +418,25 @@ This example (``simo-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale grou
 
 
 .. figure:: ../../lit_examples/lit_08-fields/EM_E_field_00.png
-   :scale: 50 %
+   :width: 12cm %
    
    Fundamental (symmetric TE-like) optical mode fields.
 
 
 .. figure:: ../../lit_examples/lit_08-fields/EM_E_field_01.png
-   :scale: 50 %
+   :width: 12cm %
    
    2nd lowest order (anti-symmetric TE-like) optical mode fields.
 
 
 .. figure:: ../../lit_examples/lit_08-fields/AC_field_23.png
-   :scale: 50 %
+   :width: 12cm %
    
    Dominant high gain elastic mode.
 
 
 .. figure:: ../../lit_examples/lit_08-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra showing gain due to photoelastic effect, gain due to moving boundary effect, and total gain.
 
@@ -409,7 +454,7 @@ This example, in ``simo-lit_09-Morrison-Optica_2017.py``, from the Sydney group 
 
 
 .. figure:: ../../lit_examples/lit_09-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
    
    Gain spectra showing gain due to photoelastic effect, gain due to moving boundary effect, and total gain.
 
@@ -428,7 +473,7 @@ The second of these two files illustrates the rotation of the core material from
 
 
 .. figure:: ../../lit_examples/lit_10a-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %
 
 .. figure:: ../../lit_examples/lit_10b-gain_spectra.png
-   :scale: 50 %
+   :width: 12cm %

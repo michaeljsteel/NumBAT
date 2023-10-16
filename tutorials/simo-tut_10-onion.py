@@ -59,7 +59,7 @@ wguide = objects.Structure(unitcell_x, d_lo, inc_shape=inc_shape,
                         material_k=mat_lo, material_l=mat_hi,
                         lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
 
-wguide.check_mesh()
+#wguide.check_mesh()
 # Move origin to nominal centre of waveguide, y adjustment needs refinement based on mesh template.
 # Note different shifts are allowed for EM and acoustic, because acoustic domain excludes vacuum regions
 # Shifts are in nm
