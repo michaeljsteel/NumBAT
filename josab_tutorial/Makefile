@@ -3,7 +3,7 @@ PYTHON=python3
 
 .PHONY: all
 all: josab01 josab02 josab03 josab04 josab05 josab06 
-all2: josab02 josab03 josab04 josab05 josab06 
+all2: josab04 josab05 josab06 
 
 .PHONY: allfast
 allfast: fjosab01 fjosab02 fjosab03 fjosab04 fjosab05 fjosab06
@@ -26,7 +26,7 @@ fjosab03:
 	$(PYTHON) simo-josab-03.py fast=1
 
 josab04: 
-	$(PYTHON) simo-josab-04i.py
+	$(PYTHON) simo-josab-04.py
 fjosab04: 
 	$(PYTHON) simo-josab-04.py fast=1
 

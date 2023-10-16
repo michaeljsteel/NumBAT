@@ -56,7 +56,7 @@ wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         lc_bkg=0.05,  # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
                         lc_refine_1=4.*refine_fac, # mesh refinement factor near the interface of waveguide, larger lc2 = finer along horizontal interface
                         lc_refine_2=5.*refine_fac) # mesh refinement factor near the origin/centre of waveguide
-wguide.check_mesh()
+#wguide.check_mesh()
 
 # Print information on material data in terminal
 print('\nUsing %s material data from' % wguide.get_material('a').chemical)
