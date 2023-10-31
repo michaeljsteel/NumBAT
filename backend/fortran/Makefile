@@ -1,12 +1,106 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
-#F_COMPILER = g95
-F_COMPILER = gnu95
-#F_COMP_EXE = f77
+#PLAT="linux_inteloneapi"
+#PLAT="linux_vanilla"
+PLAT="MacOS"
+#PLAT="myplatform"
+
+ifeq ($(PLAT), "linux_vanilla")
+
+F_COMPILER = g95
+F_COMP_EXE = f77
 F_COMP_EXE = f95
 
-#FORT_EXE = intelem
-C_COMP_EXE = gcc
+NUMPYDIR = /usr/lib/python3/dist-packages/numpy
+
+# BLAS and LAPACK from generic GNU-Linux 
+#
+ARPACK_INCL = -I/usr/local/include
+ARPACK_LIB = -L/usr/local/lib -larpack
+
+UMFPACK_INC = -I/usr/include/suitesparse 
+UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
+
+MATHINC = $(ARPACK_INCL) 
+MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB) -llapack -lblas 
+GENLIB = -lrt
+
+PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+
+else ifeq ($(PLAT), "linux_inteloneapi")
+
+F_COMPILER = g95
+F_COMP_EXE = f77
+F_COMP_EXE = f95
+
+NUMPYDIR = /usr/lib/python3/dist-packages/numpy
+
+ARPACK_INCL = -I/usr/local/include
+ARPACK_LIB = -L/usr/local/lib -larpack
+
+# BLAS and LAPACK from free Intel OneApi MKL library
+MKLROOT = /opt/intel/oneapi/mkl/latest
+MKL_INCL = -I$(MKLROOT)/include
+MKL_LIB = -L$(MKLROOT)/lib/intel64 -lmkl_rt
+
+UMFPACK_INC = -I/usr/include/suitesparse 
+UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
+MATHINC = $(MKL_INCL) $(ARPACK_INCL) 
+MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
+GENLIB = -lrt
+
+PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+
+else ifeq ($(PLAT), "MacOS")
+
+$(info "Building for MacOS")
+$(info )
+
+GCCROOT = /opt/local
+GCCBIN = $(GCCROOT)/bin
+GCCVER = mp-13
+F_COMPILER = $(GCCBIN)/gfortran-$(GCCVER)
+F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
+C_COMP_EXE = $(GCCBIN)/gcc-$(GCCVER)
+
+# standard lapack, blas and arpack
+LAPACK_LIB = -L /opt/local/lib -llapack -lblas
+ARPACK_INCL = -I/opt/local/include
+ARPACK_LIB = -L/opt/local/lib -larpack $(LAPACK_LIB) 
+#MKLROOT = 
+#MKL_INCL = 
+#MKL_LIB = 
+UMFPACK_INC = -I /opt/local/include
+UMFPACK_LIB = -L/opt/local/lib/ -lumfpack -lcholmod -lamd
+MATHINC = /opt/local/include $(MKL_INCL) $(ARPACK_INCL) 
+MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB) -L /opt/local/lib/gcc13
+#GENLIB = -lrt
+
+#DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+
+PYVER = 3.12
+PYNAME = python$(PYVER)
+PYROOT = /Library/Frameworks/Python.framework/Versions/$(PYVER)
+NUMPYDIR = $(PYROOT)/lib/$(PYNAME)/site-packages/numpy
+PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/
+PYLIB = -L $(PYROOT)/lib -l$(PYNAME) 
+OSF77FLAGS = -D __APPLE__
+
+else ifeq ($(PLAT), "myplatform")
+# You complete me!
+MATHINC = 
+MATHLIB = 
+GENLIB = -lrt
+
+endif
+
+##F_COMPILER = g95
+#F_COMPILER = gnu95
+##F_COMP_EXE = f77
+#F_COMP_EXE = f95
+#
+##FORT_EXE = intelem
+#C_COMP_EXE = gcc
 
 SRCS = $(wildcard src/*.f)
 OBJSA = $(SRCS:.f=.o)
@@ -31,48 +125,14 @@ UMFPACK_WRAPPER = $(SS_WRAP)/$(UMFPACK_OBJ)
 SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
-MATH_PLAT="inteloneapi"
-#MATH_PLAT="vanilla"
-#MATH_PLAT="myplatform"
 
-ifeq ($(MATH_PLAT), "vanilla")
-# BLAS and LAPACK from generic GNU-Linux 
-#
-ARPACK_INCL = -I/usr/local/include
-ARPACK_LIB = -L/usr/local/lib -larpack
-UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-MATHINC = $(ARPACK_INCL) 
-MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB) -llapack -lblas 
-GENLIB = -lrt
-
-else ifeq ($(MATH_PLAT), "inteloneapi")
-# BLAS and LAPACK from free Intel OneApi MKL library
-#
-ARPACK_INCL = -I/usr/local/include
-ARPACK_LIB = -L/usr/local/lib -larpack
-MKLROOT = /opt/intel/oneapi/mkl/latest
-MKL_INCL = -I$(MKLROOT)/include
-MKL_LIB = -L$(MKLROOT)/lib/intel64 -lmkl_rt
-UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-MATHINC = $(MKL_INCL) $(ARPACK_INCL) 
-MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
-GENLIB = -lrt
-
-else ifeq ($(MATH_PLAT), "myplatform")
-# You complete me!
-MATHINC = 
-MATHLIB = 
-GENLIB = -lrt
-
-endif
 
 #DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
-PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
 
 
 #Flags come in a Distribution object passed through as attributes
 #F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -ffixed-form -fno-second-underscore -O3 -cpp
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) 
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops 
 
 #F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops 
@@ -141,10 +201,10 @@ $(CMETHOD).so: $(CMETHOD).pyf $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 	echo "New compilation method Step B"
 	#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
 	#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
+	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).so
 
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
-	$(C_COMP_EXE) -O5 -DZLONG -I/usr/include/suitesparse -c $(UMFPACK_SRC) \
+	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
 		-fPIC -o $(UMFPACK_WRAPPER)
 
 $(CMETHOD).pyf: $(SRCS)
@@ -153,8 +213,9 @@ $(CMETHOD).pyf: $(SRCS)
 	-mkdir build
 	f2py3 -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower 
 	f2py3 $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
-	cp /usr/lib/python3/dist-packages/numpy/f2py/src/fortranobject.c build
+	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
+
 
 
 #purge:
