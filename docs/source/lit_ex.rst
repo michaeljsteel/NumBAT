@@ -1,6 +1,12 @@
 
 .. include:: numbatdefs.txt
 
+.. _chap-literature-label:
+
+***********************
+Literature Examples
+***********************
+
 
 Introduction 
 ---------------------
@@ -26,12 +32,19 @@ versions of nominally the same material to be selected,so that users can easily
 compare calculations to other authors's exact parameter choices, without changing their preferred material values for their own samples and experiments.
 
 In this paper, Laude and Beugnot plot a spectrum of the elastic energy density, which is
-not directly measureable. Howver the peaks show very close alignment with the gain
+not directly measureable. However the spectral peaks show close alignment with the |NUMBAT| gain
 spectrum for the same structure as is apparent in the second plot.
+We attribute the remaining difference in the location of the spectral peaks to 
+the choice of elastic material properties in the paper. 
+The paper reports a bulk shear velocity of 3400 m/s, which is around 8% smaller than the 
+usual value of approximately 3760 m/s, but the full set of material 
+properties used in the calculations are not provided.
+Hence we have used a more standard set of values.
 
 The modal profiles for the peaks marked C and D can also be compared with those from the paper in the subsequent plots.
 The most direct comparison comes from looking at the |NUMBAT| contour plots for the transverse
-and longitudinal elastic fields. Note that the transverse and axial plots for mode D in the paper are inconsistent. The axial plot is the correct one for this mode.
+and longitudinal elastic fields. Note that the transverse and axial plots for mode D in the paper are inconsistent. 
+The axial plot is the correct one for this mode.
 
 .. raw:: latex
 
@@ -65,7 +78,7 @@ and longitudinal elastic fields. Note that the transverse and axial plots for mo
    :width: 13cm
 
    Elastic mode profiles calculated in 
-   Laude and Beugnot for backward SBS in a silica waveguide. Mode  C  corresponds to the peak marked in the spectrum above.
+   Laude and Beugnot for backward SBS in a silica waveguide of diameter 1.05 micron. Mode  C  corresponds to the peak marked in the spectrum above.
 
 
 .. figure:: ../../lit_examples/lit_01-fields/AC_field_04.png
@@ -83,7 +96,8 @@ and longitudinal elastic fields. Note that the transverse and axial plots for mo
    :width: 13cm
 
    Elastic mode profiles calculated in 
-   Laude and Beugnot for backward SBS in a silica waveguide. Mode D corresponds to the peak marked in the spectrum above.
+   Laude and Beugnot for backward SBS in a silica waveguide of diameter 1.05 micron. 
+   Mode D corresponds to the peak marked in the spectrum above.
 
 
 

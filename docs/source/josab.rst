@@ -1,6 +1,12 @@
 
 .. include:: numbatdefs.txt
 
+.. _chap-josab-label:
+
+***********************
+JOSA-B Tutorial Paper
+***********************
+
 Introduction
 -------------------------------------------
 
