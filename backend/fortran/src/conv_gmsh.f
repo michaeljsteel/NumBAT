@@ -368,8 +368,18 @@ c###############################################################################
       character com_line*1024
       integer sysret
 
+#ifdef __APPLE__
+
+      com_line = "/Applications/Gmsh.app/Contents/MacOS/gmsh -0 -2" //
+     *   " -order 2 -v 0 -o " // 
+     *    trim(file1_mesh) // " " // trim(file0_mesh)
+
+#else
+
       com_line = "gmsh -0 -2  -order 2 -v 0 -o " // 
      *    trim(file1_mesh) // " " // trim(file0_mesh)
+
+#endif !! __APPLE__
 
       call system(com_line, sysret)
 
