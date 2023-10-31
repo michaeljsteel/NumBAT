@@ -27,6 +27,7 @@ import uuid
 import tempfile
 import shutil
 import platform
+from pathlib import Path
 
 import matplotlib.patches as mplpatches
 import matplotlib.collections as mplcollections
@@ -866,9 +867,14 @@ class Structure(object):
 
         #check for gmsh install
 
-        if platform.system() != 'Darwin':  # TODO: do better testing for MAC
+        if platform.system() == 'Darwin':  # TODO: do better testing for MAC
+            if not Path('/Applications/Gmsh.app/Contents/MacOS/gmsh').is_file():
+                reporting.report_and_exit('Gmsh does not seem to be installed at /Applications/Gmsh.app/Contents/MacOS/gmsh.')
+
+        else:
             if shutil.which('gmsh') is None:
                 reporting.report_and_exit('Gmsh does not seem to be installed.')
+        
 
 
         if self._build_new_mesh():
