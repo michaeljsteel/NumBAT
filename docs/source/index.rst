@@ -6,106 +6,33 @@
 .. include:: numbatdefs.txt
 
 
-Contents
+NumBAT Documentation!
 ====================================
 
 .. toctree::
    :maxdepth: 2
    :numbered: 
 
+   intro
 
-==================
-Introduction
-==================
+   install
 
-.. toctree::
-    :maxdepth: 4
+   usage
 
-    intro
+   tutorial
 
+   josab
 
-.. _chap-install-label:
+   lit_ex
 
-==================
-Installation
-==================
+   pythonapi
 
-.. toctree::
-    :maxdepth: 4
-
-    install
-
-====================================
-Basic Usage 
-====================================
-
-.. toctree::
-    :maxdepth: 4
-
-    usage
-
-====================================
-Tutorial
-====================================
-
-.. toctree::
-    :maxdepth: 4
-
-    tutorial
+   fem
 
 
-.. _chap-josab-label:
-
-====================================
-JOSA-B Tutorial Paper
-====================================
-
-.. toctree::
-    :maxdepth: 4
-
-    josab
-
-.. _chap-literature-label:
-
-====================================
-Literature Examples
-====================================
-
-.. toctree::
-    :maxdepth: 4
-
-    lit_ex
-
-.. _chap-pythonbackend-label:
-
-==================
-Python Interface
-==================
-
-.. toctree::
-    :maxdepth: 4
-
-    pythonapi
-
-==================
-Fortran Backend
-==================
-
-The intention of |NUMBAT| is that the Fortran FEM routines are essentially black boxes. 
-They are called from ``mode_calcs.py`` and return the modal fields. 
-However, there are a few important things to know about the workings of these routines.
-
-.. toctree::
-    :maxdepth: 4
-
-    fem
-
-
-
-
-
+********************
 Indices and tables
-==================
+********************
 
 * :ref:`genindex`
 * :ref:`modindex`

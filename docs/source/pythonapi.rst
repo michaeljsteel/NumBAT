@@ -1,4 +1,12 @@
 
+.. include:: numbatdefs.txt
+
+.. _chap-pythonapi-label:
+
+*********************
+Python Interface API
+*********************
+
 
 
 This chapter provides a technical auto-generated summary  of the NumBAT Python API. 
