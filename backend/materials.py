@@ -37,17 +37,22 @@ class BadMaterialFileError(Exception):
     pass
 
 
+#TODO: this class should know about files. Pull the reading from files out.
 class VoigtTensor4(object):
   '''A class for representing rank 4 tensors in the compact Voigt representation.'''
 
-  def __init__(self, sym, src_dict, src_file):
+  def __init__(self, sym, src_dict=None, src_file=None):
     self.mat=np.zeros([7,7],dtype=float)  # unit indexing
     self.sym = sym  # eg 'c', 'p', 'eta'
+
     self.d=src_dict
     self.json_file=src_file
 
   def read(self, m, n, optional=False):
     elt='{0}_{1}{2}'.format(self.sym, m, n)
+
+    if self.d is None or self.json_file is None:
+        reoprt_and_exit('Voigt Tensor', self.sym, 'is not setup for file reading.')
 
     if elt not in self.d: 
       if not optional:
@@ -63,6 +68,20 @@ class VoigtTensor4(object):
     self.read(1,1) 
     self.read(1,2) 
     self.read(4,4)
+    self.set_isotropic(self.mat[1,1], self.mat[1,2], self.mat[4,4])
+
+#  def copy(self, tm, tn, fm, fn):
+#    self.mat[tm,tn]=self.mat[fm,fn]
+
+#  def copy(self, tm, tn, fm, fn):
+#    self.mat[tm,tn]=self.mat[fm,fn]
+
+#def value(self, m, n): return self.mat[m-1, n-1]
+  def set_isotropic(self, m11, m12, m44):
+    self.mat[1,1]= m11
+    self.mat[1,2]= m12
+    self.mat[4,4]= m44
+
     self.mat[2,2]= self.mat[1,1]
     self.mat[3,3]= self.mat[1,1]
     self.mat[5,5]= self.mat[4,4]
@@ -73,13 +92,7 @@ class VoigtTensor4(object):
     self.mat[3,1]= self.mat[1,2]
     self.mat[3,2]= self.mat[1,2]
 
-#  def copy(self, tm, tn, fm, fn):
-#    self.mat[tm,tn]=self.mat[fm,fn]
 
-#  def copy(self, tm, tn, fm, fn):
-#    self.mat[tm,tn]=self.mat[fm,fn]
-
-#def value(self, m, n): return self.mat[m-1, n-1]
 
   def __getitem__(self, k):
     return self.mat[k[0], k[1]]
@@ -122,8 +135,7 @@ class Material(object):
       Material._data_loc= os.path.join(this_dir, "material_data", "")
 
     @classmethod
-    def _make_material(cls, s):
-      if not len(Material._materials):  # first time through, we load all the materials
+    def _load_materials_library(cls):
         Material._set_file_locations()
         for f in os.listdir(Material._data_loc):
             if f.endswith(".json"):
@@ -134,8 +146,13 @@ class Material(object):
 
                 if new_mat.material_name in Material._materials: # two mats have the same name  TODO: file_name is actually a mat_name
                     raise report_and_exit(f"Material file {f} has the same name as an existing material {new_mat.material_name}.")
-            #Material._materials[f[:-5]] 
+
                 Material._materials[new_mat.material_name] = new_mat
+
+    @classmethod
+    def _make_material(cls, s):
+      if not len(Material._materials):  # first time through, we load all the materials
+          Material._load_materials_library()
 
       try:
           mat= Material._materials[s]
@@ -144,17 +161,21 @@ class Material(object):
 
       return mat 
 
-    def __init__(self, data_file):
 
-        if not len(Material._data_loc): self.__class__._set_file_locations()
+
+
+    def __init__(self, data_file):  # This should never be called directly by users, who should call make_material()
+
+        #if not len(Material._data_loc): self.__class__._set_file_locations()  # This is the first material requested. Need to do some setup
 
         self.json_file=data_file
         try:
-            self._load_data_file(Material._data_loc, self.json_file)
+            self._load_data_file(self.json_file)
+            
         except FileNotFoundError:
             report_and_exit('Material data {0} file not found.'.format(self.json_file))
 
-
+        
 
     def __str__(self):
       s='''
@@ -181,16 +202,26 @@ class Material(object):
         '''Returns a string containing key elastic properties of the material.'''
         try:
             s =  'Material:       {0}'.format(self.material_name)
-            s+='\nDensity:        {0:.3f}'.format(self.rho)
-            s+='\nVelocity long.: {0:.3f}'.format( self.Vac_longitudinal() )
-            s+='\nVelocity shear: {0:.3f}'.format( self.Vac_shear())
+            s+='\nDensity:        {0:.3f} kg/m^3'.format(self.rho)
+
+            if self.is_isotropic():
+                s+='\nc11:            {0:.3f} GPa'.format(self.c_tensor.mat[1,1]*1e-9)
+                s+='\nc12:            {0:.3f} GPa'.format(self.c_tensor.mat[1,2]*1e-9)
+                s+='\nc44:            {0:.3f} GPa'.format(self.c_tensor.mat[4,4]*1e-9)
+                s+="\nYoung's mod E:  {0:.3f}".format(self.EYoung*1e-9)
+                s+='\nPoisson ratio:  {0:.3f}'.format(self.nuPoisson)
+                s+='\nVelocity long.: {0:.3f} m/s'.format( self.Vac_longitudinal() )
+                s+='\nVelocity shear: {0:.3f} m/s'.format( self.Vac_shear())
+            else:
+                s+='\nStiffness c:'+ str(self.c_tensor)
+
         except:
             s='Unknown/undefined elastic parameters in material '+self.material_name
         return s
 
     def Vac_longitudinal(self):
       '''For an isotropic material, returns the longitudinal (P-wave) elastic phase velocity.'''
-      assert(not self.anisotropic)
+      assert(self.is_isotropic())
       # lame lambda = c_12
       # lame mu = c_44
       #  v = sqrt(c_11/rho)
@@ -204,7 +235,7 @@ class Material(object):
 
     def Vac_shear(self):
       '''For an isotropic material, returns the shear (S-wave) elastic phase velocity.'''
-      assert(not self.anisotropic)
+      assert(self.is_isotropic())
       #  v = sqrt(c_44/rho)
       #    =sqrt((mu)/rho)
       if not self.rho or self.rho == 0: # Catch vacuum cases
@@ -217,7 +248,7 @@ class Material(object):
         '''Returns true if the material has at least some elastic properties defined.'''
         return self.rho is not None
 
-    def _load_data_file(self, dataloc, data_file, alt_path=''):  
+    def _load_data_file(self, data_file, alt_path=''):  
         """
         Load material data from json file.
         
@@ -228,7 +259,7 @@ class Material(object):
         
         """
 
-        with open(dataloc+data_file,'r') as fin:
+        with open(Material._data_loc + data_file,'r') as fin:
             s_in = ''.join(fin.readlines())
             s_in = re.sub(r'//.*\n','\n', s_in)
 
@@ -262,6 +293,8 @@ class Material(object):
             Im_n = self._params['Im_n']  # Imaginary part of refractive index []
             self.refindex_n = (Re_n + 1j*Im_n)  # Complex refractive index []
             self.rho = self._params['s']  # Density [kg/m3]
+            self.EYoung =  None
+            self.nuPoisson =  None
 
 #self.c_11 = self._params['c_11']  # Stiffness tensor component [Pa]
 #            self.c_12 = self._params['c_12']  # Stiffness tensor component [Pa]
@@ -282,17 +315,41 @@ class Material(object):
                 print('Unknown crystal class in material data file')
                 raise BadMaterialFileError(f"Unknown crystal class in material data file {data_file}")
 
-            self.crystal = CrystalGroup.Isotropic
+            if self.crystal == CrystalGroup.Isotropic:
+                self._anisotropic = False
 
-            self.c_tensor=VoigtTensor4('c', self._params, self.json_file)
-            self.eta_tensor=VoigtTensor4('eta', self._params, self.json_file)
-            self.p_tensor=VoigtTensor4('p', self._params, self.json_file)
-
-            self.c_tensor.load_isotropic()
-            self.p_tensor.load_isotropic()
-            self.eta_tensor.load_isotropic()
-
-            self.load_tensors()
+                # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
+                if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
+                    self.c_tensor=VoigtTensor4('c', self._params, self.json_file)
+                    self.c_tensor.load_isotropic()
+                    mu = self.c_tensor.mat[4,4]
+                    lam = self.c_tensor.mat[1,2]
+                    r=lam/mu
+                    self.nuPoisson = 0.5*r/(1+r)
+                    self.EYoung = 2*mu*(1+self.nuPoisson)
+    
+                elif 'EYoung' in self._params and 'nuPoisson' in self._params:
+                    self.EYoung = self._params['EYoung'] 
+                    self.nuPoisson = self._params['nuPoisson']
+                    c44 = 0.5*self.EYoung/(1+self.nuPoisson)
+                    c12 = self.EYoung*self.nuPoisson/( (1+self.nuPoisson)* (1-2*self.nuPoisson)) 
+                    c11 = c12+2*c44 
+                    self.c_tensor=VoigtTensor4('c')
+                    self.c_tensor.set_isotropic(c11, c12, c44)
+                else:
+                    report_and_exit('Broken isotropic material file:'+ self.json_file)
+    
+                self.eta_tensor=VoigtTensor4('eta', self._params, self.json_file)
+                self.p_tensor=VoigtTensor4('p', self._params, self.json_file)
+    
+                self.p_tensor.load_isotropic()
+                self.eta_tensor.load_isotropic()
+  
+            else:
+                self.c_tensor=VoigtTensor4('c', self._params, self.json_file)
+                self.eta_tensor=VoigtTensor4('eta', self._params, self.json_file)
+                self.p_tensor=VoigtTensor4('p', self._params, self.json_file)
+                self.load_tensors()
             
 
 
@@ -431,24 +488,11 @@ class Material(object):
     def set_refractive_index(self, nr, ni=0.0):
       self.refindex_n = nr + 1j*ni
 
+    def is_isotropic(self): return not self._anisotropic
+
     def load_tensors(self): # not do this unless symmetry is off?
 
-      self.anisotropic = False
-
-      self.crystal=CrystalGroup.Unknown
-      
-      if not 'crystal_class' in self._params: return
-
-      try:
-        self.crystal = CrystalGroup[self._params['crystal_class']]
-      except ValueError:
-        print('Unknown crystal class in material data file')
-        sys.exit(1)  #TODO: exit properly
-
-
-      if self.crystal==CrystalGroup.Isotropic: return
-
-      self.anisotropic = True
+      self._anisotropic = True
 
       if self.crystal==CrystalGroup.Trigonal:
         self.load_trigonal_crystal()

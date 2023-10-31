@@ -1334,6 +1334,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
     #TODO: mode drawing and especially saving is very slow. could do this in threads?
     for ival in ival_range: 
+        print ('ivals', ival_range, ival)
         v_modes[ival].plot_mode(comps, EM_AC)
 
 
