@@ -1,5 +1,6 @@
 {
-    "file_name": "Ta2O5_2023_Schmidt",  // Name of this file, will be used as identifier
+    "format": "NumBATMaterial-fmt-2.0",
+    "material_name": "Ta2O5_2023_Schmidt",  // Name of this file, will be used as identifier
     "chemical": "Ta2O5",  // Chemical composition
     "author": "Schmidt",  // Author of data
     "date": "2023",  // Year of data publication/creation
@@ -8,6 +9,7 @@
     "Re_n": 2.03,  // Real part of refractive index []
     "Im_n": 0.0,  // Imaginary part of refractive index []
     "s": 6800,  // Density [kg/m3]
+    "crystal_class": "Isotropic",
     "c_11": 162.3e9,  // Stiffness tensor component [Pa]
     "c_12": 48.48e9,  // Stiffness tensor component [Pa]
     "c_44": 56.91e9,  // Stiffness tensor component [Pa]
