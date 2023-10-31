@@ -29,7 +29,7 @@ To download the current version from the git repository and install any missing 
 
 In this documentation, we indicate the root NumBAT directory (e.g. ``/usr/local/NumBAT``, ``/home/mike/NumBAT``) with ``<NumBAT>``. 
 
-Before attempting to build the NumBAT module, open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``MATH_PLAT`` that control the preferred math library. The starting makefile is setup to look for the Intel OneAPI library which is the recommended configuration.
+Before attempting to build the NumBAT module, open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The starting makefile is setup to look for the Intel OneAPI library which is the recommended configuration.
 
 You may now build the NumBAT module by running the following in the ``<NumBAT>`` directory. ::
 
@@ -59,21 +59,74 @@ Installing on MacOS
 
 The following steps have worked for us:
 
- 1. Install the macports package manager.
+#. Open a terminal window on your desktop.
 
- 1. Install gcc13
+#. Make a folder for |NUMBAT| studies and clone the github repository::
 
- 1. Install lapack
+   $ mkdir numbat
+   $ cd numbat 
+   $ git clone https://github.com/michaeljsteel/NumBAT.git
+   $ cd numbat
 
- 1. Install arpack
+#. If it is not already on your system, install the MacPorts package manager at `this page <https://macports.org/install.php>`_.
+   
+#. Install the Gmsh mesh generation tool at `this page <https://gmsh.info>`_.
+   Just the main Gmsh installer is fine. The SDK and other features are not required.
 
- 1. Upgrade python
+   Install the Gmsh application into your Applications folder by dragging the Gmsh icon into Applications.
 
- 1. Install python packages numpy, scipy, matplotlib
 
- 1. cd to ``backend/fortran``
+#. Install a current gcc (we used gcc)::
 
- 1. Run ``makefile - C makefile.macos``
+   $ sudo port install gcc13
+
+#. Install the Lapack and Blas linear algebra libraries::
+
+   $ sudo port install lapack
+
+   $ sudo port install blas
+
+#. Install the Arpack eigensolver::
+
+   $ sudo port install arpack
+
+#. Install the SuiteSparse matrix algebra suite::
+
+   $ sudo port install suitesparse
+
+#. Install a current python (we used python 3.12):
+
+   Use the standard installer at `<https://www.python.org/downloads/macos/>`_.
+
+   (Note that this will install everything in `/Library/Frameworks` and **not** override 
+   the System python in `/System/Library/Frameworks.`)
+
+#. Install some python packages not included by default::
+   
+   $ pip3 install numpy scipy matplotlib psutil
+
+#. Check that the python installs work and create a matplotlib .config directory::
+
+   $ python3.12
+   $ import matplotlib
+   $ import numpy
+   $ import scipy
+   $ import psutil
+
+#. Install the |NUMBAT| matplotlib style file::
+
+   $ mkdir -pR $HOME/.matplotlib/stylelib/
+   $ cp <NumBAT>/backend/NumBATstyle.mplstyle $HOME/.matplotlib/stylelib
+
+#. Move to the |NUMBAT| fortran directory::
+
+   $ cd backend/fortran
+
+#. Open the Makefile in a text editor and edit the lines at the top  of the file so that the line `PLAT=MacOS` is active and the others are commented out. 
+
+#. Now we can build |NUMBAT| ::
+   
+   $ make - C Makefile
 
 
 .. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.
