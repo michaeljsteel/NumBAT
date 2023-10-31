@@ -1,8 +1,11 @@
 
 .. include:: numbatdefs.txt
 
-
 .. _chap-usage-label:
+
+**************
+Basic Usage
+**************
 
 A First Calculation
 ------------------------------------------------

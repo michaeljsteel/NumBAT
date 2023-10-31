@@ -1,6 +1,11 @@
+.. include:: numbatdefs.txt
 
-Installation
-================
+*******************
+Installing |NUMBAT| 
+*******************
+
+Installing on Linux
+================================
 
 The source code for NumBAT is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please download the latest release from here.
 
@@ -46,6 +51,30 @@ Other build configurations
 --------------------------
 
 The Fortran components (NumBAT source code and libraries) have been successfully compiled with Intel's ``ifortran`` as well as GCC's open-source ``gfortran``. In this documentation we use ``gfortran``, but this can be easily adjusted in ``NumBAT/backend/fortran/Makefile``
+
+
+Installing on MacOS
+================================
+|NUMBAT| can also be installed on MacOS, though this is currently somewhat experimental and has only been performed on certain versions of MacOS.  Any comments on difficulties and solutions will be appreciated.
+
+The following steps have worked for us:
+
+ 1. Install the macports package manager.
+
+ 1. Install gcc13
+
+ 1. Install lapack
+
+ 1. Install arpack
+
+ 1. Upgrade python
+
+ 1. Install python packages numpy, scipy, matplotlib
+
+ 1. cd to ``backend/fortran``
+
+ 1. Run ``makefile - C makefile.macos``
+
 
 .. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.
 
