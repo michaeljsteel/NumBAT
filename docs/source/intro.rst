@@ -1,5 +1,12 @@
 .. include:: numbatdefs.txt
 
+.. _chap-intro-label:
+
+****************************
+Introduction to |NUMBAT|
+****************************
+
+
 .. role:: raw-math(raw)
     :format: latex html
 

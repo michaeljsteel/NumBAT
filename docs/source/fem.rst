@@ -1,7 +1,11 @@
  
+.. include:: numbatdefs.txt
 
-FEM Mode Solvers
-====================
+.. _chap-fem-label:
+
+******************************
+The |NUMBAT| FEM Mode Solvers
+******************************
 
 .. _sec-newmesh-label:
 
