@@ -4,16 +4,28 @@
 Installing |NUMBAT| 
 *******************
 
+Introduction 
+================================
+While |NUMBAT| is developed on Linux, it can also be built on MacOS X as a 
+native command-line application, and under Windows using a virtual machine running Linux.
+
+In all cases, the current source code for NumBAT is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please always download the latest release from the github page.
+
+The following sections provide instructions on installing for each platform.
+Please let us know of any difficulties you encounter, or suggestions for improvements to the install procedure for MacOS or Windows, by sending an email to 
+michael.steel@mq.edu.au.
+
 Installing on Linux
 ================================
 
-The source code for NumBAT is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please download the latest release from here.
 
 NumBAT has been developed and tested on Ubuntu 23.04 with the following package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0, and Gmsh 4.8.4.  NumBAT also depends on the BLAS and LAPACK libraries. We strongly recommend linking NumBAT against optimised versions, such as the MKL library provided in the  free Intel OneAPI library.
 
-NumBAT has also been successfully installed by users on Debian, RedHat and on Windows 10 (installing Ubuntu after enabling the Windows Subystem for Linux - see https://msdn.microsoft.com/en-au/commandline/wsl/install_guide) and with different versions of packages, but these installations have not been as thoroughly documented so may require user testing.  Please get in touch with Michael Steel <michael.steel@mq.edu.au> if you run into troubles.
+|NUMBAT| has also been successfully installed by users on Debian and RedHat/Fedora, and with different versions of packages, but these installations have not been as thoroughly documented so may require user testing.  In general, any relatively current Linux system should work without trouble.
+
 
 Before installing, you may wish to update your system ::
+
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
@@ -127,6 +139,15 @@ The following steps have worked for us:
 #. Now we can build |NUMBAT| ::
    
    $ make - C Makefile
+
+Installing on Windows
+================================
+
+The easiest way to run |NUMBAT| on  Windows is usually by installing Ubuntu as a virtual machine using either `Microsoft Hyper-V <https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box <https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_.
+
+Then |NUMBAT| can be installed using exactly the same procedure as described above for standard Linux installations.
+It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing with installing the additional required packages may be quite painful.
+
 
 
 .. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.

@@ -1,8 +1,8 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
-#PLAT="linux_inteloneapi"
+PLAT="linux_inteloneapi"
 #PLAT="linux_vanilla"
-PLAT="MacOS"
+#PLAT="MacOS"
 #PLAT="myplatform"
 
 ifeq ($(PLAT), "linux_vanilla")
@@ -10,6 +10,7 @@ ifeq ($(PLAT), "linux_vanilla")
 F_COMPILER = g95
 F_COMP_EXE = f77
 F_COMP_EXE = f95
+F2PY = f2py3
 
 NUMPYDIR = /usr/lib/python3/dist-packages/numpy
 
@@ -32,6 +33,7 @@ else ifeq ($(PLAT), "linux_inteloneapi")
 F_COMPILER = g95
 F_COMP_EXE = f77
 F_COMP_EXE = f95
+F2PY = f2py3
 
 NUMPYDIR = /usr/lib/python3/dist-packages/numpy
 
@@ -85,6 +87,7 @@ NUMPYDIR = $(PYROOT)/lib/$(PYNAME)/site-packages/numpy
 PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/
 PYLIB = -L $(PYROOT)/lib -l$(PYNAME) 
 OSF77FLAGS = -D __APPLE__
+F2PY = $(PYROOT)/bin/f2py
 
 else ifeq ($(PLAT), "myplatform")
 # You complete me!
@@ -175,14 +178,14 @@ check:
 
 $(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
 	echo "Old compilation method Step B"
-	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
 					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
 			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild 
 
 $(FMETHOD).pyf: $(SRCS)
 	echo "Old compilation method Step A"
-	f2py3  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower 
-	f2py3 -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
+	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower 
+	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
 #$(FMETHOD).so: NumBAT.pyf $(OBJS)  $(UMFPACK_WRAPPER)
@@ -211,8 +214,8 @@ $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
 	-mkdir build
-	f2py3 -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower 
-	f2py3 $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
+	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower 
+	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
