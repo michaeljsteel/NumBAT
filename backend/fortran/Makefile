@@ -1,16 +1,27 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
-#PLAT="linux_inteloneapi"
-#PLAT="linux_vanilla"
-PLAT="MacOS"
-#PLAT="myplatform"
+MYPLAT="linux_inteloneapi"
+#MYPLAT="linux_vanilla"
+#MYPLAT="MacOS"
+#MYPLAT="myplatform"
+
+PLAT = $(MYPLAT)
+
+ifeq ($(origin NUMBAT_PLATFORM), environment)
+PLAT=$(NUMBAT_PLATFORM)
+endif
+
+ifndef PLAT
+$(error 'Error: Must define MYPLAT variable in Makefile or environment variable NUMBAT_PLATFORM')
+endif
 
 ifeq ($(PLAT), "linux_vanilla")
 
 F_COMPILER = g95
-F_COMP_EXE = f77
+#F_COMP_EXE = f77
 F_COMP_EXE = f95
 F2PY = f2py3
+C_COMP_EXE = gcc
 
 NUMPYDIR = /usr/lib/python3/dist-packages/numpy
 
@@ -34,6 +45,7 @@ F_COMPILER = g95
 F_COMP_EXE = f77
 F_COMP_EXE = f95
 F2PY = f2py3
+C_COMP_EXE = gcc
 
 NUMPYDIR = /usr/lib/python3/dist-packages/numpy
 
