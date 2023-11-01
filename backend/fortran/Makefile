@@ -1,8 +1,8 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
-PLAT="linux_inteloneapi"
+#PLAT="linux_inteloneapi"
 #PLAT="linux_vanilla"
-#PLAT="MacOS"
+PLAT="MacOS"
 #PLAT="myplatform"
 
 ifeq ($(PLAT), "linux_vanilla")
