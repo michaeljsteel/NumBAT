@@ -56,6 +56,8 @@ University of Technology Sydney, and the University of Sydney.
 
 We thank Christian Wolff, Mike Smith and Mikolaj Schmidt for contributions.
 
+.. _sec-contribute-label:
+
 Contributing to NumBAT
 ================================
 NumBAT is open source software licensed under the GPL with all source and documentation available
@@ -117,3 +119,4 @@ WRITE ME
 -----------------------------------------
 
 WRITE ME
+
