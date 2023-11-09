@@ -10,7 +10,7 @@
 ====================================
 
 Welcome to the documentation for |NUMBAT|, the Numerical Brillouin Anaysis Tool.
-If you itching to get started, jump straight to Chapter 2.
+If you are itching to get started, jump straight to Chapter 2.
 
 .. toctree::
    :maxdepth: 2

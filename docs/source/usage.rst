@@ -59,7 +59,7 @@ We emphasise again, that for convenience, the physical dimensions of waveguides 
 specified in nanometres.  All other quantities in |NUMBAT| are expressed 
 in the standard SI base units.
 
-.. figure::  images/tut01_mesh.png 
+.. figure::  images/meshes/tut01_mesh.png 
    :width: 15cm
 
    Generated mesh for this example as displayed by ``guide.check_mesh()``.
@@ -187,80 +187,80 @@ for developing new structure files.
 
 The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/docs/source/images/make_meshfigs.py``.
 
-.. figure:: images/rect_wg-mesh-annotated.png 
+.. figure:: images/meshes/rect_wg-mesh-annotated.png 
    :width: 15cm
 
    Rectangular waveguide using shape ``rectangular`` (template ``oneincl_msh``).
 
-.. figure:: images/circ_wg-mesh-annotated.png
+.. figure:: images/meshes/circ_wg-mesh-annotated.png
    :width: 15cm
 
    Elliptical waveguide using shape ``circular`` (template ``oneincl_msh``).
 
 
-.. figure::  images/twoincl_rect_wg_mesh_both.png 
+.. figure::  images/meshes/twoincl_rect_wg_mesh_both.png 
    :width: 15cm
 
    Coupled rectangular waveguides using shape ``rectangular`` (template ``twoincl_msh``).
 
-.. figure::  images/twoincl_circ_wg_mesh_both.png 
+.. figure::  images/meshes/twoincl_circ_wg_mesh_both.png 
    :width: 15cm
 
    Coupled circular waveguides using shape ``circular`` (template ``twoincl_msh``).
    There appers to be a bug here!
 
-.. figure::  images/rib_wg-mesh-annotated.png 
+.. figure::  images/meshes/rib_wg-mesh-annotated.png 
    :width: 15cm
 
    A conventional rib waveguide using shape ``rib`` (template ``rib``).
 
-.. figure:: images/rib_coated_wg-mesh-annotated.png
+.. figure:: images/meshes/rib_coated_wg-mesh-annotated.png
    :width: 15cm
 
    A coated rib waveguide using shape ``rib_coated`` (template ``rib_coated``).
 
-.. figure:: images/rib_double_coated_wg_mesh_both.png
+.. figure:: images/meshes/rib_double_coated_wg_mesh_both.png
    :width: 15cm
 
    A rib waveguide on two substrates using shape ``rib_double_coated`` (template ``rib_double_coated``).
 
-.. .. figure:: images/slot_wg-mesh-annotated.png
-.. figure:: images/slot_wg_mesh_both.png
+.. .. figure:: images/meshes/slot_wg-mesh-annotated.png
+.. figure:: images/meshes/slot_wg_mesh_both.png
    :width: 15cm
 
    A slot waveguide using shape ``slot`` (``material_a`` is low index) (template ``slot``).
 
-.. .. figure:: images/slot_coated_wg-mesh-annotated.png
-.. figure:: images/slot_coated_wg_mesh_both.png
+.. .. figure:: images/meshes/slot_coated_wg-mesh-annotated.png
+.. figure:: images/meshes/slot_coated_wg_mesh_both.png
    :width: 15cm
 
    A coated slot waveguide using shape ``slot_coated`` (``material_a`` is low index) (template ``slot_coated``).
 
-.. figure:: images/onion_wg_mesh_both.png
+.. figure:: images/meshes/onion_wg_mesh_both.png
    :width: 15cm
 
    A many-layered concentric structure using shape ``onion`` (template ``onion``).
 
-.. figure:: images/onion2_wg-mesh.png
+.. figure:: images/meshes/onion2_wg-mesh.png
    :width: 15cm
 
    A two-layered concentric structure with background using shape ``onion2`` (template ``onion2``).
 
-.. figure:: images/onion3_wg-mesh.png
+.. figure:: images/meshes/onion3_wg-mesh.png
    :width: 15cm
 
    A three-layered concentric structure with background using shape ``onion3`` (template ``onion3``).
 
-.. figure:: images/circ_onion_wg-mesh.png
+.. figure:: images/meshes/circ_onion_wg-mesh.png
    :width: 15cm
 
    A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
-.. figure:: images/circ_onion2_wg-mesh.png
+.. figure:: images/meshes/circ_onion2_wg-mesh.png
    :width: 15cm
 
    A two-layered concentric structure with a circular outer boundary using shape ``circ_onion2`` (template ``circ_onion2``).
 
-.. figure:: images/circ_onion3_wg-mesh.png
+.. figure:: images/meshes/circ_onion3_wg-mesh.png
    :width: 15cm
 
    A three-layered concentric structure with a circular outer boundary using shape ``circ_onion3`` (template ``circ_onion3``).
@@ -268,12 +268,12 @@ The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/
 
 
 
-.. figure:: images/trapezoidal_rib_wg_mesh_both.png
+.. figure:: images/meshes/trapezoidal_rib_wg_mesh_both.png
    :width: 15cm
 
    A trapezoidal rib structure using shape ``trapezoidal_rib``.
 
-.. figure:: images/pedestal_wg_mesh_both.png
+.. figure:: images/meshes/pedestal_wg_mesh_both.png
    :width: 15cm
 
    A supported pedestal structure using shape ``pedestal``.
