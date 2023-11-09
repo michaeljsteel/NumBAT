@@ -3,42 +3,24 @@ Welcome to NumBAT!
 
 NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
 
-
-Origin
-------
-
-The main fork of NumBAT can now be found at https://github.com/michaeljsteel/NumBAT
-
 NumBAT was developed by Bjorn Sturmberg, Kokou Dossou, Chris Poulton and Michael Steel in a collaboration between Macquarie University and the University of Technology Sydney, as part of the Australian Research Council Discovery Project DP160101691.
 
 
-Documentation
+Download 
+---------
+
+The current release of NumBAT can be found at https://github.com/michaeljsteel/NumBAT.
+
+
+
+Current documentation is available
+at  `ReadTheDocs <http://numbat-au.readthedocs.io/en/latest/>`_ or in the ``NumBAT.pdf`` file in the root directory.
+
+
+Installation
 -------------
 
-Is hosted on `ReadTheDocs <http://numbat-au.readthedocs.io/en/latest/>`_.
+NumBAT builds natively on Linux and MacOS, and can be run on Windows using a virtual machine on the Windows Subsystem for Linux
 
+For detailed instructions, please see the Installation chapter in the documentation files above.
 
-Compatability
--------------
-
-NumBAT has been developed on Ubuntu 18.04 with the following package versions: Python 3.6, Numpy 1.16.2, Suitesparse 4.4.6, and Gmsh 3.0.6.
-
-It has also been successfully installed by users on Debian, RedHat and on Windows 10 (installing Ubuntu after enabling the Windows Subystem for Linux) and with different versions of packages, but these installations have not been as thoroughly documented so may require user testing.
-
-We also provide a `docker image <https://hub.docker.com/r/morblockdock/numbat>`_ that allows for easy cross platform operation, although docker requires WSL2. Information on how to use the docker image is contained in docker_notes.md file. In our experience, a standard windows install using WSL1 and the github source code (which is essentially already "containerized") is preferable to using docker.
-
-
-Installation is as simple as ::
-
-    $ git clone https://github.com/bjornsturmberg/NumBAT.git
-
-    $ cd NumBAT/
-
-    $ sudo ./setup.sh
-
-
-For optimal results ::
-
-	$ cp NumBAT/backend/NumBATstyle.mplstyle ~/.config/matplotlib/stylelib/
-
-or replace plt.style.use('NumBATstyle') in NumBAT/backend/plotting.py with your own prefered matplotlib style file.
