@@ -18,14 +18,17 @@
 
 
 import time
+import csv
 import numpy as np
 from scipy import interpolate
 import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+
+
+#matplotlib.use('pdf')
+#import matplotlib.pyplot as plt
+#import matplotlib.gridspec as gridspec
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
-import csv
+
 
 import plotting
 from fortran import NumBAT
@@ -38,28 +41,29 @@ class Gain (object):
     def _set_allowed_ms(l, m_allow, maxm):
         if m_allow == 'All':
             l = range(maxm)
-        elif type(m_allow) == type(1):
+        elif isinstance(m_allow, int):
             l[:]=[m_allow]
         else:
             l[:]=m_allow
         if max(l)>=maxm:
-            reporting.report_and_exit('Requested mode range too large in Gain object: ', m_allow)
+            reporting.report_and_exit('Requested mode range too large in Gain object: '+ m_allow)
 
     def __init__(self):
         self._max_pumps_m = 1
         self._max_Stokes_m = 1
         self._max_ac_m = 1
 
-        self._allowed_pumps_m = []
-        self._allowed_Stokes_m = []
-        self._allowed_ac_m = []
+        self._allowed_pumps_m = []    # Pumps for which gains have been calced
+        self._allowed_Stokes_m = []   # Stokes for which gains have been calced
+        self._allowed_ac_m = []       # Acoustics for which gains have been calced
 
         self._gain_tot = None
         self._gain_PE = None
         self._gain_MB = None
 
-        self.def_m_pump = 0
-        self.def_m_Stokes = 0
+        self.def_m_pump = 0          # must be one of allowed_pumps_m TODO: needs to be checked
+        self.def_m_Stokes = 0        # must be one of allowed_Stokes_m TODO: needs to be checked
+
         self.linewidth_Hz = None
         self.alpha = None
         self.Q_factor = None
@@ -72,13 +76,13 @@ class Gain (object):
 
     def _set_sim_AC(self, sac): self.sim_AC = sac
 
-    def set_allowed_EM_pumps(self, m_allow):  
+    def set_allowed_EM_pumps(self, m_allow):
         self._set_allowed_ms(self._allowed_pumps_m, m_allow, self._max_pumps_m)
 
-    def set_allowed_EM_Stokes(self, m_allow): 
+    def set_allowed_EM_Stokes(self, m_allow):
         self._set_allowed_ms(self._allowed_Stokes_m, m_allow, self._max_Stokes_m)
 
-    def set_allowed_AC(self, m_allow):        
+    def set_allowed_AC(self, m_allow):
         self._set_allowed_ms(self._allowed_ac_m, m_allow, self._max_ac_m)
 
     def set_EM_modes(self, mP, mS):
@@ -92,18 +96,19 @@ class Gain (object):
     def gain_total_all(self):   return self._gain_tot[self.def_m_pump, self.def_m_Stokes, :]
     def gain_PE_all(self):      return self._gain_PE[self.def_m_pump, self.def_m_Stokes, :]
     def gain_MB_all(self):      return self._gain_MB[self.def_m_pump, self.def_m_Stokes, :]
-    def alpha_all(self):        return self.alpha[self.def_m_pump, self.def_m_Stokes, :]
-    def Q_factor_all(self):     return self.Q_factor[self.def_m_pump, self.def_m_Stokes, :]
-    def linewidth_Hz_all(self): return self.linewidth_Hz[self.def_m_pump, self.def_m_Stokes, :]
+    def alpha_all(self):        return self.alpha
+    def Q_factor_all(self):     return self.Q_factor
+    def linewidth_Hz_all(self): return self.linewidth_Hz
 
     def gain_total_raw(self):   return self._gain_tot
     def gain_PE_raw(self):      return self._gain_PE
     def gain_MB_raw(self):      return self._gain_MB
-    def alpha_raw(self):        return self.alpha
-    def Q_factor_raw(self):     return self.Q_factor
-    def linewidth_Hz_raw(self): return self.linewidth_Hz
 
-    def _set_gain_tot(self,g):        
+    #def alpha_raw(self):        return self.alpha
+    #def Q_factor_raw(self):     return self.Q_factor
+    #def linewidth_Hz_raw(self): return self.linewidth_Hz
+
+    def _set_gain_tot(self,g):
         self._gain_tot=g
         (self._max_pumps_m , self._max_Stokes_m , self._max_ac_m) = self._gain_tot.shape
 
@@ -112,13 +117,13 @@ class Gain (object):
         self.set_allowed_EM_Stokes(0)
         self.set_allowed_AC(range(self._max_ac_m))
 
-    def _set_gain_PE(self,g):         
+    def _set_gain_PE(self,g):
         self._gain_PE=g
 
-    def _set_gain_MB(self,g):         
+    def _set_gain_MB(self,g):
         self._gain_MB=g
 
-    def _set_alpha(self,a):           self.alphas=a
+    def _set_alpha(self,a):           self.alpha=a
     def _set_linewidth_Hz(self,lwhz): self.linewidth_Hz=lwhz
     def _set_Q_factor(self,qf):       self.Q_factor=qf
 
@@ -126,20 +131,21 @@ class Gain (object):
                 dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
                 pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                      show_gains='All', mark_modes_thresh=0.02):
-    
+
         #TODO: this needs work
 
         em_pump_m = self._allowed_pumps_m[0]
         em_Stokes_m = self._allowed_Stokes_m[0]
 
-        return plotting.plot_gain_spectra(self.sim_AC, self._gain_tot, self._gain_PE, self._gain_MB, 
+        return plotting.plot_gain_spectra(self.sim_AC, self._gain_tot, self._gain_PE, self._gain_MB,
                                    self.linewidth_Hz, em_pump_m, em_Stokes_m, self._allowed_ac_m,
-                                   freq_min, freq_max, num_interp_pts, dB, dB_peak_amp, mode_comps, 
+                                   freq_min, freq_max, num_interp_pts, dB, dB_peak_amp, mode_comps,
                                    semilogy, pdf_png, save_txt, prefix, suffix, decorator, show_gains, mark_modes_thresh)
 
 def get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 EM_ival_pump=0, EM_ival_Stokes=0, AC_ival=0, fixed_Q=None, typ_select_out=None):
-    
+
+
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
             sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump, EM_ival_Stokes, AC_ival, fixed_Q, typ_select_out)
 
@@ -168,23 +174,23 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         These are for Q_photoelastic, Q_moving_boundary, the Acoustic loss "alpha",
         and the SBS gain respectively.
 
-        Note there is a sign error in published Eq. 41. Also, in implementing Eq. 45 we use integration by parts, with a 
+        Note there is a sign error in published Eq. 41. Also, in implementing Eq. 45 we use integration by parts, with a
         boundary integral term set to zero on physical grounds, and filled in some missing subscripts. We prefer to express
         Eq. 91 with the Lorentzian explicitly visible, which makes it clear how to transform to frequency space.
         The final integrals are
 
-        .. math:: 
+        .. math::
             Q^{\rm PE} = -\varepsilon_0 \int_A {\rm d}^2r \sum_{ijkl} \varepsilon^2_r e^{(s)\star}_i e^{(p)}_j p_{ijkl} \partial_k u_l^{*},\\
 
-            Q^{\rm MB} =  \int_C {\rm d \mathbf{r} (\mathbf{u}^{*} \cdot \hat n}) \big[ (\varepsilon_a - \varepsilon_b)  
-            \varepsilon_0 ({\rm \hat n \times \mathbf{e}}) \cdot ({\rm \hat n \times \mathbf{e}}) - 
-            (\varepsilon_a^{-1} - \varepsilon_b^{-1})  \varepsilon_0^{-1} ({\rm \hat n \cdot \mathbf{d}}) 
+            Q^{\rm MB} =  \int_C {\rm d \mathbf{r} (\mathbf{u}^{*} \cdot \hat n}) \big[ (\varepsilon_a - \varepsilon_b)
+            \varepsilon_0 ({\rm \hat n \times \mathbf{e}}) \cdot ({\rm \hat n \times \mathbf{e}}) -
+            (\varepsilon_a^{-1} - \varepsilon_b^{-1})  \varepsilon_0^{-1} ({\rm \hat n \cdot \mathbf{d}})
             \cdot ({\rm \hat n \cdot \mathbf{d}}) \big],\\
 
             \alpha = \frac{\Omega^2}{\mathcal{E}_{ac}} \int {\rm d}^2r \sum_{ijkl} \partial_i u_j^{*} \eta_{ijkl} \partial_k u_l,\\
 
             \Gamma =  \frac{2 \omega \Omega {\rm Re} (Q_1 Q_1^*)}{P_p P_s \mathcal{E}_{ac}} \frac{1}{\alpha} \frac{\alpha^2}{\alpha^2 + \kappa^2}.
-  
+
 
         Args:
             sim_EM_pump  (``Simulation`` object): Contains all info on pump EM modes
@@ -218,8 +224,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 calculating the acoustic loss (alpha).
 
         Returns:
-            SBS_gain  : The SBS gain including both photoelastic and moving boundary contributions. 
-                        Note this will be negative for backwards SBS because gain is expressed as 
+            SBS_gain  : The SBS gain including both photoelastic and moving boundary contributions.
+                        Note this will be negative for backwards SBS because gain is expressed as
                         gain in power as move along z-axis in positive direction, but the Stokes
                         waves experience gain as they propagate in the negative z-direction.
                         Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
@@ -227,8 +233,8 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
             SBS_gain_PE  : The SBS gain for only the photoelastic effect.
                            The comment about negative gain (see SBS_gain above) holds here also.
                            Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
-            
-            SBS_gain_MB  : The SBS gain for only the moving boundary effect. 
+
+            SBS_gain_MB  : The SBS gain for only the moving boundary effect.
                            The comment about negative gain (see SBS_gain above) holds here also.
                            Dimensions = [n_modes_EM_Stokes,n_modes_EM_pump,n_modes_AC].
 
@@ -301,7 +307,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
 #                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
 #            else:
 #                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
-#                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements", 
+#                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
 #                        "\n using slow quadrature integration by default.\n\n")
 #                alpha = NumBAT.ac_alpha_int(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
@@ -347,7 +353,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
                 relevant_eps_effs, Fortran_debug)
         else:
             if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
-                print("Warning: photoelastic_int - not sure if mesh contains curvi-linear elements", 
+                print("Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                     "\n using slow quadrature integration by default.\n\n")
             Q_PE = NumBAT.photoelastic_int(
                 sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes, EM_ival_pump_fortran,
@@ -360,7 +366,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     except KeyboardInterrupt:
         print("\n\n Routine photoelastic_int interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time = {0:.2f} sec.".format(end - start))
+    print(f"     time = {end - start:.2f} sec.")
 
 
     # Calc Q_moving_boundary Eq. 41
@@ -373,7 +379,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         Q_MB = NumBAT.moving_boundary(sim_EM_pump.n_modes, sim_EM_Stokes.n_modes,
             sim_AC.n_modes, EM_ival_pump_fortran, EM_ival_Stokes_fortran,
             AC_ival_fortran, sim_AC.n_msh_el,
-            sim_AC.n_msh_pts, nnodes, sim_AC.table_nod, 
+            sim_AC.n_msh_pts, nnodes, sim_AC.table_nod,
             sim_AC.type_el, sim_AC.mesh_xy,
             sim_AC.structure.n_typ_el_AC, typ_select_in, typ_select_out,
             trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.sol1,
@@ -381,7 +387,7 @@ def gain_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     except KeyboardInterrupt:
         print("\n\n Routine moving_boundary interrupted by keyboard.\n\n")
     end = time.time()
-    print("     time = {0:.2f} sec.".format(end - start))
+    print(f"     time = {end - start:.2f} sec.")
     print("-----------------------------------------------")
 
     Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?
@@ -651,8 +657,12 @@ def grad_u(dx, dy, u_mat, q_AC):
     del_z_uy_star = -1j*q_AC*np.conj(m_uy)
     del_z_uz_star = -1j*q_AC*np.conj(m_uz)
 
-    del_u_mat = np.array([[del_x_ux, del_x_uy, del_x_uz], [del_y_ux, del_y_uy, del_y_uz], [del_z_ux, del_z_uy, del_z_uz]])
-    del_u_mat_star = np.array([[del_x_ux_star, del_x_uy_star, del_x_uz_star], [del_y_ux_star, del_y_uy_star, del_y_uz_star], [del_z_ux_star, del_z_uy_star, del_z_uz_star]])
+    del_u_mat = np.array([[del_x_ux, del_x_uy, del_x_uz],
+                          [del_y_ux, del_y_uy, del_y_uz],
+                          [del_z_ux, del_z_uy, del_z_uz]])
+    del_u_mat_star = np.array([[del_x_ux_star, del_x_uy_star, del_x_uz_star],
+                               [del_y_ux_star, del_y_uy_star, del_y_uz_star],
+                               [del_z_ux_star, del_z_uy_star, del_z_uz_star]])
 
     return del_u_mat, del_u_mat_star
 
@@ -663,7 +673,7 @@ def comsol_fields(data_file, n_points, ival=0):
 
     with open(data_file, 'rt', encoding='ascii') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=' ')#, quotechar='|')
-        for header_rows in range(9):
+        for _ in range(9): # skip header
             next(spamreader)
         x_coord = []; y_coord = []
         u_x = []; u_y = []; u_z = []
@@ -697,8 +707,8 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
     """
 
     # Trim EM fields to non-vacuum area where AC modes are defined
-    n_modes_EM = sim_EM_pump.n_modes
-    n_modes_AC = sim_AC.n_modes
+    #n_modes_EM = sim_EM_pump.n_modes
+    #n_modes_AC = sim_AC.n_modes
     n_msh_el_AC = sim_AC.n_msh_el
     ncomps = 3
     nnodes = 6
@@ -721,7 +731,7 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
         y_tmp.append(sim_AC.mesh_xy[1,i])
     x_min = np.min(x_tmp); x_max=np.max(x_tmp)
     y_min = np.min(y_tmp); y_max=np.max(y_tmp)
-    area = abs((x_max-x_min)*(y_max-y_min))
+    #area = abs((x_max-x_min)*(y_max-y_min))
     n_pts_x = n_points
     n_pts_y = n_points
     v_x=np.zeros(n_pts_x*n_pts_y)
@@ -752,7 +762,7 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
     v_Ey6p_E_S = np.zeros(6*sim_AC.n_msh_el, dtype=np.complex128)
     v_Ez6p_E_S = np.zeros(6*sim_AC.n_msh_el, dtype=np.complex128)
     v_n = np.zeros(6*sim_AC.n_msh_el, dtype=np.complex128)
-    v_triang6p = []
+    #v_triang6p = []
 
     i = 0
     for i_el in np.arange(sim_AC.n_msh_el):
@@ -831,7 +841,7 @@ def interp_py_fields(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, n_points,
     return n_pts_x, n_pts_y, dx, dy, E_mat_p, E_mat_S, u_mat, del_u_mat, del_u_mat_star, m_n
 
 
-def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y, 
+def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
                   dx, dy, E_mat_p, E_mat_S, u_mat, del_u_mat, del_u_mat_star, AC_ival):
     """ Quadrature integration of AC energy density, AC loss (alpha), and PE gain.
     """
@@ -898,7 +908,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
     """
 
     n_modes_EM = sim_EM_pump.n_modes
-    n_modes_AC = sim_AC.n_modes
+    #n_modes_AC = sim_AC.n_modes
     EM_ival_pump = 0
     EM_ival_Stokes = 0
 
@@ -925,7 +935,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
 
         # Carry out integration
         energy_py[AC_ival], alpha_py[AC_ival], Q_PE_py[EM_ival_pump,EM_ival_Stokes,AC_ival] = grid_integral(
-                m_n, sim_AC.structure, sim_AC.Omega_AC, n_pts_x, n_pts_y, dx, dy, 
+                m_n, sim_AC.structure, sim_AC.Omega_AC, n_pts_x, n_pts_y, dx, dy,
                 E_mat_p, E_mat_S, u_mat, del_u_mat, del_u_mat_star, AC_ival)
 
         # Load Comsol FEM fields onto grid - acoustic displacement fields
@@ -938,8 +948,8 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
         n_pts_x_comsol = n_points_comsol_data
         n_pts_y_comsol = n_points_comsol_data
         energy_comsol[AC_ival], alpha_comsol[AC_ival], Q_PE_comsol[EM_ival_pump,EM_ival_Stokes,AC_ival] = grid_integral(
-                m_n, sim_AC.structure, sim_AC.Omega_AC, n_pts_x_comsol, n_pts_y_comsol, 
-                dx_comsol, dy_comsol, E_mat_p, E_mat_S, 
+                m_n, sim_AC.structure, sim_AC.Omega_AC, n_pts_x_comsol, n_pts_y_comsol,
+                dx_comsol, dy_comsol, E_mat_p, E_mat_S,
                 u_mat_comsol, del_u_mat_comsol, del_u_mat_star_comsol, AC_ival)
 
     # Note this is only the PE contribution to gain.
