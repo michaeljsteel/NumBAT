@@ -17,22 +17,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-#import os
-#import psutil
-import sys
 import math
 import numpy as np
-#from scipy import sqrt
-#import subprocess
 from scipy import interpolate
-#import matplotlib
 import matplotlib.pyplot as plt
-#import matplotlib.gridspec as gridspec
 import matplotlib.colors as mplcolors
 
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-#from matplotlib import ticker
-#import copy
 
 
 from nbtypes import QAcMethod, FieldType, component_t
@@ -58,7 +49,7 @@ def savefig(fig, fname):
 def plot_filename(plps, ival, label=None):
     filestart = '%(pre)s-fields/%(s)s_field_%(i)02i%(add)s' % {'pre': plps['prefix'],
                                                                's': plps['EM_AC'].name, 'i': ival, 'add': plps['suffix']}
-    if label != None:
+    if label is not None:
         filestart += '_'+label
 
     if plps['pdf_png'] == 'png':
@@ -133,7 +124,7 @@ class Decorator(object):
         fs = 10
         try:
             fs = self._fontsizes()[lab]
-        except:
+        except Exception:
             print(f'Warning: unknown fontsize label "{lab}" in Decorator::get_font_size()')
         return fs
 
@@ -172,7 +163,7 @@ class Decorator(object):
     def set_title(self, t): self._title = t
 
     def add_title(self, ax):
-        if len(self._title):
+        if self._title:
             ax.set_title(self._title)
 
     def extra_axes_commands(self, ax):

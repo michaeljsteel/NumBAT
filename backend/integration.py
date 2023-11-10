@@ -127,6 +127,17 @@ class Gain (object):
     def _set_linewidth_Hz(self,lwhz): self.linewidth_Hz=lwhz
     def _set_Q_factor(self,qf):       self.Q_factor=qf
 
+    def check_acoustic_expansion_size(self):
+        for mP in self._allowed_pumps_m:
+            for mS in self._allowed_Stokes_m:
+                t_gains = self._gain_tot[mP, mS,:]
+                num_AC = len(t_gains)
+                imaxg = np.argmax(np.abs(t_gains))
+                if imaxg > num_AC*0.75:
+                    maxg=np.abs(t_gains[imaxg])
+                    reporting.register_warning(f'''
+                                               For pump and Stokes indices {mP} and {mS}, the maximum total SBS gain of {maxg} was found for acoustic mode {imaxg} which is in the upper 25\% of the number of acoustic modes in the calculation.  You should probably check the consistency of the calculation with a larger number of acoustic modes.''')
+
     def plot_spectra(self, freq_min=0., freq_max=50e9, num_interp_pts=3000,
                 dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
                 pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
@@ -161,6 +172,8 @@ def get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     gain.set_allowed_EM_pumps(EM_ival_pump)
     gain.set_allowed_EM_Stokes(EM_ival_Stokes)
     gain.set_allowed_AC(AC_ival)
+
+    gain.check_acoustic_expansion_size()
 
     return gain
 
