@@ -20,7 +20,7 @@ import materials
 # EM: electromagnetic
 # q_AC: acoustic wavevector
 
-print('\n\nCommencing NumBAT tutorial 1')
+print('\n\nCommencing NumBATApp tutorial 1')
 
 # Step 2
 # Geometric Parameters - all in nm.
@@ -52,7 +52,7 @@ AC_ival = 'All'
 # Use specified parameters to create a waveguide object.
 # to save the geometry and mesh as png files in backend/fortran/msh/
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
