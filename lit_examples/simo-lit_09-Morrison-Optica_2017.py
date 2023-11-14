@@ -1,5 +1,5 @@
 """ Replicating the results of
-    Compact Brillouin devices through hybrid 
+    Compact Brillouin devices through hybrid
     integration on Silicon
     Morrison et al.
     https://doi.org/10.1364/OPTICA.4.000847
@@ -25,8 +25,6 @@ import starter
 # EM: electromagnetic
 # q_AC: acoustic wavenumber
 
-start = time.time()
-
 # Geometric Parameters - all in nm.
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
 # Unit cell must be large to ensure fields are zero at boundary.
@@ -41,7 +39,7 @@ inc_shape = 'rib_coated'
 slab_a_x = 4000
 slab_a_y = 1000
 
-coat_x = 200 
+coat_x = 200
 coat_y = 1000
 
 
@@ -60,6 +58,8 @@ AC_ival = 'All'
 
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
+
+nbapp = numbat.NumBAT()
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
@@ -82,7 +82,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 # npzfile = np.load('wguide_data.npz')
 # sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump], 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.3, ylim_max=0.3, EM_AC='EM_E', num_ticks=3,
                          prefix=prefix)
 
@@ -138,10 +138,8 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 7.2e9  # Hz
 freq_max = 8.1e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

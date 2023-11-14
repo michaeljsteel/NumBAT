@@ -26,7 +26,6 @@ import starter
 # EM: electromagnetic
 # q_AC: acoustic wavenumber
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
@@ -60,6 +59,8 @@ Si_110.rotate_axis(np.pi/4,'y-axis', save_rotated_tensors=True)
 
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
+
+nbapp = numbat.NumBAT()
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
@@ -109,7 +110,7 @@ plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(40))
 
 set_q_factor = 680.
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -128,17 +129,15 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 
 freq_min = 2.0e9  # GHz
 freq_max = 20.e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
     prefix=prefix, suffix='')
 
 
 freq_min = 4.5e9  # GHz
 freq_max = 5.5e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
     prefix=prefix, suffix='zoom')
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

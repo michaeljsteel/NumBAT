@@ -1,68 +1,100 @@
 .. include:: numbatdefs.txt
 
 *******************
-Installing |NUMBAT| 
+Installing |NUMBAT|
 *******************
 
-Introduction 
+This chapter provides instructions on installing |NUMBAT| on each platform.
+Please email |NUMBAT_EMAIL| to let us know of any difficulties you encounter, or suggestions for improvements to the install procedure on any platform, but especially for MacOS or Windows.
+
+Information for all platforms
 ================================
-While |NUMBAT| is developed on Linux, it can also be built on MacOS X as a 
+While |NUMBAT| is developed on Linux, it can also be built on MacOS X as a
 native command-line application, and under Windows using a virtual machine running Linux.
 
-In all cases, the current source code for NumBAT is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please always download the latest release from the github page.
+In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/|NUMBAT|>`_. Please always download the latest release from the github page.
 
-The following sections provide instructions on installing for each platform.
-Please let us know of any difficulties you encounter, or suggestions for improvements to the install procedure for MacOS or Windows, by sending an email to 
-michael.steel@mq.edu.au.
+
+Install locations
+---------------------
+
+There is no need to install |NUMBAT| in a central location
+such as ``/usr/local/`` or ``/opt/local/`` though you may certainly choose to do so.
+
+
+Here and throughout this documentation, we use the string ``<NumBAT>`` to indicate the root |NUMBAT| install directory (e.g. ``/usr/local/NumBAT``, ``/home/mike/NumBAT``, ``/home/myuserid/research/NumBAT``).
+
+
 
 Installing on Linux
 ================================
 
 
-NumBAT has been developed and tested on Ubuntu 23.04 with the following package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0, and Gmsh 4.8.4.  NumBAT also depends on the BLAS and LAPACK libraries. We strongly recommend linking NumBAT against optimised versions, such as the MKL library provided in the  free Intel OneAPI library.
+|NUMBAT| has been developed and tested on Ubuntu 23.04 with the following package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0, and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and LAPACK libraries. We strongly recommend linking |NUMBAT| against optimised versions, such as the MKL library provided in the  free Intel OneAPI library.
 
 |NUMBAT| has also been successfully installed by users on Debian and RedHat/Fedora, and with different versions of packages, but these installations have not been as thoroughly documented so may require user testing.  In general, any relatively current Linux system should work without trouble.
 
+|NUMBAT| building and installation is easiest if you have root access, but it is not required.
+See the section below if you do not have root access (or the ability to run ``sudo``) on your machine.
 
-Before installing, you may wish to update your system ::
+The following steps use package syntax for Ubuntu/Debian systems. For other Linux flavours, you may need to use different package manager syntax and/or slightly different package names.
 
+The code depends critically on matrix-vector operations provided by Lapack and Blas libraries. We strongly recommend using an optimised library such as the Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries (AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
+
+#. Before installing, ensure your system is up to date ::
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
-There is no need to install NumBAT in a central location such as `/usr/local` though you may choose to do so.
+#. Install necessary python libraries ::
 
-To download the current version from the git repository and install any missing library dependencies, use
- ::
+    $ sudo apt-get install python3-matplotlib
+    $ sudo apt-get install python3-numpy
+    $ sudo apt-get install python3-scipy
+    $ sudo apt-get install python3-psutil
+
+#. To download the current version from the git repository and install any missing library dependencies, use ::
 
     $ git clone https://github.com/michaeljsteel/NumBAT.git
-    $ cd NumBAT/
-    $ sudo make installdeps 
-
-In this documentation, we indicate the root NumBAT directory (e.g. ``/usr/local/NumBAT``, ``/home/mike/NumBAT``) with ``<NumBAT>``. 
-
-Before attempting to build the NumBAT module, open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The starting makefile is setup to look for the Intel OneAPI library which is the recommended configuration.
-
-You may now build the NumBAT module by running the following in the ``<NumBAT>`` directory. ::
-
-    $ make build
-
-If this completes without error, you may run a short test suite with  ::
-
-    $ make tests
-
-To build the pdf documentation you are currently reading, use ::
-
-    $ make docs 
-
-Note however most of the figures will only be available after you have run all the example problems in the  ``tutorial`` ``lit_ex`` and ``JOSAB_tutorial`` directories.
-This can be done by running ``make`` in each of those directories. Be aware that  some of these problems are quite large and may require some time to complete depending on your computer's performance.
+    $ cd NumBAT
 
 
-Other build configurations 
+#. Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
+
+#. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+
+   $ make build
+
+#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+
+#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+
+
+Other build configurations
+--------------------------
+
+The Fortran components (|NUMBAT| source code and libraries) have been successfully compiled with Intel's ``ifortran`` as well as GCC's open-source ``gfortran``. In this documentation we use ``gfortran``, but this can be easily adjusted in ``|NUMBAT|/backend/fortran/Makefile``
+
+
+Other build configurations
 --------------------------
 
 The Fortran components (NumBAT source code and libraries) have been successfully compiled with Intel's ``ifortran`` as well as GCC's open-source ``gfortran``. In this documentation we use ``gfortran``, but this can be easily adjusted in ``NumBAT/backend/fortran/Makefile``
+
+Installing without root access
+----------------------------------------------------
+Compiling and installing |NUMBAT| itself does not rely on having root access to your machine. However, installing the supporting libraries such as SuiteSparse and Arpack
+is certainly simpler if you have root or the assistance of your system admin.
+
+If this is not possible, you can certainly proceed by building and installing all the required libraries into your own tree within your home directory.
+It may be helpful to create a tree like the following so that the relevant paths mirror those of a system install::
+
+  -- <homedir>
+  -- <homedir>/my_sys
+  -- <homedir>/my_sys/usr
+  -- <homedir>/my_sys/usr/lib
+  -- <homedir>/my_sys/usr/include
+  -- <homedir>/my_sys/usr/bin
 
 
 Installing on MacOS
@@ -76,12 +108,12 @@ The following steps have worked for us:
 #. Make a folder for |NUMBAT| studies and clone the github repository::
 
    $ mkdir numbat
-   $ cd numbat 
-   $ git clone https://github.com/michaeljsteel/NumBAT.git
+   $ cd numbat
+   $ git clone https://github.com/michaeljsteel/|NUMBAT|.git
    $ cd numbat
 
 #. If it is not already on your system, install the MacPorts package manager at `this page <https://macports.org/install.php>`_.
-   
+
 #. Install the Gmsh mesh generation tool at `this page <https://gmsh.info>`_.
    Just the main Gmsh installer is fine. The SDK and other features are not required.
 
@@ -110,11 +142,11 @@ The following steps have worked for us:
 
    Use the standard installer at `<https://www.python.org/downloads/macos/>`_.
 
-   (Note that this will install everything in `/Library/Frameworks` and **not** override 
+   (Note that this will install everything in `/Library/Frameworks` and **not** override
    the System python in `/System/Library/Frameworks.`)
 
 #. Install some python packages not included by default::
-   
+
    $ pip3 install numpy scipy matplotlib psutil
 
 #. Check that the python installs work and create a matplotlib .config directory::
@@ -128,17 +160,22 @@ The following steps have worked for us:
 #. Install the |NUMBAT| matplotlib style file::
 
    $ mkdir -pR $HOME/.matplotlib/stylelib/
-   $ cp <NumBAT>/backend/NumBATstyle.mplstyle $HOME/.matplotlib/stylelib
+   $ cp <NumBAT>/backend/|NUMBAT|style.mplstyle $HOME/.matplotlib/stylelib
 
 #. Move to the |NUMBAT| fortran directory::
 
    $ cd backend/fortran
 
-#. Open the Makefile in a text editor and edit the lines at the top  of the file so that the line `PLAT=MacOS` is active and the others are commented out. 
+#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that the line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol.
 
-#. Now we can build |NUMBAT| ::
-   
-   $ make - C Makefile
+#. Now at last, we can build |NUMBAT| ::
+
+   $ make
+
+#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+
+#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+
 
 Installing on Windows
 ================================
@@ -155,11 +192,11 @@ It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <ht
 .. Manual installation of SuiteSparse
 .. ----------------------------------
 
-.. The FEM routine used in NumBAT makes use of the highly optimised `UMFPACK <https://www.cise.ufl.edu/research/sparse/umfpack/>`_ (Unsymmetric MultiFrontal Package) direct solver for sparse matrices developed by Prof. Timothy A. Davis. This is distributed as part of the  SuiteSparse libraries under a GPL license. It can be downloaded from `https://www.cise.ufl.edu/research/sparse/SuiteSparse/ <https://www.cise.ufl.edu/research/sparse/SuiteSparse/>`_
+.. The FEM routine used in |NUMBAT| makes use of the highly optimised `UMFPACK <https://www.cise.ufl.edu/research/sparse/umfpack/>`_ (Unsymmetric MultiFrontal Package) direct solver for sparse matrices developed by Prof. Timothy A. Davis. This is distributed as part of the  SuiteSparse libraries under a GPL license. It can be downloaded from `https://www.cise.ufl.edu/research/sparse/SuiteSparse/ <https://www.cise.ufl.edu/research/sparse/SuiteSparse/>`_
 
 .. This is the process we have used in the past, however this was some years ago and may need to be modified.
 
-.. Unpack SuiteSparse into ``NumBAT/backend/fortran/``, it should create a directory there; ``SuiteSparse/``
+.. Unpack SuiteSparse into ``|NUMBAT|/backend/fortran/``, it should create a directory there; ``SuiteSparse/``
 .. Make a directory where you want SuiteSparse installed, in my case SS_installed ::
 
     $ mkdir SS_installed/
@@ -170,8 +207,8 @@ It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <ht
 
 .. set path to install folder::
 
-    line 85 INSTALL_LIB = /$Path_to_EMustack/NumBAT/backend/fortran/SS_installed/lib
-    line 86 INSTALL_INCLUDE = /$Path_to_EMustack/NumBAT/backend/fortran/SS_installed/include
+    line 85 INSTALL_LIB = /$Path_to_EMustack/|NUMBAT|/backend/fortran/SS_installed/lib
+    line 86 INSTALL_INCLUDE = /$Path_to_EMustack/|NUMBAT|/backend/fortran/SS_installed/include
 
 .. line 290ish commenting out all other references to these::
 
@@ -199,7 +236,7 @@ It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <ht
 
     $ make
 
-.. Now move back to ``NumBAT/backend/fortran/`` ::
+.. Now move back to ``|NUMBAT|/backend/fortran/`` ::
 
     $ cp SuiteSparse/metis-4.0/libmetis.a SS_installed/lib/
 
@@ -211,22 +248,38 @@ It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <ht
     $ make fortran64
     $ cp SuiteSparse/UMFPACK/Demo/umf4_f77zwrapper64.o into SS_installed/lib/
 
-.. Copy the libraries into ``NumBAT/backend/fortran/Lib/`` so that ``NumBAT/`` is a complete package that can be moved across machine without alteration. This will override the pre-compiled libraries from the release (you may wish to save these somewhere).::
+.. Copy the libraries into ``|NUMBAT|/backend/fortran/Lib/`` so that ``|NUMBAT|/`` is a complete package that can be moved across machine without alteration. This will override the pre-compiled libraries from the release (you may wish to save these somewhere).::
 
-    $ cp SS_installed/lib/*.a NumBAT/backend/fortran/Lib/
-    $ cp SS_installed/lib/umf4_f77zwrapper64.o NumBAT/backend/fortran/Lib/
+    $ cp SS_installed/lib/*.a |NUMBAT|/backend/fortran/Lib/
+    $ cp SS_installed/lib/umf4_f77zwrapper64.o |NUMBAT|/backend/fortran/Lib/
 
 
-.. NumBAT Makefile
+.. |NUMBAT| Makefile
 
-.. Edit ``NumBAT/backend/fortran/Makefile`` to reflect what compiler you are using and how you installed the libraries. The Makefile has further details.
+.. Edit ``|NUMBAT|/backend/fortran/Makefile`` to reflect what compiler you are using and how you installed the libraries. The Makefile has further details.
 
 .. Then finally run the setup.sh script!
 
-.. _sec-contribute-label:
+#. To build the pdf documentation you are currently reading, use ::
 
-Contributing to NumBAT
-----------------------------------
+    $ make docs
 
-NumBAT is open source software licensed under the GPL with all source and documentation available
-at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
+Note however most of the figures will only be available after you have run all the example problems in the  ``tutorial`` ``lit_ex`` and ``JOSAB_tutorial`` directories.
+This can be done by running ``make`` in each of those directories. Be aware that  some of these problems are quite large and may require some time to complete depending on your computer's performance.
+
+
+Building the documentation
+===============================
+
+You can rebuild the documentation you are currently reading by moving into the ``<NumBAT>/docs`` directory and running either ``make html`` or ``make latexpdf``.
+
+In each case, the output is placed in the ``<NumBAT>/docs/build`` directory.
+
+
+Note however most of the figures will only be available after you have run all the example problems in the  ``tutorial`` ``lit_ex`` and ``JOSAB_tutorial`` directories.
+This can be done by running ``make`` in each of those directories. Be aware that  some of these problems are quite large and may require some time to complete depending on your computer's performance.
+
+
+
+
+

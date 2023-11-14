@@ -1,17 +1,19 @@
 
-import threading 
+import threading
 import multiprocessing
-import traceback 
+import traceback
 import queue
-from PIL import Image
+
 import time
 import datetime
 
+from PIL import Image
+
 def join_figs(fn1, fn2, fnout):
- 
+
     images = [Image.open(x) for x in [fn1, fn2]]
 
-    nsz0 = [images[1].size[0], 
+    nsz0 = [images[1].size[0],
             int(images[0].size[1]*
             images[1].size[0]/
             images[0].size[0])]
@@ -39,7 +41,7 @@ def join_figs(fn1, fn2, fnout):
 
 
 class CalcThread(threading.Thread):
-    '''Runs the calculation function f_work(task) in a separate thread on one or more tasks 
+    '''Runs the calculation function f_work(task) in a separate thread on one or more tasks
        popped from queue.Queue q_work with results pushed to queue q_result.
 
        First element of the task tuple drawn from the queue should be
@@ -47,12 +49,12 @@ class CalcThread(threading.Thread):
 
        An additional optional queue q_work_noshare contains any tasks that may involve
        non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
-       a non-empty q_work_noshare. Obviously, this queue should be be small compared to the 
+       a non-empty q_work_noshare. Obviously, this queue should be be small compared to the
        main work queue or there will be minimal parallel advantage.
 
        '''
 
-    def __init__(self, q_work, q_result, f_work, q_work_noshare=None, verbose=False): 
+    def __init__(self, q_work, q_result, f_work, q_work_noshare=None, verbose=False):
         '''Optional q_work_noshare for non-thread-safe tasks.
         Other threads get an empty such queue and will only draw tasks from q_work.'''
         self.q_work = q_work
@@ -70,13 +72,13 @@ class CalcThread(threading.Thread):
         self.verbose = verbose
 
         # only one thread may call matplotlib
-        #self.can_plot = can_plot        
+        #self.can_plot = can_plot
         self.doing_plot_work = False
 
         threading.Thread.__init__(self)
 
     def run(self):
-        while True: 
+        while True:
             task = None
             try:
                 if self.verbose: print('{0} encountered remaining work queue lengths: ({1}, {2}).'.format(
@@ -91,7 +93,7 @@ class CalcThread(threading.Thread):
             except queue.Empty:
                 if self.verbose: print('{0} out of work, wrapping up.'.format(self.name))
                 break
-            
+
             if self.verbose: print('{0} is starting task i={1}, needs plotting: {2}.'.format(
                 self.name, task[0], self.doing_plot_work ))
 
@@ -120,13 +122,13 @@ class CalcThread(threading.Thread):
 
             except Exception as err:
                 print('\n\n{0} has encountered an exception on task {1}:'.format(self.name, task[0]),
-                      str(err)) 
+                      str(err))
                 traceback.print_exception(err)
                 break
 
-        return 
+        return
 
-def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work_noshare=None, 
+def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work_noshare=None,
                                    verbose=False):
 
     #TODO: avoid separate thread if num_threads = 1
@@ -147,7 +149,7 @@ def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work
         print('Looking at starting thread', i)
 
         # If there _is_ a non-Null q_work_noshare, only thread 1 should see it
-        qwns = q_work_noshare if (i==0) else None        
+        qwns = q_work_noshare if (i==0) else None
 
         th = CalcThread(q_work, q_result, caller, qwns, verbose)
         print('Starting thread:', th.name)
@@ -165,14 +167,14 @@ def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work
     else:
         pause = None
 
-    for th in threads:  # wait on worker threads. 
+    for th in threads:  # wait on worker threads.
         while True:
             th.join(pause)
             if report_progress: # Wake up now and again to report progress
                 if pause < pause_max:  # Early on, we report frequently, then less often over time
                     pause *= 1.25
 
-                tasks_done = total_tasks - q_work.qsize() 
+                tasks_done = total_tasks - q_work.qsize()
                 if q_work_noshare is not None:
                     tasks_done -= q_work_noshare.qsize()
                 tm_cu = time.time()
@@ -188,7 +190,7 @@ def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work
 
 
             if not th.is_alive():
-                print(f'Main thread has joined thread {th.name}. ', 
+                print(f'Main thread has joined thread {th.name}. ',
                 f'There are {threading.active_count()-1} workers remaining.')
                 break
 
@@ -198,7 +200,7 @@ def launch_worker_threads_and_wait(num_threads, caller, q_result, q_work, q_work
 
 
 class CalcProcess(multiprocessing.Process):
-    '''Runs the calculation function f_work(task) in a separate process on one or more tasks 
+    '''Runs the calculation function f_work(task) in a separate process on one or more tasks
        popped from multiprocessing.JoinableQueue q_work with results pushed to queue q_result.
 
        First element of the task tuple drawn from the queue should be
@@ -206,12 +208,12 @@ class CalcProcess(multiprocessing.Process):
 
        An additional optional queue q_work_noshare contains any tasks that may involve
        non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
-       a non-empty q_work_noshare. Obviously, this queue should be be small compared to the 
+       a non-empty q_work_noshare. Obviously, this queue should be be small compared to the
        main work queue or there will be minimal parallel advantage.
 
        '''
 
-    def __init__(self, q_work, q_result, f_work, verbose=False): 
+    def __init__(self, q_work, q_result, f_work, verbose=False):
 
         self.q_work = q_work
         self.q_result = q_result
@@ -226,23 +228,23 @@ class CalcProcess(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
 
     def run(self):
-        while True: 
+        while True:
             task = None
             try:
-                if self.verbose: print('{0} encountered remaining work queue length: {1}.'.format(
-                    self.name, self.q_work.qsize()))
+                if self.verbose:
+                    print(f'{self.name} encountered remaining work queue length: {self.q_work.qsize()}.')
 
                 # This timed wait to get a chance at the queue is inelegant
-                # Did have a get_nowait(), but then when all processes start at once, 
+                # Did have a get_nowait(), but then when all processes start at once,
                 #  some miss out on getting access and decide to give up.
                 # Better would be that nothing quits until it actually measures a qsize()=0
                 #  or else, we wait to acquire a lock on the queue, before testing get_nowait()
-                task = self.q_work.get(block=True, timeout=5)  
+                task = self.q_work.get(block=True, timeout=5)
 
             except queue.Empty as err:
-                if self.verbose: print('{0} out of work, wrapping up.'.format(self.name))
+                if self.verbose: print(f'{self.name} out of work, wrapping up.')
                 break
-            
+
             if self.verbose: print(f'{self.name} is starting task i={task[0]}.')
 
             try:
@@ -256,11 +258,10 @@ class CalcProcess(multiprocessing.Process):
                 self.td +=1
 
             except Exception as err:
-                print('\n\n{0} has encountered an exception on task {1}:'.format(self.name, task[0]),
-                      str(err)) 
+                print(f'\n\n{self.name} has encountered an exception on task {task[0]}:', str(err))
                 traceback.print_exception(err)
                 break
-    
+
         print(f'{self.name} is running off the end')
 
 def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, verbose=False):
@@ -278,7 +279,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
         print(f'Assigning {total_tasks} tasks across {num_processes} processes.')
 
     processes = []
-    for i in range(num_processes):
+    for _ in range(num_processes):
         pr = CalcProcess(q_work, q_result, caller, verbose)
         print('Starting process:', pr.name)
         pr.start()
@@ -294,7 +295,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
     else:
         pause = None
 
-    for pr in processes:  # wait on worker threads. 
+    for pr in processes:  # wait on worker threads.
         while True:
             pr.join(pause)
             if report_progress: # Wake up now and again to report progress
@@ -303,7 +304,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
 
                 tm_cu = time.time()
 
-                tasks_started = total_tasks - q_work.qsize() 
+                tasks_started = total_tasks - q_work.qsize()
                 tasks_completed = q_result.qsize()
                 frac_started=tasks_started/total_tasks
                 frac_completed=tasks_completed/total_tasks
@@ -320,7 +321,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
 
 
             if not pr.is_alive():
-                print(f'Main process has joined process {pr.name}. ', 
+                print(f'Main process has joined process {pr.name}. ',
                 f'There are {len(multiprocessing.active_children())} workers remaining.')
                 break
 

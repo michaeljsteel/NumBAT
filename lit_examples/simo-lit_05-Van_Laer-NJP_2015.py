@@ -1,30 +1,25 @@
 """ Replicating the results of
-    Net on-chip Brillouin gain based on suspended 
+    Net on-chip Brillouin gain based on suspended
     silicon nanowires
     Van Laer et al.
     http://dx.doi.org/10.1088/1367-2630/17/11/115005
 """
 
 import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
 import copy
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
-
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -43,6 +38,8 @@ AC_ival = 'All'
 
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
+
+nbapp = numbat.NumBAT()
 
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
@@ -68,8 +65,8 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 # npzfile = np.load('wguide_data2.npz')
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.45, xlim_max=0.45, 
-                         ivals=[EM_ival_pump], ylim_min=0.45, ylim_max=0.45, 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.45, xlim_max=0.45,
+                         ivals=[EM_ival_pump], ylim_min=0.45, ylim_max=0.45,
                          EM_AC='EM_E', n_points=1500, prefix=prefix)
 
 # Print the wavevectors of EM modes.
@@ -77,7 +74,7 @@ kzs = sim_EM_pump.kz_EM_all()
 print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff_all()) 
+n_eff_sim = np.real(sim_EM_pump.neff_all())
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 q_AC = 5 # close but not quite zero
@@ -95,7 +92,7 @@ plotting.plot_mode_fields(sim_AC, prefix=prefix)
 
 set_q_factor = 230 # NJP
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -118,6 +115,4 @@ freq_max = 20.0e9 # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

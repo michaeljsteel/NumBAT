@@ -75,6 +75,7 @@ The fields and gain parameters are as follows:
 
 We can reproduce Fig. 13 showing the elastic dispersion of this waveguide
 silicon waveguide using ``simo-josab-02b-acdisp.py``.  
+
 .. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
    :width: 15cm
    

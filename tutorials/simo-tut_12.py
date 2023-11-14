@@ -5,13 +5,12 @@
 import os
 import time
 import sys
-import queue
 import copy
 import multiprocessing
 import math
-import scipy.signal
-import scipy.optimize as sciopt
-import scipy.special as sp
+#import scipy.signal
+#import scipy.optimize as sciopt
+#import scipy.special as sp
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,6 +18,7 @@ import numpy as np
 
 sys.path.append("../backend/")
 
+import numbat
 import materials
 import objects
 import plotting
@@ -63,10 +63,10 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     fib_em = TwoLayerFiberEM(ncore, nclad, rco)
 
-    # The worker function passed to CalcThread to do one task 
+    # The worker function passed to CalcThread to do one task
     def solemrod_caller(args):
         (ik, k) = args # Matches queues passed to CalcThread
-        
+
         mhy_lo = 1
         mhy_hi = 5
         #v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
@@ -82,9 +82,9 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     # Multiprocessing here is for the demonstration of how to do it
     # It's probably not actually improving performance
 
-    # Choose a reasonable number of processes to test the system 
+    # Choose a reasonable number of processes to test the system
     # without grinding the computer to a halt
-    num_cores = max(2,int(os.cpu_count()/4))  
+    num_cores = max(2,int(os.cpu_count()/4))
 
     manager = multiprocessing.Manager()
     q_work = multiprocessing.JoinableQueue()        # for assigning the work
@@ -137,7 +137,7 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 multiprocessing.current_process().name, ik, len(kvec)-1))
-            plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(nmodes), 
+            plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(nmodes),
                                       prefix=prefix+'_%d'%ik, ticks=True)
 
         return (ik, tk, neff_k)
@@ -268,6 +268,8 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
+    nbapp=numbat.NumBAT()
+
     # Geometric Parameters - all in nm.
 
     smf28 = False  # which system to study: SMF-28 or chalc rod in silica
@@ -326,6 +328,8 @@ def do_main():
     #wguide.plot_mesh(prefix)
 
     solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad)
+
+    print(nbapp.final_report())
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 """ Replicating the results of
-    Interaction between light and highly confined 
+    Interaction between light and highly confined
     hypersound in a silicon photonic nanowire
     Van Laer et al.
     http://dx.doi.org/10.1038/nphoton.2015.11
@@ -7,22 +7,19 @@
     Making simplification of ignoring the pedestal.
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
 import copy
+import time
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
 from plotting import Decorator
-from fortran import NumBAT
 
 import starter
 
@@ -51,9 +48,6 @@ emdecorate=EMDecorator()
 #acdecorate=ACDecorator()
 
 
-
-start = time.time()
-
 # Geometric Parameters - all in nm.
 wl_nm = 1550
 unitcell_x = 5*wl_nm
@@ -71,7 +65,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, sub='a')
 
-
+nbapp = numbat.NumBAT()
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 # Si_110 = copy.deepcopy(materials.materials_dict["Si_2015_Van_Laer"])
@@ -100,26 +94,26 @@ if doem:
   else:
     npzfile = np.load(prefix+'-wguide_data.npz', allow_pickle=True)
     sim_EM_pump = npzfile['sim_EM_pump'].tolist()
-  
+
   sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
   np.savez(prefix+'-wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
   #npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
   #sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
-  
-  plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump], 
-                           ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E', 
+
+  plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
+                           ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E',
                            n_points=2000, quiver_points=10, prefix=prefix, decorator=emdecorate)
-  
+
   # Print the wavevectors of EM modes.
   print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
-  
+
   # Calculate the EM effective index of the waveguide.
   print("n_eff = ", np.round(sim_EM_pump.neff_all(), 4))
-  
+
 
 if doac:
   q_AC = 5 # close but not quite zero
-  
+
   # Calculate Acoustic Modes
   if new_calcs:
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
@@ -127,15 +121,15 @@ if doac:
   else:
     npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
     sim_AC = npzfile['sim_AC'].tolist()
-  
+
   plotting.plot_mode_fields(sim_AC, ivals=range(20), prefix=prefix)
-  
+
 set_q_factor = 306
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump, 
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 # Print the frequencies and gains of AC modes.
@@ -166,6 +160,4 @@ plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

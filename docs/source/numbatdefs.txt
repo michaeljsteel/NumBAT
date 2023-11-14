@@ -3,6 +3,7 @@
 
 .. |NUMBAT| replace:: NumBAT
 .. |GMSH| replace:: Gmsh
+.. |NUMBAT_EMAIL| replace:: michael.steel@mq.edu.au
 
 .. |figwidth| replace:: 10cm
 
