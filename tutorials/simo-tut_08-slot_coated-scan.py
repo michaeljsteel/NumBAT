@@ -1,30 +1,27 @@
 """ Calculate the backward SBS gain spectra of a Si
     slot waveguide containing As2S3 on a SiO2 slab.
 
-    This time include a capping layer of SiO2 and 
+    This time include a capping layer of SiO2 and
     investigate the effect of this layer's thickness.
 """
 
 import os
-import time
-import datetime
-import numpy as np
 import sys
 from multiprocessing import Pool
-import matplotlib
+import numpy as np
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
+
 
 import starter
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -47,9 +44,11 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
+numbat = numbat.NumBAT()
+
 # Function to return ac freqs for given coating thickness
 def ac_mode_freqs(coat_y):
-    print('Commencing mode calculation for coat_y = %f'% coat_y)
+    print(f'Commencing mode calculation for coat_y = {coat_y}')
 
     wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                             slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
@@ -85,11 +84,11 @@ def ac_mode_freqs(coat_y):
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
     # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-    freq_min = 4e9 
+    freq_min = 4e9
     freq_max = 14e9
-    
-    plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
-        EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
+
+    plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+        EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
         prefix=prefix, suffix='_%i' %int(coat_y))
 
     # Convert to GHz
@@ -138,7 +137,4 @@ ax.set_ylim(2.5, 9)
 fig.savefig(prefix+'-acdisp_coating.png', bbox_inches='tight')
 
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} (secs.)".format(end - start))
-print('\n\n')
-
+print(numbat.final_report())

@@ -3,31 +3,28 @@
 """
 
 # Step 1
-
-import time
-import datetime
-import numpy as np
 import sys
+import numpy as np
 
 sys.path.append("../backend/")
-import materials
-import objects
-import mode_calcs
+
+import numbat
 import integration
-import plotting
-from fortran import NumBAT
+import mode_calcs
+import objects
+import materials
+
 
 # Naming conventions
 # AC: acoustic
 # EM: electromagnetic
 # q_AC: acoustic wavevector
 
-start = time.time()
 print('\n\nCommencing NumBAT tutorial 1')
 
 # Step 2
 # Geometric Parameters - all in nm.
-lambda_nm = 1550 # Wavelength of EM wave in vacuum.
+lambda_nm = 1550  # Wavelength of EM wave in vacuum.
 # Unit cell must be large to ensure fields are zero at boundary.
 unitcell_x = 2.5*lambda_nm
 unitcell_y = unitcell_x
@@ -54,15 +51,19 @@ AC_ival = 'All'
 # Step 4
 # Use specified parameters to create a waveguide object.
 # to save the geometry and mesh as png files in backend/fortran/msh/
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.make_material("Vacuum"),
-                        material_a=materials.make_material("Si_2016_Smith"),
-                        lc_bkg=.1, # in vacuum background
-                        lc_refine_1=5.0, # on cylinder surfaces
-                        lc_refine_2=5.0) # on cylinder center
+
+numbat = numbat.NumBAT()
+
+
+wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+                           material_bkg=materials.make_material("Vacuum"),
+                           material_a=materials.make_material("Si_2016_Smith"),
+                           lc_bkg=.1,  # in vacuum background
+                           lc_refine_1=5.0,  # on cylinder surfaces
+                           lc_refine_2=5.0)  # on cylinder center
 
 # Note use of rough mesh for demonstration purposes by turning this line on.
-#wguide.check_mesh()
+# wguide.check_mesh()
 
 # Explicitly remind ourselves what data we're using.
 print('\nUsing material data: ', wguide.get_material('a'))
@@ -75,12 +76,13 @@ n_eff = wguide.get_material('a').refindex_n-0.1
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
 
 # Display the wavevectors of EM modes.
-v_kz=sim_EM_pump.kz_EM_all()
+v_kz = sim_EM_pump.kz_EM_all()
 print('\n k_z of electromagnetic modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz):
+    print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the Electromagnetic modes of the Stokes field.
-# For an idealised backward SBS simulation the Stokes modes are identical 
+# For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # # Alt
@@ -102,47 +104,45 @@ print('\n Acoustic wavenumber (1/m) = ', np.round(q_AC, 4))
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
 # Print the frequencies of AC modes.
-v_nu=sim_AC.nu_AC_all()
+v_nu = sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu):
+    print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
 # Do not calculate the acoustic loss from our fields, instead set a Q factor.
 set_q_factor = 1000.
 
 # Step 8
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump, 
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:
-SBS_gain_PE_ij = SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:]
-SBS_gain_MB_ij = SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:]
-SBS_gain_tot_ij = SBS_gain_tot[EM_ival_pump,EM_ival_Stokes,:]
+SBS_gain_PE_ij = SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :]
+SBS_gain_MB_ij = SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :]
+SBS_gain_tot_ij = SBS_gain_tot[EM_ival_pump, EM_ival_Stokes, :]
 
 # Print the Backward SBS gain of the AC modes.
 print("\nContributions to SBS gain [1/(WM)]")
 print("Acoustic Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
 
 for (m, gpe, gmb, gt) in zip(range(num_modes_AC), SBS_gain_PE_ij, SBS_gain_MB_ij, SBS_gain_tot_ij):
-    print('{0:8d}  {1:18.6e}  {2:18.6e}  {3:18.6e}'.format(m, gpe, gmb, gt))
+    print(f'{m:8d}  {gpe:18.6e}  {gmb:18.6e}  {gt:18.6e}')
 
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
-masked_PE = np.where(np.abs(SBS_gain_PE_ij)>threshold, SBS_gain_PE_ij, 0)
-masked_MB = np.where(np.abs(SBS_gain_MB_ij)>threshold, SBS_gain_MB_ij, 0)
-masked_tot = np.where(np.abs(SBS_gain_tot_ij)>threshold, SBS_gain_tot_ij, 0)
+masked_PE = np.where(np.abs(SBS_gain_PE_ij) > threshold, SBS_gain_PE_ij, 0)
+masked_MB = np.where(np.abs(SBS_gain_MB_ij) > threshold, SBS_gain_MB_ij, 0)
+masked_tot = np.where(np.abs(SBS_gain_tot_ij) > threshold, SBS_gain_tot_ij, 0)
 
 print("\n Displaying gain results with negligible components masked out:")
 
 print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
-for (m, gpe, gmb, gt) in zip( range(num_modes_AC), masked_PE, masked_MB, masked_tot):
-    print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
+for (m, gpe, gmb, gt) in zip(range(num_modes_AC), masked_PE, masked_MB, masked_tot):
+    print(f'{m:8d}  {gpe:18.6e}  {gmb:18.6e}  {gt:18.6e}')
 
-
-end = time.time()
-print("\nSimulation time: {0:10.3f} secs.\n\n".format(end - start))
-
+print(numbat.final_report())
