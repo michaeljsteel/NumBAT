@@ -14,19 +14,25 @@ def _confirm_file_exists(nm, path, evar=''):
             s += f'You may need to set the environment variable {evar}.'
         reporting.report_and_exit(s)
 
-class NumBATApp(object):
-    instances = 0
+class _NumBATApp(object):
+    my_num_instances = 0
 
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(NumBATApp, cls).__new__(cls)
-        return cls.instance
+    __instance = None
+
+    #def __new__(cls):
+    #    print('seeking nba')
+    #    if not hasattr(cls, 'instance'):
+    #        cls.instance = super(NumBATApp, cls).__new__(cls)
+    #        print('newing nba with insta', cls.instance)
+    #    return cls.instance
 
     def __init__(self):
-        if NumBATApp.instances:
-            reporting.report_and_exit('You may only create a single NumBAT object.')
+        #if _NumBATApp.my_num_instances:
+        #    reporting.report_and_exit('You may only create a single NumBAT object.')
 
-        NumBATApp.instances += 1
+        _NumBATApp.__instance = self
+
+        _NumBATApp.my_num_instances += 1
 
         self._paths={}
         self._start_time=time.time()
@@ -34,6 +40,12 @@ class NumBATApp(object):
         self._check_versions()
         self._setup_paths()
         reporting.init_logger()
+
+    @staticmethod
+    def get_instance():
+        if _NumBATApp.__instance is None:
+            _NumBATApp()  # instance gets attached inside __init__
+        return _NumBATApp.__instance
 
     def is_linux(self):
         return platform.system()=='Linux'
@@ -82,10 +94,11 @@ class NumBATApp(object):
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.6 or later.')
 
 
-def get_NumBATApp():
-    return NumBATApp()  # always returns the singleton NumBATApp object
+def NumBATApp():
+    nba = _NumBATApp.get_instance()  # always returns the singleton NumBATApp object
+    return nba
 
 
 def assert_numbat_object_created():
-    if NumBATApp.instances != 1:
+    if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
