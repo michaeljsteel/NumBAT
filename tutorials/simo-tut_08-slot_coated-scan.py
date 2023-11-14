@@ -44,7 +44,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 # Function to return ac freqs for given coating thickness
 def ac_mode_freqs(coat_y):

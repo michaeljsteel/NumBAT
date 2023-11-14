@@ -40,7 +40,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'b')
 
-numbat = numbat.NumBAT()
+NumBATApp = numbat.NumBATApp()
 
 # Note that this mesh is quite fine, may not be required if purely using dispersive sims
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,

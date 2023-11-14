@@ -44,7 +44,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 use_multiproc = num_cores >1 and not nbapp.is_macos()
 
