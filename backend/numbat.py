@@ -14,14 +14,19 @@ def _confirm_file_exists(nm, path, evar=''):
             s += f'You may need to set the environment variable {evar}.'
         reporting.report_and_exit(s)
 
-class NumBAT(object):
+class NumBATApp(object):
     instances = 0
 
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(NumBATApp, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self):
-        if NumBAT.instances:
+        if NumBATApp.instances:
             reporting.report_and_exit('You may only create a single NumBAT object.')
 
-        NumBAT.instances += 1
+        NumBATApp.instances += 1
 
         self._paths={}
         self._start_time=time.time()
@@ -77,7 +82,10 @@ class NumBAT(object):
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.6 or later.')
 
 
+def get_NumBATApp():
+    return NumBATApp()  # always returns the singleton NumBATApp object
+
 
 def assert_numbat_object_created():
-    if NumBAT.instances != 1:
+    if NumBATApp.instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')

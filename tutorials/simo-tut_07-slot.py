@@ -38,7 +38,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,

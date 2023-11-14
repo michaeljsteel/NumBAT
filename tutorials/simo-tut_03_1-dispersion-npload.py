@@ -33,7 +33,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'a')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
                            material_bkg=materials.make_material("Vacuum"),

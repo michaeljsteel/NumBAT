@@ -20,7 +20,7 @@ import numbat
 import materials
 import objects
 import plotting
-from numbattools import launch_worker_threads_and_wait
+from NumBATApptools import launch_worker_threads_and_wait
 from nbanalytic import ElasticRod
 
 import starter
@@ -350,7 +350,7 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(13, sys.argv, refine=4)
 
-    nbapp=numbat.NumBAT()
+    nbapp=numbat.NumBATApp()
 
     # Geometric Parameters - all in nm.
 

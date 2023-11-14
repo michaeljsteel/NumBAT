@@ -1,4 +1,4 @@
-""" We've now covered most of the features of NumBAT.
+""" We've now covered most of the features of NumBATApp.
     In the following tutorials we'll show how to study different
     geometries and materials.
 
@@ -37,7 +37,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv)
 
-numbat=numbat.NumBAT()
+NumBATApp=numbat.NumBATApp()
 
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),

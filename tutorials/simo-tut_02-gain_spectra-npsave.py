@@ -1,5 +1,5 @@
 """
-    NumBAT Tutorial 2
+    NumBATApp Tutorial 2
 
     Calculate the backward SBS gain spectra of a silicon waveguide surrounded in air.
 
@@ -47,9 +47,9 @@ else:
     prefix = 'tut_02'
     refine_fac = 5
 
-print('\nCommencing NumBAT tutorial 2\n')
+print('\nCommencing NumBATApp tutorial 2\n')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
@@ -156,7 +156,7 @@ else:
 
 # The following function shows how integrals can be implemented purely in python,
 # which may be of interest to users wanting to calculate expressions not currently
-# included in NumBAT. Note that the Fortran routines are much faster!
+# included in NumBATApp. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
 comsol_ivals = 5  # Number of modes contained in data file.
 SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
@@ -169,7 +169,7 @@ print("\n Displaying results of first five modes with negligible components mask
 threshold = -1e-3
 masked_PE = np.ma.masked_inside(
     SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :comsol_ivals], 0, threshold)
-print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
+print("SBS_gain [1/(Wm)] PE NumBATApp default (Fortran)\n", masked_PE)
 masked = np.ma.masked_inside(
     SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
 print("SBS_gain [1/(Wm)] python integration routines \n", masked)

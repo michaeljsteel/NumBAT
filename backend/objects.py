@@ -990,6 +990,11 @@ class Structure(object):
         # Manipulate scripts in backend/fortran/build
         # Writes final png file to user directory
 
+        nbapp = numbat.get_NumBATApp()
+
+        gmsh_exe = nbapp.path_gmsh()
+        print('gmshexe', gmsh_exe)
+
         cwd = os.getcwd()
         outprefix = os.path.join(cwd, outpref)
         tdir = tempfile.TemporaryDirectory()
@@ -1000,7 +1005,7 @@ class Structure(object):
 
         fn_scr = self.msh_location_out + self.msh_name + '_geo2png.scr'
 
-        cmd = ['gmsh', self.msh_name + '.geo', self.msh_name + '_geo2png.scr']
+        cmd = [gmsh_exe, self.msh_name + '.geo', self.msh_name + '_geo2png.scr']
 
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
@@ -1015,7 +1020,7 @@ class Structure(object):
         # cmd = ' '.join(['gmsh', f' -log {outprefix}-gmshlog.log',
         #                self.msh_name + '.msh',
         #                self.msh_name + '_msh2png.scr' ])
-        cmd = ['gmsh', self.msh_name + '.msh', self.msh_name + '_msh2png.scr']
+        cmd = [gmsh_exe, self.msh_name + '.msh', self.msh_name + '_msh2png.scr']
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
