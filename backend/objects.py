@@ -991,7 +991,6 @@ class Structure(object):
         # Writes final png file to user directory
 
         nbapp = numbat.NumBATApp()
-
         gmsh_exe = nbapp.path_gmsh()
 
         cwd = os.getcwd()
@@ -1034,10 +1033,13 @@ class Structure(object):
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''
 
-        gmsh_cmd = 'gmsh ' + self.msh_location_out + self.msh_name + '.geo'
+        nbapp = numbat.NumBATApp()
+        gmsh_exe = nbapp.path_gmsh()
+
+        gmsh_cmd = gmsh_exe + self.msh_location_out + self.msh_name + '.geo'
         os.system(gmsh_cmd)
 
-        gmsh_cmd = 'gmsh ' + self.msh_location_out + self.msh_name + '.msh'
+        gmsh_cmd = gmsh_exe + self.msh_location_out + self.msh_name + '.msh'
         os.system(gmsh_cmd)
 
     def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False,
