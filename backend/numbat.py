@@ -78,7 +78,7 @@ class _NumBATApp(object):
             path = shutil.which('gmsh')
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
-        elif self.is_mac():
+        elif self.is_macos():
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path,
                                                  '/Applications/Gmsh.app/Contents/MacOS/gmsh')
         else:
