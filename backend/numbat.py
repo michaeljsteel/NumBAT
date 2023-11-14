@@ -50,7 +50,7 @@ class _NumBATApp(object):
     def is_linux(self):
         return platform.system()=='Linux'
 
-    def is_mac(self):
+    def is_macos(self):
         return platform.system()=='Darwin'
 
     def is_windows(self):
