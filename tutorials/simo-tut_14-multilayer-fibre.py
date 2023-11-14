@@ -351,7 +351,7 @@ def do_main():
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
 
-    numbat=numbat.NumBAT()
+    nbapp=numbat.NumBAT()
 
     # Geometric Parameters - all in nm.
 
@@ -389,7 +389,7 @@ def do_main():
 
     solve_em_dispersion(prefix, wguide, ncore, nclad, rcore)
 
-    print(numbat.final_report())
+    print(nbapp.final_report())
 
 
 if __name__ == '__main__':

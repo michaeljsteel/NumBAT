@@ -39,7 +39,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(11, sys.argv, sub='a')
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x,
@@ -137,4 +137,4 @@ plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
                            prefix=prefix)
 
-print(numbat.final_report())
+print(nbapp.final_report())

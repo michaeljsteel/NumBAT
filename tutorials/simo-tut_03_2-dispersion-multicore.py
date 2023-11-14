@@ -138,4 +138,4 @@ ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')
 fig.savefig(prefix+'-dispersion_multicore.png', bbox_inches='tight')
 
 
-print(numbat.final_report())
+print(nbapp.final_report())

@@ -36,7 +36,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 
 # Warning: The fine grids in this list will take considerable time to run!
@@ -225,4 +225,4 @@ fig.savefig(prefix+'-convergence-gain_MB.png', bbox_inches='tight')
 print("Calculation times (secs.): ", ', '.join(
     map(lambda x: '%.2f' % x, time_list)))
 
-print(numbat.final_report())
+print(nbapp.final_report())

@@ -62,13 +62,13 @@ Ge_110.rotate_axis(np.pi/4., 'y-axis', save_rotated_tensors=True)
 print('Rotated Ge_110:', Ge_110.full_str())
 
 prefix, refine_fac = starter.read_args(10, sys.argv, sub='a')
-
+nbapp = numbat.NumBAT()
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Si3N4_2014_Wolff"),
-                        material_a=Ge_110, 
+                        material_a=Ge_110,
                         lc_bkg=.1, lc_refine_1=5.0, lc_refine_2=5.0)
 wguide.plot_mesh(prefix)
 
@@ -86,7 +86,7 @@ else:
 sim_EM_pump.analyse_symmetries(PointGroup.C2V)
 sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump], 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
                          ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', num_ticks=3, ticks=True,
                          prefix=prefix)
 
@@ -149,20 +149,18 @@ print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
 print("SBS_gain [1/(Wm)] total \n", masked)
 
 plotting.plot_mode_fields(sim_AC, prefix=prefix,
-     num_ticks=3, xlim_min=0.1, xlim_max=0.1, 
-     #modal_gains_PE=SBS_gain_PE[EM_ival_pump, EM_ival_Stokes,:], 
-     #modal_gains_MB=SBS_gain_MB[EM_ival_pump, EM_ival_Stokes,:], 
+     num_ticks=3, xlim_min=0.1, xlim_max=0.1,
+     #modal_gains_PE=SBS_gain_PE[EM_ival_pump, EM_ival_Stokes,:],
+     #modal_gains_MB=SBS_gain_MB[EM_ival_pump, EM_ival_Stokes,:],
      #modal_gains=SBS_gain[EM_ival_pump, EM_ival_Stokes,:]
-                          ) 
+                          )
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.0e9  # Hz
 freq_max = 11.0e9  # Hz
 
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())
