@@ -109,11 +109,14 @@ coat_max = 200
 coat_y_list = np.linspace(coat_min, coat_max, n_coats)
 
 num_cores = os.cpu_count()  # should be appropriate for individual machine/vm, and memory!
-pool = Pool(num_cores)
-pooled_mode_freqs = pool.map(ac_mode_freqs, coat_y_list)
-# Note pool.map() doesn't pass errors back from fortran routines very well.
-# It's good practise to run the extrema of your simulation range through map()
-# before launching full multicore simulation.
+
+use_multiproc = num_cores >1 and not nbapp.is_macos()
+
+if use_multiproc:
+    pool = Pool(num_cores)
+    pooled_mode_freqs = pool.map(ac_mode_freqs, coat_y_list)
+else:
+    pooled_mode_freqs = map(ac_mode_freqs, coat_y_list)
 
 # We will pack the above values into a single array for plotting purposes, initialise first
 freq_arr = np.empty((n_coats, num_modes_AC))
