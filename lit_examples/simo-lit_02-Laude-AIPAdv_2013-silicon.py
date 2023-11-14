@@ -1,31 +1,28 @@
 """ Replicating the results of
-    Generation of phonons from electrostriction in 
+    Generation of phonons from electrostriction in
     small-core optical waveguides
     Laude et al.
     http://dx.doi.org/10.1063/1.4801936
 
-    Replicating silicon example. 
+    Replicating silicon example.
     Note requirement for lots of modes and therefore lots of memory.
 """
 
 import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
+import numpy as np
+
 
 sys.path.append("../backend/")
+import NumBAT
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -46,6 +43,8 @@ AC_ival = 'All'
 
 
 prefix, refine_fac = starter.read_args(2, sys.argv)
+
+nbapp = numbat.NumBAT()
 
 # Use all specified parameters to create a waveguide object.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
@@ -84,20 +83,17 @@ plotting.plot_mode_fields(sim_AC, prefix=prefix)
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = 20e9 
+freq_min = 20e9
 freq_max = 45e9
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     semilogy=True, prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

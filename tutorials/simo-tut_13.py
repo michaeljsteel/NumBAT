@@ -9,9 +9,6 @@ import queue
 import copy
 import threading
 import math
-import scipy.signal
-import scipy.optimize as sciopt
-import scipy.special as sp
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,6 +16,7 @@ import numpy as np
 
 sys.path.append("../backend/")
 
+import numbat
 import materials
 import objects
 import plotting
@@ -315,7 +313,7 @@ def solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core):
         plot_and_label(axn, qvec_an*1e-6, neff_an[ip,:,:], '.', lab, col)
 
         #write data to text file with qvec as 0th column
-        mdata = np.hstack((qvec_an[:,np.newaxis], nu_an[ip,:,:])) 
+        mdata = np.hstack((qvec_an[:,np.newaxis], nu_an[ip,:,:]))
         np.savetxt(prefix+'-acdisp_qnu_p%d.txt'%(ip-1), mdata, fmt='%.8e',
               header='q [/m]    '+'nu_j [Hz]   '*nmodes)
 
@@ -325,8 +323,8 @@ def solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core):
     ax.plot(qvec_num*1e-6, qvec_num*Vs/(twopi*1e9), ':', color='gray', lw=.5)
 
     #write numerical dispersion data with qvec as 0th column
-    mdata = np.hstack((qvec_num[:,np.newaxis], nu_num)) 
-    np.savetxt(prefix+'-acdisp_qnu_num.txt', mdata, fmt='%.8e', 
+    mdata = np.hstack((qvec_num[:,np.newaxis], nu_num))
+    np.savetxt(prefix+'-acdisp_qnu_num.txt', mdata, fmt='%.8e',
               header='q [/m]    '+'nu_j [Hz]   '*nmodes)
 
     # Finish joint (q,nu) plot
@@ -351,6 +349,8 @@ def do_main():
     start = time.time()
 
     pref0, refine_fac = starter.read_args(13, sys.argv, refine=4)
+
+    nbapp=numbat.NumBAT()
 
     # Geometric Parameters - all in nm.
 
@@ -402,6 +402,8 @@ def do_main():
     sim_EM= wguide.calc_EM_modes(40, 1550,1.5) # solve one EM step to prep the waveguide meshing
 
     solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core)
+
+    print(nbapp.final_report())
 
 
 

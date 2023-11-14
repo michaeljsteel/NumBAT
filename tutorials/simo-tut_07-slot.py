@@ -2,25 +2,20 @@
     slot waveguide containing As2S3 on a SiO2 slab.
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
+
 import starter
 
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -43,6 +38,8 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
+nbapp = numbat.NumBAT()
+
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                         material_bkg=materials.make_material("Vacuum"),            # background
@@ -55,8 +52,8 @@ wguide.plot_mesh(prefix)
 # Move origin to nominal centre of waveguide, y adjustment needs refinement based on mesh template.
 # Note different shifts are allowed for EM and acoustic, because acoustic domain excludes vacuum regions
 # Shifts are in nm
-wguide.set_xyshift_em(-unitcell_x*.5, unitcell_y*.5)  
-wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)  
+wguide.set_xyshift_em(-unitcell_x*.5, unitcell_y*.5)
+wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
@@ -75,8 +72,8 @@ else:
     sim_EM_pump = mode_calcs.load_simulation('tut_07_pump')
     sim_EM_Stokes = mode_calcs.load_simulation('tut_07_stokes')
 
-plotting.plot_mode_fields(sim_EM_pump, quiver_points = 20, xlim_min=0.2, xlim_max=0.2, 
-                           ylim_min=0.0, ylim_max=0.0, EM_AC='EM_E', 
+plotting.plot_mode_fields(sim_EM_pump, quiver_points = 20, xlim_min=0.2, xlim_max=0.2,
+                           ylim_min=0.0, ylim_max=0.0, EM_AC='EM_E',
                            prefix=prefix)
 
 # Display the wavevectors of EM modes.
@@ -105,7 +102,7 @@ plotting.plot_mode_fields(sim_AC, quiver_points=20, prefix=prefix)
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu): print('f{i:3d}  {np.real(nu)*1e-9:.5f}')
 
 set_q_factor = 1000.
 
@@ -123,10 +120,8 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # GHz
 freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # GHz
 
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} (secs.)".format(end - start))
-print('\n\n')
+print(nbapp.final_report())

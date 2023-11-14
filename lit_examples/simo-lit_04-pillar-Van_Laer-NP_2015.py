@@ -1,30 +1,25 @@
 """ Replicating the results of
-    Interaction between light and highly confined 
+    Interaction between light and highly confined
     hypersound in a silicon photonic nanowire
     Van Laer et al.
     http://dx.doi.org/10.1038/nphoton.2015.11
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
+import time
 import copy
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
-
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -46,6 +41,8 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, sub='b')
+
+nbapp = numbat.NumBAT()
 
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer"))
@@ -71,7 +68,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, ivals=[EM_ival_pump],
-                         xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.2, 
+                         xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.2,
                          EM_AC='EM_E', prefix=prefix)
 
 # Print the wavevectors of EM modes.
@@ -87,7 +84,7 @@ plotting.plot_mode_fields(sim_AC, prefix=prefix)
 
 set_q_factor = 306
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -96,11 +93,8 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # GHz
 freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

@@ -5,24 +5,20 @@
 """
 
 import time
-import datetime
 import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -50,6 +46,8 @@ else:
 
 prefix, refine_fac = starter.read_args(6, sys.argv, sub='b')
 
+nbapp = numbat.NumBAT()
+
 # Use all specified parameters to create a waveguide object.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
@@ -66,7 +64,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=range(5),
-                         ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', 
+                         ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E',
                          prefix=prefix)
 
 # Print the wavevectors of EM modes.
@@ -74,7 +72,7 @@ kzs = sim_EM_pump.kz_EM_all()
 print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff_all()) 
+n_eff_sim = np.real(sim_EM_pump.neff_all())
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
@@ -91,7 +89,7 @@ print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4)
 
 set_q_factor = 1000.
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -100,17 +98,14 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.2e9  # GHz
 freq_max = 5.7e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     semilogy=True, prefix=prefix)
-
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

@@ -1,33 +1,28 @@
 """ Replicating the results of
-    Generation of phonons from electrostriction in 
+    Generation of phonons from electrostriction in
     small-core optical waveguides
     Laude et al.
     http://dx.doi.org/10.1063/1.4801936
 
     Replicating silica example for backwards SBS.
-     -- Compare gain in log plot with Fig 4. in paper. 
+     -- Compare gain in log plot with Fig 4. in paper.
          (Different though related quantities showing very similar resonant mode pattern.)
      -- Mode profiles m=5 (5.7 GHz) and
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
-start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -46,6 +41,8 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(1, sys.argv)
+
+nbapp=numbat.NumBAT()
 
 # Use all specified parameters to create a waveguide object.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
@@ -79,7 +76,7 @@ kzs = sim_EM_pump.kz_EM_all()
 print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff_all()) 
+n_eff_sim = np.real(sim_EM_pump.neff_all())
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
@@ -94,7 +91,7 @@ else:
     sim_AC = mode_calcs.load_simulation(prefix+'_ac')
 
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -131,7 +128,4 @@ plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix, suffix='_zoom')
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} secs.\n\n".format(end - start))
-print("--------------------------------------------------------------------\n\n\n")
-
+print(nbapp.final_report())

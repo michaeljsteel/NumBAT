@@ -1,29 +1,24 @@
 """ We've now covered most of the features of NumBAT.
-    In the following tutorials we'll show how to study different 
+    In the following tutorials we'll show how to study different
     geometries and materials.
 
-    Calculate the backward SBS gain spectra of a silicon waveguide 
+    Calculate the backward SBS gain spectra of a silicon waveguide
     surrounded by vacuum (air).
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
+
 import starter
 
-
-start = time.time()
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -41,6 +36,8 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv)
+
+numbat=numbat.NumBAT()
 
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
@@ -69,7 +66,7 @@ sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify cent
 
 print('\nPlotting EM fields')
 plotting.plot_mode_fields(sim_EM_pump, EM_AC='EM_E', ivals=[0],
-        xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4, 
+        xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
         prefix=prefix)
 
 # Display the wavevectors of EM modes.
@@ -104,7 +101,7 @@ for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e
 set_q_factor = 1000.
 
 print('\nCalculating gains')
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -122,10 +119,7 @@ freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, 
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\nSimulation time: {0:10.3f}".format(end - start))
-print('\n\n')
-
+print(nbapp.final_report())

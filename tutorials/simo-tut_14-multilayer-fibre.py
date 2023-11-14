@@ -10,7 +10,6 @@ import sys
 import copy
 import math
 import multiprocessing
-import scipy.signal
 import scipy.optimize as sciopt
 import scipy.special as sp
 
@@ -20,6 +19,7 @@ import numpy as np
 
 sys.path.append("../backend/")
 
+import numbat
 import materials
 import objects
 import plotting
@@ -158,7 +158,7 @@ def solve_chareq_em_fib2_disprel(f_disprel, family, k, nmodes, mlo, mhi, rco, nc
 # Solve the analytic dispersion relation using worker threads
 def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
-    # The worker function passed to CalcThread to do one task 
+    # The worker function passed to CalcThread to do one task
     def solemrod_caller(args):
         (ik, k) = args # Matches queues passed to CalcThread
         mhy_lo = 1
@@ -229,12 +229,12 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
         if doplot: # Only worker 1 will ever do this
             #print('{0} is plotting elastic modes at ik = {1:d} of [0..{2:d}].'.format(
             #    threading.current_thread().name, ik, len(kvec)-1))
-            plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(nmodes), 
+            plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(nmodes),
                                       prefix=prefix+'_%d'%ik, ticks=True)
 
         return (ik, tk, neff_k)
 
-    num_cores = os.cpu_count() 
+    num_cores = os.cpu_count()
     num_cores = 2
     launch_worker_processes_and_wait(num_cores, emcalc_caller, q_result, q_work)
 
@@ -351,6 +351,8 @@ def do_main():
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
 
+    nbapp=numbat.NumBAT()
+
     # Geometric Parameters - all in nm.
 
     mat_a = materials.make_material("SiO2_smf28")
@@ -374,9 +376,9 @@ def do_main():
                                inc_b_x=rn, inc_c_x=rn, inc_d_x=rn, inc_e_x=rn,
                                inc_f_x=rn, inc_g_x=rn, inc_h_x=rn, inc_i_x=rn,
                                inc_j_x=rn, inc_k_x=rn, inc_l_x=rn, inc_m_x=rn,
-                               inc_n_x=rn, inc_o_x=rn, 
-                               material_bkg=mat_vac, material_a=mat_a, 
-                               material_b=mat_b, material_c=mat_a, material_d=mat_b, material_e=mat_a, 
+                               inc_n_x=rn, inc_o_x=rn,
+                               material_bkg=mat_vac, material_a=mat_a,
+                               material_b=mat_b, material_c=mat_a, material_d=mat_b, material_e=mat_a,
                                material_f=mat_b, material_g=mat_a, material_h=mat_b, material_i=mat_a,
                                material_j=mat_b, material_k=mat_a, material_l=mat_b, material_m=mat_a,
                                material_n=mat_b, material_o=mat_a,
@@ -386,6 +388,8 @@ def do_main():
     #wguide.check_mesh()
 
     solve_em_dispersion(prefix, wguide, ncore, nclad, rcore)
+
+    print(nbapp.final_report())
 
 
 if __name__ == '__main__':
