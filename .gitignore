@@ -1,21 +1,27 @@
 
 *.cls
 *.pyc
+*.npz
+*.csv
+*.bak
+*.o
+*.pyf
+out
 
-backend/fortran/msh/*.msh
-backend/fortran/msh/*.geo
-backend/fortran/msh/*.mail
+backend/msh/*.msh
+backend/msh/*.geo
+backend/msh/*.mail
+backend/msh/build/*
+backend/fortran/build/*
 
-docs/build/latex/*.png
-docs/build/latex/*.sty
-docs/build/latex/*.aux
-docs/build/latex/*.dvi
-docs/build/latex/*.idx
-docs/build/latex/*.idx
-docs/build/latex/*.ilg
-docs/build/latex/*.ind
-docs/build/latex/*.ind
-docs/build/latex/*.log
-docs/build/latex/*.out
-docs/build/latex/*.toc
-docs/build/latex/*.ist
+josab_tutorial/*.png
+lit_examples/*.png
+tutorials/*.png
+tutorials/*.txt
+
+josab_tutorial/*-fields
+lit_examples/*-fields
+tutorials/*-fields
+
+
+docs/build/*
