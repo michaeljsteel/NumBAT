@@ -15,7 +15,13 @@ ifndef PLAT
 $(error 'Error: Must define MYPLAT variable in Makefile or environment variable NUMBAT_PLATFORM')
 endif
 
+UNAME_S := $(shell uname -s)
+
 ifeq ($(PLAT), "linux_vanilla")
+
+ifneq ($(UNAME_S), Linux)
+$(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
+endif
 
 F_COMPILER = g95
 #F_COMP_EXE = f77
@@ -40,6 +46,10 @@ GENLIB = -lrt
 PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
 
 else ifeq ($(PLAT), "linux_inteloneapi")
+
+ifneq ($(UNAME_S), Linux)
+$(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
+endif
 
 F_COMPILER = g95
 F_COMP_EXE = f77
@@ -67,8 +77,9 @@ PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/
 
 else ifeq ($(PLAT), "MacOS")
 
-$(info "Building for MacOS")
-$(info )
+ifneq ($(UNAME_S), Darwin)
+$(error 'We do not seem to be building on Mac OS. Check the value of MYPLAT in backend/fortran/Makefile')
+endif
 
 GCCROOT = /opt/local
 GCCBIN = $(GCCROOT)/bin
