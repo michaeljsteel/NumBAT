@@ -3,25 +3,18 @@
     Load EM mode data from simo_tut_02.
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
+import numpy as np
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
-import materials
-import objects
-import mode_calcs
+import numbat
 import integration
-import plotting
-from fortran import NumBAT
+import mode_calcs
+import objects
+import materials
 
 import starter
-
-
-start = time.time()
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -40,12 +33,14 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'a')
 
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        material_bkg=materials.make_material("Vacuum"),
-                        material_a=materials.make_material("Si_2016_Smith"),
-                        lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
+numbat = numbat.NumBAT()
 
-#wguide.check_mesh()
+wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+                           material_bkg=materials.make_material("Vacuum"),
+                           material_a=materials.make_material("Si_2016_Smith"),
+                           lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
+
+# wguide.check_mesh()
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
@@ -61,9 +56,10 @@ q_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
 nu_ks = 20
 
 fig, ax = plt.subplots()
-for i_ac, q_ac in enumerate(np.linspace(0.0,q_AC,nu_ks)):
+for i_ac, q_ac in enumerate(np.linspace(0.0, q_AC, nu_ks)):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_ac, EM_sim=sim_EM_pump)
-    prop_AC_modes = np.array([np.real(x) for x in sim_AC.nu_AC_all() if abs(np.real(x)) > abs(np.imag(x))])
+    prop_AC_modes = np.array(
+        [np.real(x) for x in sim_AC.nu_AC_all() if abs(np.real(x)) > abs(np.imag(x))])
     sym_list = integration.symmetries(sim_AC)
 
     for i in range(len(prop_AC_modes)):
@@ -79,14 +75,12 @@ for i_ac, q_ac in enumerate(np.linspace(0.0,q_AC,nu_ks)):
 
     print("Wavevector loop", i_ac+1, "/", nu_ks)
 
-ax.set_ylim(0,25)
-ax.set_xlim(0,1)
-ax.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc='lower right')
+ax.set_ylim(0, 25)
+ax.set_xlim(0, 1)
+ax.legend([sym_A, sym_B1, sym_B2, sym_B3], [
+          'A', r'B$_1$', r'B$_2$', r'B$_3$'], loc='lower right')
 ax.set_xlabel(r'Normalised axial wavevector $q/(2\beta)$')
 ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')
 fig.savefig('tut_03a-dispersion_symmetrised.png', bbox_inches='tight')
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} secs.".format(end - start))
-print('\n\n')
-
+print(numbat.final_report())

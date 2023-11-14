@@ -1,27 +1,20 @@
-""" Sanity check implementation of fully anisotropic 
+""" Sanity check implementation of fully anisotropic
     tensors by feeding in same parameters of simo_tut_06.
 """
 
-import time
-import datetime
-import numpy as np
 import sys
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
 import materials
 import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
-
-start = time.time()
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -43,6 +36,8 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
 
+numbat = numbat.NumBAT()
+
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
@@ -62,7 +57,7 @@ print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
 # Calculate the Electromagnetic modes of the Stokes field.
-# For an idealised backward SBS simulation the Stokes modes are identical 
+# For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # # Alt
@@ -86,14 +81,14 @@ print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival='All', 
+    EM_ival_pump, EM_ival_Stokes, AC_ival='All',
                            freq_min=0, freq_max=30e9, prefix=prefix)
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
@@ -122,6 +117,4 @@ for (m, gpe, gmb, gt) in zip( range(num_modes_AC), masked_PE, masked_MB, masked_
     print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
 
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} (secs.)".format(end - start))
-print('\n\n')
+print(numbat.final_report())
