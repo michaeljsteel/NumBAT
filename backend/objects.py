@@ -990,10 +990,9 @@ class Structure(object):
         # Manipulate scripts in backend/fortran/build
         # Writes final png file to user directory
 
-        nbapp = numbat.get_NumBATApp()
+        nbapp = numbat.NumBATApp()
 
         gmsh_exe = nbapp.path_gmsh()
-        print('gmshexe', gmsh_exe)
 
         cwd = os.getcwd()
         outprefix = os.path.join(cwd, outpref)
