@@ -46,6 +46,8 @@ prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
 nbapp = numbat.NumBAT()
 
+use_multiproc = num_cores >1 and not nbapp.is_macos()
+
 # Width previous simo's done for, with known meshing params
 known_geo = 315.
 
@@ -103,13 +105,12 @@ for width in waveguide_widths:
 new_calcs = True
 if new_calcs:
   # Run widths in parallel across num_cores CPUs using multiprocessing package.
-  pool = Pool(num_cores)
+  if use_multiproc:
+      pool = Pool(num_cores)
+      l_width_data = pool.map(modes_n_gain, l_wguides)
+  else:
+      l_width_data = list(map(modes_n_gain, l_wguides))
 
-  # Note pool.map() doesn't pass errors back from fortran routines very well.
-  # It's good practice to run the extrema of your simulation range through map()
-  # before launching full multicore simulation.
-
-  l_width_data = pool.map(modes_n_gain, l_wguides)
   v_width_data = np.array(l_width_data, dtype=object)
 
   # This generates a warning abut ragged nested sequences. Is there an option to pool.map that would clean this up?
