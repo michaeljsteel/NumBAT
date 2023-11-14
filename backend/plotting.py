@@ -242,13 +242,13 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     # process = psutil.Process()
 
-    pref = '%s-gain_spectra' % prefix
+    pref = f'{prefix}-gain_spectra'
 
     if decorator is None:
         decorator = Decorator()
     decorator._set_for_single()
 
-    # This is expensie but helps to get the peaks in most cases.
+    # This is expensive but helps to get the peaks in most cases.
     tune_steps = 50000
     # Need to do smarter interpolation to make this number lower
     tune_range = 10e9  # Hz

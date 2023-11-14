@@ -93,7 +93,7 @@ def _my_frm_onion(ax):
 
 
 class Structure(object):
-    ''' Represents a structured layer.
+    ''' Represents the geometry and  material properties (elastic and electromagnetic) of a waveguide structure.
 
         Args:
             unitcell_x  (float):
@@ -325,6 +325,8 @@ class Structure(object):
                 self.mail_data = f.readlines()
 
         if plotting_fields:  # TODO: This is for internal fortran plotting. Should have a less appealing name
+            reporting.register_warning('''Calling plotting_fields in objects.Structure.
+                                       This is deprecated. Please report to the github page.''')
             self.plotting_fields = 1
             if not os.path.exists('Bloch_fields'):
                 os.mkdir('Bloch_fields')
@@ -353,6 +355,17 @@ class Structure(object):
         # self.typ_el_AC = el_conv_table
         # print el_conv_table
 
+
+
+        self.rho, self.c_tensor, self.c_tensor_z, self.p_tensor, self.eta_tensor = self._build_elastic_tensors(symmetry_flag)
+
+        self.linear_element_shapes = ['rectangular', 'slot', 'slot_coated', 'rib',
+                                      'rib_coated', 'rib_double_coated', 'pedestal']
+        self.curvilinear_element_shapes = ['circular', 'onion', 'onion2', 'onion3',
+                                           'circ_onion', 'circ_onion2', 'circ_onion3']
+
+    def _build_elastic_tensors(self, symmetry_flag):
+
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
         # Any material not given acoustic_props assumed to be vacuum.
         acoustic_props = [
@@ -362,172 +375,121 @@ class Structure(object):
         self.n_typ_el_AC = len(acoustic_props)
 
         rho = np.zeros(self.n_typ_el_AC)
+
         # stiffness tensor in 6x6 Voigt notation
         c_tensor = np.zeros((6, 6, self.n_typ_el_AC))
+
         # stiffness tensor as rank 4 ijkz tensor
         c_tensor_z = np.zeros((3, 3, 3, self.n_typ_el_AC))
+
         # photelastic tensor as rank 4 ijkl tensor
         p_tensor = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
+
         # eta tensor as rank 4 ijkl tensor
         eta_tensor = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
 
         voigt_map = {(0, 0): 1, (1, 1): 2, (2, 2): 3, (2, 1): 4,
                      (2, 0): 5, (0, 1): 6, (1, 2): 4, (0, 2): 5, (1, 0): 6}
 
+
         for k_typ in range(self.n_typ_el_AC):
             if acoustic_props[k_typ]:
-                rho[k_typ] = acoustic_props[k_typ].rho
+                t_ac = acoustic_props[k_typ]
+                t_ac_c = t_ac.c_tensor
+                t_ac_p = t_ac.p_tensor
+                t_ac_eta = t_ac.eta_tensor
+
+                rho[k_typ] = t_ac.rho
 
                 if symmetry_flag:  # is it actually worth making this saving?
-                    c_tensor[0, 0, k_typ] = acoustic_props[k_typ].c_tensor[1, 1]
-                    c_tensor[1, 1, k_typ] = acoustic_props[k_typ].c_tensor[1, 1]
-                    c_tensor[2, 2, k_typ] = acoustic_props[k_typ].c_tensor[1, 1]
-                    c_tensor[0, 1, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[0, 2, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[1, 0, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[1, 2, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[2, 0, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[2, 1, k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor[3, 3, k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
-                    c_tensor[4, 4, k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
-                    c_tensor[5, 5, k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
+                    c_tensor[0, 0, k_typ] = t_ac_c[1, 1]
+                    c_tensor[1, 1, k_typ] = t_ac_c[1, 1]
+                    c_tensor[2, 2, k_typ] = t_ac_c[1, 1]
+                    c_tensor[0, 1, k_typ] = t_ac_c[1, 2]
+                    c_tensor[0, 2, k_typ] = t_ac_c[1, 2]
+                    c_tensor[1, 0, k_typ] = t_ac_c[1, 2]
+                    c_tensor[1, 2, k_typ] = t_ac_c[1, 2]
+                    c_tensor[2, 0, k_typ] = t_ac_c[1, 2]
+                    c_tensor[2, 1, k_typ] = t_ac_c[1, 2]
+                    c_tensor[3, 3, k_typ] = t_ac_c[4, 4]
+                    c_tensor[4, 4, k_typ] = t_ac_c[4, 4]
+                    c_tensor[5, 5, k_typ] = t_ac_c[4, 4]
 
-                    c_tensor_z[2, 2, 2,
-                               k_typ] = acoustic_props[k_typ].c_tensor[1, 1]
-                    c_tensor_z[2, 0, 0,
-                               k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor_z[2, 1, 1,
-                               k_typ] = acoustic_props[k_typ].c_tensor[1, 2]
-                    c_tensor_z[1, 1, 2,
-                               k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
-                    c_tensor_z[1, 2, 1,
-                               k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
-                    c_tensor_z[0, 0, 2,
-                               k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
-                    c_tensor_z[0, 2, 0,
-                               k_typ] = acoustic_props[k_typ].c_tensor[4, 4]
+                    c_tensor_z[2, 2, 2, k_typ] = t_ac_c[1, 1]
+                    c_tensor_z[2, 0, 0, k_typ] = t_ac_c[1, 2]
+                    c_tensor_z[2, 1, 1, k_typ] = t_ac_c[1, 2]
+                    c_tensor_z[1, 1, 2, k_typ] = t_ac_c[4, 4]
+                    c_tensor_z[1, 2, 1, k_typ] = t_ac_c[4, 4]
+                    c_tensor_z[0, 0, 2, k_typ] = t_ac_c[4, 4]
+                    c_tensor_z[0, 2, 0, k_typ] = t_ac_c[4, 4]
 
-                    p_tensor[0, 0, 0, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 1]
-                    p_tensor[1, 1, 1, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 1]
-                    p_tensor[2, 2, 2, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 1]
-                    p_tensor[0, 0, 1, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[0, 0, 2, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[1, 1, 0, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[1, 1, 2, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[2, 2, 0, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[2, 2, 1, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[1, 2]
-                    p_tensor[1, 2, 1, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[1, 2, 2, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[2, 1, 1, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[2, 1, 2, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[0, 2, 0, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[0, 2, 2, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[2, 0, 0, 2,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[2, 0, 2, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[0, 1, 0, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[0, 1, 1, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[1, 0, 0, 1,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
-                    p_tensor[1, 0, 1, 0,
-                             k_typ] = acoustic_props[k_typ].p_tensor[4, 4]
+                    p_tensor[0, 0, 0, 0, k_typ] = t_ac_p[1, 1]
+                    p_tensor[1, 1, 1, 1, k_typ] = t_ac_p[1, 1]
+                    p_tensor[2, 2, 2, 2, k_typ] = t_ac_p[1, 1]
+                    p_tensor[0, 0, 1, 1, k_typ] = t_ac_p[1, 2]
+                    p_tensor[0, 0, 2, 2, k_typ] = t_ac_p[1, 2]
+                    p_tensor[1, 1, 0, 0, k_typ] = t_ac_p[1, 2]
+                    p_tensor[1, 1, 2, 2, k_typ] = t_ac_p[1, 2]
+                    p_tensor[2, 2, 0, 0, k_typ] = t_ac_p[1, 2]
+                    p_tensor[2, 2, 1, 1, k_typ] = t_ac_p[1, 2]
+                    p_tensor[1, 2, 1, 2, k_typ] = t_ac_p[4, 4]
+                    p_tensor[1, 2, 2, 1, k_typ] = t_ac_p[4, 4]
+                    p_tensor[2, 1, 1, 2, k_typ] = t_ac_p[4, 4]
+                    p_tensor[2, 1, 2, 1, k_typ] = t_ac_p[4, 4]
+                    p_tensor[0, 2, 0, 2, k_typ] = t_ac_p[4, 4]
+                    p_tensor[0, 2, 2, 0, k_typ] = t_ac_p[4, 4]
+                    p_tensor[2, 0, 0, 2, k_typ] = t_ac_p[4, 4]
+                    p_tensor[2, 0, 2, 0, k_typ] = t_ac_p[4, 4]
+                    p_tensor[0, 1, 0, 1, k_typ] = t_ac_p[4, 4]
+                    p_tensor[0, 1, 1, 0, k_typ] = t_ac_p[4, 4]
+                    p_tensor[1, 0, 0, 1, k_typ] = t_ac_p[4, 4]
+                    p_tensor[1, 0, 1, 0, k_typ] = t_ac_p[4, 4]
 
-                    eta_tensor[0, 0, 0, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 1]
-                    eta_tensor[1, 1, 1, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 1]
-                    eta_tensor[2, 2, 2, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 1]
-                    eta_tensor[0, 0, 1, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[0, 0, 2, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[1, 1, 0, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[1, 1, 2, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[2, 2, 0, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[2, 2, 1, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[1, 2]
-                    eta_tensor[1, 2, 1, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[1, 2, 2, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[2, 1, 1, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[2, 1, 2, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[0, 2, 0, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[0, 2, 2, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[2, 0, 0, 2,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[2, 0, 2, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[0, 1, 0, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[0, 1, 1, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[1, 0, 0, 1,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
-                    eta_tensor[1, 0, 1, 0,
-                               k_typ] = acoustic_props[k_typ].eta_tensor[4, 4]
+                    eta_tensor[0, 0, 0, 0, k_typ] = t_ac_eta[1, 1]
+                    eta_tensor[1, 1, 1, 1, k_typ] = t_ac_eta[1, 1]
+                    eta_tensor[2, 2, 2, 2, k_typ] = t_ac_eta[1, 1]
+                    eta_tensor[0, 0, 1, 1, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[0, 0, 2, 2, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[1, 1, 0, 0, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[1, 1, 2, 2, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[2, 2, 0, 0, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[2, 2, 1, 1, k_typ] = t_ac_eta[1, 2]
+                    eta_tensor[1, 2, 1, 2, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[1, 2, 2, 1, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[2, 1, 1, 2, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[2, 1, 2, 1, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[0, 2, 0, 2, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[0, 2, 2, 0, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[2, 0, 0, 2, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[2, 0, 2, 0, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[0, 1, 0, 1, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[0, 1, 1, 0, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[1, 0, 0, 1, k_typ] = t_ac_eta[4, 4]
+                    eta_tensor[1, 0, 1, 0, k_typ] = t_ac_eta[4, 4]
 
                 else:
                     for i in range(6):
                         for j in range(6):
-                            c_tensor[i, j,
-                                     k_typ] = acoustic_props[k_typ].c_tensor[i+1, j+1]
+                            c_tensor[i, j, k_typ] = t_ac_c[i+1, j+1]
 
                     for i in [0, 1, 2]:
                         for j in [0, 1, 2]:
                             I = voigt_map[(i, j)]
                             for k in [0, 1, 2]:
                                 Jz = voigt_map[(k, 2)]
-                                c_tensor_z[i, j, k,
-                                           k_typ] = acoustic_props[k_typ].c_tensor[I, Jz]
+                                c_tensor_z[i, j, k, k_typ] = t_ac_c[I, Jz]
                                 for l in [0, 1, 2]:
                                     J = voigt_map[(k, l)]
-                                    p_tensor[i, j, k, l,
-                                             k_typ] = acoustic_props[k_typ].p_tensor[I, J]
-                                    eta_tensor[i, j, k, l,
-                                               k_typ] = acoustic_props[k_typ].eta_tensor[I, J]
+                                    p_tensor[i, j, k, l, k_typ] = t_ac_p[I, J]
+                                    eta_tensor[i, j, k, l, k_typ] = t_ac_eta[I, J]
 
-        self.rho = rho
-        self.c_tensor = c_tensor
-        self.c_tensor_z = c_tensor_z
-        self.p_tensor = p_tensor
-        self.eta_tensor = eta_tensor
+        return  rho,  c_tensor,  c_tensor_z,  p_tensor,  eta_tensor
 
-        self.linear_element_shapes = ['rectangular', 'slot', 'slot_coated', 'rib',
-                                      'rib_coated', 'rib_double_coated', 'pedestal']
-        self.curvilinear_element_shapes = ['circular', 'onion', 'onion2', 'onion3',
-                                           'circ_onion', 'circ_onion2', 'circ_onion3']
+#def set_threadsafe(self):
+#        pass
 
-    def set_threadsafe(self):
-        pass
-
-    def get_material(self, k): return self.d_materials[k]
+    def get_material(self, k):
+        return self.d_materials[k]
 
     def set_xyshift_em(self, x, y):
         # Sets shift in grid from user perspective in nm
