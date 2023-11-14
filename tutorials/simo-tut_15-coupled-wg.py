@@ -38,7 +38,7 @@ AC_ival = 'All'
 
 prefix_str, refine_fac = starter.read_args(14, sys.argv)
 
-numbat=numbat.NumBAT()
+nbapp=numbat.NumBAT()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
@@ -119,4 +119,4 @@ sim_AC.calc_acoustic_losses()
 plotting.plot_mode_fields(sim_AC, contours=False,
                           prefix=prefix_str, ticks=True, ivals=range(10), quiver_points=20)
 
-print(numbat.final_report())
+print(nbapp.final_report())

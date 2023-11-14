@@ -33,7 +33,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'a')
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
                            material_bkg=materials.make_material("Vacuum"),
@@ -83,4 +83,4 @@ ax.set_xlabel(r'Normalised axial wavevector $q/(2\beta)$')
 ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')
 fig.savefig('tut_03a-dispersion_symmetrised.png', bbox_inches='tight')
 
-print(numbat.final_report())
+print(nbapp.final_report())

@@ -38,7 +38,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
@@ -124,4 +124,4 @@ plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-print(numbat.final_report())
+print(nbapp.final_report())

@@ -52,7 +52,7 @@ AC_ival = 'All'
 # Use specified parameters to create a waveguide object.
 # to save the geometry and mesh as png files in backend/fortran/msh/
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
@@ -145,4 +145,4 @@ print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
 for (m, gpe, gmb, gt) in zip(range(num_modes_AC), masked_PE, masked_MB, masked_tot):
     print(f'{m:8d}  {gpe:18.6e}  {gmb:18.6e}  {gt:18.6e}')
 
-print(numbat.final_report())
+print(nbapp.final_report())

@@ -49,7 +49,7 @@ else:
 
 print('\nCommencing NumBAT tutorial 2\n')
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
@@ -191,4 +191,4 @@ plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
                            prefix=prefix, suffix='_zoom')
 
-print(numbat.final_report())
+print(nbapp.final_report())

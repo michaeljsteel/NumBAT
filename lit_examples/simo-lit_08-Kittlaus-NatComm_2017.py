@@ -53,7 +53,7 @@ class ACDecorator(plotting.Decorator):
   def __init__(self):
     super().__init__()
 
-    self.set_singleplot_fontsize('ax_label',30) 
+    self.set_singleplot_fontsize('ax_label',30)
     self.set_singleplot_fontsize('subplot_title',30)
     self.set_singleplot_fontsize('cbar_tick',20)
     self.set_singleplot_fontsize('ax_tick',30)
@@ -93,14 +93,14 @@ unitcell_y = 0.7*unitcell_x
 
 # areas included purely
 slab_b_y = 500
-coat_x = 50 
+coat_x = 50
 coat_y = 100
 coat2_x = 100
 coat2_y = 200
 
 lc_bkg = .1  # background
 lc_refine_1 = 10  # edge of rib
-lc_refine_2 = 10   # edge of slab_a 
+lc_refine_2 = 10   # edge of slab_a
 lc_refine_3 = 10    # edge of coat
 lc_refine_4 = 10    # edge of slab_b
 lc_refine_5 = 10     # edge of coat2
@@ -109,7 +109,7 @@ lc_refine_5 = 10     # edge of coat2
 # ##working set
 # lc_bkg = .5  # background
 # lc_refine_1 = 1000  # edge of rib
-# lc_refine_2 = 400   # edge of slab_a 
+# lc_refine_2 = 400   # edge of slab_a
 # lc_refine_3 = 10    # edge of coat
 # lc_refine_4 = 5   # edge of slab_b
 # lc_refine_5 = 1   # edge of coat2
@@ -117,7 +117,7 @@ lc_refine_5 = 10     # edge of coat2
 # #scaled working set: doesn't work
 # lc_bkg = 1  # background
 # lc_refine_1 = 2000  # edge of rib
-# lc_refine_2 = 600   # edge of slab_a 
+# lc_refine_2 = 600   # edge of slab_a
 # lc_refine_3 = 10    # edge of coat
 # lc_refine_4 = 4   # edge of slab_b
 # lc_refine_5 = 1  # edge of coat2
@@ -125,7 +125,7 @@ lc_refine_5 = 10     # edge of coat2
 ##scaled working set: doesn't work
 #lc_bkg = .1  # background
 #lc_refine_1 = 200  # edge of rib
-#lc_refine_2 = 75   # edge of slab_a 
+#lc_refine_2 = 75   # edge of slab_a
 #lc_refine_3 = 50    # edge of coat
 #c5  = 50  # edge of slab_b
 #lc_refine_5 = 50  # edge of coat2
@@ -153,13 +153,15 @@ Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
+nbapp = numbat.NumBAT()
+
 vac = materials.make_material("Vacuum")
 # Use specified parameters to create a waveguide object.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
-                        slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y, 
+                        slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y,
                         coat_x=coat_x, coat_y=coat_y, coat2_x=coat2_x, coat2_y=coat2_y,
-                        material_bkg=vac, 
-                        material_a=Si_110, material_b=Si_110, material_c=vac, 
+                        material_bkg=vac,
+                        material_a=Si_110, material_b=Si_110, material_c=vac,
                         material_d=vac, material_e=vac, symmetry_flag=False,
                         lc_bkg=lc_bkg, lc_refine_1=lc_refine_1, lc_refine_2=lc_refine_2,
                         lc_refine_3=lc_refine_3, lc_refine_4=lc_refine_4, lc_refine_5=lc_refine_5)
@@ -181,18 +183,18 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
 print("starting EM field plotting ")
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, 
-                         ivals=[EM_ival_pump,EM_ival_Stokes], 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
+                         ivals=[EM_ival_pump,EM_ival_Stokes],
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_E', num_ticks=3,
-                         prefix=prefix, 
-                         decorator=emdecorate, quiver_points=20, 
+                         prefix=prefix,
+                         decorator=emdecorate, quiver_points=20,
                          comps=('Ex','Ey', 'Ez','Eabs','Et'), n_points=2000, colorbar=True)
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, 
-                         ivals=[EM_ival_pump,EM_ival_Stokes], 
+plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
+                         ivals=[EM_ival_pump,EM_ival_Stokes],
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_H', num_ticks=3,
-                         prefix=prefix, 
-                         decorator=emdecorate, quiver_points=20, 
+                         prefix=prefix,
+                         decorator=emdecorate, quiver_points=20,
                          comps=('Hx','Hy', 'Hz','Habs','Ht'), n_points=2000, colorbar=True)
 
 # Print the wavevectors of EM modes.
@@ -219,14 +221,14 @@ print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
 selected_AC_modes = [7, 13, 23]
 print("AC modes selected for field plotting", selected_AC_modes)
 print("plotting acoustic modes")
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=selected_AC_modes,  
-                         num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1, 
+plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=selected_AC_modes,
+                         num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1,
                          quiver_points=20, decorator=acdecorate, colorbar=True)
 
 
 set_q_factor = 460.
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
@@ -246,10 +248,8 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 0.5e9  # Hz
 freq_max = 9.5e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, 
+plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     prefix=prefix)
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
-print("--------------------------------------------------------------------\n\n\n")
+print(nbapp.final_report())

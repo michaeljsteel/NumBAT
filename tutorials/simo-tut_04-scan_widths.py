@@ -44,7 +44,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 # Width previous simo's done for, with known meshing params
 known_geo = 315.
@@ -188,4 +188,4 @@ plt.savefig(prefix+'-gain_spectra-waterfall.png')
 plt.close()
 
 
-print(numbat.final_report())
+print(nbapp.final_report())

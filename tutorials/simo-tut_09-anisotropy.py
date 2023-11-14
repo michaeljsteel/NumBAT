@@ -36,7 +36,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
 
-numbat = numbat.NumBAT()
+nbapp = numbat.NumBAT()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
@@ -117,4 +117,4 @@ for (m, gpe, gmb, gt) in zip( range(num_modes_AC), masked_PE, masked_MB, masked_
     print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
 
 
-print(numbat.final_report())
+print(nbapp.final_report())
