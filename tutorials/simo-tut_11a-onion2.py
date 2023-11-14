@@ -39,7 +39,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(11, sys.argv, sub='a')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 # Use of a more refined mesh to produce field plots.
 wguide = objects.Structure(unitcell_x,

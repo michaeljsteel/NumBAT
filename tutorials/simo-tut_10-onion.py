@@ -35,7 +35,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(10, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp()
 
 d_hi = 200
 d_lo = 400

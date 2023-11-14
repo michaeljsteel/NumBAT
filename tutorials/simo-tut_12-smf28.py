@@ -23,7 +23,7 @@ import numbat
 import materials
 import objects
 import plotting
-from numbattools import launch_worker_threads_and_wait
+from NumBATApptools import launch_worker_threads_and_wait
 
 import starter
 
@@ -901,7 +901,7 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
-    nbapp = numbat.NumBAT()
+    nbapp = numbat.NumBATApp()
 
     # Geometric Parameters - all in nm.
 
