@@ -19,7 +19,6 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -44,7 +43,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 use_multiproc = num_cores >1 and not nbapp.is_macos()
 
@@ -91,7 +90,7 @@ for width in waveguide_widths:
     inc_a_x = width
     inc_a_y = 0.9*inc_a_x
 
-    wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y,
+    wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y,
                                inc_a_y, inc_shape,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
@@ -132,9 +131,9 @@ for i_w, width_obj in enumerate(v_width_data):
     width, sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz = width_obj
 
     plotting.plot_mode_fields(
-        sim_EM_pump, prefix=prefix, suffix='_wid_%d' % i_w, ivals=range(5))
+        sim_EM_pump,  suffix='_wid_%d' % i_w, ivals=range(5))
 
-    plotting.plot_mode_fields(sim_AC, prefix=prefix,
+    plotting.plot_mode_fields(sim_AC,
                               suffix='_wid_%d' % i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
@@ -149,7 +148,7 @@ for i_w, width_obj in enumerate(v_width_data):
     decorator.set_title(f'Gain for width $w={width:.2f}.2f$ nm')
     plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                                EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                               prefix=prefix, suffix=f'_wscan_{i_w}' ,  # include scan step in file name
+                                suffix=f'_wscan_{i_w}' ,  # include scan step in file name
                                decorator=decorator)
 
     # Repeat calc to collect data for waterfall plot.

@@ -1,4 +1,4 @@
-""" We've now covered most of the features of NumBATApp.
+""" We've now covered most of the features of NumBAT.
     In the following tutorials we'll show how to study different
     geometries and materials.
 
@@ -12,7 +12,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -37,9 +36,9 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv)
 
-NumBATApp=numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
                         lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
@@ -67,7 +66,7 @@ sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify cent
 print('\nPlotting EM fields')
 plotting.plot_mode_fields(sim_EM_pump, EM_AC='EM_E', ivals=[0],
         xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
-        prefix=prefix)
+        )
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
@@ -91,7 +90,7 @@ else:
     sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
 
 sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', prefix=prefix)
+plotting.plot_mode_fields(sim_AC, EM_AC='AC', )
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
@@ -120,6 +119,6 @@ freq_max = 12e9  # Hz
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

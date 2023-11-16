@@ -11,7 +11,6 @@ import sys
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -46,10 +45,10 @@ else:
 
 prefix, refine_fac = starter.read_args(6, sys.argv, sub='b')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
                         #lc_bkg=1, lc_refine_1=600.0, lc_refine_2=300.0)
@@ -65,7 +64,7 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=range(5),
                          ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E',
-                         prefix=prefix)
+                         )
 
 # Print the wavevectors of EM modes.
 kzs = sim_EM_pump.kz_EM_all()
@@ -82,7 +81,7 @@ shift_Hz = 4e9
 # Calculate Acoustic Modes
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-plotting.plot_mode_fields(sim_AC,  prefix=prefix)
+plotting.plot_mode_fields(sim_AC,  )
 
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
@@ -100,12 +99,12 @@ freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.2e9  # GHz
 freq_max = 5.7e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    semilogy=True, prefix=prefix)
+    semilogy=True, )
 print(nbapp.final_report())

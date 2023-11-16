@@ -13,7 +13,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -39,13 +38,13 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 Si_110.rotate_axis(np.pi/4,'y-axis', save_rotated_tensors=True)
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110, symmetry_flag=False,
                         lc_bkg=.1, lc_refine_1=15.0*refine_fac, lc_refine_2=15.0*refine_fac)
@@ -67,7 +66,7 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.45, xlim_max=0.45,
                          ivals=[EM_ival_pump], ylim_min=0.45, ylim_max=0.45,
-                         EM_AC='EM_E', n_points=1500, prefix=prefix)
+                         EM_AC='EM_E', n_points=1500, )
 
 # Print the wavevectors of EM modes.
 kzs = sim_EM_pump.kz_EM_all()
@@ -88,7 +87,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
-plotting.plot_mode_fields(sim_AC, prefix=prefix)
+plotting.plot_mode_fields(sim_AC, )
 
 set_q_factor = 230 # NJP
 
@@ -113,6 +112,6 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 freq_min = 5.0e9 # Hz
 freq_max = 20.0e9 # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, )
 
 print(nbapp.final_report())

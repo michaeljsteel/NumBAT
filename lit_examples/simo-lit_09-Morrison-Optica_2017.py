@@ -12,7 +12,6 @@ import sys
 
 sys.path.append("../backend/")
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -59,12 +58,12 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
 
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, coat_x=coat_x, coat_y=coat_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("As2S3_2017_Morrison"), # waveguide
@@ -84,7 +83,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.3, ylim_max=0.3, EM_AC='EM_E', num_ticks=3,
-                         prefix=prefix)
+                         )
 
 # Calculate the Electromagnetic modes of the Stokes field.
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
@@ -111,7 +110,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # npzfile = np.load('wguide_data_AC.npz')
 # sim_AC = npzfile['sim_AC'].tolist()
 
-plotting.plot_mode_fields(sim_AC, prefix=prefix, num_ticks=3, xlim_min=0.1, xlim_max=0.1)
+plotting.plot_mode_fields(sim_AC,  num_ticks=3, xlim_min=0.1, xlim_max=0.1)
 
 # Print the frequencies of AC modes.
 print('\n Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
@@ -140,6 +139,6 @@ freq_min = 7.2e9  # Hz
 freq_max = 8.1e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

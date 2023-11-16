@@ -11,7 +11,6 @@ sys.path.append("../backend/")
 import numbat
 import integration
 import mode_calcs
-import objects
 import materials
 
 
@@ -20,7 +19,7 @@ import materials
 # EM: electromagnetic
 # q_AC: acoustic wavevector
 
-print('\n\nCommencing NumBATApp tutorial 1')
+print('\n\nCommencing NumBAT tutorial 1')
 
 # Step 2
 # Geometric Parameters - all in nm.
@@ -55,7 +54,8 @@ AC_ival = 'All'
 nbapp = numbat.NumBATApp()
 
 
-wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+#wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1,  # in vacuum background

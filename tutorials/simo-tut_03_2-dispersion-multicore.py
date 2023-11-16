@@ -14,7 +14,6 @@ sys.path.append("../backend/")
 
 import numbat
 import mode_calcs
-import objects
 import materials
 
 import starter
@@ -40,10 +39,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'b')
 
-NumBATApp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 # Note that this mesh is quite fine, may not be required if purely using dispersive sims
-wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
