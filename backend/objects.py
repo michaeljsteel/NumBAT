@@ -226,10 +226,12 @@ class Structure(object):
                  make_mesh_now=True, force_mesh=True,
                  mesh_file='NEED_FILE.mail', check_mesh=False, plt_mesh=False,
                  lc_bkg=0.09, lc_refine_1=1.0, lc_refine_2=1.0, lc_refine_3=1.0, lc_refine_4=1.0, lc_refine_5=1.0,
-                 plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0,
-                 plot_field_conc=False):
+                 plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0, plot_field_conc=False, 
+                 direct_call=True):
 
         numbat.assert_numbat_object_created()
+        if direct_call:
+            reporting.register_warning('Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0

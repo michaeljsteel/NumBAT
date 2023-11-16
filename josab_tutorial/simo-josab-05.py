@@ -3,20 +3,18 @@ Script to evaluate intermodal forward Brillouin scattering in a cylindrical SiO2
 """
 
 # Import the necessary packages
-import time
-import datetime
+
+
 import numpy as np
 import sys
-import copy
-from matplotlib.ticker import AutoMinorLocator
 import math
 sys.path.append("../backend/")
+import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
+
 
 import starter
 
@@ -25,7 +23,7 @@ import starter
 # EM: electromagnetic
 # q_AC: acoustic wavenumber
 
-start = time.time()
+
 
 # Specify Geometric Parameters - all in [nm].
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
@@ -51,8 +49,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
+nbapp = numbat.NumBATApp(prefix)
+
 # Use all specified parameters to create a waveguide object
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2021_Poulton"),
                         lc_bkg=0.05, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
@@ -74,7 +74,7 @@ print("Starting EM field plotting ")
 plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
                          EM_AC='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
-                         prefix=prefix, quiver_points=40,
+                          quiver_points=40,
                          n_points=1000, colorbar=True)
 
 # A computation interruption if needed
@@ -112,7 +112,7 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 freq_min = 2.5e9
 freq_max = 3.0e9
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, prefix=prefix)
+    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max, )
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
@@ -129,7 +129,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=6; #note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(15),
+plotting.plot_mode_fields(sim_AC,  ivals=range(15),
                           num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
@@ -150,5 +150,4 @@ absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Sto
 absQtot = pow(absQtot2,1/2)
 print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
+print(nbapp.final_report())

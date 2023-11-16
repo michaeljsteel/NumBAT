@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -72,7 +71,7 @@ n_eff = 1.44 # just a little under the core index
 
 prefix, refine_fac = starter.read_args(3, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 prefix = 'lit_03_m4'
 
@@ -121,7 +120,7 @@ def modes_n_gain(diam):
     # Use all specified parameters to create a waveguide object.
     unitcell_x = 3*diam
     unitcell_y = unitcell_x
-    wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+    wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                             material_bkg=mat_bkg, material_a=mat_a,
                             #lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
                             lc_bkg=.1/refine_fac, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -130,7 +129,7 @@ def modes_n_gain(diam):
 
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
-    #plotting.plot_mode_fields(sim_EM_pump, ivals=range(5), EM_AC='EM_E', prefix=prefix)
+    #plotting.plot_mode_fields(sim_EM_pump, ivals=range(5), EM_AC='EM_E', )
 
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 

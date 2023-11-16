@@ -3,24 +3,22 @@ Calculate dispersion diagram of the acoustic modes in a rectangular Si waveguide
 """
 
 # Import the necessary packages
-import time
-import datetime
+
+
 import numpy as np
 import sys
-import matplotlib
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
+import numbat
 import materials
-import objects
 import mode_calcs
 import integration
-import plotting
-from fortran import NumBAT
+
 
 import starter
 
-start = time.time()
+
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
@@ -39,8 +37,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(2, sys.argv, sub='b')
 
+nbapp = numbat.NumBATApp(prefix)
+
 # Use all specified parameters to create a waveguide object
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=0.05, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
@@ -96,5 +96,4 @@ plt.ylabel(r'Frequency (GHz)')
 plt.savefig(prefix+'-disp-qnu.png', bbox_inches='tight')
 plt.close()
 
-end = time.time()
-print("\n Simulation time (sec.)", (end - start))
+print(nbapp.final_report())

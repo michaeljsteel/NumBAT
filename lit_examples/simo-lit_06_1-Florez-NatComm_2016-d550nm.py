@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -74,10 +73,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv, sub='a')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
                         lc_bkg=.1, lc_refine_1=5*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -102,7 +101,7 @@ if doem:
 
   plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=range(6),
                            ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', decorator=emdecorate,
-                            prefix=prefix)
+                            )
 
   # Print the wavevectors of EM modes.
   kzs = sim_EM_pump.kz_EM_all()
@@ -126,7 +125,7 @@ else:
   npzfile = np.load('wguide_data_florez_AC.npz', allow_pickle=True)
   sim_AC = npzfile['sim_AC'].tolist()
 
-plotting.plot_mode_fields(sim_AC,  prefix=prefix, ivals=range(10),
+plotting.plot_mode_fields(sim_AC,   ivals=range(10),
                           xlim_min=-.1, ylim_min=-.1, xlim_max=-.1, ylim_max=-.1,
                           decorator=acdecorate)
 
@@ -146,34 +145,34 @@ freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.06e9  # GHz
 freq_max = 6.0e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='-5')
+     suffix='-5')
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 6.28e9  # GHz
 freq_max = 6.32e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='-6')
+     suffix='-6')
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 8.09e9  # GHz
 freq_max = 8.13e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='-8')
+     suffix='-8')
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 11.65e9  # GHz
 freq_max = 11.69e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='-11')
+     suffix='-11')
 
 print(nbapp.final_report())

@@ -5,6 +5,9 @@ import shutil
 import time
 import datetime
 
+import objects
+
+
 _evar_gmsh_path = 'NUMBAT_PATH_GMSH'
 
 def _confirm_file_exists(nm, path, evar=''):
@@ -26,7 +29,7 @@ class _NumBATApp(object):
     #        print('newing nba with insta', cls.instance)
     #    return cls.instance
 
-    def __init__(self):
+    def __init__(self, prefix='nbtmp'):
         #if _NumBATApp.my_num_instances:
         #    reporting.report_and_exit('You may only create a single NumBAT object.')
 
@@ -34,6 +37,7 @@ class _NumBATApp(object):
 
         _NumBATApp.my_num_instances += 1
 
+        self._prefix=prefix
         self._paths={}
         self._start_time=time.time()
 
@@ -42,9 +46,9 @@ class _NumBATApp(object):
         reporting.init_logger()
 
     @staticmethod
-    def get_instance():
+    def get_instance(prefix=''):
         if _NumBATApp.__instance is None:
-            _NumBATApp()  # instance gets attached inside __init__
+            _NumBATApp(prefix)  # instance gets attached inside __init__
         return _NumBATApp.__instance
 
     def is_linux(self):
@@ -56,6 +60,11 @@ class _NumBATApp(object):
     def is_windows(self):
         return platform.system()=='Windows'
 
+    def set_prefix(self, s): # change to getter/setter
+        self._prefix=s
+
+    def prefix(self):
+        return self._prefix
 
     def path_gmsh(self):
         return self._paths['gmsh']
@@ -72,6 +81,10 @@ class _NumBATApp(object):
                 fout.write(s)
 
         return s
+
+    def make_structure(self, *args, **kwargs):
+        return objects.Structure(*args, direct_call=False, **kwargs)
+
 
     def _setup_paths(self):
         if self.is_linux():
@@ -94,8 +107,8 @@ class _NumBATApp(object):
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.6 or later.')
 
 
-def NumBATApp():
-    nba = _NumBATApp.get_instance()  # always returns the singleton NumBATApp object
+def NumBATApp(prefix=''):
+    nba = _NumBATApp.get_instance(prefix)  # always returns the singleton NumBATApp object
     return nba
 
 

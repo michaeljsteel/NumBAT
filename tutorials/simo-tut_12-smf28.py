@@ -21,9 +21,8 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import plotting
-from NumBATApptools import launch_worker_threads_and_wait
+from numbattools import launch_worker_threads_and_wait
 
 import starter
 
@@ -901,7 +900,7 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
-    nbapp = numbat.NumBATApp()
+    nbapp = numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
 
@@ -953,7 +952,7 @@ def do_main():
         unitcell_x = rcore*35  # system size in nm
         unitcell_y = unitcell_x
 
-    wguide = objects.Structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
+    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
                                inc_b_x=aclad,
                                unitcell_y=unitcell_y,
                                material_bkg=mat_bkg,
@@ -977,7 +976,7 @@ def do_main():
     mat_bkg = mat_vac
 
     refine_fac = 2.
-    wguide = objects.Structure(unitcell_x, acore, inc_shape=inc_shape,
+    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,
                                unitcell_y=unitcell_y, inc_b_x=rcore*.1,
                                material_bkg=mat_bkg,
                                material_a=mat_core,
@@ -987,7 +986,7 @@ def do_main():
     wguide.plot_mesh(prefix)
     # solve one EM step to prop the waveguide meshing
     sim_EM = wguide.calc_EM_modes(40, 1550, 1.5)
-    # plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(5), prefix=prefix)
+    # plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(5), )
     # sim_EM=None
 
     solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core)

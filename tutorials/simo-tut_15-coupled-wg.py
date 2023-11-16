@@ -9,7 +9,6 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import mode_calcs
 
 import plotting
@@ -38,10 +37,10 @@ AC_ival = 'All'
 
 prefix_str, refine_fac = starter.read_args(14, sys.argv)
 
-nbapp=numbat.NumBATApp()
+nbapp=numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = objects.Structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
+wguide = nbapp.make_structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
                            inc_a_y=inc_a_y,
                            inc_b_x=inc_b_x,
                            inc_b_y=inc_b_y,
@@ -87,11 +86,10 @@ for m in range(num_modes_EM_pump):
 n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
-plotting.plot_mode_fields(sim_EM_pump, ivals=range(8), contours=True, EM_AC='EM_E',
-                          prefix=prefix_str, ticks=True, quiver_points=20)
+plotting.plot_mode_fields(sim_EM_pump, ivals=range(8), contours=True, EM_AC='EM_E', ticks=True, quiver_points=20)
 
 plotting.plot_mode_fields(sim_EM_pump,  ivals=range(8), contours=True, EM_AC='EM_H',
-                          prefix=prefix_str, ticks=True, quiver_points=20)
+                           ticks=True, quiver_points=20)
 
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
@@ -117,6 +115,6 @@ for m in range(num_modes_AC):
 sim_AC.calc_acoustic_losses()
 
 plotting.plot_mode_fields(sim_AC, contours=False,
-                          prefix=prefix_str, ticks=True, ivals=range(10), quiver_points=20)
+                          ticks=True, ivals=range(10), quiver_points=20)
 
 print(nbapp.final_report())

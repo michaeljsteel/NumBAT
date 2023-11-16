@@ -8,7 +8,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -36,10 +35,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_test_anisotropic"),
                         lc_bkg=1, lc_refine_1=200.0*refine_fac, lc_refine_2=1.0*refine_fac)
@@ -89,7 +88,7 @@ SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integra
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival='All',
-                           freq_min=0, freq_max=30e9, prefix=prefix)
+                           freq_min=0, freq_max=30e9, )
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:

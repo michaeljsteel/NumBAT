@@ -54,17 +54,11 @@ class NBWarnings(object):
 # Create singleton
 g_warnings=NBWarnings()
 
-###def init_warnings():
-   # global g_warnings
-    #g_warnings = NBWarnings()
-
 def report_warnings():
-    #if g_warnings is None:
-    #    init_warnings()
     return g_warnings.report()
 
 # extenal function called from other files
 def register_warning(s):
-    #if g_warnings is None:
-    #    init_warnings()
     g_warnings.add_warning(s)
+
+    print(s)

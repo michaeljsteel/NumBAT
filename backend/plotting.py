@@ -26,6 +26,7 @@ import matplotlib.colors as mplcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
+import numbat
 from nbtypes import QAcMethod, FieldType, component_t
 from fortran import NumBAT
 import reporting
@@ -241,6 +242,8 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     # TODO: give a no plot option 'calc_gain_spectra'
 
     # process = psutil.Process()
+
+    if not prefix: prefix=numbat.NumBATApp().prefix()
 
     pref = f'{prefix}-gain_spectra'
 
@@ -1432,6 +1435,9 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 #              # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y,
 #               'quiver_points': quiver_points }
 #
+
+    if not prefix: prefix=numbat.NumBATApp().prefix()
+
     mode_helper.set_plot_params(xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
                                 EM_AC='EM_E',
                                 quiver_points=quiver_points,
