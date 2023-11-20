@@ -9,7 +9,6 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -38,10 +37,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(11, sys.argv, sub='b')
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = objects.Structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
+wguide = nbapp.make_structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
                            inc_b_x=inc_b_x, inc_c_x=inc_c_x,
                            unitcell_y=unitcell_y,
                            material_bkg=materials.make_material("Vacuum"),
@@ -84,7 +83,7 @@ print("n_eff", np.round(n_eff_sim, 4))
 
 for em_ac in ('EM_E', 'EM_H'):
     plotting.plot_mode_fields(
-        sim_EM_pump, ivals=range(10), EM_AC=em_ac, prefix=prefix)
+        sim_EM_pump, ivals=range(10), EM_AC=em_ac, )
 
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
@@ -104,7 +103,7 @@ for (i, nu) in enumerate(v_nu):
   print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
 plotting.plot_mode_fields(sim_AC, xlim_min=-.2, xlim_max=-.2, ylim_min=-.2, ylim_max=-.2,
-                          prefix=prefix, ivals=range(num_modes_AC), quiver_points=20)
+                           ivals=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
@@ -118,6 +117,6 @@ freq_min = 4.e9
 freq_max = 10.e9
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           prefix=prefix)
+                           )
 
 print(nbapp.final_report())

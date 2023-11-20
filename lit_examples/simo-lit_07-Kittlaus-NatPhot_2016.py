@@ -12,7 +12,6 @@ import copy
 
 sys.path.append("../backend/")
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -60,11 +59,11 @@ Si_110.rotate_axis(np.pi/4,'y-axis', save_rotated_tensors=True)
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110,
@@ -85,7 +84,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=range(5),
-                         ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', prefix=prefix)
+                         ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', )
 
 # Print the wavevectors of EM modes.
 print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
@@ -106,7 +105,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=range(40))
+plotting.plot_mode_fields(sim_AC,  ivals=range(40))
 
 set_q_factor = 680.
 
@@ -131,13 +130,13 @@ freq_min = 2.0e9  # GHz
 freq_max = 20.e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='')
+     suffix='')
 
 
 freq_min = 4.5e9  # GHz
 freq_max = 5.5e9  # GHz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='zoom')
+     suffix='zoom')
 
 print(nbapp.final_report())

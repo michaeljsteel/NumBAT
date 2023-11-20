@@ -600,7 +600,7 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(13, sys.argv)
 
-    nbapp = numbat.NumBAT()
+    nbapp = numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
 

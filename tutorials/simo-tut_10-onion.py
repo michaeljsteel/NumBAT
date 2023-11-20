@@ -12,7 +12,6 @@ matplotlib.use('pdf')
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -35,14 +34,14 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(10, sys.argv)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 d_hi = 200
 d_lo = 400
 mat_hi = materials.make_material("Si_2016_Smith")
 mat_lo = materials.make_material("SiO2_2016_Smith")
 # Use of a more refined mesh to produce field plots.
-wguide = objects.Structure(unitcell_x, d_lo, inc_shape=inc_shape,
+wguide = nbapp.make_structure(unitcell_x, d_lo, inc_shape=inc_shape,
                            unitcell_y=unitcell_y,
                            inc_b_x=d_hi,
                            inc_c_x=d_lo, inc_d_x=d_hi, inc_e_x=d_lo, inc_f_x=d_hi,
@@ -97,11 +96,11 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Only plot fields of fundamental (ival = 0) mode.
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_E',
-                          prefix=prefix, ticks=True, quiver_points=20)
+                           ticks=True, quiver_points=20)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_H',
-                          prefix=prefix, ticks=True, quiver_points=20)
+                           ticks=True, quiver_points=20)
 
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
@@ -121,7 +120,7 @@ for (i, nu) in enumerate(v_nu):
   print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
 plotting.plot_mode_fields(sim_AC, contours=False,
-                          prefix=prefix, ticks=True, ivals=[10], quiver_points=20)
+                           ticks=True, ivals=[10], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
@@ -135,6 +134,6 @@ freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # Hz
 freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           prefix=prefix)
+                           )
 
 print(nbapp.final_report())

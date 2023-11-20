@@ -24,26 +24,25 @@ $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in ba
 endif
 
 F_COMPILER = g95
-#F_COMP_EXE = f77
 F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
 
 NUMPYDIR = /usr/lib/python3/dist-packages/numpy
 
-# BLAS and LAPACK from generic GNU-Linux 
+# BLAS and LAPACK from generic GNU-Linux
 #
 ARPACK_INCL = -I/usr/local/include
 ARPACK_LIB = -L/usr/local/lib -larpack
 
-UMFPACK_INC = -I/usr/include/suitesparse 
+UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
 
-MATHINC = $(ARPACK_INCL) 
-MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB) -llapack -lblas 
+MATHINC = $(ARPACK_INCL)
+MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB -llapack -lblas
 GENLIB = -lrt
-
-PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+PYVER=3.11
+PYINC = -I /usr/include/python$(PYVER) -I /usr/lib/python3/dist-packages/numpy/f2py/src/
 
 else ifeq ($(PLAT), "linux_inteloneapi")
 
@@ -52,7 +51,6 @@ $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in ba
 endif
 
 F_COMPILER = g95
-F_COMP_EXE = f77
 F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
@@ -67,13 +65,14 @@ MKLROOT = /opt/intel/oneapi/mkl/latest
 MKL_INCL = -I$(MKLROOT)/include
 MKL_LIB = -L$(MKLROOT)/lib/intel64 -lmkl_rt
 
-UMFPACK_INC = -I/usr/include/suitesparse 
+UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-MATHINC = $(MKL_INCL) $(ARPACK_INCL) 
+MATHINC = $(ARPACK_INCL) $(MKL_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 GENLIB = -lrt
 
-PYINC = -I /usr/include/python3.11 -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+PYVER=3.11
+PYINC = -I /usr/include/python$(PYVER) -I /usr/lib/python3/dist-packages/numpy/f2py/src/
 
 else ifeq ($(PLAT), "MacOS")
 
@@ -91,13 +90,13 @@ C_COMP_EXE = $(GCCBIN)/gcc-$(GCCVER)
 # standard lapack, blas and arpack
 LAPACK_LIB = -L /opt/local/lib -llapack -lblas
 ARPACK_INCL = -I/opt/local/include
-ARPACK_LIB = -L/opt/local/lib -larpack $(LAPACK_LIB) 
-#MKLROOT = 
-#MKL_INCL = 
-#MKL_LIB = 
+ARPACK_LIB = -L/opt/local/lib -larpack $(LAPACK_LIB)
+#MKLROOT =
+#MKL_INCL =
+#MKL_LIB =
 UMFPACK_INC = -I /opt/local/include
 UMFPACK_LIB = -L/opt/local/lib/ -lumfpack -lcholmod -lamd
-MATHINC = /opt/local/include $(MKL_INCL) $(ARPACK_INCL) 
+MATHINC = /opt/local/include $(MKL_INCL) $(ARPACK_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB) -L /opt/local/lib/gcc13
 #GENLIB = -lrt
 
@@ -108,25 +107,18 @@ PYNAME = python$(PYVER)
 PYROOT = /Library/Frameworks/Python.framework/Versions/$(PYVER)
 NUMPYDIR = $(PYROOT)/lib/$(PYNAME)/site-packages/numpy
 PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/
-PYLIB = -L $(PYROOT)/lib -l$(PYNAME) 
+PYLIB = -L $(PYROOT)/lib -l$(PYNAME)
 OSF77FLAGS = -D __APPLE__
 F2PY = $(PYROOT)/bin/f2py
 
 else ifeq ($(PLAT), "myplatform")
 # You complete me!
-MATHINC = 
-MATHLIB = 
+MATHINC =
+MATHLIB =
 GENLIB = -lrt
 
 endif
 
-##F_COMPILER = g95
-#F_COMPILER = gnu95
-##F_COMP_EXE = f77
-#F_COMP_EXE = f95
-#
-##FORT_EXE = intelem
-#C_COMP_EXE = gcc
 
 SRCS = $(wildcard src/*.f)
 OBJSA = $(SRCS:.f=.o)
@@ -158,23 +150,23 @@ UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 #Flags come in a Distribution object passed through as attributes
 #F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -ffixed-form -fno-second-underscore -O3 -cpp
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) 
-CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops 
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS)
+CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
-#F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops 
-#CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv 
+#F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops
+#CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv
 
 build/%.o : src/%.f
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@ 
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
 
 build/%.o : src/%.c
-	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@ 
+	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
 build/%.o : build/%.f
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@ 
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
 
 build/%.o : build/%.c
-	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@ 
+	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
 #NumBAT.so: NumBAT.pyf $(SRCS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)
 #	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
@@ -196,18 +188,18 @@ endif
 
 all: $(NumBAT_MOD).so
 
-check: 
+check:
 	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
 
 $(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
 	echo "Old compilation method Step B"
 	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
 					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
-			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild 
+			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild
 
 $(FMETHOD).pyf: $(SRCS)
 	echo "Old compilation method Step A"
-	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower 
+	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower
 	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
@@ -219,7 +211,7 @@ $(FMETHOD).pyf: $(SRCS)
 
 
 
-F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f 
+F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
@@ -237,7 +229,7 @@ $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
 	-mkdir build
-	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower 
+	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
