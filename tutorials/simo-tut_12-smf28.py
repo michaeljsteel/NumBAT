@@ -900,7 +900,6 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
-    nbapp = numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
 
@@ -928,6 +927,8 @@ def do_main():
         mat_clad = mat_SiO2
         mat_bkg = mat_vac
         prefix = pref0+'-em-sil'
+
+    nbapp = numbat.NumBATApp(prefix)
 
     rcore = dcore/2.0
     rclad = dclad/2.0
