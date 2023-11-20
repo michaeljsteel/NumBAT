@@ -35,7 +35,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
-nbapp = numbat.NumBATApp(prefix)
+nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 
 # Warning: The fine grids in this list will take considerable time to run!
