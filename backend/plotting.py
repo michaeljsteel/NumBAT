@@ -243,7 +243,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     # process = psutil.Process()
 
-    if not prefix: prefix=numbat.NumBATApp().prefix()
+    if not prefix: prefix=numbat.NumBATApp().outprefix()
 
     pref = f'{prefix}-gain_spectra'
 
@@ -1436,7 +1436,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 #               'quiver_points': quiver_points }
 #
 
-    if not prefix: prefix=numbat.NumBATApp().prefix()
+    if not prefix: prefix=numbat.NumBATApp().outprefix()
 
     mode_helper.set_plot_params(xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
                                 EM_AC='EM_E',
