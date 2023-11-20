@@ -8,7 +8,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -38,9 +37,9 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                         material_bkg=materials.make_material("Vacuum"),            # background
                         material_a=materials.make_material("As2S3_2017_Morrison"), # slot
@@ -74,7 +73,7 @@ else:
 
 plotting.plot_mode_fields(sim_EM_pump, quiver_points = 20, xlim_min=0.2, xlim_max=0.2,
                            ylim_min=0.0, ylim_max=0.0, EM_AC='EM_E',
-                           prefix=prefix)
+                           )
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
@@ -97,7 +96,7 @@ if recalc_fields:
 else:
     sim_AC = mode_calcs.load_simulation('tut_07_acoustic')
 
-plotting.plot_mode_fields(sim_AC, quiver_points=20, prefix=prefix)
+plotting.plot_mode_fields(sim_AC, quiver_points=20, )
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
@@ -122,6 +121,6 @@ freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # GHz
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

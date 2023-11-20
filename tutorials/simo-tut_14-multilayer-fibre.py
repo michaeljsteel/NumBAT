@@ -21,9 +21,8 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import plotting
-from NumBATApptools import launch_worker_processes_and_wait
+from numbattools import launch_worker_processes_and_wait
 
 import starter
 
@@ -351,7 +350,7 @@ def do_main():
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
 
-    nbapp=numbat.NumBATApp()
+    nbapp=numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
 
@@ -372,7 +371,7 @@ def do_main():
     inc_shape = 'circ_onion'
     unitcell_x = rcore*7  # system size in nm
 
-    wguide = objects.Structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
+    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
                                inc_b_x=rn, inc_c_x=rn, inc_d_x=rn, inc_e_x=rn,
                                inc_f_x=rn, inc_g_x=rn, inc_h_x=rn, inc_i_x=rn,
                                inc_j_x=rn, inc_k_x=rn, inc_l_x=rn, inc_m_x=rn,

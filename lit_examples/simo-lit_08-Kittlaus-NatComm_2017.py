@@ -13,7 +13,6 @@ from matplotlib.ticker import AutoMinorLocator
 
 sys.path.append("../backend/")
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -153,11 +152,11 @@ Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 vac = materials.make_material("Vacuum")
 # Use specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y,
                         coat_x=coat_x, coat_y=coat_y, coat2_x=coat2_x, coat2_y=coat2_y,
                         material_bkg=vac,
@@ -186,14 +185,14 @@ print("starting EM field plotting ")
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_E', num_ticks=3,
-                         prefix=prefix,
+
                          decorator=emdecorate, quiver_points=20,
                          comps=('Ex','Ey', 'Ez','Eabs','Et'), n_points=2000, colorbar=True)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
                          ylim_min=0.435, ylim_max=0.435, EM_AC='EM_H', num_ticks=3,
-                         prefix=prefix,
+
                          decorator=emdecorate, quiver_points=20,
                          comps=('Hx','Hy', 'Hz','Habs','Ht'), n_points=2000, colorbar=True)
 
@@ -221,7 +220,7 @@ print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.Eig_values)*1e-9, 4))
 selected_AC_modes = [7, 13, 23]
 print("AC modes selected for field plotting", selected_AC_modes)
 print("plotting acoustic modes")
-plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=selected_AC_modes,
+plotting.plot_mode_fields(sim_AC,  ivals=selected_AC_modes,
                          num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1,
                          quiver_points=20, decorator=acdecorate, colorbar=True)
 
@@ -250,6 +249,6 @@ freq_min = 0.5e9  # Hz
 freq_max = 9.5e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

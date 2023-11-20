@@ -1,5 +1,5 @@
 """
-    NumBATApp Tutorial 2
+    NumBAT Tutorial 2
 
     Calculate the backward SBS gain spectra of a silicon waveguide surrounded in air.
 
@@ -19,7 +19,6 @@ import numbat
 import plotting
 import integration
 import mode_calcs
-import objects
 import materials
 
 
@@ -47,12 +46,12 @@ else:
     prefix = 'tut_02'
     refine_fac = 5
 
-print('\nCommencing NumBATApp tutorial 2\n')
+print('\nCommencing NumBAT tutorial 2\n')
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
+wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y, inc_a_y, inc_shape,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -100,12 +99,12 @@ print('\nPlotting EM fields')
 # Plot the E field of the pump mode
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          EM_AC='EM_E', prefix=prefix, ticks=True)
+                          EM_AC='EM_E', ticks=True)
 
 # Plot the H field of the pump mode
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          EM_AC='EM_H', prefix=prefix, ticks=True)
+                          EM_AC='EM_H', ticks=True)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -134,7 +133,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-plotting.plot_mode_fields(sim_AC, contours=True, prefix=prefix,
+plotting.plot_mode_fields(sim_AC, contours=True,
                           ticks=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:
@@ -156,7 +155,7 @@ else:
 
 # The following function shows how integrals can be implemented purely in python,
 # which may be of interest to users wanting to calculate expressions not currently
-# included in NumBATApp. Note that the Fortran routines are much faster!
+# included in NumBAT. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
 comsol_ivals = 5  # Number of modes contained in data file.
 SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
@@ -169,7 +168,7 @@ print("\n Displaying results of first five modes with negligible components mask
 threshold = -1e-3
 masked_PE = np.ma.masked_inside(
     SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :comsol_ivals], 0, threshold)
-print("SBS_gain [1/(Wm)] PE NumBATApp default (Fortran)\n", masked_PE)
+print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 masked = np.ma.masked_inside(
     SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
 print("SBS_gain [1/(Wm)] python integration routines \n", masked)
@@ -181,14 +180,14 @@ print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # Hz
 freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           prefix=prefix, dB=True, semilogy=True)
+                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
+                           freq_max=freq_max, dB=True, semilogy=True)
 
 # Repeat this plot focusing on one frequency range
 freq_min = 11.5e9  # Hz
 freq_max = 13.5e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           prefix=prefix, suffix='_zoom')
+                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
+                           freq_max=freq_max, suffix='_zoom')
 
 print(nbapp.final_report())

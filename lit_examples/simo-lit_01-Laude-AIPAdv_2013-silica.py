@@ -16,7 +16,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -42,10 +41,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(1, sys.argv)
 
-nbapp=numbat.NumBAT()
+nbapp=numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
                         lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -65,7 +64,7 @@ if recalc:
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
     plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
-                         ylim_min=0.4, ylim_max=0.4, prefix=prefix)
+                         ylim_min=0.4, ylim_max=0.4, )
 else:
     sim_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
     sim_EM_Stokes = mode_calcs.load_simulation(prefix+'_pump')
@@ -112,20 +111,20 @@ high_g_indices = (np.abs(gains).argsort()[-nplot:])
 high_g_indices.sort()
 
 if recalc:
-    plotting.plot_mode_fields(sim_AC, prefix=prefix, ivals=high_g_indices)
+    plotting.plot_mode_fields(sim_AC,  ivals=high_g_indices)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9  # Hz
 freq_max = 13.e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    semilogy=True, prefix=prefix, mode_comps=True, dB=True)
+    semilogy=True,  mode_comps=True, dB=True)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.3e9  # Hz
 freq_max = 6.6e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix, suffix='_zoom')
+     suffix='_zoom')
 
 print(nbapp.final_report())

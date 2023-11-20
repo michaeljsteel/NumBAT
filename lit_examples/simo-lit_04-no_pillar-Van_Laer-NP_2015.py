@@ -15,7 +15,6 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -65,13 +64,13 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, sub='a')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 # Si_110 = copy.deepcopy(materials.materials_dict["Si_2015_Van_Laer"])
 Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
 # Use all specified parameters to create a waveguide object.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110, symmetry_flag=False,
                         lc_bkg=.1, lc_refine_1=20.0*refine_fac, lc_refine_2=20.0*refine_fac)
@@ -102,7 +101,7 @@ if doem:
 
   plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
                            ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E',
-                           n_points=2000, quiver_points=10, prefix=prefix, decorator=emdecorate)
+                           n_points=2000, quiver_points=10,  decorator=emdecorate)
 
   # Print the wavevectors of EM modes.
   print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
@@ -122,7 +121,7 @@ if doac:
     npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
     sim_AC = npzfile['sim_AC'].tolist()
 
-  plotting.plot_mode_fields(sim_AC, ivals=range(20), prefix=prefix)
+  plotting.plot_mode_fields(sim_AC, ivals=range(20), )
 
 set_q_factor = 306
 
@@ -158,6 +157,6 @@ freq_min =5e9 # 9.1e9 # Hz
 freq_max = 50e9 # 9.3e9 # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

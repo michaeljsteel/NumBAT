@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -44,13 +43,13 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix)
 
 # Function to return ac freqs for given coating thickness
 def ac_mode_freqs(coat_y):
     print(f'Commencing mode calculation for coat_y = {coat_y}')
 
-    wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+    wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                             slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                             coat_y=coat_y,
                             material_bkg=materials.make_material("Vacuum"),            # background
@@ -75,7 +74,7 @@ def ac_mode_freqs(coat_y):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
     if coat_y == 20.0: # Shouldn't really test equality on floats like this
-        plotting.plot_mode_fields(sim_AC, prefix=prefix, suffix='_%i' %int(coat_y))
+        plotting.plot_mode_fields(sim_AC,  suffix='_%i' %int(coat_y))
 
     set_q_factor = 1000.
 
@@ -89,7 +88,7 @@ def ac_mode_freqs(coat_y):
 
     plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-        prefix=prefix, suffix='_%i' %int(coat_y))
+         suffix='_%i' %int(coat_y))
 
     # Convert to GHz
     mode_freqs = sim_AC.nu_AC_all()*1.e-9

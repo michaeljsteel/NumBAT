@@ -20,9 +20,8 @@ sys.path.append("../backend/")
 
 import numbat
 import materials
-import objects
 import plotting
-from NumBATApptools import launch_worker_processes_and_wait
+from numbattools import launch_worker_processes_and_wait
 from nbanalytic import TwoLayerFiberEM, EMPoln
 
 import starter
@@ -268,7 +267,6 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
-    nbapp=numbat.NumBATApp()
 
     # Geometric Parameters - all in nm.
 
@@ -297,6 +295,7 @@ def do_main():
         mat_bkg  = mat_vac
         prefix =pref0+'-sil'
 
+    nbapp=numbat.NumBATApp(prefix)
 
     rcore = dcore/2.0
     rclad = dclad/2.0
@@ -317,7 +316,7 @@ def do_main():
         unitcell_y = unitcell_x
 
 
-    wguide = objects.Structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
+    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
                                inc_b_x=aclad,
                             unitcell_y=unitcell_y,
                             material_bkg=mat_bkg,

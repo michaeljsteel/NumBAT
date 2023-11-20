@@ -12,7 +12,6 @@ import time
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 
@@ -36,7 +35,7 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 
 # Warning: The fine grids in this list will take considerable time to run!
@@ -52,7 +51,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     print("\n Running simulation", i_lc+1, "/", nu_lcs)
     lc_refine_2 = lc_ref/2
     lc_bkg = lc_bkg_list[i_lc]
-    wguide = objects.Structure(unitcell_x, inc_a_x, unitcell_y,
+    wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y,
                                inc_a_y, inc_shape,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(

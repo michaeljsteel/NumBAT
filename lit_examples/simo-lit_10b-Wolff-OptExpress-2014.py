@@ -12,7 +12,6 @@ import sys
 sys.path.append("../backend/")
 import numbat
 import materials
-import objects
 import mode_calcs
 import integration
 import plotting
@@ -52,14 +51,14 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(10, sys.argv, sub='b')
 
-nbapp = numbat.NumBAT()
+nbapp = numbat.NumBATApp(prefix)
 
 #reuse_fields=True   # use saved data
 reuse_fields=False  # calculate from scratch
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
 #slab_a_x=slab_a_x, slab_a_y=slab_a_y,
 #coat_x=coat_x, coat_y=coat_y,
                         material_bkg=materials.make_material("Si3N4_2014_Wolff"),
@@ -84,7 +83,7 @@ sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
                          ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', num_ticks=3, ticks=True,
-                         prefix=prefix)
+                         )
 
 if not reuse_fields:
   sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
@@ -144,7 +143,7 @@ print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
 print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
 print("SBS_gain [1/(Wm)] total \n", masked)
 
-plotting.plot_mode_fields(sim_AC, prefix=prefix,
+plotting.plot_mode_fields(sim_AC,
      num_ticks=3, xlim_min=0.1, xlim_max=0.1)
 #     modal_gains_PE=SBS_gain_PE[EM_ival_pump, EM_ival_Stokes,:],
 #     modal_gains_MB=SBS_gain_MB[EM_ival_pump, EM_ival_Stokes,:],
@@ -156,6 +155,6 @@ freq_max = 11.0e9  # Hz
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    prefix=prefix)
+    )
 
 print(nbapp.final_report())

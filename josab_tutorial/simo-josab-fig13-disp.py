@@ -3,26 +3,25 @@
     Load EM mode data from simo_tut_02.
 """
 
-import time
-import datetime
+
+
 import numpy as np
 import sys
-import matplotlib
+
 import matplotlib.pyplot as plt
 import math
 
 sys.path.append("../backend/")
+import numbat
 import materials
-import objects
 import mode_calcs
 import integration
-import plotting
-from fortran import NumBAT
+
 
 import starter
 
 
-start = time.time()
+
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -41,8 +40,10 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(11, sys.argv)
 
+nbapp = numbat.NumBATApp(prefix)
+
 mat_core = materials.make_material("Si_2021_Poulton")
-wguide = objects.Structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a= mat_core, lc_bkg=.05, lc_refine_1=2.0*refine_fac, lc_refine_2=2.0*refine_fac)
 
@@ -87,7 +88,4 @@ ax.set_xlabel(r'Normalised axial wavevector $q/(2\beta)$')
 ax.set_ylabel(r'Frequency $\nu = \Omega/(2\pi)$ [GHz]')
 fig.savefig(prefix+'-disp-qnu.png', bbox_inches='tight')
 
-end = time.time()
-print("\nSimulation time: {0:10.3f} secs.".format(end - start))
-print('\n\n')
-
+print(nbapp.final_report())
