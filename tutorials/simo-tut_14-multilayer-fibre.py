@@ -22,7 +22,7 @@ sys.path.append("../backend/")
 import numbat
 import materials
 import plotting
-from NumBATApptools import launch_worker_processes_and_wait
+from numbattools import launch_worker_processes_and_wait
 
 import starter
 

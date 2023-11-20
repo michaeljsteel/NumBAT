@@ -14,7 +14,7 @@ import numpy as np
 
 
 sys.path.append("../backend/")
-import NumBAT
+import numbat
 import materials
 import mode_calcs
 import integration

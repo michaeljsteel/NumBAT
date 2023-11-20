@@ -19,7 +19,7 @@ sys.path.append("../backend/")
 import numbat
 import materials
 import plotting
-from NumBATApptools import launch_worker_threads_and_wait
+from numbattools import launch_worker_threads_and_wait
 from nbanalytic import ElasticRod
 
 import starter
@@ -349,7 +349,6 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(13, sys.argv, refine=4)
 
-    nbapp=numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
 
@@ -378,6 +377,8 @@ def do_main():
         mat_bkg  = mat_vac
         prefix =pref0+'-em-sil'
 
+
+    nbapp=numbat.NumBATApp(prefix)
 
     # Elastic problem of a single rod in vacuum
     rcore = 1000
