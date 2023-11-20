@@ -121,8 +121,7 @@ class CalcThread(threading.Thread):
                     #print('\n\n{0} has called td {1} times.'.format(self.name, self.td))
 
             except Exception as err:
-                print('\n\n{0} has encountered an exception on task {1}:'.format(self.name, task[0]),
-                      str(err))
+                print(f'\n\n{self.name} has encountered an exception on task {task[0]}:', str(err))
                 traceback.print_exception(err)
                 break
 

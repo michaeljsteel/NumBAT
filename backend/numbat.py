@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import datetime
+from pathlib import Path
 
 import objects
 
@@ -29,7 +30,7 @@ class _NumBATApp(object):
     #        print('newing nba with insta', cls.instance)
     #    return cls.instance
 
-    def __init__(self, prefix='nbtmp'):
+    def __init__(self, outprefix='nbtmp', outdir='.'):
         #if _NumBATApp.my_num_instances:
         #    reporting.report_and_exit('You may only create a single NumBAT object.')
 
@@ -37,7 +38,8 @@ class _NumBATApp(object):
 
         _NumBATApp.my_num_instances += 1
 
-        self._prefix=prefix
+        self._outprefix=outprefix
+        self._outdir=outdir
         self._paths={}
         self._start_time=time.time()
 
@@ -46,9 +48,9 @@ class _NumBATApp(object):
         reporting.init_logger()
 
     @staticmethod
-    def get_instance(prefix=''):
+    def get_instance(outprefix='', outdir=''):
         if _NumBATApp.__instance is None:
-            _NumBATApp(prefix)  # instance gets attached inside __init__
+            _NumBATApp(outprefix, outdir)  # instance gets attached inside __init__
         return _NumBATApp.__instance
 
     def is_linux(self):
@@ -60,24 +62,31 @@ class _NumBATApp(object):
     def is_windows(self):
         return platform.system()=='Windows'
 
-    def set_prefix(self, s): # change to getter/setter
-        self._prefix=s
+    # Only needed to change prefix at some point
+    def set_outprefix(self, s): # change to getter/setter
+        self._outprefix=s
 
-    def prefix(self):
-        return self._prefix
+    def outprefix(self):
+        return self._outprefix
+
+    def outdir(self):
+        return self._outdir
+
+    def outpath(self):
+        return str(Path(self._outdir, self._outprefix))
 
     def path_gmsh(self):
         return self._paths['gmsh']
 
-    def final_report(self, prefix=''):
+    def final_report(self, outprefix=''):
         dt=time.time()-self._start_time
         s_dt = datetime.timedelta(seconds=round(dt))
 
         s=f"\nNumBAT calculations concluded. \n Simulation time: {s_dt}.\n"
         s+=reporting.report_warnings()+'\n'
 
-        if prefix:
-            with open(prefix+'_warnings.txt', 'w') as fout:
+        if outprefix:
+            with open(outprefix+'_warnings.txt', 'w') as fout:
                 fout.write(s)
 
         return s
@@ -87,6 +96,17 @@ class _NumBATApp(object):
 
 
     def _setup_paths(self):
+        # numbat paths
+        if not Path(self._outdir).is_dir():
+            try:
+                Path(self._outdir).mkdir()
+            except OSError as ex:
+                reporting.report_and_exit(f"Can't open output directory {self._outdir}: " 
+                                          +str(ex))
+
+
+
+        # paths to other tools
         if self.is_linux():
             path = shutil.which('gmsh')
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
@@ -107,8 +127,11 @@ class _NumBATApp(object):
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.6 or later.')
 
 
-def NumBATApp(prefix=''):
-    nba = _NumBATApp.get_instance(prefix)  # always returns the singleton NumBATApp object
+# always returns the singleton NumBATApp object
+def NumBATApp(outprefix='', outdir='.'):
+    '''Returns the same singleton NumBATApp object on every call.'''
+
+    nba = _NumBATApp.get_instance(outprefix, outdir)  
     return nba
 
 

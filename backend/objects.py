@@ -509,7 +509,7 @@ class Structure(object):
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
     def _load_mesh_template(self, msh_template):
-        geo = open(self.msh_location_in + f'{msh_template}_msh_template.geo' , 'r').read()
+        geo = open(Path(self.msh_location_in ,f'{msh_template}_msh_template.geo') , 'r').read()
         return geo
 
     # TODO: in a plug-in system for .geo templates, this function doesn't need to be in the class
@@ -896,15 +896,14 @@ class Structure(object):
 
         # full path to backend directory that this code file is in
         this_directory = os.path.dirname(os.path.realpath(__file__))
-        # msh_location_in = os.path.join(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
+        # msh_location_in = Path(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
         # msh directory inside backend
-        msh_location_in = os.path.join(this_directory, 'msh', '')
 
-        self.msh_location_in = msh_location_in
-        self.msh_location_out = os.path.join(msh_location_in, 'build', '')
+        self.msh_location_in = Path(this_directory, 'msh')
+        self.msh_location_out = Path(self.msh_location_in, 'build')
 
-        if not os.path.exists(self.msh_location_out):
-            os.mkdir(self.msh_location_out)
+        if not self.msh_location_out.is_dir():
+            self.msh_location_out.mkdir()
 
         if self.inc_shape in ['circular', 'rectangular', 'twoincl']:
             msh_template, msh_name, subs = self._make_geo_circular_rectangular(
@@ -959,13 +958,13 @@ class Structure(object):
         if self._build_new_mesh():
             geo = self._apply_geo_subs(msh_template, subs)
 
-            fname = self.msh_location_out + msh_name
+            fname = Path(self.msh_location_out , msh_name)
 
-            with open(fname + '.geo', 'w') as fout:
+            with open(str(fname) + '.geo', 'w') as fout:
                 fout.write(geo)
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-            err_no, err_msg = NumBAT.conv_gmsh(fname)
+            err_no, err_msg = NumBAT.conv_gmsh(str(fname))
             if err_no != 0:
 
                 s = 'Terminating after Fortran error in processing .geo file "%s.geo".' % fname
@@ -978,7 +977,7 @@ class Structure(object):
                   gmsh {fname}.geo'''
                 reporting.report_and_exit(s)
 
-        self.mesh_file = fname + '.mail'
+        self.mesh_file = str(fname) + '.mail'
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed?
         self.msh_name = msh_name
 
@@ -996,16 +995,23 @@ class Structure(object):
         gmsh_exe = nbapp.path_gmsh()
 
         cwd = os.getcwd()
-        outprefix = os.path.join(cwd, outpref)
+        outprefix = Path(numbat.NumBATApp().outdir(), outpref)
         tdir = tempfile.TemporaryDirectory()
-        tmpoutpref = os.path.join(tdir.name, outpref)
+        tmpoutpref = str(Path(tdir.name, outpref))
 
-        conv_tmp = open(self.msh_location_in + 'geo2png.scr', 'r').read()
-        conv = conv_tmp.replace('tmp', tmpoutpref + '-mesh_geom')
+        conv_tmp = open(Path(self.msh_location_in, 'geo2png.scr'), 'r').read()
+        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_geom')
 
-        fn_scr = self.msh_location_out + self.msh_name + '_geo2png.scr'
+        fn_scr = Path(self.msh_location_out , self.msh_name + '_geo2png.scr')
 
         cmd = [gmsh_exe, self.msh_name + '.geo', self.msh_name + '_geo2png.scr']
+
+        print('outpref',outprefix)
+        print('tdir',tdir)
+        print('tmpoutpref',tmpoutpref)
+        print('fn',fn_scr)
+        print('mshout',self.msh_location_out)
+        print('cmd',cmd)
 
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
@@ -1013,10 +1019,10 @@ class Structure(object):
 
         os.wait()
 
-        conv_tmp = open(self.msh_location_in + 'msh2png.scr', 'r').read()
-        conv = conv_tmp.replace('tmp', tmpoutpref + '-mesh_nodes')
+        conv_tmp = open(Path(self.msh_location_in, 'msh2png.scr'), 'r').read()
+        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_nodes')
 
-        fn_scr = self.msh_location_out + self.msh_name + '_msh2png.scr'
+        fn_scr = Path(self.msh_location_out , self.msh_name + '_msh2png.scr')
         # cmd = ' '.join(['gmsh', f' -log {outprefix}-gmshlog.log',
         #                self.msh_name + '.msh',
         #                self.msh_name + '_msh2png.scr' ])
@@ -1030,7 +1036,7 @@ class Structure(object):
 
         nbtools.join_figs(tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',
-                          outprefix+'-mesh.png')
+                          str(outprefix)+'-mesh.png')
 
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''
