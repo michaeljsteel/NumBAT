@@ -62,6 +62,9 @@ class _NumBATApp(object):
     def is_windows(self):
         return platform.system()=='Windows'
 
+    def can_multiprocess(self):
+        return self.is_linux()
+
     # Only needed to change prefix at some point
     def set_outprefix(self, s): # change to getter/setter
         self._outprefix=s

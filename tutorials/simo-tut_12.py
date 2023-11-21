@@ -87,6 +87,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     manager = multiprocessing.Manager()
     q_work = multiprocessing.JoinableQueue()        # for assigning the work
+    q_work = manager.Queue()
     q_result = manager.Queue()      # for returning the answers
 
     # build all the tasks
