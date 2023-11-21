@@ -3,6 +3,7 @@ import threading
 import multiprocessing
 import traceback
 import queue
+import numbat
 
 import time
 import datetime
@@ -269,20 +270,30 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
     report_progress = True
     #verbose=True
 
-    total_tasks = q_work.qsize()
+    
+    do_multiproc = numbat.NumBATApp().can_multiprocess()
 
     # Launch processes and keep copies
 
-    num_processes = min(num_processes, total_tasks)
-    if report_progress:
-        print(f'Assigning {total_tasks} tasks across {num_processes} processes.')
+    if do_multiproc:
+        total_tasks = q_work.qsize()
+        num_processes = min(num_processes, total_tasks)
+
+        if report_progress:
+            print(f'Assigning {total_tasks} tasks across {num_processes} processes.')
+    else: 
+        print('Performing calculation in single processor mode.')
+        num_processes = 1
 
     processes = []
     for _ in range(num_processes):
         pr = CalcProcess(q_work, q_result, caller, verbose)
         print('Starting process:', pr.name)
-        pr.start()
-        processes.append(pr)
+        if do_multiproc:
+            pr.start() 
+            processes.append(pr)
+        else:
+            pr.run()
 
     tm_st = time.time()
 
