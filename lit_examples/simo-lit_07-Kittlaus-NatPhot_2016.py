@@ -6,16 +6,17 @@
 
 import time
 import datetime
-import numpy as np
 import sys
 import copy
+import numpy as np
 
 sys.path.append("../backend/")
+import numbat
+
 import materials
 import mode_calcs
 import integration
 import plotting
-from fortran import NumBAT
 
 import starter
 
