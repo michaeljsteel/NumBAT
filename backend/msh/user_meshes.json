@@ -12,13 +12,13 @@
             "wg_impl": "builtin_meshes.py",
             "wg_class": "Circular",
             "inc_shape": "circular",
-            "active": 0
+            "active": 1
         },
         {
             "wg_impl": "builtin_meshes.py",
             "wg_class": "TwoIncl",
             "inc_shape": "twoincl",
-            "active": 0
+            "active": 1
         },
 
         {
