@@ -208,14 +208,19 @@ class Structure(object):
     @classmethod
     def _initialise_waveguide_templates(cls, nbapp):
         pmsh_dir = nbapp.path_mesh_templates()
-        pmsh_index = Path(pmsh_dir, 'user_meshes.json')
 
-        if not pmsh_index.exists():
+        pmsh_index_builtin = Path(pmsh_dir, 'builtin_waveguides.json')
+        pmsh_index_user = Path(pmsh_dir, 'user_waveguides.json')
+
+        if not pmsh_index_builtin.exists():
             reporting.register_warning(
-                f"Couldn't find user mesh template index file: {pmsh_index}")
+                f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
         else:
-            cls._user_mesh_templates = _load_waveguide_templates(pmsh_dir, pmsh_index)
+            cls._user_mesh_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
 
+        if  pmsh_index_user.exists():
+            user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
+            cls._user_mesh_templates.update(user_wg_templates)
 
 
 
