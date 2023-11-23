@@ -10,11 +10,13 @@ def _process_one_and_two_incls(params, mats):
 
     if params['slab_b_x'] is not None:
         raise ValueError(
-                f"NumBAT doesn't understand your geometry: with shape {self.inc_shape}, I did not expect values for slab_b.")
-    elif params['slab_a_x'] is not None:
+                f"NumBAT doesn't understand your geometry: with shape {params['inc_shape']}, I did not expect values for slab_b.")
+
+    if params['slab_a_x'] is not None:
         raise ValueError(
-            f"NumBAT doesn't understand your geometry: with shape {self.inc_shape}, I did not expect values for slab_a.")
-    elif params['inc_a_x'] is not None:
+            f"NumBAT doesn't understand your geometry: with shape {params['inc_shape']}, I did not expect values for slab_a.")
+
+    if params['inc_a_x'] is not None:
         if params['coat_y'] is None and params['inc_b_x'] is None:  # One inclusion, no coating
             gmshfile = 'oneincl'  # used to be just '1'
             nelts = 2          # bkg, core (mat_a)

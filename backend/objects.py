@@ -24,17 +24,12 @@ import copy
 
 
 import tempfile
-#import shutil
-#import platform
 from pathlib import Path
 import json
-import uuid
 import importlib
 
 import numpy as np
 
-
-#import matplotlib.patches as mplpatches
 
 
 from mode_calcs import Simulation
@@ -43,11 +38,6 @@ from fortran import NumBAT
 import reporting
 import numbattools as nbtools
 import materials
-
-
-#g_onion_layer_thicknesses = ()
-
-
 
 
 # def dec_float_str(dec_float):
@@ -654,12 +644,12 @@ class Structure(object):
         '''Visualise geometry and mesh with gmsh.'''
 
         nbapp = numbat.NumBATApp()
-        gmsh_exe = nbapp.path_gmsh()
+        gmsh_exe = str(nbapp.path_gmsh())
 
-        gmsh_cmd = gmsh_exe + self.msh_location_out + self.msh_name + '.geo'
+        gmsh_cmd = gmsh_exe + str(self.msh_location_out) + self.msh_name + '.geo'
         os.system(gmsh_cmd)
 
-        gmsh_cmd = gmsh_exe + self.msh_location_out + self.msh_name + '.msh'
+        gmsh_cmd = gmsh_exe + str(self.msh_location_out) + self.msh_name + '.msh'
         os.system(gmsh_cmd)
 
 
