@@ -17,26 +17,24 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-#import time
+# import time
 import os
 import subprocess
 import copy
 
 
-#import numbers
-
-import uuid
 import tempfile
-import shutil
-import platform
+#import shutil
+#import platform
 from pathlib import Path
+import json
+import uuid
+import importlib
 
 import numpy as np
 
 
-import matplotlib.patches as mplpatches
-#import matplotlib.collections as mplcollections
-#import matplotlib.colors as mplcolors
+#import matplotlib.patches as mplpatches
 
 
 from mode_calcs import Simulation
@@ -47,50 +45,62 @@ import numbattools as nbtools
 import materials
 
 
-g_onion_layer_thicknesses = ()
+#g_onion_layer_thicknesses = ()
 
 
-def is_real_number(x):
-    # return isinstance(x, float) or isinstance(x, int)
-    # return isinstance(x, numbers.Number)
+
+
+# def dec_float_str(dec_float):
+#     ''' Convert float with decimal point into string with '_' in place of '.' '''
+#     try:
+#         s = '%8.1f' % dec_float
+#     except Exception:
+#         s = ''
+#     # if type(dec_float) is float or type(dec_float) is int:
+#     #    s = '%8.1f' % dec_float
+#     # else:
+#     #    s = ''
+#     # s = s.replace('.', '_')
+#     s = s.replace('.', ',')
+#     s = s.replace(' ', '')
+#     return s
+
+
+def _load_waveguide_templates(p_msh_dir, p_msh_index):
+    '''Loads and instantiates waveguide templates returning an index of waveguide inc_shape to class.'''
+
     try:
-        xx = float(x)
-        return True
-    except Exception:
-        return False
+        with open(p_msh_index) as fin:
+            msh_index = json.load(fin)['user_meshes']
+    except Exception as ex:
+        raise Exception(
+            'JSON parse error in reading user mesh index file' + str(ex)) from ex
 
+    for msh in msh_index:
+        if not msh.get('active', 1):  # this mesh is turned off for now
+            continue
 
-def dec_float_str(dec_float):
-    ''' Convert float with decimal point into string with '_' in place of '.' '''
-    try:
-        s = '%8.1f' % dec_float
-    except Exception:
-        s = ''
-    # if type(dec_float) is float or type(dec_float) is int:
-    #    s = '%8.1f' % dec_float
-    # else:
-    #    s = ''
-    # s = s.replace('.', '_')
-    s = s.replace('.', ',')
-    s = s.replace(' ', '')
-    return s
+        mshnm = msh['inc_shape']
+        mshpy = msh['wg_impl']
+        mshclsnm = msh['wg_class']
 
+        pth_mod = Path(p_msh_dir, mshpy)
 
-def _frm_onion(ax, layers):
-    nmtoum = 1.e-3   # radii are in nm but plots are in microns
+        if not pth_mod.exists():
+            raise Exception(
+                f'Missing user template implementation file: {str(pth_mod)}')
 
-    r = 0
-    for l in layers:
-        if l is not None:
-            r += l
-            circ = mplpatches.Circle((0, 0), r*nmtoum, facecolor=None, fill=False, edgecolor='gray',
-                                     linewidth=.75)
-            ax.add_patch(circ)
+        spec = importlib.util.spec_from_file_location(mshnm, pth_mod)
+        py_mod = spec.loader.load_module()
 
+        if not hasattr(py_mod, mshclsnm):
+            raise Exception(
+                f"Can't find user template class {mshclsnm} in implementation file: {mshpy}")
+        mshcls = getattr(py_mod, mshclsnm)
 
-def _my_frm_onion(ax):
-    global g_onion_layer_thicknesses
-    return _frm_onion(ax, g_onion_layer_thicknesses[:self.n_typ_el-1])
+        msh['mesh_cls'] = mshcls
+
+    return msh_index
 
 
 class Structure(object):
@@ -201,6 +211,24 @@ class Structure(object):
             plot_abs  (bool): Choose to plot absolute value of modal fields.
     '''
 
+
+    _user_mesh_templates = {}
+
+    # called at startup from NumBATApp.__init__
+    @classmethod
+    def _initialise_waveguide_templates(cls, nbapp):
+        pmsh_dir = nbapp.path_mesh_templates()
+        pmsh_index = Path(pmsh_dir, 'user_meshes.json')
+
+        if not pmsh_index.exists():
+            reporting.register_warning(
+                f"Couldn't find user mesh template index file: {pmsh_index}")
+        else:
+            cls._user_mesh_templates = _load_waveguide_templates(pmsh_dir, pmsh_index)
+
+
+
+
     def __init__(self, unitcell_x, inc_a_x,
                  unitcell_y=None, inc_a_y=None, inc_shape='rectangular',
                  slab_a_x=None, slab_a_y=None, slab_b_x=None, slab_b_y=None,
@@ -226,19 +254,25 @@ class Structure(object):
                  make_mesh_now=True, force_mesh=True,
                  mesh_file='NEED_FILE.mail', check_mesh=False, plt_mesh=False,
                  lc_bkg=0.09, lc_refine_1=1.0, lc_refine_2=1.0, lc_refine_3=1.0, lc_refine_4=1.0, lc_refine_5=1.0,
-                 plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0, plot_field_conc=False, 
+                 plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0, plot_field_conc=False,
                  direct_call=True):
+
+        if plt_mesh:
+            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
+
+        if check_mesh:
+            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
 
         numbat.assert_numbat_object_created()
         if direct_call:
-            reporting.register_warning('Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
+            reporting.register_warning(
+                'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
         self.shift_ac_x = 0  # user requested offsets to coord-system
         self.shift_ac_y = 0
 
-        self.mpl_wg_frame_drawer = None
 
         # Structures material properties - need to check geometry definition
         # to ensure connecting material type with correct surface of geometry
@@ -251,81 +285,47 @@ class Structure(object):
                      'k': material_k, 'l': material_l, 'm': material_m, 'n': material_n, 'o': material_o,
                      'p': material_p, 'q': material_q, 'r': material_r}
         for (tag, mat) in mat_pairs.items():
-            self.d_materials[tag] = mat if (
-                mat is not None) else copy.deepcopy(mat_vac)
+            self.d_materials[tag] = mat if (mat is not None) else copy.deepcopy(mat_vac)
 
         # Structures geometric shapes
-        self.unitcell_x = float(unitcell_x)
+        self.inc_shape = inc_shape
+        unitcell_x = float(unitcell_x)
         self.inc_a_x = inc_a_x
+        self.unitcell_x = unitcell_x
 
         if unitcell_y is None:
-            self.unitcell_y = float(unitcell_x)
+            unitcell_y = float(unitcell_x)
         else:
-            self.unitcell_y = float(unitcell_y)
+            unitcell_y = float(unitcell_y)
 
         if inc_a_y is None:
-            self.inc_a_y = float(inc_a_x)
+            inc_a_y = float(inc_a_x)
         else:
-            self.inc_a_y = float(inc_a_y)
+            inc_a_y = float(inc_a_y)
 
-        self.inc_b_x = inc_b_x
         if inc_b_x is not None:
             if inc_b_y is None:
-                self.inc_b_y = float(inc_b_x)
+                inc_b_y = float(inc_b_x)
             else:
-                self.inc_b_y = float(inc_b_y)
+                inc_b_y = float(inc_b_y)
 
-        # structure shape and dimensions
-        self.inc_shape = inc_shape
-        self.slab_a_x = slab_a_x
-        self.slab_a_y = slab_a_y
-        self.slab_b_x = slab_b_x
-        self.slab_b_y = slab_b_y
-        self.pillar_x = pillar_x
-        self.pillar_y = pillar_y
-        self.inc_c_x = inc_c_x
-        self.inc_d_x = inc_d_x
-        self.inc_e_x = inc_e_x
-        self.inc_f_x = inc_f_x
-        self.inc_g_x = inc_g_x
-        self.inc_h_x = inc_h_x
-        self.inc_i_x = inc_i_x
-        self.inc_j_x = inc_j_x
-        self.inc_k_x = inc_k_x
-        self.inc_l_x = inc_l_x
-        self.inc_m_x = inc_m_x
-        self.inc_n_x = inc_n_x
-        self.inc_o_x = inc_o_x
-        self.coat_x = coat_x
-        self.coat_y = coat_y
-        self.coat2_x = coat2_x
-        self.coat2_y = coat2_y
-        self.two_inc_sep = two_inc_sep
-        self.incs_y_offset = incs_y_offset
+        self.all_params = {'lc': lc_bkg}
+        for p in ['unitcell_x', 'inc_a_x', 'unitcell_y', 'inc_a_y', 'inc_shape', 'slab_a_x',
+                  'slab_a_y', 'slab_b_x', 'slab_b_y', 'coat_x', 'coat_y', 'coat2_x', 'coat2_y',
+                  'inc_b_x', 'inc_b_y', 'two_inc_sep', 'incs_y_offset', 'pillar_x', 'pillar_y',
+                  'inc_c_x', 'inc_d_x', 'inc_e_x', 'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x',
+                  'inc_j_x', 'inc_k_x', 'inc_l_x', 'inc_m_x', 'inc_n_x', 'inc_o_x',
+                  'lc_refine_1', 'lc_refine_2', 'lc_refine_3', 'lc_refine_4', 'lc_refine_5']:
+            self.all_params[p] = eval(p)
 
         self.loss = loss       # TODO: Boolean. Needs better name
-
-        if plt_mesh:
-            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
-
-        if check_mesh:
-            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
-
-        # grid resolution controls
-        self.lc = lc_bkg
-        self.lc_refine_1 = lc_refine_1
-        self.lc_refine_2 = lc_refine_2
-        self.lc_refine_3 = lc_refine_3
-        self.lc_refine_4 = lc_refine_4
-        self.lc_refine_5 = lc_refine_5
         self.force_mesh = force_mesh
 
         if make_mesh_now:
-            self.make_mesh(self.d_materials)
+            self.build_waveguide_geometry(self.d_materials)
         else:  # TODO: this seems to be broken. But also not really worth supporting? Mesh construction is not hard
             print(f"Using mesh from existing file '{mesh_file}'.")
             self.mesh_file = mesh_file
-            # read in first line giving number of msh points and elements
             with open(self.mesh_file) as f:
                 self.mail_data = f.readlines()
 
@@ -360,14 +360,7 @@ class Structure(object):
         # self.typ_el_AC = el_conv_table
         # print el_conv_table
 
-
-
-        self.rho, self.c_tensor, self.c_tensor_z, self.p_tensor, self.eta_tensor = self._build_elastic_tensors(symmetry_flag)
-
-        self.linear_element_shapes = ['rectangular', 'slot', 'slot_coated', 'rib',
-                                      'rib_coated', 'rib_double_coated', 'pedestal']
-        self.curvilinear_element_shapes = ['circular', 'onion', 'onion2', 'onion3',
-                                           'circ_onion', 'circ_onion2', 'circ_onion3']
+        self._build_elastic_tensors(symmetry_flag)
 
     def _build_elastic_tensors(self, symmetry_flag):
 
@@ -395,7 +388,6 @@ class Structure(object):
 
         voigt_map = {(0, 0): 1, (1, 1): 2, (2, 2): 3, (2, 1): 4,
                      (2, 0): 5, (0, 1): 6, (1, 2): 4, (0, 2): 5, (1, 0): 6}
-
 
         for k_typ in range(self.n_typ_el_AC):
             if acoustic_props[k_typ]:
@@ -486,12 +478,15 @@ class Structure(object):
                                 for l in [0, 1, 2]:
                                     J = voigt_map[(k, l)]
                                     p_tensor[i, j, k, l, k_typ] = t_ac_p[I, J]
-                                    eta_tensor[i, j, k, l, k_typ] = t_ac_eta[I, J]
+                                    eta_tensor[i, j, k, l,
+                                               k_typ] = t_ac_eta[I, J]
 
-        return  rho,  c_tensor,  c_tensor_z,  p_tensor,  eta_tensor
+        self.rho = rho
+        self.c_tensor = c_tensor
+        self.c_tensor_z = c_tensor_z
+        self.p_tensor = p_tensor
+        self.eta_tensor = eta_tensor
 
-#def set_threadsafe(self):
-#        pass
 
     def get_material(self, k):
         return self.d_materials[k]
@@ -505,387 +500,17 @@ class Structure(object):
         self.shift_ac_x = x*1e-9
         self.shift_ac_y = y*1e-9
 
-    def _build_new_mesh(self):  #TODO: msh_name ?
+    def _new_mesh_required(self):  # TODO: msh_name ?
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
-    def _load_mesh_template(self, msh_template):
-        geo = open(Path(self.msh_location_in ,f'{msh_template}_msh_template.geo') , 'r').read()
-        return geo
 
-    # TODO: in a plug-in system for .geo templates, this function doesn't need to be in the class
-    #      turn the _make_geo_* functions into non-member functions as call-backs
 
-    def _make_mesh_name(self, msh_template, l_dims):
-        '''Make name for the concrete instantiation of a given mesh .geo template'''
-        msh_name = msh_template
-
-        # made crazy long names, not helping
-        # for v in l_dims:
-        #    if is_real_number(v): msh_name += '_%s' % dec_float_str(v)
-
-        msh_name += '--pid-%d' % os.getpid()
-
-        # need to make name unique to support parallel processing
-        msh_name += '--'+str(uuid.uuid4())
-
-        return msh_name
-
-    def _apply_geo_subs(self, msh_template, subs):
-        '''Turn the template into a concrete instantiation of a given mesh .geo template'''
-        geo = self._load_mesh_template(msh_template)
-        for (olds, news, val) in subs:
-            if val is None:  # unset value not overridden or dropped
-                continue
-            elif is_real_number(val):
-                geo = geo.replace(olds, news % val)
-            else:
-                geo = geo.replace(olds, news)
-        return geo
-
-        # TODO: the 1_on_slab, 2_on_slab, 1_on_2slab etc seem never to have been hooked up.
-        #      Are they useful?
-
-    def _make_geo_circular_rectangular(self, inc_shape, d_materials):
-        subs = ''
-
-        if self.slab_b_x is not None:
-            raise ValueError(
-                f"NumBAT doesn't understand your geometry: with shape {self.inc_shape}, I did not expect values for slab_b.")
-        elif self.slab_a_x is not None:
-            raise ValueError(
-                f"NumBAT doesn't understand your geometry: with shape {self.inc_shape}, I did not expect values for slab_a.")
-        elif self.inc_a_x is not None:
-            if self.coat_y is None and self.inc_b_x is None:  # One inclusion, no coating
-                msh_template = 'oneincl'  # used to be just '1'
-                self.n_typ_el = 2         # bkg, core (mat_a)
-
-                msh_name = self._make_mesh_name(msh_template,
-                                                (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y))
-
-            elif self.coat_y is None and self.inc_b_x is not None:  # Two inclusions, no coating
-                msh_template = 'twoincl'  # used to be just '2'
-                self.n_typ_el = 3         # bkg, core 1 (mat_a), core 2 (mat_b)
-
-                msh_name = self._make_mesh_name(msh_template,
-                                                (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.inc_a_x, self.inc_a_y))
-
-            # Two inclusions, with coating # TODO:implement
-            elif self.coat_y is not None and self.inc_b_x is not None:
-                raise NotImplementedError(
-                    'Have not implemented 2 coated inclusions.')
-
-            elif self.coat_y is not None and self.inc_b_x is None:  # One inclusion, with coating # TODO:implement
-                raise NotImplementedError(
-                    'Have not implemented 1 coated inclusions.')
-
-            else:
-                raise ValueError("NumBAT doesn't understand your geometry.")
-        else:
-            raise ValueError('must have at least one nonzero inclusion.')
-
-        if inc_shape == 'circular':
-            msh_name += '-c'
-
-        # TODO: these are crazy small defaults
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-
-        if self.inc_shape == 'circular':
-            subs.append(('rect = 1;', 'rect = 0;', ''))
-
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-
-        if msh_template in ['twoincl', '2', '2_on_s', '2_on_2s']:
-            subs.append(('a2 = 10;', 'a2 = %f;', self.inc_b_x))
-            subs.append(('a2y = 20;', 'a2y = %f;', self.inc_b_y))
-            subs.append(('sep = 10;', 'sep = %f;', self.two_inc_sep))
-
-            # geo = geo.replace('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;' % self.lc_refine_3)
-        if msh_template == '2':
-            subs.append(('yoff = -5;', 'yoff = %f;', self.incs_y_offset))
-
-        if msh_template in ['1_on_slab', '1_on_2slabs', '1_on_slab', '2_on_2slabs']:
-            subs.append(('slab_width = d_in_nm;',
-                        'slab_width = %f;', self.slab_a_x))
-            subs.append(
-                ('slab_height = 10;', 'slab_height = %f;', self.slab_a_y))
-            subs.append(
-                ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.lc_refine_3))
-            subs.append(
-                ('lc_refine_4 = lc/1;', 'lc_refine_4 = lc/%f;', self.lc_refine_4))
-
-        if msh_template in ['1_on_2slabs', '2_on_2slabs']:
-            subs.append(('slab2_width = d_in_nm;',
-                        'slab2_width = %f;', self.slab_b_x))
-            subs.append(
-                ('slab2_height = 5;', 'slab2_height = %f;', self.slab_b_y))
-            subs.append(
-                ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.lc_refine_3))
-            subs.append(
-                ('lc_refine_4 = lc/1;', 'lc_refine_4 = lc/%f;', self.lc_refine_4))
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_slot(self, inc_shape, d_materials):
-        subs = ''
-
-        if self.coat_y is not None:
-            msh_template = 'slot_coated'
-            self.n_typ_el = 5
-
-            msh_name = self._make_mesh_name(msh_template,
-                                            (self.unitcell_x, self.unitcell_y, self.inc_a_x,
-                                             self.inc_a_y, self.inc_b_x, self.slab_a_x,
-                                             self.slab_a_y, self.coat_y))
-
-            subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-            subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-            subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-            subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-            subs.append(('a2 = 20;', 'a2 = %f;', self.inc_b_x))
-            subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-            subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-            subs.append(('c1y = 10;', 'c1y = %f;', self.coat_y))
-            subs.append(('lc = 0;', 'lc = %f;', self.lc))
-            subs.append(
-                ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-            subs.append(
-                ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-
-            # msh_name = 'slot_c_%(d)s_%(dy)s_%(a)s_%(b)s_%(c)s_%(cc)s_%(ccc)s' % {
-            msh_name = self._make_mesh_name(msh_template,
-                                            (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.inc_b_x, self.slab_a_y, self.coat_y))
-        else:
-            msh_template = 'slot'
-            self.n_typ_el = 4
-            # msh_name = 'slot_%(d)s_%(dy)s_%(a)s_%(b)s_%(c)s_%(cc)s_%(ccc)s' % {
-            msh_name = self._make_mesh_name(msh_template,
-                                            (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.inc_b_x, self.slab_a_x, self.slab_a_y))
-
-            subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-            subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-            subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-            subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-            subs.append(('a2 = 20;', 'a2 = %f;', self.inc_b_x))
-            subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-            subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-            subs.append(('lc = 0;', 'lc = %f;', self.lc))
-            subs.append(
-                ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-            subs.append(
-                ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-            subs.append(
-                ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.lc_refine_3))
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_rib(self, inc_shape, d_materials):
-        subs = ''
-        msh_template = 'rib'
-
-        # bkg, rib (mat_a), slab (mat_b), [outer ribs (mat_c)]
-        if d_materials['c'].is_vacuum():  # TODO: perhaps a better test is whether bkg = mat_c
-            self.n_typ_el = 3
-        else:
-            self.n_typ_el = 4
-
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.slab_a_x, self.slab_a_y))
-
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_rib_coated(self, inc_shape, d_materials):
-        subs = ''
-
-        msh_template = 'rib_coated'
-        self.n_typ_el = 4  # bkg, rib (mat_a), slab (mat_b), coating (mat_c)
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.coat_x, self.coat_y, self.slab_a_x, self.slab_a_y))
-
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-        subs.append(('coatx = 2;', 'coatx = %f;', self.coat_x))
-        subs.append(('coaty = 2;', 'coaty = %f;', self.coat_y))
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-        subs.append(
-            ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.lc_refine_3))
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_rib_double_coated(self, inc_shape, d_materials):
-        subs = ''
-        msh_template = 'rib_double_coated'
-        # bkg, rib (mat_a), slab (mat_b), top inner coating (mat_c), bottom coating (mat_d), top outer-coating (mat_e)
-        self.n_typ_el = 6
-
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y,
-                                         self.coat_x, self.coat_y, self.coat2_y, self.slab_a_x, self.slab_a_y, self.slab_b_y))
-
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-        subs.append(('slab2y = 5;', 'slab2y = %f;', self.slab_b_y))
-        subs.append(('coatx = 2;', 'coatx = %f;', self.coat_x))
-        subs.append(('coaty = 2;', 'coaty = %f;', self.coat_y))
-        subs.append(('coat2x = 4;', 'coat2x = %f;', self.coat2_x))
-        subs.append(('coat2y = 4;', 'coat2y = %f;', self.coat2_y))
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-        subs.append(
-            ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.lc_refine_3))
-        subs.append(
-            ('lc_refine_4 = lc/1;', 'lc_refine_4 = lc/%f;', self.lc_refine_4))
-        subs.append(
-            ('lc_refine_5 = lc/1;', 'lc_refine_5 = lc/%f;', self.lc_refine_5))
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_pedestal(self, inc_shape, d_materials):
-        subs = ''
-        msh_template = 'pedestal'
-        self.n_typ_el = 4
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.unitcell_y, self.inc_a_x, self.inc_a_y, self.pillar_x, self.pillar_y, self.slab_a_x, self.slab_a_y))
-
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.inc_a_y))
-        subs.append(('a1top = 15;', 'a1top = %f;', self.inc_b_x))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.slab_a_x))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.slab_a_y))
-        subs.append(('slabxtop = 60;', 'slabxtop = %f;', self.slab_b_x))
-        subs.append(('px = 2;', 'px = %f;', self.pillar_x))
-        subs.append(('py = 5;', 'py = %f;', self.pillar_y))
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-
-        return msh_template, msh_name, subs
-
-    # This global passing is horrible.
-    # It would be so much nicer to make this a lambda inside _make_onion_geo,
-    # but then it is hard to pickle for multiprocessing
-
-    def _make_geo_onion(self, inc_shape, d_materials):
-        # TODO: Check:  ax+2*(bx+cx+...) <=unitcell_x
-
-        subs = ''
-        msh_template = self.inc_shape
-        if inc_shape in ['onion', 'circ_onion']:
-            self.n_typ_el = 16
-        elif inc_shape in ['onion1', 'circ_onion1']:
-            self.n_typ_el = 2
-        elif inc_shape in ['onion2', 'circ_onion2']:
-            self.n_typ_el = 3
-        elif inc_shape in ['onion3', 'circ_onion3']:
-            self.n_typ_el = 4
-
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.inc_a_x, self.inc_b_x, self.inc_c_x, self.inc_d_x,
-                                         self.inc_e_x, self.inc_f_x, self.inc_g_x, self.inc_h_x, self.inc_i_x, self.inc_j_x, self.inc_k_x, self.inc_l_x, self.inc_m_x, self.inc_n_x,
-                                         self.inc_o_x))
-
-        subs = [('d_in_nm = 2000;', 'd_in_nm = %f;', self.unitcell_x)]
-        subs.append(('dy_in_nm = 2000;', 'dy_in_nm = %f;', self.unitcell_y))
-        subs.append(('a1 = 100;', 'a1 = %f;', self.inc_a_x))
-        subs.append(('a2 = 100;', 'a2 = %f;', self.inc_b_x))
-        subs.append(('a3 = 100;', 'a3 = %f;', self.inc_c_x))
-        subs.append(('a4 = 100;', 'a4 = %f;', self.inc_d_x))
-        subs.append(('a5 = 100;', 'a5 = %f;', self.inc_e_x))
-        subs.append(('a6 = 100;', 'a6 = %f;', self.inc_f_x))
-        subs.append(('a7 = 100;', 'a7 = %f;', self.inc_g_x))
-        subs.append(('a8 = 100;', 'a8 = %f;', self.inc_h_x))
-        subs.append(('a9 = 100;', 'a9 = %f;', self.inc_i_x))
-        subs.append(('a10 = 100;', 'a10 = %f;', self.inc_j_x))
-        subs.append(('a11 = 100;', 'a11 = %f;', self.inc_k_x))
-        subs.append(('a12 = 100;', 'a12 = %f;', self.inc_l_x))
-        subs.append(('a13 = 100;', 'a13 = %f;', self.inc_m_x))
-        subs.append(('a14 = 100;', 'a14 = %f;', self.inc_n_x))
-        subs.append(('a15 = 100;', 'a15 = %f;', self.inc_o_x))
-        subs.append(('lc = 0;', 'lc = %f;', self.lc))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.lc_refine_1))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.lc_refine_2))
-
-        # make wg frame for plots. factor 2 because first element is the diameter,
-        # remainder are the annular thicknesses
-        global g_onion_layer_thicknesses
-        g_onion_layer_thicknesses = (self.inc_a_x/2, self.inc_b_x, self.inc_c_x, self.inc_d_x, self.inc_e_x,
-                                     self.inc_f_x, self.inc_g_x, self.inc_h_x, self.inc_i_x, self.inc_j_x,
-                                     self.inc_k_x, self.inc_l_x, self.inc_m_x, self.inc_n_x, self.inc_o_x)
-
-        # TODO: FIX ME: Bring this funcitonality back
-        # self.mpl_wg_frame_drawer = _my_frm_onion
-
-        return msh_template, msh_name, subs
-
-    def _make_geo_trapezoidal_rib(self, inc_shape, d_materials):
-        # inc_a_x - width of the top of the rib
-        # inc_a_y - height of the top of the rib
-        # slab_a_x - width of the middle of the rib
-        # slab_a_y - height of the buried part of the rib
-
-        msh_template = 'trapezoidal_rib'
-        self.n_typ_el = 4
-        msh_name = self._make_mesh_name(msh_template,
-                                        (self.unitcell_x, self.inc_a_x, self.inc_a_y, self.slab_a_x, self.slab_a_y))
-
-        subs = [('top_rib_width = 600.0;', "top_rib_width = %f;", self.inc_a_x)]
-        subs.append(('mid_rib_width = 900.0;',
-                    "mid_rib_width = %f;", self.slab_a_x))
-        subs.append(('rib_height = 500.0;', "rib_height = %f;", self.inc_a_y))
-        subs.append(('slab_thickness = 300.0;',
-                    "slab_thickness = %f;", self.slab_a_y))
-        subs.append(('lc = 0.020000;', "lc = %f;", self.lc))
-        subs.append(('lc_refine_1 = lc/10.0;',
-                    "lc_refine_1 = lc/%f;", self.lc_refine_1))
-        subs.append(('lc_refine_2 = lc/5.0;',
-                    "lc_refine_2 = lc/%f;", self.lc_refine_2))
-
-        return msh_template, msh_name, subs
 
     def get_mail_data(self):
         '''Returns list of lines in the NumBAT mesh format .mail file'''
         return self.mail_data
 
-    def make_mesh(self, d_materials):
+    def build_waveguide_geometry(self, d_materials):
         ''' Take the parameters specified in python and make a Gmsh FEM mesh.
             Creates a .geo and .msh file from the .geo template,
             then uses Fortran conv_gmsh routine
@@ -896,69 +521,61 @@ class Structure(object):
 
         # full path to backend directory that this code file is in
         this_directory = os.path.dirname(os.path.realpath(__file__))
+
         # msh_location_in = Path(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
         # msh directory inside backend
 
         self.msh_location_in = Path(this_directory, 'msh')
         self.msh_location_out = Path(self.msh_location_in, 'build')
 
+        self.wg_geom = None
+
         if not self.msh_location_out.is_dir():
             self.msh_location_out.mkdir()
 
-        if self.inc_shape in ['circular', 'rectangular', 'twoincl']:
-            msh_template, msh_name, subs = self._make_geo_circular_rectangular(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['rib']:
-            msh_template, msh_name, subs = self._make_geo_rib(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['rib_coated']:
-            msh_template, msh_name, subs = self._make_geo_rib_coated(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['rib_double_coated']:
-            msh_template, msh_name, subs = self._make_geo_rib_double_coated(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['slot', 'slot_coated']:
-            msh_template, msh_name, subs = self._make_geo_slot(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['pedestal']:
-            msh_template, msh_name, subs = self._make_geo_pedestal(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['onion', 'onion1', 'onion2', 'onion3',
-                                'circ_onion', 'circ_onion1', 'circ_onion2', 'circ_onion3']:
-            msh_template, msh_name, subs = self._make_geo_onion(
-                self.inc_shape, d_materials)
-
-        elif self.inc_shape in ['trapezoidal_rib']:
-            msh_template, msh_name, subs = self._make_geo_trapezoidal_rib(
-                self.inc_shape, d_materials)
-
         else:
-            raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
-                                      'is not currently implemented. \nPlease make a mesh with gmsh and '
-                                      'consider contributing this to NumBAT via github.')
+            found = False
+            for msh in Structure._user_mesh_templates:
+                if self.inc_shape in msh['inc_shape']:
+                    found = True
+                    wg_geom = msh['mesh_cls'](self.all_params, d_materials)
+                    wg_geom.init_geometry()
 
-        # check for gmsh install
+                    self.n_typ_el = wg_geom.num_type_elements()
 
-        if platform.system() == 'Darwin':  # TODO: do better testing for MAC
-            if not Path('/Applications/Gmsh.app/Contents/MacOS/gmsh').is_file():
-                reporting.report_and_exit(
-                    'Gmsh does not seem to be installed at /Applications/Gmsh.app/Contents/MacOS/gmsh.')
+                    break
 
-        else:
-            if shutil.which('gmsh') is None:
-                reporting.report_and_exit(
-                    'Gmsh does not seem to be installed.')
+            if not found:
+                raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
+                                          'is not currently implemented. \nPlease make a mesh with gmsh and '
+                                          'consider contributing this to NumBAT via github.')
 
-        if self._build_new_mesh():
-            geo = self._apply_geo_subs(msh_template, subs)
+        self.linear_element_shapes = []
+        self.curvilinear_element_shapes = []
 
-            fname = Path(self.msh_location_out , msh_name)
+        if wg_geom is not None:
+            if wg_geom.is_curvilinear():
+                self.linear_element_shapes.append(wg_geom.geom_name())
+            else:
+                self.curvilinear_element_shapes.append(wg_geom.geom_name())
+
+        self.wg_geom = wg_geom
+
+        self._build_mesh()
+
+
+    def _build_mesh(self):
+        '''Instantiates template gmsh file to specific gmsh then runs conv_gmsh to generate NumBAT .mail file.'''
+
+        msh_template = self.wg_geom.gmsh_template_filename()
+        msh_fname = self.wg_geom.get_instance_filename()
+
+
+        if self._new_mesh_required():
+
+            geo = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
+
+            fname = Path(self.msh_location_out, msh_fname)
 
             with open(str(fname) + '.geo', 'w') as fout:
                 fout.write(geo)
@@ -979,11 +596,13 @@ class Structure(object):
 
         self.mesh_file = str(fname) + '.mail'
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed?
-        self.msh_name = msh_name
+        self.msh_name = msh_fname
 
         # read in first line giving number of msh points and elements
         with open(self.mesh_file) as f:
             self.mail_data = f.readlines()
+
+
 
     def plot_mesh(self, outpref):
         '''Visualise mesh with gmsh and save to a file.'''
@@ -994,7 +613,7 @@ class Structure(object):
         nbapp = numbat.NumBATApp()
         gmsh_exe = nbapp.path_gmsh()
 
-        cwd = os.getcwd()
+
         outprefix = Path(numbat.NumBATApp().outdir(), outpref)
         tdir = tempfile.TemporaryDirectory()
         tmpoutpref = str(Path(tdir.name, outpref))
@@ -1002,16 +621,10 @@ class Structure(object):
         conv_tmp = open(Path(self.msh_location_in, 'geo2png.scr'), 'r').read()
         conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_geom')
 
-        fn_scr = Path(self.msh_location_out , self.msh_name + '_geo2png.scr')
+        fn_scr = Path(self.msh_location_out, self.msh_name + '_geo2png.scr')
 
-        cmd = [gmsh_exe, self.msh_name + '.geo', self.msh_name + '_geo2png.scr']
-
-        print('outpref',outprefix)
-        print('tdir',tdir)
-        print('tmpoutpref',tmpoutpref)
-        print('fn',fn_scr)
-        print('mshout',self.msh_location_out)
-        print('cmd',cmd)
+        cmd = [gmsh_exe, self.msh_name + '.geo',
+               self.msh_name + '_geo2png.scr']
 
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
@@ -1022,17 +635,16 @@ class Structure(object):
         conv_tmp = open(Path(self.msh_location_in, 'msh2png.scr'), 'r').read()
         conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_nodes')
 
-        fn_scr = Path(self.msh_location_out , self.msh_name + '_msh2png.scr')
-        # cmd = ' '.join(['gmsh', f' -log {outprefix}-gmshlog.log',
-        #                self.msh_name + '.msh',
-        #                self.msh_name + '_msh2png.scr' ])
-        cmd = [gmsh_exe, self.msh_name + '.msh', self.msh_name + '_msh2png.scr']
+        fn_scr = Path(self.msh_location_out, self.msh_name + '_msh2png.scr')
+
+        cmd = [gmsh_exe, self.msh_name + '.msh',
+               self.msh_name + '_msh2png.scr']
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
         subprocess.Popen(cmd, cwd=self.msh_location_out)
 
-        (pid, status) = os.wait()
+        os.wait()
 
         nbtools.join_figs(tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',
@@ -1049,6 +661,9 @@ class Structure(object):
 
         gmsh_cmd = gmsh_exe + self.msh_location_out + self.msh_name + '.msh'
         os.system(gmsh_cmd)
+
+
+
 
     def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False,
                       **args):
@@ -1104,3 +719,10 @@ class Structure(object):
 
         sim.calc_AC_modes(bcs)
         return sim
+
+
+# called at startup from NumBATApp.__init__
+def initialise_waveguide_templates(numbatapp):
+    Structure._initialise_waveguide_templates(numbatapp)
+
+

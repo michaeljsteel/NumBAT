@@ -71,7 +71,7 @@ n_eff = 1.44 # just a little under the core index
 
 prefix, refine_fac = starter.read_args(3, sys.argv)
 
-nbapp = numbat.NumBATApp(prefix)
+nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 prefix = 'lit_03_m4'
 

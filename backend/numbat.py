@@ -42,10 +42,12 @@ class _NumBATApp(object):
         self._outdir=outdir
         self._paths={}
         self._start_time=time.time()
+        self._codedir = Path(__file__).parents[0]
 
         self._check_versions()
         self._setup_paths()
         reporting.init_logger()
+        objects.initialise_waveguide_templates(self)
 
     @staticmethod
     def get_instance(outprefix='', outdir=''):
@@ -81,6 +83,9 @@ class _NumBATApp(object):
     def path_gmsh(self):
         return self._paths['gmsh']
 
+    def path_mesh_templates(self):
+        return Path(self._codedir, 'msh')
+
     def final_report(self, outprefix=''):
         dt=time.time()-self._start_time
         s_dt = datetime.timedelta(seconds=round(dt))
@@ -104,7 +109,7 @@ class _NumBATApp(object):
             try:
                 Path(self._outdir).mkdir()
             except OSError as ex:
-                reporting.report_and_exit(f"Can't open output directory {self._outdir}: " 
+                reporting.report_and_exit(f"Can't open output directory {self._outdir}: "
                                           +str(ex))
 
 
@@ -123,6 +128,8 @@ class _NumBATApp(object):
         _confirm_file_exists('Gmsh', self._paths['gmsh'], _evar_gmsh_path)
 
 
+
+
     def _check_versions(self):
         pyver = platform.python_version_tuple()
 
@@ -134,7 +141,7 @@ class _NumBATApp(object):
 def NumBATApp(outprefix='', outdir='.'):
     '''Returns the same singleton NumBATApp object on every call.'''
 
-    nba = _NumBATApp.get_instance(outprefix, outdir)  
+    nba = _NumBATApp.get_instance(outprefix, outdir)
     return nba
 
 

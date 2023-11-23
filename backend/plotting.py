@@ -91,7 +91,7 @@ class Decorator(object):
 
     def add_frame(self, ax):
         if self._frame_drawer is not None:
-            self._frame_drawer(ax)
+            self._frame_drawer.draw_mpl_frame(ax)
 
     def _fontsizes(self):
         if self._is_single:
@@ -1098,7 +1098,7 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
     lw = decorator.get_axes_property('linewidth')
     ec = decorator.get_axes_property('edgecolor')
 
-    decorator.set_frame_drawer(sim_wguide.structure.mpl_wg_frame_drawer)
+    decorator.set_frame_drawer(sim_wguide.structure.wg_geom)
 
     EM_AC = plps['EM_AC']
     plt.clf()
