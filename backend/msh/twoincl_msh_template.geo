@@ -152,13 +152,13 @@ If(rect == 0)
     Plane Surface(71) = {70};
     If(yoffset < 0)
         Line Loop(72) = {16, 4, -27, -26, -12, -20};
-        Plane Surface(73) = {44};
+        Plane Surface(73) = {72};
         Line Loop(74) = {12, 28, -2, 13, -17};
-        Plane Surface(75) = {46};
+        Plane Surface(75) = {74};
         Line Loop(76) = {28, 21, 29, -38, 31, -26};
-        Plane Surface(77) = {48};
+        Plane Surface(77) = {76};
         Line Loop(78) = {31, 27, -24, -25, -39};
-        Plane Surface(79) = {50};
+        Plane Surface(79) = {78};
     EndIf
     If(yoffset > 0)
         Line Loop(72) = {13, -17, 12, 26, 28, -2};
