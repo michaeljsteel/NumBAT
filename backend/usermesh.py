@@ -12,7 +12,7 @@ def is_real_number(x):
     #except Exception:
     #    return False
 
-class UserGeometryBase(object):
+class UserGeometryBase():
 
     def __init__(self, params, d_materials):
         self._geom_name = ''
@@ -95,7 +95,7 @@ class UserGeometryBase(object):
         # for v in l_dims:
         #    if is_real_number(v): msh_name += '_%s' % dec_float_str(v)
 
-        msh_fname += '--pid-%d' % os.getpid()
+        msh_fname += f'--pid-{os.getpid()}'
 
         # need to make name unique to support parallel processing
         msh_fname += '--'+str(uuid.uuid4())
@@ -105,4 +105,3 @@ class UserGeometryBase(object):
     def draw_mpl_frame(self, ax):
         '''Add elements to a matplotlib axis to draw outline of the structure'''
         print('base class drawmplframe')
-        pass
