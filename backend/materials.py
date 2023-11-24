@@ -25,6 +25,8 @@ import json
 import re
 
 import numpy as np
+
+
 # import sys
 
 # from scipy.interpolate import interp1d
@@ -203,21 +205,17 @@ class Material(object):
     def elastic_properties(self):
         '''Returns a string containing key elastic properties of the material.'''
         try:
-            s = 'Material:       {0}'.format(self.material_name)
-            s += '\nDensity:        {0:.3f} kg/m^3'.format(self.rho)
+            s = f'Material:       {self.material_name}'
+            s += f'\nDensity:        {self.rho:.3f} kg/m^3'
 
             if self.is_isotropic():
-                s += '\nc11:            {0:.3f} GPa'.format(
-                    self.c_tensor.mat[1, 1]*1e-9)
-                s += '\nc12:            {0:.3f} GPa'.format(
-                    self.c_tensor.mat[1, 2]*1e-9)
-                s += '\nc44:            {0:.3f} GPa'.format(
-                    self.c_tensor.mat[4, 4]*1e-9)
-                s += "\nYoung's mod E:  {0:.3f} GPa".format(self.EYoung*1e-9)
-                s += '\nPoisson ratio:  {0:.3f}'.format(self.nuPoisson)
-                s += '\nVelocity long.: {0:.3f} m/s'.format(
-                    self.Vac_longitudinal())
-                s += '\nVelocity shear: {0:.3f} m/s'.format(self.Vac_shear())
+                s += f'\nc11:            {self.c_tensor.mat[1, 1]*1e-9:.3f} GPa'
+                s += f'\nc12:            {self.c_tensor.mat[1, 2]*1e-9:.3f} GPa'
+                s += f'\nc44:            {self.c_tensor.mat[4, 4]*1e-9:.3f} GPa'
+                s += f"\nYoung's mod E:  {self.EYoung*1e-9:.3f} GPa"
+                s += f'\nPoisson ratio:  {self.nuPoisson:.3f}'
+                s += f'\nVelocity long.: {self.Vac_longitudinal():.3f} m/s'
+                s += f'\nVelocity shear: {self.Vac_shear():.3f} m/s'
             else:
                 s += '\nStiffness c:' + str(self.c_tensor)
 

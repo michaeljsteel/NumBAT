@@ -61,7 +61,7 @@ def _load_waveguide_templates(p_msh_dir, p_msh_index):
 
     try:
         with open(p_msh_index) as fin:
-            msh_index = json.load(fin)['user_meshes']
+            msh_index = json.load(fin)['wguides']
     except Exception as ex:
         raise Exception(
             'JSON parse error in reading user mesh index file' + str(ex)) from ex
@@ -112,8 +112,9 @@ class Structure(object):
 
             inc_shape  (str):
                 Shape of inclusions that have template mesh, currently:
-                 ``circular`` ``rectangular`` ``slot`` ``rib`` ``slot_coated`` ``rib_coated`` ``rib_double_coated`` ``pedestal`` ``onion`` ``onion2`` ``onion3``.
-                 ectangular is default.
+                 ``circular`` ``rectangular`` ``slot`` ``rib`` ``slot_coated`` ``rib_coated``
+                 ``rib_double_coated`` ``pedestal`` ``onion`` ``onion2`` ``onion3``.
+                 rectangular is default.
 
             slab_a_x  (float):
                 The horizontal diameter in nm of the slab directly below the inclusion.
@@ -206,7 +207,7 @@ class Structure(object):
 
     # called at startup from NumBATApp.__init__
     @classmethod
-    def _initialise_waveguide_templates(cls, nbapp):
+    def initialise_waveguide_templates(cls, nbapp):
         pmsh_dir = nbapp.path_mesh_templates()
 
         pmsh_index_builtin = Path(pmsh_dir, 'builtin_waveguides.json')
@@ -220,7 +221,7 @@ class Structure(object):
 
         if  pmsh_index_user.exists():
             user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-            cls._user_mesh_templates.update(user_wg_templates)
+            cls._user_mesh_templates.extend(user_wg_templates)
 
 
 
@@ -579,9 +580,9 @@ class Structure(object):
             err_no, err_msg = NumBAT.conv_gmsh(str(fname))
             if err_no != 0:
 
-                s = 'Terminating after Fortran error in processing .geo file "%s.geo".' % fname
+                s = f'Terminating after Fortran error in processing .geo file "{fname}%s.geo".'
                 if len(err_msg):
-                    s += '\nMessage was:\n %s' % err_msg
+                    s += f'\nMessage was:\n {err_msg}'
                 s += f'''
 
                 Is the mesh template file "backend/fortran/msh/{msh_template}.geo" designed correctly?
@@ -718,6 +719,5 @@ class Structure(object):
 
 # called at startup from NumBATApp.__init__
 def initialise_waveguide_templates(numbatapp):
-    Structure._initialise_waveguide_templates(numbatapp)
-
+    Structure.initialise_waveguide_templates(numbatapp)
 

@@ -1,5 +1,5 @@
 {
-    "user_meshes":
+    "wguides":
     [
         {
             "wg_impl": "builtin_meshes.py",

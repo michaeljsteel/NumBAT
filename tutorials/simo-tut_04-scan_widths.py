@@ -182,9 +182,8 @@ ax.set_ylabel('Width (nm)', fontsize=14)
 ax.set_ylim3d(waveguide_widths[0], waveguide_widths[-1])
 ax.set_zlabel('|Gain| (1/Wm)', fontsize=14)
 ax.set_zlim3d(0, 1500)
-# We change the fontsize of minor ticks label
 plt.tick_params(axis='both', which='major', labelsize=12, pad=-2)
-plt.savefig(prefix+'-gain_spectra-waterfall.png')
+plt.savefig(nbapp.outpath()+'-gain_spectra-waterfall.png')
 plt.close()
 
 

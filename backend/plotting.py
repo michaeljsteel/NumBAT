@@ -16,13 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-
 import math
 import numpy as np
-from scipy import interpolate
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
-
+from pathlib import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -30,6 +28,7 @@ import numbat
 from nbtypes import QAcMethod, FieldType, component_t
 from fortran import NumBAT
 import reporting
+
 
 # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 keep_plots_open = False
@@ -43,13 +42,28 @@ except (ValueError, IOError, AttributeError):
 mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
 
-def savefig(fig, fname):
-    fig.savefig(fname)
+
+def save_and_close_figure(fig, fig_fname):
+
+    if fig_fname[-3:-1] == 'png':
+        st = fig.savefig(fig_fname)
+    else:
+        st = fig.savefig(fig_fname, bbox_inches='tight')
+
+    plt.close(fig)
+
 
 
 def plot_filename(plps, ival, label=None):
-    filestart = '%(pre)s-fields/%(s)s_field_%(i)02i%(add)s' % {'pre': plps['prefix'],
-                                                               's': plps['EM_AC'].name, 'i': ival, 'add': plps['suffix']}
+    #fullpref = str(Path(numbat.NumBATApp().outdir(), plps['prefix']))
+    fullpref = str(numbat.NumBATApp().fieldspath())
+
+
+
+    comp = plps['EM_AC'].name
+    suf = plps['suffix']
+    filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
+
     if label is not None:
         filestart += '_'+label
 
@@ -59,6 +73,8 @@ def plot_filename(plps, ival, label=None):
         fig_filename = filestart+'.pdf'
     else:
         raise ValueError("pdf_png must be either 'png' or 'pdf'.")
+
+    print('fullpref', fullpref, fig_filename)
 
     return fig_filename
 
@@ -246,6 +262,9 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     if not prefix: prefix=numbat.NumBATApp().outprefix()
 
     pref = f'{prefix}-gain_spectra'
+    pathpref = str(Path(numbat.NumBATApp().outdir(), pref))
+
+    print('\n\npathpref', pathpref)
 
     if decorator is None:
         decorator = Decorator()
@@ -307,9 +326,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
             if save_txt:
                 save_array = np.array([v_nu_loc, v_gain_loc]).T
-                np.savetxt('%(pre)s-mode_comps%(add)s-%(mode)i.csv'
-                           % {'pre': pref, 'add': suffix, 'mode': m},
-                           save_array, delimiter=',')
+                np.savetxt(f'{pathpref}-mode_comps{suffix}-{m}.csv', save_array, delimiter=',')
         # set up an interpolation for summing all the gain peaks
         v_gain_global += np.interp(nu_grid, v_nu_loc, v_gain_loc)
 
@@ -326,13 +343,11 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         decorator.add_title(ax)
         decorator.extra_axes_commands(ax)
 
-        fig.savefig('%(pre)s-mode_comps%(add)s.%(png)s' % {
-            'pre': pref, 'add': suffix, 'png': pdf_png})
+        save_and_close_figure(fig, f'{pathpref}-mode_comps{suffix}.{pdf_png}')
 
         if save_txt:
             save_array = np.array([nu_grid, v_gain_global]).T
-            np.savetxt('%(pre)s-mode_comps%(add)s-Total.csv'
-                       % {'pre': pref, 'add': suffix}, save_array, delimiter=',')
+            np.savetxt(f'{pathpref}-mode_comps{suffix}-Total.csv' , save_array, delimiter=',')
 
     v_gain_global_tot = np.zeros(num_interp_pts)
     v_gain_global_PE = np.zeros(num_interp_pts)
@@ -434,22 +449,17 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     decorator.extra_axes_commands(ax)
     decorator.add_title(ax)
 
-    # fig.tight_layout()
+    save_and_close_figure(fig, f'{pathpref}{suffix}.{pdf_png}')
 
-    savefig(fig, '%(pre)s%(add)s.%(png)s' %
-            {'pre': pref, 'add': suffix, 'png': pdf_png})
-    plt.close(fig)
 
     if save_txt:
         save_array = np.array([nu_grid, v_gain_global_tot]).T
-        np.savetxt('%(pre)s-MB_PE_comps%(add)s-Total.csv' % {'pre': pref, 'add': suffix},
-                   save_array, delimiter=',')
+        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-Total.csv', save_array, delimiter=',')
         save_array = np.array([nu_grid, v_gain_global_PE]).T
-        np.savetxt('%(pre)s-MB_PE_comps%(add)s-PE.csv' % {'pre': pref, 'add': suffix},
-                   save_array, delimiter=',')
+        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-PE.csv',  save_array, delimiter=',')
         save_array = np.array([nu_grid, v_gain_global_MB]).T
-        np.savetxt('%(pre)s-MB_PE_comps%(add)s-MB.csv' % {'pre': pref, 'add': suffix},
-                   save_array, delimiter=',')
+        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-MB.csv',  save_array, delimiter=',')
+
 
     if dB:
         fig, ax = plt.subplots()
@@ -478,16 +488,12 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             ax.text(nuloc, abs(Gm)*v_scale, m, fontsize=fs, horizontalalignment='left',
                     verticalalignment='top')
 
-        fig.savefig('%(pre)s-gain_spectra-dB%(add)s.%(png)s' % {
-            'pre': prefix, 'add': suffix, 'png': pdf_png})
-        plt.close(fig)
+        save_and_close_figure(fig, f'{pathpref}-gain_spectra-dB{suffix}.{pdf_png}')
 
         if save_txt:
             save_array = (
                 nu_grid, 10*np.log10(np.exp(abs(v_gain_global_tot)*dB_const)))
-            np.savetxt('%(pre)s-gain_spectra-dB%(add)s.csv'
-                       % {'pre': prefix, 'add': suffix},
-                       save_array, delimiter=',')
+            np.savetxt(f'{pathpref}-gain_spectra-dB{suffix}.csv', save_array, delimiter=',')
 
     if semilogy:
         fig, ax = plt.subplots()
@@ -506,9 +512,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             ax.text(nuloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
                     verticalalignment='top')
 
-        fig.savefig('%(pre)s-gain_spectra-logy%(add)s.%(png)s' % {
-            'pre': prefix, 'add': suffix, 'png': pdf_png})
-        plt.close(fig)
+        save_and_close_figure(fig, f'{pathpref}-gain_spectra-logy{suffix}.{pdf_png}')
 
     return v_gain_global, v_gain_global_PE, v_gain_global_MB
 
@@ -1101,18 +1105,19 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
     decorator.set_frame_drawer(sim_wguide.structure.wg_geom)
 
     EM_AC = plps['EM_AC']
-    plt.clf()
-    fig = plt.figure(figsize=figsz)
-    fig.subplots_adjust(wspace=ws, hspace=hs)
     plt.rc('axes', linewidth=lw)
     plt.rc('axes', edgecolor=ec)
+
 
     rows = 3
     if plps['suppress_imimre']:
         rows = 2
 
-    axi = 1
-    ax = plt.subplot(rows, 3, axi)
+    fig, axs = plt.subplots(rows, 3, figsize=figsz)
+    axi = 0
+    ax = axs[axi//3, axi%3]
+
+
     plot_mode_data(ax, v_plots, plps, sim_wguide,
                    ival, v_x, v_y)  # mode data summary
     axi += 1
@@ -1122,13 +1127,13 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
     cc_quiv = {FieldType.EM_E: component_t('Et'), FieldType.EM_H: component_t(
         'Ht'), FieldType.AC: component_t('ut')}[EM_AC]
 
-    ax = plt.subplot(rows, 3, axi)
+    ax = axs[axi//3, axi%3]
     # plot_one_component_axes(ax, m_X, m_Y, v_plots, plps, cc)  # the intensity plot
     plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_plots, plps,
                                                cc_cont=cc_cont, cc_quiver=cc_quiv)  # the intensity plot
     axi += 1
 
-    ax = plt.subplot(rows, 3, axi)
+    ax = axs[axi//3, axi%3]
     # plot_one_component_quiver(ax, m_X, m_Y, v_plots, plps, cc)  # the transverse vector plot
     plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, v_plots, plps,
                                                cc_quiver=cc_quiv)  # the intensity plot
@@ -1141,142 +1146,15 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
             continue
         if not cc.is_signed_field():
             continue
-        ax = plt.subplot(rows, 3, axi)
+        ax = axs[axi//3, axi%3]
         plot_one_component_axes_contour_and_quiver(
             ax, m_X, m_Y, v_plots, plps, cc_cont=cc)  # the scalar plots
         axi += 1
 
-    figfile = plot_filename(plps, ival)
-    save_figure(plt, figfile)
-
-    if not keep_plots_open:
-        plt.close()
-
-    if False and plps['EM_AC'] == FieldType.AC and plps['stress_fields']:
-        # Interpolate onto rectangular Cartesian grid
-        # TODO: connect mgrid with meshgrid picture above
-        xy = list(zip(v_x6p, v_y6p))
-        grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x *
-                                  1j, y_min:y_max:n_pts_y*1j]
-        m_ReEx = interpolate.griddata(
-            xy, v_Ex6p.real, (grid_x, grid_y), method='linear')
-        m_ReEy = interpolate.griddata(
-            xy, v_Ey6p.real, (grid_x, grid_y), method='linear')
-        m_ReEz = interpolate.griddata(
-            xy, v_Ez6p.real, (grid_x, grid_y), method='linear')
-        m_ImEx = interpolate.griddata(
-            xy, v_Ex6p.imag, (grid_x, grid_y), method='linear')
-        m_ImEy = interpolate.griddata(
-            xy, v_Ey6p.imag, (grid_x, grid_y), method='linear')
-        m_ImEz = interpolate.griddata(
-            xy, v_Ez6p.imag, (grid_x, grid_y), method='linear')
-        m_AbsE = interpolate.griddata(
-            xy, v_E6p.real, (grid_x, grid_y), method='linear')
-        dx = grid_x[-1, 0] - grid_x[-2, 0]
-        dy = grid_y[0, -1] - grid_y[0, -2]
-        m_Ex = m_ReEx + 1j*m_ImEx
-        m_Ey = m_ReEy + 1j*m_ImEy
-        m_Ez = m_ReEz + 1j*m_ImEz
-        m_Ex = m_Ex.reshape(n_pts_x, n_pts_y)
-        m_Ey = m_Ey.reshape(n_pts_x, n_pts_y)
-        m_Ez = m_Ez.reshape(n_pts_x, n_pts_y)
-        m_AbsE = m_AbsE.reshape(n_pts_x, n_pts_y)
-
-        m_ReEx = np.real(m_Ex)
-        m_ReEy = np.real(m_Ey)
-        m_ReEz = np.real(m_Ez)
-        m_ImEx = np.imag(m_Ex)
-        m_ImEy = np.imag(m_Ey)
-        m_ImEz = np.imag(m_Ez)
-
-        del_x_Ex = np.gradient(m_Ex, dx, axis=0)
-        del_y_Ex = np.gradient(m_Ex, dy, axis=1)
-        del_x_Ey = np.gradient(m_Ey, dx, axis=0)
-        del_y_Ey = np.gradient(m_Ey, dy, axis=1)
-        del_x_Ez = np.gradient(m_Ez, dx, axis=0)
-        del_y_Ez = np.gradient(m_Ez, dy, axis=1)
-        del_z_Ex = 1j*sim_wguide.q_AC*m_Ex
-        del_z_Ey = 1j*sim_wguide.q_AC*m_Ey
-        del_z_Ez = 1j*sim_wguide.q_AC*m_Ez
-
-        # Flip y order as imshow has origin at top left
-        del_mat = np.array([del_x_Ex[:, ::-1].real, del_x_Ey[:, ::-1].real, del_x_Ez[:, ::-1].real, del_x_Ex[:, ::-1].imag, del_x_Ey[:, ::-1].imag, del_x_Ez[:, ::-1].imag, del_y_Ex[:, ::-1].real, del_y_Ey[:, ::-1].real, del_y_Ez[:, ::-1].real,
-                           del_y_Ex[:, ::-1].imag, del_y_Ey[:, ::-1].imag, del_y_Ez[:, ::-1].imag, del_z_Ex[:, ::-1].real, del_z_Ey[:, ::-1].real, del_z_Ez[:, ::-1].real, del_z_Ex[:, ::-1].imag, del_z_Ey[:, ::-1].imag, del_z_Ez[:, ::-1].imag])
-        v_labels = ["Re($S_{xx}$)", "Re($S_{xy}$)", "Re($S_{xz}$)", "Im($S_{xx}$)", "Im($S_{xy}$)", "Im($S_{xz}$)", "Re($S_{yx}$)", "Re($S_{yy}$)", "Re($S_{yz}$)",
-                    "Im($S_{yx}$)", "Im($S_{yy}$)", "Im($S_{yz}$)", "Re($S_{zx}$)", "Re($S_{zy}$)", "Re($S_{zz}$)", "Im($S_{zx}$)", "Im($S_{zy}$)", "Im($S_{zz}$)"]
-
-        # stress field plots
-        plt.clf()
-        fig = plt.figure(figsize=(15, 30))
-        for i_p, plot in enumerate(del_mat):
-            ax = plt.subplot(6, 3, i_p+1)
-            im = plt.imshow(plot.T)
-            # no ticks
-            plt.xticks([])
-            plt.yticks([])
-            # limits
-            if xlim_min != None:
-                ax.set_xlim(xlim_min*n_points, (1-xlim_max)*n_points)
-            if ylim_min != None:
-                ax.set_ylim((1-ylim_min)*n_points, ylim_max*n_points)
-            # titles
-            plt.title(v_labels[i_p], fontsize=decorator.get_font_size(
-                'subplot_title'))
-            # colorbar
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.1)
-            cbar = plt.colorbar(im, cax=cax, format='%.2e')
-            if num_ticks:
-                cbarticks = np.linspace(
-                    np.min(plot), np.max(plot), num=num_ticks)
-            elif ylim_min != None:
-                if xlim_min/ylim_min > 3:
-                    cbarlabels = np.linspace(np.min(plot), np.max(plot), num=3)
-                if xlim_min/ylim_min > 1.5:
-                    cbarlabels = np.linspace(np.min(plot), np.max(plot), num=5)
-                else:
-                    cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
-            else:
-                cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
-            cbar.set_ticks(cbarlabels)
-            cbarlabels = ['%.2f' % t for t in cbarlabels]
-            cbar.set_ticklabels(cbarlabels)
-            if contours:
-                if contour_lst:
-                    cbarticks = contour_lst
-                if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
-                    CS2 = ax.contour(
-                        m_X, m_Y, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
-                cbar.add_lines(CS2)
-            cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
-        fig.set_tight_layout(True)
-        n_str = ''
-        if np.imag(sim_wguide.Eig_values[ival]) < 0:
-            k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz' % \
-                {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
-                 'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
-        else:
-            k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz' % \
-                {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
-                 'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
-        plt.suptitle('Mode #' + str(ival) + '   ' + k_str + '   ' +
-                     n_str, fontsize=decorator.get_font_size('title'))
-
-        if pdf_png == 'png':
-            plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
-                        {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix})
-        elif pdf_png == 'pdf':
-            plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
-                        {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix}, bbox_inches='tight')
-        if not keep_plots_open:
-            plt.close()
+    fig_fname = plot_filename(plps, ival)
+    save_and_close_figure(fig,  fig_fname)
 
 
-def save_figure(plt, figfile):
-    if figfile[-3:-1] == 'png':
-        plt.savefig(figfile)
-    else:
-        plt.savefig(figfile, bbox_inches='tight')
 
 
 def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc, axis=None):
@@ -1289,8 +1167,8 @@ def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc, axis=None
         plt.rc('axes', linewidth=decorator.get_axes_property('linewidth'))
         plt.rc('axes', edgecolor=decorator.get_axes_property('edgecolor'))
 
-        fig = plt.figure(figsize=(12, 10))
-        ax = plt.subplot(111)
+        fig, ax = plt.subplots(figsize=(12, 10))
+
     else:
         ax = axis
 
@@ -1309,10 +1187,8 @@ def plot_one_component(m_X, m_Y, v_fields, plps, sim_wguide, ival, cc, axis=None
                                                cc_cont=cc_cont, cc_quiver=cc_quiv)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
-        figfile = plot_filename(plps, ival, cc._user_code)
-        save_figure(plt, figfile)
-        if not keep_plots_open:
-            plt.close()
+        fig_fname = plot_filename(plps, ival, cc._user_code)
+        save_and_close_figure(fig, fig_fname)
 
 
 # deprecated spelling.
@@ -1469,30 +1345,30 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
 
 
 #### Plot mesh #############################################
-def plot_msh(mesh_xy, prefix='', suffix=''):
-    """ Plot EM mode fields.
+# def plot_msh(mesh_xy, prefix='', suffix=''):
+#     """ Plot EM mode fields.
 
-        Args:
-            sim_wguide : A ``Struct`` instance that has had calc_modes calculated
+#         Args:
+#             sim_wguide : A ``Struct`` instance that has had calc_modes calculated
 
-        Keyword Args:
-            n_points  (int): The number of points across unitcell to \
-                interpolate the field onto.
-    """
+#         Keyword Args:
+#             n_points  (int): The number of points across unitcell to \
+#                 interpolate the field onto.
+#     """
 
-    # plt.clf()
-    # plt.figure(figsize=(13,13))
-    # ax = plt.subplot(1,1,1)
-    fig, ax = plt.subplots()
-    for node in range(np.shape(mesh_xy)[1]):
-        plt.plot(mesh_xy[0, node], mesh_xy[1, node], 'og')
-    ax.set_aspect('equal')
-    # plt.savefig('%(pre)smsh_%(add)s.pdf' %
-    #   {'pre' : prefix, 'add' : suffix}, bbox_inches='tight')
-    fig.savefig('%(pre)smsh_%(add)s.pdf' %
-                {'pre': prefix, 'add': suffix}, bbox_inches='tight')
-    if not keep_plots_open:
-        plt.close()
+#     # plt.clf()
+#     # plt.figure(figsize=(13,13))
+#     # ax = plt.subplot(1,1,1)
+#     fig, ax = plt.subplots()
+#     for node in range(np.shape(mesh_xy)[1]):
+#         plt.plot(mesh_xy[0, node], mesh_xy[1, node], 'og')
+#     ax.set_aspect('equal')
+#     # plt.savefig('%(pre)smsh_%(add)s.pdf' %
+#     #   {'pre' : prefix, 'add' : suffix}, bbox_inches='tight')
+#     fig.savefig('%(pre)smsh_%(add)s.pdf' %
+#                 {'pre': prefix, 'add': suffix}, bbox_inches='tight')
+#     if not keep_plots_open:
+#         plt.close()
 
 
 # Plot nodal arrangement on mesh triangle.
@@ -1508,5 +1384,126 @@ def plot_msh(mesh_xy, prefix='', suffix=''):
 #     plt.plot(x, y, 'o')
 #     plt.text(x+0.001, y+0.001, str(i))
 # plt.savefig('triangle_%i.png' %el)
-if not keep_plots_open:
-    plt.close()
+#if not keep_plots_open:
+#    plt.close()
+
+
+# def broken_stress_plots():
+#     if False and plps['EM_AC'] == FieldType.AC and plps['stress_fields']:
+#         # Interpolate onto rectangular Cartesian grid
+#         # TODO: connect mgrid with meshgrid picture above
+#         xy = list(zip(v_x6p, v_y6p))
+#         grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x *
+#                                   1j, y_min:y_max:n_pts_y*1j]
+#         m_ReEx = interpolate.griddata(
+#             xy, v_Ex6p.real, (grid_x, grid_y), method='linear')
+#         m_ReEy = interpolate.griddata(
+#             xy, v_Ey6p.real, (grid_x, grid_y), method='linear')
+#         m_ReEz = interpolate.griddata(
+#             xy, v_Ez6p.real, (grid_x, grid_y), method='linear')
+#         m_ImEx = interpolate.griddata(
+#             xy, v_Ex6p.imag, (grid_x, grid_y), method='linear')
+#         m_ImEy = interpolate.griddata(
+#             xy, v_Ey6p.imag, (grid_x, grid_y), method='linear')
+#         m_ImEz = interpolate.griddata(
+#             xy, v_Ez6p.imag, (grid_x, grid_y), method='linear')
+#         m_AbsE = interpolate.griddata(
+#             xy, v_E6p.real, (grid_x, grid_y), method='linear')
+#         dx = grid_x[-1, 0] - grid_x[-2, 0]
+#         dy = grid_y[0, -1] - grid_y[0, -2]
+#         m_Ex = m_ReEx + 1j*m_ImEx
+#         m_Ey = m_ReEy + 1j*m_ImEy
+#         m_Ez = m_ReEz + 1j*m_ImEz
+#         m_Ex = m_Ex.reshape(n_pts_x, n_pts_y)
+#         m_Ey = m_Ey.reshape(n_pts_x, n_pts_y)
+#         m_Ez = m_Ez.reshape(n_pts_x, n_pts_y)
+#         m_AbsE = m_AbsE.reshape(n_pts_x, n_pts_y)
+
+#         m_ReEx = np.real(m_Ex)
+#         m_ReEy = np.real(m_Ey)
+#         m_ReEz = np.real(m_Ez)
+#         m_ImEx = np.imag(m_Ex)
+#         m_ImEy = np.imag(m_Ey)
+#         m_ImEz = np.imag(m_Ez)
+
+#         del_x_Ex = np.gradient(m_Ex, dx, axis=0)
+#         del_y_Ex = np.gradient(m_Ex, dy, axis=1)
+#         del_x_Ey = np.gradient(m_Ey, dx, axis=0)
+#         del_y_Ey = np.gradient(m_Ey, dy, axis=1)
+#         del_x_Ez = np.gradient(m_Ez, dx, axis=0)
+#         del_y_Ez = np.gradient(m_Ez, dy, axis=1)
+#         del_z_Ex = 1j*sim_wguide.q_AC*m_Ex
+#         del_z_Ey = 1j*sim_wguide.q_AC*m_Ey
+#         del_z_Ez = 1j*sim_wguide.q_AC*m_Ez
+
+#         # Flip y order as imshow has origin at top left
+#         del_mat = np.array([del_x_Ex[:, ::-1].real, del_x_Ey[:, ::-1].real, del_x_Ez[:, ::-1].real, del_x_Ex[:, ::-1].imag, del_x_Ey[:, ::-1].imag, del_x_Ez[:, ::-1].imag, del_y_Ex[:, ::-1].real, del_y_Ey[:, ::-1].real, del_y_Ez[:, ::-1].real,
+#                            del_y_Ex[:, ::-1].imag, del_y_Ey[:, ::-1].imag, del_y_Ez[:, ::-1].imag, del_z_Ex[:, ::-1].real, del_z_Ey[:, ::-1].real, del_z_Ez[:, ::-1].real, del_z_Ex[:, ::-1].imag, del_z_Ey[:, ::-1].imag, del_z_Ez[:, ::-1].imag])
+#         v_labels = ["Re($S_{xx}$)", "Re($S_{xy}$)", "Re($S_{xz}$)", "Im($S_{xx}$)", "Im($S_{xy}$)", "Im($S_{xz}$)", "Re($S_{yx}$)", "Re($S_{yy}$)", "Re($S_{yz}$)",
+#                     "Im($S_{yx}$)", "Im($S_{yy}$)", "Im($S_{yz}$)", "Re($S_{zx}$)", "Re($S_{zy}$)", "Re($S_{zz}$)", "Im($S_{zx}$)", "Im($S_{zy}$)", "Im($S_{zz}$)"]
+
+#         # stress field plots
+#         plt.clf()
+#         fig = plt.figure(figsize=(15, 30))
+#         for i_p, plot in enumerate(del_mat):
+#             ax = plt.subplot(6, 3, i_p+1)
+#             im = plt.imshow(plot.T)
+#             # no ticks
+#             plt.xticks([])
+#             plt.yticks([])
+#             # limits
+#             if xlim_min != None:
+#                 ax.set_xlim(xlim_min*n_points, (1-xlim_max)*n_points)
+#             if ylim_min != None:
+#                 ax.set_ylim((1-ylim_min)*n_points, ylim_max*n_points)
+#             # titles
+#             plt.title(v_labels[i_p], fontsize=decorator.get_font_size(
+#                 'subplot_title'))
+#             # colorbar
+#             divider = make_axes_locatable(ax)
+#             cax = divider.append_axes("right", size="5%", pad=0.1)
+#             cbar = plt.colorbar(im, cax=cax, format='%.2e')
+#             if num_ticks:
+#                 cbarticks = np.linspace(
+#                     np.min(plot), np.max(plot), num=num_ticks)
+#             elif ylim_min != None:
+#                 if xlim_min/ylim_min > 3:
+#                     cbarlabels = np.linspace(np.min(plot), np.max(plot), num=3)
+#                 if xlim_min/ylim_min > 1.5:
+#                     cbarlabels = np.linspace(np.min(plot), np.max(plot), num=5)
+#                 else:
+#                     cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+#             else:
+#                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+#             cbar.set_ticks(cbarlabels)
+#             cbarlabels = ['%.2f' % t for t in cbarlabels]
+#             cbar.set_ticklabels(cbarlabels)
+#             if contours:
+#                 if contour_lst:
+#                     cbarticks = contour_lst
+#                 if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
+#                     CS2 = ax.contour(
+#                         m_X, m_Y, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
+#                 cbar.add_lines(CS2)
+#             cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
+#         fig.set_tight_layout(True)
+#         n_str = ''
+#         if np.imag(sim_wguide.Eig_values[ival]) < 0:
+#             k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz' % \
+#                 {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
+#                  'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+#         else:
+#             k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz' % \
+#                 {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
+#                  'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+#         plt.suptitle('Mode #' + str(ival) + '   ' + k_str + '   ' +
+#                      n_str, fontsize=decorator.get_font_size('title'))
+
+#         if pdf_png == 'png':
+#             plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
+#                         {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix})
+#         elif pdf_png == 'pdf':
+#             plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
+#                         {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix}, bbox_inches='tight')
+#         if not keep_plots_open:
+#             plt.close()
