@@ -3,15 +3,16 @@
 
 .. _chap-pythonapi-label:
 
+
 *********************
 Python Interface API
 *********************
 
 
 
-This chapter provides a technical auto-generated summary  of the NumBAT Python API. 
+This chapter provides a technical auto-generated summary  of the NumBAT Python API.
 
-The API consists of five core modules\: 
+The API consists of five core modules\:
   - ``materials``, for defining waveguide materials and their properties;
   - ``objects``, for constructing waveguides from materials;
   - ``mode_calcs``, for the core calculation of electromagnetic and acoustic modes;

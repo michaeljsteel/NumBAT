@@ -24,13 +24,13 @@ Goals
 stimulated Brillouin scattering (SBS) in integrated waveguides. It uses finite element algorithms
 to solve the electromagnetic and acoustic modes of a wide range of 2D waveguide structures. It
 can account for photoelastic/electrostriction and moving boundary/radiation pressure effects, as well as
-arbitrary acoustic anisotropy. 
+arbitrary acoustic anisotropy.
 
 |NUMBAT| also supports user-defined material properties and we hope its creation will drive a community-driven
 set of standard properties and geometries which will allow all groups to test and validate each other's
 work.
 
-A full description of the |NUMBAT| physics and numerical algorithms  is available in the article B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019), 
+A full description of the |NUMBAT| physics and numerical algorithms  is available in the article B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019),
 available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 
@@ -39,11 +39,11 @@ to contribute are available in :ref:`sec-contribute-label`.
 
 Citing |NumBAT|
 ===============
-If you use |NumBAT| in published work, we would appreciate a citation 
+If you use |NumBAT| in published work, we would appreciate a citation
 to B.C.P Sturmberg at al.,
 "Finite element analysis of stimulated Brillouin scattering in integrated
-photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019), 
-available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_ 
+photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019),
+available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_
 and `<https://arxiv.org/abs/1811.10219>`_,
 and a link to the github page at `<https://github.com/michaeljsteel/NumBAT>`_.
 
@@ -67,7 +67,7 @@ at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome addit
 Support
 =============
 Development of |NumBAT| has been supported in part by the
-Australian Research Council under Discovery Projects 
+Australian Research Council under Discovery Projects
 DP130100832, DP160101691, DP200101893 and DP220100488.
 
 Release notes
@@ -76,25 +76,31 @@ Release notes
 Version 2.0
 -----------
 
-A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface and make plotting and analysis simpler and more powerful. 
+A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface and make plotting and analysis simpler and more powerful.
 You will need to make some changes to existing files to run in |NUMBAT| 2.0.  Your best guide to new capabilities and API changes is to look through the code in the tutorial examples.
 
 Some key changes you will need to make are as follows:
- * The waveguide class ``Struct`` has been renamed to ``Structure`` 
+ * There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
+ * It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
+ * The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.
+ * The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
+ * The waveguide class ``Struct`` has been renamed to ``Structure``.
+ * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
  * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
- * To access an existing material in an  existing ``Struture`` object (usually in a variable called ``wguide`` use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
+ * To access an existing material in an  existing ``Struture`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
  * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
  * The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
  * Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
       * The frequency arguments ``freq_min`` and ``freq_max`` should now be passed in units of Hz, not GHz.
       * The argument ``k_AC`` has been removed.
- * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity.
+ * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
+ * All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
 
 
-What does |NUMBAT| actually calculate? 
+What does |NUMBAT| actually calculate?
 =======================================
 
-|NUMBAT| performs three main types of calculations given a particular waveguide design: 
+|NUMBAT| performs three main types of calculations given a particular waveguide design:
  * solve the electromagnetic modal problem  using the finite element method (FEM).
  * solve the elastic modal problem  using FEM.
  * calculate Brillouin gain coefficients and linewidths for a given triplet of two optical and one elastic mode, and use this to generate gain spectra.

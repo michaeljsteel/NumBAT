@@ -282,13 +282,13 @@ def do_main():
 
     nbapp = numbat.NumBATApp()
 
-    #do_oneincl(nbapp)
+    do_oneincl(nbapp)
     do_twoincl(nbapp)
-    #do_rib(nbapp)
-    #do_slot(nbapp)
-    #do_onion(nbapp)
-    #do_trapezoid(nbapp)
-    #do_pedestal(nbapp)
+    do_rib(nbapp)
+    do_slot(nbapp)
+    do_onion(nbapp)
+    do_trapezoid(nbapp)
+    do_pedestal(nbapp)
 
 
 if __name__=='__main__':

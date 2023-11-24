@@ -5,11 +5,12 @@ from pathlib import Path
 def is_real_number(x):
     # return isinstance(x, float) or isinstance(x, int)
     # return isinstance(x, numbers.Number)
-    try:
-        xx = float(x)
-        return True
-    except Exception:
-        return False
+    return isinstance(x, (int, float))
+    #try:
+    #    xx = float(x)
+    #    return True
+    #except Exception:
+    #    return False
 
 class UserGeometryBase(object):
 
@@ -103,4 +104,5 @@ class UserGeometryBase(object):
 
     def draw_mpl_frame(self, ax):
         '''Add elements to a matplotlib axis to draw outline of the structure'''
+        print('base class drawmplframe')
         pass

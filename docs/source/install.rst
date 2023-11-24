@@ -1,5 +1,7 @@
 .. include:: numbatdefs.txt
 
+.. _chap-install-label:
+
 *******************
 Installing |NUMBAT|
 *******************
@@ -89,12 +91,12 @@ is certainly simpler if you have root or the assistance of your system admin.
 If this is not possible, you can certainly proceed by building and installing all the required libraries into your own tree within your home directory.
 It may be helpful to create a tree like the following so that the relevant paths mirror those of a system install::
 
-  -- <homedir>
-  -- <homedir>/my_sys
-  -- <homedir>/my_sys/usr
-  -- <homedir>/my_sys/usr/lib
-  -- <homedir>/my_sys/usr/include
-  -- <homedir>/my_sys/usr/bin
+   $HOME/
+    |---my_sys/
+         |---usr/
+              |---include/
+              |---lib/
+              |---bin/
 
 
 Installing on MacOS
@@ -253,8 +255,6 @@ It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <ht
     $ cp SS_installed/lib/*.a |NUMBAT|/backend/fortran/Lib/
     $ cp SS_installed/lib/umf4_f77zwrapper64.o |NUMBAT|/backend/fortran/Lib/
 
-
-.. |NUMBAT| Makefile
 
 .. Edit ``|NUMBAT|/backend/fortran/Makefile`` to reflect what compiler you are using and how you installed the libraries. The Makefile has further details.
 

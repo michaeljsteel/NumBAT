@@ -1,10 +1,14 @@
 # User NumBAT mesh implementation file
 
-#import uuid
-#import os
+
+import matplotlib.patches as mplpatches
+
 from usermesh import UserGeometryBase
 
-def _process_one_and_two_incls(params, mats):
+nmtoum = 1.e-3   # template radii are in nm but matplotlib plots are in microns
+
+
+def _process_one_and_two_incls(params):
     nelts = 0
     gmshfile = ''
 
@@ -92,7 +96,7 @@ def _process_one_and_two_incls_subs(msh_template, umb):
 class Circular(UserGeometryBase):
 
     def init_geometry(self):
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params, self._d_materials)
+        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a circular waveguide.'''
         self.set_properties('circular', nelts, True, desc)
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
@@ -105,10 +109,20 @@ class Circular(UserGeometryBase):
 
         return subs
 
+    def draw_mpl_frame(self, ax):
+
+        rad = self.get_param('inc_a_x') * 0.5
+
+        circ = mplpatches.Circle((0, 0), rad*nmtoum, facecolor=None, fill=False, edgecolor='gray',
+                                    linewidth=.75)
+        ax.add_patch(circ)
+
+
+
 class Rectangular(UserGeometryBase):
 
     def init_geometry(self):
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params, self._d_materials)
+        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a rectangular waveguide.'''
         self.set_properties('rectangular', nelts, False, desc)
         self._gmsh_template_filename = gmshfile # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
@@ -121,10 +135,19 @@ class Rectangular(UserGeometryBase):
         return subs
 
 
+    def draw_mpl_frame(self, ax):
+
+        wid = self.get_param('inc_a_x') * nmtoum
+        hgt = self.get_param('inc_a_y') * nmtoum
+
+        ax.add_patch(mplpatches.Rectangle((-wid/2, -hgt/2), wid, hgt,
+                      facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+
 class TwoIncl(UserGeometryBase):
 
     def init_geometry(self):
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params, self._d_materials)
+        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a double inclusion waveguide.'''
         self.set_properties('twoincl', nelts, True, desc)
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
@@ -134,6 +157,33 @@ class TwoIncl(UserGeometryBase):
         subs = _process_one_and_two_incls_subs(self._gmsh_template_filename, self)
 
         return subs
+
+    def draw_mpl_frame(self, ax):
+
+        widl = self.get_param('inc_a_x') * nmtoum
+        hgtl = self.get_param('inc_a_y') * nmtoum
+        widr = self.get_param('inc_b_x') * nmtoum
+        hgtr = self.get_param('inc_b_y') * nmtoum
+        sep  = self.get_param('two_inc_sep') * nmtoum
+        yoff  = self.get_param('yoff') * nmtoum
+
+        shape = self.get_param('inc_shape')
+
+        if shape == 'circular':
+            ax.add_patch(mplpatches.Circle( (-sep/2, 0), widl,
+                facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+            ax.add_patch(mplpatches.Circle( (sep/2, yoff), widr,
+                facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+        else:
+            ax.add_patch(mplpatches.Rectangle( (-sep/2-widl/2, -hgtl/2), widl, hgtl,
+                facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+            ax.add_patch(mplpatches.Rectangle( (sep/2-widr/2, yoff-hgtr/2), widr, hgtr,
+                facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+
 
 
 
@@ -164,6 +214,23 @@ def make_onion_subs(umb):
     return subs
 
 
+def draw_onion_frame(ax, umb):
+
+    layers = ('inc_a_x', 'inc_b_x', 'inc_c_x', 'inc_d_x', 'inc_e_x',
+                                    'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x', 'inc_j_x',
+                                    'inc_k_x', 'inc_l_x', 'inc_m_x', 'inc_n_x', 'inc_o_x')
+
+
+    rad = 0
+    for sl in layers:
+        l = umb.get_param(sl)
+        if l is not None:
+            if sl == 'inc_a_x':
+                rad += l/2  # inc_a_x is diameter
+            else:
+                rad += l
+            ax.add_patch( mplpatches.Circle((0, 0), rad*nmtoum,
+                             facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
 class Onion(UserGeometryBase):
     def init_geometry(self):
@@ -174,26 +241,8 @@ class Onion(UserGeometryBase):
         subs = make_onion_subs(self)
         return subs
 
-    def draw_mpl_frame(self, ax):
-        '''Draws a set of rings corresponding to the radii'''
-        nmtoum = 1.e-3   # template radii are in nm but matplotlib plots are in microns
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
-        layers = ('inc_a_x', 'inc_b_x', 'inc_c_x', 'inc_d_x', 'inc_e_x',
-                                     'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x', 'inc_j_x',
-                                     'inc_k_x', 'inc_l_x', 'inc_m_x', 'inc_n_x', 'inc_o_x')
-
-
-        r = 0
-        for sl in layers:
-            l = self.get_param(sl)
-            if l is not None:
-                if sl == 'inc_a_x':
-                    r += 0.5
-                else:
-                    r+=l
-                circ = mplpatches.Circle((0, 0), r*nmtoum, facecolor=None, fill=False, edgecolor='gray',
-                                     linewidth=.75)
-                ax.add_patch(circ)
 
 
 
@@ -205,6 +254,7 @@ class Onion1(UserGeometryBase):
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
 class Onion2(UserGeometryBase):
     def init_geometry(self):
@@ -214,6 +264,7 @@ class Onion2(UserGeometryBase):
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
 class Onion3(UserGeometryBase):
     def init_geometry(self):
@@ -223,6 +274,8 @@ class Onion3(UserGeometryBase):
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
 
 
@@ -235,6 +288,8 @@ class CircOnion(UserGeometryBase):
         subs = make_onion_subs(self)
         return subs
 
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
+
 class CircOnion1(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a one-layer circular waveguide in a circular domain.'''
@@ -243,6 +298,8 @@ class CircOnion1(UserGeometryBase):
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
 class CircOnion2(UserGeometryBase):
     def init_geometry(self):
@@ -253,6 +310,8 @@ class CircOnion2(UserGeometryBase):
         subs = make_onion_subs(self)
         return subs
 
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
+
 class CircOnion3(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a circular domain.'''
@@ -261,6 +320,8 @@ class CircOnion3(UserGeometryBase):
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
 
 

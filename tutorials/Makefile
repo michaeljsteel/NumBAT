@@ -6,6 +6,8 @@ all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
 
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
 				ftut08 ftut09 ftut11a  ftut12 tut13 tut14
+allfastb: ftut06 ftut07 \
+				ftut08 ftut09 ftut11a  ftut12 tut13 tut14
 
 broken: tut10
 

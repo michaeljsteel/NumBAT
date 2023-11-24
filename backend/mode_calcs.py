@@ -19,13 +19,14 @@
 
 
 import sys
-import os
 import copy
 from math import *
+from pathlib import Path
 import numpy as np
 
 import matplotlib
 
+import numbat
 from reporting import report_and_exit
 from nbtypes import *
 import integration
@@ -100,8 +101,9 @@ class ModePlotHelper(object):
         # modal_gains_MB=None,
         # modal_gains=None):
 
-        if prefix and not os.path.exists("%s-fields" % prefix):
-            os.mkdir("%s-fields" % prefix)
+        pathfields = numbat.NumBATApp().fieldspath()
+
+        if prefix and not Path(pathfields).exists(): Path(pathfields).mkdir()
 
         if isinstance(EM_AC, str):  # aim to get rid of this
             if self.sim.is_AC():
@@ -1257,12 +1259,9 @@ class Simulation(object):
         shift_ksqr = self.n_eff**2 * self.k_0**2
 
         if EM_FEM_debug == 1:
-            if not os.path.exists("Normed"):
-                os.mkdir("Normed")
-            if not os.path.exists("Matrices"):
-                os.mkdir("Matrices")
-            if not os.path.exists("Output"):
-                os.mkdir("Output")
+            if not Path("Normed").exists(): Path("Normed").mkdir()
+            if not Path("Matrices").exists(): Path("Matrices").mkdir()
+            if not Path("Output").exists(): Path("Output").mkdir()
 
         # mesh sizes is at top of mail file    #TODO: would these values be better as part of tstruc?
         self.n_msh_pts, self.n_msh_el = map(
@@ -1584,12 +1583,9 @@ class Simulation(object):
 
         if AC_FEM_debug == 1:
             print('shift_nu', shift_nu)
-            if not os.path.exists("Normed"):
-                os.mkdir("Normed")
-            if not os.path.exists("Output"):
-                os.mkdir("Output")
-            if not os.path.exists("Matrices"):
-                os.mkdir("Matrices")
+            if not Path("Normed").exists(): Path("Normed").mkdir()
+            if not Path("Output").exists(): Path("Output").mkdir()
+            if not Path("Matrices").exists(): Path("Matrices").mkdir()
 
         # Size of Fortran's complex superarray (scales with mesh)
         # int_max, cmplx_max, real_max = NumBAT.array_size(self.n_msh_el, self.n_modes)
