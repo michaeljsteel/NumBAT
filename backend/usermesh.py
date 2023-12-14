@@ -104,4 +104,5 @@ class UserGeometryBase():
 
     def draw_mpl_frame(self, ax):
         '''Add elements to a matplotlib axis to draw outline of the structure'''
-        print('base class drawmplframe')
+        pass
+        # print('base class drawmplframe on ', ax)

@@ -25,6 +25,7 @@ import json
 import re
 
 import numpy as np
+import numpy.linalg
 
 
 # import sys
@@ -108,6 +109,12 @@ class VoigtTensor4(object):
         self.mat[k[0], k[1]] = v
 
     def rotate(self, theta, rotation_axis):
+        '''Rotates the crystal axes an angle theta in radians around the axis defined by
+        the rotation_axis expressed as the 3-tuple (nx, ny, nz).
+
+
+        CHECK ME!!: This is based on NumBAT's orientation being x horizontal, y vertical, and z along the waveguide (out of the page for a right hand set).
+        ''' 
         rmat = _rotate_Voigt_tensor(self.mat[1:, 1:], theta, rotation_axis)
         self.mat[1:, 1:] = rmat
 
@@ -425,8 +432,10 @@ class Material(object):
                 f'Failed to load cubic crystal class in material data file {self.json_file}')
 
     def load_trigonal_crystal(self):
+        # Good source for these rules is the supp info of doi:10.1364/JOSAB.482656 (Gustavo surface paper)
         try:
-            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4), (6, 6)]:
+            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4) ]:
+                           #(6, 6)
                 self.c_tensor.read(i, j)
 
             self.c_tensor[2, 1] = self.c_tensor[1, 2]
@@ -444,8 +453,12 @@ class Material(object):
             self.c_tensor[5, 5] = self.c_tensor[4, 4]
             self.c_tensor[5, 6] = self.c_tensor[1, 4]
             self.c_tensor[6, 5] = self.c_tensor[1, 4]
+            self.c_tensor[6, 6] = (self.c_tensor[1, 1]-self.c_tensor[1,2])/2.0
 
-            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4), (6, 6)]:
+            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), 
+                           (3,1), (3, 3), (4,1), (4, 4) 
+           #                ](6, 6)
+            ]:
                 self.eta_tensor.read(i, j)
 
             self.eta_tensor[2, 1] = self.eta_tensor[1, 2]
@@ -453,16 +466,17 @@ class Material(object):
             self.eta_tensor[2, 3] = self.eta_tensor[1, 3]
             self.eta_tensor[2, 4] = -self.eta_tensor[1, 4]
 
-            self.eta_tensor[3, 1] = self.eta_tensor[1, 3]
-            self.eta_tensor[3, 2] = self.eta_tensor[1, 3]
-            self.eta_tensor[3, 3] = self.eta_tensor[3, 3]
+            #self.eta_tensor[3, 1] = self.eta_tensor[1, 3]
+            self.eta_tensor[3, 2] = self.eta_tensor[3, 1]
+            #self.eta_tensor[3, 3] = self.eta_tensor[3, 3]
 
-            self.eta_tensor[4, 1] = self.eta_tensor[1, 4]
-            self.eta_tensor[4, 2] = -self.eta_tensor[1, 4]
+            #self.eta_tensor[4, 1] = self.eta_tensor[1, 4]
+            self.eta_tensor[4, 2] = -self.eta_tensor[4, 1]
 
             self.eta_tensor[5, 5] = self.eta_tensor[4, 4]
-            self.eta_tensor[5, 6] = self.eta_tensor[1, 4]
+            self.eta_tensor[5, 6] = self.eta_tensor[4, 1]
             self.eta_tensor[6, 5] = self.eta_tensor[1, 4]
+            self.eta_tensor[6, 6] = 0.5*(self.eta_tensor[1, 1]-self.eta_tensor[1, 2])
 
             # TODO: confirm correct symmetry properties for p. Using trigonal = C3v from Powell
             self.p_tensor.read(1, 1)
@@ -596,19 +610,19 @@ def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
     """
 
     if isinstance(rotation_axis, str):
-        if rotation_axis == 'x-axis':
+        if rotation_axis.lower() in ('x', 'x-axis'):
             mat_R = np.array([[1, 0, 0], [0, np.cos(
                 theta), -np.sin(theta)], [0, np.sin(theta), np.cos(theta)]])
-        elif rotation_axis == 'y-axis':
+        elif rotation_axis.lower()  == ('y', 'y-axis'):
             mat_R = np.array([[np.cos(theta), 0, np.sin(theta)], [
                              0, 1, 0], [-np.sin(theta), 0, np.cos(theta)]])
-        elif rotation_axis == 'z-axis':
+        elif rotation_axis.lower()  == ('z', 'z-axis'):
             mat_R = np.array([[np.cos(theta), -np.sin(theta), 0],
                              [np.sin(theta), np.cos(theta), 0], [0, 0, 1]])
     else:
         emsg = f"Can't convert {rotation_axis} to a 3-element unit vector."
         try:
-            if isinstance(rotation_axis, list):  # try to convert to numpy
+            if isinstance(rotation_axis, (tuple,list)):  # try to convert to numpy
                 uvec = np.array(rotation_axis)
             elif isinstance(rotation_axis, np.ndarray):
                 uvec = rotation_axis
@@ -618,11 +632,12 @@ def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
             report_and_exit(emsg)
 
         # uvec is now a numpy array of some length
-        if len(uvec) != 3 or np.abs(uvec) == 0.0:
+        nvec = np.linalg.norm(uvec)
+        if len(uvec) != 3 or nvec == 0.0:
             report_and_exit(emsg)
 
         # normlise u
-        uvec = uvec / np.abs(uvec)
+        uvec = uvec / nvec
         ct = math.cos(theta)
         st = math.sin(theta)
         omct = 1-ct

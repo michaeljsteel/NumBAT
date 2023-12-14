@@ -4,15 +4,20 @@
 Mesh.MshFileVersion = 2.2;
 
 // d = 1; // grating period
-d_in_nm = 8200.0; // total width
-dy_in_nm = 2500.0; // total height
+//d_in_nm = 8200.0; // total width
+//dy_in_nm = 2500.0; // total height
+
+d_in_nm = 100.0; // total width
+dy_in_nm = 50.0; // total height
+
 dy = dy_in_nm/d_in_nm;  // height (fraction or width)
 
 hy2 = -.65*dy; // top of the substrate
 
 top_rib_width = 600.0;
 mid_rib_width = 900.0;
-bottom_rib_width = 3*mid_rib_width;
+// bottom_rib_width = 3*mid_rib_width;
+bottom_rib_width = 1800.0;
 
 rib_height = 500.0;
 slab_thickness = 300.0;
@@ -70,12 +75,13 @@ Line(56) = {21, 23};
 Line(57) = {23, 24};
 Line(59) = {24, 4};
 
-// substrate part of the rib
-Line Loop(1) = {-12, -11, -55, -4, 53, -13};
-Plane Surface(1) = {1};
 
 // elevated part of the rib
-Line Loop(2) = {56, -3, 51, 4};
+Line Loop(1) = {56, -3, 51, 4};
+Plane Surface(1) = {1};
+
+// buried part of the rib
+Line Loop(2) = {-12, -11, -55, -4, 53, -13};
 Plane Surface(2) = {2};
 
 // entire bottom substrate
@@ -96,7 +102,12 @@ Plane Surface(6) = {6};
 
 // surroundings
 Physical Surface(1) = {4, 5, 6};
-// rib
-Physical Surface(2) = {1, 2};
+
+// rib elevated
+Physical Surface(2) = {1};
+
+// rib buried
+Physical Surface(3) = {2};
+
 // substrate
-Physical Surface(3) = {3};
+Physical Surface(4) = {3};

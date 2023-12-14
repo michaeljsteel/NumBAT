@@ -1,0 +1,40 @@
+{
+    "format": "NumBATMaterial-fmt-2.0",
+    "material_name": "LiNbO3_2023_Comsol",  // Name of this file, will be used as identifier
+ "chemical": "LiNbO3",  // Chemical composition
+ "author": "Steel",  // Author of data
+ "date": "2023",  // Year of data publication/creation
+ "institution": "Lviv Polytechnic Nat University",  // Source institution
+ "doi": "dx.doi.org/10.1063/1.3238507",  // doi or, failing that, the http address
+ "Re_n": 2.30,  // Real part of refractive index (n_o) []
+ "_Re_no": 2.30,  // Real part of refractive index (n_e) []
+ "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 4643,  // Density [kg/m3]
+ "crystal_class": "Trigonal",
+ "c_11": 198.83,  // Stiffness tensor component [Pa]
+ "c_12": 54.64e9,  // Stiffness tensor component [Pa]
+ "c_13": 68.23e9,  // Stiffness tensor component [Pa]
+ "c_14": 7.83e9,  // Stiffness tensor component [Pa]
+ "c_33": 235.71e9,  // Stiffness tensor component [Pa]
+ "c_44": 59.86e9,  // Stiffness tensor component [Pa]
+ "_c_66": 72.2e9,  // Stiffness tensor component [Pa]
+ "p_11": -0.021,  // Photoelastic tensor component []
+ "p_12": 0.060,  // Photoelastic tensor component []
+ "p_13": 0.172,  // Photoelastic tensor component []
+ "p_31": 0.141,  // Photoelastic tensor component []
+ "p_33": 0.118,  // Photoelastic tensor component []
+ "p_14": -0.052,  // Photoelastic tensor component []
+ "p_41": -0.109,  // Photoelastic tensor component []
+ "p_44": 0.121,  // Photoelastic tensor component []
+ "eta_11": 0.6547e-3,  // Acoustic loss tensor component [Pa s] taken from Bajak et al 1981, doi.org/10.1121/1.385588
+ "eta_12": 0.2275e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_13": 0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_14":-0.0687e-3,  // Acoustic loss tensor component [Pa s]
+
+
+ "eta_33": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
+
+ "eta_66": 0.2136e-3  // Acoustic loss tensor component [Pa s]
+}

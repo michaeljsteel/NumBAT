@@ -365,12 +365,25 @@ class TrapezoidalRib(UserGeometryBase):
 
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a trapezoidal_rib waveguide.
-        Key parameters are:
 
-        # inc_a_x  - width of the top of the rib
-        # inc_a_y  - height of the top of the rib
-        # slab_a_x - width of the middle of the rib
-        # slab_a_y - height of the buried part of the rib
+        Geometric parameters are:
+
+          # inc_a_x  - width of the top of the rib
+          # inc_a_y  - height of the top of the rib
+          # slab_a_x - width of the middle of the rib
+          # slab_a_y - height of the buried part of the rib
+
+        Materials are:
+          # material_bkg - background
+          # material_a   - rib 
+          # material_b   - substrate
+
+        Grid parameters are:
+          # lc          - grid points arounds boundary as fraction of unitcell_x
+          # lc_refine1  - refined density along upper rib
+          # lc_refine2  - refined density along buried rib
+
+          # Adjust so that the bottom of the emerging rib takes its grid from the buried part
         '''
         self.set_properties('trapezoidal_rib', 4, False, desc)
 
@@ -380,17 +393,19 @@ class TrapezoidalRib(UserGeometryBase):
         #                                 (self.get_param('unitcell_x, self.get_param('inc_a_x,
         #                                  self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [('top_rib_width = 600.0;', "top_rib_width = %f;", self.get_param('inc_a_x'))]
-        subs.append(('mid_rib_width = 900.0;',
-                    "mid_rib_width = %f;", self.get_param('slab_a_x')))
-        subs.append(('rib_height = 500.0;', "rib_height = %f;", self.get_param('inc_a_y')))
-        subs.append(('slab_thickness = 300.0;',
-                    "slab_thickness = %f;", self.get_param('slab_a_y')))
-        subs.append(('lc = 0.020000;', "lc = %f;", self.get_param('lc')))
-        subs.append(('lc_refine_1 = lc/10.0;',
-                    "lc_refine_1 = lc/%f;", self.get_param('lc_refine_1')))
-        subs.append(('lc_refine_2 = lc/5.0;',
-                    "lc_refine_2 = lc/%f;", self.get_param('lc_refine_2')))
+        subs = [    ('d_in_nm = 100.0;', 'd_in_nm = %f;',  self.get_param('unitcell_x'))]
+        subs.append(('dy_in_nm = 50.0;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs.append(('top_rib_width = 600.0;',     'top_rib_width = %f;',    self.get_param('inc_a_x')))
+        subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
+
+        subs.append(('mid_rib_width = 900.0;',     'mid_rib_width = %f;',    self.get_param('slab_a_x')))
+
+        subs.append(('bottom_rib_width = 1800.0;', 'bottom_rib_width = %f;', self.get_param('slab_b_x')))
+        subs.append(('slab_thickness = 300.0;',    'slab_thickness = %f;',   self.get_param('slab_a_y')))
+
+        subs.append(('lc = 0.020000;',         "lc = %f;", self.get_param('lc')))
+        subs.append(('lc_refine_1 = lc/10.0;', "lc_refine_1 = lc/%f;", self.get_param('lc_refine_1')))
+        subs.append(('lc_refine_2 = lc/5.0;',  "lc_refine_2 = lc/%f;", self.get_param('lc_refine_2')))
 
         return subs
 
