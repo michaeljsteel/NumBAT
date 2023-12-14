@@ -34,8 +34,10 @@
  "eta_14":-0.0687e-3,  // Acoustic loss tensor component [Pa s]
 
 
+ "eta_31": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
  "eta_33": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
  "eta_44": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_41": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
 
  "eta_66": 0.2136e-3,  // Acoustic loss tensor component [Pa s]
 
