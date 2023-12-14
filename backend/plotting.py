@@ -58,8 +58,6 @@ def plot_filename(plps, ival, label=None):
     #fullpref = str(Path(numbat.NumBATApp().outdir(), plps['prefix']))
     fullpref = str(numbat.NumBATApp().fieldspath())
 
-
-
     comp = plps['EM_AC'].name
     suf = plps['suffix']
     filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
@@ -73,8 +71,6 @@ def plot_filename(plps, ival, label=None):
         fig_filename = filestart+'.pdf'
     else:
         raise ValueError("pdf_png must be either 'png' or 'pdf'.")
-
-    print('fullpref', fullpref, fig_filename)
 
     return fig_filename
 

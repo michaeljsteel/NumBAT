@@ -649,13 +649,16 @@ class Structure(object):
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''
 
+
+        print('checking mesh')
         nbapp = numbat.NumBATApp()
         gmsh_exe = str(nbapp.path_gmsh())
 
-        gmsh_cmd = gmsh_exe + str(self.msh_location_out) + self.msh_name + '.geo'
+        gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.geo'
+        print(gmsh_cmd)
         os.system(gmsh_cmd)
 
-        gmsh_cmd = gmsh_exe + str(self.msh_location_out) + self.msh_name + '.msh'
+        gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.msh'
         os.system(gmsh_cmd)
 
 
