@@ -28,6 +28,8 @@ If you are itching to get started, jump straight to Chapter 2.
 
    lit_ex
 
+   technical
+
    pythonapi
 
    fem
