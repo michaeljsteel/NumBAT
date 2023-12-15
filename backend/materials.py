@@ -434,73 +434,51 @@ class Material(object):
     def load_trigonal_crystal(self):
         # Good source for these rules is the supp info of doi:10.1364/JOSAB.482656 (Gustavo surface paper)
         try:
-            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4) ]:
-                           #(6, 6)
-                self.c_tensor.read(i, j)
+            for lintens in [self.c_tensor, self.eta_tensor]:
+                for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4) ]:
+                    lintens.read(i, j)
 
-            self.c_tensor[2, 1] = self.c_tensor[1, 2]
-            self.c_tensor[2, 2] = self.c_tensor[1, 1]
-            self.c_tensor[2, 3] = self.c_tensor[1, 3]
-            self.c_tensor[2, 4] = -self.c_tensor[1, 4]
+            lintens[2, 1] = lintens[1, 2]
+            lintens[2, 2] = lintens[1, 1]
+            lintens[2, 3] = lintens[1, 3]
+            lintens[2, 4] = -lintens[1, 4]
 
-            self.c_tensor[3, 1] = self.c_tensor[1, 3]
-            self.c_tensor[3, 2] = self.c_tensor[1, 3]
-            self.c_tensor[3, 3] = self.c_tensor[3, 3]
+            lintens[3, 1] = lintens[1, 3]
+            lintens[3, 2] = lintens[1, 3]
 
-            self.c_tensor[4, 1] = self.c_tensor[1, 4]
-            self.c_tensor[4, 2] = -self.c_tensor[1, 4]
+            lintens[4, 1] = lintens[1, 4]
+            lintens[4, 2] = -lintens[1, 4]
 
-            self.c_tensor[5, 5] = self.c_tensor[4, 4]
-            self.c_tensor[5, 6] = self.c_tensor[1, 4]
-            self.c_tensor[6, 5] = self.c_tensor[1, 4]
-            self.c_tensor[6, 6] = (self.c_tensor[1, 1]-self.c_tensor[1,2])/2.0
+            lintens[5, 5] = lintens[4, 4]
+            lintens[5, 6] = lintens[1, 4]
+            lintens[6, 5] = lintens[1, 4]
+            lintens[6, 6] = (lintens[1, 1]-lintens[1,2])/2.0
 
-            for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), 
-                           (3,1), (3, 3), (4,1), (4, 4) 
-           #                ](6, 6)
-            ]:
-                self.eta_tensor.read(i, j)
 
-            self.eta_tensor[2, 1] = self.eta_tensor[1, 2]
-            self.eta_tensor[2, 2] = self.eta_tensor[1, 1]
-            self.eta_tensor[2, 3] = self.eta_tensor[1, 3]
-            self.eta_tensor[2, 4] = -self.eta_tensor[1, 4]
-
-            #self.eta_tensor[3, 1] = self.eta_tensor[1, 3]
-            self.eta_tensor[3, 2] = self.eta_tensor[3, 1]
-            #self.eta_tensor[3, 3] = self.eta_tensor[3, 3]
-
-            #self.eta_tensor[4, 1] = self.eta_tensor[1, 4]
-            self.eta_tensor[4, 2] = -self.eta_tensor[4, 1]
-
-            self.eta_tensor[5, 5] = self.eta_tensor[4, 4]
-            self.eta_tensor[5, 6] = self.eta_tensor[4, 1]
-            self.eta_tensor[6, 5] = self.eta_tensor[1, 4]
-            self.eta_tensor[6, 6] = 0.5*(self.eta_tensor[1, 1]-self.eta_tensor[1, 2])
-
-            # TODO: confirm correct symmetry properties for p. Using trigonal = C3v from Powell
+            # TODO: confirm correct symmetry properties for p. 
+            # PreviouslyuUsing trigonal = C3v from Powell, now the paper above
             self.p_tensor.read(1, 1)
             self.p_tensor.read(1, 2)
             self.p_tensor.read(1, 3)
             self.p_tensor.read(1, 4)
+            self.p_tensor.read(3, 1)
+            self.p_tensor.read(3, 3)
+            self.p_tensor.read(4, 1)
+            self.p_tensor.read(4, 4)
 
             self.p_tensor[2, 1] = self.p_tensor[1, 2]
             self.p_tensor[2, 2] = self.p_tensor[1, 1]
             self.p_tensor[2, 3] = self.p_tensor[1, 3]
             self.p_tensor[2, 4] = -self.p_tensor[1, 4]
 
-            self.p_tensor.read(3, 1)
             self.p_tensor[3, 2] = self.p_tensor[3, 1]
-            self.p_tensor.read(3, 3)
 
-            self.p_tensor.read(4, 1)
             self.p_tensor[4, 2] = -self.p_tensor[4, 1]
-            self.p_tensor.read(4, 4)
 
-            self.p_tensor[5, 5] = -self.p_tensor[4, 4]
-            self.p_tensor[5, 6] = 2*self.p_tensor[4, 1]
-            self.p_tensor[6, 5] = -self.p_tensor[1, 4]
-            self.p_tensor[6, 6] = self.p_tensor[1, 1] - self.p_tensor[1, 2]
+            self.p_tensor[5, 5] = self.p_tensor[4, 4]
+            self.p_tensor[5, 6] = self.p_tensor[4, 1]
+            self.p_tensor[6, 5] = self.p_tensor[1, 4]
+            self.p_tensor[6, 6] = (self.p_tensor[1, 1] - self.p_tensor[1, 2])/2
 
         except Exception:
             report_and_exit(
