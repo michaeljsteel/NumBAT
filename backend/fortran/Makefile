@@ -101,6 +101,7 @@ PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
 
 
 else ifeq ($(PLAT), "MacOS")
+# MacOS with standard LAPACK, BLAS and ARPACK
 
 ifneq ($(UNAME_S), Darwin)
 $(error 'We do not seem to be building on Mac OS. Check the value of MYPLAT in backend/fortran/Makefile')
@@ -113,7 +114,7 @@ F_COMPILER = $(GCCBIN)/gfortran-$(GCCVER)
 F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
 C_COMP_EXE = $(GCCBIN)/gcc-$(GCCVER)
 
-# standard lapack, blas and arpack
+
 LAPACK_LIB = -L /opt/local/lib -llapack -lblas
 ARPACK_INCL = -I/opt/local/include
 ARPACK_LIB = -L/opt/local/lib -larpack $(LAPACK_LIB)
@@ -126,7 +127,6 @@ MATHINC = /opt/local/include $(MKL_INCL) $(ARPACK_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB) -L /opt/local/lib/gcc13
 #GENLIB = -lrt
 
-#DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
 
 PYVER = 3.12
 PYNAME = python$(PYVER)
@@ -170,17 +170,9 @@ SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 
-
-#DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
-
-
-#Flags come in a Distribution object passed through as attributes
-#F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -ffixed-form -fno-second-underscore -O3 -cpp
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS)
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
-#F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops
-#CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv
 
 build/%.o : src/%.f
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
@@ -194,10 +186,7 @@ build/%.o : build/%.f
 build/%.o : build/%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
-#NumBAT.so: NumBAT.pyf $(SRCS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)
-#	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
-#	$(DEFS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)   \
-#	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB)
+
 
 F2PYLINK=Ccomp
 #F2PYLINK=Fcomp
@@ -209,8 +198,6 @@ else
 FMETHOD=$(NumBAT_MOD)
 CMETHOD=null
 endif
-
-
 
 check:
 	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
@@ -227,13 +214,6 @@ $(FMETHOD).pyf: $(SRCS)
 	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
-#$(FMETHOD).so: NumBAT.pyf $(OBJS)  $(UMFPACK_WRAPPER)
-#	echo "Old compilation method"
-#	f2py3 -c NumBAT.pyf $(OBJS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
-#	$(DEFS)  $(UMFPACK_WRAPPER) \
-##	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB) --build-dir tbuild
-
-
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
@@ -248,8 +228,7 @@ $(CMETHOD).so: $(CMETHOD).pyf $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
 		-fPIC -o $(UMFPACK_WRAPPER)
-test:
-	echo $(NUMPYDIR)
+
 $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
@@ -265,3 +244,27 @@ clean:
 	-rm -f $(SS_WRAP)/*.o
 	-rm -f build/*.o build/*.f build/*.c
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
+
+
+
+#TRASH SECTION
+
+
+#NumBAT.so: NumBAT.pyf $(SRCS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)
+#	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+#	$(DEFS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)   \
+#	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB)
+
+
+#$(FMETHOD).so: NumBAT.pyf $(OBJS)  $(UMFPACK_WRAPPER)
+#	echo "Old compilation method"
+#	f2py3 -c NumBAT.pyf $(OBJS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+#	$(DEFS)  $(UMFPACK_WRAPPER) \
+##	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB) --build-dir tbuild
+
+
+#F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops
+#CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv
+
+
+#DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
