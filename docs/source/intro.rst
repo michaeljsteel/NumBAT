@@ -122,13 +122,13 @@ where the electric field has the form for modal propagation along :math:`z`:
 
 .. math::
 
-   \vec E = a \vec e(x,y) e^{i (kz-\omega t) } + a^* \vec e(x,y) e^{-i (kz-\omega t) } ,
+   \vec E(x,y,z,t) = a(z) \vec e(x,y) e^{i (kz-\omega t) } + a^*(z) \vec e(x,y) e^{-i (kz-\omega t) } ,
 
 and the magnetic  field is given by
 
 .. math::
 
-   \vec b =  \frac{1}{i \omega} \nabla \times \vec E.
+   \vec B =  \frac{1}{i \omega} \nabla \times \vec E.
 
 
 Elastic  modal problem
@@ -148,7 +148,7 @@ The displacement has the modal propagation form
 
 .. math::
 
-   \vec U = a \, \vec u(x,y) e^{i (qz-\Omega t) } + a^* \, \vec u(x,y) e^{-i (qz-\Omega t) } ,
+   \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y) e^{-i (qz-\Omega t) } ,
 
 
 For details on how these problems are framed as finite element problems, we refer to `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
@@ -160,13 +160,24 @@ For propagation in a given mode :math:`\vec e_n` or :math:`\vec U_n`, the optica
 and elastic (:math:`a`) energy fluxes in Watts and linear energy densities in (J/m) are given by the
 following expressions
 
-
 .. math::
 
    P_n^{(o)}        & = 2 \mathrm{Re} \int \mathrm{d}^2 r \, \hat{z} \cdot (\vec e_n^*(x,y) \times \vec h_n(x,y)), \\
    {\cal E}_n^{(o)} & = 2 \epsilon_0 \int \mathrm{d}^2 r \, \epsilon_r(x,y) |\vec e_n(x,y)|^2 \\
    P_n^{(a)} & =  \mathrm{Re} \int \mathrm{d}^2 r \, (-2i\Omega) \sum_{jkl} c_{zjkl}(x,y) u^*_{mj}(x,y) \partial_k u_{ml}(x,y) \\
-   {\cal E}_n^{(a)} & = 2 \Omega^2 \int_A \mathrm{d}^2 r \, \rho(x,y) |\vec u_n(x,y)|^2
+   {\cal E}_n^{(a)} & = 2 \Omega^2 \int_A \mathrm{d}^2 r \, \rho(x,y) |\vec u_n(x,y)|^2.
+
+For fields with slowly-varying optical and elastic amplitudes :math:`a_m(z)` and :math:`b_m(z)`, the total
+carried powers are
+
+.. math::
+   P^{(o)}(z)  & = \sum_m |a_n(z)|^2 P_n^{(o)} \\
+   P^{(a)}(z)  & = \sum_m |b_n(z)|^2 P_n^{(a)}.
+
+Note that in this convention, the amplitude functions :math:`a_m(z)` and :math:`b_m(z)`
+are dimensionless and the units of the fields live in the modal functions
+:math:`\vec e_n, \vec h_n, \vec U_n`.
+
 
 SBS gain calculation  modal problem
 -----------------------------------------
@@ -214,9 +225,10 @@ With the above conventions, the dynamical equations for the slowly-varying ampli
 
 ..  math::
 
-   i \frac{\partial }{\partial t} a^{(p)} + i v_g^{p} \frac{\partial }{\partial t} a^{(p)} & = Q^{\mathrm{tot}} a^s b     \\
-   i \frac{\partial }{\partial t} a^{(s)} - i v_g^{s} \frac{\partial }{\partial t} a^{(s)} & =   Q^{\mathrm{tot}} a^p b^*   \\
-   i \frac{\partial }{\partial t} b  + i v_g^{a} \frac{\partial }{\partial t} b & =  Q^{\mathrm{tot}} a^p a^{s*}
+   i \frac{1}{v_g^{p}} \frac{\partial }{\partial z} a_p + i  \frac{\partial }{\partial t} a_p & = Q^{\mathrm{tot}} a_s b     \\
+   i \frac{1}{v_g^{s}} \frac{\partial }{\partial z} a_s - i   \frac{\partial }{\partial t} a_s & =   Q^{\mathrm{tot}} a_p b^*   \\
+   i \frac{1}{v_g^{a}} \frac{\partial }{\partial z} b  + i   \frac{\partial }{\partial t} b
+    - \alpha_s b & =  Q^{\mathrm{tot}} a_p a_s^*
 
 
 
