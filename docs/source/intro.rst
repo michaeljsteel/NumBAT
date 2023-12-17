@@ -162,17 +162,17 @@ following expressions
 
 .. math::
 
-   P_n^{(o)}        & = 2 \mathrm{Re} \int \mathrm{d}^2 r \, \hat{z} \cdot (\vec e_n^*(x,y) \times \vec h_n(x,y)), \\
+   {\cal P}_n^{(o)}        & = 2 \mathrm{Re} \int \mathrm{d}^2 r \, \hat{z} \cdot (\vec e_n^*(x,y) \times \vec h_n(x,y)), \\
    {\cal E}_n^{(o)} & = 2 \epsilon_0 \int \mathrm{d}^2 r \, \epsilon_r(x,y) |\vec e_n(x,y)|^2 \\
-   P_n^{(a)} & =  \mathrm{Re} \int \mathrm{d}^2 r \, (-2i\Omega) \sum_{jkl} c_{zjkl}(x,y) u^*_{mj}(x,y) \partial_k u_{ml}(x,y) \\
+   {\cal P}_n^{(a)} & =  \mathrm{Re} \int \mathrm{d}^2 r \, (-2i\Omega) \sum_{jkl} c_{zjkl}(x,y) u^*_{mj}(x,y) \partial_k u_{ml}(x,y) \\
    {\cal E}_n^{(a)} & = 2 \Omega^2 \int_A \mathrm{d}^2 r \, \rho(x,y) |\vec u_n(x,y)|^2.
 
 For fields with slowly-varying optical and elastic amplitudes :math:`a_m(z)` and :math:`b_m(z)`, the total
 carried powers are
 
 .. math::
-   P^{(o)}(z)  & = \sum_m |a_n(z)|^2 P_n^{(o)} \\
-   P^{(a)}(z)  & = \sum_m |b_n(z)|^2 P_n^{(a)}.
+   P^{(o)}(z)  & = \sum_m |a_n(z)|^2 {\cal P}_n^{(o)} \\
+   P^{(a)}(z)  & = \sum_m |b_n(z)|^2 {\cal P}_n^{(a)}.
 
 Note that in this convention, the amplitude functions :math:`a_m(z)` and :math:`b_m(z)`
 are dimensionless and the units of the fields live in the modal functions
@@ -186,9 +186,9 @@ The photoelastic and moving boundary couplings in J/m are given by
 
 .. math::
 
-   Q^{\mathrm{PE}} & = - \epsilon \int_A  \mathrm{d}^2 r \, \sum_{ijkl} \epsilon_r^2  \,
+   Q^{\mathrm{(PE)}} & = - \epsilon \int_A  \mathrm{d}^2 r \, \sum_{ijkl} \epsilon_r^2  \,
    e_i^{(s)*}  \, e_j^{(p)}  \, p_{ijkl}   \, \partial_k u_l^* \\
-   Q^{\mathrm{MB}} & = \int_{\cal C}  \mathrm{d} {\vec r} \, (\vec u^* \cdot \hat{n})
+   Q^{\mathrm{(MB))}} & = \int_{\cal C}  \mathrm{d} {\vec r} \, (\vec u^* \cdot \hat{n})
    \times \\
    & ~~~~
    \left [
@@ -204,7 +204,7 @@ Then the peak SBS gain :math:`\Gamma` is given by
 .. math::
    \Gamma = \frac{2\omega \Omega}{\alpha_t} \frac{|Q_\mathrm{tot}|^2}{P^{(s)}P^{(p)}{\cal E}^{(a)}},
 
-where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(PE)} + Q^{(MB)}`.
+where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`.
 
 Here :math:`\alpha_t` is the temporal elastic loss coefficent in :math:`\mathrm{s}^{-1}`.
 It is related to the spatial attenuation coefficient by
@@ -225,10 +225,10 @@ With the above conventions, the dynamical equations for the slowly-varying ampli
 
 ..  math::
 
-   i \frac{1}{v_g^{p}} \frac{\partial }{\partial z} a_p + i  \frac{\partial }{\partial t} a_p & = Q^{\mathrm{tot}} a_s b     \\
-   i \frac{1}{v_g^{s}} \frac{\partial }{\partial z} a_s - i   \frac{\partial }{\partial t} a_s & =   Q^{\mathrm{tot}} a_p b^*   \\
-   i \frac{1}{v_g^{a}} \frac{\partial }{\partial z} b  + i   \frac{\partial }{\partial t} b
-    - \alpha_s b & =  Q^{\mathrm{tot}} a_p a_s^*
+    \frac{1}{v_g^{p}} \frac{\partial }{\partial t} a_p +   \frac{\partial }{\partial z} a_p & = -i \frac{\omega_p Q_{\mathrm{tot}}}{{\cal P}_o} a_s b     \\
+    \frac{1}{v_g^{s}} \frac{\partial }{\partial t} a_s -    \frac{\partial }{\partial z} a_s & = i  \frac{\omega_s Q_{\mathrm{tot}}^*}{{\cal P}_o} a_p b^*   \\
+    \frac{1}{v_g^{a}} \frac{\partial }{\partial t} b  +    \frac{\partial }{\partial z} b
+    + \frac{\alpha_s}{2} b & =  -i  \frac{\Omega Q_{\mathrm{tot} }^*}{{\cal P}_a}  a_p a_s^*
 
 
 
