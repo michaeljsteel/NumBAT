@@ -110,19 +110,127 @@ Here we specify the precise mathematical problems been solved.
 For further details, see  the |NUMBAT| paper in the Journal of Lightwave Technolgoy at
 at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
-1. Electromagnetic modal problem
+Electromagnetic modal problem
+----------------------------------
+The electromagnetic wave problem is defined by the vector wave equation
+
+.. math::
+
+   - \nabla \times (\nabla \times {\vec E}) + \omega^2 \epsilon_0 \, \epsilon_r(x,y) \vec E =0,
+
+where the electric field has the form for modal propagation along :math:`z`:
+
+.. math::
+
+   \vec E = a \vec e(x,y) e^{i (kz-\omega t) } + a^* \vec e(x,y) e^{-i (kz-\omega t) } ,
+
+and the magnetic  field is given by
+
+.. math::
+
+   \vec b =  \frac{1}{i \omega} \nabla \times \vec E.
+
+
+Elastic  modal problem
 ----------------------------------
 
+The elastic modal problem is defined by the wave equation
 
-WRITE ME
+.. math::
 
-2. Elastic  modal problem
-----------------------------------
+   \nabla \cdot \bar{T} + \omega^2 \rho(x,y) \vec U = 0,
 
-WRITE ME
+where :math:`\vec u` is the elastic displacement and :math:`\bar{T}=\mathbf{c}(x,y) \bar{S}` is the stress tensor,
+defined in terms of the stiffness :math:`\mathbf{c}` and the strain tensor
+:math:`\bar{S}=S_{ij} = \frac{1}{2}(\frac{\partial U_i}{\partial r_j} + \frac{\partial U_j}{\partial r_i})`.
 
-3. SBS gain calculation  modal problem
+The displacement has the modal propagation form
+
+.. math::
+
+   \vec U = a \, \vec u(x,y) e^{i (qz-\Omega t) } + a^* \, \vec u(x,y) e^{-i (qz-\Omega t) } ,
+
+
+For details on how these problems are framed as finite element problems, we refer to `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
+
+Modal properties
+-----------------------
+
+For propagation in a given mode :math:`\vec e_n` or :math:`\vec U_n`, the optical (:math:`o`)
+and elastic (:math:`a`) energy fluxes in Watts and linear energy densities in (J/m) are given by the
+following expressions
+
+
+.. math::
+
+   P_n^{(o)}        & = 2 \mathrm{Re} \int \mathrm{d}^2 r \, \hat{z} \cdot (\vec e_n^*(x,y) \times \vec h_n(x,y)), \\
+   {\cal E}_n^{(o)} & = 2 \epsilon_0 \int \mathrm{d}^2 r \, \epsilon_r(x,y) |\vec e_n(x,y)|^2 \\
+   P_n^{(a)} & =  \mathrm{Re} \int \mathrm{d}^2 r \, (-2i\Omega) \sum_{jkl} c_{zjkl}(x,y) u^*_{mj}(x,y) \partial_k u_{ml}(x,y) \\
+   {\cal E}_n^{(a)} & = 2 \Omega^2 \int_A \mathrm{d}^2 r \, \rho(x,y) |\vec u_n(x,y)|^2
+
+SBS gain calculation  modal problem
 -----------------------------------------
 
-WRITE ME
+The photoelastic and moving boundary couplings in J/m are given by
+
+.. math::
+
+   Q^{\mathrm{PE}} & = - \epsilon \int_A  \mathrm{d}^2 r \, \sum_{ijkl} \epsilon_r^2  \,
+   e_i^{(s)*}  \, e_j^{(p)}  \, p_{ijkl}   \, \partial_k u_l^* \\
+   Q^{\mathrm{MB}} & = \int_{\cal C}  \mathrm{d} {\vec r} \, (\vec u^* \cdot \hat{n})
+   \times \\
+   & ~~~~
+   \left [
+   (\epsilon_a - \epsilon_b) \epsilon_0 (\hat{n} \times \vec u^{(s)})^* \cdot (\hat{n} \times \vec e^{(p)})
+   -
+   (\epsilon_a^{-1} - \epsilon_b^{-1}) \epsilon_0^{-1} (\hat{n} \cdot \vec d^{(s)})^*
+          \cdot (\hat{n} \cdot \vec d^{(p)})
+   \right]
+
+
+Then the peak SBS gain :math:`\Gamma` is given by
+
+.. math::
+   \Gamma = \frac{2\omega \Omega}{\alpha_t} \frac{|Q_\mathrm{tot}|^2}{P^{(s)}P^{(p)}{\cal E}^{(a)}},
+
+where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(PE)} + Q^{(MB)}`.
+
+Here :math:`\alpha_t` is the temporal elastic loss coefficent in :math:`\mathrm{s}^{-1}`.
+It is related to the spatial attenuation coefficient by
+:math:`\alpha_s = \alpha_t /v_{\mathrm{p}}^{(\mathrm{a})}` with :math:`v_{\mathrm{p}}^{(\mathrm{a})}` being the elastic phase velocity.
+
+In a backward SBS problem, where there is genuine gain in Stokes optical field propagating in the negative
+:math:`z` direction, its power evolves as
+
+.. math::
+
+   P^{\mathrm{(s)}}(z) = P_\mathrm{in}^{\mathrm{(s)}} e^{-\Gamma z}.
+
+
+SBS equations of motion
+-----------------------------------------
+
+With the above conventions, the dynamical equations for the slowly-varying amplitudes are
+
+..  math::
+
+   i \frac{\partial }{\partial t} a^{(p)} + i v_g^{p} \frac{\partial }{\partial t} a^{(p)} & = Q^{\mathrm{tot}} a^s b     \\
+   i \frac{\partial }{\partial t} a^{(s)} - i v_g^{s} \frac{\partial }{\partial t} a^{(s)} & =   Q^{\mathrm{tot}} a^p b^*   \\
+   i \frac{\partial }{\partial t} b  + i v_g^{a} \frac{\partial }{\partial t} b & =  Q^{\mathrm{tot}} a^p a^{s*}
+
+
+
+Here we've chosen the group velocities to be positive and included the propagation direction explicitly.
+
+
+Connect these to output quantities from code
+-------------------------------------------------
+
+
+Equivalent forms of equations
+-----------------------------------
+
+TODO: show forms without the normalisation energies and with cubic style effective area.
+
+Compare to some fiber literature and the hydrodynamic reprn.
 
