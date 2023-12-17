@@ -24,6 +24,8 @@ endif
 UNAME_S := $(shell uname -s)
 
 ifeq ($(PLAT), "linux_vanilla")
+# Uses BLAS and LAPACK from generic GNU-Linux
+
 
 ifneq ($(UNAME_S), Linux)
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
@@ -34,26 +36,29 @@ F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
 
-# BLAS and LAPACK from generic GNU-Linux
-#
-ARPACK_INCL = -I/usr/local/include
-ARPACK_LIB = -L/usr/local/lib -larpack
+## Check from here until EndDefs
+ARPACK_INCL = -I /usr/local/include
+ARPACK_LIB  = -L /usr/local/lib -larpack
+
+MKLROOT = /opt/intel/oneapi/mkl/latest
 
 UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
+
+PYVERMAJ=3
+PYVERMAJMIN=3.11
+PYROOT = /usr/lib/python$(PYVERMAJ)
+PYINCCORE = /usr/include/python$(PYVERMAJMIN)
+## EndDefs
+
+
 
 MATHINC = $(ARPACK_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB -llapack -lblas
 GENLIB = -lrt
 
-PYVERMAJ=3                                         ## Check me
-PYVERMAJMIN=3.11                                   ## Check me
-PYROOT = /usr/lib/python$(PYVERMAJ)                ## Check me
-PYINCCORE = -I /usr/include/python$(PYVERMAJMIN)   ## Check me
-
 NUMPYDIR = $(PYROOT)/dist-packages/numpy
 PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
-
 
 else ifeq ($(PLAT), "linux_inteloneapi")
 # Uses BLAS and LAPACK from free Intel OneApi MKL library
