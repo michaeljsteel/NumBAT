@@ -1,5 +1,11 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
+NumBAT_MOD=NumBAT
+
+all: $(NumBAT_MOD).so
+
+## Choose your platform
+
 MYPLAT="linux_inteloneapi"
 #MYPLAT="linux_vanilla"
 #MYPLAT="MacOS"
@@ -28,8 +34,6 @@ F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
 
-NUMPYDIR = /usr/lib/python3/dist-packages/numpy
-
 # BLAS and LAPACK from generic GNU-Linux
 #
 ARPACK_INCL = -I/usr/local/include
@@ -41,10 +45,18 @@ UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
 MATHINC = $(ARPACK_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB -llapack -lblas
 GENLIB = -lrt
-PYVER=3.11
-PYINC = -I /usr/include/python$(PYVER) -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+
+PYVERMAJ=3                                         ## Check me
+PYVERMAJMIN=3.11                                   ## Check me
+PYROOT = /usr/lib/python$(PYVERMAJ)                ## Check me
+PYINCCORE = -I /usr/include/python$(PYVERMAJMIN)   ## Check me
+
+NUMPYDIR = $(PYROOT)/dist-packages/numpy
+PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
+
 
 else ifeq ($(PLAT), "linux_inteloneapi")
+# Uses BLAS and LAPACK from free Intel OneApi MKL library
 
 ifneq ($(UNAME_S), Linux)
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
@@ -55,24 +67,33 @@ F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
 
-NUMPYDIR = /usr/lib/python3/dist-packages/numpy
+## Check from here until EndDefs
+ARPACK_INCL = -I /usr/local/include
+ARPACK_LIB  = -L /usr/local/lib -larpack
 
-ARPACK_INCL = -I/usr/local/include
-ARPACK_LIB = -L/usr/local/lib -larpack
-
-# BLAS and LAPACK from free Intel OneApi MKL library
 MKLROOT = /opt/intel/oneapi/mkl/latest
-MKL_INCL = -I$(MKLROOT)/include
-MKL_LIB = -L$(MKLROOT)/lib/intel64 -lmkl_rt
 
 UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
+
+PYVERMAJ=3
+PYVERMAJMIN=3.11
+PYROOT = /usr/lib/python$(PYVERMAJ)
+PYINCCORE = /usr/include/python$(PYVERMAJMIN)
+## EndDefs
+
+
+
+MKL_INCL = -I $(MKLROOT)/include
+MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
+
 MATHINC = $(ARPACK_INCL) $(MKL_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 GENLIB = -lrt
 
-PYVER=3.11
-PYINC = -I /usr/include/python$(PYVER) -I /usr/lib/python3/dist-packages/numpy/f2py/src/
+NUMPYDIR = $(PYROOT)/dist-packages/numpy
+PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
+
 
 else ifeq ($(PLAT), "MacOS")
 
@@ -173,8 +194,6 @@ build/%.o : build/%.c
 #	$(DEFS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)   \
 #	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB)
 
-NumBAT_MOD=NumBAT
-
 F2PYLINK=Ccomp
 #F2PYLINK=Fcomp
 
@@ -186,7 +205,7 @@ FMETHOD=$(NumBAT_MOD)
 CMETHOD=null
 endif
 
-all: $(NumBAT_MOD).so
+
 
 check:
 	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
@@ -224,7 +243,8 @@ $(CMETHOD).so: $(CMETHOD).pyf $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
 		-fPIC -o $(UMFPACK_WRAPPER)
-
+test:
+	echo $(NUMPYDIR)
 $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
@@ -236,11 +256,7 @@ $(CMETHOD).pyf: $(SRCS)
 
 
 
-#purge:
-#	-rm $(NumBAT_MOD).so $(NumBAT_MOD).*.so
-
 clean:
 	-rm -f $(SS_WRAP)/*.o
-	-rm -rf tbuild/*
 	-rm -f build/*.o build/*.f build/*.c
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
