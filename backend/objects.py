@@ -21,6 +21,7 @@
 import os
 import subprocess
 import copy
+import traceback
 
 
 import tempfile
@@ -80,11 +81,14 @@ def _load_waveguide_templates(p_msh_dir, p_msh_index):
             reporting.report_and_exit(f'Missing waveguide template implementation file: {str(mshpy)} named in str({p_msh_index}).'
                             + f'\nFile was expected in directory {str(p_msh_dir)}')
 
-        spec = importlib.util.spec_from_file_location(mshnm, pth_mod)
-        py_mod = spec.loader.load_module()
-
+        spec = importlib.util.spec_from_file_location(mshnm, pth_mod)  # TODO: is mshnm the right name for this?
+        try:
+            py_mod = spec.loader.load_module()
+        except Exception as ex:
+            reporting.report_and_exit(f"Python couldn't load the user module '{str(mshpy)}'."+
+                                      "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+
+                                      f'\n\n\n The full traceback was {traceback.format_exc()}')
         if not hasattr(py_mod, mshclsnm):
-            #raise Exception
             reporting.report_and_exit(f"Can't find waveguide template class {mshclsnm} in implementation file: {mshpy}")
         mshcls = getattr(py_mod, mshclsnm)
 
