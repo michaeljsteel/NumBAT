@@ -7,7 +7,7 @@ from usermesh import UserGeometryBase
 class MyGuide(UserGeometryBase):  
 
     # Set up any needed adjustable dimensions 
-    def init_geometry(self): 
+    def init_geometry(self):
         desc = '''An example NumBAT geometry template for a user defined waveguide.  '''
 
 
