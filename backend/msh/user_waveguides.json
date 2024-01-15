@@ -2,10 +2,24 @@
     "wguides":
     [
         {
-            "wg_impl": "example_guides.py",
+            "wg_impl": "example_userguides.py",
             "wg_class": "MyGuide",
             "inc_shape": "myguide",
             "active": 1
+        },
+
+        {
+            "wg_impl": "example_userguides.py",
+            "wg_class": "MyGuideB",
+            "inc_shape": "myguideB",
+            "active": 0
+        },
+
+        {
+            "wg_impl": "example_userguides.py",
+            "wg_class": "MyGuideC",
+            "inc_shape": "myguideC",
+            "active": 0
         }
 
     ]
