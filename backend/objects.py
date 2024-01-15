@@ -63,8 +63,7 @@ def _load_waveguide_templates(p_msh_dir, p_msh_index):
         with open(p_msh_index) as fin:
             msh_index = json.load(fin)['wguides']
     except Exception as ex:
-        raise Exception(
-            'JSON parse error in reading user mesh index file' + str(ex)) from ex
+        raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
 
     for msh in msh_index:
         if not msh.get('active', 1):  # this mesh is turned off for now
@@ -77,15 +76,16 @@ def _load_waveguide_templates(p_msh_dir, p_msh_index):
         pth_mod = Path(p_msh_dir, mshpy)
 
         if not pth_mod.exists():
-            raise Exception(
-                f'Missing user template implementation file: {str(pth_mod)}')
+        #    raise Exception
+            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(mshpy)} named in str({p_msh_index}).'
+                            + f'\nFile was expected in directory {str(p_msh_dir)}')
 
         spec = importlib.util.spec_from_file_location(mshnm, pth_mod)
         py_mod = spec.loader.load_module()
 
         if not hasattr(py_mod, mshclsnm):
-            raise Exception(
-                f"Can't find user template class {mshclsnm} in implementation file: {mshpy}")
+            #raise Exception
+            reporting.report_and_exit(f"Can't find waveguide template class {mshclsnm} in implementation file: {mshpy}")
         mshcls = getattr(py_mod, mshclsnm)
 
         msh['mesh_cls'] = mshcls
@@ -218,8 +218,11 @@ class Structure(object):
                 f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
         else:
             cls._user_mesh_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
-
-        if  pmsh_index_user.exists():
+        
+        if not pmsh_index_user.exists():
+            reporting.register_warning(
+                f"Couldn't find user waveguide template index file: {pmsh_index_user}")
+        else:
             user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
             cls._user_mesh_templates.extend(user_wg_templates)
 
