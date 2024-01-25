@@ -224,6 +224,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
 
 
     num_cores = os.cpu_count()
+    num_cores = 1
     launch_worker_threads_and_wait(num_cores, accalc_caller, q_result, q_work, q_work_plot)
 
     #Collect all the data back into one matrix
