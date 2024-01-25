@@ -25,7 +25,7 @@ py = 5;
 p_w = px/d_in_nm;
 p_h = py/d_in_nm;
 
-lc = 0; // background and unitcell edge
+lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 

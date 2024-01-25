@@ -1,47 +1,9 @@
-
-c
-ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-c
-      subroutine type_arete(i, i1, i2, ne_d1, nu_d1, typ_el_d1)
-c
-      implicit none
-      integer i, i1, i2, ne_d1
-      integer nu_d1(3,ne_d1), typ_el_d1(ne_d1)
-      integer j, k, k1, k2
-c
-      i = 0
-      do j=1,ne_d1
-        k = typ_el_d1(j)
-        k1 = nu_d1(1,j)
-        k2 = nu_d1(2,j)
-        if(k1 .eq. i1 .and. k2 .eq. i2) then
-          i = k
-          return
-        elseif(k1 .eq. i2 .and. k2 .eq. i1) then
-          i = k
-          return
-        endif
-      enddo
-c      print*, '?? type_arete: Resultat negatif'
-c      print*, 'i1, i2 = ', i1, i2
-c      stop
-c
-      end
- 
-
-
- 
-c###############################################
- 
-
-
- 
-      subroutine renumerote(n_pts, n_elts, v_nd_imat, v_elt_nodes, 
-     *     vx, vy, errco, emsg)
+      subroutine renumber_nodes(n_pts, n_gmsh_tri, v_nd_iphyscurve, 
+     * v_gmsh_tri_nodes, vx, vy, errco, emsg)
  
       implicit none
-      integer n_elts, n_pts
-      integer v_elt_nodes(6,n_elts), v_nd_imat(n_pts)
+      integer n_gmsh_tri, n_pts
+      integer v_gmsh_tri_nodes(6,n_gmsh_tri), v_nd_iphyscurve(n_pts)
       double precision vx(n_pts), vy(n_pts)
 
       integer errco
@@ -49,17 +11,18 @@ c###############################################
       character emsg*1024
 
 c
-      integer i, j, k, i1, ip(2,3)
+      integer i, j, nd, i1, ip(2,3)
       integer long_adj
 c      xadj(n_pts+1),
-      integer n_pts_max, long_adj_max
-      parameter(n_pts_max=250000)
-      parameter (long_adj_max=2500000 )
-      integer visite(n_pts_max), lb(n_pts_max)
+      integer, parameter :: n_pts_max=250000
+      integer, parameter :: long_adj_max=2500000 
+
+      integer visited(n_pts_max)
+      integer neighbours(n_pts_max)       ! how many nodes have a connection to this one
       integer xadj(n_pts_max+1), adjncy(long_adj_max)
-      integer nut(6)
-      character file_ui*100
-      common/imp_file/file_ui
+      integer t_nodes(6)
+!      character file_ui*100
+!      common/imp_file/file_ui
  
 c ip(1,i) = i+1 MOD 3
 c ip(2,i) = i+2 MOD 3
@@ -72,49 +35,55 @@ c ip(2,i) = i+2 MOD 3
       ip(2,2) = 1
       ip(2,3) = 2
 
-c      From earlier tests, this should never happen
-      if(n_pts_max .lt. n_pts) then
-        write(emsg,*) 'Renumerote (in conv_gmsh.f): ',
-     *    ' n_pts_max < n_pts ', n_pts_max, n_pts
-        errco = -10
-        return 
-      endif
+! c      From earlier tests, this should never happen
+!       if(n_pts_max .lt. n_pts) then
+!         write(emsg,*) 'Renumerote (in conv_gmsh.f): ',
+!      *    ' n_pts_max < n_pts ', n_pts_max, n_pts
+!         errco = -10
+!         return 
+!       endif
  
       do i = 1,n_pts
-        visite(i) = 0
-        lb(i)=0
+        visited(i) = 0
+        neighbours(i)=0
       enddo
  
-      do j = 1,n_elts   ! for all elements (of 6 node type)
+      ! Find the number of associations each triangle node has
+
+      do j = 1,n_gmsh_tri     ! for all triangle (6 node) elements 
  
         do i=1,6              ! copy the 6 nodes for this element
-          nut(i) = v_elt_nodes(i,j)
-        enddo
-
-        do i=1,6               ! accumulate the number nodes connected to k in lb(k) ?
-          k = nut(i)
-          lb(k) = lb(k) + 6 - 1
+          t_nodes(i) = v_gmsh_tri_nodes(i,j)
+          nd = t_nodes(i)
+          neighbours(nd) = neighbours(nd) + 6 - 1    ! account for the 5 other nodes of this element
         enddo
 
         do i=1,3
-          i1 = nut(i+3)
-          if(visite(i1) .eq. 0) then  !first time visiting this node
-            visite(i1) = 1
-C           ! les points sur larete i ont deja ete compte
-          else  
-            k = nut(i)
-            lb(k) = lb(k) - 2
-            k = nut(ip(1,i))
-            lb(k) = lb(k) - 2
-            k = nut(i+3)
-            lb(k) = lb(k) - 2
+          i1 = t_nodes(i+3)            ! consider the edge nodes
+          if(visited(i1) .eq. 0) then  !first time visiting this edge node
+            visited(i1) = 1
+          else     
+            ! So the points on edge i have already been counted, and must be un-double counted
+            ! The three points on the edge have already met their two neighbours on this edge, so we subtract 2.
+            ! Nodes in order clockwise around the triangle are 1(v) 4(e) 2(v) 5(e) 3(v) 6(e) 
+            nd = t_nodes(i)         ! the first vertex
+            neighbours(nd) = neighbours(nd) - 2
+            nd = t_nodes(ip(1,i))   ! the second vertex, wrapping back to 1 if it is vertex 3
+            neighbours(nd) = neighbours(nd) - 2
+            nd = t_nodes(i+3)       ! the edge
+            neighbours(nd) = neighbours(nd) - 2
           endif
         enddo
       enddo
+
+      do i = 1,n_pts
+            
+            write(*,*) 'neighbours', i, neighbours(i)
+          enddo
 c
       xadj(1) = 1
       do i = 1,n_pts
-        xadj(i+1) = xadj(i) + lb(i)
+        xadj(i+1) = xadj(i) + neighbours(i)
       enddo
       long_adj = xadj(n_pts+1)
 c      print*, 'renumerote: long_adj = ', long_adj
@@ -128,8 +97,8 @@ c
       endif
 c
 c      print*, 'Appel de mat_ad'
-      call mat_adj(n_pts, n_elts, long_adj, v_elt_nodes,
-     *      xadj, adjncy, vx, vy, v_nd_imat, ui)
+      call mat_adj(n_pts, n_gmsh_tri, long_adj, v_gmsh_tri_nodes,
+     *      xadj, adjncy, vx, vy, v_nd_iphyscurve, ui)
 c
       return
       end
@@ -411,73 +380,73 @@ c
 
 c     ------------------------------------------------------------------
 c
-      subroutine mailp2(tcp2,maxvis,ne,n_pts,ns,liste,nb,numero)
+!       subroutine mailp2(tcp2,maxvis,ne,n_pts,ns,liste,nb,numero)
 
-c     ------------------------------------------------------------------
+! c     ------------------------------------------------------------------
 
-      integer flag, i, ip(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
-      integer liste(maxvis,ns), maxvis, nb(ns), numero(maxvis,ns)
-      integer tcp2(6,ne)
-c
-c     ------------------------------------------------------------------
-c
-c      print*, 'MAILP2: 0: n_pts = ', n_pts
-      ip(1) = 2
-      ip(2) = 3
-      ip(3) = 1
-c
-      do i = 1, ns
-         nb(i) = 0
-      enddo
-c
-      n_pts = ns
-      do jel = 1, ne
-         do i = 1, 3
-c
-            is1 = tcp2(i,jel)
-            is2 = tcp2(ip(i),jel)
-            if (is1.gt.is2) then
-               temp = is1
-               is1  = is2
-               is2  = temp
-            endif
-c
-            flag = 0
-c
-            if (nb(is1).eq.0) go to 1
-c
-            do j = 1, nb(is1)
-               if (liste(j,is1).eq.is2) then
-                  flag = 1
-                  jj   = j
-                  goto 1
-               endif
-            enddo
-c
-1           continue
-            if (flag.eq.0) then
-c
-c              l'arete n'est pas dans la liste
-c              -------------------------------
-c
-               n_pts = n_pts+1
-               tcp2(i+3,jel) = n_pts
-               nb(is1) = nb(is1)+1
-               liste(nb(is1),is1) = is2
-               numero(nb(is1),is1) = n_pts
-            else
-c
-c              l'arete est deja dans la liste
-c              ------------------------------
-c
-               tcp2(i+3,jel) = numero(jj,is1)
-            endif
-c
-         enddo
-c
-      enddo
-c
-      end
+!       integer flag, i, ip(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
+!       integer liste(maxvis,ns), maxvis, nb(ns), numero(maxvis,ns)
+!       integer tcp2(6,ne)
+! c
+! c     ------------------------------------------------------------------
+! c
+! c      print*, 'MAILP2: 0: n_pts = ', n_pts
+!       ip(1) = 2
+!       ip(2) = 3
+!       ip(3) = 1
+! c
+!       do i = 1, ns
+!          nb(i) = 0
+!       enddo
+! c
+!       n_pts = ns
+!       do jel = 1, ne
+!          do i = 1, 3
+! c
+!             is1 = tcp2(i,jel)
+!             is2 = tcp2(ip(i),jel)
+!             if (is1.gt.is2) then
+!                temp = is1
+!                is1  = is2
+!                is2  = temp
+!             endif
+! c
+!             flag = 0
+! c
+!             if (nb(is1).eq.0) go to 1
+! c
+!             do j = 1, nb(is1)
+!                if (liste(j,is1).eq.is2) then
+!                   flag = 1
+!                   jj   = j
+!                   goto 1
+!                endif
+!             enddo
+! c
+! 1           continue
+!             if (flag.eq.0) then
+! c
+! c              l'arete n'est pas dans la liste
+! c              -------------------------------
+! c
+!                n_pts = n_pts+1
+!                tcp2(i+3,jel) = n_pts
+!                nb(is1) = nb(is1)+1
+!                liste(nb(is1),is1) = is2
+!                numero(nb(is1),is1) = n_pts
+!             else
+! c
+! c              l'arete est deja dans la liste
+! c              ------------------------------
+! c
+!                tcp2(i+3,jel) = numero(jj,is1)
+!             endif
+! c
+!          enddo
+! c
+!       enddo
+! c
+!       end
 
 c
 c###############################################
@@ -498,7 +467,7 @@ c
       integer n_pts_max, ip(2,3), m, m1
       parameter(n_pts_max=250000)
       integer lb2(n_pts_max)
-      integer nut(6)
+      integer t_nodes(6)
       integer mask(n_pts_max), perm(n_pts_max)
       integer xls(n_pts_max), invperm(n_pts_max)
       integer idfn_r(n_pts_max)
@@ -532,13 +501,13 @@ c
 c
       do j = 1,ne
         do i=1,6
-          nut(i) = nu(i,j)
+          t_nodes(i) = nu(i,j)
         enddo
         do i=1,6
-          i1=nut(i)
+          i1=t_nodes(i)
           ind1=xadj(i1)
           do k=1,6
-            k1=nut(k)
+            k1=t_nodes(k)
             ind2=0
             if(k .eq. i) then
               ind2=1
@@ -618,35 +587,35 @@ c
 
 c     ------------------------------------------------------------------
 c
-      subroutine prepmailp2(tcp1,maxvis,ne,ns,visite)
-
-c     ------------------------------------------------------------------
-
-      integer i, ii, jel, maxvis, ne, ns, tcp1(6,ne), visite(ns)
-
-c     ------------------------------------------------------------------
-
-
-      do i = 1, ns
-         visite(i) = 0
-      enddo
-
-      do jel = 1, ne
-         do i = 1, 3
-            ii = tcp1(i,jel)
-            visite(ii) = visite(ii)+1
-         enddo
-      enddo
-
-      maxvis = 0
-      do i = 1, ns
-         maxvis = max(maxvis,visite(i))
-      enddo
-
-
-      end
-
+c      subroutine prepmailp2(tcp1,maxvis,ne,ns,visited)
 c
+cc     ------------------------------------------------------------------
+c
+c      integer i, ii, jel, maxvis, ne, ns, tcp1(6,ne), visited(ns)
+c
+cc     ------------------------------------------------------------------
+c
+c
+c      do i = 1, ns
+c         visited(i) = 0
+c      enddo
+c
+c      do jel = 1, ne
+c         do i = 1, 3
+c            ii = tcp1(i,jel)
+c            visited(ii) = visited(ii)+1
+c         enddo
+c      enddo
+c
+c      maxvis = 0
+c      do i = 1, ns
+c         maxvis = max(maxvis,visited(i))
+c      enddo
+c
+c
+c      end
+c
+cc
 c###############################################
 c
 
@@ -764,7 +733,7 @@ c
 c###############################################
 c
       subroutine symmetry(n_pts, ne, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      x, y, i_sym)
 
 c*******************************************************
@@ -774,22 +743,22 @@ c
 c*******************************************************
 c
       implicit none
-      integer i_sym, max_n_elts, max_n_pts
+      integer i_sym, max_n_gmsh_tri, max_n_pts
 
       integer ne, n_pts
-      integer nu(6,max_n_elts), typ_el(max_n_elts)
+      integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
       integer idfn(max_n_pts)
       double precision x(max_n_pts), y(max_n_pts)
 
 c     Local data
 
-      integer max_n_elts_0, max_n_pts_0
+      integer max_n_gmsh_tri_0, max_n_pts_0
       parameter(max_n_pts_0=250000)
-      parameter (max_n_elts_0=120000)
+      parameter (max_n_gmsh_tri_0=120000)
       integer ne_0, n_pts_0, idfn_0(max_n_pts_0)
-      integer nu_0(6,max_n_elts_0), typ_el_0(max_n_elts_0)
+      integer nu_0(6,max_n_gmsh_tri_0), typ_el_0(max_n_gmsh_tri_0)
       double precision x_0(max_n_pts_0),  y_0(max_n_pts_0)
-      integer tab_ne(max_n_elts_0), tab_n_pts(max_n_pts_0,3)
+      integer tab_ne(max_n_gmsh_tri_0), tab_n_pts(max_n_pts_0,3)
 c
 c
       integer i, j
@@ -820,19 +789,19 @@ c
 ccccccccccc
       if(i_sym .eq. 1) then
         call y_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 cccccc
       elseif(i_sym .eq. 2) then
         call x_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 cccccc
       elseif(i_sym .eq. 3) then
         call y_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 
@@ -852,7 +821,7 @@ c
         enddo
 
         call x_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 
@@ -875,27 +844,27 @@ c
 c###############################################
 c
       subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 c
       implicit none
-      integer max_n_elts, max_n_pts
+      integer max_n_gmsh_tri, max_n_pts
 
       integer ne_0, n_pts_0, idfn_0(max_n_pts)
-      integer nu_0(6,max_n_elts), typ_el_0(max_n_elts)
+      integer nu_0(6,max_n_gmsh_tri), typ_el_0(max_n_gmsh_tri)
 
       integer ne, n_pts, idfn(max_n_pts)
-      integer nu(6,max_n_elts), typ_el(max_n_elts)
+      integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
 
-      integer tab_ne(max_n_elts), tab_n_pts(max_n_pts,3)
+      integer tab_ne(max_n_gmsh_tri), tab_n_pts(max_n_pts,3)
       double precision x(max_n_pts), y(max_n_pts)
       double precision x_0(max_n_pts),  y_0(max_n_pts)
 c
 c     Local variables
       integer i, i1, i2, i_a, i_b, j, j1, j2
       integer ne_1, n_pts_1, n_pts_2
-      integer nut_0(6), nut_a(6), nut_b(6)
+      integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
       double precision tol, y_min, y_max, y_mid
       double precision x_a, y_a, x_b, y_b
 
@@ -993,47 +962,47 @@ c
         if(i_a .gt. 0) then
           i_b = i_b + 1
           do j=1,6
-            nut_0(j) = nu_0(j,i)
+            t_nodes_0(j) = nu_0(j,i)
           enddo
 
           do j=1,6
-            j1 = tab_n_pts(nut_0(j),1)
-            nut_a(j) = j1
-            j2 = tab_n_pts(nut_0(j),2)
+            j1 = tab_n_pts(t_nodes_0(j),1)
+            t_nodes_a(j) = j1
+            j2 = tab_n_pts(t_nodes_0(j),2)
 
             if(j2 .eq. 1) then
-              nut_b(j) = j1
+              t_nodes_b(j) = j1
             elseif(j2 .eq. 2) then
-              nut_b(j) = tab_n_pts(nut_0(j),3)
-c              nut_b(j) = n_pts - j1 + 1
+              t_nodes_b(j) = tab_n_pts(t_nodes_0(j),3)
+c              t_nodes_b(j) = n_pts - j1 + 1
             else
               open (unit=ui,file=file_ui)
               write(*,*) 'SYMMETRY: tab_n_pts(i,2) = ', j2
-              write(*,*) 'i, tab_n_pts(i,1) = ', nut_0(j), j1
+              write(*,*) 'i, tab_n_pts(i,1) = ', t_nodes_0(j), j1
               stop
             endif
           enddo
           do j=1,6
-            nu(j,i_a) = nut_a(j)
+            nu(j,i_a) = t_nodes_a(j)
           enddo
           typ_el(i_a) = typ_el_0(i)
 
 c          i_b = ne - i_a + 1
           if(i_a .gt. ne/2) stop
           do j=1,3
-            nu(j,i_b) = nut_b(3-j+1)
-            nu(j+3,i_b) = nut_b(6-j+1)
+            nu(j,i_b) = t_nodes_b(3-j+1)
+            nu(j+3,i_b) = t_nodes_b(6-j+1)
           enddo
 c
 c       Symmetry reverses the orientation
 c       so we must reverse the numbering to get the positive orientation
 
-          nu(1,i_b) = nut_b(1)
-          nu(2,i_b) = nut_b(3)
-          nu(3,i_b) = nut_b(2)
-          nu(4,i_b) = nut_b(6)
-          nu(5,i_b) = nut_b(5)
-          nu(6,i_b) = nut_b(4)
+          nu(1,i_b) = t_nodes_b(1)
+          nu(2,i_b) = t_nodes_b(3)
+          nu(3,i_b) = t_nodes_b(2)
+          nu(4,i_b) = t_nodes_b(6)
+          nu(5,i_b) = t_nodes_b(5)
+          nu(6,i_b) = t_nodes_b(4)
 
           typ_el(i_b) = typ_el_0(i)
         endif
@@ -1049,27 +1018,27 @@ c
 c###############################################
 c
       subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, 
-     *      max_n_elts, max_n_pts, idfn, nu, typ_el, 
+     *      max_n_gmsh_tri, max_n_pts, idfn, nu, typ_el, 
      *      idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,
      *      tab_ne, tab_n_pts)
 c
       implicit none
-      integer max_n_elts, max_n_pts
+      integer max_n_gmsh_tri, max_n_pts
 
       integer ne_0, n_pts_0, idfn_0(max_n_pts)
-      integer nu_0(6,max_n_elts), typ_el_0(max_n_elts)
+      integer nu_0(6,max_n_gmsh_tri), typ_el_0(max_n_gmsh_tri)
 
       integer ne, n_pts, idfn(max_n_pts)
-      integer nu(6,max_n_elts), typ_el(max_n_elts)
+      integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
 
-      integer tab_ne(max_n_elts), tab_n_pts(max_n_pts,3)
+      integer tab_ne(max_n_gmsh_tri), tab_n_pts(max_n_pts,3)
       double precision x(max_n_pts), y(max_n_pts)
       double precision x_0(max_n_pts),  y_0(max_n_pts)
 c
 c     Local variables
       integer i, i1, i2, i_a, i_b, j, j1, j2
       integer ne_1, n_pts_1, n_pts_2
-      integer nut_0(6), nut_a(6), nut_b(6)
+      integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
       double precision tol, x_min, x_max, x_mid
       double precision x_a, y_a, x_b, y_b
 
@@ -1166,47 +1135,47 @@ c
         if(i_a .gt. 0) then
           i_b = i_b + 1
           do j=1,6
-            nut_0(j) = nu_0(j,i)
+            t_nodes_0(j) = nu_0(j,i)
           enddo
 
           do j=1,6
-            j1 = tab_n_pts(nut_0(j),1)
-            nut_a(j) = j1
-            j2 = tab_n_pts(nut_0(j),2)
+            j1 = tab_n_pts(t_nodes_0(j),1)
+            t_nodes_a(j) = j1
+            j2 = tab_n_pts(t_nodes_0(j),2)
 
             if(j2 .eq. 1) then
-              nut_b(j) = j1
+              t_nodes_b(j) = j1
             elseif(j2 .eq. 2) then
-              nut_b(j) = tab_n_pts(nut_0(j),3)
-c              nut_b(j) = n_pts - j1 + 1
+              t_nodes_b(j) = tab_n_pts(t_nodes_0(j),3)
+c              t_nodes_b(j) = n_pts - j1 + 1
             else
               open (unit=ui,file=file_ui)
               write(*,*) 'SYMMETRY_X: tab_n_pts(i,2) = ', j2
-              write(*,*) 'i, tab_n_pts(i,1) = ', nut_0(j), j1
+              write(*,*) 'i, tab_n_pts(i,1) = ', t_nodes_0(j), j1
               stop
             endif
           enddo
           do j=1,6
-            nu(j,i_a) = nut_a(j)
+            nu(j,i_a) = t_nodes_a(j)
           enddo
           typ_el(i_a) = typ_el_0(i)
 
 c          i_b = ne - i_a + 1
           if(i_a .gt. ne/2) stop
           do j=1,3
-            nu(j,i_b) = nut_b(3-j+1)
-            nu(j+3,i_b) = nut_b(6-j+1)
+            nu(j,i_b) = t_nodes_b(3-j+1)
+            nu(j+3,i_b) = t_nodes_b(6-j+1)
           enddo
 c
 c       Symmetry reverses the orientation
 c       so we must reverse the numbering to get the positive orientation
 
-          nu(1,i_b) = nut_b(1)
-          nu(2,i_b) = nut_b(3)
-          nu(3,i_b) = nut_b(2)
-          nu(4,i_b) = nut_b(6)
-          nu(5,i_b) = nut_b(5)
-          nu(6,i_b) = nut_b(4)
+          nu(1,i_b) = t_nodes_b(1)
+          nu(2,i_b) = t_nodes_b(3)
+          nu(3,i_b) = t_nodes_b(2)
+          nu(4,i_b) = t_nodes_b(6)
+          nu(5,i_b) = t_nodes_b(5)
+          nu(6,i_b) = t_nodes_b(4)
 
           typ_el(i_b) = typ_el_0(i)
         endif
@@ -1218,3 +1187,32 @@ c
 c
 c###############################################
 c
+c
+ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+cc
+c      subroutine type_arete(i, i1, i2, ne_d1, nu_d1, typ_el_d1)
+cc
+c      implicit none
+c      integer i, i1, i2, ne_d1
+c      integer nu_d1(3,ne_d1), typ_el_d1(ne_d1)
+c      integer j, k, k1, k2
+cc
+c      i = 0
+c      do j=1,ne_d1
+c        k = typ_el_d1(j)
+c        k1 = nu_d1(1,j)
+c        k2 = nu_d1(2,j)
+c        if(k1 .eq. i1 .and. k2 .eq. i2) then
+c          i = k
+c          return
+c        elseif(k1 .eq. i2 .and. k2 .eq. i1) then
+c          i = k
+c          return
+c        endif
+c      enddo
+cc      print*, '?? type_arete: Resultat negatif'
+cc      print*, 'i1, i2 = ', i1, i2
+cc      stop
+cc
+c      end
+c 

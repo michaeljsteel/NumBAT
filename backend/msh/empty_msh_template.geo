@@ -4,7 +4,7 @@
 Mesh.MshFileVersion = 2.2;
 
 // Meshing parameters
-lc = 0; // base level meshing parameter
+lc = 0.1; // base level meshing parameter
 lc_refine_1 = lc/1; // mesh refinement parameters
 lc_refine_2 = lc/1; // mesh refinement parameters
 

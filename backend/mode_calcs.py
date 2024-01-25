@@ -43,6 +43,50 @@ VacCSpeed = 299792458
 def load_simulation(prefix):
     return Simulation.load_simulation(prefix)
 
+# Checks of mesh and triangles satisfy conditions for triangulation
+# Quadratic algorithm. Use on the smallest grid possible
+def check_triangulation(vx, vy, triangs):
+    # are points unique
+    print('\n\nChecking triangulation goodness')
+    npts = len(vx)
+    dsepmin = 1e6
+    dsi=0
+    dsj=0
+    for i in range(npts):
+        for j in range(i+1, npts):
+            dsep = sqrt( (vx[i]-vx[j])**2 +(vy[i]-vy[j])**2)
+            if dsep < dsepmin:
+                dsepmin = dsep
+                dsi=i
+                dsj=j
+            
+
+    print('  Closest space of triangle points was', dsepmin)
+    if dsepmin < 1e-11:
+        print(f'Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]})')
+
+    #print('Raw points')
+    #for i in range(npts):
+    #    print(i, vx[i], vy[i])
+
+
+    # is list of triangles unique
+    s_vtri = set()
+    clean = True
+    for tri in triangs:
+        stri = str(tri)
+        if stri in s_vtri:
+            print("        Double triangle at", stri)
+            clean = False
+        else:
+            s_vtri.add(stri)
+    if clean: 
+        print("  No doubled triangles found")
+    else:
+        print("  Found doubled triangles")
+
+       
+
 
 # helper class for plotting. factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim
 class ModePlotHelper(object):
@@ -127,6 +171,7 @@ class ModePlotHelper(object):
                             'quiver_points': quiver_points
                             }
 
+
     def interpolate_mode_i(self, ival, field_type):
         # self.v_Fx6p etc could propbably be made local to this function
         # construct the meshed field from fortran solution
@@ -197,7 +242,6 @@ class ModePlotHelper(object):
         self.v_Fz6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
         self.v_triang6p = []
 
-        # i = 0  # what is this counting?
         for i_el in np.arange(sim.n_msh_el):
             # triangles
             idx = np.arange(6*i_el, 6*(i_el+1))
@@ -219,25 +263,24 @@ class ModePlotHelper(object):
                 self.v_y6p[i] = self.mesh_xy[i_ex, 1]
                 i += 1
 
+        self.triang6p = matplotlib.tri.Triangulation(self.v_x6p, self.v_y6p, self.v_triang6p)
+
         # Interpolate onto triangular grid - honest to FEM elements
         # dense triangulation with unique points
         self.v_triang1p = []
+        table_nod = self.table_nod
         for i_el in np.arange(sim.n_msh_el):
-            # triangles
-            table_nod = self.table_nod
             triangles = [[table_nod[i_el, 0]-1, table_nod[i_el, 3]-1, table_nod[i_el, 5]-1],
-                         [table_nod[i_el, 1]-1, table_nod[i_el, 4] -
-                             1, table_nod[i_el, 3]-1],
-                         [table_nod[i_el, 2]-1, table_nod[i_el, 5] -
-                             1, table_nod[i_el, 4]-1],
+                         [table_nod[i_el, 1]-1, table_nod[i_el, 4]-1, table_nod[i_el, 3]-1],
+                         [table_nod[i_el, 2]-1, table_nod[i_el, 5]-1, table_nod[i_el, 4]-1],
                          [table_nod[i_el, 3]-1, table_nod[i_el, 4]-1, table_nod[i_el, 5]-1]]
             self.v_triang1p.extend(triangles)
 
+        # This is for testing only. Normally turn off
+        check_triangulation( self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
+
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
-        self.triang6p = matplotlib.tri.Triangulation(
-            self.v_x6p, self.v_y6p, self.v_triang6p)
-        self.triang1p = matplotlib.tri.Triangulation(
-            self.mesh_xy[:, 0], self.mesh_xy[:, 1], self.v_triang1p)
+        self.triang1p = matplotlib.tri.Triangulation(self.mesh_xy[:, 0], self.mesh_xy[:, 1], self.v_triang1p)
 
         # Now use the coords user would like to think in
         # Odd that we are doing this at ModeHelper level?

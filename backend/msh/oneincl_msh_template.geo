@@ -13,7 +13,7 @@ a1y = 10;
 radius1 = (a1/(2*d_in_nm))*d;
 radius1y = (a1y/(2*d_in_nm))*d;
 rect = 1;
-lc = 0; // 0.501 0.201 0.0701;
+lc = 0.1; // 0.501 0.201 0.0701;
 lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 centres
 

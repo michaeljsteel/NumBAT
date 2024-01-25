@@ -30,7 +30,7 @@ coat2y = 4;
 coat2_w = coat2x/d_in_nm;
 coat2_h = coat2y/d_in_nm;
 
-lc = 0; // background and unitcell edge
+lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 lc_refine_3 = lc/1; // coat

@@ -56,7 +56,7 @@ def _process_one_and_two_incls_subs(msh_template, umb):
 
 
 
-    subs.append(('lc = 0;', 'lc = %f;', umb.get_param('lc')))
+    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc')))
     subs.append(
         ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', umb.get_param('lc_refine_1')))
     subs.append(
@@ -194,12 +194,15 @@ class Triangular(UserGeometryBase):
 
 
     def apply_parameters(self):
-        subs = [('d_in_nm = 1000.0;',         'd_in_nm = %f;',        self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')))
-        subs.append(('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')))
-        subs.append(('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')))
-        subs.append(('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')))
-        subs.append(('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
+        subs = [('d_in_nm = 1000.0;',     'd_in_nm = %f;',        self.get_param('unitcell_x')), 
+                ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')), 
+                ('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')), 
+                ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')), 
+                ('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')), 
+                ('lc = 0.1;',             'lc = %f;',             self.get_param('lc')), 
+                ('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')), 
+                ('lc_refine_2 = lc/3.0;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2'))
+                ]
 
         return subs
 
@@ -233,7 +236,7 @@ def make_onion_subs(umb):
     subs.append(('a13 = 100;', 'a13 = %f;', umb.get_param('inc_m_x')))
     subs.append(('a14 = 100;', 'a14 = %f;', umb.get_param('inc_n_x')))
     subs.append(('a15 = 100;', 'a15 = %f;', umb.get_param('inc_o_x')))
-    subs.append(('lc = 0;', 'lc = %f;', umb.get_param('lc')))
+    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc')))
     subs.append(
         ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', umb.get_param('lc_refine_1')))
     subs.append(
@@ -379,7 +382,7 @@ class Pedestal(UserGeometryBase):
         subs.append(('slabxtop = 60;', 'slabxtop = %f;', self.get_param('slab_b_x')))
         subs.append(('px = 2;', 'px = %f;', self.get_param('pillar_x')))
         subs.append(('py = 5;', 'py = %f;', self.get_param('pillar_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -461,7 +464,7 @@ class Rib(UserGeometryBase):
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -493,7 +496,7 @@ class RibCoated(UserGeometryBase):
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
         subs.append(('coatx = 2;', 'coatx = %f;', self.get_param('coat_x')))
         subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -530,7 +533,7 @@ class RibDoubleCoated(UserGeometryBase):
         subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_y')))
         subs.append(('coat2x = 4;', 'coat2x = %f;', self.get_param('coat2_x')))
         subs.append(('coat2y = 4;', 'coat2y = %f;', self.get_param('coat2_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -566,7 +569,7 @@ class Slot(UserGeometryBase):
         subs.append(('a2 = 20;', 'a2 = %f;', self.get_param('inc_b_x')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -598,7 +601,7 @@ class SlotCoated(UserGeometryBase):
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
         subs.append(('c1y = 10;', 'c1y = %f;', self.get_param('coat_y')))
-        subs.append(('lc = 0;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(

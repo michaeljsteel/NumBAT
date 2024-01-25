@@ -24,9 +24,9 @@ bw = base_width*scale;
 pxo = peak_xoff*scale;
 ph = peak_height*scale;
 
-lc = 0.020000;         // background and unitcell edge
-lc_refine_1 = lc/1.0; // triangle boundaries
-//lc_refine_2 = lc/1.0;  // 
+lc = 0.1;         // background and unitcell edge
+lc_refine_1 = lc/1.0;  // triangle boundaries
+lc_refine_2 = lc/3.0;  // peak corner (which should be the sharp one if there is one)
 
 //////////////////////////////////////////
 
@@ -49,7 +49,7 @@ Point(7) = { boxside/2, -ph/2., 0, lc};           // Boundary right of base
 // Triangle 
 Point(10) = {-bw/2.,       -ph/2., 0, lc_refine_1}; // Left base
 Point(11) = {bw/2.,        -ph/2., 0, lc_refine_1}; // Right base
-Point(12) = {-bw/2.+pxo,    ph/2., 0, lc_refine_1}; // Peak
+Point(12) = {-bw/2.+pxo,    ph/2., 0, lc_refine_2}; // Peak
 
 
 //

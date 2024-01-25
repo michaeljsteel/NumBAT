@@ -23,7 +23,7 @@ slab_h = slaby/d_in_nm;
 c1y = 10;
 cov1y = (c1y/(2*d_in_nm))*d;
 
-lc = 0; // background and unitcell edge
+lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 lc_refine_3 = lc/1; // coating
