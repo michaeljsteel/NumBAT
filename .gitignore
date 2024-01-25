@@ -19,9 +19,14 @@ lit_examples/*.png
 tutorials/*.png
 tutorials/*.txt
 
+tutorials/tut_*/*
+lit_examples/lit_*/*
+josab_tutorial/josab_*/*
+
 josab_tutorial/*-fields
 lit_examples/*-fields
 tutorials/*-fields
 
 
 docs/build/*
+
