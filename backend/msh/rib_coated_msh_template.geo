@@ -22,7 +22,7 @@ coaty = 2;
 coat_w = coatx/d_in_nm;
 coat_h = coaty/d_in_nm;
 
-lc = 0; // background and unitcell edge
+lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 lc_refine_3 = lc/1; // coat

@@ -20,7 +20,7 @@ slaby = 10;
 slab_w = slabx/d_in_nm;
 slab_h = slaby/d_in_nm;
 
-lc = 0; // background and unitcell edge
+lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 

@@ -41,7 +41,7 @@ If(slab2_w == 1)
     slab2_w_full = 1;
 EndIf
 
-lc = 0; // 0.501 0.201 0.0701;
+lc = 0.1; // 0.501 0.201 0.0701;
 lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 centres
 lc_refine_3 = lc/1; // centres of top and bottom
