@@ -55,6 +55,11 @@ tut06:
 ftut06: 
 	$(PYTHON) simo-tut_06-silica_nanowire.py fast=1
 
+tut06b: 
+	$(PYTHON) simo-tut_06b-silicon_triangular_nanowire.py 
+ftut06b: 
+	$(PYTHON) simo-tut_06b-silicon_triangular_nanowire.py fast=1
+
 tut07: 
 	$(PYTHON) simo-tut_07-slot.py 
 ftut07: 

@@ -573,7 +573,6 @@ class Structure(object):
         msh_template = self.wg_geom.gmsh_template_filename()
         msh_fname = self.wg_geom.get_instance_filename()
 
-
         if self._new_mesh_required():
 
             geo = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
@@ -592,7 +591,7 @@ class Structure(object):
                     s += f'\nMessage was:\n {err_msg}'
                 s += f'''
 
-                Is the mesh template file "backend/fortran/msh/{msh_template}.geo" designed correctly?
+                Is the mesh template file "backend/fortran/msh/{msh_template}_msh_template.geo" designed correctly?
                 To help diagnose the problem, try viewing the generated mesh file in gmsh by running:
                   gmsh {fname}.geo'''
                 reporting.report_and_exit(s)

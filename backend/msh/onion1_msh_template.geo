@@ -25,13 +25,13 @@ x0 = -dy/2;
 y0 = dy/2;
 
 
-//Box part a 
+//Outer box corners
 Point(1) = {x0,    y0,    0, lc};         // NW
 Point(2) = {x0,    y0-hy, 0, lc};         // SW
 Point(3) = {x0+hx, y0-hy, 0, lc};         // SE
 Point(4) = {x0+hx, y0,    0,lc};          // NE
 
-//Box part b 
+//Outer box midpoints
 Point(6) = {x0+hx/2, y0,      0, lc};     // N
 Point(7) = {x0,      y0-hy/2, 0, lc};     // W
 Point(8) = {x0+hx/2, y0-hy,   0, lc};     // S
@@ -60,13 +60,13 @@ Line(12) = {12,10};  // W
 Line(13) = {10,13};  // S
 Line(14) = {10,14};  // E
 
-// Box to outer circle
+// Lines from outer box to outer circle (1)
 Line(2001) = {6,11}; //N
 Line(2002) = {7,12}; //W
 Line(2003) = {13,8}; //S
 Line(2004) = {14,9}; //E
 
-//Circle 1
+//Circle 1 circumference
 Ellipsis(211) = {14,10,11,11};  //NE
 Ellipsis(212) = {11,10,12,12};  //NW
 Ellipsis(213) = {12,10,13,13};  //SW
@@ -86,7 +86,7 @@ Plane Surface(518) = {513};
 Line Loop(514) = {14, -214, -13}; //SE
 Plane Surface(519) = {514};
 
-// Outer circle to boundary surfaces
+// Outer circle to boundary surfaces (Squares with quarter circles removed at the origin)
 Line Loop(501) = {2001, -211, 2004, -7, -2}; //NE
 Plane Surface(506) = {501};
 Line Loop(502) = {212, -2002, -5, 1, 2001};  //NW

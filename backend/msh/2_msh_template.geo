@@ -29,6 +29,7 @@ hy = dy; // Thickness: square profile => hy=d
 hx = 0.;
 
 
+// Outer border
 Point(1) = {0, 0, 0, lc};
 Point(2) = {-hx, -hy, 0, lc};
 Point(3) = {-hx+d, -hy, 0, lc};
