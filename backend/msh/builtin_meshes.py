@@ -184,6 +184,34 @@ class TwoIncl(UserGeometryBase):
                 facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
 
+class Triangular(UserGeometryBase):
+
+    def init_geometry(self):
+        #gmshfile, nelts = _process_one_and_two_incls(self._d_params)
+        desc = '''A NumBAT geometry template for a triangular waveguide.'''
+        self.set_properties('triangular', 2, False, desc)
+        #self._gmsh_template_filename = gmshfile # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
+
+
+    def apply_parameters(self):
+        subs = [('d_in_nm = 1000.0;',         'd_in_nm = %f;',        self.get_param('unitcell_x'))]
+        subs.append(('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')))
+        subs.append(('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')))
+        subs.append(('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')))
+        subs.append(('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')))
+        subs.append(('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
+
+        return subs
+
+
+    def draw_mpl_frame(self, ax):
+
+        wid = self.get_param('inc_a_x') * nmtoum
+        hgt = self.get_param('inc_a_y') * nmtoum
+
+        #ax.add_patch(mplpatches.Rectangle((-wid/2, -hgt/2), wid, hgt,
+        #              facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
 
 
 
