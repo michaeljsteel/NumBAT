@@ -11,7 +11,7 @@
       character emsg*1024
 
 c
-      integer i, j, nd, i1, ip(2,3)
+      integer i, j, nd, i1, iplusj_mod3(2,3)
       integer long_adj
 c      xadj(n_pts+1),
       integer, parameter :: n_pts_max=250000
@@ -24,16 +24,16 @@ c      xadj(n_pts+1),
 !      character file_ui*100
 !      common/imp_file/file_ui
  
-c ip(1,i) = i+1 MOD 3
-c ip(2,i) = i+2 MOD 3
+c iplusj_mod3(1,i) = i+1 MOD 3
+c iplusj_mod3(2,i) = i+2 MOD 3
  
-      ip(1,1) = 2
-      ip(1,2) = 3
-      ip(1,3) = 1
+      iplusj_mod3(1,1) = 2
+      iplusj_mod3(1,2) = 3
+      iplusj_mod3(1,3) = 1
  
-      ip(2,1) = 3
-      ip(2,2) = 1
-      ip(2,3) = 2
+      iplusj_mod3(2,1) = 3
+      iplusj_mod3(2,2) = 1
+      iplusj_mod3(2,3) = 2
 
 ! c      From earlier tests, this should never happen
 !       if(n_pts_max .lt. n_pts) then
@@ -68,7 +68,7 @@ c ip(2,i) = i+2 MOD 3
             ! Nodes in order clockwise around the triangle are 1(v) 4(e) 2(v) 5(e) 3(v) 6(e) 
             nd = t_nodes(i)         ! the first vertex
             neighbours(nd) = neighbours(nd) - 2
-            nd = t_nodes(ip(1,i))   ! the second vertex, wrapping back to 1 if it is vertex 3
+            nd = t_nodes(iplusj_mod3(1,i))   ! the second vertex, wrapping back to 1 if it is vertex 3
             neighbours(nd) = neighbours(nd) - 2
             nd = t_nodes(i+3)       ! the edge
             neighbours(nd) = neighbours(nd) - 2
@@ -384,16 +384,16 @@ c
 
 ! c     ------------------------------------------------------------------
 
-!       integer flag, i, ip(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
+!       integer flag, i, iplusj_mod3(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
 !       integer liste(maxvis,ns), maxvis, nb(ns), numero(maxvis,ns)
 !       integer tcp2(6,ne)
 ! c
 ! c     ------------------------------------------------------------------
 ! c
 ! c      print*, 'MAILP2: 0: n_pts = ', n_pts
-!       ip(1) = 2
-!       ip(2) = 3
-!       ip(3) = 1
+!       iplusj_mod3(1) = 2
+!       iplusj_mod3(2) = 3
+!       iplusj_mod3(3) = 1
 ! c
 !       do i = 1, ns
 !          nb(i) = 0
@@ -404,7 +404,7 @@ c
 !          do i = 1, 3
 ! c
 !             is1 = tcp2(i,jel)
-!             is2 = tcp2(ip(i),jel)
+!             is2 = tcp2(iplusj_mod3(i),jel)
 !             if (is1.gt.is2) then
 !                temp = is1
 !                is1  = is2
@@ -464,7 +464,7 @@ c
       double precision x(n_pts), y(n_pts)
 c
       integer i, j, k, i1, k1, ind1, ind2
-      integer n_pts_max, ip(2,3), m, m1
+      integer n_pts_max, iplusj_mod3(2,3), m, m1
       parameter(n_pts_max=250000)
       integer lb2(n_pts_max)
       integer t_nodes(6)
@@ -475,16 +475,16 @@ c
       character file_ui*100
       common/imp_file/file_ui
 c
-c ip(1,i) = i+1 MOD 3
-c ip(2,i) = i+2 MOD 3
+c iplusj_mod3(1,i) = i+1 MOD 3
+c iplusj_mod3(2,i) = i+2 MOD 3
 c
-      ip(1,1) = 2
-      ip(1,2) = 3
-      ip(1,3) = 1
+      iplusj_mod3(1,1) = 2
+      iplusj_mod3(1,2) = 3
+      iplusj_mod3(1,3) = 1
 c
-      ip(2,1) = 3
-      ip(2,2) = 1
-      ip(2,3) = 2
+      iplusj_mod3(2,1) = 3
+      iplusj_mod3(2,2) = 1
+      iplusj_mod3(2,3) = 2
 c
       if(n_pts_max .lt. n_pts) then
         open (unit=ui,file=file_ui)
