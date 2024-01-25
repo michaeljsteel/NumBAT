@@ -31,8 +31,8 @@ slab_a_y = 100
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
-EM_ival_pump = 0
-EM_ival_Stokes = 0
+EM_ival_pump = 1
+EM_ival_Stokes = 1
 AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
