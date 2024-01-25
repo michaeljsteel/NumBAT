@@ -536,22 +536,21 @@ class Structure(object):
         if not self.msh_location_out.is_dir():
             self.msh_location_out.mkdir()
 
-        else:
-            found = False
-            for msh in Structure._user_mesh_templates:
-                if self.inc_shape in msh['inc_shape']:
-                    found = True
-                    wg_geom = msh['mesh_cls'](self.all_params, d_materials)
-                    wg_geom.init_geometry()
+        found = False 
+        for msh in Structure._user_mesh_templates: 
+            if self.inc_shape in msh['inc_shape']:
+                found = True
+                wg_geom = msh['mesh_cls'](self.all_params, d_materials)
+                wg_geom.init_geometry()
 
-                    self.n_typ_el = wg_geom.num_type_elements()
+                self.n_typ_el = wg_geom.num_type_elements()
 
-                    break
+                break
 
-            if not found:
-                raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
-                                          'is not currently implemented. \nPlease make a mesh with gmsh and '
-                                          'consider contributing this to NumBAT via github.')
+        if not found:
+            raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
+                                      'is not currently implemented. \nPlease make a mesh with gmsh and '
+                                      'consider contributing this to NumBAT via github.')
 
         self.linear_element_shapes = []
         self.curvilinear_element_shapes = []
