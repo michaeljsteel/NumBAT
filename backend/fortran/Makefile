@@ -6,8 +6,8 @@ all: $(NumBAT_MOD).so
 
 ## Choose your platform
 
-MYPLAT="linux_inteloneapi"
-#MYPLAT="linux_vanilla"
+#MYPLAT="linux_inteloneapi"
+MYPLAT="linux_vanilla"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
@@ -33,32 +33,42 @@ endif
 
 F_COMPILER = g95
 F_COMP_EXE = f95
-F2PY = f2py3
 C_COMP_EXE = gcc
 
 ## Check from here until EndDefs
 ARPACK_INCL = -I /usr/local/include
-ARPACK_LIB  = -L /usr/local/lib -larpack
+ARPACK_LIB  = -L /usr/lib/x86_64-linux-gnu -larpack
 
-MKLROOT = /opt/intel/oneapi/mkl/latest
+#MKLROOT = /opt/intel/oneapi/mkl/latest
 
 UMFPACK_INC = -I/usr/include/suitesparse
-UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
+UMFPACK_LIB = -L /usr/lib/x86_64-linux-gnu -lumfpack -lcholmod -lamd -lsuitesparseconfig
 
 PYVERMAJ=3
 PYVERMAJMIN=3.11
-PYROOT = /usr/lib/python$(PYVERMAJ)
-PYINCCORE = /usr/include/python$(PYVERMAJMIN)
+PYROOT = /home/msteel/mypy3
+PYBIN = $(PYROOT)/bin
+PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
+PYBASELIB = $(PYROOT)/lib/python$(PYVERMAJMIN)
+PYPACKAGES = $(PYBASELIB)/site-packages
+
+# virtual env doesn't contain Python.h ?!
+SYSTEMPYINC = /usr/include/python3.11
+
+F2PY = $(PYBIN)/f2py
+#PYINCCORE = $(PYROOT)/include/python$(PYVERMAJMIN)
 ## EndDefs
 
 
 
 MATHINC = $(ARPACK_INCL)
-MATHLIB = $(ARPACK_LIB) $(UMFPACK)_LIB -llapack -lblas
+MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) -llapack -lblas
 GENLIB = -lrt
 
-NUMPYDIR = $(PYROOT)/dist-packages/numpy
-PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
+NUMPYDIR = $(PYPACKAGES)/numpy
+#PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/f2py/src/
+PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
+
 
 else ifeq ($(PLAT), "linux_inteloneapi")
 # Uses BLAS and LAPACK from free Intel OneApi MKL library
@@ -83,7 +93,7 @@ UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
 
 PYVERMAJ=3
 PYVERMAJMIN=3.11
-PYROOT = /usr/lib/python$(PYVERMAJ)
+PYROOT = /home/msteel/myp3/lib/python$(PYVERMAJ)
 PYINCCORE = /usr/include/python$(PYVERMAJMIN)
 ## EndDefs
 
@@ -146,17 +156,22 @@ GENLIB = -lrt
 endif
 
 
-SRCS = $(wildcard src/*.f)
-OBJSA = $(SRCS:.f=.o)
+# TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
+#       find a better way
+SRCS_F = $(wildcard src/*.f) 
+SRCS_F95 = $(wildcard src/*.f95)
+OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
 OBJS = $(subst src,build,$(OBJSA))
 
-PYINTERFACE_SRCSA = conv_gmsh.f py_calc_modes_AC.f py_calc_modes.f \
+#conv_gmsh.f 
+PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_AC.f py_calc_modes.f \
 	EM_mode_energy_int_v2_Ez.f \
   EM_mode_energy_int_Ez.f photoelastic_int.f photoelastic_int_v2.f \
   AC_mode_power_int.f AC_mode_power_int_v2.f AC_mode_power_int_v4.f \
   AC_alpha_int.f AC_alpha_int_v2.f moving_boundary.f array_material_AC.f \
   AC_mode_elastic_energy_int.f AC_mode_elastic_energy_int_v4.f EM_mode_E_energy_int.f \
-  H_mode_field_Ez.f array_size.f
+  H_mode_field_Ez.f array_size.f 
+#numbatmod.f
 
 PYINTERFACE_SRCS = $(addprefix src/, $(PYINTERFACE_SRCSA))
 
@@ -170,9 +185,12 @@ SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS)
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build 
+# -std=f95
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
+build/%.o : src/%.f95
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
 
 build/%.o : src/%.f
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
@@ -186,6 +204,8 @@ build/%.o : build/%.f
 build/%.o : build/%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
+build/%.e : src/%.f
+	cpp -I src $< -o $@
 
 
 F2PYLINK=Ccomp
@@ -242,7 +262,8 @@ $(CMETHOD).pyf: $(SRCS)
 
 clean:
 	-rm -f $(SS_WRAP)/*.o
-	-rm -f build/*.o build/*.f build/*.c
+	-rm -f build/*.o build/*.f build/*.c 
+	-rm ./*.mod src/*.mod build/*.mod
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 
 

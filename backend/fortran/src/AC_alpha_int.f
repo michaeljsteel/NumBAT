@@ -1,6 +1,6 @@
-C Calculate the overlap integral of an AC mode with itself using
-C numerical quadrature.  
-C
+! Calculate the overlap integral of an AC mode with itself using
+! numerical quadrature.  
+!
       subroutine AC_alpha_int (nval, 
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, eta_tensor, beta_AC, Omega_AC, soln_AC,
