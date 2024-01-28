@@ -6,8 +6,8 @@ all: $(NumBAT_MOD).so
 
 ## Choose your platform
 
-#MYPLAT="linux_inteloneapi"
-MYPLAT="linux_vanilla"
+MYPLAT="linux_inteloneapi"
+#MYPLAT="linux_vanilla"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
@@ -23,11 +23,12 @@ endif
 
 UNAME_S := $(shell uname -s)
 
-ifeq ($(PLAT), "linux_vanilla")
-# Uses BLAS and LAPACK from generic GNU-Linux
 
 
-ifneq ($(UNAME_S), Linux)
+ifeq ($(PLAT), "linux_vanilla")   ##### LINUX VANILLA
+                                  ##### Uses BLAS and LAPACK from generic GNU-Linux
+
+ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
 endif
 
@@ -70,7 +71,8 @@ NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
 
-else ifeq ($(PLAT), "linux_inteloneapi")
+
+else ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI
 # Uses BLAS and LAPACK from free Intel OneApi MKL library
 
 ifneq ($(UNAME_S), Linux)
@@ -93,7 +95,8 @@ UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
 
 PYVERMAJ=3
 PYVERMAJMIN=3.11
-PYROOT = /home/msteel/myp3/lib/python$(PYVERMAJ)
+#TODO: move this to a personal venv
+PYROOT = /usr/lib/python$(PYVERMAJ)
 PYINCCORE = /usr/include/python$(PYVERMAJMIN)
 ## EndDefs
 

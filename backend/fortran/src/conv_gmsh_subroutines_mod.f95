@@ -10,7 +10,7 @@ subroutine balance_fem_node_graph(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, v_nd_iphy
 
    use numbatmod
 
-   integer errco
+   integer assertions_on, errco
    character emsg*(STRINGLEN)
    
    integer n_pts, n_gmsh_tri
@@ -27,7 +27,7 @@ subroutine balance_fem_node_graph(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, v_nd_iphy
    if (assertions_on .ne. 0) then
    call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11, errco, emsg)
    RETONERROR(errco)
-   fi
+   endif
 
    ! builds adjncy
    call make_adjacency_matrix(n_pts,n_gmsh_tri, v_gmsh_tri_nodes, xadj, num_adj, adjncy)
