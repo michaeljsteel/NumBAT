@@ -131,8 +131,9 @@ c     i_sym = 0 always, so this is switched off
 
          ! TODO: Figure out what this is doing.
          ! Some kind of useful reordering?
-         call balance_fem_node_graph(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, 
-     *     v_nd_iphyscurve, vx, vy, errco, assertions_on, emsg)
+         call balance_fem_node_graph(n_pts, n_gmsh_tri, 
+     *     v_gmsh_tri_nodes, v_nd_iphyscurve, vx, vy, errco, 
+     *     assertions_on, emsg) 
          RETONERROR(errco)
 
          write(*,*) n_pts, n_gmsh_tri
@@ -181,21 +182,13 @@ c###############################################################################
          character com_line*(STRINGLEN)
          integer sysret
 
-         write(*,*) 'slen', STRINGLEN
-         write(*,*) 'slena', fname_geo
-         write(*,*) 'slenb', fname_msh
-         
-
 #ifdef __APPLE__
-
-         com_line = "/Applications/Gmsh.app/Contents/MacOS/gmsh -0 -2" //
-     *      " -order 2 -v 0 -o " //
-     *       trim(fname_msh) // " " // trim(fname_geo)
-
+        com_line="/Applications/Gmsh.app/Contents/MacOS/gmsh -0 -2" //
+     *     " -order 2 -v 0 -o " //
+     *      trim(fname_msh) // " " // trim(fname_geo)
 #else
-
-         com_line = "gmsh -0 -2  -order 2 -v 0 -o " //
-     *       trim(fname_msh) // " " // trim(fname_geo)
+        com_line = "gmsh -0 -2  -order 2 -v 0 -o " //
+     *      trim(fname_msh) // " " // trim(fname_geo)
          write(*,*) com_line
 #endif !! __APPLE__
 
