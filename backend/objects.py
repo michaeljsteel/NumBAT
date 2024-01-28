@@ -582,7 +582,9 @@ class Structure(object):
                 fout.write(geo)
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-            err_no, err_msg = NumBAT.conv_gmsh(str(fname))
+            assertions_on = False
+            
+            err_no, err_msg = NumBAT.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:
 
                 s = f'Terminating after Fortran error in processing .geo file "{fname}%s.geo".'

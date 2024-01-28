@@ -4,6 +4,7 @@
 
 #define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
 
+#define D_STRINGLEN 1024
 
 #endif 
 

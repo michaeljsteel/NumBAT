@@ -208,6 +208,9 @@ c         Add the contribution of the element iel to the mode component
             mode_pol(j,ival) = mode_pol(j,ival) + mode_comp(j)
           enddo
 
+          n_core(1)=-1000  ! TODO: THIS COLULD SEEMS NEVER TO BE CALLED, THESE BAD VALUES TO TRY TO MAKE IT FAIL IF IT DOES
+          n_core(2)=-1000
+
           if (typ_e .eq. n_core(1) .or. typ_e .eq. n_core(2)) then
             write(*,*) "Warning: unitialised n_core in array_sol_AC.f"
             z_tmp2 = mode_comp(1) + mode_comp(2)
