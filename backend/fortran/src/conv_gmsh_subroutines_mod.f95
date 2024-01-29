@@ -2,19 +2,19 @@
 
 !  This file performs RCM reordering to make the bandwidth of the adjacency matrix smaller.
 !  This makes sparse matrix operations more efficient.
-!  The shuffling is based on the triangular elements in v_gmsh_tri_nodes only.
+!  The shuffling is based on the triangular elements in v_triang_nodes only.
 !  But we must also permute the indices and positions in v_nd_iphyscurve and vx, vy.
 
-subroutine balance_fem_node_graph(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, v_nd_iphyscurve, &
-   vx, vy, assertions_on, errco, emsg)
+subroutine balance_fem_node_graph(n_pts, n_gelts_triangs, v_triang_nodes, &
+   v_nd_iphyscurve, vx, vy, assertions_on, errco, emsg)
 
    use numbatmod
 
    integer assertions_on, errco
    character emsg*(STRINGLEN)
-   
-   integer n_pts, n_gmsh_tri
-   integer v_gmsh_tri_nodes(6,n_gmsh_tri), v_nd_iphyscurve(n_pts)
+
+   integer n_pts, n_gelts_triangs
+   integer v_triang_nodes(6,n_gelts_triangs), v_nd_iphyscurve(n_pts)
    double precision vx(n_pts), vy(n_pts)
 
    integer num_adj               ! total accumulated number of adj nodes
@@ -22,31 +22,32 @@ subroutine balance_fem_node_graph(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, v_nd_iphy
    integer adjncy(MAX_LONG_ADJ)  ! how many nodes have a connection to this one
 
    ! builds xadj and num_adj
-   call make_adjacency_cumulative_vector(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, xadj, num_adj)
+   call make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj)
 
    if (assertions_on .ne. 0) then
-   call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11, errco, emsg)
-   RETONERROR(errco)
+      call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11, errco, emsg)
+      RETONERROR(errco)
    endif
 
    ! builds adjncy
-   call make_adjacency_matrix(n_pts,n_gmsh_tri, v_gmsh_tri_nodes, xadj, num_adj, adjncy)
+   call make_adjacency_matrix(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, adjncy)
 !         write(*,*) 'renumbering with: num_adj = ', num_adj
 
-   call rebalance_adjacency_matrix(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, xadj, num_adj, &
-      adjncy, vx, vy, v_nd_iphyscurve, errco, emsg)
+   
+   call rebalance_adjacency_matrix(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, &
+      adjncy, vx, vy, v_nd_iphyscurve, assertions_on, errco, emsg)
 
-   return
 end
 
 !-------------------------------------------------------------------------------
-! builds xadj and num_adj from v_gmsh_tri_nodes
-subroutine make_adjacency_cumulative_vector(n_pts, n_gmsh_tri, v_gmsh_tri_nodes, xadj, num_adj)
+! builds xadj and num_adj from v_triang_nodes
+! at end, numadj = xadj(n_pts+1) = sum_j neighbours(j)
+subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj)
 
    use numbatmod
 
-   integer n_gmsh_tri, n_pts
-   integer v_gmsh_tri_nodes(6,n_gmsh_tri)
+   integer n_gelts_triangs, n_pts
+   integer v_triang_nodes(6,n_gelts_triangs)
    integer xadj(MAX_N_PTS+1)     ! cumulative number of connections
    integer num_adj
 
@@ -62,10 +63,10 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gmsh_tri, v_gmsh_tri_nodes,
 
    ! Find the number of associations each triangle node has
 
-   do j = 1,n_gmsh_tri     ! for all triangle (6 node) elements
+   do j = 1,n_gelts_triangs     ! for all triangle (6 node) elements
 
       do i=1,6              ! copy the 6 nodes for this element
-         t_nodes(i) = v_gmsh_tri_nodes(i,j)
+         t_nodes(i) = v_triang_nodes(i,j)
          nd = t_nodes(i)
          neighbours(nd) = neighbours(nd) + 6 - 1    ! account for the 5 other nodes of this element
       enddo
@@ -88,10 +89,6 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gmsh_tri, v_gmsh_tri_nodes,
       enddo
    enddo
 
-   !do i = 1,n_pts
-   !   write(*,*) 'neighbours', i, neighbours(i)
-   !enddo
-
    ! make xadj the vector of cumulative sum of neighbours
    xadj(1) = 1
    do i = 1,n_pts
@@ -99,17 +96,17 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gmsh_tri, v_gmsh_tri_nodes,
    enddo
    num_adj = xadj(n_pts+1)
 
-   end subroutine
+end subroutine
 
 !-------------------------------------------------------------------------------
 !-------------------------------------------------------------------------------
-! Make adjncy from xadj, num_adj, v_gmsh_tri_nodes
-
-subroutine make_adjacency_matrix(n_pts, n_elts_tri,  v_gmsh_tri_nodes, xadj, num_adj, adjncy)
+! Make adjncy from xadj, num_adj, v_triang_nodes
+! At end: adjncy(j) is non-zero except possibly for adjncy(n_gelts_triang)
+subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, num_adj, adjncy)
 
    use numbatmod
-   integer n_elts_tri, n_pts, num_adj
-   integer v_gmsh_tri_nodes(6,n_elts_tri)
+   integer n_gelts_triang, n_pts, num_adj
+   integer v_triang_nodes(6,n_gelts_triang)
    integer xadj(n_pts+1), adjncy(num_adj)
 
    integer lb2(MAX_N_PTS)
@@ -120,9 +117,9 @@ subroutine make_adjacency_matrix(n_pts, n_elts_tri,  v_gmsh_tri_nodes, xadj, num
       lb2(i)=0
    enddo
 
-   do j = 1,n_elts_tri     ! For all (6 node) triangles
+   do j = 1,n_gelts_triang     ! For all (6 node) triangles
       do i=1,6
-         t_nodes(i) = v_gmsh_tri_nodes(i,j)  ! get the current 6 nodes of this elt
+         t_nodes(i) = v_triang_nodes(i,j)  ! get the current 6 nodes of this elt
       enddo
 
       do i=1,6              ! for each of the 6 nodes
@@ -158,63 +155,149 @@ subroutine make_adjacency_matrix(n_pts, n_elts_tri,  v_gmsh_tri_nodes, xadj, num
 end subroutine
 
 !----------------------------------------------------------------------------
+subroutine check_point_separations(n_pts, vx, vy, errco, emsg)
+   use numbatmod
+   integer n_pts, errco
+   double precision vx(*), vy(*)
+   character emsg*(STRINGLEN)
+   integer i,j, mi, mj
+   double precision minsep, sep
+
+   write(*,*) 'Looking for the smallest node separation.'
+   write(*,*) 'If you just trust your mesh, set assertions_on =False in objects.py)'
+
+   minsep=1e10
+   do i = 1, n_pts-1
+      do j=i+1, n_pts
+         sep = sqrt((vx(i)-vx(j))**2 + (vy(i)-vy(j))**2)
+         if (sep .lt. minsep) then
+            minsep = sep
+            mi = i
+            mj = j
+            write(*,*) 'New minsep: ', minsep
+         endif
+
+         
+
+      enddo
+   enddo
+
+   write(*,*) 'Minimum point separation is ', minsep
+   if (minsep .lt. 1e-10) then
+      write(emsg,*) 'Minimum FEM node spatial separation seems very small:', minsep, &
+       '(x,y)_i = ', vx(mi), vy(mi), '.  (x,y)_j = ', vx(mj), vy(mj) 
+      errco = NBERR_BAD_NODE_SEPARATION
+   endif
+
+end subroutine
+
+!----------------------------------------------------------------------------
+! The permutation perm should an actual permutation of 1 to n_pts
 ! Every elt of adjncy except the last should be nonzero (apparently).
-subroutine assert_good_adjmat_permutation(num_adj, adjncy, errco, emsg)
+subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, emsg)
    use numbatmod
    integer errco
    character emsg*(STRINGLEN)
-   integer num_adj, i
-   integer adjncy(num_adj)
+   integer n_pts, num_adj
+   integer adjncy(num_adj), perm(*)
+   integer permcheck(n_pts)
+   integer found_bad, i
 
-   do i = 1,num_adj-1
-      if(adjncy(i) .eq. 0) then
-         write(emsg,*) 'rebalance_adjaceny_matrix ',  '(in conv_gmsh.f): ', &
-            ' Attention, permuted adjacency matrix has unexpected zero values', 'i, adjncy(i) = ', i, adjncy(i)
-         errco=-53
-         return
+   write(*,*)  'Checking permutation and adjacency invariants:'
+   ! Is the permutation actually a permutation (a bijection)? Is every value mapped somewhere?
+   found_bad = 0
+   do i = 1, n_pts
+      permcheck(i)=0
+   enddo
+   do i = 1, n_pts
+      permcheck(perm(i)) =permcheck(perm(i)) + 1
+   enddo
+   do i = 1, n_pts
+      if (permcheck(i) .ne. 1) then
+         found_bad=i
       endif
    enddo
-   end subroutine
+
+   if (found_bad .ne. 0) then
+      write(emsg,*) 'rebalance_adjaceny_matrix ',  '(in conv_gmsh.f): ', &
+         ' Attention, permuted adjacency matrix has unexpected zero values', 'i, adjncy(i) = ', found_bad, adjncy(found_bad)
+      errco=NBERR_BAD_PERMUTATION
+      write(*,*) 'Bad permutation. Index ',found_bad,' was mapped to ', permcheck(i), 'times.  Dumping all values.'
+      write(*,*) 'i, perm(i)'
+      do i = 1,n_pts
+         write(*,*) i, perm(i)
+      enddo
+   else
+      write(*,*) '  - seems to be a good permutation.'
+   endif
+
+
+   found_bad = 0
+   do i = 1,num_adj-1
+      if(adjncy(i) .eq. 0) then
+         found_bad = i
+      endif
+   enddo
+
+   if (found_bad .ne. 0) then
+      write(emsg,*) 'rebalance_adjaceny_matrix ',  '(in conv_gmsh.f): ', &
+         ' Attention, permuted adjacency matrix has unexpected zero values', 'i, adjncy(i) = ', found_bad, adjncy(found_bad)
+      errco=NBERR_BAD_ADJACENCY
+      write(*,*) 'Bad adjacency matrix, see log. Dumping all values'
+      write(*,*) 'i, adjncy(i)'
+      do i = 1,num_adj
+         write(*,*) i, adjncy(i)
+      enddo
+   else
+      write(*,*) '  - seems to be a good adjacency matrix.'
+   endif
+
+end subroutine
 
 
 !----------------------------------------------------------------------------
-! Shuffle v_gmsh_tri_nodes, vx, vy 
-subroutine apply_node_permutations(n_pts, n_elts_tri, perm, idfn, v_gmsh_tri_nodes, vx, vy)
+! Shuffle v_triang_nodes, vx, vy
+subroutine apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy)
    use numbatmod
 
-   integer n_elts_tri, n_pts
+   integer n_gelts_triang, n_pts
    integer perm(MAX_N_PTS)
    integer idfn(n_pts)
-   integer v_gmsh_tri_nodes(6,n_elts_tri)
+   integer v_triang_nodes(6,n_gelts_triang)
    double precision vx(n_pts), vy(n_pts)
 
    integer i,j
    integer invperm(MAX_N_PTS), idfn_r(MAX_N_PTS)
    double precision x_r(MAX_N_PTS), y_r(MAX_N_PTS)
-   
-      do i = 1, n_pts
-         invperm(perm(i)) = i
+
+   do i = 1, n_pts
+      invperm(perm(i)) = i
+   enddo
+
+   do i = 1, n_gelts_triang
+      do j = 1, 6
+         v_triang_nodes(j,i) = invperm(v_triang_nodes(j,i))
       enddo
-   
-      do i = 1, n_elts_tri
-         do j = 1, 6
-            v_gmsh_tri_nodes(j,i) = invperm(v_gmsh_tri_nodes(j,i))
-         enddo
-      enddo
-   
-      do i = 1, n_pts
-         idfn_r(i) = idfn(perm(i))
-         x_r(i) = vx(perm(i))
-         y_r(i) = vy(perm(i))
-      enddo
-   
-      do i = 1, n_pts
-         idfn(i) = idfn_r(i)
-         vx(i) = x_r(i)
-         vy(i) = y_r(i)
-      enddo
-   
-   end subroutine
+   enddo
+
+   do i = 1, n_pts
+      idfn_r(i) = idfn(perm(i))
+      x_r(i) = vx(perm(i))
+      y_r(i) = vy(perm(i))
+   enddo
+
+
+
+   do i = 1, n_pts
+      idfn(i) = idfn_r(i)
+      vx(i) = x_r(i)
+      vy(i) = y_r(i)
+   enddo
+
+
+
+end subroutine
+
 
 
 !c###############################################
@@ -224,7 +307,7 @@ subroutine apply_node_permutations(n_pts, n_elts_tri, perm, idfn, v_gmsh_tri_nod
 ! This Fortran subroutine, named `rebalance_adjacency_matrix`, appears to perform the following tasks:
 
 ! 1. **Building the adjacency matrix for a mesh of triangular elements:**
-!    - It takes as input the number of points (`n_pts`), the number of triangular elements (`n_elts_tri`), the connectivity array of nodes for each element (`v_gmsh_tri_nodes`), the node identification array (`idfn`), the cumulative sum of degrees array (`xadj`), and the adjacency list (`adjncy`).
+!    - It takes as input the number of points (`n_pts`), the number of triangular elements (`n_gelts_triang`), the connectivity array of nodes for each element (`v_triang_nodes`), the node identification array (`idfn`), the cumulative sum of degrees array (`xadj`), and the adjacency list (`adjncy`).
 !    - For each triangular element, it updates the adjacency list (`adjncy`) based on the connectivity of nodes. It avoids duplicates and self-comparisons.
 
 ! 2. **Applying the Reverse Cuthill-McKee (RCM) algorithm to renumber nodes:**
@@ -234,7 +317,7 @@ subroutine apply_node_permutations(n_pts, n_elts_tri, perm, idfn, v_gmsh_tri_nod
 
 ! 3. **Reordering mesh-related arrays based on the RCM permutation:**
 !    - It creates an inverse permutation array (`invperm`) to map the new ordering back to the original ordering.
-!    - It applies the inverse permutation to the connectivity array of nodes for each triangular element (`v_gmsh_tri_nodes`).
+!    - It applies the inverse permutation to the connectivity array of nodes for each triangular element (`v_triang_nodes`).
 !    - It applies the inverse permutation to the node identification array, `vx` (x-coordinates), and `vy` (y-coordinates).
 
 ! 4. **Additional notes:**
@@ -244,30 +327,33 @@ subroutine apply_node_permutations(n_pts, n_elts_tri, perm, idfn, v_gmsh_tri_nod
 ! It's worth noting that the RCM algorithm is used here to reduce the bandwidth of the adjacency matrix, which can be beneficial for certain numerical computations involving sparse matrices. The reordering of arrays based on the RCM permutation is a common step in preparing data for efficient sparse matrix computations.
 
 
-subroutine rebalance_adjacency_matrix(n_pts, n_elts_tri, v_gmsh_tri_nodes, xadj, num_adj, adjncy, vx, vy, idfn,  errco, emsg)
+
+subroutine rebalance_adjacency_matrix(n_pts, n_gelts_triang, v_triang_nodes, &
+   xadj, num_adj, adjncy, vx, vy, idfn, assertions_on, errco, emsg)
 
    use numbatmod
 
-   integer errco
+   integer errco, assertions_on
    character emsg*(STRINGLEN)
 
-   integer n_elts_tri, n_pts, num_adj
-   integer v_gmsh_tri_nodes(6,n_elts_tri), idfn(n_pts)
+   integer n_gelts_triang, n_pts, num_adj
+   integer v_triang_nodes(6,n_gelts_triang), idfn(n_pts)
    integer xadj(n_pts+1), adjncy(num_adj)
    double precision vx(n_pts), vy(n_pts)
-   
+
 
    integer mask(MAX_N_PTS), perm(MAX_N_PTS)
    integer xls(MAX_N_PTS)
-   
+
 
    call genrcm(n_pts, xadj, adjncy, perm, mask, xls)
 
+   if (assertions_on .ne. 0) then
+      call assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, emsg)
+      RETONERROR(errco)
+   endif
 
-   call assert_good_adjmat_permutation(num_adj, adjncy, errco, emsg)
-   RETONERROR(errco)
-   
-   call apply_node_permutations(n_pts, n_elts_tri, perm, idfn, v_gmsh_tri_nodes, vx, vy)
+   call apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy)
 
 end subroutine
 
@@ -275,8 +361,8 @@ end subroutine
 
 !--------------------------------------------------------------------------------------------------------
 
-! This Fortran subroutine, named `genrcm`, seems to be generating a Reverse Cuthill-McKee (RCM) ordering 
-! for a graph represented by its adjacency list. The RCM algorithm is used to reduce the bandwidth of a 
+! This Fortran subroutine, named `genrcm`, seems to be generating a Reverse Cuthill-McKee (RCM) ordering
+! for a graph represented by its adjacency list. The RCM algorithm is used to reduce the bandwidth of a
 ! sparse matrix, which can be beneficial for solving sparse linear systems more efficiently.
 
 ! Here's a breakdown of the key components of the function:
@@ -288,43 +374,43 @@ end subroutine
 ! - `mask`: An array indicating whether a node has been visited (`mask(i) = 1` means not visited, and `mask(i) = 0` means visited).
 ! - `xls`: An array storing the cumulative sum of nodes at each level in the level structure.
 
-! The subroutine initializes a mask array where all nodes are marked as not visited (`mask(i) = 1`). 
-! It then iterates over the nodes (`neqns`) to find the RCM ordering. For each unvisited node, it 
-! invokes the `fnroot` subroutine to generate a level structure (`xls`) using the breadth-first search (BFS) 
-! approach and updates the mask accordingly. 
-! Subsequently, the `rcm` subroutine is called to perform the Reverse Cuthill-McKee ordering starting from the 
+! The subroutine initializes a mask array where all nodes are marked as not visited (`mask(i) = 1`).
+! It then iterates over the nodes (`neqns`) to find the RCM ordering. For each unvisited node, it
+! invokes the `fnroot` subroutine to generate a level structure (`xls`) using the breadth-first search (BFS)
+! approach and updates the mask accordingly.
+! Subsequently, the `rcm` subroutine is called to perform the Reverse Cuthill-McKee ordering starting from the
 ! specified root node.
 
-! The ordering obtained from the `rcm` subroutine is stored in the `perm` array. The process continues until all nodes are visited. 
+! The ordering obtained from the `rcm` subroutine is stored in the `perm` array. The process continues until all nodes are visited.
 ! The loop is designed to handle disconnected components in the graph.
 
-! In summary, this subroutine applies the Reverse Cuthill-McKee algorithm to generate a node ordering (`perm`) 
-! that minimizes the bandwidth of the graph represented by the adjacency list. 
+! In summary, this subroutine applies the Reverse Cuthill-McKee algorithm to generate a node ordering (`perm`)
+! that minimizes the bandwidth of the graph represented by the adjacency list.
 ! The `xls` array is used to store the level structure, and the `mask` array keeps track of visited nodes during the process.
 
 subroutine  genrcm (neqns, xadj, adjncy, perm, mask, xls)
 
-      integer adjncy(*), mask(*), perm(*), xls(*)
-      integer xadj(*), ccsize, i, neqns, nlvl, num, root
-   
-      do i = 1, neqns
-         mask(i) = 1
-      enddo
-      
-      num = 1
-      do i = 1, neqns
-         if (mask(i).eq.0) continue
+   integer adjncy(*), mask(*), perm(*), xls(*)
+   integer xadj(*), ccsize, i, neqns, nlvl, num, root
 
-         root = i
-         call fnroot (root,xadj,adjncy,mask,nlvl,xls,perm(num))
-         call rcm (root,xadj,adjncy,mask,perm(num),ccsize,xls)
+   do i = 1, neqns
+      mask(i) = 1
+   enddo
 
-         num = num + ccsize
-         if (num.gt.neqns) return
+   num = 1
+   do i = 1, neqns
+      if (mask(i).eq.0) continue
 
-      enddo
-   end
-   
+      root = i
+      call fnroot (root,xadj,adjncy,mask,nlvl,xls,perm(num))
+      call rcm (root,xadj,adjncy,mask,perm(num),ccsize,xls)
+
+      num = num + ccsize
+      if (num.gt.neqns) return
+
+   enddo
+end
+
 !    ------------------------------------------------------------------
 
 subroutine fnroot (root,xadj,adjncy,mask,nlvl,xls,ls)
@@ -360,34 +446,40 @@ subroutine fnroot (root,xadj,adjncy,mask,nlvl,xls,ls)
 !    ------------------------------------------------------------------
 
    call rootls (root,xadj,adjncy,mask,nlvl,xls,ls)
+
    ccsize = xls(nlvl+1) - 1
    if (nlvl.eq.1 .or. nlvl.eq.ccsize) return
+
 100 jstrt = xls(nlvl)
    mindeg = ccsize
    root = ls(jstrt)
    if (ccsize.eq.jstrt) go to 400
+
    do 300 j = jstrt, ccsize
       node = ls(j)
       ndeg = 0
       kstrt = xadj(node)
       kstop = xadj(node+1) - 1
+
       do 200 k = kstrt, kstop
          nabor = adjncy(k)
          if (mask(nabor).gt.0) ndeg = ndeg + 1
 200   continue
+
       if (ndeg.ge.mindeg) go to 300
       root = node
       mindeg = ndeg
 300 continue
+
 400 call rootls (root,xadj,adjncy,mask,nunlvl,xls,ls)
+
    if (nunlvl.le.nlvl) return
    nlvl = nunlvl
    if (nlvl.lt.ccsize) go to 100
 
-
 end
 
-!c###############################################
+!---------------------------------------------------------------------
 
 
 subroutine  rcm (root,xadj,adjncy,mask,perm,ccsize,deg)
@@ -479,7 +571,9 @@ end
 
 subroutine  rootls (root,xadj,adjncy,mask,nlvl,xls,ls)
 
-!         This Fortran subroutine `rootls` appears to perform a level structure traversal of a graph starting from a specified root node. It uses a breadth-first search (BFS) approach to explore the graph and organize nodes into levels.
+! This Fortran subroutine `rootls` appears to perform a level structure traversal of a graph
+! starting from a specified root node. It uses a breadth-first search (BFS) approach to explore
+! the graph and organize nodes into levels.
 
 ! Here's a breakdown of the key components of the function:
 
@@ -491,16 +585,24 @@ subroutine  rootls (root,xadj,adjncy,mask,nlvl,xls,ls)
 ! - `xls`: An array storing the cumulative sum of nodes at each level in the level structure.
 ! - `ls`: An array representing the level structure.
 
-! The subroutine initializes by marking the root node as visited (setting `mask(root) = 0`), and adding it to the level structure (`ls` array). It then enters a loop (`200`) that iteratively explores the neighbors of the nodes in the current level. The loop continues until all nodes at the current level have been processed.
+! The subroutine initializes by marking the root node as visited (setting `mask(root) = 0`), and
+! adding it to the level structure (`ls` array). It then enters a loop (`200`) that iteratively
+! explores the neighbors of the nodes in the current level.
+! The loop continues until all nodes at the current level have been processed.
 
 ! Within the loop:
 ! 1. The starting and ending indices for the current level are determined (`lbegin` and `lvlend`).
-! 2. The neighbors of each node in the current level are explored, and if a neighbor has not been visited (`mask(nbr) = 1`), it is added to the level structure.
+! 2. The neighbors of each node in the current level are explored, and if a neighbor has not been
+!   visited (`mask(nbr) = 1`), it is added to the level structure.
 ! 3. The `mask` array is updated to mark visited nodes.
 
-! After processing all nodes in the current level, the subroutine checks if there are more nodes to explore in subsequent levels. If so, it increments the level count (`nlvl`), updates the cumulative sum array (`xls`), and repeats the process.
+! After processing all nodes in the current level, the subroutine checks if there are more nodes
+! to explore in subsequent levels. If so, it increments the level count (`nlvl`), updates the
+! cumulative sum array (`xls`), and repeats the process.
 
-! The subroutine continues until all nodes in the graph are visited. The final result is a level structure stored in the `ls` array, with information about the cumulative sum of nodes at each level stored in the `xls` array. The `mask` array is used to keep track of visited nodes during the traversal.
+! The subroutine continues until all nodes in the graph are visited. The final result is a level
+! structure stored in the `ls` array, with information about the cumulative sum of nodes at each
+! level stored in the `xls` array. The `mask` array is used to keep track of visited nodes during the traversal.
 
 !    ------------------------------------------------------------------
 
@@ -542,76 +644,92 @@ subroutine  rootls (root,xadj,adjncy,mask,nlvl,xls,ls)
 
 end
 
+!-------------------------------------------------------------------------------------------------------
 
-subroutine  degree (root,xadj,adjncy,mask,deg,ccsize,ls)
+! This Fortran subroutine appears to be implementing a breadth-first search (BFS) traversal of a graph
+! starting from a given `ROOT` node. The graph is represented using an adjacency list with
+! arrays `XADJ` and `ADJNCY`, where `XADJ` contains the cumulative sum of the degrees of nodes,
+! and `ADJNCY` contains the adjacency information for each node.
 
-   !         ChatGPT says:
-   !         This Fortran subroutine appears to be implementing a breadth-first search (BFS) traversal of a graph starting from a given `ROOT` node. The graph is represented using an adjacency list with arrays `XADJ` and `ADJNCY`, where `XADJ` contains the cumulative sum of the degrees of nodes, and `ADJNCY` contains the adjacency information for each node.
-   
-   ! Here's a breakdown of the key components of the function:
-   
-   ! - `ROOT`: The starting node for the BFS traversal.
-   ! - `XADJ`: Cumulative sum of the degrees of nodes in the graph.
-   ! - `ADJNCY`: Adjacency list representation of the graph.
-   ! - `MASK`: An array indicating whether a node has been visited (`MASK(i)=0` means not visited, and `MASK(i)=1` means visited).
-   ! - `DEG`: An array to store the degree of each node.
-   ! - `CCSIZE`: A variable to keep track of the size of the connected component.
-   ! - `LS`: An array representing the BFS traversal order.
-   
-   ! The function initializes with the `ROOT` node and performs BFS by traversing the graph layer by layer. The BFS traversal is done in a loop (`100`) until all nodes are visited. The process involves updating the degree of each node (`DEG` array), marking visited nodes in the `MASK` array, and updating the BFS traversal order in the `LS` array.
-   
-   ! The key steps within the loop (`100`) are:
-   
-   ! 1. Setting the beginning and end indices for the current layer of the BFS traversal.
-   ! 2. Iterating over the nodes in the current layer.
-   ! 3. For each node, updating its degree (`IDEG`), marking it as visited, and updating the BFS traversal order.
-   
-   ! The loop continues until all nodes in the current layer are processed. The process then repeats for the next layer until the entire graph is traversed.
-   
-   ! Finally, the function resets the signs of the `XADJ` array for all nodes, effectively undoing the changes made during the traversal.
-   
-   ! It's worth noting that this subroutine does not explicitly handle disconnected components in the graph. It assumes that the graph is connected. If there are multiple connected components, you might need to invoke this subroutine for each component separately.
-   
-   
-      integer adjncy(*), deg(*), ls(*), mask(*)
-      integer xadj(*), ccsize, i, ideg, j, jstop, jstrt
-      integer lbegin, lvlend, lvsize, nbr, node, root
-   
-   
-      ls(1) = root
-      xadj(root) = -xadj(root)
-      lvlend = 0
-      ccsize = 1
-   100 lbegin = lvlend + 1
-      lvlend = ccsize
-      do 400 i = lbegin, lvlend
-         node = ls(i)
-         jstrt = -xadj(node)
-         jstop = iabs(xadj(node + 1)) - 1
-         ideg = 0
-         if (jstop.lt.jstrt) go to 300
-         do 200 j = jstrt, jstop
-            nbr = adjncy(j)
-            if (mask(nbr).eq.0) go to 200
-            ideg = ideg + 1
-            if (xadj(nbr).lt.0) go to 200
-            xadj(nbr) = -xadj(nbr)
-            ccsize = ccsize + 1
-            ls(ccsize) = nbr
-   200   continue
-   300   deg(node) = ideg
-   400 continue
-      lvsize = ccsize - lvlend
-      if (lvsize.gt.0) go to 100
-      do 500 i = 1, ccsize
-         node = ls(i)
-         xadj(node) = -xadj(node)
-   500 continue
-   
-   
-   end
+! Here's a breakdown of the key components of the function:
 
-   
+! - `ROOT`: The starting node for the BFS traversal.
+! - `XADJ`: Cumulative sum of the degrees of nodes in the graph.
+! - `ADJNCY`: Adjacency list representation of the graph.
+! - `MASK`: An array indicating whether a node has been visited (`MASK(i)=0` means not visited,
+!            and `MASK(i)=1` means visited).
+! - `DEG`: An array to store the degree of each node.
+! - `CCSIZE`: A variable to keep track of the size of the connected component.
+! - `LS`: An array representing the BFS traversal order.
+
+! The function initializes with the `ROOT` node and performs BFS by traversing the graph layer by layer.
+! The BFS traversal is done in a loop (`100`) until all nodes are visited. The process involves updating
+! the degree of each node (`DEG` array), marking visited nodes in the `MASK` array, and updating the BFS
+! traversal order in the `LS` array.
+
+! The key steps within the loop (`100`) are:
+
+! 1. Setting the beginning and end indices for the current layer of the BFS traversal.
+! 2. Iterating over the nodes in the current layer.
+! 3. For each node, updating its degree (`IDEG`), marking it as visited, and updating the BFS traversal order.
+
+! The loop continues until all nodes in the current layer are processed. The process then repeats for
+! the next layer until the entire graph is traversed.
+
+! Finally, the function resets the signs of the `XADJ` array for all nodes, effectively undoing the
+! changes made during the traversal.
+
+! It's worth noting that this subroutine does not explicitly handle disconnected components in the graph.
+! It assumes that the graph is connected. If there are multiple connected components,
+! you might need to invoke this subroutine for each component separately.
+
+subroutine  degree (root, xadj, adjncy, mask, deg, ccsize, ls)
+
+   integer adjncy(*), deg(*), ls(*), mask(*)
+   integer xadj(*), ccsize, i, ideg, j, jstop, jstrt
+   integer lbegin, lvlend, lvsize, nbr, node, root
+
+
+   ls(1) = root
+   xadj(root) = -xadj(root)
+   lvlend = 0
+   ccsize = 1
+100 lbegin = lvlend + 1
+   lvlend = ccsize
+
+   do 400 i = lbegin, lvlend
+      node = ls(i)
+      jstrt = -xadj(node)
+      jstop = iabs(xadj(node + 1)) - 1
+      ideg = 0
+
+      if (jstop.lt.jstrt) go to 300
+
+      do 200 j = jstrt, jstop
+         nbr = adjncy(j)
+         if (mask(nbr).eq.0) go to 200
+         ideg = ideg + 1
+         if (xadj(nbr).lt.0) go to 200
+         xadj(nbr) = -xadj(nbr)
+         ccsize = ccsize + 1
+         ls(ccsize) = nbr
+200   continue
+
+300   deg(node) = ideg
+
+400 continue
+   lvsize = ccsize - lvlend
+   if (lvsize.gt.0) go to 100
+
+   do 500 i = 1, ccsize
+      node = ls(i)
+      xadj(node) = -xadj(node)
+500 continue
+
+
+end
+
+
 !c###############################################!c
 
 !      subroutine type_arete(i, i1, i2, ne_d1, nu_d1, typ_el_d1)
@@ -713,7 +831,7 @@ subroutine  degree (root,xadj,adjncy,mask,deg,ccsize,ls)
 
 
 
-!    ------------------------------------------------------------------!!     
+!    ------------------------------------------------------------------!!
 ! subroutine prepmailp2(tcp1,maxvis,ne,ns,visited)!c!    ------------------------------------------------------------------!
 !     integer i, ii, jel, maxvis, ne, ns, tcp1(6,ne), visited(ns)!c!    ------------------------------------------------------------------!c
 !     do i = 1, ns
@@ -870,7 +988,7 @@ subroutine  degree (root,xadj,adjncy,mask,deg,ccsize,ls)
 !       endif
 !     enddo
 
-!     
+!
 !     end
 
 !    ------------------------------------------------------------------

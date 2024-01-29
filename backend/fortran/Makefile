@@ -4,7 +4,17 @@ NumBAT_MOD=NumBAT
 
 all: $(NumBAT_MOD).so
 
-## Choose your platform
+## Set your python virtualenv platform
+MYPYENV = $(HOME)/mypy3
+PYVERMAJ=3
+PYVERMAJMIN=3.11
+
+# virtual env doesn't contain Python.h, so we grab it from here: 
+SYSTEMPYINC = /usr/include/python3.11
+
+
+
+## Set your other libraries
 
 MYPLAT="linux_inteloneapi"
 #MYPLAT="linux_vanilla"
@@ -13,6 +23,7 @@ MYPLAT="linux_inteloneapi"
 
 PLAT = $(MYPLAT)
 
+# or set it from an environment variable
 ifeq ($(origin NUMBAT_PLATFORM), environment)
 PLAT=$(NUMBAT_PLATFORM)
 endif
@@ -44,21 +55,14 @@ ARPACK_LIB  = -L /usr/lib/x86_64-linux-gnu -larpack
 
 UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L /usr/lib/x86_64-linux-gnu -lumfpack -lcholmod -lamd -lsuitesparseconfig
+## EndDefs
 
-PYVERMAJ=3
-PYVERMAJMIN=3.11
-PYROOT = /home/msteel/mypy3
+PYROOT = $(MYPYENV)
 PYBIN = $(PYROOT)/bin
 PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
-PYBASELIB = $(PYROOT)/lib/python$(PYVERMAJMIN)
-PYPACKAGES = $(PYBASELIB)/site-packages
-
-# virtual env doesn't contain Python.h ?!
-SYSTEMPYINC = /usr/include/python3.11
-
+PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 F2PY = $(PYBIN)/f2py
-#PYINCCORE = $(PYROOT)/include/python$(PYVERMAJMIN)
-## EndDefs
+
 
 
 
@@ -67,9 +71,7 @@ MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) -llapack -lblas
 GENLIB = -lrt
 
 NUMPYDIR = $(PYPACKAGES)/numpy
-#PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/f2py/src/
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
-
 
 
 else ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI
@@ -92,15 +94,12 @@ MKLROOT = /opt/intel/oneapi/mkl/latest
 
 UMFPACK_INC = -I/usr/include/suitesparse
 UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-
-PYVERMAJ=3
-PYVERMAJMIN=3.11
-#TODO: move this to a personal venv
-PYROOT = /usr/lib/python$(PYVERMAJ)
-PYINCCORE = /usr/include/python$(PYVERMAJMIN)
 ## EndDefs
 
-
+PYROOT = $(MYPYENV)
+PYBIN = $(PYROOT)/bin
+PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
+PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 
 MKL_INCL = -I $(MKLROOT)/include
 MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
@@ -109,8 +108,8 @@ MATHINC = $(ARPACK_INCL) $(MKL_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 GENLIB = -lrt
 
-NUMPYDIR = $(PYROOT)/dist-packages/numpy
-PYINC = -I $(PYINCCORE) -I $(NUMPYDIR)/f2py/src/
+NUMPYDIR = $(PYPACKAGES)/numpy
+PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
 
 else ifeq ($(PLAT), "MacOS")
