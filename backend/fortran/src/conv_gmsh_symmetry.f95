@@ -1,29 +1,25 @@
 !c###############################################!!c###############################################
-subroutine symmetry(n_pts, ne, max_n_gmsh_tri, idfn, nu, typ_el, x, y, i_sym)
+subroutine symmetry(n_pts, ne, max_n_gelts_triangs, idfn, nu, typ_el, x, y, i_sym)
 
    !!    symmetry: symmetrize an FEM mesh!c*******************************************************
 
    use numbatmod
-   integer i_sym, max_n_gmsh_tri
+   integer i_sym, max_n_gelts_triangs
 
    integer ne, n_pts
-   integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
+   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
    integer idfn(MAX_N_PTS)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
 
-   !    Local data
-
-   integer max_n_gmsh_tri_0, MAX_N_PTS_0
+   integer max_n_gelts_triangs_0, MAX_N_PTS_0
    parameter(MAX_N_PTS_0=250000)
-   parameter (max_n_gmsh_tri_0=120000)
+   parameter (max_n_gelts_triangs_0=120000)
    integer ne_0, n_pts_0, idfn_0(MAX_N_PTS_0)
-   integer nu_0(6,max_n_gmsh_tri_0), typ_el_0(max_n_gmsh_tri_0)
+   integer nu_0(6,max_n_gelts_triangs_0), typ_el_0(max_n_gelts_triangs_0)
    double precision x_0(MAX_N_PTS_0),  y_0(MAX_N_PTS_0)
-   integer tab_ne(max_n_gmsh_tri_0), tab_n_pts(MAX_N_PTS_0,3)!c
+   integer tab_ne(max_n_gelts_triangs_0), tab_n_pts(MAX_N_PTS_0,3)!c
    integer i, j
-   !         integer debug, ui
-   !character file_ui*100!         common/imp/ui, debug
-   !common/imp_file/file_ui!ccccccccccccccccccccccccc
+
    n_pts_0 = n_pts
    ne_0 = ne
    do i=1,n_pts_0
@@ -38,14 +34,14 @@ subroutine symmetry(n_pts, ne, max_n_gmsh_tri, idfn, nu, typ_el, x, y, i_sym)
       typ_el_0(i) = typ_el(i)
    enddo!ccccccccccc
    if(i_sym .eq. 1) then
-      call y_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gmsh_tri, idfn, nu, typ_el, &
+      call y_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, &
          idfn_0, nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
 
    elseif(i_sym .eq. 2) then
-      call x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gmsh_tri, idfn, nu, typ_el, &
+      call x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, &
          idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,    tab_ne, tab_n_pts)
    elseif(i_sym .eq. 3) then
-      call y_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gmsh_tri, idfn, nu, typ_el, &
+      call y_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, &
          idfn_0, nu_0, typ_el_0, x, y, x_0, y_0,  tab_ne, tab_n_pts)
 
       n_pts_0 = n_pts
@@ -62,7 +58,7 @@ subroutine symmetry(n_pts, ne, max_n_gmsh_tri, idfn, nu, typ_el, x, y, i_sym)
          typ_el_0(i) = typ_el(i)
       enddo
 
-      call x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gmsh_tri, idfn, nu, typ_el, idfn_0, &
+      call x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, idfn_0, &
          nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
 
    else
@@ -75,18 +71,18 @@ end
 
  !c###############################################
 
-subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gmsh_tri, idfn, nu, typ_el, &
+subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, typ_el, &
    idfn_0, nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
    use numbatmod
-   integer max_n_gmsh_tri
+   integer max_n_gelts_triangs
 
    integer ne_0, n_pts_0, idfn_0(MAX_N_PTS)
-   integer nu_0(6,max_n_gmsh_tri), typ_el_0(max_n_gmsh_tri)
+   integer nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
 
    integer ne, n_pts, idfn(MAX_N_PTS)
-   integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
+   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
 
-   integer tab_ne(max_n_gmsh_tri), tab_n_pts(MAX_N_PTS,3)
+   integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
    double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!    Local variables
    integer i, i1, i2, i_a, i_b, j, j1, j2
@@ -228,18 +224,18 @@ end
 
  !c###############################################!!c###############################################
 
-subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gmsh_tri, idfn, nu, typ_el, &
+subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, &
    idfn_0, nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
    use numbatmod
-   integer max_n_gmsh_tri
+   integer max_n_gelts_triangs
 
    integer ne_0, n_pts_0, idfn_0(MAX_N_PTS)
-   integer nu_0(6,max_n_gmsh_tri), typ_el_0(max_n_gmsh_tri)
+   integer nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
 
    integer ne, n_pts, idfn(MAX_N_PTS)
-   integer nu(6,max_n_gmsh_tri), typ_el(max_n_gmsh_tri)
+   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
 
-   integer tab_ne(max_n_gmsh_tri), tab_n_pts(MAX_N_PTS,3)
+   integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
    double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!    Local variables
    integer i, i1, i2, i_a, i_b, j, j1, j2

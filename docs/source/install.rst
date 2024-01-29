@@ -48,12 +48,23 @@ The code depends critically on matrix-vector operations provided by Lapack and B
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
+#. Create a python virtual environment for working with |NUMBAT|.
+   You can use any name and location for your tree. 
+   To specify a virtual environment tree called `nbpy3` in your home directory, enter ::
+
+    $ cd ~
+    $ python3 -m virtualenv nbpy3
+
+
+#. Activate the new python virtual environment ::
+
+    $ source ~/nbpy3/bin/activate
+
 #. Install necessary python libraries ::
 
-    $ sudo apt-get install python3-matplotlib
-    $ sudo apt-get install python3-numpy
-    $ sudo apt-get install python3-scipy
-    $ sudo apt-get install python3-psutil
+    $ pip3 install numpy matplotlib scipy psutils
+
+#. Create a working directory for your |NUMBAT| work and move into it.
 
 #. To download the current version from the git repository and install any missing library dependencies, use ::
 

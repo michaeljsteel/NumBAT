@@ -80,6 +80,7 @@ A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface 
 You will need to make some changes to existing files to run in |NUMBAT| 2.0.  Your best guide to new capabilities and API changes is to look through the code in the tutorial examples.
 
 Some key changes you will need to make are as follows:
+ * On Linux, the fortran Makefile is now designed to work with a virtual environment python to avoid dependencies on your system python.
  * There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
  * It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
  * The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.

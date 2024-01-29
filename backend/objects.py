@@ -582,7 +582,7 @@ class Structure(object):
                 fout.write(geo)
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-            assertions_on = False
+            assertions_on = True
             
             err_no, err_msg = NumBAT.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:

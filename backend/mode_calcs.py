@@ -63,7 +63,9 @@ def check_triangulation(vx, vy, triangs):
 
     print('  Closest space of triangle points was', dsepmin)
     if dsepmin < 1e-11:
-        print(f'Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]})')
+        msg=f'Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
+        msg+='\nIt seems the mesh grid reordering has failed.'
+        report_and_exit(msg)
 
     #print('Raw points')
     #for i in range(npts):
