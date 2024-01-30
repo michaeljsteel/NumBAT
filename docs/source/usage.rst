@@ -226,12 +226,12 @@ These structures consist of a pair of waveguides with a single common background
 The dimesions are set by ``inc_a_x/inc_a_y`` and  ``inc_b_x/inc_b_y``. They are separated
 horintally by ``two_inc_sep`` and the right waveguide has a vertical offset of ``y_off``.
 
-.. figure::  images/meshes/twoincl_rect_wg_mesh_both.png
+.. figure::  images/meshes/twoincl_rect_wg-mesh.png
    :width: 15cm
 
    Coupled rectangular waveguides using shape ``rectangular`` (template ``twoincl_msh``).
 
-.. figure::  images/meshes/twoincl_circ_wg_mesh_both.png
+.. figure::  images/meshes/twoincl_circ_wg-mesh.png
    :width: 15cm
 
    Coupled circular waveguides using shape ``circular`` (template ``twoincl_msh``).
@@ -253,13 +253,13 @@ These structures consist of a rib on one or more substrate layers with zero to t
 
    A coated rib waveguide using shape ``rib_coated`` (template ``rib_coated``).
 
-.. figure:: images/meshes/rib_double_coated_wg_mesh_both.png
+.. figure:: images/meshes/rib_double_coated_wg-mesh.png
    :width: 15cm
 
    A rib waveguide on two substrates using shape ``rib_double_coated`` (template ``rib_double_coated``).
 
 .. .. figure:: images/meshes/slot_wg-mesh-annotated.png
-.. figure:: images/meshes/slot_wg_mesh_both.png
+.. figure:: images/meshes/slot_wg-mesh.png
    :width: 15cm
 
 Engineered rib  waveguides
@@ -268,12 +268,12 @@ Engineered rib  waveguides
 These are examples of more complex rib geometries. These are good examples to study in order to make new designs
 using the user-specified waveguide and mesh mechanism.
 
-.. figure:: images/meshes/trapezoidal_rib_wg_mesh_both.png
+.. figure:: images/meshes/trapezoidal_rib_wg-mesh.png
    :width: 15cm
 
    A trapezoidal rib structure using shape ``trapezoidal_rib``.
 
-.. figure:: images/meshes/pedestal_wg_mesh_both.png
+.. figure:: images/meshes/pedestal_wg-mesh.png
    :width: 15cm
 
    A supported pedestal structure using shape ``pedestal``.
@@ -288,7 +288,7 @@ by the 'slot' effect.
    A slot waveguide using shape ``slot`` (``material_a`` is low index) (template ``slot``).
 
 .. .. figure:: images/meshes/slot_coated_wg-mesh-annotated.png
-.. figure:: images/meshes/slot_coated_wg_mesh_both.png
+.. figure:: images/meshes/slot_coated_wg-mesh.png
    :width: 15cm
 
    A coated slot waveguide using shape ``slot_coated`` (``material_a`` is low index) (template ``slot_coated``).
@@ -303,7 +303,7 @@ Note that ``inc_a_x`` specifies the innermost *diameter*.
 The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thickness of each succssive layer.
 
 
-.. figure:: images/meshes/onion_wg_mesh_both.png
+.. figure:: images/meshes/onion_wg-mesh.png
    :width: 15cm
 
    A many-layered concentric structure using shape ``onion`` (template ``onion``).
