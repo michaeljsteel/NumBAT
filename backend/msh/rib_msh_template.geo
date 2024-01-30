@@ -9,8 +9,8 @@ dy_in_nm = 50;
 dy = dy_in_nm/d_in_nm;
 a1 = 20;
 a1y = 10;
-radius1 = (a1/(2*d_in_nm))*d;
-radius1y = (a1y/(2*d_in_nm))*d;
+rib_halfw = (a1/(2*d_in_nm))*d;
+rib_halfh = (a1y/(2*d_in_nm))*d;
 
 slabx = 80;
 slaby = 10;
@@ -21,36 +21,41 @@ lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
 lc_refine_2 = lc/1; // slab
 
-hy = dy/2 + (slab_h/2) + radius1y; // 
-hx = 0.;
-x0 = -d/2;
+hy = dy/2 + (slab_h/2) + rib_halfh; // 
 y0 = hy-slab_h;
+ytop = y0;
+ybot = y0-dy;
+ymid = y0-hy;
 
 
-Point(1) = {x0, y0, 0, lc};
-Point(2) = {x0-hx, y0-dy, 0, lc};
-Point(3) = {x0-hx+d,y0-dy, 0, lc};
-Point(4) = {x0+d, y0, 0,lc};
+// Outer box
+Point(1) = {-d/2, ytop,    0, lc};     // NW
+Point(2) = {-d/2, ybot, 0, lc};     // SW
+Point(3) = {d/2,  ybot, 0, lc};     // SE
+Point(4) = {d/2,  ytop,    0,lc};      // NE
 
 // Slab
-Point(5) = {x0+d/2-slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
-Point(6) = {x0+d/2+slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
-Point(13) = {x0+d/2-slab_w/2,y0 -hy, 0, lc_refine_2};
-Point(14) = {x0+d/2+slab_w/2, y0-hy, 0, lc_refine_2};
+Point(5)  = {-slab_w/2, ymid+slab_h, 0, lc_refine_2}; // NW
+Point(6)  = {+slab_w/2, ymid+slab_h, 0, lc_refine_2}; // NE
+Point(13) = {-slab_w/2, ymid,        0, lc_refine_2}; // SW
+Point(14) = {+slab_w/2, ymid,        0, lc_refine_2}; // SE
 
 // Rib
-Point(7) = {x0-hx+d/2-radius1, y0-hy+slab_h, 0, lc_refine_1};
-Point(8) = {x0-hx+d/2+radius1, y0-hy+slab_h, 0, lc_refine_1};
-Point(9) = {x0-hx+d/2-radius1, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
-Point(10) = {x0-hx+d/2+radius1,y0 -hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(7)  = {-rib_halfw, ymid+slab_h, 0, lc_refine_1};             // SW
+Point(8)  = {+rib_halfw, ymid+slab_h, 0, lc_refine_1};             // SE
+Point(9)  = {-rib_halfw, ymid+2*rib_halfh+slab_h, 0, lc_refine_1}; // NW
+Point(10) = {+rib_halfw, ymid+2*rib_halfh+slab_h, 0, lc_refine_1}; // NE
 
-Point(11) = {x0+0, y0-hy+slab_h, 0, lc};
-Point(12) = {x0+d, y0-hy+slab_h, 0, lc};
-Point(15) = {x0-hx+d/2+radius1, y0, 0, lc};
-Point(16) = {x0-hx+d/2-radius1, y0, 0, lc};
-Point(17) = {x0-hx+d/2+radius1, y0-dy, 0, lc};
-Point(18) = {x0-hx+d/2-radius1, y0-dy, 0, lc};
 
+Point(11) = {-d/2,       ymid+slab_h, 0, lc}; // Left end of surface
+Point(12) = {d/2,        ymid+slab_h, 0, lc}; // Right end of surface
+Point(15) = {+rib_halfw, ytop, 0, lc};           // Intersec of top and right rib vertical
+Point(16) = {-rib_halfw, ytop, 0, lc};           // Intersec of top and left rib vertical
+Point(17) = {+rib_halfw, ybot, 0, lc};           // Intersec of bot and right rib vertical (no purpose)
+Point(18) = {-rib_halfw, ybot, 0, lc};           // Intersec of bot and right rib vertical (no purpose)
+
+Line(2) = {2,3};
+Line(4) = {4,1};
 Line(5) = {5, 7};
 Line(6) = {7, 9};
 Line(7) = {9, 10};
@@ -64,7 +69,7 @@ Line(14) = {1, 11};
 Line(15) = {11, 2};
 Line(16) = {4, 12};
 Line(17) = {12, 3};
-Line Loop(18) = {14, 15, 2, -17, -16, 4};
+Line Loop(18) = {14, 15, 2, -17, -16, 4}; //Lines 2 and 4 don't exist?!
 Line(19) = {11, 5};
 Line(20) = {6, 12};
 Line Loop(25) = {6, 7, 8, 9};

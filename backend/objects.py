@@ -22,6 +22,7 @@ import os
 import subprocess
 import copy
 import traceback
+import time
 
 
 import tempfile
@@ -582,7 +583,7 @@ class Structure(object):
                 fout.write(geo)
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-            assertions_on = True
+            assertions_on = False
             
             err_no, err_msg = NumBAT.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:
@@ -652,6 +653,7 @@ class Structure(object):
         nbtools.join_figs(tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',
                           str(outprefix)+'-mesh.png')
+        print(tmpoutpref)
 
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''
