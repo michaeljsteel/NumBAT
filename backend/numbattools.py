@@ -10,10 +10,19 @@ import datetime
 
 from PIL import Image
 
-def join_figs(fn1, fn2, fnout):
+def join_figs(l_fns, fnout, clip=None):
 
-    images = [Image.open(x) for x in [fn1, fn2]]
+    images = []
+    for fn in l_fns: 
+        im = Image.open(fn)
 
+        if clip is not None:
+            sz = im.size
+            area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
+            im = im.crop(area)
+        images.append(im)
+
+    #matches heights of first two images
     nsz0 = [images[1].size[0],
             int(images[0].size[1]*
             images[1].size[0]/

@@ -650,10 +650,10 @@ class Structure(object):
 
         os.wait()
 
-        nbtools.join_figs(tmpoutpref+'-mesh_geom.png',
-                          tmpoutpref+'-mesh_nodes.png',
-                          str(outprefix)+'-mesh.png')
-        print(tmpoutpref)
+        nbtools.join_figs([tmpoutpref+'-mesh_geom.png',
+                          tmpoutpref+'-mesh_nodes.png',],
+                          str(outprefix)+'-mesh.png',
+                          clip=(60,50,60,50))
 
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''

@@ -1,6 +1,7 @@
 import sys
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import time
+import math
 
 
 
@@ -17,6 +18,80 @@ mat_c = materials.make_material("SiO2_2016_Smith")
 mat_d = materials.make_material("SiO2_2016_Smith")
 mat_e = materials.make_material("SiO2_2016_Smith")
 
+fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
+
+col_mat = 'black'
+col_lc = 'darkgreen'
+col_dim = 'brown'
+
+def add_mat_lab(im, bw, bh, lab, x, y):
+    d = ImageDraw.Draw(im)
+    d.text((x,y), lab, font=fnt_mat, fill=col_mat, anchor='mm')
+
+def add_lc(im, bw, bh, lab, x, y, compass):
+
+    arlen = .05*bw
+    sqlen = .05*bw/math.sqrt(2)
+    ax = x
+    ay = y
+
+    match compass:
+        case 'N':
+            ay -= alen
+            anc = 'mb'
+        case 'S':
+            ay += alen
+            anc = 'mt'
+        case 'E':
+            ax += alen
+            anc = 'lm'
+        case 'W':
+            ax -= alen
+            anc = 'rm'
+        case 'NW':
+            ax -= sqlen
+            ay -= sqlen
+            anc = 'rb'
+        case 'NE':
+            ax += sqlen
+            ay -= sqlen
+            anc = 'lb'
+        case 'SW':
+            ax -= sqlen
+            ay += sqlen
+            anc = 'rt'
+        case 'SE':
+            ax += sqlen
+            ay += sqlen
+            anc = 'lt'
+
+    d = ImageDraw.Draw(im)
+    d.line((x,y,ax,ay), fill=col_lc, width=2)
+    d.text((ax,ay), lab, font=fnt_mat, fill=col_lc, anchor=anc)
+
+def add_dim(im, bw, bh, lab, x1, y1, x2, y2, compass):
+
+    alen = bh*.02
+    tx = (x1 + x2)/2
+    ty = (y1+y2)/2
+
+    match compass:
+        case 'N':
+            ty -= alen
+            anc = 'mb'
+        case 'S':
+            ty += alen
+            anc = 'mt'
+        case 'E':
+            tx += alen
+            anc = 'lm'
+        case 'W':
+            tx -= alen
+            anc = 'rm'
+
+    d = ImageDraw.Draw(im)
+    d.line((x1,y1,x2,y2), fill=col_dim)
+    d.text((tx,ty), lab, font=fnt_mat, fill=col_dim, anchor=anc)
 
 def do_oneincl(nbapp):
 #
@@ -35,8 +110,74 @@ def do_oneincl(nbapp):
     wguide2 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'circular',
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
-    wguide1.plot_mesh('rect_wg')
-    wguide2.plot_mesh('circ_wg')
+    #wguide1.plot_mesh('rect_wg')
+    #wguide2.plot_mesh('circ_wg')
+
+    
+    unitcell_x = 4000
+    unitcell_y = 3000
+    inc_a_x = 2000
+    inc_b_x = 600
+    inc_b_y = 1100
+
+    wguide3 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'triangular',
+                            material_bkg=mat_bkg, material_a=mat_a,
+                            inc_b_x = inc_b_x, inc_b_y = inc_b_y,
+                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
+
+
+    frt = 'triangular'
+    wguide3.plot_mesh(frt+'_wg')
+
+
+    with Image.open(frt+'_wg-mesh.png').convert('RGBA') as im:
+        sz = im.size
+        bl = im.size[0]*.025
+        br = im.size[0]*.475
+        bt = im.size[1]*.06
+        bb = im.size[1]*.93
+        bw = br-bl
+        bh = bb-bt
+
+        scalx = 1/unitcell_x
+        scaly = 1/unitcell_y
+
+        bumpx = -.0*bw
+        bumpy = +.01*bh
+        x0 = (bl+br)/2  + bumpx
+        y0 = (bt+bb)/2 + bumpy
+        ymid = bt+bh*(.5+.5*inc_b_y*scaly) + bumpy
+
+        #add_mat_lab(im, bw, bh, 'x', x0, ymid)
+        #add_mat_lab(im, bw, bh, 'x', bl, bt)
+        #add_mat_lab(im, bw, bh, 'x', br, bt)
+        #add_mat_lab(im, bw, bh, 'x', bl, bb)
+        #add_mat_lab(im, bw, bh, 'x', br, bb)
+
+        add_mat_lab(im, bw, bh, 'mat_b1', x0-bw/15, ymid-bh/8)
+        add_mat_lab(im, bw, bh, 'mat_bg', x0-bw/3, y0-bh/6)
+        add_mat_lab(im, bw, bh, 'mat_bg', x0+bw/3, y0-bh/6)
+        add_mat_lab(im, bw, bh, 'mat_bg', x0, ymid+bh/6)
+
+        add_lc(im, bw, bh, 'lc_bg', x0-bw/6, bt, 'SW')
+        add_lc(im, bw, bh, 'lc_1',  x0-bw/6, ymid, 'SW')
+
+        x1 = x0-.5*bw*inc_a_x*scalx; x2 = x1+bw*inc_a_x*scalx
+        y1 = ymid+.03*bh; y2 = ymid+.03*bh
+        add_dim(im, bw, bh, 'inc_a_x', x1, y1, x2, y2, 'S')
+
+        x1 = x0-.5*bw*inc_a_x*scalx; x2 = x1+bw*inc_b_x*scalx
+        y1 = ymid-.03*bh; y2 = ymid-.03*bh
+        add_dim(im, bw, bh, 'inc_b_x', x1, y1, x2, y2, 'N')
+
+        x1 = x0+.5*bw*inc_a_x*scalx; x2 = x1
+        y1 = ymid; y2 = y1-bh*inc_b_y*scaly
+        add_dim(im, bw, bh, 'inc_b_y', x1, y1, x2, y2, 'E')
+
+
+        im.show()
+        im.save(frt+'_wg-mesh-annotated.png')
+
 
 def do_twoincl(nbapp):
     #
@@ -104,7 +245,7 @@ def do_rib(nbapp):
                                 material_c=mat_c, material_d=mat_d, material_e=mat_e,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10, 
                                 lc_refine_4=20, lc_refine_5=20)
-    wguide3.check_mesh()
+    #wguide3.check_mesh()
     wguide3.plot_mesh('rib_double_coated_wg')
 
     
@@ -144,8 +285,8 @@ def do_slot(nbapp):
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, 
                                 lc_refine_3=10, lc_refine_4=20)
     wguide2.plot_mesh('slot_coated_wg')
-    wguide1.check_mesh()
-    wguide2.check_mesh()
+    #wguide1.check_mesh()
+    #wguide2.check_mesh()
 
 
 
