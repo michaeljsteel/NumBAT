@@ -26,6 +26,10 @@ mike:
 view:
 	evince build/latex/NumBAT.pdf
 
+BROWSER=google-chrome
+hview:
+	$(BROWSER) build/html/index.html
+
 .PHONY: help
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
