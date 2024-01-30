@@ -307,12 +307,16 @@ end subroutine
 ! This Fortran subroutine, named `rebalance_adjacency_matrix`, appears to perform the following tasks:
 
 ! 1. **Building the adjacency matrix for a mesh of triangular elements:**
-!    - It takes as input the number of points (`n_pts`), the number of triangular elements (`n_gelts_triang`), the connectivity array of nodes for each element (`v_triang_nodes`), the node identification array (`idfn`), the cumulative sum of degrees array (`xadj`), and the adjacency list (`adjncy`).
-!    - For each triangular element, it updates the adjacency list (`adjncy`) based on the connectivity of nodes. It avoids duplicates and self-comparisons.
+!    - It takes as input the number of points (`n_pts`), the number of triangular elements (`n_gelts_triang`), 
+!       the connectivity array of nodes for each element (`v_triang_nodes`), the node identification 
+!       array (`idfn`), the cumulative sum of degrees array (`xadj`), and the adjacency list (`adjncy`).
+!    - For each triangular element, it updates the adjacency list (`adjncy`) based on the connectivity of nodes. 
+!      It avoids duplicates and self-comparisons.
 
 ! 2. **Applying the Reverse Cuthill-McKee (RCM) algorithm to renumber nodes:**
 !    - It initializes arrays (`mask`, `perm`, `xls`, etc.) for use in the RCM algorithm.
-!    - It calls the `genrcm` subroutine, which is responsible for applying the RCM algorithm to generate a new ordering of nodes (`perm`).
+!    - It calls the `genrcm` subroutine, which is responsible for applying the RCM algorithm to 
+!        generate a new ordering of nodes (`perm`).
 !    - It checks for potential issues in the adjacency list (`adjncy`) and returns an error if necessary.
 
 ! 3. **Reordering mesh-related arrays based on the RCM permutation:**
@@ -322,9 +326,12 @@ end subroutine
 
 ! 4. **Additional notes:**
 !    - The subroutine includes error checking for potential issues with the adjacency list.
-!    - It provides the option to reorganize additional arrays based on the RCM ordering (such as `idfn`, `vx`, and `vy`), but this is conditional on the logical value `.true.`.
+!    - It provides the option to reorganize additional arrays based on the RCM ordering 
+!        (such as `idfn`, `vx`, and `vy`), but this is conditional on the logical value `.true.`.
 
-! It's worth noting that the RCM algorithm is used here to reduce the bandwidth of the adjacency matrix, which can be beneficial for certain numerical computations involving sparse matrices. The reordering of arrays based on the RCM permutation is a common step in preparing data for efficient sparse matrix computations.
+! It's worth noting that the RCM algorithm is used here to reduce the bandwidth of the adjacency matrix, 
+! which can be beneficial for certain numerical computations involving sparse matrices. The reordering 
+! of arrays based on the RCM permutation is a common step in preparing data for efficient sparse matrix computations.
 
 
 

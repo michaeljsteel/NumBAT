@@ -194,7 +194,7 @@ class Triangular(UserGeometryBase):
 
 
     def apply_parameters(self):
-        subs = [('d_in_nm = 1000.0;',     'd_in_nm = %f;',        self.get_param('unitcell_x')), 
+        subs = [('dx_in_nm = 1000.0;',    'dx_in_nm = %f;',       self.get_param('unitcell_x')), 
                 ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')), 
                 ('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')), 
                 ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')), 
