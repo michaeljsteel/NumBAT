@@ -32,16 +32,29 @@ Installing on Linux
 ================================
 
 
-|NUMBAT| has been developed and tested on Ubuntu 23.04 with the following package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0, and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and LAPACK libraries. We strongly recommend linking |NUMBAT| against optimised versions, such as the MKL library provided in the  free Intel OneAPI library.
+|NUMBAT| has been developed and tested on Ubuntu 23.04 with the following
+package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0,
+and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and LAPACK libraries. We
+strongly recommend linking |NUMBAT| against optimised versions, such as the MKL
+library provided in the  free Intel OneAPI library.
 
-|NUMBAT| has also been successfully installed by users on Debian and RedHat/Fedora, and with different versions of packages, but these installations have not been as thoroughly documented so may require user testing.  In general, any relatively current Linux system should work without trouble.
+|NUMBAT| has also been successfully installed by users on Debian and
+RedHat/Fedora, and with different versions of packages, but these installations
+have not been as thoroughly documented so may require user testing.  In
+general, any relatively current Linux system should work without trouble.
 
-|NUMBAT| building and installation is easiest if you have root access, but it is not required.
-See the section below if you do not have root access (or the ability to run ``sudo``) on your machine.
+|NUMBAT| building and installation is easiest if you have root access, but it
+is not required.  See the section below if you do not have root access (or the
+ability to run ``sudo``) on your machine.
 
-The following steps use package syntax for Ubuntu/Debian systems. For other Linux flavours, you may need to use different package manager syntax and/or slightly different package names.
+The following steps use package syntax for Ubuntu/Debian systems. For other
+Linux flavours, you may need to use different package manager syntax and/or
+slightly different package names.
 
-The code depends critically on matrix-vector operations provided by Lapack and Blas libraries. We strongly recommend using an optimised library such as the Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries (AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
+The code depends critically on matrix-vector operations provided by Lapack and
+Blas libraries. We strongly recommend using an optimised library such as the
+Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
+(AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
 
 #. Before installing, ensure your system is up to date ::
 
@@ -122,8 +135,8 @@ The following steps have worked for us:
 
    $ mkdir numbat
    $ cd numbat
-   $ git clone https://github.com/michaeljsteel/|NUMBAT|.git
-   $ cd numbat
+   $ git clone https://github.com/michaeljsteel/NumBAT.git
+   $ cd NumBAT
 
 #. If it is not already on your system, install the MacPorts package manager at `this page <https://macports.org/install.php>`_.
 
@@ -141,8 +154,6 @@ The following steps have worked for us:
 
    $ sudo port install lapack
 
-   $ sudo port install blas
-
 #. Install the Arpack eigensolver::
 
    $ sudo port install arpack
@@ -158,9 +169,25 @@ The following steps have worked for us:
    (Note that this will install everything in `/Library/Frameworks` and **not** override
    the System python in `/System/Library/Frameworks.`)
 
-#. Install some python packages not included by default::
+#. Install python `virtualenv` package
 
-   $ pip3 install numpy scipy matplotlib psutil
+   $ cd /Library/Frameworks/Python.framework/Versions/3.12/bin/
+   $ ./python3.12 -m pip install --upgrade pip
+   $ ./pip3 install virtualenv
+
+#. Create a |NUMBAT|-specific python virtual environment in `~/nbpy3`
+
+    $ cd /Library/Frameworks/Python.framework/Versions/3.12/bin/
+    $ ./python3 -m virtualenv ~/nbpy3
+
+
+#. Activate the new python virtual environment (note the leading fullstop) ::
+
+    $ . ~/nbpy3/bin/activate
+
+#. Install necessary python libraries ::
+
+    $ pip3 install numpy matplotlib scipy psutil
 
 #. Check that the python installs work and create a matplotlib .config directory::
 
@@ -179,7 +206,11 @@ The following steps have worked for us:
 
    $ cd backend/fortran
 
-#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that the line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol.
+#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that: 
+   
+     - The line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol. 
+     - The value of `MYPYENV` matches the folder of your python virtual environment set up above.
+     - The value of `PYVERMAJMIN` and `SYSTEMPYINC` are set appropriately.  
 
 #. Now at last, we can build |NUMBAT| ::
 
@@ -193,12 +224,19 @@ The following steps have worked for us:
 Installing on Windows
 ================================
 
-The easiest way to run |NUMBAT| on  Windows is usually by installing Ubuntu as a virtual machine using either `Microsoft Hyper-V <https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box <https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_.
+The easiest way to run |NUMBAT| on  Windows is usually by installing Ubuntu as
+a virtual machine using either `Microsoft Hyper-V
+<https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box
+<https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_.
 
-Then |NUMBAT| can be installed using exactly the same procedure as described above for standard Linux installations.
-It is also possible to build |NUMBAT| using the `Windows Subsystem for Linux <https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing with installing the additional required packages may be quite painful.
+Then |NUMBAT| can be installed using exactly the same procedure as described
+above for standard Linux installations.  It is also possible to build |NUMBAT|
+using the `Windows Subsystem for Linux
+<https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
+with installing the additional required packages may be quite painful.
 
 
+There is also an outdated Docker package for Windows that could be updated to support the current version of |NUMBAT| if there is demand. Let us know.
 
 .. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.
 
