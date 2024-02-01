@@ -163,6 +163,9 @@ subroutine check_point_separations(n_pts, vx, vy, errco, emsg)
    integer i,j, mi, mj
    double precision minsep, sep
 
+   mi = 0
+   mj = 0
+
    write(*,*) 'Looking for the smallest node separation.'
    write(*,*) 'If you just trust your mesh, set assertions_on =False in objects.py)'
 

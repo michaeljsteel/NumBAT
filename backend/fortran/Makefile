@@ -5,20 +5,20 @@ NumBAT_MOD=NumBAT
 all: $(NumBAT_MOD).so
 
 ## Set your python virtualenv platform
-MYPYENV = $(HOME)/mypy3
+MYPYENV = $(HOME)/nbpy3
 PYVERMAJ=3
-PYVERMAJMIN=3.11
+PYVERMAJMIN=3.12
 
 # virtual env doesn't contain Python.h, so we grab it from here: 
-SYSTEMPYINC = /usr/include/python3.11
+SYSTEMPYINC = /usr/include/python3.12
 
 
 
 ## Set your other libraries
 
-MYPLAT="linux_inteloneapi"
+#MYPLAT="linux_inteloneapi"
 #MYPLAT="linux_vanilla"
-#MYPLAT="MacOS"
+MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
 PLAT = $(MYPLAT)
@@ -139,13 +139,23 @@ MATHINC = /opt/local/include $(MKL_INCL) $(ARPACK_INCL)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB) -L /opt/local/lib/gcc13
 #GENLIB = -lrt
 
+PYROOT = $(MYPYENV)
+PYBIN = $(PYROOT)/bin
+PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
+PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 
-PYVER = 3.12
-PYNAME = python$(PYVER)
-PYROOT = /Library/Frameworks/Python.framework/Versions/$(PYVER)
-NUMPYDIR = $(PYROOT)/lib/$(PYNAME)/site-packages/numpy
-PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/
+PYNAME = python$(PYVERMAJMIN)
+#NUMPYDIR = $(PYROOT)/lib/$(PYNAME)/site-packages/numpy
+
+PYFRAMEWORK = /Library/Frameworks/Python.framework/Versions/Current
+PYCINC = -I $(PYFRAMEWORK)/Headers
+
+NUMPYDIR = $(PYPACKAGES)/numpy
+PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/ $(PYCINC)/ -I /opt/local/include/gcc13/c++
+
 PYLIB = -L $(PYROOT)/lib -l$(PYNAME)
+PYLIB = -L $(PYFRAMEWORK)/lib -l$(PYNAME)
+
 OSF77FLAGS = -D __APPLE__
 F2PY = $(PYROOT)/bin/f2py
 
@@ -189,7 +199,7 @@ UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build 
 # -std=f95
-CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
+CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops 
 
 build/%.o : src/%.f95
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
@@ -255,6 +265,7 @@ $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
 	-mkdir build
+	#cp /Library/Frameworks/Python.framework/Headers/Python.h src
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
