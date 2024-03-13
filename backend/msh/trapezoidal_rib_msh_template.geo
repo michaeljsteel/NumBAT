@@ -4,13 +4,13 @@
 Mesh.MshFileVersion = 2.2;
 
 // d = 1; // grating period
-//d_in_nm = 8200.0; // total width
+//dx_in_nm = 8200.0; // total width
 //dy_in_nm = 2500.0; // total height
 
-d_in_nm = 100.0; // total width
-dy_in_nm = 50.0; // total height
+dx_in_nm = 4000.0; // total width
+dy_in_nm = 2000.0; // total height
 
-dy = dy_in_nm/d_in_nm;  // height (fraction or width)
+dy = dy_in_nm/dx_in_nm;  // height (fraction or width)
 
 hy2 = -.65*dy; // top of the substrate
 
@@ -29,28 +29,30 @@ lc_refine_2 = lc/5.0; // slab
 //////////////////////////////////////////
 
 
-Point(1) = {0, 0, 0, lc};
-Point(2) = {0, -dy, 0, lc};
-Point(3) = {1, -dy, 0, lc};
-Point(4) = {1, 0, 0, lc};
+x0 = -.5;
+y0 = .5*dy;
+Point(1) = {0+x0, 0+y0, 0, lc};
+Point(2) = {0+x0, -dy+y0, 0, lc};
+Point(3) = {1+x0, -dy+y0, 0, lc};
+Point(4) = {1+x0, 0+y0, 0, lc};
 
 // slab (burried part of the rib)
-Point(5) = {.5-bottom_rib_width/d_in_nm/2., hy2, 0, lc_refine_2};
-Point(6) = {.5+bottom_rib_width/d_in_nm/2., hy2, 0, lc_refine_2};
-Point(13) = {.5-bottom_rib_width/d_in_nm/2., hy2-slab_thickness/d_in_nm, 0, lc_refine_2};
-Point(14) = {.5+bottom_rib_width/d_in_nm/2., hy2-slab_thickness/d_in_nm, 0, lc_refine_2};
+Point(5) = {.5+x0-bottom_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
+Point(6) = {.5+x0+bottom_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
+Point(13) = {.5+x0-bottom_rib_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
+Point(14) = {.5+x0+bottom_rib_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
 
 // sticking out part of the rib
-Point(20) = {.5-mid_rib_width/d_in_nm/2., hy2, 0, lc_refine_1};
-Point(21) = {.5+mid_rib_width/d_in_nm/2., hy2, 0, lc_refine_1};
-Point(22) = {.5-top_rib_width/d_in_nm/2., hy2+rib_height/d_in_nm, 0, lc_refine_1};
-Point(23) = {.5+top_rib_width/d_in_nm/2., hy2+rib_height/d_in_nm, 0, lc_refine_1};
+Point(20) = {.5+x0-mid_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
+Point(21) = {.5+x0+mid_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
+Point(22) = {.5+x0-top_rib_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
+Point(23) = {.5+x0+top_rib_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
 
-Point(11) = {0, hy2, 0, lc};
-Point(12) = {1, hy2, 0, lc};
+Point(11) = {0+x0, hy2+y0, 0, lc};
+Point(12) = {1+x0, hy2+y0, 0, lc};
 
-Point(24) = {.5+top_rib_width/d_in_nm/2., 0, 0, lc};
-Point(25) = {.5-top_rib_width/d_in_nm/2., 0, 0, lc};
+Point(24) = {.5+x0+top_rib_width/dx_in_nm/2., y0, 0, lc};
+Point(25) = {.5+x0-top_rib_width/dx_in_nm/2., y0, 0, lc};
 
 
 Line(1) = {2, 3};

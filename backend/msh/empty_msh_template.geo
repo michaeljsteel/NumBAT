@@ -9,10 +9,10 @@ lc_refine_1 = lc/1; // mesh refinement parameters
 lc_refine_2 = lc/1; // mesh refinement parameters
 
 // Unit cell
-d_in_nm = 1000;
+dx_in_nm = 1000;
 dy_in_nm = 600;
 d = 1; // normalised unitcell limits x
-h = dy_in_nm/d_in_nm; // unitcell limit y
+h = dy_in_nm/dx_in_nm; // unitcell limit y
 
 Point(1) = {0, 0, 0, lc};
 Point(2) = {0, -h, 0, lc};
