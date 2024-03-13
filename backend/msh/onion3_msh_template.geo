@@ -5,15 +5,15 @@
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-d_in_nm = 2000;
+dx_in_nm = 2000;
 dy_in_nm = 2000;
-dy = dy_in_nm/d_in_nm;
+dy = dy_in_nm/dx_in_nm;
 a1 = 100;
 a2 = 100;
 a3 = 100;
 
 a1r = a1/2; // Radius of central rod
-scale = d/d_in_nm;
+scale = d/dx_in_nm;
 
 rad1 = a1r * scale;
 rad2 = (a1r+a2)*scale;

@@ -49,7 +49,7 @@ def _process_one_and_two_incls(params):
 
 def _process_one_and_two_incls_subs(msh_template, umb):
         # TODO: these are crazy small defaults
-    subs = [('d_in_nm = 100;', 'd_in_nm = %f;', umb.get_param('unitcell_x'))]
+    subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', umb.get_param('unitcell_x'))]
     subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', umb.get_param('unitcell_y')))
     subs.append(('a1 = 20;', 'a1 = %f;', umb.get_param('inc_a_x')))
     subs.append(('a1y = 10;', 'a1y = %f;', umb.get_param('inc_a_y')))
@@ -72,7 +72,7 @@ def _process_one_and_two_incls_subs(msh_template, umb):
         subs.append(('yoff = -5;', 'yoff = %f;', umb.get_param('incs_y_offset')))
 
     if msh_template in ['1_on_slab', '1_on_2slabs', '1_on_slab', '2_on_2slabs']:
-        subs.append(('slab_width = d_in_nm;',
+        subs.append(('slab_width = dx_in_nm;',
                     'slab_width = %f;', umb.get_param('slab_a_x')))
         subs.append(
             ('slab_height = 10;', 'slab_height = %f;', umb.get_param('.slab_a_y')))
@@ -82,7 +82,7 @@ def _process_one_and_two_incls_subs(msh_template, umb):
             ('lc_refine_4 = lc/1;', 'lc_refine_4 = lc/%f;', umb.get_param('lc_refine_4')))
 
     if msh_template in ['1_on_2slabs', '2_on_2slabs']:
-        subs.append(('slab2_width = d_in_nm;',
+        subs.append(('slab2_width = dx_in_nm;',
                     'slab2_width = %f;', umb.get_param('slab_b_x')))
         subs.append(
             ('slab2_height = 5;', 'slab2_height = %f;', umb.get_param('slab_b_y')))
@@ -219,7 +219,7 @@ class Triangular(UserGeometryBase):
 
 
 def make_onion_subs(umb):
-    subs = [('d_in_nm = 2000;', 'd_in_nm = %f;', umb.get_param('unitcell_x'))]
+    subs = [('dx_in_nm = 2000;', 'dx_in_nm = %f;', umb.get_param('unitcell_x'))]
     subs.append(('dy_in_nm = 2000;', 'dy_in_nm = %f;', umb.get_param('unitcell_y')))
     subs.append(('a1 = 100;', 'a1 = %f;', umb.get_param('inc_a_x')))
     subs.append(('a2 = 100;', 'a2 = %f;', umb.get_param('inc_b_x')))
@@ -372,7 +372,7 @@ class Pedestal(UserGeometryBase):
         #                                 self.get_param('pillar_x, self.get_param('pillar_y,
         #                                 self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
@@ -424,7 +424,7 @@ class TrapezoidalRib(UserGeometryBase):
         #                                 (self.get_param('unitcell_x, self.get_param('inc_a_x,
         #                                  self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [    ('d_in_nm = 100.0;', 'd_in_nm = %f;',  self.get_param('unitcell_x'))]
+        subs = [    ('dx_in_nm = 100.0;', 'dx_in_nm = %f;',  self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50.0;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('top_rib_width = 600.0;',     'top_rib_width = %f;',    self.get_param('inc_a_x')))
         subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
@@ -458,7 +458,7 @@ class Rib(UserGeometryBase):
         # msh_name = self.get_param('_make_mesh_name(self._mesh_name,
         #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y, self.get_param('inc_a_x, self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
@@ -488,7 +488,7 @@ class RibCoated(UserGeometryBase):
         #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
         #                                  self.get_param('coat_x, self.get_param('coat_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
@@ -522,7 +522,7 @@ class RibDoubleCoated(UserGeometryBase):
         #                                  self.get_param('coat2_y, self.get_param('slab_a_x,
         #                                  self.get_param('slab_a_y, self.get_param('slab_b_y')))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
@@ -562,7 +562,7 @@ class Slot(UserGeometryBase):
         #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
         #                                  self.get_param('inc_b_x, self.get_param('slab_a_x, self.get_param('slab_a_y')))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
@@ -593,7 +593,7 @@ class SlotCoated(UserGeometryBase):
         #                                  self.get_param('inc_a_y, self.get_param('inc_b_x, self.get_param('slab_a_x,
         #                                  self.get_param('slab_a_y, self.get_param('coat_y')))
 
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))

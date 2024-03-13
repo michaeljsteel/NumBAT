@@ -5,13 +5,13 @@
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-d_in_nm = 100;
+dx_in_nm = 100;
 dy_in_nm = 50;
-dy = dy_in_nm/d_in_nm;
+dy = dy_in_nm/dx_in_nm;
 a1 = 20;
 a1y = 10;
-radius1 = (a1/(2*d_in_nm))*d;
-radius1y = (a1y/(2*d_in_nm))*d;
+radius1 = (a1/(2*dx_in_nm))*d;
+radius1y = (a1y/(2*dx_in_nm))*d;
 rect = 1;
 lc = 0.1; // 0.501 0.201 0.0701;
 lc_refine_1 = lc/1; // on cylinder surfaces

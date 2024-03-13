@@ -23,7 +23,7 @@ class MyGuide(UserGeometryBase):
     def apply_parameters(self):
 
         # At a minimum we usually need to adjust the unit cell size
-        subs = [('d_in_nm = 100;', 'd_in_nm = %f;', self.get_param('unitcell_x'))]
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
 
         return subs

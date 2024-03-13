@@ -4,18 +4,18 @@
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-d_in_nm = 100;
+dx_in_nm = 100;
 dy_in_nm = 50;
-dy = dy_in_nm/d_in_nm;
+dy = dy_in_nm/dx_in_nm;
 a1 = 20;
 a1y = 10;
-rib_halfw = (a1/(2*d_in_nm))*d;
-rib_halfh = (a1y/(2*d_in_nm))*d;
+rib_halfw = (a1/(2*dx_in_nm))*d;
+rib_halfh = (a1y/(2*dx_in_nm))*d;
 
 slabx = 80;
 slaby = 10;
-slab_w = slabx/d_in_nm;
-slab_h = slaby/d_in_nm;
+slab_w = slabx/dx_in_nm;
+slab_h = slaby/dx_in_nm;
 
 lc = 0.1; // background and unitcell edge
 lc_refine_1 = lc/1; // rib
