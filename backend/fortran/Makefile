@@ -5,28 +5,31 @@ NumBAT_MOD=NumBAT
 all: $(NumBAT_MOD).so
 
 ## Set your python virtualenv platform
-MYPYENV = $(HOME)/nbpy3
+#MYPYENV = $(HOME)/nbpy3
+MYPYENV = $(HOME)/mypy3
 PYVERMAJ=3
+#PYVERMAJMIN=$(origin NUMBAT_PYVER),3.12)
 PYVERMAJMIN=3.12
-
-# virtual env doesn't contain Python.h, so we grab it from here: 
-SYSTEMPYINC = /usr/include/python3.12
-
+PYVERMAJMIN=3.11
 
 
 ## Set your other libraries
 
-#MYPLAT="linux_inteloneapi"
+MYPLAT="linux_inteloneapi"
 #MYPLAT="linux_vanilla"
-MYPLAT="MacOS"
+#MYPLAT="MacOS"
 #MYPLAT="myplatform"
+
+# virtual env doesn't contain Python.h, so we grab it from here: 
+SYSTEMPYINC = /usr/include/python$(PYVERMAJMIN)
+
 
 PLAT = $(MYPLAT)
 
 # or set it from an environment variable
-ifeq ($(origin NUMBAT_PLATFORM), environment)
-PLAT=$(NUMBAT_PLATFORM)
-endif
+#ifeq ($(origin NUMBAT_PLATFORM), environment)
+#PLAT=$(NUMBAT_PLATFORM)
+#endif
 
 ifndef PLAT
 $(error 'Error: Must define MYPLAT variable in Makefile or environment variable NUMBAT_PLATFORM')
@@ -165,6 +168,8 @@ MATHINC =
 MATHLIB =
 GENLIB = -lrt
 
+else 
+$(error "Unknown platform: $(NUMBAT_PLATFORM)" )
 endif
 
 
@@ -219,6 +224,11 @@ build/%.o : build/%.c
 build/%.e : src/%.f
 	cpp -I src $< -o $@
 
+build/%.e : src/%.c
+	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
+
+build/%.e : build/%.c
+	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
 F2PYLINK=Ccomp
 #F2PYLINK=Fcomp
