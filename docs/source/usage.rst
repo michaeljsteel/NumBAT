@@ -94,9 +94,13 @@ To save the results from a simulation that are displayed upon execution (the pri
 
 To have direct access to the simulation objects upon the completion of a script use::
 
-    $ python3 -i simo.py
+    $ python3 -i ./simo-tut_01-first_calc.py 
 
-This will execute the ``simo.py`` script and then return you into an interactive python session within the terminal. This terminal session provides the user experience of an ipython type shell where the python environment and all the simulation objects are as in the simo.py script. In this session you can access the docstrings of objects, classes and methods. For example::
+This will execute the python script and then return you into an interactive
+python session within the terminal. This terminal session provides the user
+experience of an ipython type shell where the python environment and all the
+simulation objects are in the same state as in the script when it has finished executing. In this session you can access the docstrings of objects, 
+classes and methods. For example::
 
     >>> from pydoc import help
     >>> help(objects.Struct)

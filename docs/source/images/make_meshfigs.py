@@ -24,6 +24,10 @@ col_mat = 'black'
 col_lc = 'darkgreen'
 col_dim = 'brown'
 
+fn_suff_raw = '_wg'
+fn_ext_raw = '_wg-mesh.png'
+fn_ext_anno = '_wg-mesh-annotated.png'
+
 def add_mat_lab(im, bw, bh, lab, x, y):
     d = ImageDraw.Draw(im)
     d.text((x,y), lab, font=fnt_mat, fill=col_mat, anchor='mm')
@@ -93,90 +97,153 @@ def add_dim(im, bw, bh, lab, x1, y1, x2, y2, compass):
     d.line((x1,y1,x2,y2), fill=col_dim)
     d.text((tx,ty), lab, font=fnt_mat, fill=col_dim, anchor=anc)
 
-def do_oneincl(nbapp):
-#
-# oneincl_mesh.geo
-# 
-    unitcell_x = 4000
-    unitcell_y = 3000
-    inc_a_x = 1500
-    inc_a_y = 750
+def get_sizes(im,x0,x1,y0,y1,un_x, un_y):
+    sz = im.size
+    bl = im.size[0]*x0
+    br = im.size[0]*x1
+    bt = im.size[1]*y0
+    bb = im.size[1]*y1
+    bw = br-bl
+    bh = bb-bt
+
+    scalx = bw/un_x
+    scaly = bh/un_y
+
+    return (bl, br, bt, bb, bw, bh, scalx, scaly)
+
+
+def do_oneincl_rect(nbapp):
+    un_x = 4000; un_y = 3000; inc_a_x = 1500; inc_a_y = 750
+
     # plain rect waveguide
-    wguide1 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'rectangular',
+    wguide = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rectangular',
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
+    frt = 'rect'
+    wguide.plot_mesh('rect'+fn_suff_raw)
+
     
-    
-    wguide2 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'circular',
+    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+
+        x0 = (bl+br)/2
+        y0 = (bt+bb)/2
+        dx = (br-bl)/20
+        dy = (bt-bb)/20
+
+        add_mat_lab(im, bw, bh, 'mat_bkg', x0-2*dx, y0+dy)
+        add_mat_lab(im, bw, bh, 'mat_a', x0-dx*6, y0+dy*5)
+
+        add_lc(im, bw, bh, 'lc_bg', x0-dx*3, bt-.5*dy, 'SW')
+        add_lc(im, bw, bh, 'lc_1',  x0-inc_a_x*scalx*.5, y0-dy, 'SW')
+
+        xs = x0-.53*inc_a_x*scalx; xf=xs
+        ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
+        add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
+
+        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx; 
+        ys = y0-.53*inc_a_y*scaly; yf = ys
+        add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
+
+
+
+        im.show()
+        im.save(frt+fn_ext_anno)
+
+def do_oneincl_circ(nbapp):
+    un_x = 4000; un_y = 3000; inc_a_x = 1500; inc_a_y = 750
+
+    wguide = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'circular',
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
-    #wguide1.plot_mesh('rect_wg')
-    #wguide2.plot_mesh('circ_wg')
+    frt = 'circ'
+    wguide.plot_mesh(frt+fn_suff_raw)
 
-    
-    unitcell_x = 4000
-    unitcell_y = 3000
-    inc_a_x = 2000
-    inc_b_x = 600
-    inc_b_y = 1100
+    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
 
-    wguide3 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'triangular',
+        x0 = (bl+br)/2
+        y0 = (bt+bb)/2
+        dx = (br-bl)/20
+        dy = (bt-bb)/20
+
+        add_mat_lab(im, bw, bh, 'mat_bkg', x0-dx,   y0+dy)
+        add_mat_lab(im, bw, bh, 'mat_a',   x0-5*dx, y0+dy*5)
+
+
+        add_lc(im, bw, bh, 'lc_bkg', x0-2*dx, bt-.5*dy, 'SW')
+        add_lc(im, bw, bh, 'lc_2',   x0-dx, y0+bh/8, 'SW')
+        add_lc(im, bw, bh, 'lc_3',   x0,      y0, 'SE')
+
+        xs = x0-.53*inc_a_x*scalx; xf=xs
+        ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
+        add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
+
+        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx; 
+        ys = y0-.53*inc_a_y*scaly; yf = ys
+        add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
+
+
+
+        im.show()
+        im.save(frt+fn_ext_anno)
+
+def do_oneincl_triang(nbapp):
+    un_x = 4000; un_y = 3000; inc_a_x = 2000; inc_a_y = 750; inc_b_x = 600; inc_b_y = 1100
+
+    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'triangular',
                             material_bkg=mat_bkg, material_a=mat_a,
                             inc_b_x = inc_b_x, inc_b_y = inc_b_y,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
 
 
     frt = 'triangular'
-    wguide3.plot_mesh(frt+'_wg')
+    wguide3.plot_mesh(frt+fn_suff_raw) 
 
+    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
 
-    with Image.open(frt+'_wg-mesh.png').convert('RGBA') as im:
-        sz = im.size
-        bl = im.size[0]*.025
-        br = im.size[0]*.475
-        bt = im.size[1]*.06
-        bb = im.size[1]*.93
-        bw = br-bl
-        bh = bb-bt
-
-        scalx = 1/unitcell_x
-        scaly = 1/unitcell_y
+        dx = (br-bl)/20
+        dy = (bt-bb)/20
 
         bumpx = -.0*bw
         bumpy = +.01*bh
+
         x0 = (bl+br)/2  + bumpx
         y0 = (bt+bb)/2 + bumpy
-        ymid = bt+bh*(.5+.5*inc_b_y*scaly) + bumpy
-
-        #add_mat_lab(im, bw, bh, 'x', x0, ymid)
-        #add_mat_lab(im, bw, bh, 'x', bl, bt)
-        #add_mat_lab(im, bw, bh, 'x', br, bt)
-        #add_mat_lab(im, bw, bh, 'x', bl, bb)
-        #add_mat_lab(im, bw, bh, 'x', br, bb)
+        ymid = bt+bh*.5+.5*inc_b_y*scaly + bumpy
 
         add_mat_lab(im, bw, bh, 'mat_b1', x0-bw/15, ymid-bh/8)
         add_mat_lab(im, bw, bh, 'mat_bg', x0-bw/3, y0-bh/6)
         add_mat_lab(im, bw, bh, 'mat_bg', x0+bw/3, y0-bh/6)
         add_mat_lab(im, bw, bh, 'mat_bg', x0, ymid+bh/6)
 
-        add_lc(im, bw, bh, 'lc_bg', x0-bw/6, bt, 'SW')
-        add_lc(im, bw, bh, 'lc_1',  x0-bw/6, ymid, 'SW')
+        add_lc(im, bw, bh, 'lc_bkg', x0-bw/6, bt-.5*dy, 'SW')
+        add_lc(im, bw, bh, 'lc_1',  x0-bw/3, ymid, 'SW')
 
-        x1 = x0-.5*bw*inc_a_x*scalx; x2 = x1+bw*inc_a_x*scalx
+        x1 = x0-.5*inc_a_x*scalx; x2 = x1+inc_a_x*scalx
         y1 = ymid+.03*bh; y2 = ymid+.03*bh
         add_dim(im, bw, bh, 'inc_a_x', x1, y1, x2, y2, 'S')
 
-        x1 = x0-.5*bw*inc_a_x*scalx; x2 = x1+bw*inc_b_x*scalx
+        x1 = x0-.5*inc_a_x*scalx; x2 = x1+inc_b_x*scalx
         y1 = ymid-.03*bh; y2 = ymid-.03*bh
         add_dim(im, bw, bh, 'inc_b_x', x1, y1, x2, y2, 'N')
 
-        x1 = x0+.5*bw*inc_a_x*scalx; x2 = x1
-        y1 = ymid; y2 = y1-bh*inc_b_y*scaly
+        x1 = x0+.5*inc_a_x*scalx; x2 = x1
+        y1 = ymid; y2 = y1-inc_b_y*scaly
         add_dim(im, bw, bh, 'inc_b_y', x1, y1, x2, y2, 'E')
 
 
         im.show()
-        im.save(frt+'_wg-mesh-annotated.png')
+        im.save(frt+fn_ext_anno)
+
+
+
+
+def do_oneincl(nbapp):
+    do_oneincl_rect(nbapp)
+    do_oneincl_circ(nbapp)
+    do_oneincl_triang(nbapp)
 
 
 def do_twoincl(nbapp):
@@ -185,21 +252,21 @@ def do_twoincl(nbapp):
     # 
     
     # rect inclusions
-    unitcell_x = 4000
-    unitcell_y = 3000
+    un_x = 4000
+    un_y = 3000
     inc_a_x = 1500
     inc_a_y = 750
     inc_b_x = int(inc_a_x/2)
     inc_b_y = inc_a_y*2
     incs_y_offset = -400
     two_inc_sep=500
-    wguide1 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'rectangular',
+    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rectangular',
                                 inc_b_x=inc_b_x, inc_b_y=inc_b_y, two_inc_sep=two_inc_sep,
                                incs_y_offset=incs_y_offset,
                             material_bkg=mat_air, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     # circ inclusions
-    wguide2 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'circular',
+    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'circular',
                                 inc_b_x=inc_b_x, inc_b_y=inc_b_y, two_inc_sep=two_inc_sep,
                             material_bkg=mat_a, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
@@ -208,8 +275,8 @@ def do_twoincl(nbapp):
    
 def do_rib(nbapp):
     # rib structures inclusions
-    unitcell_x = 4000
-    unitcell_y = 3000
+    un_x = 4000
+    un_y = 3000
     inc_a_x = 1000
     inc_a_y = 400
 
@@ -221,14 +288,14 @@ def do_rib(nbapp):
     coat2_x = 70
     coat2_y = 70
 
-    wguide1 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'rib',
+    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
                             material_bkg=mat_bkg, material_a=mat_a, 
                                 material_b=mat_b,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10)
     wguide1.plot_mesh('rib_wg')
 
-    wguide2 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'rib_coated',
+    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib_coated',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
                                 coat_x=coat_x, coat_y=coat_y, 
                             material_bkg=mat_bkg, material_a=mat_a, 
@@ -237,7 +304,7 @@ def do_rib(nbapp):
     wguide2.plot_mesh('rib_coated_wg')
 
 
-    wguide3 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'rib_double_coated',
+    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib_double_coated',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
                                 coat_x=coat_x, coat_y=coat_y, 
                                 coat2_x=coat2_x, coat2_y=coat2_y, 
@@ -251,8 +318,8 @@ def do_rib(nbapp):
     
 def do_slot(nbapp):
     # rib structures inclusions
-    unitcell_x = 4000
-    unitcell_y = 3000
+    un_x = 4000
+    un_y = 3000
     slab_a_x = 3000
     slab_a_y = 400
 
@@ -262,7 +329,7 @@ def do_slot(nbapp):
     inc_b_x = 300  # pillar width
     coat_y = 50  # pillar coat thickness
 
-    wguide1 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'slot',
+    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
                                 inc_b_x=inc_b_x,
                             material_bkg=mat_bkg, material_a=mat_bkg, 
@@ -271,10 +338,10 @@ def do_slot(nbapp):
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10)
     wguide1.plot_mesh('slot_wg')
 
-    unitcell_x = 4000
-    unitcell_y = 1000
+    un_x = 4000
+    un_y = 1000
 
-    wguide2 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'slot_coated',
+    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot_coated',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
                                 inc_b_x=inc_b_x,
                                 coat_y=coat_y,
@@ -293,14 +360,14 @@ def do_slot(nbapp):
 def do_onion(nbapp):
 
     # A concentric Bragg fibre
-    unitcell_x = 1500
-    unitcell_y = 1500
+    un_x = 1500
+    un_y = 1500
 
     # layer thicknesses
     d1=50
     d2=75
 
-    wguide1 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'onion',
+    wguide1 = nbapp.make_structure(un_x,d1,un_y,d1,'onion',
                                 inc_b_x=d2, inc_c_x=d1, inc_d_x=d2, inc_e_x=d1, inc_f_x=d2,
                                 inc_g_x=d1, inc_h_x=d2, inc_i_x=d1, inc_j_x=d2, inc_k_x=d1,
                                 inc_l_x=d2, inc_m_x=d1, inc_n_x=d2, inc_o_x=d1,
@@ -313,13 +380,13 @@ def do_onion(nbapp):
     wguide1.plot_mesh('onion_wg')
 
     # Single mode fiber 
-    unitcell_x = 300
-    unitcell_y = 300
+    un_x = 300
+    un_y = 300
     # layer thicknesses
     d1=20
     d2=127/2.
 
-    wguide2 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'onion2',
+    wguide2 = nbapp.make_structure(un_x,d1,un_y,d1,'onion2',
                                 inc_b_x=d2, 
                             material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
                             lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
@@ -327,14 +394,14 @@ def do_onion(nbapp):
 
 
     # Single mode fiber with explicit cladding
-    unitcell_x = 300
-    unitcell_y = 300
+    un_x = 300
+    un_y = 300
     # layer thicknesses
     d1=20
     d2=127/2.
     d3=20
 
-    wguide3 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'onion3',
+    wguide3 = nbapp.make_structure(un_x,d1,un_y,d1,'onion3',
                                 inc_b_x=d2, 
                                 inc_c_x=d3, 
                             material_bkg=mat_bkg, material_a=mat_a, 
@@ -344,9 +411,9 @@ def do_onion(nbapp):
 
 
 
-    unitcell_x = 1500
-    unitcell_y = 1500
-    wguide1 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'circ_onion',
+    un_x = 1500
+    un_y = 1500
+    wguide1 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion',
                                 inc_b_x=d2, inc_c_x=d1, inc_d_x=d2, inc_e_x=d1, inc_f_x=d2,
                                 inc_g_x=d1, inc_h_x=d2, inc_i_x=d1, inc_j_x=d2, inc_k_x=d1,
                                 inc_l_x=d2, inc_m_x=d1, inc_n_x=d2, inc_o_x=d1,
@@ -359,19 +426,19 @@ def do_onion(nbapp):
     wguide1.plot_mesh('circ_onion_wg')
 
     # Single mode fiber 
-    unitcell_x = 300
-    unitcell_y = 300
+    un_x = 300
+    un_y = 300
     # layer thicknesses
     d1=20
     d2=127/2.
 
-    wguide2 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'circ_onion2',
+    wguide2 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion2',
                                 inc_b_x=d2, 
                             material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
                             lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
     wguide2.plot_mesh('circ_onion2_wg')
 
-    wguide3 = nbapp.make_structure(unitcell_x,d1,unitcell_y,d1,'circ_onion3',
+    wguide3 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion3',
                                 inc_b_x=d2, 
                                 inc_c_x=d3, 
                             material_bkg=mat_bkg, material_a=mat_a, 
@@ -380,15 +447,15 @@ def do_onion(nbapp):
     wguide3.plot_mesh('circ_onion3_wg')
 
 def do_trapezoid(nbapp):
-    unitcell_x = 2000
-    unitcell_y = 2000
+    un_x = 2000
+    un_y = 2000
     # layer thicknesses
     inc_a_x = 500
     inc_a_y = 300
     slab_a_x = 1000
     slab_a_y = 300
 
-    wguide3 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'trapezoidal_rib',
+    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'trapezoidal_rib',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                             material_bkg=mat_bkg, material_a=mat_a, 
                                 material_b=mat_b,
@@ -397,8 +464,8 @@ def do_trapezoid(nbapp):
     #wguide3.check_mesh()
 
 def do_pedestal(nbapp):
-    unitcell_x = 3000
-    unitcell_y = 2000
+    un_x = 3000
+    un_y = 2000
 
     # layer thicknesses
     inc_a_x = 500
@@ -412,7 +479,7 @@ def do_pedestal(nbapp):
     slab_a_y = 300
 
 
-    wguide1 = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,'pedestal',
+    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'pedestal',
                                 inc_b_x = inc_b_x, slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                             material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
                             pillar_x=pillar_x, pillar_y=pillar_y,
@@ -424,12 +491,12 @@ def do_main():
     nbapp = numbat.NumBATApp()
 
     do_oneincl(nbapp)
-    do_twoincl(nbapp)
-    do_rib(nbapp)
-    do_slot(nbapp)
-    do_onion(nbapp)
-    do_trapezoid(nbapp)
-    do_pedestal(nbapp)
+    #do_twoincl(nbapp)
+    #do_rib(nbapp)
+    #do_slot(nbapp)
+    #do_onion(nbapp)
+    #do_trapezoid(nbapp)
+    #do_pedestal(nbapp)
 
 
 if __name__=='__main__':
