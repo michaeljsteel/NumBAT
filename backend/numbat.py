@@ -137,8 +137,8 @@ class _NumBATApp(object):
     def _check_versions(self):
         pyver = platform.python_version_tuple()
 
-        if int(pyver[0])<3 or int(pyver[1])<7:
-            reporting.report_and_exit('NumBAT must be run with a Python version of 3.6 or later.')
+        if int(pyver[0])<3 or int(pyver[1])<10:
+            reporting.report_and_exit('NumBAT must be run with a Python version of 3.11 or later.')
 
 
 # always returns the singleton NumBATApp object

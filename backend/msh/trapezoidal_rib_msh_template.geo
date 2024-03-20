@@ -3,25 +3,24 @@
 // Force Gmsh to use legacy msh file format v2
 Mesh.MshFileVersion = 2.2;
 
-// d = 1; // grating period
-//dx_in_nm = 8200.0; // total width
-//dy_in_nm = 2500.0; // total height
-
+//Unscaled dimensions
 dx_in_nm = 4000.0; // total width
 dy_in_nm = 2000.0; // total height
 
-dy = dy_in_nm/dx_in_nm;  // height (fraction or width)
-
-hy2 = -.65*dy; // top of the substrate
 
 top_rib_width = 600.0;
 mid_rib_width = 900.0;
-// bottom_rib_width = 3*mid_rib_width;
 bottom_rib_width = 1800.0;
-
 rib_height = 500.0;
 slab_thickness = 300.0;
 
+//Scaled dimensions
+dy = dy_in_nm/dx_in_nm;  // height (fraction or width)
+hy2 = -.65*dy; // top of the substrate
+x0 = -.5;
+y0 = .5*dy;
+
+//Mesh
 lc = 0.020000; // background and unitcell edge
 lc_refine_1 = lc/10.0; // rib
 lc_refine_2 = lc/5.0; // slab
@@ -29,8 +28,6 @@ lc_refine_2 = lc/5.0; // slab
 //////////////////////////////////////////
 
 
-x0 = -.5;
-y0 = .5*dy;
 Point(1) = {0+x0, 0+y0, 0, lc};
 Point(2) = {0+x0, -dy+y0, 0, lc};
 Point(3) = {1+x0, -dy+y0, 0, lc};
