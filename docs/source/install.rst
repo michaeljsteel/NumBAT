@@ -131,6 +131,14 @@ The following steps have worked for us:
 
 #. Open a terminal window on your desktop.
 
+#. Ensure you have the Xcode Command Line Tools installed. This is the basic package for command line development on MacOS. Enter the following command and then follow the prompts.
+
+   $ xcode-select --install
+
+   **Note** that there is a different version of the Xcode tools for each major release of MacOS. If you have upgraded your OS, say from Ventura to Sonoma, you must install the corresponding version of Xcode.
+
+   If the installer says Xcode is installed but an upgrade exists, you almost certainly want to apply that upgrade. 
+
 #. Make a folder for |NUMBAT| studies and clone the github repository::
 
    $ mkdir numbat
@@ -143,7 +151,8 @@ The following steps have worked for us:
 #. Install the Gmsh mesh generation tool at `this page <https://gmsh.info>`_.
    Just the main Gmsh installer is fine. The SDK and other features are not required.
 
-   Install the Gmsh application into your Applications folder by dragging the Gmsh icon into Applications.
+   **Note:** After the installer has run, you must move the Gmsh application into your Applications 
+   folder by dragging the Gmsh icon into Applications.
 
 
 #. Install a current gcc (we used gcc)::
