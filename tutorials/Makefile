@@ -105,6 +105,12 @@ tut14:
 ftut14: 
 	$(PYTHON) simo-tut_14-multilayer-fibre.py fast=1
 
+tut17: 
+	$(PYTHON) simo-tut_17-rotations.py
+ftut17: 
+	$(PYTHON) simo-tut_17-rotations.py fast=1
+
+
 clean:
 	-rm *.png *.npz
 	-rm -rf tut*fields ftut*fields
