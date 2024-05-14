@@ -19,6 +19,7 @@
  "c_33": 240.0e9,  // Stiffness tensor component [Pa]
  "c_44": 59.9e9,  // Stiffness tensor component [Pa]
  "c_66": 72.2e9,  // Stiffness tensor component [Pa]
+
  "p_11": -0.021,  // Photoelastic tensor component []
  "p_12": 0.060,  // Photoelastic tensor component []
  "p_13": 0.172,  // Photoelastic tensor component []
@@ -41,10 +42,14 @@
 
  "eta_66": 0.2136e-3,  // Acoustic loss tensor component [Pa s]
 
- "_eta_22": 0.6547e-3,  // Acoustic loss tensor component [Pa s]
- "_eta_23": 0.2499e-3,  // Acoustic loss tensor component [Pa s]
- "_eta_24": 0.0687e-3,  // Acoustic loss tensor component [Pa s]
- "_eta_55": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
- "_eta_56":-0.0687e-3  // Acoustic loss tensor component [Pa s]
+ "_eta_22":  0.6547e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_23":  0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_24":  0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_55":  0.1765e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_56": -0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ 
+ "orientation_x-cut": "ident",
+ "orientation_y-cut": "ident",
+ "orientation_z-cut": "1,0,0,90"
 
 }

@@ -18,6 +18,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+import sys
 import os
 import traceback
 import math
@@ -28,6 +29,12 @@ import numpy as np
 import numpy.linalg
 import tempfile
 import subprocess
+import scipy.linalg
+
+import numbattools
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as mplcolors
 
 
 from nbtypes import CrystalGroup
@@ -40,6 +47,10 @@ class BadMaterialFileError(Exception):
 
 # TODO: this class should not know about files. Pull the reading from files out.
 
+
+# TODO: VoigtTensors check for symmetry consistency.  Seems to be not quite symmetric, 
+# a mix of symmetric and skew-symmetric. Is that right?
+
 class VoigtTensor4(object):
     '''A class for representing rank 4 tensors in the compact Voigt representation.'''
 
@@ -50,6 +61,9 @@ class VoigtTensor4(object):
         self.d = src_dict
         self.json_file = src_file
 
+    def as_zerobase_matrix(self):
+        return self.mat[1:, 1:]
+    
     def read(self, m, n, optional=False):
         elt = f'{self.sym}_{m}{n}'
 
@@ -312,6 +326,12 @@ class Material(object):
             self.EYoung = None
             self.nuPoisson = None
 
+
+            #self.crystal_avec = np.array([1.0,0.0,0.0])
+            #self.crystal_bvec = np.array([0.0,1.0,0.0])
+            #self.crystal_cvec = np.array([0.0,0.0,1.0])
+
+
 # self.c_11 = self._params['c_11']  # Stiffness tensor component [Pa]
 #            self.c_12 = self._params['c_12']  # Stiffness tensor component [Pa]
 #            self.c_44 = self._params['c_44']  # Stiffness tensor component [Pa]
@@ -342,7 +362,14 @@ class Material(object):
                 self.p_tensor = VoigtTensor4('p', self._params, self.json_file)
                 #self.load_tensors()
                 self.load_crystal_anisotropic()
+            self._store_original_tensors()
 
+    def _store_original_tensors(self):
+        self._c_tensor_orig = self.c_tensor
+        self._p_tensor_orig = self.p_tensor
+        self._eta_tensor_orig  = self.eta_tensor
+
+        
     def is_vacuum(self):
         '''Returns True if the material is the vacuum.'''
         return self.chemical == 'Vacuum'
@@ -495,10 +522,16 @@ class Material(object):
         """
 
         rotation_axis = parse_rotation_axis(rot_axis_spec)
-            
         self.c_tensor.rotate(theta, rotation_axis)
         self.p_tensor.rotate(theta, rotation_axis)
         self.eta_tensor.rotate(theta, rotation_axis)
+
+        caxes = self._crystal_axes.copy()
+        self.set_crystal_axes(
+            _rotate_3vector(caxes[0], theta, rotation_axis),
+            _rotate_3vector(caxes[1], theta, rotation_axis),
+            _rotate_3vector(caxes[2], theta, rotation_axis)
+        )
 
         if save_rotated_tensors:
             np.savetxt('rotated_c_tensor.csv',
@@ -508,24 +541,133 @@ class Material(object):
             np.savetxt('rotated_eta_tensor.csv',
                        self.eta_tensor.mat, delimiter=',')
 
+    def reset_orientation(self):  #restore orientation to original axes in spec file.
+        self.c_tensor = self._c_tensor_orig
+        self.p_tensor = self._p_tensor_orig
+        self.eta_tensor  = self._eta_tensor_orig
+
+        self.set_crystal_axes(np.array([1.0,0.,0.]),np.array([0.,1.0,0.]),np.array([0.0,0.,1.]))
+
+        #self.crystal_avec = np.array([1.0,0.0,0.0])
+        #self.crystal_bvec = np.array([0.0,1.0,0.0])
+        #self.crystal_cvec = np.array([0.0,0.0,1,0])
+
+        
+    def set_orientation(self, label):  # rotate original crystal to specific named-orientation, eg x-cut, y-cut. '111' etc.
+        self.reset_orientation()
+
+        try:
+            ocode = self._params[f'orientation_{label.lower()}']
+        except KeyError:
+            report_and_exit(f'Orientation "{label}" is not defined for material {self.material_name}.')
+
+        if ocode == 'ident':  # native orientation is the desired one
+            return 
+        
+        try:
+            ux, uy, uz, rot = map(float, ocode.split(','))
+        except:
+            report_and_exit(f"Can't parse crystal orientation code {ocode} for material {self.material_name}.")
+        rot_axis = np.array((ux, uy, uz))
+        theta = rot*np.pi/180
+
+        self.rotate(theta, rot_axis)
+        
     def plot_bulk_dispersion(self, pref):
+        '''Draw slowness curve in the horizontal (x-z) plane for the crystal axes current orientation.
 
-        pass
+        Solving the Christoffel equation
+        D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
+        C is the Voigt form stiffness.
+        D = [
+            [κx  0   0   0  κz  κy  ]
+            [0   κy  0   κz 0   κx  ]
+            [0   0   κz  κy κx  0]
+        ] where κ=(cos phi, 0, sin phi)
+        '''
+        #kx0, kx1 = -5.,5.
+        #kz0, kz1 = -5.,5.
+        npts = 500
+        v_kphi = np.linspace(0.,np.pi*2,npts)
+        v_vl = np.zeros(npts)
+        v_vs1  = np.zeros(npts)
+        v_vs2  = np.zeros(npts)
 
+        with open(pref+'-bulkdisp.dat', 'w') as fout:
+
+            fout.write('#phi    kapx    kapz    vl         vs1        vs2        vlx     vly      vlz     vs1x    vs1y     vs1z    vs2x    vs2y     vs2z\n')
+
+
+            kapcomp = np.zeros(3)
+            for ik,kphi in enumerate(v_kphi):
+                kapx = np.cos(kphi)
+                kapz = np.sin(kphi)
+                kapy = 0.0
+                vkap = np.array([kapx, kapy, kapz])
+                mD = np.array([
+                    [kapx, 0,    0,    0,    kapz, kapy],
+                    [0,    kapy, 0,    kapz, 0,    kapx],
+                    [0,    0,    kapz, kapy, kapx, 0]
+                ])
+                
+                mLHS = np.matmul(np.matmul(mD, self.c_tensor.as_zerobase_matrix()), mD.T) / self.rho
+
+                fout.write(f'{kphi:.4f}  {vkap[0]:+.4f}  {vkap[2]:+.4f}  ')
+
+                #Solve and normalise
+                evals, evecs = scipy.linalg.eig(mLHS)
+                for i in range(3): evecs[:,i] /=np.linalg.norm(evecs[:,i]) # TODO: make a oneliner.
+                vels = np.sqrt(np.real(evals))
+                
+                # identify the longitudinal mode (dot product with kappa = \pm 1)
+                for i in range(3): kapcomp[i] = np.dot(vkap, evecs[:,i]) # TODO: make a oneliner
+
+                if numbattools.almost_zero(1-np.abs(kapcomp[0])):
+                    ivs = [0,1,2]  # indices of eigsols vl, vs1, vs2
+                elif numbattools.almost_zero(1-np.abs(kapcomp[1])):
+                    ivs = [1,0,2]
+                else:
+                    ivs = [2,0,1]
+                    
+                for iv in ivs: fout.write(f'{vels[iv]:.4f}  ')
+                for iv in ivs: fout.write(f'{evecs[0,iv]:.4f}  {evecs[1,iv]:.4f}   {evecs[2,iv]:.4f}  ')
+                fout.write(f'{kapcomp[0]:.4f}  {kapcomp[1]:.4f} {kapcomp[2]:.4f}')
+
+                fout.write('\n')
+
+                # Store vels for plotting in km/s
+                v_vl[ik] = vels[ivs[0]] * 0.001
+                v_vs1[ik] = vels[ivs[1]]* 0.001
+                v_vs2[ik] = vels[ivs[2]]* 0.001
+                
+        #fig, ax = plt.subplots(subplot_kw={'projection':'polar'})
+        fig, ax = plt.subplots()
+        ax.plot(np.cos(v_kphi)/v_vl, np.sin(v_kphi)/v_vl, 'g', lw=1, markersize=1, label=r'$v_l$')
+        ax.plot(np.cos(v_kphi)/v_vs1, np.sin(v_kphi)/v_vs1, lw=1, color='brown', label=r'$v_{s,i}$')
+        ax.plot(np.cos(v_kphi)/v_vs2, np.sin(v_kphi)/v_vs2, lw=1, color='brown')
+        #ax.set_rticks([])
+        ax.set_xlabel(r'$1/v_x$ [s/km]')
+        ax.set_ylabel(r'$1/v_z$ [s/km]')
+        #ax.grid(False)
+        ax.set_aspect(1.0)
+        ax.axhline(0, c='gray')
+        ax.axvline(0, c='gray')
+        ax.legend(loc='upper right', frameon=False, fontsize=16)
+
+        #decorator.add_extra_axes_commands()
+        # add label
+        ax.text(0.05, 0.95, self.material_name, fontsize=14, style='italic',
+                transform=ax.transAxes)
+        
+        plt.savefig(pref+'-bulkdisp.png')
+                    
     def make_crystal_plot(self, pref):
-        # get temp .asy file 
+        '''Build crystal coordinates diagram using call to external asymptote application.'''
+        
         fn = tempfile.NamedTemporaryFile(suffix='.asy', mode='w+t', delete=False)
 
-        # draw axes
-        
         asy_cmds = get_asy_crystal_axes(self._crystal_axes)
-        asy_cmds+=''
         fn.write(asy_cmds)
-
-
-        # draw waveguide box
-
-        # draw crystal axes
         fn.close()
 
         # run .asy 
@@ -643,25 +785,11 @@ def parse_rotation_axis(rot_axis_spec):
             report_and_exit(f'Rotation axis {rot_axis} must have length 3.')
 
     return rot_axis
-    
-def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
+
+def _make_rotation_matrix(theta, rotation_axis): 
     """
-    Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
-    T_PQ is a rank-4 tensor expressed in 6x6 Voigt notation.
-
-    The complete operation in 3x3x3x3 notation is
-    T'_ijkl  = sum_{pqrs} R_ip R_jq R_kr R_ls  T_pqrs.
-
-    The result T'_ijkl is returned in Voigt format T'_PQ.
-
-    Args:
-        T_PQ  (array): Tensor to be rotated.
-
-        theta  (float): Angle to rotate by in radians.
-
-        rotation_axis  (str): Axis around which to rotate.
+    Return the SO(3) matrix corresponding to a rotation of theta radians the specified rotation_axis.
     """
-
     if isinstance(rotation_axis, str):
         if rotation_axis.lower() in ('x', 'x-axis'):
             mat_R = np.array([[1, 0, 0], [0, np.cos(
@@ -702,6 +830,38 @@ def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
             [uz*ux*omct-uy*st, uz*uy*omct+ux*st, ct+uz**2*omct]
         ])
 
+    return mat_R
+
+def _rotate_3vector(vec, theta, rotation_axis):
+    mat_R = _make_rotation_matrix(theta, rotation_axis)
+
+    vrot = 0*vec
+    for i in range(3):
+        vrot[i] = mat_R[i,0]*vec[0] + mat_R[i,1]*vec[1] + mat_R[i,2]*vec[2]
+
+    return vrot
+        
+def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
+    """
+    Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
+    T_PQ is a rank-4 tensor expressed in 6x6 Voigt notation.
+
+    The complete operation in 3x3x3x3 notation is
+    T'_ijkl  = sum_{pqrs} R_ip R_jq R_kr R_ls  T_pqrs.
+
+    The result T'_ijkl is returned in Voigt format T'_PQ.
+
+    Args:
+        T_PQ  (array): Tensor to be rotated.
+
+        theta  (float): Angle to rotate by in radians.
+
+        rotation_axis  (str): Axis around which to rotate.
+    """
+
+    mat_R = _make_rotation_matrix(theta, rotation_axis)
+    
+    
     Tp_PQ = np.zeros((6, 6))
     for i in range(3):
         for j in range(3):
@@ -733,33 +893,9 @@ def isotropic_stiffness(E, v):
     return c_11, c_12, c_44
 
 
-# g_materials={}
-
-
 def make_material(s):
     return Material._make_material(s)
 
-#  global g_materials
-#  if not len(g_materials):
-# this_dir= os.path.dirname(os.path.realpath(__file__))
-#    data_loc= os.path.join(this_dir, "material_data", "")
-#  for f in os.listdir(data_loc):
-#    if f.endswith(".json"):
-# g_materials[f[:-5]] = Material(data_loc, f[:-5])
-#        print('loading mat', f)
-#        g_materials[f[:-5]] = Material(f)
-
-#  return g_materials[s]
-
-# This code is deprecated and will be removed. Use get_material() instead.
-# print('loading materials dict')
-# materials_dict = {}
-# this_directory = os.path.dirname(os.path.realpath(__file__))
-# data_location = os.path.join(this_directory, "material_data", "")
-# for file in os.listdir(data_location):
-#    if file.endswith(".json"):
-#        materials_dict[file[:-5]] = Material(data_location, file[:-5])
-# print('cone loading materials dict')
 
 def get_asy_crystal_axes(crystal_axes):
 
@@ -770,49 +906,53 @@ def get_asy_crystal_axes(crystal_axes):
     
     s1='''
 settings.outformat='png';
-settings.render=16;
+settings.render=8;
 import three;
 import graph3;
-size(2cm,0);
-//currentlight=Viewport;
-'''
 
-    s2='''
-void build_axis(triple org, triple axis, real angle) {
+size(2cm,0);
+defaultpen(fontsize(7pt));
+defaultpen(.2);
 
 real axlen=1.25;
-
-//draw( org--org+dx,black,Arrow3(18));
-//draw( org--org+dy,black,Arrow3(18));
-//draw( org--org+dz,black,Arrow3(8));
-
-draw(O--2X ^^ O--2Y ^^ O--2Z);
-label("$x$", 2X*1.1);
-label("$y$", 2Y*1.1);
-label("$z$", 2Z*1.1);
+int arrsize=3;
 real blen=.5;
+
+//currentprojection=orthographic(1,1,1);
+currentprojection=oblique;
+
+
+draw(O--2X, black, Arrow3(arrsize), L=Label("$\hat{x}$", position=EndPoint));
+draw(O--2Y, black, Arrow3(arrsize), L=Label("$\hat{y}$", position=EndPoint));
+draw(O--3Z, black, Arrow3(arrsize), L=Label("$\hat{z}$", position=EndPoint));
+
+draw(O-- -2X, gray);
+draw(O-- -2Y, gray);
+draw(O-- -2Z, gray);
+
+
+//label("$\hat{x}$", 3X*1.1);
+//label("$\hat{y}$", 3Y*1.1);
+//label("$\hat{z}$", 3Z*1.1);
+
 draw(box((-1,-.5,-2)*blen,(1,.5,2)*blen),blue);
-''' 
-
-    s3='''
-triple avec={0};
-triple bvec={1};
-triple cvec={2};
-'''.format(s_avec, s_bvec, s_cvec) 
-
-    s4='''
-draw(O--avec, red);
-draw(O--bvec, red);
-draw(O--cvec, red);
-label("$c_x$", avec*1.1);
-label("$c_y$", bvec*1.1);
-label("$c_z$", cvec*1.1);
-}
 '''
 
-    s5='''
-build_axis(O,(0,1,1),45);
-
+    s2=f'''triple avec={s_avec};
+triple bvec={s_bvec};
+triple cvec={s_cvec};
 '''
 
-    return s1+s2+s3+s4+s5
+    s3 = '''triple corig=(0,.5,2)*blen;
+draw(corig--avec+corig, red, Arrow3(arrsize), L=Label("$c_x$", position=EndPoint));
+draw(corig--bvec+corig, red, Arrow3(arrsize), L=Label("$c_y$", position=EndPoint));
+draw(corig--cvec+corig, red, Arrow3(arrsize), L=Label("$c_z$", position=EndPoint));
+
+triple k0=(1,-1,-1);
+triple k1=k0+(0,0,2);
+
+draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
+'''
+
+
+    return s1 + s2 + s3

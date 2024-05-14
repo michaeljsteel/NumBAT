@@ -10,6 +10,10 @@ import datetime
 
 from PIL import Image
 
+
+def almost_zero(x, tol=1e-10):
+    return abs(x)<tol
+
 def join_figs(l_fns, fnout, clip=None):
 
     images = []
