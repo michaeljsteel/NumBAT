@@ -7,6 +7,7 @@
 *.bak
 *.o
 *.pyf
+*.dat
 out
 
 backend/msh/*.msh
