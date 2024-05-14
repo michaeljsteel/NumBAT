@@ -26,16 +26,9 @@ import re
 
 import numpy as np
 import numpy.linalg
+import tempfile
+import subprocess
 
-
-# import sys
-
-# from scipy.interpolate import interp1d
-# import matplotlib
-# import matplotlib.pyplot as plt
-
-#import nbtypes
-#import reporting
 
 from nbtypes import CrystalGroup
 from reporting import report_and_exit
@@ -184,6 +177,11 @@ class Material(object):
     def __init__(self, data_file):
 
         self.json_file = data_file
+
+
+        # members to fill out amongst others
+        self._crystal_axes=[]  # a,b,c crystal axes according to standard conventions
+        
         try:
             self._load_data_file(self.json_file)
 
@@ -335,53 +333,26 @@ class Material(object):
                     f"Unknown crystal class in material data file {data_file}") from exc
 
             if self.crystal == CrystalGroup.Isotropic:
-                self._anisotropic = False
-
-                # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
-                if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
-                    self.c_tensor = VoigtTensor4(
-                        'c', self._params, self.json_file)
-                    self.c_tensor.load_isotropic()
-                    mu = self.c_tensor.mat[4, 4]
-                    lam = self.c_tensor.mat[1, 2]
-                    r = lam/mu
-                    self.nuPoisson = 0.5*r/(1+r)
-                    self.EYoung = 2*mu*(1+self.nuPoisson)
-
-                elif 'EYoung' in self._params and 'nuPoisson' in self._params:
-                    self.EYoung = self._params['EYoung']
-                    self.nuPoisson = self._params['nuPoisson']
-                    c44 = 0.5*self.EYoung/(1+self.nuPoisson)
-                    c12 = self.EYoung*self.nuPoisson / \
-                        ((1+self.nuPoisson) * (1-2*self.nuPoisson))
-                    c11 = c12+2*c44
-                    self.c_tensor = VoigtTensor4('c')
-                    self.c_tensor.set_isotropic(c11, c12, c44)
-                else:
-                    report_and_exit(
-                        'Broken isotropic material file:' + self.json_file)
-
-                self.eta_tensor = VoigtTensor4(
-                    'eta', self._params, self.json_file)
-                self.p_tensor = VoigtTensor4('p', self._params, self.json_file)
-
-                self.p_tensor.load_isotropic()
-                self.eta_tensor.load_isotropic()
-
+                self.load_crystal_isotropic()
+                
             else:
                 self.c_tensor = VoigtTensor4('c', self._params, self.json_file)
                 self.eta_tensor = VoigtTensor4(
                     'eta', self._params, self.json_file)
                 self.p_tensor = VoigtTensor4('p', self._params, self.json_file)
-                self.load_tensors()
+                #self.load_tensors()
+                self.load_crystal_anisotropic()
 
     def is_vacuum(self):
         '''Returns True if the material is the vacuum.'''
         return self.chemical == 'Vacuum'
 
     # (don't really need this as isotropic materials are the same)
-    def load_cubic_crystal(self):
+    def load_crystal_cubic(self):
 
+        # plain cartesian axes
+        self.set_crystal_axes(np.array([1.0,0.,0.]),np.array([0.,1.0,0.]),np.array([0.0,0.,1.]))
+        
         try:
             self.c_tensor.read(1, 1)
             self.c_tensor.read(1, 2)
@@ -431,8 +402,11 @@ class Material(object):
             report_and_exit(
                 f'Failed to load cubic crystal class in material data file {self.json_file}')
 
-    def load_trigonal_crystal(self):
+    def load_crystal_trigonal(self):
         # Good source for these rules is the supp info of doi:10.1364/JOSAB.482656 (Gustavo surface paper)
+
+        self.set_crystal_axes(np.array([1.0,0.,0.]),np.array([0.,1.0,0.]),np.array([0.0,0.,1.]))
+                                
         try:
             for lintens in [self.c_tensor, self.eta_tensor]:
                 for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4) ]:
@@ -484,7 +458,7 @@ class Material(object):
             report_and_exit(
                 f'Failed to load trigonal crystal class in material data file {self.json_file}')
 
-    def load_general_crystal(self):
+    def load_crystal_general(self):
         try:  # full anisotropic tensor components
             for i in range(1, 7):
                 for j in range(1, 7):
@@ -501,22 +475,11 @@ class Material(object):
 
     def is_isotropic(self): return not self._anisotropic
 
-    def load_tensors(self):  # not do this unless symmetry is off?
 
-        self._anisotropic = True
-
-        if self.crystal == CrystalGroup.Trigonal:
-            self.load_trigonal_crystal()
-            return
-        elif self.crystal == CrystalGroup.Cubic:
-            self.load_cubic_crystal()
-            return
-
-        elif self.crystal == CrystalGroup.GeneralAnisotropic:
-            self.load_general_crystal()
-            return
-
-    def rotate_axis(self, theta, rotate_axis, save_rotated_tensors=False):
+    def rotate_axis(self, theta, rotation_axis, save_rotated_tensors=False):
+        self.rotate(theta, rotation_axis, save_rotated_tensors)
+        
+    def rotate(self, theta, rot_axis_spec, save_rotated_tensors=False):
         """ Rotate crystal axis by theta radians.
 
             Args:
@@ -531,9 +494,11 @@ class Material(object):
                 ``Material`` object with rotated tensor values.
         """
 
-        self.c_tensor.rotate(theta, rotate_axis)
-        self.p_tensor.rotate(theta, rotate_axis)
-        self.eta_tensor.rotate(theta, rotate_axis)
+        rotation_axis = parse_rotation_axis(rot_axis_spec)
+            
+        self.c_tensor.rotate(theta, rotation_axis)
+        self.p_tensor.rotate(theta, rotation_axis)
+        self.eta_tensor.rotate(theta, rotation_axis)
 
         if save_rotated_tensors:
             np.savetxt('rotated_c_tensor.csv',
@@ -543,6 +508,88 @@ class Material(object):
             np.savetxt('rotated_eta_tensor.csv',
                        self.eta_tensor.mat, delimiter=',')
 
+    def plot_bulk_dispersion(self, pref):
+
+        pass
+
+    def make_crystal_plot(self, pref):
+        # get temp .asy file 
+        fn = tempfile.NamedTemporaryFile(suffix='.asy', mode='w+t', delete=False)
+
+        # draw axes
+        
+        asy_cmds = get_asy_crystal_axes(self._crystal_axes)
+        asy_cmds+=''
+        fn.write(asy_cmds)
+
+
+        # draw waveguide box
+
+        # draw crystal axes
+        fn.close()
+
+        # run .asy 
+        subprocess.run(['asy', fn.name, '-o', f'{pref}crystal'])
+
+    def set_crystal_axes(self, va, vb, vc):
+        self._crystal_axes = [va, vb, vc]
+        
+    def load_crystal_isotropic(self):
+        # ordinary Cartesian axes for the crystal axes
+        self.set_crystal_axes(
+            np.array([1.0,0.,0.]),
+             np.array([0.,1.0,0.]),
+             np.array([0.0,0.,1.]))
+            
+        
+        self._anisotropic = False
+
+        # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
+        if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
+            self.c_tensor = VoigtTensor4(
+                'c', self._params, self.json_file)
+            self.c_tensor.load_isotropic()
+            mu = self.c_tensor.mat[4, 4]
+            lam = self.c_tensor.mat[1, 2]
+            r = lam/mu
+            self.nuPoisson = 0.5*r/(1+r)
+            self.EYoung = 2*mu*(1+self.nuPoisson)
+
+        elif 'EYoung' in self._params and 'nuPoisson' in self._params:
+            self.EYoung = self._params['EYoung']
+            self.nuPoisson = self._params['nuPoisson']
+            c44 = 0.5*self.EYoung/(1+self.nuPoisson)
+            c12 = self.EYoung*self.nuPoisson / \
+                ((1+self.nuPoisson) * (1-2*self.nuPoisson))
+            c11 = c12+2*c44
+            self.c_tensor = VoigtTensor4('c')
+            self.c_tensor.set_isotropic(c11, c12, c44)
+        else:
+            report_and_exit(
+                'Broken isotropic material file:' + self.json_file)
+
+        self.eta_tensor = VoigtTensor4(
+            'eta', self._params, self.json_file)
+        self.p_tensor = VoigtTensor4('p', self._params, self.json_file)
+
+        self.p_tensor.load_isotropic()
+        self.eta_tensor.load_isotropic()
+
+    def load_crystal_anisotropic(self):  # not do this unless symmetry is off?
+
+        self.c_tensor = VoigtTensor4('c', self._params, self.json_file)
+        self.eta_tensor = VoigtTensor4('eta', self._params, self.json_file)
+        self.p_tensor = VoigtTensor4('p', self._params, self.json_file)
+                
+        self._anisotropic = True
+
+        #TODO: change to match/case
+        if self.crystal == CrystalGroup.Trigonal:
+            self.load_crystal_trigonal()
+        elif self.crystal == CrystalGroup.Cubic:
+            self.load_crystal_cubic()
+        elif self.crystal == CrystalGroup.GeneralAnisotropic:
+            self.load_crystal_general()
 
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
@@ -568,7 +615,35 @@ def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
 
     return Tp_ijkl
 
+def parse_rotation_axis(rot_axis_spec):
+    '''Convert one of several forms - string, numpy 3vec -  to a standard 3vec'''
 
+    if isinstance(rot_axis_spec, str):
+        ral = rot_axis_spec.lower()
+        if ral in ('x', 'x-axis'):
+            rot_axis = np.array([1.,0.,0.])
+        elif ral in ('y', 'y-axis'):
+            rot_axis = np.array([0.,1.,0.])
+        elif ral in ('z', 'z-axis'):
+            rot_axis = np.array([0.,0.,1.])
+        else:
+            report_and_exit(f"Can't convert {rot_axis_spec} to a 3-element unit vector.")
+    else: # should be a numeric 3 vector
+
+        try:
+            if isinstance(rot_axis_spec, (tuple,list)):  # try to convert to numpy
+                rot_axis = np.array(rot_axis_spec)
+            elif isinstance(rot_axis_spec, np.ndarray):
+                rot_axis = rot_axis_spec
+            else:
+                report_and_exit(emsg)
+        except Exception:
+            report_and_exit(emsg)
+        if len(rot_axis) !=3:
+            report_and_exit(f'Rotation axis {rot_axis} must have length 3.')
+
+    return rot_axis
+    
 def _rotate_Voigt_tensor(T_PQ, theta, rotation_axis):
     """
     Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
@@ -685,3 +760,59 @@ def make_material(s):
 #    if file.endswith(".json"):
 #        materials_dict[file[:-5]] = Material(data_location, file[:-5])
 # print('cone loading materials dict')
+
+def get_asy_crystal_axes(crystal_axes):
+
+    (va, vb, vc) = crystal_axes
+    s_avec = '('+','.join(map(str, va))+')'
+    s_bvec = '('+','.join(map(str, vb))+')'
+    s_cvec = '('+','.join(map(str, vc))+')'
+    
+    s1='''
+settings.outformat='png';
+settings.render=16;
+import three;
+import graph3;
+size(2cm,0);
+//currentlight=Viewport;
+'''
+
+    s2='''
+void build_axis(triple org, triple axis, real angle) {
+
+real axlen=1.25;
+
+//draw( org--org+dx,black,Arrow3(18));
+//draw( org--org+dy,black,Arrow3(18));
+//draw( org--org+dz,black,Arrow3(8));
+
+draw(O--2X ^^ O--2Y ^^ O--2Z);
+label("$x$", 2X*1.1);
+label("$y$", 2Y*1.1);
+label("$z$", 2Z*1.1);
+real blen=.5;
+draw(box((-1,-.5,-2)*blen,(1,.5,2)*blen),blue);
+''' 
+
+    s3='''
+triple avec={0};
+triple bvec={1};
+triple cvec={2};
+'''.format(s_avec, s_bvec, s_cvec) 
+
+    s4='''
+draw(O--avec, red);
+draw(O--bvec, red);
+draw(O--cvec, red);
+label("$c_x$", avec*1.1);
+label("$c_y$", bvec*1.1);
+label("$c_z$", cvec*1.1);
+}
+'''
+
+    s5='''
+build_axis(O,(0,1,1),45);
+
+'''
+
+    return s1+s2+s3+s4+s5

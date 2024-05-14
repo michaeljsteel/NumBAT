@@ -64,7 +64,8 @@ For example, elastic freqencies :math:`\nu` are expressed in Hz, not GHz.
     This is an integer corresponding to the mode number :math:`m` of an electromagnetic 
     mode :math:`\vec E_m(\vec r)` or an acoustic mode :math:`\vec u_m(\vec r)`.
 
-    For both electromagnetic and acoustic modes, counting of modes begins with ``m=0``.
+    For both electromagnetic and acoustic modes, counting of modes begins with ``m=0`` 
+    and are ordered by decreasing effective index and increasing frequency respectively.
 
     For the electromagnetic problem in which frequency/free-space wavelength is the 
     independent variable, the :math:`m=0` mode has the *highest* effective index
@@ -75,6 +76,9 @@ For example, elastic freqencies :math:`\nu` are expressed in Hz, not GHz.
     independent variable and we solve for frequency :math:`\nu=\Omega/(2\pi)`. 
     The :math:`m=0` mode has the *lowest* frequency 
     :math:`\nu` of any mode for a given wavenumber :math:`q`.
+
+    The integer :math:`m` therefore has no particular correspondence to 
+    the conventional two index mode indices for fibre or rectangular waveguides.
 
 
 ``inc_a_x, inc_a_y, inc_b_x, inc_b_y, slab_a_x, slab_a_y,``  ...  etc
