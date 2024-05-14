@@ -13,6 +13,7 @@ import copy
 
 import starter
 
+np.set_printoptions( precision=4)
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
 unitcell_x = 5*lambda_nm
@@ -21,21 +22,28 @@ inc_a_x = 550
 inc_a_y = inc_a_x
 inc_shape = 'circular'
 
-mat_a=materials.make_material("SiO2_2016_Smith")        # isotropic
+mat_a=materials.make_material("SiO2_2021_Poulton")        # isotropic
 mat_b=materials.make_material("Si_2012_Rakich")  # cubic
 mat_c=materials.make_material("LiNbO3aniso_2021_Steel") # tetragonal
 
-pref = 'tut_17-'
+mat_d=materials.make_material("LiNbO3aniso_2021_Steel") # tetragonal
+
+pref = 'tut_17'
 
 mat_as = [copy.copy(mat_a) for i in range(4)]
 mat_bs = [copy.copy(mat_b) for i in range(4)]
 mat_cs = [copy.copy(mat_c) for i in range(4)]
-print(mat_as)
+mat_ds = [copy.copy(mat_d) for i in range(4)]
 
-mat_as[0].rotate(pi/2, 'x-axis')
-mat_as[1].rotate(-pi/2, 'y-axis')
-mat_as[2].rotate(pi/4, (1,1,1))
-mat_as[3].rotate(pi/4, np.array([1,0,1]))
+#print('x pi/4')
+mat_as[0].rotate(pi/5, 'x-axis')
+#print('\n\ny -pi/2')
+#mat_as[1].rotate(-pi/2, 'y-axis')
+#print('\n\n111, pi/4')
+#mat_as[2].rotate(pi/4, (1,1,1))
+#print('\n\n101, pi/4')
+#mat_as[3].rotate(pi/4, np.array([1,0,1]))
+#
 
 mat_bs[0].rotate(pi/2, 'x-axis')
 mat_bs[1].rotate(-pi/2, 'y-axis')
@@ -47,10 +55,25 @@ mat_cs[1].rotate(-pi/2, 'y-axis')
 mat_cs[2].rotate(pi/4, (1,1,1))
 mat_cs[3].rotate(pi/4, np.array([1,2,1]))
 
+mat_ds[0].set_orientation('x-cut')
+mat_ds[1].set_orientation('y-cut')
+mat_ds[2].set_orientation('y-cut')
+mat_ds[2].set_orientation('z-cut')
+mat_ds[3].set_orientation('y-cut')
+mat_ds[3].set_orientation('z-cut')
+mat_ds[3].set_orientation('x-cut')
 
-#for mats in (mat_as, mat_bs, mat_cs):
-for mats in (mat_as,):
-    for im,m in enumerate(mats): m.make_crystal_plot(pref+f'_{im:d}')
-    #for m in mats: m.plot_bulk_dispersion(pref)
+
+
+
+#for mats in (mat_as, mat_bs, mat_cs, mat_ds):
+##for mats in (mat_as,):
+#    for im,m in enumerate(mats): 
+#        m.make_crystal_plot(pref+f'{im:d}')
+#    #for m in mats: m.plot_bulk_dispersion(pref)
+
+for mats in (mat_ds,):
+    for im,m in enumerate(mats): 
+        m.plot_bulk_dispersion(pref+f'-{im:d}')
 
 

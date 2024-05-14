@@ -26,7 +26,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import numbat
 from nbtypes import QAcMethod, FieldType, component_t
-#from fortran import NumBAT
+from fortran import NumBAT
 import reporting
 
 
