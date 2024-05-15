@@ -33,6 +33,7 @@ import scipy.linalg
 
 import numbattools
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
@@ -585,20 +586,28 @@ class Material(object):
             [0   0   κz  κy κx  0]
         ] where κ=(cos phi, 0, sin phi)
         '''
-        #kx0, kx1 = -5.,5.
-        #kz0, kz1 = -5.,5.
-        npts = 500
+        
+        npolpts = 28
+        npolskip = 40
+        npts = npolpts*npolskip # about 1000
         v_kphi = np.linspace(0.,np.pi*2,npts)
-        v_vl = np.zeros(npts)
-        v_vs1  = np.zeros(npts)
-        v_vs2  = np.zeros(npts)
-
+        v_vel = np.zeros([npts, 3])
+        #v_vs1  = np.zeros(npts)
+        #v_vs2  = np.zeros(npts)
+        v_velc = np.zeros([npts, 3])
+        #v_vs1c  = np.zeros(npts)
+        #v_vs2c  = np.zeros(npts)
+        
+        cm='cool' # Color map for polarisation coding
+        cmm = mpl.colormaps[cm]
         with open(pref+'-bulkdisp.dat', 'w') as fout:
 
-            fout.write('#phi    kapx    kapz    vl         vs1        vs2        vlx     vly      vlz     vs1x    vs1y     vs1z    vs2x    vs2y     vs2z\n')
+            fout.write('#phi    kapx     kapz     vl         vs1        vs2        vlx     vly      vlz     vs1x    vs1y     vs1z     vs2x    vs2y      vs2z    k.v1    k.v2   k.v3\n')
 
 
+            fig, ax = plt.subplots()
             kapcomp = np.zeros(3)
+            ycomp = np.zeros(3)
             for ik,kphi in enumerate(v_kphi):
                 kapx = np.cos(kphi)
                 kapz = np.sin(kphi)
@@ -612,39 +621,87 @@ class Material(object):
                 
                 mLHS = np.matmul(np.matmul(mD, self.c_tensor.as_zerobase_matrix()), mD.T) / self.rho
 
+                #print('\n\nkap', kphi)
+                #print('Cij', self.c_tensor.as_zerobase_matrix()) 
+                #print('mD', mD)
+                #print('mLHS', mLHS)
+                
                 fout.write(f'{kphi:.4f}  {vkap[0]:+.4f}  {vkap[2]:+.4f}  ')
 
                 #Solve and normalise
                 evals, evecs = scipy.linalg.eig(mLHS)
                 for i in range(3): evecs[:,i] /=np.linalg.norm(evecs[:,i]) # TODO: make a oneliner.
                 vels = np.sqrt(np.real(evals))
-                
-                # identify the longitudinal mode (dot product with kappa = \pm 1)
-                for i in range(3): kapcomp[i] = np.dot(vkap, evecs[:,i]) # TODO: make a oneliner
 
-                if numbattools.almost_zero(1-np.abs(kapcomp[0])):
-                    ivs = [0,1,2]  # indices of eigsols vl, vs1, vs2
-                elif numbattools.almost_zero(1-np.abs(kapcomp[1])):
-                    ivs = [1,0,2]
-                else:
-                    ivs = [2,0,1]
-                    
+                # Sort according to velocity and color according to overlaps with kappa 
+                # and out of plane vector
+                
+                ivs = np.argsort(-vels)  # most likely get pwave first
+
+                for i in range(3): 
+                    kapcomp[i] = np.abs(np.dot(vkap, evecs[:,ivs[i]])) # TODO: make a oneliner
+                    ycomp[i] = np.abs(evecs[1,ivs[i]])
+
+                    v_vel[ik, i] = vels[ivs[i]] * 0.001   # velocities in km/s
+                    v_velc[ik, i] = kapcomp[i]
+
+                
                 for iv in ivs: fout.write(f'{vels[iv]:.4f}  ')
                 for iv in ivs: fout.write(f'{evecs[0,iv]:.4f}  {evecs[1,iv]:.4f}   {evecs[2,iv]:.4f}  ')
                 fout.write(f'{kapcomp[0]:.4f}  {kapcomp[1]:.4f} {kapcomp[2]:.4f}')
 
                 fout.write('\n')
 
-                # Store vels for plotting in km/s
-                v_vl[ik] = vels[ivs[0]] * 0.001
-                v_vs1[ik] = vels[ivs[1]]* 0.001
-                v_vs2[ik] = vels[ivs[2]]* 0.001
+                        
+                #v_vl[ik] = vels[ivs[0]] * 0.001
+                #v_vs1[ik] = vels[ivs[1]]* 0.001
+                #v_vs2[ik] = vels[ivs[2]]* 0.001
+                
+                #v_vs1c[ik] = kapcomp[1]
+                #v_vs2c[ik] = kapcomp[2]
+
+                # polarisation projections
+                rad = 0.07/v_vel[0,0] # length of polarisation sticks
+                lwstick = .9
+                srad = 8 # diameter of polarisation dots
+                if ik%npolskip == 0:
+                    
+                    for i in range(3):
+                        rad0 = 1/v_vel[ik, i] 
+                        ptm = rad0*np.array([np.cos(kphi) , np.sin(kphi)])
+                        pt0 = ptm - evecs[0:3:2, ivs[i]]*rad  # add on x and z comps
+                        pt1 = ptm + evecs[0:3:2, ivs[i]]*rad  # add on x and z comps
+                        ax.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=cmm(kapcomp[i]), lw=lwstick)
+                        ax.plot(ptm[0], ptm[1], 'o', c=cmm(kapcomp[i]), markersize=srad*ycomp[i])
+                    
+                    # rad1 = 1/v_vs1[ik]
+                    # ptm = rad1*np.array([np.cos(kphi) , np.sin(kphi)])
+                    # pt0 = ptm - evecs[0:3:2, ivs[1]]*rad*0.05  # add on x and z comps
+                    # pt1 = ptm + evecs[0:3:2, ivs[1]]*rad*0.05  # add on x and z comps
+                    # ax.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=cmm(kapcomp[1]), lw=lwstick)
+
+                    # ax.plot(ptm[0], ptm[1], 'o', c=cmm(kapcomp[1]), markersize=srad*ycomp[1])
+
+                    # rad2 = 1/v_vs2[ik]
+                    # ptm = rad2*np.array([np.cos(kphi) , np.sin(kphi)])
+                    # pt0 = ptm - evecs[0:3:2, ivs[2]]*rad*0.05  # add on x and z comps
+                    # pt1 = ptm + evecs[0:3:2, ivs[2]]*rad*0.05  # add on x and z comps
+                    # ax.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=cmm(kapcomp[2]), lw=lwstick)
+                    # ax.plot(ptm[0], ptm[1], 'o', c=cmm(kapcomp[2]), markersize=srad*ycomp[2])
+                    
+
                 
         #fig, ax = plt.subplots(subplot_kw={'projection':'polar'})
-        fig, ax = plt.subplots()
-        ax.plot(np.cos(v_kphi)/v_vl, np.sin(v_kphi)/v_vl, 'g', lw=1, markersize=1, label=r'$v_l$')
-        ax.plot(np.cos(v_kphi)/v_vs1, np.sin(v_kphi)/v_vs1, lw=1, color='brown', label=r'$v_{s,i}$')
-        ax.plot(np.cos(v_kphi)/v_vs2, np.sin(v_kphi)/v_vs2, lw=1, color='brown')
+        
+        #ax.plot(np.cos(v_kphi)/v_vl, np.sin(v_kphi)/v_vl, 'g', lw=1, markersize=1, label=r'$v_l$')
+        #ax.plot(np.cos(v_kphi)/v_vs1, np.sin(v_kphi)/v_vs1, lw=1, color='brown', label=r'$v_{s,i}$')
+        #ax.plot(np.cos(v_kphi)/v_vs2, np.sin(v_kphi)/v_vs2, lw=1, color='brown')
+
+        for i in range(3):
+            ax.scatter(np.cos(v_kphi)/v_vel[:,i], np.sin(v_kphi)/v_vel[:,i], c=v_velc[:,i], vmin=0, vmax=1, s=0.5,label=r'$v_l$', cmap=cm)
+        #ax.scatter(np.cos(v_kphi)/v_vel[1], np.sin(v_kphi)/v_vs1, c=v_vec[1], vmin=0, vmax=1,s=0.5,#label=r'$v_{s,i}$', cmap=cm)
+        #ax.scatter(np.cos(v_kphi)/v_vel[2], np.sin(v_kphi)/v_vs2, c=v_vec[2], vmin=0, vmax=1, s=1, cmap=cm)
+
         #ax.set_rticks([])
         ax.set_xlabel(r'$1/v_x$ [s/km]')
         ax.set_ylabel(r'$1/v_z$ [s/km]')
@@ -652,7 +709,7 @@ class Material(object):
         ax.set_aspect(1.0)
         ax.axhline(0, c='gray')
         ax.axvline(0, c='gray')
-        ax.legend(loc='upper right', frameon=False, fontsize=16)
+        #ax.legend(loc='upper# right', frameon=False, fontsize=16)
 
         #decorator.add_extra_axes_commands()
         # add label
@@ -956,3 +1013,6 @@ draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
 
 
     return s1 + s2 + s3
+
+def compare_bulk_dispersion(self, mat1, mat2, pref):
+    pass
