@@ -36,15 +36,11 @@ mat_bs = [copy.deepcopy(mat_b) for i in range(4)]
 mat_cs = [copy.deepcopy(mat_c) for i in range(4)]
 mat_ds = [copy.deepcopy(mat_d) for i in range(4)]
 
-#print('x pi/4')
 mat_as[0].rotate(pi/5, 'x-axis')
-#print('\n\ny -pi/2')
-#mat_as[1].rotate(-pi/2, 'y-axis')
-#print('\n\n111, pi/4')
-#mat_as[2].rotate(pi/4, (1,1,1))
-#print('\n\n101, pi/4')
-#mat_as[3].rotate(pi/4, np.array([1,0,1]))
-#
+mat_as[1].rotate(-pi/2, 'y-axis')
+mat_as[2].rotate(pi/4, (1,1,1))
+mat_as[3].rotate(pi/4, np.array([1,0,1]))
+
 
 mat_bs[0].rotate(pi/2, 'x-axis')
 mat_bs[1].rotate(-pi/2, 'y-axis')
@@ -56,13 +52,14 @@ mat_cs[1].rotate(-pi/2, 'y-axis')
 mat_cs[2].rotate(pi/4, (1,1,1))
 mat_cs[3].rotate(pi/4, np.array([1,2,1]))
 
-#mat_ds[0].set_orientation('x-cut')
-#mat_ds[1].set_orientation('y-cut')
-#mat_ds[2].set_orientation('y-cut')
-#mat_ds[2].set_orientation('z-cut')
-#mat_ds[3].set_orientation('y-cut')
-#mat_ds[3].set_orientation('z-cut')
-#mat_ds[3].set_orientation('x-cut')
+mat_ds[0].set_orientation('x-cut')
+mat_ds[1].set_orientation('y-cut')
+mat_ds[2].set_orientation('y-cut')
+mat_ds[2].set_orientation('z-cut')
+mat_ds[3].set_orientation('y-cut')
+mat_ds[3].set_orientation('z-cut')
+mat_ds[3].set_orientation('x-cut')
+for i in range(4): print('d', i, mat_ds[i].c_tensor)
 
 
 
@@ -70,12 +67,15 @@ mat_cs[3].rotate(pi/4, np.array([1,2,1]))
 #for mats in (mat_as, mat_bs, mat_cs, mat_ds):
 ##for mats in (mat_as,):
 #    for im,m in enumerate(mats): 
-#        m.make_crystal_plot(pref+f'{im:d}')
+#        m.make_crystal_axes_plot(pref+f'{im:d}')
 #    #for m in mats: m.plot_bulk_dispersion(pref)
+#
+#$for am,mats in enumerate((mat_as, mat_bs, mat_cs, mat_ds)):
+ #$   for im,m in enumerate(mats):
+  #$      m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
+#$
+materials.compare_bulk_dispersion(mat_as[3], mat_cs[3], pref)
+mat_cs[3].plot_bulk_dispersion_3D(pref)
 
-print(mat_cs[0].c_tensor.mat)
-for am,mats in enumerate((mat_cs,)):
-    for im,m in enumerate((mats[0],)): 
-        m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}')
 
 

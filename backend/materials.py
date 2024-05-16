@@ -34,6 +34,7 @@ import scipy.linalg
 import numbattools
 
 import matplotlib as mpl
+import matplotlib.cm as mplcm
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
@@ -54,6 +55,15 @@ unit_z = np.array([0.0, 0.0, 1.0])
 to_Voigt = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]])
 
 
+g_material_library = None
+
+def make_material(s):
+    global g_material_library
+    
+    if g_material_library is None:
+        g_material_library = MaterialLibrary()
+
+    return g_material_library.get_material(s)   
              
 
 def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
@@ -171,6 +181,44 @@ def _rotate_Voigt_tensor(T_PQ, mat_R):
 
     return Tp_PQ
 
+def solve_christoffel(vkap, c_stiff, rho):
+    '''Solve eigenproblem of Christoffel equation and sort modes by velocity.'''
+    (kapx, kapy, kapz) = vkap
+    
+    mD = np.array([
+    [kapx, 0,    0,    0,    kapz, kapy],
+    [0,    kapy, 0,    kapz, 0,    kapx],
+    [0,    0,    kapz, kapy, kapx, 0]])
+
+    mLHS = np.matmul(np.matmul(mD, c_stiff.as_zerobase_matrix()),mD.T)/rho
+
+    #print('\n\nkap', kphi)
+    #print('Cij', self.c_tensor.as_zerobase_matrix()) 
+    #print('mD', mD)
+    #print('mLHS', mLHS)
+
+    #Solve and normalise
+    evals, evecs = scipy.linalg.eig(mLHS)
+    for i in range(3): evecs[:,i] /=np.linalg.norm(evecs[:,i]) # TODO: make a oneliner.
+    vels = np.sqrt(np.real(evals))
+
+    # orthos = np.array([
+    #     np.dot(evecs[:,0], evecs[:,1]),
+    #     np.dot(evecs[:,0], evecs[:,2]),
+    #     np.dot(evecs[:,1], evecs[:,2]) ])
+    # print(np.abs(orthos).max())
+                
+    # Sort according to velocity 
+                
+    ivs = np.argsort(-vels)  # most likely get pwave first
+
+    vels = np.sqrt(np.real(evals[ivs])) * 0.001 # v in km/s
+    vecs = evecs[ivs,:]
+
+    return  vels, vecs 
+
+
+
 
 
 class VoigtTensor4(object):
@@ -256,9 +304,6 @@ class VoigtTensor4(object):
         rot_tensor = _rotate_Voigt_tensor(self.mat[1:, 1:], matR)
         self.mat[1:, 1:] = rot_tensor
 
-
-# TODO: separate Material and MaterialLibrary
-
 class MaterialLibrary:
 
     def __init__(self):
@@ -283,7 +328,6 @@ class MaterialLibrary:
         return mat
 
     def _load_materials(self):
-        #Material._set_file_locations()
         for fname in os.listdir(self._data_loc):
             if not fname.endswith(".json"): continue
 
@@ -741,7 +785,51 @@ class Material(object):
 
         self.c_tensor.check_symmetries()
 
-    def plot_bulk_dispersion(self, pref, label=None):
+
+    def plot_bulk_dispersion_3D(self, pref):
+        '''
+        Generate isocontour surfaces of the bulk dispersion in 3D k-space.
+        
+        '''
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+
+        # Make data
+        tpts=50
+        ppts=100
+        vphi = np.linspace(0, 2 * np.pi, ppts)
+        vtheta = np.linspace(0, np.pi, tpts)
+        
+        ivx = np.zeros([tpts, ppts, 3]) 
+        ivy = np.zeros([tpts, ppts, 3]) 
+        ivz = np.zeros([tpts, ppts, 3]) 
+
+        for ip,phi in enumerate(vphi):
+            for itheta,theta in enumerate(vtheta):
+                vkap = np.array([np.sin(theta)*np.cos(phi), 
+                                 np.sin(theta)*np.sin(phi),
+                                 np.cos(theta)])
+                vels, vecs = solve_christoffel(vkap, self.c_tensor, self.rho)
+                
+                ivx[itheta,ip,:] =  vkap[0]/vels 
+                ivy[itheta,ip,:] =  vkap[1]/vels 
+                ivz[itheta,ip,:] =  vkap[2]/vels 
+        
+        for i in range(3):
+            ax.plot_surface(ivx[:,:,i], ivy[:,:,i], ivz[:,:,i], alpha=.25)
+
+        for a in ('x', 'y', 'z'):
+            ax.tick_params(axis=a, labelsize=12 )
+        for axis in [ax.w_xaxis, ax.w_yaxis, ax.w_zaxis]:
+            axis.line.set_linewidth(.5)
+    
+        
+        ax.set_aspect('equal')
+
+        plt.savefig(pref+'-bulkdisp3D.png')
+
+        
+    def plot_bulk_dispersion(self, pref, label):
         '''Draw slowness curve in the horizontal (x-z) plane for the crystal axes current orientation.
 
         Solving the Christoffel equation
@@ -754,7 +842,21 @@ class Material(object):
         ] where κ=(cos phi, 0, sin phi)
         '''
 
+        fig, ax = setup_bulk_dispersion_2D_plot()
+            
+        
+        cm='cool' # Color map for polarisation coding
+        self._add_bulk_dispersion_curves_to_axes(pref, fig, ax, cm)
+
         if label is None: label=self.material_name
+        ax.text(0.05, 0.95, label, fontsize=14, style='italic',
+                transform=ax.transAxes)
+        
+        plt.savefig(pref+'-bulkdisp.png')
+
+
+    def _add_bulk_dispersion_curves_to_axes(self, pref, fig, ax, cm):
+
         npolpts = 28
         npolskip = 40
         npts = npolpts*npolskip # about 1000
@@ -762,14 +864,11 @@ class Material(object):
         v_vel = np.zeros([npts, 3])
         v_velc = np.zeros([npts, 3])
         
-        cm='cool' # Color map for polarisation coding
         cmm = mpl.colormaps[cm]
         with open(pref+'-bulkdisp.dat', 'w') as fout:
 
             fout.write('#phi    kapx     kapz     vl         vs1        vs2        vlx     vly      vlz     vs1x    vs1y     vs1z     vs2x    vs2y      vs2z    k.v1    k.v2   k.v3\n')
 
-
-            fig, ax = plt.subplots()
             kapcomp = np.zeros(3)
             ycomp = np.zeros(3)
             for ik,kphi in enumerate(v_kphi):
@@ -777,48 +876,21 @@ class Material(object):
                 kapz = np.sin(kphi)
                 kapy = 0.0
                 vkap = np.array([kapx, kapy, kapz])
-                mD = np.array([
-                    [kapx, 0,    0,    0,    kapz, kapy],
-                    [0,    kapy, 0,    kapz, 0,    kapx],
-                    [0,    0,    kapz, kapy, kapx, 0]
-                ])
-                
-                mLHS = np.matmul(np.matmul(mD, self.c_tensor.as_zerobase_matrix()), mD.T) / self.rho
 
-                #print('\n\nkap', kphi)
-                #print('Cij', self.c_tensor.as_zerobase_matrix()) 
-                #print('mD', mD)
-                #print('mLHS', mLHS)
-                
                 fout.write(f'{kphi:.4f}  {vkap[0]:+.4f}  {vkap[2]:+.4f}  ')
 
-                #Solve and normalise
-                evals, evecs = scipy.linalg.eig(mLHS)
-                for i in range(3): evecs[:,i] /=np.linalg.norm(evecs[:,i]) # TODO: make a oneliner.
-                vels = np.sqrt(np.real(evals))
-
-                # orthos = np.array([
-                #     np.dot(evecs[:,0], evecs[:,1]),
-                #     np.dot(evecs[:,0], evecs[:,2]),
-                #     np.dot(evecs[:,1], evecs[:,2]) ])
-
-                # print(np.abs(orthos).max())
+                vels, vecs = solve_christoffel(vkap, self.c_tensor, self.rho)
+                ivs=[0,1,2] # TODO:remove
+                for i in range(3):
                 
-                # Sort according to velocity and color according to overlaps with kappa 
-                # and out of plane vector
-                
-                ivs = np.argsort(-vels)  # most likely get pwave first
+                    kapcomp[i] = np.abs(np.dot(vkap, vecs[:,ivs[i]])) # TODO: make a oneliner
+                    ycomp[i] = np.abs(vecs[1,ivs[i]])
 
-                for i in range(3): 
-                    kapcomp[i] = np.abs(np.dot(vkap, evecs[:,ivs[i]])) # TODO: make a oneliner
-                    ycomp[i] = np.abs(evecs[1,ivs[i]])
-
-                    v_vel[ik, i] = vels[ivs[i]] * 0.001   # velocities in km/s
+                    v_vel[ik, i] = vels[ivs[i]] # velocities in km/s
                     v_velc[ik, i] = kapcomp[i]
-
                 
                 for iv in ivs: fout.write(f'{vels[iv]:.4f}  ')
-                for iv in ivs: fout.write(f'{evecs[0,iv]:.4f}  {evecs[1,iv]:.4f}   {evecs[2,iv]:.4f}  ')
+                for iv in ivs: fout.write(f'{vecs[0,iv]:.4f}  {vecs[1,iv]:.4f}   {vecs[2,iv]:.4f}  ')
                 fout.write(f'{kapcomp[0]:.4f}  {kapcomp[1]:.4f} {kapcomp[2]:.4f}')
 
                 fout.write('\n')
@@ -833,26 +905,20 @@ class Material(object):
                     for i in range(3):
                         rad0 = 1/v_vel[ik, i] 
                         ptm = rad0*np.array([np.cos(kphi) , np.sin(kphi)])
-                        pt0 = ptm - evecs[0:3:2, ivs[i]]*rad  # add on x and z comps
-                        pt1 = ptm + evecs[0:3:2, ivs[i]]*rad  # add on x and z comps
+                        pt0 = np.real(ptm - vecs[0:3:2, ivs[i]]*rad )  # add on x and z comps
+                        pt1 = np.real(ptm + vecs[0:3:2, ivs[i]]*rad ) # add on x and z comps
                         polc = cmm(kapcomp[i])
                         polc = 'k'
                         ax.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
                         ax.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
-                    
-        for i in range(3):
-            ax.scatter(np.cos(v_kphi)/v_vel[:,i], np.sin(v_kphi)/v_vel[:,i], c=v_velc[:,i], vmin=0, vmax=1, s=0.5,label=r'$v_l$', cmap=cm)
-  
-        ax.set_xlabel(r'$1/v_x$ [s/km]')
-        ax.set_ylabel(r'$1/v_z$ [s/km]')
-        ax.set_aspect(1.0)
-        ax.axhline(0, c='gray', lw=.5)
-        ax.axvline(0, c='gray', lw=.5)
 
-        ax.text(0.05, 0.95, label, fontsize=14, style='italic',
-                transform=ax.transAxes)
+        for i in range(3):
+            ax.scatter(np.cos(v_kphi)/v_vel[:,i], np.sin(v_kphi)/v_vel[:,i], c=v_velc[:,i], vmin=0, vmax=1, s=0.5, cmap=cm)
+
+        fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax, shrink=.5, pad=.025, label='$\hat{e} \cdot \hat{\kappa}$')
+
         
-        plt.savefig(pref+'-bulkdisp.png')
+        
                     
     def make_crystal_axes_plot(self, pref):
         '''Build crystal coordinates diagram using call to external asymptote application.'''
@@ -866,7 +932,31 @@ class Material(object):
         # run .asy 
         subprocess.run(['asy', fn.name, '-o', f'{pref}crystal'])
 
+def setup_bulk_dispersion_2D_plot():
+    fig, ax = plt.subplots()
+    ax.set_xlabel(r'$1/v_x$ [s/km]')
+    ax.set_ylabel(r'$1/v_z$ [s/km]')
+    ax.set_aspect(1.0)
+    ax.axhline(0, c='gray', lw=.5)
+    ax.axvline(0, c='gray', lw=.5)
+    return fig, ax
 
+def compare_bulk_dispersion(mat1, mat2, pref):
+    fig, ax = setup_bulk_dispersion_2D_plot()
+
+    cm1='cool' # Color map for polarisation coding
+    cm2='autumn' # Color map for polarisation coding
+    
+    mat1._add_bulk_dispersion_curves_to_axes(pref+'_mat1', fig, ax, cm1)
+    mat2._add_bulk_dispersion_curves_to_axes(pref+'_mat2', fig, ax, cm2)
+    
+    ax.text(0.05, 0.95, mat1.material_name, fontsize=14, style='italic',
+                transform=ax.transAxes)
+    ax.text(0.05, 0.90, mat2.material_name, fontsize=14, style='italic',
+                transform=ax.transAxes)
+    
+        
+    plt.savefig(pref+'-compare-bulkdisp.png')
 
 
 def isotropic_stiffness(E, v):
@@ -887,17 +977,7 @@ def isotropic_stiffness(E, v):
 
     return c_11, c_12, c_44
 
-g_material_library = None
 
-def make_material(s):
-    global g_material_library
-    
-    if g_material_library is None:
-        g_material_library = MaterialLibrary()
-
-    return g_material_library.get_material(s)   
-
-    #return Material._make_material(s)
 
 
 def get_asy_crystal_axes(crystal_axes):
@@ -960,5 +1040,3 @@ draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
 
     return s1 + s2 + s3
 
-def compare_bulk_dispersion(self, mat1, mat2, pref):
-    pass
