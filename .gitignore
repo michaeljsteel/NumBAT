@@ -8,6 +8,9 @@
 *.o
 *.pyf
 *.dat
+*.swp
+*.py.swp
+.*.py.swp
 out
 
 backend/msh/*.msh
@@ -34,3 +37,4 @@ docs/build/*
 *.mod 
 *.so
 
+tutorials/.simo-tut_17-rotations.py.swp
