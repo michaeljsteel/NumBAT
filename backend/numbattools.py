@@ -14,6 +14,10 @@ from PIL import Image
 def almost_zero(x, tol=1e-10):
     return abs(x)<tol
 
+def almost_unity(x, tol=1e-10):
+    return abs(1-x)<tol
+
+
 def join_figs(l_fns, fnout, clip=None):
 
     images = []
