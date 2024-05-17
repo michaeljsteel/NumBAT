@@ -27,7 +27,7 @@ mat_a=materials.make_material("SiO2_2021_Poulton")        # isotropic
 mat_b=materials.make_material("Ge_cubic_2014_Wolff")  # cubic
 mat_c=materials.make_material("LiNbO3aniso_2021_Steel") # tetragonal
 
-mat_d=materials.make_material("LiNbO3aniso_2021_Steel") # tetragonal
+mat_d=materials.make_material("GaAs_1970_Auld") # tetragonal
 
 pref = 'tut_17'
 
@@ -52,14 +52,18 @@ mat_cs[1].rotate(-pi/2, 'y-axis')
 mat_cs[2].rotate(pi/4, (1,1,1))
 mat_cs[3].rotate(pi/4, np.array([1,2,1]))
 
-mat_ds[0].set_orientation('x-cut')
-mat_ds[1].set_orientation('y-cut')
-mat_ds[2].set_orientation('y-cut')
-mat_ds[2].set_orientation('z-cut')
-mat_ds[3].set_orientation('y-cut')
-mat_ds[3].set_orientation('z-cut')
-mat_ds[3].set_orientation('x-cut')
-for i in range(4): print('d', i, mat_ds[i].c_tensor)
+#mat_ds[0].set_orientation('x-cut')
+#mat_ds[1].set_orientation('y-cut')
+#mat_ds[2].set_orientation('y-cut')
+#mat_ds[2].set_orientation('z-cut')
+#mat_ds[3].set_orientation('y-cut')
+#mat_ds[3].set_orientation('z-cut')
+#mat_ds[3].set_orientation('x-cut')
+
+#for i in range(4): print('d', i, mat_ds[i].c_tensor)
+mat_ds[1].rotate(pi/4, 'x-axis')
+mat_ds[2].rotate(pi/3, 'x-axis')
+mat_ds[3].rotate(pi/4, (1,1,1))
 
 
 
@@ -69,13 +73,15 @@ for i in range(4): print('d', i, mat_ds[i].c_tensor)
 #    for im,m in enumerate(mats): 
 #        m.make_crystal_axes_plot(pref+f'{im:d}')
 #    #for m in mats: m.plot_bulk_dispersion(pref)
-#
-#$for am,mats in enumerate((mat_as, mat_bs, mat_cs, mat_ds)):
- #$   for im,m in enumerate(mats):
-  #$      m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
+
+#for am,mats in enumerate((mat_as, mat_bs, mat_cs, mat_ds)):
+for am,mats in enumerate((mat_ds,)):
+    for im,m in enumerate(mats):
+     m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
+     m.plot_bulk_dispersion_3D(pref+f'-3d-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
 #$
-materials.compare_bulk_dispersion(mat_as[3], mat_cs[3], pref)
-mat_cs[3].plot_bulk_dispersion_3D(pref)
+#materials.compare_bulk_dispersion(mat_as[3], mat_cs[3], pref)
+#mat_as[0].plot_bulk_dispersion(pref)
 
 
 
