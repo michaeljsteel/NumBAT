@@ -17,6 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from enum import Enum, IntEnum, auto
+import numpy as np
 
 #### Natural constants ########################################################
 ASTM15_tot_I = 900.084            # Integral ASTM 1.5 solar irradiance W/m**2
@@ -24,6 +25,10 @@ Plancks_h = 6.62607015e-34     # Planck's constant in Js (exact)
 speed_c = 299792458          # Speed of light in vacuum in m/s (exact)
 charge_e = 1.602176634e-19    # Charge of an electron in C (exact)
 ###############################################################################
+
+unit_x = np.array([1.0, 0.0, 0.0])
+unit_y = np.array([0.0, 1.0, 0.0])
+unit_z = np.array([0.0, 0.0, 1.0])
 
 
 class SimType(Enum):
