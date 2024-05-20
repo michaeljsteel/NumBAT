@@ -758,6 +758,8 @@ class Material(object):
 
         self.c_tensor.check_symmetries()
 
+        
+
     def plot_bulk_dispersion_3D(self, pref, label=None):
         '''
         Generate isocontour surfaces of the bulk dispersion in 3D k-space.
@@ -798,6 +800,7 @@ class Material(object):
                 ivgx[itheta, ip, :] = v_vgroup[:, 0]
                 ivgy[itheta, ip, :] = v_vgroup[:, 1]
                 ivgz[itheta, ip, :] = v_vgroup[:, 2]
+             
            
         for i in range(3):
             ax_vp.plot_surface(ivx[:, :, i], ivy[:, :, i], ivz[:, :, i], alpha=.25)
@@ -862,26 +865,31 @@ class Material(object):
             kapcomp = np.zeros(3)
             ycomp = np.zeros(3)
             for ik, kphi in enumerate(v_kphi):
-                kapx = np.cos(kphi)
-                kapz = np.sin(kphi)
-                kapy = 0.0
-                vkap = np.array([kapx, kapy, kapz])
+                #kapx = np.cos(kphi)
+                #kapz = np.sin(kphi)
+                #kapy = 0.0
+                vkap = np.array([np.cos(kphi), 0.0, np.sin(kphi)])
 
                 fout.write(f'{kphi:.4f}  {vkap[0]:+.4f}  {vkap[2]:+.4f}  ')
 
+
+                # solve_christoffel returns:
+                # eigvecs are sorted by phase velocity
+                # v_vphase[m]:   |vphase| of modes m=1 to 3
+                # vecs[:,m]:     evecs of modes m=1 to 3
+                # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
                 v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.c_tensor, self.rho)
 
-                # eigvecs are sorted by phase velocity
-                for i in range(3):
-                     
-                    # TODO: make a oneliner
-                    kapcomp[i] = np.abs(np.dot(vkap, vecs[:,i]))  # $\kappa \cdot u_i$
-                    ycomp[i] = np.abs(vecs[1,i])                  # $\unity \cdot u_i$
+                v_vel[ik, :] = v_vphase    # phase velocity
+                v_vgx[ik, :] = v_vgroup[:,0]  # group velocity components
+                v_vgz[ik, :] = v_vgroup[:,2]
 
-                    v_vel[ik, i] = v_vphase[i]    # phase velocity
-                    v_velc[ik, i] = kapcomp[i]    # phase velocity color by polarisation
-                    v_vgx[ik, i] = v_vgroup[i,0]  # group velocity components
-                    v_vgz[ik, i] = v_vgroup[i,2]
+                ycomp = np.abs(vecs[1,:])                  # $\unity \cdot u_i$
+                kapcomp = np.abs(np.matmul(vkap, vecs))  # component of vkap along each evec
+                v_velc[ik, :] = kapcomp    # phase velocity color by polarisation
+                
+                
+                print('iks', ik, kphi, v_vphase, v_vgroup)
 
                 for iv in range(3):
                     fout.write(f'{v_vphase[iv]*1000:10.4f}  ')
@@ -917,7 +925,6 @@ class Material(object):
                         ax_vp.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
                         ax_vp.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
 
-
         # the main curves for 1/v_p and v_g
         for i in range(3):
             ax_sl.scatter(np.cos(v_kphi)/v_vel[:, i], np.sin(v_kphi) /
@@ -928,6 +935,9 @@ class Material(object):
 
             ax_vg.scatter(v_vgx[:,i], v_vgz[:,i],  c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm)
 
+        print('fx',v_vgx)
+        print('fz',v_vgz)
+        
         make_axes_square(np.abs(1/v_vel).max(), ax_sl)
         make_axes_square(np.abs(v_vel).max(), ax_vp)
         make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
