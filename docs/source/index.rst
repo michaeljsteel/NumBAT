@@ -14,6 +14,7 @@ If you are itching to get started, jump straight to Chapter 2.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
    :numbered: 
 
    intro
@@ -23,6 +24,8 @@ If you are itching to get started, jump straight to Chapter 2.
    usage
 
    tutorial
+
+
 
    josab
 

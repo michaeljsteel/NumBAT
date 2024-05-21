@@ -5,6 +5,55 @@ import sys
 
 from nbtypes import unit_x, unit_y, unit_z
 
+def kvec_to_symmetric_gradient(kvec):
+    '''Calculates 6x3 symmetric gradient matrix for plane wave of wavevector kvec.
+
+    See Auld I, eq 1.53
+    '''
+    kx, ky, kz = kvec
+    
+    nabla_I_J = np.array([
+        [kx,   0.0, 0.0],
+        [0.0,  ky,  0.0],
+        [0.0,  0.0, kz],
+        [0,    kz,  ky],
+        [kz,   0.0, kx],
+        [ky,   kx, 0.0]
+    ])
+    return nabla_I_J
+    
+    
+def power_flux_christoffel(kapv, v_p, evec, c_stiff):
+    '''Evaluates the power flux P=-v^* \cdot T for a given unit wavevector kapv, eigenvector evec and implicit wavenumber k and frequency omega. 
+
+    Factors of 2 seem to be correct here, but good to write out in full in docs.
+    '''
+
+    # S_I = \nabla_Ij (uj e^i(k kap . r)) = i k (\nabla_Ij  e^i(k kap . r)) . uj
+    # Evaluate the S_I 6x1 vector, Auld 1.50, 1.49                        
+    S_I = 1j * np.matmul(kvec_to_symmetric_gradient(kapv), evec)
+
+    T_I = np.matmul(c_stiff.as_zerobase_matrix(), S_I)  # Auld 3.20   # Indices off by 1 from zero count
+
+    # Pcomp = - 1/2 v^* . T ,   Auld 2.30       , 5.77
+    #       =  -1/2 (i \omega u^*) .  T
+    #om = 1.0 # unit k and omega
+    vsx, vsy, vsz = 1j*np.conj(evec)
+    Pcomp = - 0.5 * np.array([
+        vsx*T_I[0] + vsy*T_I[5] + vsz*T_I[4], 
+        vsx*T_I[5] + vsy*T_I[1] + vsz*T_I[3], 
+        vsx*T_I[4] + vsy*T_I[3] + vsz*T_I[2] ])
+
+    # u_s = 1/2  k^2 S_I c_IJ SJ  # Auld, 5.35
+    u_s = .5*np.matmul(np.matmul(S_I, c_stiff.as_zerobase_matrix()), S_I)  # real vs complex fields?
+
+    # vg = Pcomp/u_s ->  Pcomp/us   (omega k)/(k^2) = v_p Pcomp/us
+    v_g = - np.real(v_p * Pcomp/u_s)
+    #print('powers', kapv, v_p, u_s, Pcomp, v_g)
+    return v_g
+        
+    
+    
 def Gamma_christoffel(vkap, c_stiff, rho):
     '''Returns Gamma_ij = 1/V0^2   mD.Cij.md^T/rho  in units of (km/s)^2
     vkap is unit wavevector.
@@ -91,36 +140,38 @@ def solve_christoffel(vkap, c_stiff, rho):
     # sys.exit(0)
     for m in range(3): # for each mode at this vkap
         v_p = v_vphase[m]
-
-        for ii in range(10):
-            dkk = dkap /2**ii
-            print('dk005', ii, (chareq_christoffel(vkap+dkk*unit_x, c_stiff, rho, v_p)-
-                 chareq_christoffel(vkap-dkk*unit_x, c_stiff, rho, v_p))/(2*dkk))
+        v_g = power_flux_christoffel(vkap, v_p, v_evecs[:,m], c_stiff)
+        v_vgroup[m,:] = v_g 
+            
+        # for ii in range(10):
+        #     dkk = dkap /2**ii
+        #     print('dk005', ii, (chareq_christoffel(vkap+dkk*unit_x, c_stiff, rho, v_p)-
+        #          chareq_christoffel(vkap-dkk*unit_x, c_stiff, rho, v_p))/(2*dkk))
             
 
-        dOmdkapx = (chareq_christoffel(vkap+dkap*unit_x, c_stiff, rho, v_p)-
-                 chareq_christoffel(vkap-dkap*unit_x, c_stiff, rho, v_p))/(2*dkap)
+        # dOmdkapx = (chareq_christoffel(vkap+dkap*unit_x, c_stiff, rho, v_p)-
+        #          chareq_christoffel(vkap-dkap*unit_x, c_stiff, rho, v_p))/(2*dkap)
     
-        dOmdkapy = (chareq_christoffel(vkap+dkap*unit_y, c_stiff, rho, v_p)- 
-                  chareq_christoffel(vkap-dkap*unit_y, c_stiff, rho, v_p))/(2*dkap)
+        # dOmdkapy = (chareq_christoffel(vkap+dkap*unit_y, c_stiff, rho, v_p)- 
+        #           chareq_christoffel(vkap-dkap*unit_y, c_stiff, rho, v_p))/(2*dkap)
 
-        dOmdkapz = (chareq_christoffel(vkap+dkap*unit_z, c_stiff, rho, v_p)- 
-                 chareq_christoffel(vkap-dkap*unit_z, c_stiff, rho, v_p))/(2*dkap)
+        # dOmdkapz = (chareq_christoffel(vkap+dkap*unit_z, c_stiff, rho, v_p)- 
+        #          chareq_christoffel(vkap-dkap*unit_z, c_stiff, rho, v_p))/(2*dkap)
 
-        dOmdvp = (chareq_christoffel(vkap, c_stiff, rho, v_p+dvel)- 
-              chareq_christoffel(vkap, c_stiff, rho, v_p-dvel))/(2*dvel)
+        # dOmdvp = (chareq_christoffel(vkap, c_stiff, rho, v_p+dvel)- 
+        #       chareq_christoffel(vkap, c_stiff, rho, v_p-dvel))/(2*dvel)
 
-        vg = -np.array([dOmdkapx, dOmdkapy, dOmdkapz])/dOmdvp
-        v_vgroup[m,:] = vg
+        # vg = -np.array([dOmdkapx, dOmdkapy, dOmdkapz])/dOmdvp
+        # v_vgroup[m,:] = vg
 
 
-        print('\n\n',vkap, vkap+dkap*unit_x, v_p, vg, '\n        ',
-              dOmdkapx, dOmdkapy, dOmdkapz, dOmdvp, '\n        ',
-              Gamma_christoffel(vkap, c_stiff, rho),
-              chareq_christoffel(vkap, c_stiff, rho, v_p),
-              np.matmul(Gamma_christoffel(vkap, c_stiff, rho), v_evecs[:,m])
-                        -v_p**2*v_evecs[:,m],  v_evecs[:,m]
-              )
+        # print('\n\n',vkap, vkap+dkap*unit_x, v_p, v_g, '\n        ',
+        #       #dOmdkapx, dOmdkapy, dOmdkapz, dOmdvp, '\n        ',
+        #       Gamma_christoffel(vkap, c_stiff, rho),
+        #       chareq_christoffel(vkap, c_stiff, rho, v_p),
+        #       np.matmul(Gamma_christoffel(vkap, c_stiff, rho), v_evecs[:,m])
+        #                 -v_p**2*v_evecs[:,m],  v_evecs[:,m]
+        #       )
         
      #print(v_p, 
       #    chareq_christoffel(vkap, c_stiff, rho, v_p),
