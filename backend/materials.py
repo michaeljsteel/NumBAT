@@ -39,6 +39,7 @@ import matplotlib as mpl
 import matplotlib.cm as mplcm
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
+import matplotlib.ticker as ticker
 
 
 from nbtypes import CrystalGroup
@@ -758,18 +759,14 @@ class Material(object):
 
         self.c_tensor.check_symmetries()
 
+
+    def _add_3d_dispersion_curves_to_axes(self, ax_ivp=None, ax_vg=None):
         
 
-    def plot_bulk_dispersion_3D(self, pref, label=None):
-        '''
-        Generate isocontour surfaces of the bulk dispersion in 3D k-space.
-
-        '''
-        #fig = plt.figure()
-        #ax = fig.add_subplot(projection='3d')
-        fig, axs = plt.subplots(1,2, subplot_kw={'projection':'3d'})
-        ax_vp, ax_vg = axs
-
+        axs = []
+        if ax_ivp is not None: axs.append(ax_ivp)
+        if ax_vg is not None: axs.append(ax_vg)
+        
         # Make data
         tpts = 50
         ppts = 100
@@ -803,38 +800,60 @@ class Material(object):
              
            
         for i in range(3):
-            ax_vp.plot_surface(ivx[:, :, i], ivy[:, :, i], ivz[:, :, i], alpha=.25)
+            if ax_ivp:
+                ax_ivp.plot_surface(ivx[:, :, i], ivy[:, :, i], ivz[:, :, i], alpha=.25)
 
-            ax_vg.plot_surface(ivgx[:, :, i], ivgy[:, :, i], ivgz[:, :, i], alpha=.25)
+            if ax_vg:
+                ax_vg.plot_surface(ivgx[:, :, i], ivgy[:, :, i], ivgz[:, :, i], alpha=.25)
+
+        
+        if ax_ivp:
+            ax_ivp.set_xlabel(r'$1/v_x^{(p)}$ [s/km]', fontsize=8, labelpad=1)
+            ax_ivp.set_ylabel(r'$1/v_y^{(p)}$ [s/km]', fontsize=8, labelpad=1)
+            ax_ivp.set_zlabel(r'$1/v_z^{(p)}$ [s/km]', fontsize=8, labelpad=1)
+        if ax_vg:
+            ax_vg.set_xlabel(r'$v_x^{(g)}$ [km/s]', fontsize=8, labelpad=1)
+            ax_vg.set_ylabel(r'$v_y^{(g)}$ [km/s]', fontsize=8, labelpad=1)
+            ax_vg.set_zlabel(r'$v_z^{(g)}$ [km/s]', fontsize=8, labelpad=1)
+            
 
         for ax in axs:
             for a in ('x', 'y', 'z'):
-                ax.tick_params(axis=a, labelsize=8)
-            for t_ax in [ax.w_xaxis, ax.w_yaxis, ax.w_zaxis]:
+                ax.tick_params(axis=a, labelsize=8, pad=0)
+            for t_ax in [ax.xaxis, ax.yaxis, ax.zaxis]:
                 t_ax.line.set_linewidth(.5)
-
         
             #ax.set_aspect('equal')
-        
+
+    def plot_bulk_dispersion_3D(self, pref, label=None):
+        '''
+        Generate isocontour surfaces of the bulk dispersion in 3D k-space.
+        '''
+
+        fig, axs = plt.subplots(1,2, subplot_kw={'projection':'3d'})
+        ax_vp, ax_vg = axs
+
+
+        self._add_3d_dispersion_curves_to_axes(ax_vp, ax_vg)
+    
 
         plt.savefig(pref+'-bulkdisp3D.png')
 
     def plot_bulk_dispersion(self, pref, label=None):
-        '''Draw slowness surface |1/v_p(kappa)| and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
-
-        Solving the Christoffel equation
-        D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
+        '''Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
+        
+        Solving the Christoffel equation: D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
         C is the Voigt form stiffness.
         D = [
-            [κx  0   0   0  κz  κy  ]
-            [0   κy  0   κz 0   κx  ]
-            [0   0   κz  κy κx  0]
-        ] where κ=(cos phi, 0, sin phi)
+        [κx  0   0   0  κz  κy  ]
+        [0   κy  0   κz 0   κx  ]
+        [0   0   κz  κy κx  0]] where κ=(cos phi, 0, sin phi).
+
         '''
 
         fig, axs = setup_bulk_dispersion_2D_plot()
 
-        ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0] 
+        ax_sl, ax_vp, ax_vg, ax_ivp_3d = axs
             
         cm = 'cool'  # Color map for polarisation coding
         self._add_bulk_slowness_curves_to_axes(pref, fig, ax_sl, ax_vp, ax_vg, cm)
@@ -843,6 +862,8 @@ class Material(object):
             label = self.material_name
         ax_sl.text(-0.1, 1.1, label, fontsize=14, style='italic', transform=ax_sl.transAxes)
 
+        self._add_3d_dispersion_curves_to_axes(ax_ivp_3d)
+            
         plt.savefig(pref+'-bulkdisp.png')
 
     def _add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
@@ -888,8 +909,6 @@ class Material(object):
                 kapcomp = np.abs(np.matmul(vkap, vecs))  # component of vkap along each evec
                 v_velc[ik, :] = kapcomp    # phase velocity color by polarisation
                 
-                
-                print('iks', ik, kphi, v_vphase, v_vgroup)
 
                 for iv in range(3):
                     fout.write(f'{v_vphase[iv]*1000:10.4f}  ')
@@ -935,8 +954,9 @@ class Material(object):
 
             ax_vg.scatter(v_vgx[:,i], v_vgz[:,i],  c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm)
 
-        print('fx',v_vgx)
-        print('fz',v_vgz)
+        # Tick location seems to need help here
+        for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
+            tax.set_major_locator(ticker.MultipleLocator(2.0, offset=0))
         
         make_axes_square(np.abs(1/v_vel).max(), ax_sl)
         make_axes_square(np.abs(v_vel).max(), ax_vp)
@@ -961,11 +981,16 @@ class Material(object):
 
 def setup_bulk_dispersion_2D_plot():
     '''Plots both slowness and ray normal contours.'''
+    
     fig, axs = plt.subplots(2,2, figsize=(7,6))
-    #fig.tight_layout()  # breaks xaxis fonts. find another way
+    fig.subplots_adjust(hspace=.35, wspace=0)
     
     ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0] 
 
+    axs[1,1].set_axis_off()  # Hide axis 2,2
+
+    axs[1,1].remove()
+    ax_ivp3d = fig.add_subplot(2,2,4, projection='3d')
     ax_sl.set_xlabel(r'$1/v^{(p)}_{x}$ [s/km]')
     ax_sl.set_ylabel(r'$1/v^{(p)}_{z}$ [s/km]')
     ax_vp.set_xlabel(r'$v^{(p)}_{x}$ [s/km]')
@@ -973,7 +998,7 @@ def setup_bulk_dispersion_2D_plot():
     ax_vg.set_xlabel(r'$v^{(g)}_{x}$ [km/s]')
     ax_vg.set_ylabel(r'$v^{(g)}_{z}$ [km/s]')
     
-    for ax in axs.flat:
+    for ax in axs.flat[:3]:  # Don't write to axis 2,2
         ax.axhline(0, c='gray', lw=.5)
         ax.axvline(0, c='gray', lw=.5)
         ax.tick_params(width=.5)
@@ -981,7 +1006,7 @@ def setup_bulk_dispersion_2D_plot():
              ax.get_xticklabels() + ax.get_yticklabels()):
                 item.set_fontsize(10)
         for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
-        
+    axs = ax_sl, ax_vp, ax_vg, ax_ivp3d    
     return fig, axs
 
 
@@ -998,9 +1023,9 @@ def compare_bulk_dispersion(mat1, mat2, pref):
     mat2._add_bulk_slowness_curves_to_axes(pref+'_mat2', fig, ax_vp, ax_vg, cm2)
 
     ax_vp.text(0.05, 0.95, mat1.material_name, fontsize=14, style='italic',
-            transform=ax.transAxes)
+            transform=ax_vp.transAxes)
     ax_vg.text(0.05, 0.90, mat2.material_name, fontsize=14, style='italic',
-            transform=ax.transAxes)
+            transform=ax_vp.transAxes)
 
     plt.savefig(pref+'-compare-bulkdisp.png')
 
@@ -1084,7 +1109,7 @@ draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
     return s1 + s2 + s3
 
 def make_axes_square(ext0, ax):
-    ext = 1.05*ext0
+    ext = 1.1*ext0
     ax.set_xlim(-ext, ext)
     ax.set_ylim(-ext, ext)
     ax.set_aspect('equal')

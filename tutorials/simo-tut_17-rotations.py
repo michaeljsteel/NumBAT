@@ -75,11 +75,10 @@ mat_ds[3].rotate(pi/4, (1,1,1))
 #    #for m in mats: m.plot_bulk_dispersion(pref)
 
 #for am,mats in enumerate((mat_as, mat_bs, mat_cs, mat_ds)):
-for am,mats in enumerate((mat_as,)):
+for am,mats in enumerate((mat_ds,)):
     for im,m in enumerate(mats):
      m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
      m.plot_bulk_dispersion_3D(pref+f'-3d-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
-     sys.exit(0)
 #$
 #materials.compare_bulk_dispersion(mat_as[3], mat_cs[3], pref)
 #mat_as[0].plot_bulk_dispersion(pref)

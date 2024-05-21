@@ -1,10 +1,12 @@
+
 .. include:: numbatdefs.txt
 
 .. _chap-install-label:
 
 *******************
-Installing |NUMBAT|
+Installing NumBAT
 *******************
+
 
 This chapter provides instructions on installing |NUMBAT| on each platform.
 Please email |NUMBAT_EMAIL| to let us know of any difficulties you encounter, or suggestions for improvements to the install procedure on any platform, but especially for MacOS or Windows.
@@ -34,7 +36,7 @@ Installing on Linux
 
 |NUMBAT| has been developed and tested on Ubuntu 23.04 with the following
 package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0,
-and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and LAPACK libraries. We
+and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and :eq: libraries. We
 strongly recommend linking |NUMBAT| against optimised versions, such as the MKL
 library provided in the  free Intel OneAPI library.
 
