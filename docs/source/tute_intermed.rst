@@ -250,34 +250,6 @@ of both electromagnetic and elastic modes in a pair of closely adjacent waveguid
 
 
 
-Tutorial 16 -- Using NumBAT in a Jupyter notebook 
---------------------------------------------------
-For those who like to work in an interactive fashion,
-|NUMBAT| works perfectly well inside a Jupyter notebook. 
-This is demonstrated in the file ``jup_16_smf28.ipynb`` using the standard
-SMF-28 fibre problem as an example.
-
-On a Linux system, you can open this at the command line with::
-
-  $ jupyter-notebook ``jup_16_smf28.ipynb``
-
-or else load it directly in an already open Jupyter environment.
-
-The notebook demonstrates how to run standard |NUMBAT| routines step by step.
-The output is still written to disk, so the notebook includes some simple techniques for 
-efficiently displaying mode profiles and spectra inside the notebook. 
 
 
-.. figure:: images/jupyter_ss.png
-   :scale: 100 %
 
-   |NUMBAT| calculation of SMF-28 modes within a Jupyter notebook.
-
-
-Tutorial 17 -- Test Jupyter
---------------------------------------------------
-
-.. toctree:: 
-   :maxdepth: 1
-
-   notebooks/jup_16_smf28
