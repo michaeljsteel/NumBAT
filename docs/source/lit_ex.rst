@@ -3,13 +3,11 @@
 
 .. _chap-literature-label:
 
-***********************
-Literature Examples
-***********************
+*******************************
+Additional Literature Examples
+*******************************
 
 
-Introduction
----------------------
 
 Having become somewhat familiar with |NUMBAT|, we now set out to replicate a number of examples
 from the recent literature located in the ``lit_examples`` directory.
