@@ -26,10 +26,10 @@ import json
 import re
 import copy
 import numpy as np
-import numpy.linalg
+#import numpy.linalg
 import tempfile
 import subprocess
-import scipy.linalg
+#import scipy.linalg
 
 import numbattools
 from  nbtypes import unit_x, unit_y, unit_z
@@ -49,8 +49,7 @@ import reporting
 class BadMaterialFileError(Exception):
     pass
 
-
-
+        
 
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
@@ -211,8 +210,15 @@ class VoigtTensor4(object):
         self.mat[k[0], k[1]] = v
 
     def __str__(self):
+
+        prec = np.get_printoptions()['precision']
+        np.set_printoptions(precision=4)
+
         s = f'\nVoigt tensor {self.material_name}, tensor {self.symbol}:\n'
         s += str(self.mat[1:, 1:])
+
+        np.set_printoptions(precision=prec)
+        
         return s
 
     def dump(self):
@@ -355,15 +361,16 @@ class Material(object):
         self._parse_json_data(json_data, filename)
 
     def __str__(self):
-        s = f'''
-          Material: {self.chemical}
-          File: {self.material_name}
-          Source: {self.author}
-          Date: {self.date}
-          '''
+        s = (f'Material: {self.chemical}\n'
+             f'  File: {self.material_name}\n'
+             f'  Source: {self.author}\n'
+             f'  Date: {self.date}' )
         if len(self.comment):
-            s += 'Comment: '+self.comment
+            s += f'\nComment: {self.comment}'
         return s
+
+    def copy(self): 
+        return copy.deepcopy(self)
 
     def full_str(self):
         s = str(self)
@@ -374,20 +381,33 @@ class Material(object):
 
     def elastic_properties(self):
         '''Returns a string containing key elastic properties of the material.'''
-        try:
-            s = f'Material:       {self.material_name}'
-            s += f'\nDensity:        {self.rho:.3f} kg/m^3'
 
+        dent = '\n  '
+        try:
+            s = f'Elastic properties of material {self.material_name}'
+            s += dent + f'Density:        {self.rho:.3f} kg/m^3'
+            s += dent + f'Crystal class:  {self.crystal.name}'
+            
             if self.is_isotropic():
-                s += f'\nc11:            {self.c_tensor.mat[1, 1]*1e-9:.3f} GPa'
-                s += f'\nc12:            {self.c_tensor.mat[1, 2]*1e-9:.3f} GPa'
-                s += f'\nc44:            {self.c_tensor.mat[4, 4]*1e-9:.3f} GPa'
-                s += f"\nYoung's mod E:  {self.EYoung*1e-9:.3f} GPa"
-                s += f'\nPoisson ratio:  {self.nuPoisson:.3f}'
-                s += f'\nVelocity long.: {self.Vac_longitudinal():.3f} m/s'
-                s += f'\nVelocity shear: {self.Vac_shear():.3f} m/s'
+                s += dent + f'c11:            {self.c_tensor.mat[1, 1]*1e-9:.3f} GPa'
+                s += dent + f'c12:            {self.c_tensor.mat[1, 2]*1e-9:.3f} GPa'
+                s += dent + f'c44:            {self.c_tensor.mat[4, 4]*1e-9:.3f} GPa'
+                s += dent + f"Young's mod E:  {self.EYoung*1e-9:.3f} GPa"
+                s += dent + f'Poisson ratio:  {self.nuPoisson:.3f}'
+                s += dent + f'Velocity long.: {self.Vac_longitudinal():.3f} m/s'
+                s += dent + f'Velocity shear: {self.Vac_shear():.3f} m/s'
             else:
-                s += '\nStiffness c:' + str(self.c_tensor)
+                s += dent + 'Stiffness c_IJ:' + str(self.c_tensor) + '\n'
+                
+                # find wave properties for z propagation
+                v_phase, v_evecs, v_vgroup = solve_christoffel(unit_z, self.c_tensor, self.rho)
+
+                with np.printoptions(precision=4, floatmode='fixed', sign=' ', suppress=True):
+                    for m in range(3):
+                        vgabs = np.linalg.norm(v_vgroup[m])
+                        s += dent + f'Wave mode {m+1}: v_p={v_phase[m]:.4f} km/s,  |v_g|={vgabs:.4f} km/s,  ' \
+                            + 'u_j=' + str(v_evecs[:,m]) + ',  v_g=' + str(v_vgroup[m]) +' km/s'
+                
 
         except Exception:
             s = 'Unknown/undefined elastic parameters in material '+self.material_name
@@ -845,9 +865,9 @@ class Material(object):
         Solving the Christoffel equation: D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
         C is the Voigt form stiffness.
         D = [
-        [κx  0   0   0  κz  κy  ]
-        [0   κy  0   κz 0   κx  ]
-        [0   0   κz  κy κx  0]] where κ=(cos phi, 0, sin phi).
+        [kapx  0   0   0  kapz  kapy  ]
+        [0   kapy  0   kapz 0   kapx  ]
+        [0   0   kapz  kapy kapx  0]] where kap=(cos phi, 0, sin phi).
 
         '''
 
@@ -976,7 +996,7 @@ class Material(object):
         fn.close()
 
         # run .asy
-        subprocess.run(['asy', fn.name, '-o', f'{pref}crystal'])
+        subprocess.run(['asy', fn.name, '-o', f'{pref}-crystal'])
 
 
 def setup_bulk_dispersion_2D_plot():
