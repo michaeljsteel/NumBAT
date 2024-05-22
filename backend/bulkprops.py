@@ -1,5 +1,4 @@
 import numpy as np
-#import numpy.linalg
 import scipy.linalg
 import sys
 
