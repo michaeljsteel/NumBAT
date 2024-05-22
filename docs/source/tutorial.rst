@@ -106,6 +106,13 @@ We now walk through a number of simple simulations that demonstrate the basic us
 
    tute_elem
 
+   notebooks/jup_09_smf28
+
+
+.. raw:: latex
+
+    \clearpage
+
 
 Intermediate tutorials
 ======================
@@ -116,8 +123,16 @@ The next set of tutorials begin to explore some more advanced features.
    :maxdepth: 1
 
 
+   notebooks/jup_09a_bulk_anisotropy
+
+.. raw:: latex
+
+    \clearpage
+
+.. toctree:: 
+   :maxdepth: 1
+
    tute_intermed
 
 
 
-   notebooks/jup_16_smf28

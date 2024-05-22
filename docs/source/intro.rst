@@ -119,17 +119,27 @@ The electromagnetic wave problem is defined by the vector wave equation
 
    - \nabla \times (\nabla \times {\vec E}) + \omega^2 \epsilon_0 \, \epsilon_r(x,y) \vec E =0,
 
-where the electric field has the form for modal propagation along :math:`z`:
+where the *real-valued* electric field has the following form for modal propagation along :math:`z`:
+
+CHECK THE FACTOR of HALF here.
+
+.. math::
+   :nowrap:   
+
+   \begin{align*}
+   \vec E(x,y,z,t) = & \frac{1}{2} \left ( {\vec \cal E}(\vec r) e^{- i  \omega t } + {\vec \cal E}^* (\vec r) e^{- i  \omega t } \right) \\
+                   = & \frac{1}{2} \left ( a(z) \vec e(x,y) e^{i (kz-\omega t) } + a^*(z) \vec e(x,y) e^{-i (kz-\omega t) } \right),
+   \end{align*}
+   
+
+in terms of the complex field amplitude :math:`\mathcal{E}(\vec r)`, the mode profile :math:`\vec e(x,y)` and the complex slowly-varying envelope function :math:`a(z)`. 
+
+By Faraday's law the complex magnetic field amplitude is given by
 
 .. math::
 
-   \vec E(x,y,z,t) = a(z) \vec e(x,y) e^{i (kz-\omega t) } + a^*(z) \vec e(x,y) e^{-i (kz-\omega t) } ,
+   {\vec {\cal B} } =  \frac{1}{i \omega} \nabla \times {\vec {\cal E}}.
 
-and the magnetic  field is given by
-
-.. math::
-
-   \vec B =  \frac{1}{i \omega} \nabla \times \vec E.
 
 
 Elastic  modal problem
@@ -149,7 +159,7 @@ The displacement has the modal propagation form
 
 .. math::
 
-   \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y) e^{-i (qz-\Omega t) } ,
+   \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y)^* e^{-i (qz-\Omega t) } ,
 
 
 For details on how these problems are framed as finite element problems, we refer to `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
