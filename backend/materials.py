@@ -386,6 +386,8 @@ class Material(object):
         try:
             s = f'Elastic properties of material {self.material_name}'
             s += dent + f'Density:        {self.rho:.3f} kg/m^3'
+            s += dent + f'Ref. index:     {self.refindex_n:.4f} '
+            
             s += dent + f'Crystal class:  {self.crystal.name}'
             
             if self.is_isotropic():
@@ -985,6 +987,97 @@ class Material(object):
         #fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_vp, shrink=.5,
         #             pad=.025, location='top', label='$\hat{e} \cdot \hat{\kappa}$')
 
+
+
+    def _add_bulk_slowness_curves_to_axes_2x1(self, pref, fig, ax_sl, ax_vp, cm, mat1or2):
+
+        npolpts = 28
+        npolskip = 10  #make bigger
+        npts = npolpts*npolskip  # about 1000
+        v_kphi = np.linspace(0., np.pi*2, npts)
+        v_vel = np.zeros([npts, 3])
+        v_velc = np.zeros([npts, 3])
+        v_vgx = np.zeros([npts, 3])
+        v_vgz = np.zeros([npts, 3])
+        
+
+        cmm = mpl.colormaps[cm]
+        
+        kapcomp = np.zeros(3)
+        ycomp = np.zeros(3)
+        for ik, kphi in enumerate(v_kphi):
+            vkap = np.array([np.cos(kphi), 0.0, np.sin(kphi)])
+
+
+            # solve_christoffel returns:
+            # eigvecs are sorted by phase velocity
+            # v_vphase[m]:   |vphase| of modes m=1 to 3
+            # vecs[:,m]:     evecs of modes m=1 to 3
+            # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
+            v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.c_tensor, self.rho)
+
+            v_vel[ik, :] = v_vphase    # phase velocity
+            #v_vgx[ik, :] = v_vgroup[:,0]  # group velocity components
+            #v_vgz[ik, :] = v_vgroup[:,2]
+
+            ycomp = np.abs(vecs[1,:])                  # $\unity \cdot u_i$
+            kapcomp = np.abs(np.matmul(vkap, vecs))  # component of vkap along each evec
+            v_velc[ik, :] = kapcomp    # phase velocity color by polarisation
+            
+
+            
+            # Draw polarisation ball and stick notations
+            irad = 0.07/v_vel[0, 0]  # length of polarisation sticks
+            rad = 0.07*v_vel[0, 0]  # length of polarisation sticks
+            lwstick = .9
+            srad = 5  # diameter of polarisation dots
+            if ik % npolskip == 0: 
+
+                for i in range(3):
+                    radsl = 1/v_vel[ik, i]
+                    radvp = v_vel[ik, i]
+                    polc = cmm(kapcomp[i])
+                    polc = 'k'  # all black for now
+
+                    ptm = radsl*np.array([np.cos(kphi), np.sin(kphi)])
+                    pt0 = np.real(ptm - vecs[0:3:2, i]*irad)
+                    pt1 = np.real(ptm + vecs[0:3:2, i]*irad)
+                    ax_sl.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
+                    ax_sl.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
+
+                    ptm = radvp*np.array([np.cos(kphi), np.sin(kphi)])
+                    pt0 = np.real(ptm - vecs[0:3:2, i]*rad)
+                    pt1 = np.real(ptm + vecs[0:3:2, i]*rad)
+                    
+                    #ax_vp.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
+                    #ax_vp.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
+
+        # the main curves for 1/v_p and v_g
+        for i in range(3):
+            ax_sl.scatter(np.cos(v_kphi)/v_vel[:, i], np.sin(v_kphi) /
+                        v_vel[:, i], c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm)
+
+            #ax_vp.scatter(np.cos(v_kphi)*v_vel[:, i], np.sin(v_kphi) *
+            #            v_vel[:, i], c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm)
+
+            #ax_vg.scatter(v_vgx[:,i], v_vgz[:,i],  c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm)
+
+        # Tick location seems to need help here
+        #for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
+         #   tax.set_major_locator(ticker.MultipleLocator(2.0, offset=0))
+        
+        make_axes_square(np.abs(1/v_vel).max(), ax_sl)
+        #make_axes_square(np.abs(v_vel).max(), ax_vp)
+        #make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
+        
+        cbar=fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_sl, shrink=.5,
+                     pad=.025, location='right')
+        cbar.ax.tick_params(labelsize=6, width=.25)
+        
+        cbar.outline.set_linewidth(1)
+        cbar.set_label(label=f'Mat {mat1or2} ' +'$\hat{e} \cdot \hat{\kappa}$', fontsize=10)
+        
+
     def make_crystal_axes_plot(self, pref):
         '''Build crystal coordinates diagram using call to external asymptote application.'''
 
@@ -1030,22 +1123,57 @@ def setup_bulk_dispersion_2D_plot():
     return fig, axs
 
 
-def compare_bulk_dispersion(mat1, mat2, pref):
-    fig, axs = setup_bulk_dispersion_2D_plot()
-
-    ax_vp, ax_vg = axs[0]  
+def setup_bulk_dispersion_2D_plot_2x1():
+    '''Plots both slowness and ray normal contours.'''
     
+    fig, axs = plt.subplots(1,1, figsize=(6,4))
+    #fig.subplots_adjust(hspace=.35, wspace=0)
+    axs = axs,
+    #ax_sl, ax_vg = axs
+    ax_sl = axs[0]
+    
+    #ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0] 
+
+    #axs[1,1].set_axis_off()  # Hide axis 2,2
+
+    #axs[1,1].remove()
+    #ax_ivp3d = fig.add_subplot(2,2,4, projection='3d')
+    ax_sl.set_xlabel(r'$1/v^{(p)}_{x}$ [s/km]')
+    ax_sl.set_ylabel(r'$1/v^{(p)}_{z}$ [s/km]')
+    #ax_vp.set_xlabel(r'$v^{(p)}_{x}$ [s/km]')
+    #ax_vp.set_ylabel(r'$v^{(p)}_{z}$ [s/km]')
+    #ax_vg.set_xlabel(r'$v^{(g)}_{x}$ [km/s]')
+    #ax_vg.set_ylabel(r'$v^{(g)}_{z}$ [km/s]')
+    
+    for ax in axs:  # Don't write to axis 2,2
+        ax.axhline(0, c='gray', lw=.5)
+        ax.axvline(0, c='gray', lw=.5)
+        ax.tick_params(width=.5)
+        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
+             ax.get_xticklabels() + ax.get_yticklabels()):
+                item.set_fontsize(12)
+        for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
+    #axs = ax_sl, ax_vp, ax_vg, ax_ivp3d    
+    return fig, axs
+
+
+def compare_bulk_dispersion(mat1, mat2, pref):
+    fig, axs = setup_bulk_dispersion_2D_plot_2x1()
+
+    #ax_sl, ax_vg = axs 
+    ax_sl=axs[0]
+    ax_vg=None
     
     cm1 = 'cool'  # Color map for polarisation coding
     cm2 = 'autumn'  # Color map for polarisation coding
 
-    mat1._add_bulk_slowness_curves_to_axes(pref+'_mat1', fig, ax_vp, ax_vg, cm1)
-    mat2._add_bulk_slowness_curves_to_axes(pref+'_mat2', fig, ax_vp, ax_vg, cm2)
+    mat1._add_bulk_slowness_curves_to_axes_2x1(pref+'_mat1', fig, ax_sl, ax_vg, cm1, 1)
+    mat2._add_bulk_slowness_curves_to_axes_2x1(pref+'_mat2', fig, ax_sl, ax_vg, cm2, 2)
 
-    ax_vp.text(0.05, 0.95, mat1.material_name, fontsize=14, style='italic',
-            transform=ax_vp.transAxes)
-    ax_vg.text(0.05, 0.90, mat2.material_name, fontsize=14, style='italic',
-            transform=ax_vp.transAxes)
+    ax_sl.text(0.05, 1.15, f'Mat 1: {mat1.material_name}', fontsize=14, style='italic',
+            transform=ax_sl.transAxes)
+    ax_sl.text(0.05, 1.05, f'Mat 2: {mat2.material_name}', fontsize=14, style='italic',
+            transform=ax_sl.transAxes)
 
     plt.savefig(pref+'-compare-bulkdisp.png')
 
