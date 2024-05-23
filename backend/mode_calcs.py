@@ -279,7 +279,8 @@ class ModePlotHelper(object):
             self.v_triang1p.extend(triangles)
 
         # This is for testing only. Normally turn off
-        check_triangulation( self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
+        if False:
+            check_triangulation( self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         self.triang1p = matplotlib.tri.Triangulation(self.mesh_xy[:, 0], self.mesh_xy[:, 1], self.v_triang1p)

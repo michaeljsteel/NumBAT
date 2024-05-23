@@ -90,8 +90,7 @@ for width in waveguide_widths:
     inc_a_x = width
     inc_a_y = 0.9*inc_a_x
 
-    wguide = nbapp.make_structure(unitcell_x, inc_a_x, unitcell_y,
-                               inc_a_y, inc_shape,
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),

@@ -317,7 +317,7 @@ def do_main():
         unitcell_y = unitcell_x
 
 
-    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, acore,   # remove these factors of 2
                                inc_b_x=aclad,
                             unitcell_y=unitcell_y,
                             material_bkg=mat_bkg,

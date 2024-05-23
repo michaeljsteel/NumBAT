@@ -9,6 +9,7 @@
   "Re_n": 1.4492,  // Real part of refractive index []
   "Im_n": 0.0,  // Imaginary part of refractive index []
   "s": 2203,  // Density [kg/m3]
+  "_s": 5003,  // Density [kg/m3]
   "crystal_class": "Isotropic",
   "c_11": 78e9,  // Stiffness tensor component [Pa]
   "c_12": 16e9,  // Stiffness tensor component [Pa]

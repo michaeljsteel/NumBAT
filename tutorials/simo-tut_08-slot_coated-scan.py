@@ -49,7 +49,7 @@ nbapp = numbat.NumBATApp(prefix)
 def ac_mode_freqs(coat_y):
     print(f'Commencing mode calculation for coat_y = {coat_y}')
 
-    wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
                             slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                             coat_y=coat_y,
                             material_bkg=materials.make_material("Vacuum"),            # background

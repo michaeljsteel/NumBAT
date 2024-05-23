@@ -41,8 +41,7 @@ d_lo = 400
 mat_hi = materials.make_material("Si_2016_Smith")
 mat_lo = materials.make_material("SiO2_2016_Smith")
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(unitcell_x, d_lo, inc_shape=inc_shape,
-                           unitcell_y=unitcell_y,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=d_lo, 
                            inc_b_x=d_hi,
                            inc_c_x=d_lo, inc_d_x=d_hi, inc_e_x=d_lo, inc_f_x=d_hi,
                            inc_g_x=d_lo, inc_h_x=d_hi, inc_i_x=d_lo, inc_j_x=d_hi,

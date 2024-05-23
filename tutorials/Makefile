@@ -110,6 +110,10 @@ tut17:
 ftut17: 
 	$(PYTHON) simo-tut_17-rotations.py fast=1
 
+tut18: 
+	$(PYTHON) simo-tut_18-sbs-in-smf28.py
+ftut18: 
+	$(PYTHON) simo-tut_18-sbs-in-smf28.py fast=1
 
 clean:
 	-rm *.png *.npz
