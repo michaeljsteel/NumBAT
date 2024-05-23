@@ -40,17 +40,15 @@ prefix, refine_fac = starter.read_args(11, sys.argv, sub='a')
 
 nbapp = numbat.NumBATApp(prefix)
 
-# Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(unitcell_x,
-                           inc_a_x,  # inner diameter
-                           inc_shape=inc_shape,
+mat_bkg=materials.make_material("Vacuum"),
+mat_a=materials.make_material("As2S3_2021_Poulton"),
+mat_b=materials.make_material("SiO2_2021_Poulton"),
+
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, 
                            inc_b_x=inc_b_x,  # first annulus width
-                           unitcell_y=unitcell_y,
-                           material_bkg=materials.make_material("Vacuum"),
-                           material_a=materials.make_material(
-                               "As2S3_2021_Poulton"),
-                           material_b=materials.make_material(
-                               "SiO2_2021_Poulton"),
+                           material_bkg=mat_bkg,
+                           material_a=mat_a,
+                           material_b=mat_b,
                            lc_bkg=.1, lc_refine_1=2.0*refine_fac, lc_refine_2=2*refine_fac)
 
 wguide.plot_mesh(prefix)

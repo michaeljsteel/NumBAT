@@ -21,30 +21,60 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 5*lambda_nm
-unitcell_y = unitcell_x
-inc_a_x = 550
-inc_a_y = inc_a_x
-inc_shape = 'circular'
+core_a = 8e3
+clad_a = 125e3
+clad_a = 30e3
+clad_a = 4000
 
-num_modes_EM_pump = 20
+unitcell_x = clad_a*2.0
+#unitcell_x = 5*lambda_nm
+unitcell_y = unitcell_x
+
+methodtri=1
+
+
+num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
 EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix, refine_fac = starter.read_args(6, sys.argv)
+prefix, refine_fac = starter.read_args(18, sys.argv)
 
 nbapp = numbat.NumBATApp(prefix)
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
-                        material_bkg=materials.make_material("Vacuum"),
-                        material_a=materials.make_material("SiO2_2016_Smith"),
-                        lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
+mat_vac = materials.make_material('Vacuum')
+sio2 = "SiO2GeO2_smf28"
+#sio2 = "SiO2_2016_Smith"
 
+mat_clad = materials.make_material(sio2)
+mat_core = materials.make_material(sio2)
+
+onion = False
+if onion:
+    inc_shape = 'onion2'
+    inc_a_x = core_a
+    inc_b_x = clad_a-core_a
+else:
+    inc_shape = 'circular'
+    inc_a_x = clad_a
+
+if onion:
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=core_a, 
+                              inc_b_x = clad_a-core_a, 
+                              material_bkg=mat_vac, material_a=mat_core, material_b=mat_clad, 
+                              lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
+else:
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=inc_a_x, 
+                              material_bkg=mat_vac, material_a=mat_core, 
+                              lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
+
+
+
+wguide.plot_mesh(prefix)
 # Expected effective index of fundamental guided mode.
-n_eff = 1.4
+n_eff = .5*(mat_clad.refindex_n +mat_core.refindex_n )
 
 recalc_fields=True     # run the calculation from scratch
 #recalc_fields=False   # reuse saved fields from previous calculation
@@ -54,18 +84,18 @@ if recalc_fields:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-    sim_EM_pump.save_simulation('tut_06_pump')
-    sim_EM_Stokes.save_simulation('tut_06_stokes')
+#    sim_EM_pump.save_simulation('tut_18_pump')
+#    sim_EM_Stokes.save_simulation('tut_18_stokes')
 else:
-    sim_EM_pump = mode_calcs.load_simulation('tut_06_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
+    sim_EM_pump = mode_calcs.load_simulation('tut_18_pump')
+    sim_EM_Stokes = mode_calcs.load_simulation('tut_18_stokes')
 
-sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+#sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+#sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
-trim=0.4
-#trim=0.0
+#trim=0.4
+trim=0
 plotting.plot_mode_fields(sim_EM_pump, EM_AC='EM_E', ivals=range(5),
         xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
@@ -86,11 +116,11 @@ shift_Hz = 4e9
 # Calculate Acoustic modes.
 if recalc_fields:
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
-    sim_AC.save_simulation('tut_06_acoustic')
+    #sim_AC.save_simulation('tut_18_acoustic')
 else:
-    sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
+    sim_AC = mode_calcs.load_simulation('tut_18_acoustic')
 
-sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+#sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 plotting.plot_mode_fields(sim_AC, EM_AC='AC', )
 
 # Print the frequencies of AC modes.
@@ -116,7 +146,7 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
-freq_max = 12e9  # Hz
+freq_max = 15e9  # Hz
 
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,

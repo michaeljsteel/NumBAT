@@ -40,7 +40,7 @@ prefix, refine_fac = starter.read_args(11, sys.argv, sub='b')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x,
                            inc_b_x=inc_b_x, inc_c_x=inc_c_x,
                            unitcell_y=unitcell_y,
                            material_bkg=materials.make_material("Vacuum"),

@@ -371,7 +371,7 @@ def do_main():
     inc_shape = 'circ_onion'
     unitcell_x = rcore*7  # system size in nm
 
-    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,  # remove these factors of 2
+    wguide = nbapp.make_structure(inc_shape, unitcell_x,  inc_a_x = acore, # remove these factors of 2
                                inc_b_x=rn, inc_c_x=rn, inc_d_x=rn, inc_e_x=rn,
                                inc_f_x=rn, inc_g_x=rn, inc_h_x=rn, inc_i_x=rn,
                                inc_j_x=rn, inc_k_x=rn, inc_l_x=rn, inc_m_x=rn,

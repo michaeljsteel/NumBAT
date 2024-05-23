@@ -260,8 +260,6 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     pref = f'{prefix}-gain_spectra'
     pathpref = str(Path(numbat.NumBATApp().outdir(), pref))
 
-    print('\n\npathpref', pathpref)
-
     if decorator is None:
         decorator = Decorator()
     decorator._set_for_single()

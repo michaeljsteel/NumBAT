@@ -392,10 +392,9 @@ def do_main():
     mat_core = mat_As2S3
     mat_bkg  = mat_vac
 
-    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,
-                            unitcell_y=unitcell_y, inc_b_x  =rcore*.1,
-                            material_bkg=mat_bkg,
-                            material_a=mat_core,
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, 
+                                  acore, inc_b_x  =rcore*.1,
+                            material_bkg=mat_bkg, material_a=mat_core,
                             lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
 
     prefix =pref0
