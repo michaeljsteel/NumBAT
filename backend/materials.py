@@ -30,10 +30,7 @@ import numpy as np
 import tempfile
 import subprocess
 #import scipy.linalg
-
-import numbattools
-from  nbtypes import unit_x, unit_y, unit_z
-from bulkprops import *
+import pathlib
 
 import matplotlib as mpl
 import matplotlib.cm as mplcm
@@ -41,6 +38,13 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 import matplotlib.ticker as ticker
 
+
+
+
+import numbattools
+from  nbtypes import unit_x, unit_y, unit_z
+from bulkprops import *
+from voigt import *
 
 from nbtypes import CrystalGroup
 import reporting
@@ -50,14 +54,7 @@ class BadMaterialFileError(Exception):
     pass
 
         
-
-# Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
-#               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
-to_Voigt = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]])
-
-
 g_material_library = None
-
 
 def make_material(s):
     global g_material_library
@@ -68,232 +65,17 @@ def make_material(s):
     return g_material_library.get_material(s)
 
 
-def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
-    '''
-    Calculates the element ijkl of the rotated tensor Tp from the original
-    rank-4 tensor T_PQ in 6x6 Voigt notation under the rotation specified by the 3x3 matrix R.
-    '''
-
-    Tp_ijkl = 0
-
-    for q in range(3):
-        for r in range(3):
-            V1 = to_Voigt[q, r]
-            for s in range(3):
-                for t in range(3):
-                    V2 = to_Voigt[s, t]
-                    Tp_ijkl += mat_R[i, q] * mat_R[j, r] * \
-                        mat_R[k, s] * mat_R[l, t] * T_pqrs[V1, V2]
-
-    return Tp_ijkl
-
-
-def parse_rotation_axis(rot_axis_spec):
-    '''Convert one of several forms - string, numpy 3vec -  to a standard unit 3vec'''
-
-    if isinstance(rot_axis_spec, str):
-        ral = rot_axis_spec.lower()
-        if ral in ('x', 'x-axis'):
-            rot_axis = unit_x
-        elif ral in ('y', 'y-axis'):
-            rot_axis = unit_y
-        elif ral in ('z', 'z-axis'):
-            rot_axis = unit_z
-        else:
-            reporting.report_and_exit(
-                f"Can't convert {rot_axis_spec} to a 3-element unit vector.")
-    else:  # should be a numeric 3 vector
-        emsg = f"Can't convert {rot_axis_spec} to a 3-element unit vector."
-        try:
-            if isinstance(rot_axis_spec, (tuple, list)):  # try to convert to numpy
-                rot_axis = np.array(rot_axis_spec)
-            elif isinstance(rot_axis_spec, np.ndarray):
-                rot_axis = rot_axis_spec
-            else:
-                reporting.report_and_exit(emsg)
-        except Exception:
-            reporting.report_and_exit(emsg)
-        if len(rot_axis) != 3:
-            reporting.report_and_exit(
-                f'Rotation axis {rot_axis} must have length 3.')
-
-    nvec = np.linalg.norm(rot_axis)
-    if numbattools.almost_zero(nvec):
-        reporting.report_and_exit(f'Rotation axis {rot_axis} has zero length.')
-
-    return rot_axis/nvec
-
-
-def _make_rotation_matrix(theta, rot_axis_spec):
-    """
-    Return the SO(3) matrix corresponding to a rotation of theta radians the specified rotation_axis.
-    """
-
-    uvec = parse_rotation_axis(rot_axis_spec)
-
-    ct = math.cos(theta)
-    st = math.sin(theta)
-    omct = 1-ct
-    ux, uy, uz = uvec[:]
-
-    mat_R = np.array([
-        [ct + ux**2*omct,  ux*uy*omct-uz*st, ux*uz*omct+uy*st],
-        [uy*ux*omct+uz*st, ct + uy**2*omct,  uy*uz*omct-ux*st],
-        [uz*ux*omct-uy*st, uz*uy*omct+ux*st, ct+uz**2*omct]
-    ])
-
-    reporting.assertion(numbattools.almost_unity(
-        np.linalg.det(mat_R)), 'Rotation matrix has unit determinant.')
-
-    return mat_R
-
-
-def _rotate_3vector(vec, mat_R):
-    # mat_R = _make_rotation_matrix(theta, rotation_axis)
-
-    vrot = 0*vec
-    for i in range(3):
-        vrot[i] = mat_R[i, 0]*vec[0] + mat_R[i, 1]*vec[1] + mat_R[i, 2]*vec[2]
-
-    return vrot
-
-
-def _rotate_Voigt_tensor(T_PQ, mat_R):
-    """
-    Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
-    T_PQ is a rank-4 tensor expressed in 6x6 Voigt notation.
-
-    The complete operation in 3x3x3x3 notation is
-    T'_ijkl  = sum_{pqrs} R_ip R_jq R_kr R_ls  T_pqrs.
-
-    The result T'_ijkl is returned in Voigt format T'_PQ.
-
-    Args:
-        T_PQ  (array): Tensor to be rotated.
-
-        theta  (float): Angle to rotate by in radians.
-
-        rotation_axis  (str): Axis around which to rotate.
-    """
-
-    # mat_R = _make_rotation_matrix(theta, rotation_axis)
-
-    Tp_PQ = np.zeros((6, 6))
-    for i in range(3):
-        for j in range(3):
-            V1 = to_Voigt[i, j]
-            for k in range(3):
-                for l in range(3):
-                    V2 = to_Voigt[k, l]
-                    Tp_PQ[V1, V2] = rotate_tensor_elt(i, j, k, l, T_PQ, mat_R)
-
-    return Tp_PQ
-
-
-
-
-class VoigtTensor4(object):
-    '''A class for representing rank 4 tensors in the compact Voigt representation.'''
-
-    def __init__(self, material_name, symbol, src_dict=None):
-        self.mat = np.zeros([7, 7], dtype=float)  # unit indexing
-        self.material_name = material_name
-        self.symbol = symbol  # eg 'c', 'p', 'eta'
-        self.d = src_dict
-
-    # Allow direct indexing of Voigt tensor in [(i,j)] form
-
-    def __getitem__(self, k):
-        return self.mat[k[0], k[1]]
-
-    def __setitem__(self, k, v):
-        self.mat[k[0], k[1]] = v
-
-    def __str__(self):
-
-        prec = np.get_printoptions()['precision']
-        np.set_printoptions(precision=4)
-
-        s = f'\nVoigt tensor {self.material_name}, tensor {self.symbol}:\n'
-        s += str(self.mat[1:, 1:])
-
-        np.set_printoptions(precision=prec)
-        
-        return s
-
-    def dump(self):
-        print(f'\nVoigt tensor {self.material_name}, tensor {self.symbol}')
-        print(self.mat[1:, 1:])
-
-    def as_zerobase_matrix(self):
-        '''Returns copy of Voigt matrix indexed as m[0..5, 0..5].'''
-        return self.mat[1:, 1:].copy()
-
-    def read(self, m, n, optional=False):
-        elt = f'{self.symbol}_{m}{n}'
-
-        if elt not in self.d:
-            if not optional:
-                reporting.report_and_exit(
-                    f'Failed to read required tensor element {elt} for material {self.material_name}')
-            else:
-                return False
-
-        self.mat[m, n] = self.d[elt]
-        return True
-
-    def load_isotropic(self):
-        self.read(1, 1)
-        self.read(1, 2)
-        self.read(4, 4)
-        self.set_isotropic(self.mat[1, 1], self.mat[1, 2], self.mat[4, 4])
-
-    def set_isotropic(self, m11, m12, m44):
-        '''Build Voigt matrix from 3 parameters for isotropic geometry. 
-        (Actually, only two are independent.)'''
-
-        self.mat[1, 1] = m11
-        self.mat[1, 2] = m12
-        self.mat[4, 4] = m44
-
-        self.mat[2, 2] = self.mat[1, 1]
-        self.mat[3, 3] = self.mat[1, 1]
-        self.mat[5, 5] = self.mat[4, 4]
-        self.mat[6, 6] = self.mat[4, 4]
-        self.mat[2, 1] = self.mat[1, 2]
-        self.mat[2, 3] = self.mat[1, 2]
-        self.mat[1, 3] = self.mat[1, 2]
-        self.mat[3, 1] = self.mat[1, 2]
-        self.mat[3, 2] = self.mat[1, 2]
-
-    def check_symmetries(self, sym=None):
-        # Check matrix is symmetric and positive definite
-
-        rtol = 1e-12
-        tol = rtol * np.abs(self.mat).max()
-        tmat = self.mat - self.mat.T
-        mat_is_sym = numbattools.almost_zero(np.linalg.norm(tmat), tol)
-        reporting.assertion(
-            mat_is_sym, f'Material matrix {self.material_name}-{self.symbol} is symmetric.\n' + str(self.mat))
-
-    def rotate(self, matR):
-        '''Rotates the crystal according to the SO(3) matrix matR.
-        '''
-
-        rot_tensor = _rotate_Voigt_tensor(self.mat[1:, 1:], matR)
-        self.mat[1:, 1:] = rot_tensor
-
 
 class MaterialLibrary:
 
     def __init__(self):
 
-        self._data_loc = ''
+        self._material_data_path = ''
         self._materials = {}
 
         # identify mat data directory:  backend/material_data
         this_dir = os.path.dirname(os.path.realpath(__file__))
-        self._data_loc = os.path.join(this_dir, "material_data", "")
+        self._material_data_path = os.path.join(this_dir, "material_data", "")  # TODO: move name of path to numbat.py
 
         self._load_materials()
 
@@ -307,32 +89,36 @@ class MaterialLibrary:
         return mat
 
     def _load_materials(self):
-        for fname in os.listdir(self._data_loc):
-            if not fname.endswith(".json"):
-                continue
 
+        for fname in pathlib.Path(self._material_data_path).glob('*.json'):
+            
             json_data = None
-            with open(self._data_loc + fname, 'r') as fin:
-                s_in = ''.join(fin.readlines())
+            with open(fname, 'r') as fin:
+
+                # read whole file and remove comments
+                s_in = ''.join(fin.readlines())  
                 s_in = re.sub(r'//.*\n', '\n', s_in)
 
                 try:
                     json_data = json.loads(s_in)
                 except Exception as err:
-                    traceback.print_exc()
+                    traceback.print_exc()  # TODO: why this traceback?
                     reporting.report_and_exit(
                         f'JSON parsing error: {err} for file {self.json_file}')
+
+            mat_name = json_data['material_name']
+
+            if mat_name in self._materials:
+                reporting.report_and_exit(
+                    f"Material file {fname} has the same name as an existing material {mat_name}.")
 
             try:
                 new_mat = Material(json_data, fname)
             except BadMaterialFileError as err:
                 reporting.report_and_exit(str(err))
 
-            if new_mat.material_name in self._materials:
-                reporting.report_and_exit(
-                    f"Material file {fname} has the same name as an existing material {new_mat.material_name}.")
-
-            self._materials[new_mat.material_name] = new_mat
+            
+            self._materials[mat_name] = new_mat
 
 
 class Material(object):
@@ -446,6 +232,7 @@ class Material(object):
 
         """
         self._params = json_data  # Do without this?
+        self.json_file = fname
 
         # Name of this file, will be used as identifier and must be present
         self.material_name = json_data.get('material_name', 'NOFILENAME')
@@ -500,11 +287,10 @@ class Material(object):
             self.construct_crystal_isotropic()
 
         else:
-            self.c_tensor = VoigtTensor4(self.material_name, 'c', json_data)
-            self.eta_tensor = VoigtTensor4(
-                self.material_name, 'eta', json_data)
-            self.p_tensor = VoigtTensor4(self.material_name, 'p', json_data)
-            # self.load_tensors()
+            #self.c_tensor = VoigtTensor4(self.material_name, 'c', json_data, 'stiffness', ('GPa', 1.e9))
+            #self.eta_tensor = VoigtTensor4(self.material_name, 'eta', json_data, 'viscosity')
+            #self.p_tensor = VoigtTensor4(self.material_name, 'p', json_data, 'photoelasticity')
+            
             self.construct_crystal_anisotropic()
         self._store_original_tensors()
 
@@ -524,8 +310,8 @@ class Material(object):
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
         try:
-            self.c_tensor.read(1, 1)
-            self.c_tensor.read(1, 2)
+            self.c_tensor.read_from_json(1, 1)
+            self.c_tensor.read_from_json(1, 2)
             self.c_tensor[1, 3] = self.c_tensor[1, 2]
             self.c_tensor[2, 1] = self.c_tensor[1, 2]
             self.c_tensor[2, 2] = self.c_tensor[1, 1]
@@ -533,12 +319,12 @@ class Material(object):
             self.c_tensor[3, 1] = self.c_tensor[1, 2]
             self.c_tensor[3, 2] = self.c_tensor[1, 2]
             self.c_tensor[3, 3] = self.c_tensor[1, 1]
-            self.c_tensor.read(4, 4)
+            self.c_tensor.read_from_json(4, 4)
             self.c_tensor[5, 5] = self.c_tensor[4, 4]
             self.c_tensor[6, 6] = self.c_tensor[4, 4]
 
-            self.eta_tensor.read(1, 1)
-            self.eta_tensor.read(1, 2)
+            self.eta_tensor.read_from_json(1, 1)
+            self.eta_tensor.read_from_json(1, 2)
             self.eta_tensor[1, 3] = self.eta_tensor[1, 2]
             self.eta_tensor[2, 1] = self.eta_tensor[1, 2]
             self.eta_tensor[2, 2] = self.eta_tensor[1, 1]
@@ -546,12 +332,12 @@ class Material(object):
             self.eta_tensor[3, 1] = self.eta_tensor[1, 2]
             self.eta_tensor[3, 2] = self.eta_tensor[1, 2]
             self.eta_tensor[3, 3] = self.eta_tensor[1, 1]
-            self.eta_tensor.read(4, 4)
+            self.eta_tensor.read_from_json(4, 4)
             self.eta_tensor[5, 5] = self.eta_tensor[4, 4]
             self.eta_tensor[6, 6] = self.eta_tensor[4, 4]
 
-            self.p_tensor.read(1, 1)
-            self.p_tensor.read(1, 2)
+            self.p_tensor.read_from_json(1, 1)
+            self.p_tensor.read_from_json(1, 2)
 
             self.p_tensor[1, 3] = self.p_tensor[1, 2]
             self.p_tensor[2, 1] = self.p_tensor[1, 2]
@@ -560,12 +346,12 @@ class Material(object):
             self.p_tensor[3, 1] = self.p_tensor[1, 2]
             self.p_tensor[3, 2] = self.p_tensor[1, 2]
             self.p_tensor[3, 3] = self.p_tensor[1, 1]
-            self.p_tensor.read(4, 4)
+            self.p_tensor.read_from_json(4, 4)
 
             # According to Powell, for Oh group, these are distinct elements, but no one seems to quote them
-            if not self.p_tensor.read(5, 5, optional=True):
+            if not self.p_tensor.read_from_json(5, 5, optional=True):
                 self.p_tensor[5, 5] = self.p_tensor[4, 4]
-            if not self.p_tensor.read(6, 6, optional=True):
+            if not self.p_tensor.read_from_json(6, 6, optional=True):
                 self.p_tensor[6, 6] = self.p_tensor[4, 4]
 
         except Exception:
@@ -580,7 +366,7 @@ class Material(object):
         try:
             for lintens in [self.c_tensor, self.eta_tensor]:
                 for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4)]:
-                    lintens.read(i, j)
+                    lintens.read_from_json(i, j)
 
                 lintens[2, 1] = lintens[1, 2]
                 lintens[2, 2] = lintens[1, 1]
@@ -600,14 +386,14 @@ class Material(object):
 
             # TODO: confirm correct symmetry properties for p.
             # PreviouslyuUsing trigonal = C3v from Powell, now the paper above
-            self.p_tensor.read(1, 1)
-            self.p_tensor.read(1, 2)
-            self.p_tensor.read(1, 3)
-            self.p_tensor.read(1, 4)
-            self.p_tensor.read(3, 1)
-            self.p_tensor.read(3, 3)
-            self.p_tensor.read(4, 1)
-            self.p_tensor.read(4, 4)
+            self.p_tensor.read_from_json(1, 1)
+            self.p_tensor.read_from_json(1, 2)
+            self.p_tensor.read_from_json(1, 3)
+            self.p_tensor.read_from_json(1, 4)
+            self.p_tensor.read_from_json(3, 1)
+            self.p_tensor.read_from_json(3, 3)
+            self.p_tensor.read_from_json(4, 1)
+            self.p_tensor.read_from_json(4, 4)
 
             self.p_tensor[2, 1] = self.p_tensor[1, 2]
             self.p_tensor[2, 2] = self.p_tensor[1, 1]
@@ -631,9 +417,9 @@ class Material(object):
         try:  # full anisotropic tensor components
             for i in range(1, 7):
                 for j in range(1, 7):
-                    self.c_tensor.read(i, j)
-                    self.p_tensor.read(i, j)
-                    self.eta_tensor.read(i, j)
+                    self.c_tensor.read_from_json(i, j)
+                    self.p_tensor.read_from_json(i, j)
+                    self.eta_tensor.read_from_json(i, j)
 
         except KeyError:
             reporting.report_and_exit(
@@ -645,12 +431,12 @@ class Material(object):
     def is_isotropic(self): return not self._anisotropic
 
     # deprecated
-    def rotate_axis(self, theta, rotation_axis, save_rotated_tensors=False):
+    def rotate_axis(self, rotation_axis, theta, save_rotated_tensors=False):
         reporting.register_warning(
             'rotate_axis function is depprecated. Use rotate()')
-        self.rotate(theta, rotation_axis, save_rotated_tensors)
+        self.rotate(rotation_axis, theta, save_rotated_tensors)
 
-    def rotate(self, theta, rot_axis_spec, save_rotated_tensors=False):
+    def rotate(self, rot_axis_spec, theta, save_rotated_tensors=False):
         """ Rotate crystal axis by theta radians.
 
             Args:
@@ -665,8 +451,8 @@ class Material(object):
                 ``Material`` object with rotated tensor values.
         """
 
-        rotation_axis = parse_rotation_axis(rot_axis_spec)
-        matR = _make_rotation_matrix(theta, rotation_axis)
+        rotation_axis = voigt.parse_rotation_axis(rot_axis_spec)
+        matR = voigt._make_rotation_matrix(rotation_axis, theta)
 
         self.c_tensor.rotate(matR)
         self.p_tensor.rotate(matR)
@@ -676,9 +462,9 @@ class Material(object):
 
         caxes = self._crystal_axes.copy()
         self.set_crystal_axes(
-            _rotate_3vector(caxes[0], matR),
-            _rotate_3vector(caxes[1], matR),
-            _rotate_3vector(caxes[2], matR)
+            voigt._rotate_3vector(caxes[0], matR),
+            voigt._rotate_3vector(caxes[1], matR),
+            voigt._rotate_3vector(caxes[2], matR)
         )
 
         if save_rotated_tensors:
@@ -719,7 +505,7 @@ class Material(object):
         rot_axis = np.array((ux, uy, uz))
         theta = rot*np.pi/180
 
-        self.rotate(theta, rot_axis)
+        self.rotate(rot_axis, theta)
 
     def set_crystal_axes(self, va, vb, vc):
         self._crystal_axes = [va, vb, vc]
@@ -730,10 +516,15 @@ class Material(object):
 
         self._anisotropic = False
 
+        self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.eta_tensor = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+
+        
         # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
         if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
-            self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params)
-            self.c_tensor.load_isotropic()
+        #    self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params)
+            self.c_tensor.load_isotropic_from_json()
             mu = self.c_tensor.mat[4, 4]
             lam = self.c_tensor.mat[1, 2]
             r = lam/mu
@@ -748,27 +539,23 @@ class Material(object):
                 ((1+self.nuPoisson) * (1-2*self.nuPoisson))
             c11 = c12+2*c44
             self.c_tensor = VoigtTensor4(self.material_name, 'c')
-            self.c_tensor.set_isotropic(c11, c12, c44)
+            self.c_tensor.make_isotropic_tensor(c11, c12, c44)
         else:
             reporting.report_and_exit(
                 'Broken isotropic material file:' + self.json_file)
 
-        self.eta_tensor = VoigtTensor4(self.material_name,
-                                       'eta', self._params)
-        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params)
-
-        self.p_tensor.load_isotropic()
-        self.eta_tensor.load_isotropic()
+        self.p_tensor.load_isotropic_from_json()
+        self.eta_tensor.load_isotropic_from_json()
 
         self.c_tensor.check_symmetries()
 
     # not do this unless symmetry is off?
     def construct_crystal_anisotropic(self):
 
-        self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params)
-        self.eta_tensor = VoigtTensor4(self.material_name, 'eta', self._params)
-        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params)
-
+        self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.eta_tensor = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+            
         self._anisotropic = True
 
         # TODO: change to match/case
@@ -978,7 +765,9 @@ class Material(object):
 
         # Tick location seems to need help here
         for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
-            tax.set_major_locator(ticker.MultipleLocator(2.0, offset=0))
+            tax.set_major_locator(ticker.MultipleLocator(2.0
+                                                         #, offset=0
+                                                         ))
         
         make_axes_square(np.abs(1/v_vel).max(), ax_sl)
         make_axes_square(np.abs(v_vel).max(), ax_vp)
@@ -1075,7 +864,7 @@ class Material(object):
         cbar.ax.tick_params(labelsize=6, width=.25)
         
         cbar.outline.set_linewidth(1)
-        cbar.set_label(label=f'Mat {mat1or2} ' +'$\hat{e} \cdot \hat{\kappa}$', fontsize=10)
+        cbar.set_label(label=f'Mat {mat1or2} ' +r'$\hat{e} \cdot \hat{\kappa}$', fontsize=10)
         
 
     def make_crystal_axes_plot(self, pref):
@@ -1204,7 +993,7 @@ def asy_draw_crystal_axes(crystal_axes):
     s_bvec = '('+','.join(map(str, vb))+')'
     s_cvec = '('+','.join(map(str, vc))+')'
 
-    s1 = '''
+    s1 = r'''
 settings.outformat='png';
 settings.render=8;
 import three;

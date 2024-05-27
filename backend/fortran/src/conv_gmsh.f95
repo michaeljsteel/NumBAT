@@ -404,8 +404,7 @@ subroutine write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
    ! Write the NumBAT format .mail file
    ! Format:
    ! Number_of_nodes  Number_of_6node_triangles
-   ! Node_number  x_j   y_j  v_nd_iphyscurve_j                    ! Node
-   ! Node positions, and physcurve # for those nodes which are on bdy elts (v_nd_iphyscurve(i) != 0)
+   ! Node_number  x_j   y_j  v_nd_iphyscurve_j :   Node positions(x,y), and physcurve number for those nodes which are on bdy elts (v_nd_iphyscurve(i) != 0)
    ! Triangle_number  6x node indices  physsurf_index   ! only for 6-node triangles, not 3-node lines
 
    use numbatmod

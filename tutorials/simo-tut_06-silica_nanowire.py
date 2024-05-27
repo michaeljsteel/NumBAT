@@ -41,7 +41,9 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
-                        lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
+                        #lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
+                        #lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
+                        lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3.0*refine_fac)
 
 # Expected effective index of fundamental guided mode.
 n_eff = 1.4
@@ -59,9 +61,6 @@ if recalc_fields:
 else:
     sim_EM_pump = mode_calcs.load_simulation('tut_06_pump')
     sim_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
-
-sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
 trim=0.4

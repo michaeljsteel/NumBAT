@@ -3,12 +3,14 @@ import threading
 import multiprocessing
 import traceback
 import queue
-import numbat
-
 import time
 import datetime
+import scipy.integrate as sciint
+import numpy as np
 
 from PIL import Image
+
+import numbat
 
 
 def almost_zero(x, tol=1e-10):
@@ -17,6 +19,11 @@ def almost_zero(x, tol=1e-10):
 def almost_unity(x, tol=1e-10):
     return abs(1-x)<tol
 
+def np_min_max(v):
+    return np.min(v), np.max(v)
+
+def int2d(mat):
+    return sciint.simpson(sciint.simpson(mat))
 
 def join_figs(l_fns, fnout, clip=None):
 

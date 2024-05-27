@@ -9,7 +9,7 @@
         "nbpy",
         "numbatdefs",
         "Numpy",
-        "Suitesparse"
+        "Suitesparse",
         "Lapack",
         "AOCL",
         "virtualenv",
@@ -211,6 +211,7 @@
         "usermesh",
         "subclassing",
         "instatiation",
-    ]
+    ],
+    "python.defaultInterpreterPath": "/home/msteel/mypy3-12"
 }
 

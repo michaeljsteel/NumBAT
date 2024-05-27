@@ -7,7 +7,7 @@ c     Explicit inputs
      *    debug, show_mem_est, mesh_file, n_msh_pts, n_msh_el,
      *    n_typ_el, c_tensor, rho, d_in_m, shift_nu,
      *    i_bnd_cdns, itermax, tol,
-     *    plot_modes, 
+c    *    plot_modes, 
 c    *    cmplx_max, real_max, int_max, 
      *    supplied_geo_flag, type_nod, symmetry_flag,
 c     Inputs and outputs
@@ -44,7 +44,8 @@ C  Local parameters:
 C       ! Propagation constant
       complex*16 q_ac 
       integer*8 int_max, cmplx_max, int_used, cmplx_used
-      integer*8 real_max, real_used, plot_modes
+      integer*8 real_max, real_used
+C     integer*8  plot_modes
       integer*8 errco
       character*2048 emsg
 
@@ -494,25 +495,25 @@ C         write(ui,*) "sqrt(shift_omsq)/(2*pi) = ", sqrt(omsq) / (2.0d0 * pi)
         enddo
       endif
       
-C    Save Original solution
-      if (plot_modes .eq. 1) then
-        dir_name = "AC_fields"
-C        call write_sol_AC (num_modes, n_msh_el, nodes_per_el, lambda,
-C      *       v_nu_out, sol1, mesh_file, dir_name)
-C        call write_param (lambda, n_msh_pts, n_msh_el, i_bnd_cdns,
-C    *       num_modes, nvect, itermax, tol, shift_omsq, lx, ly,
-C    *       mesh_file, n_conv, dir_name)
-        tchar = "AC_fields/All_plots_png_abs2_eE.geo"
-        open (unit=34,file=tchar)
-          do i=1,num_modes
-            call gmsh_post_process_AC (i, num_modes, n_msh_el, 
-     *         n_msh_pts, nodes_per_el, table_nod, type_el,
-     *         x_arr, v_nu_out, sol1, b(jp_rhs), a(ip_visite),
-     *         gmsh_file_pos, dir_name, d_in_m, debug)
-          enddo
-        close (unit=34)
-      endif
-C
+CC    Save Original solution
+C      if (plot_modes .eq. 1) then
+C        dir_name = "AC_fields"
+CC        call write_sol_AC (num_modes, n_msh_el, nodes_per_el, lambda,
+CC      *       v_nu_out, sol1, mesh_file, dir_name)
+CC        call write_param (lambda, n_msh_pts, n_msh_el, i_bnd_cdns,
+CC    *       num_modes, nvect, itermax, tol, shift_omsq, lx, ly,
+CC    *       mesh_file, n_conv, dir_name)
+C        tchar = "AC_fields/All_plots_png_abs2_eE.geo"
+C        open (unit=34,file=tchar)
+C          do i=1,num_modes
+C            call gmsh_post_process_AC (i, num_modes, n_msh_el, 
+C     *         n_msh_pts, nodes_per_el, table_nod, type_el,
+C     *         x_arr, v_nu_out, sol1, b(jp_rhs), a(ip_visite),
+C     *         gmsh_file_pos, dir_name, d_in_m, debug)
+C          enddo
+C        close (unit=34)
+C      endif
+CC
 C
 C#########################  End Calculations  ###########################
 C

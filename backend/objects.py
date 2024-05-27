@@ -17,85 +17,71 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-# import time
 import os
 import subprocess
 import copy
 import traceback
-import time
-
 
 import tempfile
 from pathlib import Path
 import json
 import importlib
+import matplotlib.pyplot as plt
 
 import numpy as np
+import scipy.interpolate
 
 
 
-from mode_calcs import Simulation
 import numbat
-from fortran import NumBAT
 import reporting
 import numbattools as nbtools
 import materials
+from fortran import NumBAT
+import plotting
+from mode_calcs import Simulation
+import nbgmsh
 
+def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
+    '''Loads and instantiates waveguide templates specified in .json file {p_wgtemplate_index} in directory {p_wgtemplate_dir}.
 
-# def dec_float_str(dec_float):
-#     ''' Convert float with decimal point into string with '_' in place of '.' '''
-#     try:
-#         s = '%8.1f' % dec_float
-#     except Exception:
-#         s = ''
-#     # if type(dec_float) is float or type(dec_float) is int:
-#     #    s = '%8.1f' % dec_float
-#     # else:
-#     #    s = ''
-#     # s = s.replace('.', '_')
-#     s = s.replace('.', ',')
-#     s = s.replace(' ', '')
-#     return s
-
-
-def _load_waveguide_templates(p_msh_dir, p_msh_index):
-    '''Loads and instantiates waveguide templates returning an index of waveguide inc_shape to class.'''
+    Returns an index of waveguide inc_shape to class.'''
 
     try:
-        with open(p_msh_index) as fin:
-            msh_index = json.load(fin)['wguides']
+        with open(p_wgtemplate_index) as fin:
+            wg_index = json.load(fin)['wguides']
     except Exception as ex:
         raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
 
-    for msh in msh_index:
-        if not msh.get('active', 1):  # this mesh is turned off for now
+    for wg in wg_index:
+        if not wg.get('active', 1):  # this mesh is turned off for now
             continue
 
-        mshnm = msh['inc_shape']
-        mshpy = msh['wg_impl']
-        mshclsnm = msh['wg_class']
+        wgnm = wg['inc_shape']    # Name of inc_shape requested by user
+        wgclsnm = wg['wg_class']  # Python class implementing this template
+        wgpy = wg['wg_impl']      # Python file definind that class
 
-        pth_mod = Path(p_msh_dir, mshpy)
+        pth_mod = Path(p_wgtemplate_dir, wgpy)
 
         if not pth_mod.exists():
         #    raise Exception
-            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(mshpy)} named in str({p_msh_index}).'
-                            + f'\nFile was expected in directory {str(p_msh_dir)}')
+            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({p_wgtemplate_index}).'
+                            + f'\nFile was expected in directory {str(p_wgtemplate_dir)}')
 
-        spec = importlib.util.spec_from_file_location(mshnm, pth_mod)  # TODO: is mshnm the right name for this?
+        spec = importlib.util.spec_from_file_location(wgnm, pth_mod)  # TODO: is wgnm the right name for this?
         try:
             py_mod = spec.loader.load_module()
         except Exception as ex:
-            reporting.report_and_exit(f"Python couldn't load the user module '{str(mshpy)}'."+
+            reporting.report_and_exit(f"Python couldn't load the user module '{str(wgpy)}'."+
                                       "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+
                                       f'\n\n\n The full traceback was {traceback.format_exc()}')
-        if not hasattr(py_mod, mshclsnm):
-            reporting.report_and_exit(f"Can't find waveguide template class {mshclsnm} in implementation file: {mshpy}")
-        mshcls = getattr(py_mod, mshclsnm)
+        if not hasattr(py_mod, wgclsnm):
+            reporting.report_and_exit(f"Can't find waveguide template class {wgclsnm} in implementation file: {wgpy}")
+        wgcls = getattr(py_mod, wgclsnm)
 
-        msh['mesh_cls'] = mshcls
+        wg['wg_template_cls'] = wgcls
 
-    return msh_index
+    return wg_index
 
 
 class Structure(object):
@@ -208,7 +194,7 @@ class Structure(object):
     '''
 
 
-    _user_mesh_templates = {}
+    _waveguide_templates = {}   # class-level dictionary of waveguide template name to implementing class
 
     # called at startup from NumBATApp.__init__
     @classmethod
@@ -222,14 +208,14 @@ class Structure(object):
             reporting.register_warning(
                 f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
         else:
-            cls._user_mesh_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
+            cls._waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
         
         if not pmsh_index_user.exists():
             reporting.register_warning(
                 f"Couldn't find user waveguide template index file: {pmsh_index_user}")
         else:
             user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-            cls._user_mesh_templates.extend(user_wg_templates)
+            cls._waveguide_templates.extend(user_wg_templates)
 
 
 
@@ -266,6 +252,21 @@ class Structure(object):
             reporting.register_warning(
                 'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
+        self.n_typ_el = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
+        self.n_typ_el_AC = 0  # total number of materials with elastic properties in the structure (ie not vacuum)
+
+        # material identities seem to depend on stable ordering of the material dictionary when converted to a list
+
+        # Numpy arrays storing acoustic properties, zero-indexed, for all materials
+        # These are the arrays passed to Fortran
+        self.rho = None          # [ntyp_el_AC]
+        self.c_tensor = None     # [3 x 3 x ntyp_el_AC]
+        self.c_tensor_z = None   # [3x3x3x1 ntyp_el_AC]
+        self.p_tensor = None     # [3x3x3x3 ntyp_el_AC]  # why are these needed? why not do all using Voigt form?
+        self.eta_tensor = None   # [3x3x3x3 ntyp_el_AC]
+
+        
+
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
         self.shift_ac_x = 0  # user requested offsets to coord-system
@@ -282,6 +283,10 @@ class Structure(object):
                      'f': material_f, 'g': material_g, 'h': material_h, 'i': material_i, 'j': material_j,
                      'k': material_k, 'l': material_l, 'm': material_m, 'n': material_n, 'o': material_o,
                      'p': material_p, 'q': material_q, 'r': material_r}
+
+        # Fill up dictionary with all mats 'bkg' to 'r' with vacuum if needed.
+        # TODO: Why do this. Better to leave undefined and fail if needed materials are missing.
+        
         for (tag, mat) in mat_pairs.items():
             self.d_materials[tag] = mat if (mat is not None) else copy.deepcopy(mat_vac)
 
@@ -323,10 +328,11 @@ class Structure(object):
             self.build_waveguide_geometry(self.d_materials)
         else:  # TODO: this seems to be broken. But also not really worth supporting? Mesh construction is not hard
             print(f"Using mesh from existing file '{mesh_file}'.")
-            self.mesh_file = mesh_file
-            with open(self.mesh_file) as f:
+            self.mesh_mail_fname = mesh_file
+            with open(self.mesh_mail_fname) as f:
                 self.mail_data = f.readlines()
 
+        # TODO: much of this plotting stuffis no longer needed
         if plotting_fields:  # TODO: This is for internal fortran plotting. Should have a less appealing name
             reporting.register_warning('''Calling plotting_fields in objects.Structure.
                                        This is deprecated. Please report to the github page.''')
@@ -361,6 +367,7 @@ class Structure(object):
         self._build_elastic_tensors(symmetry_flag)
 
     def _build_elastic_tensors(self, symmetry_flag):
+        '''Put all elastic tensor properties into single 3 x 3 x num_material arrays, zero-indexed'''
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
         # Any material not given acoustic_props assumed to be vacuum.
@@ -384,9 +391,14 @@ class Structure(object):
         # eta tensor as rank 4 ijkl tensor
         eta_tensor = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
 
+
+        # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
+        # TODO: use a zero-indexed form of toVoigt map
         voigt_map = {(0, 0): 1, (1, 1): 2, (2, 2): 3, (2, 1): 4,
                      (2, 0): 5, (0, 1): 6, (1, 2): 4, (0, 2): 5, (1, 0): 6}
 
+
+        # Build zero-based material tensors from unit-based
         for k_typ in range(self.n_typ_el_AC):
             if acoustic_props[k_typ]:
                 t_ac = acoustic_props[k_typ]
@@ -397,6 +409,7 @@ class Structure(object):
                 rho[k_typ] = t_ac.rho
 
                 if symmetry_flag:  # is it actually worth making this saving?
+                    print('Surprise: using symmetry_flag tensor buildings.')
                     c_tensor[0, 0, k_typ] = t_ac_c[1, 1]
                     c_tensor[1, 1, k_typ] = t_ac_c[1, 1]
                     c_tensor[2, 2, k_typ] = t_ac_c[1, 1]
@@ -465,7 +478,7 @@ class Structure(object):
                 else:
                     for i in range(6):
                         for j in range(6):
-                            c_tensor[i, j, k_typ] = t_ac_c[i+1, j+1]
+                            c_tensor[i, j, k_typ] = t_ac_c[i+1, j+1]  # TODO: replace with Voigt.value() ?
 
                     for i in [0, 1, 2]:
                         for j in [0, 1, 2]:
@@ -504,8 +517,8 @@ class Structure(object):
 
 
 
-    def get_mail_data(self):
-        '''Returns list of lines in the NumBAT mesh format .mail file'''
+    def get_mail_mesh_data(self):
+        '''Returns Object representing mesh in  .mail file'''
         return self.mail_data
 
     def build_waveguide_geometry(self, d_materials):
@@ -515,30 +528,32 @@ class Structure(object):
             to convert .msh into .mail, which is used in NumBAT FEM routine.
         '''
 
-        print('Building mesh')
+        print('Building waveguide')
 
         # full path to backend directory that this code file is in
         this_directory = os.path.dirname(os.path.realpath(__file__))
 
-        # msh_location_in = Path(this_directory, 'fortran', 'msh', '')  # msh directory inside backend
-        # msh directory inside backend
-
+        # locations of gmsh input and output files
         self.msh_location_in = Path(this_directory, 'msh')
         self.msh_location_out = Path(self.msh_location_in, 'build')
 
-        self.wg_geom = None
-
+        
         if not self.msh_location_out.is_dir():
             self.msh_location_out.mkdir()
 
+        self.wg_geom = None
+
         found = False 
-        for msh in Structure._user_mesh_templates: 
-            if self.inc_shape in msh['inc_shape']:
+        for wg in Structure._waveguide_templates: 
+            if self.inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
                 found = True
-                wg_geom = msh['mesh_cls'](self.all_params, d_materials)
+
+                # Instantiate the class that defines this waveguide model
+                wg_geom = wg['wg_template_cls'](self.all_params, d_materials)
+
                 wg_geom.init_geometry()
 
-                self.n_typ_el = wg_geom.num_type_elements()
+                self.n_typ_el = wg_geom.num_type_elements()  # This is number of elements declared by template
 
                 break
 
@@ -562,13 +577,17 @@ class Structure(object):
 
 
     def _build_mesh(self):
-        '''Instantiates template gmsh file to specific gmsh then runs conv_gmsh to generate NumBAT .mail file.'''
+        '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh 
+        to generate the NumBAT .mail file.'''
 
+        print('  Processing Gmsh')
+        
         msh_template = self.wg_geom.gmsh_template_filename()
         msh_fname = self.wg_geom.get_instance_filename()
 
         if self._new_mesh_required():
 
+            # create string in .geo format from the template file with all parameters adjusted for our design
             geo = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
 
             fname = Path(self.msh_location_out, msh_fname)
@@ -592,14 +611,15 @@ class Structure(object):
                   gmsh {fname}.geo'''
                 reporting.report_and_exit(s)
 
-        self.mesh_file = str(fname) + '.mail'
-        # TODO: curently used onyl to generate filenames for plot_mesh. Needed?
+        self.mesh_mail_fname = str(fname) + '.mail'
+        # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
         self.msh_name = msh_fname
 
         # read in first line giving number of msh points and elements
-        with open(self.mesh_file) as f:
-            self.mail_data = f.readlines()
+        with open(self.mesh_mail_fname) as f:
+            mail_lines= f.readlines()
 
+        self.mail_data = nbgmsh.MailData(mail_lines)  #keep track of the Mail format
 
 
     def plot_mesh(self, outpref):
@@ -652,13 +672,10 @@ class Structure(object):
     def check_mesh(self):
         '''Visualise geometry and mesh with gmsh.'''
 
-
-        print('checking mesh')
         nbapp = numbat.NumBATApp()
         gmsh_exe = str(nbapp.path_gmsh())
 
         gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.geo'
-        print(gmsh_cmd)
         os.system(gmsh_cmd)
 
         gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.msh'
@@ -687,6 +704,9 @@ class Structure(object):
 
         print('Calculating EM modes:')
         sim.calc_EM_modes()
+
+        # TODO: return an EMSimResult that can plot and analyse but not calculate
+        
         return sim
 
     def calc_AC_modes(self, num_modes, q_AC,
@@ -717,12 +737,80 @@ class Structure(object):
         sim = Simulation(self, num_modes=num_modes, q_AC=q_AC,
                          shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
 
-        print('\n\nCalculating AC modes')
+        print('\n\nCalculating elastic modes')
 
         sim.calc_AC_modes(bcs)
         return sim
 
 
+    def plot_refractive_index_profile(self, prefix, as_epsilon=False):
+        print('\n\nPlotting ref index')
+
+        
+        mail = self.mail_data
+        v_x, v_y = mail.v_centx, mail.v_centy
+        v_elt_indices = mail.v_elts[:,-1]  # the elt number column
+        v_refindex = 0*v_x
+
+        print('Mesh props', mail.n_msh_pts, mail.n_msh_elts)
+
+        uniq_elts = set(list(v_elt_indices))
+
+        
+        # find ref index at each centroid
+        v_elt_refindex = np.zeros(len(uniq_elts))
+        
+        for i in range(len(v_elt_refindex)):
+            v_elt_refindex[i] = np.real(list(self.d_materials.values())[i].refindex_n)
+
+        for i,elt in enumerate(v_elt_indices):
+            v_refindex[i] = v_elt_refindex[elt-1]
+
+
+        # Now have an irregular x,y,n array to interpolate onto.
+
+        x_min = np.min(v_x)
+        x_max = np.max(v_x)
+        y_min = np.min(v_y)
+        y_max = np.max(v_y)
+
+        n_points = 40
+        area = abs((x_max-x_min)*(y_max-y_min))
+        n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
+        n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+
+        
+        v_regx = np.linspace(x_min, x_max, n_pts_x)
+        v_regy = np.linspace(y_min, y_max, n_pts_y)
+        m_regx, m_regy = np.meshgrid(v_regx, v_regy)
+
+        xy_in = np.array([v_x, v_y]).T
+        xy_out = np.vstack([m_regx.ravel(), m_regy.ravel()]).T
+        
+        
+        v_regindex = scipy.interpolate.griddata(xy_in, v_refindex, xy_out).reshape([n_pts_y, n_pts_x])
+        fig, ax = plt.subplots()
+
+        if as_epsilon:
+            v_regindex = v_regindex**2
+            fig.suptitle('Dielectric constant')
+        else:
+            fig.suptitle('Refractive index')
+
+        cmap='cool'
+        cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0)
+        ax.set_xlabel(r'$x$')
+        ax.set_ylabel(r'$y$')
+        fig.colorbar(cf)
+        
+
+        plotting.save_and_close_figure(fig, prefix+'refn.png')
+        
+              
+    def plot_phase_velocity_z_profile(self, prefix):
+        print('plotting phasevel index')
+    
+    
 # called at startup from NumBATApp.__init__
 def initialise_waveguide_templates(numbatapp):
     Structure.initialise_waveguide_templates(numbatapp)

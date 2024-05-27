@@ -80,7 +80,7 @@ class _NumBATApp(object):
     def outpath(self):
         return str(Path(self._outdir, self._outprefix))
 
-    def fieldspath(self):
+    def path_fields(self):
         return str(Path(self._outdir, self._outprefix+'-fields'))
 
 
@@ -152,3 +152,4 @@ def NumBATApp(outprefix='', outdir='.'):
 def assert_numbat_object_created():
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
+
