@@ -6,11 +6,11 @@ all: $(NumBAT_MOD).so
 
 ## Set your python virtualenv platform
 #MYPYENV = $(HOME)/nbpy3
-MYPYENV = $(HOME)/mypy3
+MYPYENV = $(HOME)/mypy3-12
 PYVERMAJ=3
 #PYVERMAJMIN=$(origin NUMBAT_PYVER),3.12)
 PYVERMAJMIN=3.12
-PYVERMAJMIN=3.11
+#PYVERMAJMIN=3.11
 
 
 ## Set your other libraries

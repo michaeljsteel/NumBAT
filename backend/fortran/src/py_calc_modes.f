@@ -1,4 +1,52 @@
 #include "numbat_decl.h"
+
+C----------------------------------------------------------------------------------------
+
+C      subroutine prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
+C     *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
+C     *     iindex, errco, emsg)
+C
+C      integer*8 int_max, cmplx_max, real_max
+C      integer*8 n_msh_el, n_msh_pts, n_modes
+C      integer :: stat=0
+C
+C      integer*8, dimension(:), allocatable :: awk
+C      complex*16, dimension(:), allocatable :: bwk
+C      double precision, dimension(:), allocatable :: cwk
+C      integer*8, dimension(:), allocatable :: iindex
+C      complex*16, dimension(:,:), allocatable :: overlap_L
+C      integer*8 errco
+C      character*2048 emsg
+C
+C      call array_size(n_msh_pts, n_msh_el, n_modes,
+C     *     int_max, cmplx_max, real_max, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      allocate(bwk(cmplx_max), STAT=stat)
+C      call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      allocate(cwk(real_max), STAT=stat)
+C      call check_alloc(stat, real_max, "c", -1, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      allocate(awk(int_max), STAT=stat)
+C      call check_alloc(stat, int_max, "a", -1, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      allocate(overlap_L(n_modes,n_modes), STAT=stat)
+C      call check_alloc(stat, n_modes*n_modes, 
+C     *   "overlap_L", -1, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      allocate(iindex(n_modes), STAT=stat)
+C      call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
+C      RETONERROR(errco) 
+C
+C      end subroutine prepare_workspaces
+C----------------------------------------------------------------------------------------
+
+
        
 c   lambda       - free space wavelength in m
 c   n_modes    - desired number of eigenvectors
@@ -96,6 +144,7 @@ c     E_H_field = 2 => Magnetic field formulation (H-Field)
       integer*8 E_H_field
       integer*8 neq, debug
       integer*8 n_msh_pts_p3
+
 C  Variable used by valpr
       integer*8 n_modes, nvect, itermax, ltrav
       integer*8 n_conv, i_base
@@ -215,6 +264,11 @@ C       ly=1.0 ! NOTE: currently requires ly=lx, ie rectangular unit cell.
       emsg = ""
 
 c     Declare work space arrays
+
+c     call prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
+c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
+c    *     iindex, errco, emsg)
+c     RETONERROR(errco) 
 
       call array_size(n_msh_pts, n_msh_el, n_modes,
      *     int_max, cmplx_max, real_max, errco, emsg)
@@ -932,3 +986,4 @@ C
       deallocate(awk, bwk, cwk , iindex, overlap_L)
 
       end subroutine calc_EM_modes
+

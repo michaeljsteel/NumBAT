@@ -56,7 +56,7 @@ def save_and_close_figure(fig, fig_fname):
 
 def plot_filename(plps, ival, label=None):
     #fullpref = str(Path(numbat.NumBATApp().outdir(), plps['prefix']))
-    fullpref = str(numbat.NumBATApp().fieldspath())
+    fullpref = str(numbat.NumBATApp().path_fields())
 
     comp = plps['EM_AC'].name
     suf = plps['suffix']
@@ -962,15 +962,12 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
         decorator.extra_axes_commands(ax)
 
 
-def plot_mode_data(ax, v_fields, plps, sim_wguide, ival, v_x, v_y):  # mode data summary
+def plot_mode_data(ax, plps, sim_wguide, ival, v_x, v_y):  # mode data summary
 
-    # TODO: Move this analysis to a better place
-    [m_ReEx, m_ReEy, m_ReEz, m_ImEx, m_ImEy, m_ImEz, m_AbsE] = [v_fields['Fxr'], v_fields['Fyr'],
-                                                                v_fields['Fzr'], v_fields['Fxi'], v_fields['Fyi'], v_fields['Fzi'], v_fields['Fabs']]
-    tms = sim_wguide.get_modes()
-    modeobj = sim_wguide.get_modes()[ival]
-    modeobj._analyse_mode(v_x, v_y, m_ReEx, m_ReEy, m_ReEz,
-                          m_ImEx, m_ImEy, m_ImEz, m_AbsE)
+
+    #tms = sim_wguide.get_modes()
+    modeobj = sim_wguide.get_all_modes()[ival]
+    modeobj.analyse_mode()
 
     yhi = .99  # try and make these ranges match those of the physical domain?
     dy = .10
@@ -1112,8 +1109,7 @@ def plot_all_components(v_x, v_y, m_X, m_Y, v_plots, plps, sim_wguide, ival):
     ax = axs[axi//3, axi%3]
 
 
-    plot_mode_data(ax, v_plots, plps, sim_wguide,
-                   ival, v_x, v_y)  # mode data summary
+    plot_mode_data(ax, plps, sim_wguide, ival, v_x, v_y)  # mode data summary
     axi += 1
 
     cc_cont = {FieldType.EM_E: component_t('Eabs'), FieldType.EM_H: component_t(
@@ -1309,7 +1305,7 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
     if not prefix: prefix=numbat.NumBATApp().outprefix()
 
     mode_helper.set_plot_params(xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
-                                EM_AC='EM_E',
+                                field_type=FieldType.EM_E,
                                 quiver_points=quiver_points,
                                 num_ticks=num_ticks, colorbar=colorbar, contours=contours, contour_lst=contour_lst,
                                 pdf_png=pdf_png,
@@ -1321,19 +1317,18 @@ def plot_mode_fields(sim_wguide, ivals=None, n_points=501, quiver_points=30,
     # modal_gains_MB=modal_gains_MB,
     # modal_gains=modal_gains)
 
-    v_modes = sim_wguide.get_modes()
+    v_modes = sim_wguide.get_all_modes()
 
     modetype = 'em'
     if EM_AC == FieldType.AC:
         modetype = 'acoustic'
 
     if len(ival_range) > 1:
-        print('Plotting {} modes m={} to {}.'.format(
-            modetype, ival_range[0], ival_range[-1]))
+        print(f'Plotting {modetype} modes m={ival_range[0]} to {ival_range[-1]}.')
     else:
-        print('Plotting {} mode m={}.'.format(modetype, ival_range[0]))
+        print(f'Plotting {modetype} mode m={ival_range[0]}.')
 
-    # TODO: mode drawing and especially saving is very slow. could do this in threads?
+    # TODO: mode drawing and especially saving is very slow. 
     for ival in ival_range:
         v_modes[ival].plot_mode(comps, EM_AC)
 

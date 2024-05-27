@@ -1,7 +1,4 @@
-""" We've now covered most of the features of NumBAT.
-    In the following tutorials we'll show how to study different
-    geometries and materials.
-
+""" 
     Calculate the backward SBS gain spectra of a silicon waveguide
     surrounded by vacuum (air).
 """
@@ -24,18 +21,16 @@ lambda_nm = 1550
 core_a = 8e3
 clad_a = 125e3
 clad_a = 30e3
-clad_a = 4000
+clad_a = 8000
 
 unitcell_x = clad_a*2.0
 #unitcell_x = 5*lambda_nm
 unitcell_y = unitcell_x
 
-methodtri=1
-
 
 num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
-num_modes_AC = 40
+num_modes_AC = 200
 EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
@@ -111,7 +106,14 @@ print("n_eff = {0:.4e}".format(n_eff_sim))
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
 
-shift_Hz = 4e9
+
+# expected location of longitudinal modes
+# Omega = v_l q_AC
+NuLong_est = q_AC * mat_core.Vac_longitudinal()/(2*np.pi)
+
+print(f"Longitudinal modes expected near nu={NuLong_est*1e-9:.4f} GHz")
+
+shift_Hz = NuLong_est*1.0
 
 # Calculate Acoustic modes.
 if recalc_fields:

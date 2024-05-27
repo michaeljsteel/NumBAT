@@ -115,6 +115,13 @@ tut18:
 ftut18: 
 	$(PYTHON) simo-tut_18-sbs-in-smf28.py fast=1
 
+
+tut19: 
+	$(PYTHON) simo-tut_19_waveguide_profiles.py
+ftut19: 
+	$(PYTHON) simo-tut_19_waveguide_profiles.py fast=1
+
+
 clean:
 	-rm *.png *.npz
 	-rm -rf tut*fields ftut*fields

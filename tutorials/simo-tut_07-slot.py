@@ -51,8 +51,8 @@ wguide.plot_mesh(prefix)
 # Move origin to nominal centre of waveguide, y adjustment needs refinement based on mesh template.
 # Note different shifts are allowed for EM and acoustic, because acoustic domain excludes vacuum regions
 # Shifts are in nm
-wguide.set_xyshift_em(-unitcell_x*.5, unitcell_y*.5)
-wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)
+#wguide.set_xyshift_em(-unitcell_x*.5, unitcell_y*.5)
+#wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
@@ -101,7 +101,7 @@ plotting.plot_mode_fields(sim_AC, quiver_points=20, )
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('f{i:3d}  {np.real(nu)*1e-9:.5f}')
+for (m, nu) in enumerate(v_nu): print(f'{m:3d}  {np.real(nu)*1e-9:.5f}')
 
 set_q_factor = 1000.
 
