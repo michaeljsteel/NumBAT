@@ -72,8 +72,7 @@ else:
     sim_EM_Stokes = mode_calcs.load_simulation('tut_07_stokes')
 
 plotting.plot_mode_fields(sim_EM_pump, quiver_points = 20, xlim_min=0.2, xlim_max=0.2,
-                           ylim_min=0.0, ylim_max=0.0, EM_AC='EM_E',
-                           )
+                           ylim_min=0.0, ylim_max=0.0, field_type='EM_E')
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()

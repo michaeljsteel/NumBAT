@@ -82,7 +82,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 # sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
-                         ylim_min=0.3, ylim_max=0.3, EM_AC='EM_E', num_ticks=3,
+                         ylim_min=0.3, ylim_max=0.3, field_type='EM_E', num_ticks=3,
                          )
 
 # Calculate the Electromagnetic modes of the Stokes field.

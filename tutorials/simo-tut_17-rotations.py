@@ -36,34 +36,25 @@ mat_bs = [copy.deepcopy(mat_b) for i in range(4)]
 mat_cs = [copy.deepcopy(mat_c) for i in range(4)]
 mat_ds = [copy.deepcopy(mat_d) for i in range(4)]
 
-mat_as[0].rotate(pi/5, 'x-axis')
-mat_as[1].rotate(-pi/2, 'y-axis')
-mat_as[2].rotate(pi/4, (1,1,1))
-mat_as[3].rotate(pi/4, np.array([1,0,1]))
+mat_as[0].rotate('x-axis', pi/5)
+mat_as[1].rotate('y-axis', -pi/2)
+mat_as[2].rotate((1,1,1), pi/4)
+mat_as[3].rotate(np.array([1,0,1]), pi/4)
 
 
-mat_bs[0].rotate(pi/2, 'x-axis')
-mat_bs[1].rotate(-pi/2, 'y-axis')
-mat_bs[2].rotate(pi/4, (1,1,1))
-mat_bs[3].rotate(pi/3, np.array([1,1,1]))
+mat_bs[0].rotate('x-axis', pi/2)
+mat_bs[1].rotate('y-axis', -pi/2)
+mat_bs[2].rotate((1,1,1), pi/4)
+mat_bs[3].rotate(np.array([1,1,1]), pi/3)
 
-#mat_cs[0].rotate(pi/2, 'x-axis')
-mat_cs[1].rotate(-pi/2, 'y-axis')
-mat_cs[2].rotate(pi/4, (1,1,1))
-mat_cs[3].rotate(pi/4, np.array([1,2,1]))
-
-#mat_ds[0].set_orientation('x-cut')
-#mat_ds[1].set_orientation('y-cut')
-#mat_ds[2].set_orientation('y-cut')
-#mat_ds[2].set_orientation('z-cut')
-#mat_ds[3].set_orientation('y-cut')
-#mat_ds[3].set_orientation('z-cut')
-#mat_ds[3].set_orientation('x-cut')
+mat_cs[1].rotate('y-axis', -pi/2)
+mat_cs[2].rotate((1,1,1), pi/4)
+mat_cs[3].rotate(np.array([1,2,1]), pi/4)
 
 #for i in range(4): print('d', i, mat_ds[i].c_tensor)
-mat_ds[1].rotate(pi/4, 'x-axis')
-mat_ds[2].rotate(pi/3, 'x-axis')
-mat_ds[3].rotate(pi/4, (1,1,1))
+mat_ds[1].rotate('x-axis', pi/4)
+mat_ds[2].rotate('x-axis', pi/3)
+mat_ds[3].rotate((1,1,1), pi/4)
 
 
 

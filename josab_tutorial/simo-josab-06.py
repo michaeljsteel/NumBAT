@@ -73,7 +73,7 @@ print("Plotting EM fields ")
 # print("no plotting")
 plotting.plot_mode_fields(sim_EM_pump,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
-                         EM_AC='EM_E', num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
+                         field_type='EM_E', num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
                           n_points=1000, colorbar=True)
 
 # Print the wavevectors of EM modes.

@@ -131,13 +131,13 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
         (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
 
         t_lambda_nm = twopi/tk
-        sim_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
-        neff_k= np.sort(np.real(sim_EM.neff_all()))[-nmodes:]
+        simres_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
+        neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
 
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 multiprocessing.current_process().name, ik, len(kvec)-1))
-            plotting.plot_mode_fields(sim_EM, EM_AC='EM_E', ivals=range(nmodes),
+            plotting.plot_mode_fields(simres_EM, field_type='EM_E', ivals=range(nmodes),
                                       prefix=prefix+'_%d'%ik, ticks=True)
 
         return (ik, tk, neff_k)
@@ -319,7 +319,6 @@ def do_main():
 
     wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, acore,   # remove these factors of 2
                                inc_b_x=aclad,
-                            unitcell_y=unitcell_y,
                             material_bkg=mat_bkg,
                             material_a=mat_core,
                             material_b=mat_clad,

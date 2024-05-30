@@ -184,14 +184,14 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 print("starting EM field plotting ")
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
-                         ylim_min=0.435, ylim_max=0.435, EM_AC='EM_E', num_ticks=3,
+                         ylim_min=0.435, ylim_max=0.435, field_type='EM_E', num_ticks=3,
 
                          decorator=emdecorate, quiver_points=20,
                          comps=('Ex','Ey', 'Ez','Eabs','Et'), n_points=2000, colorbar=True)
 
 plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4,
                          ivals=[EM_ival_pump,EM_ival_Stokes],
-                         ylim_min=0.435, ylim_max=0.435, EM_AC='EM_H', num_ticks=3,
+                         ylim_min=0.435, ylim_max=0.435, field_type='EM_H', num_ticks=3,
 
                          decorator=emdecorate, quiver_points=20,
                          comps=('Hx','Hy', 'Hz','Habs','Ht'), n_points=2000, colorbar=True)

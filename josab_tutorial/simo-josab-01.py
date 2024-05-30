@@ -80,7 +80,7 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 print("Plotting EM fields ")
 
-plotting.plot_mode_fields(sim_EM_pump, ivals=[EM_ival_pump], EM_AC='EM_E', num_ticks=3,
+plotting.plot_mode_fields(sim_EM_pump, ivals=[EM_ival_pump], field_type='EM_E', num_ticks=3,
                           xlim_min=0.1, xlim_max=0.1, ylim_min=0.1, ylim_max=0.1, )
 
 # Calculate the EM effective index of the waveguide.
