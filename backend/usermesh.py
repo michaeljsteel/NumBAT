@@ -16,7 +16,7 @@ class UserGeometryBase():
 
     def __init__(self, params, d_materials):
         self._geom_name = ''
-        self._num_type_elements=0
+        self._num_type_materials=0
         self._is_curvilinear=False
         self._d_materials = d_materials
         self._d_params = params
@@ -26,8 +26,8 @@ class UserGeometryBase():
     def get_param(self, k):
         return self._d_params.get(k, None)
 
-    def set_num_type_elements(self, n):
-        self._num_type_elements = n
+    def set_num_type_materials(self, n):
+        self._num_type_materials = n
 
     def set_is_curvilinear(self, b):
         self._is_curvilinear = b
@@ -38,9 +38,9 @@ class UserGeometryBase():
     def set_description(self, desc):
         self._descrip = desc
 
-    def set_properties(self, nm, n_elements, is_curvi, desc):
+    def set_properties(self, nm, n_materials, is_curvi, desc):
         self.set_name(nm)
-        self.set_num_type_elements(n_elements)
+        self.set_num_type_materials(n_materials)
         self.set_is_curvilinear(is_curvi)
         self.set_description(desc)
 
@@ -53,8 +53,8 @@ class UserGeometryBase():
         else:
             return self.geom_name()
 
-    def num_type_elements(self):
-        return self._num_type_elements
+    def num_type_materials(self):
+        return self._num_type_materials
 
     def is_curvilinear(self):
         return self._is_curvilinear

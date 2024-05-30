@@ -2,48 +2,48 @@
 
 C----------------------------------------------------------------------------------------
 
-C      subroutine prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
-C     *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
-C     *     iindex, errco, emsg)
-C
-C      integer*8 int_max, cmplx_max, real_max
-C      integer*8 n_msh_el, n_msh_pts, n_modes
-C      integer :: stat=0
-C
-C      integer*8, dimension(:), allocatable :: awk
-C      complex*16, dimension(:), allocatable :: bwk
-C      double precision, dimension(:), allocatable :: cwk
-C      integer*8, dimension(:), allocatable :: iindex
-C      complex*16, dimension(:,:), allocatable :: overlap_L
-C      integer*8 errco
-C      character*2048 emsg
-C
-C      call array_size(n_msh_pts, n_msh_el, n_modes,
-C     *     int_max, cmplx_max, real_max, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      allocate(bwk(cmplx_max), STAT=stat)
-C      call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      allocate(cwk(real_max), STAT=stat)
-C      call check_alloc(stat, real_max, "c", -1, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      allocate(awk(int_max), STAT=stat)
-C      call check_alloc(stat, int_max, "a", -1, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      allocate(overlap_L(n_modes,n_modes), STAT=stat)
-C      call check_alloc(stat, n_modes*n_modes, 
-C     *   "overlap_L", -1, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      allocate(iindex(n_modes), STAT=stat)
-C      call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
-C      RETONERROR(errco) 
-C
-C      end subroutine prepare_workspaces
+c     subroutine prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
+c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
+c    *     iindex, errco, emsg)
+c
+c     integer*8 int_max, cmplx_max, real_max
+c     integer*8 n_msh_el, n_msh_pts, n_modes
+c     integer :: stat=0
+c
+c     integer*8, dimension(:), allocatable :: awk
+c     complex*16, dimension(:), allocatable :: bwk
+c     double precision, dimension(:), allocatable :: cwk
+c     integer*8, dimension(:), allocatable :: iindex
+c     complex*16, dimension(:,:), allocatable :: overlap_L
+c     integer*8 errco
+c     character*2048 emsg
+c
+c     call array_size(n_msh_pts, n_msh_el, n_modes,
+c    *     int_max, cmplx_max, real_max, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     allocate(bwk(cmplx_max), STAT=stat)
+c     call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     allocate(cwk(real_max), STAT=stat)
+c     call check_alloc(stat, real_max, "c", -1, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     allocate(awk(int_max), STAT=stat)
+c     call check_alloc(stat, int_max, "a", -1, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     allocate(overlap_L(n_modes,n_modes), STAT=stat)
+c     call check_alloc(stat, n_modes*n_modes, 
+c    *   "overlap_L", -1, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     allocate(iindex(n_modes), STAT=stat)
+c     call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
+c     RETONERROR(errco) 
+c
+c     end subroutine prepare_workspaces
 C----------------------------------------------------------------------------------------
 
 
@@ -68,13 +68,11 @@ c   mesh_xy        - (2 , n_msh_pts)  x,y coords?
 c   ls_material  - (1, nodes_per_el+7, n_msh_el)
 
       subroutine calc_EM_modes(
-c     Explicit inputs
-     *    lambda, dimscale_in_m, mesh_file, n_modes, n_msh_pts, 
-     *    n_msh_el, n_typ_el, v_refindex_n, bloch_vec, shift_ksqr,
-     *    bnd_cdn_i, itermax, E_H_field, debug, 
-
-c         plot options are all obselete
-     *    plot_modes, plot_real, plot_imag, plot_abs, 
+c     Inputs
+     *    lambda, dimscale_in_m, bloch_vec, shift_ksqr, E_H_field,
+     *    n_modes, mesh_file, n_msh_pts, 
+     *    n_msh_el, n_typ_el, v_refindex_n, 
+     *    bnd_cdn_i, itermax, debug, 
 
 c     Outputs
      *    beta1, sol1, mode_pol,
@@ -834,28 +832,29 @@ C     (see Eq. (25) of the JOSAA 2012 paper)
 
 C
 C    Save Original solution
-      if (plot_modes .eq. 1) then
-        dir_name = "Bloch_fields"
-        q_average = 0
-C        call write_sol (n_modes, n_msh_el, nodes_per_el, E_H_field, lambda,
-C     *       beta1, sol1, mesh_file, dir_name)
-C        call write_param (E_H_field, lambda, n_msh_pts, n_msh_el, bnd_cdn_i,
-C     *       n_modes, nvect, itermax, tol, shift_ksqr, dim_x, dim_y,
-C     *       mesh_file, mesh_format, n_conv, n_typ_el, eps_eff,
-C     *       bloch_vec, dir_name)
-        tchar = "Bloch_fields/PDF/All_plots_pdf.geo"
-        open (unit=34,file=tchar)
-          do i=1,n_modes
-            call gmsh_post_process (i, E_H_field, n_modes, n_msh_el, 
-     *        n_msh_pts, nodes_per_el, table_nod, type_el, n_typ_el,
-     *        v_refindex_n, mesh_xy, beta1, sol1,
-     *        awk(ip_visite), gmsh_file_pos, dir_name,
-     *        q_average, plot_real, plot_imag, plot_abs)
-          enddo
-        close (unit=34)
-      endif
-C
-C  Normalisation
+c      if (plot_modes .eq. 1) then
+c        dir_name = "Bloch_fields"
+c        q_average = 0
+cC        call write_sol (n_modes, n_msh_el, nodes_per_el, E_H_field, lambda,
+cC     *       beta1, sol1, mesh_file, dir_name)
+cC        call write_param (E_H_field, lambda, n_msh_pts, n_msh_el, bnd_cdn_i,
+cC     *       n_modes, nvect, itermax, tol, shift_ksqr, dim_x, dim_y,
+cC     *       mesh_file, mesh_format, n_conv, n_typ_el, eps_eff,
+cC     *       bloch_vec, dir_name)
+c        tchar = "Bloch_fields/PDF/All_plots_pdf.geo"
+c        open (unit=34,file=tchar)
+c          do i=1,n_modes
+c            call gmsh_post_process (i, E_H_field, n_modes, n_msh_el, 
+c     *        n_msh_pts, nodes_per_el, table_nod, type_el, n_typ_el,
+c     *        v_refindex_n, mesh_xy, beta1, sol1,
+c     *        awk(ip_visite), gmsh_file_pos, dir_name,
+c     *        q_average, plot_real, plot_imag, plot_abs)
+c          enddo
+c        close (unit=34)
+c      endif
+cC
+
+c Normalisation
       if(debug .eq. 1) then
         write(ui,*) "py_calc_modes.f: Field  Normalisation"
       endif
