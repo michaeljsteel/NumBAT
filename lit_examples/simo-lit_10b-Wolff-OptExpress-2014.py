@@ -58,7 +58,7 @@ reuse_fields=False  # calculate from scratch
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
 #slab_a_x=slab_a_x, slab_a_y=slab_a_y,
 #coat_x=coat_x, coat_y=coat_y,
                         material_bkg=materials.make_material("Si3N4_2014_Wolff"),

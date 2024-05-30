@@ -55,7 +55,7 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
-Si_110.rotate_axis(np.pi/4,'y-axis', save_rotated_tensors=True)
+Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
 
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
@@ -64,7 +64,7 @@ nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=Si_110,

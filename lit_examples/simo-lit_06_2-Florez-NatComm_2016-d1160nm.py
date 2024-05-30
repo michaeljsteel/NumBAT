@@ -48,7 +48,7 @@ prefix, refine_fac = starter.read_args(6, sys.argv, sub='b')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
                         #lc_bkg=1, lc_refine_1=600.0, lc_refine_2=300.0)

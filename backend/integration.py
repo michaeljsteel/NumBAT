@@ -294,6 +294,8 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     n_modes_AC = sim_AC.n_modes
 
     fem_ac = sim_AC.fem_mesh
+    struc = sim_EM_pump.structure
+    
     #n_msh_el_AC = sim_AC.fem_mesh.n_msh_el
 
     trimmed_EM_pump_field = np.zeros((ncomps, nnodes, n_modes_EM_pump, fem_ac.n_msh_el), dtype=complex)
@@ -311,7 +313,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.fem_evecs[x,n,ival,new_el]
 
     relevant_eps_effs =[]
-    for el_typ in range(sim_EM_pump.structure.n_mats_em):
+    for el_typ in range(struc.n_mats_em):
         if el_typ+1 in fem_ac.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.fem_mesh.v_refindexn[el_typ]**2)
 
@@ -369,7 +371,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     alpha = simres_AC.alpha_t_AC_all()
     
     print('\n Photoelastic calc')
-    if sim_EM_pump.structure.using_linear_elements():
+    if struc.using_linear_elements():
         Q_PE = NumBAT.photoelastic_int_v2(
             sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes, EM_ival_pump_fortran,
             EM_ival_Stokes_fortran, AC_ival_fortran, fem_ac.n_msh_el,
@@ -379,7 +381,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
     else:
-        if not sim_EM_pump.structure.using_curvilinear_elements():
+        if not struc.using_curvilinear_elements():
             print("Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                 "\n using slow quadrature integration by default.\n\n")
         Q_PE = NumBAT.photoelastic_int(

@@ -148,7 +148,7 @@ AC_ival = 'All'
 
 # Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer")
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
-Si_110.rotate_axis(np.pi/4,'z-axis', save_rotated_tensors=True)
+Si_110.rotate_axis('z-axis', np.pi/4, save_rotated_tensors=True)
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
@@ -156,7 +156,7 @@ nbapp = numbat.NumBATApp(prefix)
 
 vac = materials.make_material("Vacuum")
 # Use specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y,
                         coat_x=coat_x, coat_y=coat_y, coat2_x=coat2_x, coat2_y=coat2_y,
                         material_bkg=vac,

@@ -40,7 +40,7 @@ prefix, refine_fac = starter.read_args(2, sys.argv, sub='b')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=0.05, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge
@@ -72,8 +72,8 @@ plt.figure(figsize=(10,6))
 ax = plt.subplot(1,1,1)
 for i_ac, q_ac in enumerate(np.linspace(0.0,q_AC,nu_ks)):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_ac, EM_sim=sim_EM_pump)
-    prop_AC_modes = np.array([np.real(x) for x in sim_AC.Eig_values if abs(np.real(x)) > abs(np.imag(x))])
-    sym_list = integration.symmetries(sim_AC)
+    prop_AC_modes = np.array([np.real(x) for x in sim_AC.eigs_nu if abs(np.real(x)) > abs(np.imag(x))])
+    sym_list = integration.symmetries(sim_AC)   # FIXME Symmetries
 
     for i in range(len(prop_AC_modes)):
         Om = prop_AC_modes[i]*1e-9

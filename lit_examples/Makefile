@@ -6,7 +6,7 @@ slow: lit04a lit04b lit05 lit06a lit06b lit07 lit08 lit09 lit10
 
 allfast: flit01 flit02 flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
 #allfast: flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
-fast1: flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
+fast1: flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
 
 lit01: 
 	$(PYTHON) simo-lit_01-Laude-AIPAdv_2013-silica.py
