@@ -57,7 +57,7 @@ reuse_fields=False  # calculate from scratch
 
 Ge_110 = copy.deepcopy(materials.make_material("Ge_cubic_2014_Wolff"))
 print('Initial Ge_100:', Ge_110.full_str())
-Ge_110.rotate_axis(np.pi/4., 'y-axis', save_rotated_tensors=True)
+Ge_110.rotate_axis( 'y-axis', np.pi/4., save_rotated_tensors=True)
 print('Rotated Ge_110:', Ge_110.full_str())
 
 prefix, refine_fac = starter.read_args(10, sys.argv, sub='a')
@@ -65,7 +65,7 @@ nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = nbapp.make_structure(unitcell_x,inc_a_x,unitcell_y,inc_a_y,inc_shape,
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Si3N4_2014_Wolff"),
                         material_a=Ge_110,
                         lc_bkg=.1, lc_refine_1=5.0, lc_refine_2=5.0)
