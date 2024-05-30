@@ -110,12 +110,12 @@ class FemMesh:
                                     # (maybe different to origianl underlying mesh)
         self.n_msh_el =  0          # Number of elements in .msh mesh file
 
-        self.n_typ_el = 0              # There is only n_type_el, but there is both  type_el and typ_el
+        self.n_mats_em = 0              # There is only n_type_el, but there is both  type_el and typ_el
         
         
         # made by python
         self.v_refindex = None         # refractive index at each node
-        self.type_el =  None           # index of elt's material in list of active materials. Values: 1..n_typ_el
+        self.type_el =  None           # index of elt's material in list of active materials. Values: 1..n_mats_em
         self.el_conv_table_n = None
         
         # made by fortran
@@ -140,7 +140,7 @@ class FemMesh:
 
 
         self.mesh_mail_fname = struc.mesh_mail_fname
-        self.n_typ_el = struc.n_typ_el
+        self.n_mats_em = struc.n_mats_em
            
 
         mesh = struc.get_mail_mesh_data() 
@@ -150,18 +150,18 @@ class FemMesh:
         self.n_msh_el = mesh.n_msh_elts
 
         print('\n The EM sim mesh has {0} nodes, {1} elements and {2} element types (materials).'.format(
-            self.n_msh_pts, self.n_msh_el, self.n_typ_el))
+            self.n_msh_pts, self.n_msh_el, self.n_mats_em))
         
-        matitems = list(struc.d_materials.items())[:self.n_typ_el]
-        matvals = list(struc.d_materials.values())[:self.n_typ_el]
+        matitems = list(struc.d_materials.items())[:self.n_mats_em]
+        matvals = list(struc.d_materials.values())[:self.n_mats_em]
         
         self.v_refindexn =np.array([m.refindex_n for m in matvals])
-        self.el_conv_table_n = {i:i for i in range(1, self.n_typ_el+1)} 
+        self.el_conv_table_n = {i:i for i in range(1, self.n_mats_em+1)} 
         if not struc.loss:
             self.v_refindexn = self.v_refindexn.real
 
         print(f' The material index table is:', self.el_conv_table_n, '\n')
-        print(f' There are {struc.n_typ_el} active materials:')
+        print(f' There are {struc.n_mats_em} active materials:')
         for im, m in enumerate(matvals):
             print(f'  {m.material_name+",":20} n = {self.v_refindexn[im]:.5f}, mat. index = {im+1}.')  # +1 because materials are reported by their Fortran index
 
@@ -192,7 +192,7 @@ class FemMesh:
         el_conv_table = {}
         oldloc = 1
         newloc = 1
-        for mat in list(structure.d_materials.values())[:structure.n_typ_el]:  #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway) 
+        for mat in list(structure.d_materials.values())[:structure.n_mats_em]:  #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway) 
             if mat.has_elastic_properties():
                 el_conv_table[oldloc] = newloc
                 newloc += 1
@@ -840,7 +840,7 @@ class EMSimulation(Simulation):
         
         resm = NumBAT.calc_em_modes(self.lambda_m, self.d_in_m, self.k_perp, shift_ksqr, 
                                     self.E_H_field, self.n_modes, 
-                                    fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, fm.n_typ_el, fm.v_refindexn, 
+                                    fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, fm.n_mats_em, fm.v_refindexn, 
                                     bnd_cdn_i, itermax, EM_FEM_debug)
 
 
@@ -859,12 +859,11 @@ class EMSimulation(Simulation):
 
 # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
-        nnodes = 6
         if tstruc.using_linear_elements():
             # Integration using analytically evaluated basis function integrals. Fast.
             self.EM_mode_power = NumBAT.em_mode_energy_int_v2_ez(
                 self.k_0, self.n_modes, 
-                fm.n_msh_el, fm.n_msh_pts, nnodes, fm.table_nod, fm.mesh_xy, 
+                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, fm.table_nod, fm.mesh_xy, 
                 self.eigs_kz, self.fem_evecs)
         else:
             if not tstruc.using_curvilinear_elements():
@@ -873,7 +872,7 @@ class EMSimulation(Simulation):
         # Integration by quadrature. Slowest.
             self.EM_mode_power = NumBAT.em_mode_energy_int_ez(
                 self.k_0, self.n_modes, 
-                fm.n_msh_el, fm.n_msh_pts, nnodes, fm.table_nod, fm.mesh_xy, 
+                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, fm.table_nod, fm.mesh_xy, 
                 self.eigs_kz, self.fem_evecs)
         # Bring Kokou's def into line with CW formulation.
         self.EM_mode_power = 2.0*self.EM_mode_power
@@ -883,9 +882,6 @@ class EMSimulation(Simulation):
         if self.calc_EM_mode_energy:
             print("Calculating EM mode energies...")
             
-            nnodes = 6
-            # import time
-            # start = time.time()
             if tstruc.using_linear_elements():
                 # # Semi-analytic integration. Fastest!
                 # else:
@@ -894,8 +890,8 @@ class EMSimulation(Simulation):
                 #             "\n using slow quadrature integration by default.\n\n")
                 # # Integration by quadrature. Slowest.
                 self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
-                    self.n_modes, fm.n_msh_el, fm.n_msh_pts, nnodes,
-                    fm.table_nod, fm.type_el, fm.n_typ_el, fm.v_refindexn,
+                    self.n_modes, fm.n_msh_el, fm.n_msh_pts, fm.n_nodes,
+                    fm.table_nod, fm.type_el, fm.n_mats_em, fm.v_refindexn,
                     fm.mesh_xy, self.fem_evecs)
             else:
                 print(
@@ -1027,7 +1023,7 @@ class ACSimulation(Simulation):
         resm = NumBAT.calc_ac_modes(
             self.n_modes, self.q_AC,  self.d_in_m, shift_nu, 
             fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, 
-            tstruc.symmetry_flag, tstruc.n_typ_el_AC, el_props.c_IJ, el_props.rho,
+            tstruc.symmetry_flag, tstruc.n_mats_ac, el_props.c_IJ, el_props.rho,
             bnd_cdn_i, itermax, ARPACK_tol,
             fm.node_physindex_AC,
             ac_mesh_from_em, AC_FEM_debug, show_mem_est,
@@ -1047,19 +1043,18 @@ class ACSimulation(Simulation):
         
         # Retrieve the material properties of each mesh point.
         self.ls_material = NumBAT.array_material_ac(
-            fm.n_msh_el, tstruc.n_typ_el_AC, fm.type_el_AC,
+            fm.n_msh_el, tstruc.n_mats_ac, fm.type_el_AC,
             el_props.rho, el_props.c_IJ, el_props.p_ijkl, el_props.eta_ijkl)
 
         # Calc unnormalised power in each AC mode - PRA Eq. 18.
         if self.calc_AC_mode_power:
             print('doing AC mode power')
-            nnodes = 6
             if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                 self.AC_mode_power = NumBAT.ac_mode_power_int_v4(
                     self.n_modes, fm.n_msh_el, fm.n_msh_pts,
-                    nnodes, fm.table_nod, fm.type_el, fm.mesh_xy,
-                    tstruc.n_typ_efm, el_props.c_IJ,
+                    fm.n_nodes, fm.table_nod, fm.type_el, fm.mesh_xy,
+                    tstruc.n_mats_ac, el_props.c_IJ,
                     self.q_AC, Omega_AC, self.fem_evecs)
             else:
                 if not tstruc.using_curvilinear_elements():
@@ -1068,21 +1063,20 @@ class ACSimulation(Simulation):
             # Integration by quadrature. Slowest.
                 self.AC_mode_power = NumBAT.ac_mode_power_int(
                     self.n_modes, fm.n_msh_el, fm.n_msh_pts,
-                    nnodes, fm.table_nod, fm.type_el, fm.mesh_xy,
-                    tstruc.n_typ_el_AC, tstruc.acten_cijkz,
+                    fm.n_nodes, fm.table_nod, fm.type_el, fm.mesh_xy,
+                    tstruc.n_mats_ac, el_props.acten_cijkz,
                     self.q_AC, Omega_AC, self.fem_evecs, AC_FEM_debug)
             
 
 # Calc unnormalised elastic energy in each AC mode - PRA Eq. 16.
-        nnodes = 6
         print('doing AC mode energy')
 
         if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
             self.AC_mode_energy = NumBAT.ac_mode_elastic_energy_int_v4(
                 self.n_modes, fm.n_msh_el, fm.n_msh_pts,
-                nnodes, fm.table_nod, fm.type_el, fm.mesh_xy,
-                tstruc.n_typ_el_AC, el_props.rho,
+                fm.n_nodes, fm.table_nod, fm.type_el, fm.mesh_xy,
+                tstruc.n_mats_ac, el_props.rho,
                 Omega_AC, self.fem_evecs)
         else:
             if not tstruc.using_curvilinear_elements():
@@ -1091,8 +1085,8 @@ class ACSimulation(Simulation):
         # Integration by quadrature. Slowest.
             self.AC_mode_energy = NumBAT.ac_mode_elastic_energy_int(
                 self.n_modes, fm.n_msh_el, fm.n_msh_pts,
-                nnodes, fm.table_nod, fm.type_el, fm.mesh_xy,
-                tstruc.n_typ_el_AC, el_props.rho,
+                fm.n_nodes, fm.table_nod, fm.type_el, fm.mesh_xy,
+                tstruc.n_mats_ac, el_props.rho,
                 Omega_AC, self.fem_evecs, AC_FEM_debug)
 
         self.calc_acoustic_losses()
@@ -1106,10 +1100,10 @@ class ACSimulation(Simulation):
         if self.shift_Hz is None:
             # For AC problem shift is a frequency; [shift] = s^-1.
             v_list = []
-            for el in range(self.structure.n_typ_el_AC):
+            for el in range(self.structure.n_mats_ac):
                 # Using acoustic velocity of longitudinal mode pg 215 Auld vol 1.
                 v_list.append(
-                    np.sqrt(self.structure.actens_c_IJ[0, 0][el]/self.structure.rho[el]))
+                    np.sqrt(self.structure.el_props.c_IJ[0, 0][el]/self.structure.el_props.rho[el]))
                 # # Using acoustic velocity of shear mode pg 215 Auld vol 1.
                 # v_list.append(np.sqrt(self.structure.actens_c_IJ[3,3][el]/self.structure.rho[el]))
             AC_velocity = np.real(v_list).min()
@@ -1138,13 +1132,12 @@ class ACSimulation(Simulation):
 
             # Calc alpha (loss) Eq. 45
             print("Acoustic loss calc")
-            nnodes = 6  # TODO: is this right?
             
             if tstruc.using_linear_elements():
                 alpha = NumBAT.ac_alpha_int_v2(self.n_modes,
-                                                fm.n_msh_el, fm.n_msh_pts, nnodes,
+                                                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes,
                                                 fm.table_nod, fm.type_el, fm.mesh_xy,
-                                                tstruc.n_typ_el_AC, el_props.eta_ijkl,
+                                                tstruc.n_mats_ac, el_props.eta_ijkl,
                                                 self.q_AC, Omega_AC, self.fem_evecs,
                                                 # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
                                                 self.AC_mode_energy)  # appropriate for alpha in [1/s]
@@ -1156,9 +1149,9 @@ class ACSimulation(Simulation):
                 # not sure why this is needed by ac_alpha_int
                 #overlap = np.zeros(self.n_modes, dtype=complex)
                 alpha = NumBAT.ac_alpha_int(self.n_modes,
-                                            fm.n_msh_el, fm.n_msh_pts, nnodes,
+                                            fm.n_msh_el, fm.n_msh_pts, fm.n_nodes,
                                             fm.table_nod, fm.type_el, fm.mesh_xy,
-                                            tstruc.n_typ_el_AC, el_props.eta_ijkl,
+                                            tstruc.n_mats_ac, el_props.eta_ijkl,
                                             self.q_AC,  Omega_AC, self.fem_evecs,
                                             # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
                                             self.AC_mode_energy, Fortran_debug)  # appropriate for alpha in [1/s]

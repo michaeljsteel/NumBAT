@@ -100,7 +100,7 @@ if doem:
   #sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
   plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
-                           ylim_min=0.43, ylim_max=0.43, EM_AC='EM_E',
+                           ylim_min=0.43, ylim_max=0.43, field_type='EM_E',
                            n_points=2000, quiver_points=10,  decorator=emdecorate)
 
   # Print the wavevectors of EM modes.

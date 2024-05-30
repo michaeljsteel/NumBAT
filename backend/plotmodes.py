@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-#import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
@@ -27,15 +26,10 @@ from collections.abc import Iterable
 import numbat
 from numbattools import *
 from nbtypes import QAcMethod, FieldType, component_t, twopi
-#from fortran import NumBAT
-#mport reporting
-
-
-
 
 
 def plot_filename(plps, ival, label=None):
-    #fullpref = str(Path(numbat.NumBATApp().outdir(), plps['prefix']))
+    
     fullpref = str(numbat.NumBATApp().path_fields())
 
     comp = plps['EM_AC'].name
@@ -207,14 +201,6 @@ class Decorator(object):
 
     def get_axes_property(self, lab):
         return self._get_axes_prop().get(lab, None)
-        # prop=''
-        # try:
-        #  prop=self._get_axes_prop()[lab]
-        # except:
-        #  print('Warning: unknown axes property label "{0}" in Decorator::get_axes_property()'.format(lab))
-        #  print (self._get_axes_prop())
-        #  sys.exit(1)
-        # return prop
 
     def is_single_plot(self):
         '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
@@ -382,11 +368,7 @@ def plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, l_fields, plps,
         #         [y2, y2, y2, ...]
 
         n_pts_y, n_pts_x = m_X.shape
-        # delprint('\n\nshape 1', n_pts_x, n_pts_y)
-        # delprint('shape 2', m_X[0,:5])
-        # delprint('shape 2', m_X[1,:5])
-        # delprint('shape 2', m_Y[0,:5])
-        # delprint('shape 2', m_Y[1,:5])
+
 
         # grid points to skip for each arrow
         # this could probably be chosen nicer
@@ -404,14 +386,10 @@ def plot_one_component_axes_contour_and_quiver(ax, m_X, m_Y, l_fields, plps,
         # is quiver_skip_x and _y around the right way given the .T operation?
         v_x_q = m_X.T[qrange_x[:, np.newaxis], qrange_y]
         v_y_q = m_Y.T[qrange_x[:, np.newaxis], qrange_y]
-        # v_x_q = m_X.T[0::quiver_skip_x, 0::quiver_skip_y]
-        # v_y_q = m_Y.T[0::quiver_skip_x, 0::quiver_skip_y]
+
 
         # TODO: why no transpose on these fields?
-        # m_ReEx_q = l_fields['Fxr'][0::quiver_skip_x, 0::quiver_skip_y]
-        # m_ReEy_q = l_fields['Fyr'][0::quiver_skip_x, 0::quiver_skip_y]
-        # m_ImEx_q = l_fields['Fxi'][0::quiver_skip_x, 0::quiver_skip_y]
-        # m_ImEy_q = l_fields['Fyi'][0::quiver_skip_x, 0::quiver_skip_y]
+
         m_ReEx_q = l_fields['Fxr'][qrange_x[:, np.newaxis], qrange_y]
         m_ReEy_q = l_fields['Fyr'][qrange_x[:, np.newaxis], qrange_y]
         m_ImEx_q = l_fields['Fxi'][qrange_x[:, np.newaxis], qrange_y]
@@ -613,7 +591,8 @@ def delme_plot_one_component_axes(ax, m_X, m_Y, l_fields, plps, cc):
     if do_contours:
         if np.max(np.abs(field[~np.isnan(field)])) > plot_threshold:
             CS2 = ax.contour(m_X, m_Y, field.T, levels=cbarticks,
-                             colors=mycolors[::-1], linewidths=(1.5,))
+                             #colors=mycolors[::-1],   # FIXME
+                             linewidths=(1.5,))
             if do_cbar:
                 cbar.add_lines(CS2)
 
@@ -683,11 +662,6 @@ def plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
     plot_set_title(ax, comp_label, plps, decorator)
 
     plot_set_axes_style(ax, plps, decorator)
-
-    # if plps['xlim_min'] != None:
-    #    ax.set_xlim(xmin+plps['xlim_min']*width_x,xmax-plps['xlim_max']*width_x)
-    # if plps['ylim_min'] != None:
-    #    ax.set_ylim(ymin+plps['ylim_min']*width_y,ymax-plps['ylim_max']*width_y)
 
     if True or xlmi > 0 or xlma > 0:
         xmin, xmax = ax.get_xlim()
@@ -922,23 +896,7 @@ def plot_one_component(m_X, m_Y, v_fields, plps, sim_result, ival, cc, axis=None
         save_and_close_figure(fig, fig_fname)
 
 
-# deprecated spelling.
-def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
-                    xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
-                    field_type='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
-                    stress_fields=False, pdf_png='png',
-                    prefix='', suffix='', ticks=True, comps=[], decorator=None,
-                    suppress_imimre=True,
-                    modal_gains_PE=None,
-                    modal_gains_MB=None,
-                    modal_gains=None):
 
-    print('Warning: "plt_mode_fields" is deprecated, use "plot_mode_fields"')
-    plot_mode_fields(sim_result, ivals, n_points, quiver_points,
-                     xlim_min, xlim_max, ylim_min, ylim_max,
-                     field_type, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png,
-                     prefix, suffix, ticks, comps, decorator,
-                     suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
 
 #### Standard plotting of spectra #############################################
 
@@ -949,10 +907,7 @@ def plot_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=30,
                      num_ticks=None, colorbar=True, contours=False, contour_lst=None,
                      stress_fields=False, pdf_png='png',
                      prefix='', suffix='', ticks=True, comps=[], decorator=None,
-                     suppress_imimre=True,
-                     modal_gains_PE=None,
-                     modal_gains_MB=None,
-                     modal_gains=None):
+                     suppress_imimre=True, modal_gains_PE=None, modal_gains_MB=None, modal_gains=None):
     """ Plot E or H fields of EM mode, or the AC modes displacement fields.
 
         Args:
@@ -1014,7 +969,7 @@ def plot_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=30,
     if not ivals is None:
         ival_range = ivals
     else:
-        ival_range = range(len(sim_result.nu_AC_all()))
+        ival_range = range(sim_result.n_modes)
 
     mode_helper = sim_result.get_mode_helper()
     mode_helper.setup_plot_grid(n_points=n_points)
@@ -1072,3 +1027,23 @@ def plot_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=30,
     for ival in ival_range:
         v_modes[ival].plot_mode(comps, field_type)
 
+
+
+###########################################################################################################
+# deprecated spelling.
+def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
+                    xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
+                    field_type='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
+                    stress_fields=False, pdf_png='png',
+                    prefix='', suffix='', ticks=True, comps=[], decorator=None,
+                    suppress_imimre=True,
+                    modal_gains_PE=None,
+                    modal_gains_MB=None,
+                    modal_gains=None):
+
+    print('Warning: "plt_mode_fields" is deprecated, use "plot_mode_fields"')
+    plot_mode_fields(sim_result, ivals, n_points, quiver_points,
+                     xlim_min, xlim_max, ylim_min, ylim_max,
+                     field_type, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png,
+                     prefix, suffix, ticks, comps, decorator,
+                     suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)

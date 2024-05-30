@@ -100,7 +100,7 @@ if doem:
   sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
   plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=range(6),
-                           ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', decorator=emdecorate,
+                           ylim_min=0.2, ylim_max=0.2, field_type='EM_E', decorator=emdecorate,
                             )
 
   # Print the wavevectors of EM modes.

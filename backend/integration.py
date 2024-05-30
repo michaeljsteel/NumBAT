@@ -311,7 +311,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.fem_evecs[x,n,ival,new_el]
 
     relevant_eps_effs =[]
-    for el_typ in range(sim_EM_pump.structure.n_typ_el):
+    for el_typ in range(sim_EM_pump.structure.n_mats_em):
         if el_typ+1 in fem_ac.typ_el_AC:
             relevant_eps_effs.append(sim_EM_pump.fem_mesh.v_refindexn[el_typ]**2)
 
@@ -327,7 +327,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 #                alpha = NumBAT.ac_alpha_int_v2(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
-#                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.el_props.eta_ijkl,
+#                    sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.eta_ijkl,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
 #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
@@ -338,7 +338,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 #                alpha = NumBAT.ac_alpha_int(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
-#                    sim_AC.structure.n_typ_el_AC, sim_AC.structure.el_props.eta_ijkl,
+#                    sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.eta_ijkl,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
 #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
@@ -375,7 +375,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             EM_ival_Stokes_fortran, AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes,
             fem_ac.table_nod, fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_typ_el_AC, sim_AC.structure.el_props.p_ijkl,
+            sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.p_ijkl,
             q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
     else:
@@ -387,7 +387,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             EM_ival_Stokes_fortran, AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes,
             fem_ac.table_nod, fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_typ_el_AC, sim_AC.structure.el_props.p_ijkl,
+            sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.p_ijkl,
             q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
 
@@ -402,7 +402,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes, fem_ac.table_nod,
             fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_typ_el_AC, typ_select_in, typ_select_out,
+            sim_AC.structure.n_mats_ac, typ_select_in, typ_select_out,
             trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
     
@@ -935,7 +935,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
     n_points_comsol_data = 100
 
     # relevant_eps_effs =[]
-    # for el_typ in range(sim_EM_pump.structure.n_typ_el):
+    # for el_typ in range(sim_EM_pump.structure.n_mats_em):
     #     if el_typ+1 in sim_AC.typ_el_AC:
     #         relevant_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
 

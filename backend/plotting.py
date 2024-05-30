@@ -170,8 +170,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         # build lorentzian centered on mode m
         v_nu_loc = np.real(sim_AC.nu_AC(m) + detuning_range)
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
-        v_gain_loc = np.real(
-            SBS_gain[EM_ival_pump, EM_ival_Stokes, m]) * v_Lorentz
+        v_gain_loc = np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]) * v_Lorentz
 
         if mode_comps:
             ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
@@ -217,12 +216,9 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     mask = np.where((sim_AC.nu_AC_all() > freq_min) *
                     (sim_AC.nu_AC_all() < freq_max), 1, 0)
 
-    gain = np.max(
-        np.abs(np.real(mask*SBS_gain[EM_ival_pump, EM_ival_Stokes, :])))
-    gain_PE = np.max(
-        np.abs(np.real(mask*SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :])))
-    gain_MB = np.max(
-        np.abs(np.real(mask*SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :])))
+    gain = np.max(np.abs(np.real(mask*SBS_gain[EM_ival_pump, EM_ival_Stokes, :])))
+    gain_PE = np.max(np.abs(np.real(mask*SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :])))
+    gain_MB = np.max(np.abs(np.real(mask*SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :])))
 
     if do_tot:
         maxG = np.max(np.array([gain, gain_PE, gain_MB]))
@@ -254,16 +250,14 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                 ax.plot(nu0_m*1e-9, gain_m, 'ob')
 
         if do_PE:
-            gain_PE_m = abs(
-                np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
+            gain_PE_m = abs(np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_PE_m * v_Lorentz
             v_gain_global_PE += np.interp(nu_grid, v_nu_loc, v_gain_loc)
             if gain_PE_m > mark_modes_thresh*maxG:
                 ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
 
         if do_MB:
-            gain_MB_m = abs(
-                np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
+            gain_MB_m = abs(np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_MB_m * v_Lorentz
             v_gain_global_MB += np.interp(nu_grid, v_nu_loc, v_gain_loc)
             if gain_MB_m > mark_modes_thresh*maxG:
@@ -282,14 +276,11 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                 modelabs_logy.append((xloc, Gm, m))
 
     if do_PE:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_PE),
-                'r', linewidth=lw, label='PE')
+        ax.plot(nu_grid_GHz, np.abs(v_gain_global_PE), 'r', linewidth=lw, label='PE')
     if do_MB:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_MB),
-                'g', linewidth=lw, label='MB')
+        ax.plot(nu_grid_GHz, np.abs(v_gain_global_MB), 'g', linewidth=lw, label='MB')
     if do_tot:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_tot),
-                'b', linewidth=lw, label='Total gain')
+        ax.plot(nu_grid_GHz, np.abs(v_gain_global_tot), 'b', linewidth=lw, label='Total gain')
 
     ax.legend(loc=0)
     ax.set_xlim(nu_min_GHz, nu_max_GHz)
@@ -322,14 +313,11 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         v_scale = dB_peak_amp * Leff*math.log10(math.exp(1.0))
         v_amp = v_scale * abs(v_gain_global_tot)
         if do_PE:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_PE),
-                    'r', linewidth=lw, label="PE")
+            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
         if do_MB:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_MB),
-                    'g', linewidth=lw, label="MB")
+            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")
         if do_tot:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_tot),
-                    'b', linewidth=lw, label="Total")
+            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz, nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)', size=fs)
@@ -349,12 +337,9 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     if semilogy:
         fig, ax = plt.subplots()
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_PE),
-                    'r', linewidth=lw, label="PE")
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_MB),
-                    'g', linewidth=lw, label="MB")
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_tot),
-                    'b', linewidth=lw, label="Total")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")
+        ax.semilogy(nu_grid_GHz, abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz, nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)', size=fs)

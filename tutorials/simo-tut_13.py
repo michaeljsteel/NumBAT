@@ -49,7 +49,7 @@ def plot_and_label (ax, vx, mat, sty, lab, col=None):
         ax.plot(vx, mat[:,0], sty, label=lab, color=col, ms=5)
 
 def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
-    cmat = coremat.c_tensor
+    cmat = coremat.stiffness_c_IJ
     c11 = cmat[1,1].real
     c12 = cmat[1,2].real
     c44 = cmat[4,4].real
@@ -180,7 +180,7 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
 
     return nu_an
 
-def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
+def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, simres_EM, cmat):
 
     Vl = cmat.Vac_longitudinal()
     Vs = cmat.Vac_shear()
@@ -197,13 +197,13 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
         (iq, tq, doplot, wg) = args # Matches queues passed to CalcThread
 
         shift_Hz=0.8*tq*Vs/twopi  # look for modes not to far from the shear sound line
-        sim_AC= wg.calc_AC_modes(nbasis_AC, tq, shift_Hz=shift_Hz, EM_sim=sim_EM) #, bcs='Open')
-        v_nu_num= np.sort(np.real(sim_AC.nu_AC_all()))[:nmodes]
+        simres_AC= wg.calc_AC_modes(nbasis_AC, tq, shift_Hz=shift_Hz, EM_sim=simres_EM) #, bcs='Open')
+        v_nu_num= np.sort(np.real(simres_AC.nu_AC_all()))[:nmodes]
 
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            plotting.plot_mode_fields(sim_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
+            plotting.plot_mode_fields(simres_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
 
         return (iq, tq, v_nu_num)
 
@@ -262,7 +262,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
     return nu_num
 
 
-def solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core):
+def solve_elastic_dispersion(prefix, ssys, wguide, simres_EM, rcore, mat_core):
     print('\n\nAcoustic dispersion problem')
     print(    '---------------------------')
 
@@ -289,7 +289,7 @@ def solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core):
     nu_an = solve_elastic_rod_analytical(prefix, qvec_an, nmodes, mat_core, rcore)
 
     print('Doing numerical problem')
-    nu_num = solve_elastic_rod_numerical(prefix, qvec_num, nmodes, wguide, sim_EM, mat_core)
+    nu_num = solve_elastic_rod_numerical(prefix, qvec_num, nmodes, wguide, simres_EM, mat_core)
     #nu_num = np.zeros([len(qvec_num), nmodes], dtype=float)
 
 
@@ -399,9 +399,9 @@ def do_main():
 
     prefix =pref0
     #wguide.plot_mesh(prefix)
-    sim_EM= wguide.calc_EM_modes(40, 1550,1.5) # solve one EM step to prep the waveguide meshing
+    simres_EM= wguide.calc_EM_modes(40, 1550,1.5) # solve one EM step to prep the waveguide meshing
 
-    solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core)
+    solve_elastic_dispersion(prefix, ssys, wguide, simres_EM, rcore, mat_core)
 
     print(nbapp.final_report())
 

@@ -262,8 +262,8 @@ class Structure(object):
             reporting.register_warning(
                 'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
-        self.n_typ_el = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
-        self.n_typ_el_AC = 0  # total number of materials with elastic properties in the structure (ie not vacuum)
+        self.n_mats_em = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
+        self.n_mats_ac = 0  # total number of materials with elastic properties in the structure (ie not vacuum)
 
         # material identities seem to depend on stable ordering of the material dictionary when converted to a list
 
@@ -375,25 +375,25 @@ class Structure(object):
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
         # Any material not given acoustic_props assumed to be vacuum.
-        acoustic_props = [
-            m for m in self.d_materials.values() if m.has_elastic_properties()]
+        
+        acoustic_props = [m for m in self.d_materials.values() if m.has_elastic_properties()]
 
         # Number of different acoustic materials
-        self.n_typ_el_AC = len(acoustic_props)
+        self.n_mats_ac = len(acoustic_props)
 
-        rho = np.zeros(self.n_typ_el_AC)
+        rho = np.zeros(self.n_mats_ac)
 
         # stiffness tensor in 6x6 Voigt notation
-        actens_c_IJ = np.zeros((6, 6, self.n_typ_el_AC))
+        actens_c_IJ = np.zeros((6, 6, self.n_mats_ac))
 
         # stiffness tensor as rank 4 ijkz tensor
-        actens_c_ijkz = np.zeros((3, 3, 3, self.n_typ_el_AC))
+        actens_c_ijkz = np.zeros((3, 3, 3, self.n_mats_ac))
 
         # photelastic tensor as rank 4 ijkl tensor
-        actens_p_ijkl = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
+        actens_p_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
 
         # eta tensor as rank 4 ijkl tensor
-        actens_eta_ijkl = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
+        actens_eta_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
 
 
         # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
@@ -403,7 +403,7 @@ class Structure(object):
 
 
         # Build zero-based material tensors from unit-based
-        for k_typ in range(self.n_typ_el_AC):
+        for k_typ in range(self.n_mats_ac):
             if acoustic_props[k_typ]:
                 t_ac = acoustic_props[k_typ]
                 t_ac_c_IJ = t_ac.stiffness_c_IJ
@@ -557,7 +557,7 @@ class Structure(object):
 
                 wg_geom.init_geometry()
 
-                self.n_typ_el = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
+                self.n_mats_em = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
 
                 break
 
