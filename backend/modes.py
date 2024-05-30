@@ -1,0 +1,803 @@
+import numpy as np
+
+import matplotlib.tri
+from math import *
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+
+import numbat
+from nbtypes import *
+from numbattools import *
+import plotting
+
+class ModePlotHelper(object):
+    '''Helper class for plotting modes. 
+       Factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim.
+       '''
+
+    def __init__(self, simresult):  # , field_type):
+        self.sim_result = simresult
+        self.setup_for_npoints = 0
+
+        # self.field_type = field_type  # Enum.FieldType
+        self.plot_params = {}
+
+        self.zero_arrays()
+        self.set_plot_params(prefix='')
+
+    def zero_arrays(self):
+        self.triang6p = None  #needed after triangularions are built?
+        self.triang1p = None
+        self.interper_f = None
+
+        self.v_x6p = None
+        self.v_y6p = None
+        self.v_Fx6p = None
+        self.v_Fy6p = None
+        self.v_Fz6p = None
+
+        
+        self.v_x = None  # final plot coordinate arrays in microns
+        self.v_y = None
+        self.m_X = None  # mesh grid versions of the same
+        self.m_Y = None
+
+    def cleanup(self):
+        # Now that these are part of the sim object,
+        # we need to get rid of them to allow pickling of sim files, as they contain C++ objects
+
+        del self.triang6p
+        del self.triang1p
+        del self.interper_f
+
+        del self.v_x, self.v_y, self.m_X, self.m_Y
+        del self.v_x6p, self.v_y6p
+        del self.v_Fx6p, self.v_Fy6p, self.v_Fz6p
+
+        self.zero_arrays()
+
+
+#    def make_picklable(self): #before this object can be copied or saved it needs internal C++ objects removed. They are rebuilt when needed.
+#        if not self.triang6p is None: del self.triang6p._cpp_triangulation
+#        if not self.triang1p is None: del self.triang1p._cpp_triangulation
+
+    def set_plot_params(self,  # n_points=501, quiver_points=30,
+                        xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
+                        field_type=FieldType.EM_E,
+                        quiver_points=30,
+                        num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
+                        suppress_imimre=True, pdf_png='png',
+                        prefix='tmp', suffix='', decorator=plotting.Decorator(), ):
+        # modal_gains_PE=None,
+        # modal_gains_MB=None,
+        # modal_gains=None):
+
+        pf = numbat.NumBATApp().path_fields()
+        if prefix and not Path(pf).exists(): Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
+
+        if isinstance(field_type, str):  # aim to get rid of this
+            if self.sim_result.is_AC():
+                field_type = FieldType.AC
+            else:
+                try:
+                    # TODO:ugly that this changes from string to enum
+                    field_type = FieldType.from_str(field_type)
+                except Exception as ex:
+                    raise ValueError(
+                        "field_type must be either 'AC', 'EM_E' or 'EM_H'.") from ex
+
+        self.plot_params = {'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min,
+                            'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks': num_ticks,
+                            'colorbar': colorbar, 'contours': contours, 'contour_lst': contour_lst, 'EM_AC': field_type,
+                            'prefix': prefix, 'suffix': suffix, 'pdf_png': pdf_png,
+                            # 'modal_gain':modal_gain,
+                            'decorator': decorator,
+                            'suppress_imimre': suppress_imimre,
+                            # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y,
+                            'quiver_points': quiver_points
+                            }
+
+
+    def interpolate_mode_i(self, ival, field_type):
+        # self.v_Fx6p etc could propbably be made local to this function
+        # construct the meshed field from fortran solution
+
+        simres = self.sim_result
+
+        fem = simres.fem_mesh
+
+        # extract the field data at every node of every elt for the desired mode and field 
+        # v_Fxxx have length 6*n_msh_el 
+        i = 0
+        for i_el in range(fem.n_msh_el):
+            for i_node in range(6):
+                if field_type in (FieldType.EM_E, FieldType.AC):
+                    self.v_Fx6p[i] = simres.fem_evecs[0, i_node, ival, i_el]
+                    self.v_Fy6p[i] = simres.fem_evecs[1, i_node, ival, i_el]
+                    self.v_Fz6p[i] = simres.fem_evecs[2, i_node, ival, i_el]
+                else:
+                    self.v_Fx6p[i] = simres.fem_evecs_H[0, i_node, ival, i_el]
+                    self.v_Fy6p[i] = simres.fem_evecs_H[1, i_node, ival, i_el]
+                    self.v_Fz6p[i] = simres.fem_evecs_H[2, i_node, ival, i_el]
+                    
+                i += 1
+
+        
+        
+        self.v_F6p = np.sqrt(np.abs(self.v_Fx6p)**2 +
+                             np.abs(self.v_Fy6p)**2 + np.abs(self.v_Fz6p)**2)
+        
+        # Always need these ones.
+        m_ReFx = self.interper_f(self.v_Fx6p.real)
+        m_ReFy = self.interper_f(self.v_Fy6p.real)
+        m_ImFz = self.interper_f(self.v_Fz6p.imag)
+        m_AbsF = self.interper_f(self.v_F6p)
+
+        # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
+        m_ImFx = self.interper_f(self.v_Fx6p.imag)
+        m_ImFy = self.interper_f(self.v_Fy6p.imag)
+        m_ReFz = self.interper_f(self.v_Fz6p.real)
+
+
+        d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx, 'Fyr': m_ReFy, 'Fyi': m_ImFy,
+                    'Fzr': m_ReFz, 'Fzi': m_ImFz, 'Fabs': m_AbsF}
+
+        return d_fields
+
+    def _choose_plot_points(self, n_points):
+        '''Picks actual data points for the plot grid based on requested resolution.'''
+        self.setup_for_npoints = n_points
+
+        fem = self.sim_result.fem_mesh
+        
+        x_min, x_max = np_min_max(fem.mesh_xy[0,:])
+        y_min, y_max = np_min_max(fem.mesh_xy[1,:])
+        
+        area = abs((x_max-x_min)*(y_max-y_min))
+        self.n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
+        self.n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+
+        # Now use the coords user would like to think in
+        shiftx, shifty = self.sim_result.get_xyshift()
+        #self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
+        
+        # These are the actual x and y domains of the final plots
+        self.v_x = np.linspace(x_min, x_max, self.n_pts_x)
+        self.v_y = np.linspace(y_min, y_max, self.n_pts_y)
+        self.v_x_out = self.v_x + shiftx
+        self.v_y_out = self.v_y + shifty
+
+        
+        self.m_X_out, self.m_Y_out = np.meshgrid(self.v_x_out, self.v_y_out)
+
+        # TODO: 
+        #    make these in microns? but would have to adjust interpolation vectors v_x_flat
+        #    make non-shifted versions for cleaner code. 1D so not expensive.
+
+    
+
+        print('''
+  Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um),
+                mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
+                    '''.format(
+            1e6*self.v_x[0], 1e6*self.v_x[-1],
+            1e6*self.v_y[0], 1e6*self.v_y[-1],
+            1e6*self.v_x_out[0], 1e6*self.v_x_out[-1], 1e6*self.v_y_out[0], 1e6*self.v_y_out[-1]))
+        return shiftx, shifty
+
+    def _save_triangulation_plots(self):
+        fig, axs=plt.subplots(1,2)
+        axs[0].triplot(self.triang1p, linewidth=.5)
+        axs[1].triplot(self.triang6p, linewidth=.5)
+        for ax in axs:
+            ax.set_aspect(1.0)
+            ax.scatter(self.mesh_xy[:,0],self.mesh_xy[:,1], s=2, c='red')
+
+        pref = numbat.NumBATApp().outprefix()
+        fname = pref + f'-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png'
+        plotting.save_and_close_figure(fig, fname)
+        
+        
+ 
+    def setup_plot_grid(self, n_points=501):
+        '''Define interpolation plotting grids for a nominal n_points**2 points distributed evenly amongst x and y.'''
+
+        if self.setup_for_npoints == n_points:
+            return  # only need to repeat if the grid density changes
+
+        sim = self.sim_result.fem_mesh
+
+        shiftx, shifty = self._choose_plot_points(n_points)
+        
+        # unrolling data for the interpolators
+        # TODO: for EM, table_nod seems to be identical to the MailData one
+        #       mesh_xy seems to be the same but with some fractional scaling.
+
+        # Sim version is in fortran ordering
+        # This version is in python ordering.  Eeek!
+        self.table_nod = sim.table_nod.T   
+        self.mesh_xy = sim.mesh_xy.T  # is v_x, v_y  * d_in_m
+        
+        # dense triangulation with multiple points
+        self.v_x6p = np.zeros(6*sim.n_msh_el)
+        self.v_y6p = np.zeros(6*sim.n_msh_el)
+        self.v_Fx6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+        self.v_Fy6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+        self.v_Fz6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
+        self.v_triang6p = []
+
+        # In table_nod 
+        # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
+        # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
+        # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
+        
+        
+        # create sub-triangles from combos of the element nodes
+        for idx in range(0, 6*sim.n_msh_el, 6):
+            triangles = [[idx+0, idx+3, idx+5],
+                         [idx+1, idx+4, idx+3],
+                         [idx+2, idx+5, idx+4],
+                         [idx+3, idx+4, idx+5]]
+            self.v_triang6p.extend(triangles)
+    
+
+        tabnod_py = self.table_nod -1  #  shift fortran to python indexing
+        
+        # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
+        # i is the index for the coordinates FIND A BETTER NAME
+        i = 0
+        for i_el in range(sim.n_msh_el):
+            for i_node in range(6):
+                i_ex = tabnod_py[i_el, i_node]
+                self.v_x6p[i] = self.mesh_xy[i_ex, 0]
+                self.v_y6p[i] = self.mesh_xy[i_ex, 1]
+                i += 1
+
+        
+
+        # Interpolate onto triangular grid - honest to FEM elements
+        # dense triangulation with unique points
+        self.v_triang1p = []
+        table_nod = self.table_nod
+        for i_el in np.arange(sim.n_msh_el):
+            triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
+                         [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
+                         [tabnod_py[i_el, 2], tabnod_py[i_el, 5], tabnod_py[i_el, 4]],
+                         [tabnod_py[i_el, 3], tabnod_py[i_el, 4], tabnod_py[i_el, 5]]]
+            self.v_triang1p.extend(triangles)
+
+        # TODO: There seems to be no difference between v_triang6p and v_triang1p. 
+        
+        # This is for testing only. Normally turn off
+        if False:
+            check_triangulation( self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
+
+        # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
+        self.triang6p = matplotlib.tri.Triangulation(self.v_x6p, self.v_y6p, self.v_triang6p)
+        self.triang1p = matplotlib.tri.Triangulation(self.mesh_xy[:, 0], self.mesh_xy[:, 1], self.v_triang1p)
+
+        self._save_triangulation_plots()
+        
+        # building interpolators: triang1p for the finder, triang6p for the values
+        # TODO: could be more efficient only interpolating the fields which are ultimately to be used?
+        # create rectangular arrays corresponding to the v_x, v_y grids
+
+        # There might be a cleaner way of doing this
+        v_x_flat = self.m_X_out.flatten('F') - shiftx
+        v_y_flat = self.m_Y_out.flatten('F') - shifty
+        finder = matplotlib.tri.TrapezoidMapTriFinder(self.triang1p)
+        self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
+            self.triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(self.n_pts_x, self.n_pts_y)
+
+
+
+
+
+
+
+    
+
+class Mode(object):
+    '''This is a base class for both EM and AC modes.'''
+
+    def __init__(self, sim, m):
+        self.mode_num = m
+        self.sim_result = sim
+        self.fracs = []  # fx, fy, ft, fz
+        self.r0 = None  # centre of mass
+        self.w2 = None  # second moment width
+        self.r0_offset = (0.0, 0.0)
+        self.extra_data = {}
+        self.analysed = False
+        self.interpolated = { FieldType.EM_E: False,  FieldType.EM_H: False, FieldType.AC: False }
+        self.d_fields = {}
+        self.clear_mode_plot_data()
+
+    def get_mode_helper(self):
+        return self.sim_result.get_mode_helper()
+
+    def prepare_mode(self, n_points, field_type):
+        
+        mh = self.get_mode_helper()
+
+        mh.setup_plot_grid(n_points=n_points)
+    
+        if self.is_AC():
+            self.field_type = FieldType.AC
+        else:
+            self.field_type = field_type
+
+        
+        if not self.interpolated[field_type]:
+            self.interpolate_mode(mh)
+            self.interpolated[field_type] = True
+        
+        
+    
+    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None,
+                  n_points=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
+
+
+        self.prepare_mode(n_points, field_type)
+        
+        
+        mh = self.get_mode_helper()
+
+        
+        # FIX ME
+        if not decorator is None:
+            mh.plot_params['decorator'] = decorator
+        elif mh.plot_params['decorator'] is None:
+            # don't want to do this.
+            mh.plot_params['decorator'] = plotting.Decorator()
+
+        # Just for now
+        # mh.plot_params['decorator'].set_singleplot_axes_property('axes.linewidth',.5)
+        # mh.plot_params['quiver_points']=6
+        # mh.plot_params['colorbar']=False
+        # mh.plot_params['add_title']=False
+
+        self._plot_me(mh, comps, field_type, ax)
+
+        self.clear_mode_plot_data()
+
+    def plot_mode_H(self, comps):  # plot magnetic field for EM modes
+        self.plot_mode(comps, EM_field=FieldType.EM_H)
+
+    def plot_strain(self):
+        if not self.sim_result.is_AC():
+            print("Doing strain in an EM sim.!")
+        print('doing strain')
+        mh = self.get_mode_helper()
+        mh.plot_strain_mode_i(self.mode_num)
+
+    def clear_mode_plot_data(self):
+        for k in self.d_fields.keys(): self.d_fields[k] = None
+        
+    def interpolate_mode(self, mode_helper):
+        
+        sim = self.sim_result
+
+        mh = mode_helper
+        self.d_fields = mh.interpolate_mode_i(self.mode_num, self.field_type)
+        
+        if self.field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
+            for m_F in self.d_fields.values():   # Do this when they are first made
+                m_F *= vacuum_impedance_Z0
+  
+
+    def _plot_me(self, mode_helper, comps, field_type, ax=None):
+        #v_plots = {'Fxr': self.m_ReFx, 'Fyr': self.m_ReFy, 'Fzi': self.m_ImFz,
+        #           'Fxi': self.m_ImFx, 'Fyi': self.m_ImFy, 'Fzr': self.m_ReFz, 'Fabs': self.m_AbsF}
+
+        # TODO: weirdly, we only ax != None when there is one component to plot
+        if not ax is None and len(comps) != 1:
+            print(
+                '\nError: when providing an axis to plot on, must specify exactly one modal component.')
+            return
+
+        mh = mode_helper
+        decorator = mh.plot_params['decorator']
+
+        decorator._set_for_multi()
+        # TODO this is a kludgy way of doing this. send it through separately
+        mh.plot_params['EM_AC'] = field_type
+
+        # can't do multiplots on a provided axis (would need a provided figure)
+        if ax is None:
+            plotting.plot_all_components(mh.v_x_out, mh.v_y_out, mh.m_X_out, mh.m_Y_out, self.d_fields,
+                                         mh.plot_params, self.sim_result, self.mode_num)
+
+        if len(comps):
+            decorator._set_for_single()
+            # options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut']
+            for comp in comps:
+                cc = component_t(comp)
+                plotting.plot_one_component(
+                    mh.m_X_out, mh.m_Y_out, self.d_fields, mh.plot_params, self.sim_result, self.mode_num, cc, ax)
+
+    def add_mode_data(self, d):
+        '''Adds a dictionary of user-defined information about a mode.
+
+           :param dict d: Dict of (str, data) tuples of user-defined information about a mode.
+      '''
+        self.extra_data.update(d)
+
+    def get_mode_data(self):
+        '''Return dictionary of user-defined information about the mode.
+
+           :return: Dictionary of user-defined information about the mode.
+           :rtype: dict(str, obj)
+           '''
+        return self.extra_data
+
+    def field_fracs(self):
+        '''Returns tuple (*fx*, *fy*, *fz*, *ft*) of "fraction" of mode contained in *x*, *y*, *z* or *t* (sum of transverse *x+y*) components.
+
+           Note that *fraction* is defined through a simple overlap integral. It does not necessarily represent the fraction of energy density in the component.
+
+           :return: Tuple of mode fractions
+           :rtype: tuple(float, float, float, float)
+        '''
+        if not self.analysed:
+            print('mode has not being analysed')
+        return self.fracs
+
+    def __str__(self):
+        '''String representation of the mode.'''
+        s = 'Abstract mode class'
+        return s
+
+    def is_poln_ex(self):
+        '''Returns true if mode is predominantly x-polarised (ie if *fx*>0.7).
+
+           :rtype: bool
+           '''
+        polthresh = .7
+        return self.fracs[0] > polthresh
+
+    def is_poln_ey(self):
+        '''Returns true if mode is predominantly y-polarised (ie if *fy*>0.7).
+
+           :rtype: bool
+           '''
+        polthresh = .7
+        return self.fracs[1] > polthresh
+
+    def is_poln_indeterminate(self):
+        '''Returns true if transverse polarisation is neither predominantly *x* or *y* oriented.
+
+           :rtype: bool
+           '''
+        return not (self.is_poln_ex() or self.is_poln_ey())
+
+    def is_EM(self):
+        '''Returns true if the mode is an electromagnetic mode.
+
+           :rtype: bool
+           '''
+        return self.sim_result.is_EM()
+
+    def is_AC(self):
+        '''Returns true if the mode is an acoustic mode.
+
+           :rtype: bool
+           '''
+        return self.sim_result.is_AC()
+
+    def center_of_mass(self):
+        '''Returns the centre of mass of the mode relative to the specified origin.
+
+           :rtype: float
+        '''
+        return self.r0-self.r0_offset
+
+    def second_moment_widths(self):
+        r'''Returns the second moment widths :math:`(w_x, w_y, \sqrt{w_x^2+w_y^2})` of the mode relative to the specified origin.
+
+           :rtype: (float, float, float)
+           '''
+        return self.w2
+
+    def center_of_mass_x(self):
+        '''Returns the $x$ component moment of the centre of mass  of the mode.
+
+           :rtype: float
+           '''
+        return self.r0[0]-self.r0_offset[0]
+
+    def center_of_mass_y(self):
+        '''Returns the $y$ component moment of the centre of mass  of the mode.
+
+           :rtype: float
+           '''
+        return self.r0[1]-self.r0_offset[1]
+
+    def wx(self):
+        '''Returns the $x$ component moment of the second moment width.
+
+           :rtype: float
+           '''
+        return self.w2[0]
+
+    def wy(self):
+        '''Returns the $y$ component moment of the second moment width.
+
+           :rtype: float
+           '''
+        return self.w2[1]
+
+    def w0(self):
+        r'''Returns the combined second moment width :math:`\sqrt{w_x^2+w_y^2}`.
+
+           :rtype: float
+           '''
+        return self.w2[2]
+
+    def set_r0_offset(self, x0, y0):
+        '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
+
+           This can be useful in aligning the FEM coordinate grid with a physically sensible place in the waveguide.
+
+           :param float x0: *x* position of nominal origin.
+           :param float y0: *y* position of nominal origin.
+      '''
+        self.r0_offset = (x0, y0)
+
+    def analyse_mode(self, n_points=501, EM_field=FieldType.EM_E):
+        '''Perform a series of measurements on the mode *f* to determine polarisation fractions, second moment widths etc.
+
+           :param array v_x: Vector of x points.
+           :param array v_y: Vector of y points.
+           :param array m_Refx: Matrix of real part of fx.
+           :param array m_Refy: Matrix of real part of fy.
+           :param array m_Refz: Matrix of real part of fz.
+           :param array m_Imfx: Matrix of imaginary part of fx.
+           :param array m_Imfy: Matrix of imaginary part of fy.
+           :param array m_Imfz: Matrix of imaginary part of fz.
+           '''
+
+        self.prepare_mode(n_points, EM_field)
+
+        self.analysed = True
+
+        mh = self.get_mode_helper()
+        v_x = mh.v_x_out
+        v_y = mh.v_y_out
+
+        mFs = self.d_fields
+
+        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2
+        m_Fy2 = mFs['Fyr']**2 + mFs['Fyi']**2
+        m_Fz2 = mFs['Fzr']**2 + mFs['Fzi']**2
+        m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2
+        
+        s_fx = int2d(m_Fx2)
+        s_fy = int2d(m_Fy2)
+        s_fz = int2d(m_Fz2)
+        
+        s_f = s_fx+s_fy+s_fz
+        f_x = s_fx/s_f
+        f_y = s_fy/s_f
+        f_t = f_x+f_y
+        f_z = s_fz/s_f
+        self.fracs = [f_x, f_y, f_t, f_z]
+        
+
+        [m_x, m_y] = np.meshgrid(v_x, v_y, indexing='ij')  # This is opposite to normal indexing to get image style ordering
+        m_yud = np.flipud(m_y)  # Flipping upside down y to get sensible values for r0 position.
+        
+        m_xmod = m_x * m_Fall2  # could do this by broadcasting without meshgrid?
+        m_ymod = m_yud * m_Fall2
+        
+        x0 = int2d(m_xmod)/s_f
+        y0 = int2d(m_ymod)/s_f
+        m_x2mod = np.power((m_x-x0), 2) * m_Fall2
+        m_y2mod = np.power((m_yud-y0), 2) * m_Fall2
+        w2x = sqrt(int2d(m_x2mod)/s_f)
+        w2y = sqrt(int2d(m_y2mod)/s_f)
+        w2 = sqrt(w2x*w2x+w2y*w2y)
+        self.r0 = np.array([x0, y0])
+        self.w2 = np.array([w2x, w2y, w2])
+
+
+class ModeEM(Mode):
+    '''Class representing a single electromagnetic (EM) mode.'''
+
+    def __init__(self, sim, m):
+        super().__init__(sim, m)
+
+    def __str__(self):
+        s = 'EM mode # {0}'.format(self.mode_num)
+        return s
+
+    #def _analyse_mode(self):
+    #    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy,
+    #                          m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+
+
+class ModeAC(Mode):
+    '''Class representing a single acoustic (AC) mode.'''
+
+    def __init__(self, sim, m):
+        super().__init__(sim, m)
+
+        self.gain = {}  # { (EM_p_i, EM_s_j): gain}
+        self.gain_PE = {}
+        self.gain_MB = {}
+
+    def __str__(self):
+        s = 'AC mode # {0}'.format(self.mode_num)
+        return s
+
+    #def _analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
+    #    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy,
+    #                          m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
+
+
+
+# def plot_strain_mode_i(self, ival):
+    #     # TODO: this interpolation looks very old. Can we get strain directly from fortran?
+    #     # Interpolate onto rectangular Cartesian grid
+
+    #     m_Fx = self.m_ReFx + 1j*self.m_ImFx
+    #     m_Fy = self.m_ReFy + 1j*self.m_ImFy
+    #     m_Fz = self.m_ReFz + 1j*self.m_ImFz
+    #     dx = self.v_x[1]-self.v_x[0]
+    #     dy = self.v_y[1]-self.v_y[0]
+
+    #     print('finding gradients')
+    #     # TODO: Check that the axis choice checks out
+    #     del_x_Fx = np.gradient(m_Fx, dx, axis=0)
+    #     del_y_Fx = np.gradient(m_Fx, dy, axis=1)
+    #     del_x_Fy = np.gradient(m_Fy, dx, axis=0)
+    #     del_y_Fy = np.gradient(m_Fy, dy, axis=1)
+    #     del_x_Fz = np.gradient(m_Fz, dx, axis=0)
+    #     del_y_Fz = np.gradient(m_Fz, dy, axis=1)
+    #     del_z_Fx = 1j*self.sim.q_AC*m_Fx
+    #     del_z_Fy = 1j*self.sim.q_AC*m_Fy
+    #     del_z_Fz = 1j*self.sim.q_AC*m_Fz
+
+    #     return
+
+    #     self.v_x = np.linspace(x_min, x_max, self.n_pts_x)
+    #     # For now, get these avlues from v_x already figured out earlier.
+    #     x_min = self.v_x[0]
+    #     x_max = self.v_x[-1]
+    #     n_pts_x = len(self.v_x)
+    #     y_min = self.v_y[0]
+    #     y_max = self.v_y[-1]
+    #     n_pts_y = len(self.v_y)
+
+    #     xy = list(zip(self.v_x6p, self.v_y6p))
+
+    #     # This seems to be equivalent  to taking grid_x = self.m_Y, grid_y = self.m_X
+    #     # CONFIRM!
+    #     # grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x*1j, y_min:y_max:n_pts_y*1j]  #OLD CODE
+    #     grid_x, grid_y = self.m_Y, self.m_X  # NEW CODE
+
+    #     m_ReFx = interpolate.griddata(
+    #         xy, v_Fx6p.real, (grid_x, grid_y), method='linear')
+    #     m_ReFy = interpolate.griddata(
+    #         xy, v_Fy6p.real, (grid_x, grid_y), method='linear')
+    #     m_ReFz = interpolate.griddata(
+    #         xy, v_Fz6p.real, (grid_x, grid_y), method='linear')
+    #     m_ImFx = interpolate.griddata(
+    #         xy, v_Fx6p.imag, (grid_x, grid_y), method='linear')
+    #     m_ImFy = interpolate.griddata(
+    #         xy, v_Fy6p.imag, (grid_x, grid_y), method='linear')
+    #     m_ImFz = interpolate.griddata(
+    #         xy, v_Fz6p.imag, (grid_x, grid_y), method='linear')
+    #     m_AbsF = interpolate.griddata(
+    #         xy, v_F6p.real, (grid_x, grid_y), method='linear')
+
+    #     dx = grid_x[-1, 0] - grid_x[-2, 0]
+    #     dy = grid_y[0, -1] - grid_y[0, -2]
+
+    #     m_Fx = m_ReFx + 1j*m_ImFx
+    #     m_Fy = m_ReFy + 1j*m_ImFy
+    #     m_Fz = m_ReFz + 1j*m_ImFz
+    #     m_Fx = m_Fx.reshape(n_pts_x, n_pts_y)
+    #     m_Fy = m_Fy.reshape(n_pts_x, n_pts_y)
+    #     m_Fz = m_Fz.reshape(n_pts_x, n_pts_y)
+    #     m_AbsF = m_AbsF.reshape(n_pts_x, n_pts_y)
+
+    #     m_ReFx = np.real(m_Fx)
+    #     m_ReFy = np.real(m_Fy)
+    #     m_ReFz = np.real(m_Fz)
+    #     m_ImFx = np.imag(m_Fx)
+    #     m_ImFy = np.imag(m_Fy)
+    #     m_ImFz = np.imag(m_Fz)
+
+    #     del_x_Fx = np.gradient(m_Fx, dx, axis=0)
+    #     del_y_Fx = np.gradient(m_Fx, dy, axis=1)
+    #     del_x_Fy = np.gradient(m_Fy, dx, axis=0)
+    #     del_y_Fy = np.gradient(m_Fy, dy, axis=1)
+    #     del_x_Fz = np.gradient(m_Fz, dx, axis=0)
+    #     del_y_Fz = np.gradient(m_Fz, dy, axis=1)
+    #     del_z_Fx = 1j*sim_wguide.q_AC*m_Fx
+    #     del_z_Fy = 1j*sim_wguide.q_AC*m_Fy
+    #     del_z_Fz = 1j*sim_wguide.q_AC*m_Fz
+
+    #     # Flip y order as imshow has origin at top left
+    #     del_mat = np.array([del_x_Ex[:, ::-1].real, del_x_Ey[:, ::-1].real, del_x_Ez[:, ::-1].real, del_x_Ex[:, ::-1].imag, del_x_Ey[:, ::-1].imag, del_x_Ez[:, ::-1].imag, del_y_Ex[:, ::-1].real, del_y_Ey[:, ::-1].real, del_y_Ez[:, ::-1].real,
+    #                        del_y_Ex[:, ::-1].imag, del_y_Ey[:, ::-1].imag, del_y_Ez[:, ::-1].imag, del_z_Ex[:, ::-1].real, del_z_Ey[:, ::-1].real, del_z_Ez[:, ::-1].real, del_z_Ex[:, ::-1].imag, del_z_Ey[:, ::-1].imag, del_z_Ez[:, ::-1].imag])
+    #     v_labels = ["Re($S_{xx}$)", "Re($S_{xy}$)", "Re($S_{xz}$)", "Im($S_{xx}$)", "Im($S_{xy}$)", "Im($S_{xz}$)", "Re($S_{yx}$)", "Re($S_{yy}$)", "Re($S_{yz}$)",
+    #                 "Im($S_{yx}$)", "Im($S_{yy}$)", "Im($S_{yz}$)", "Re($S_{zx}$)", "Re($S_{zy}$)", "Re($S_{zz}$)", "Im($S_{zx}$)", "Im($S_{zy}$)", "Im($S_{zz}$)"]
+
+    #     # stress field plots
+    #     plt.clf()
+    #     fig = plt.figure(figsize=(15, 30))
+    #     for i_p, plot in enumerate(del_mat):
+    #         ax = plt.subplot(6, 3, i_p+1)
+    #         im = plt.imshow(plot.T)
+    #         # no ticks
+    #         plt.xticks([])
+    #         plt.yticks([])
+    #         # limits
+    #         if xlim_min > 0:
+    #             ax.set_xlim(xlim_min*n_points, (1-xlim_max)*n_points)
+    #         if ylim_min > 0:
+    #             ax.set_ylim((1-ylim_min)*n_points, ylim_max*n_points)
+    #         # titles
+    #         plt.title(v_labels[i_p], fontsize=decorator.get_font_size(
+    #             'subplot_title'))
+    #         # colorbar
+    #         divider = make_axes_locatable(ax)
+    #         cax = divider.append_axes("right", size="5%", pad=0.1)
+    #         cbar = plt.colorbar(im, cax=cax, format='%.2e')
+    #         if num_ticks:
+    #             cbarticks = np.linspace(
+    #                 np.min(plot), np.max(plot), num=num_ticks)
+    #         elif ylim_min != 0:
+    #             if xlim_min/ylim_min > 3:
+    #                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=3)
+    #             if xlim_min/ylim_min > 1.5:
+    #                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=5)
+    #             else:
+    #                 cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+    #         else:
+    #             cbarlabels = np.linspace(np.min(plot), np.max(plot), num=7)
+    #         cbar.set_ticks(cbarlabels)
+    #         cbarlabels = ['%.2f' % t for t in cbarlabels]
+    #         cbar.set_ticklabels(cbarlabels)
+    #         if contours:
+    #             if contour_lst:
+    #                 cbarticks = contour_lst
+    #             if np.max(np.abs(plot[~np.isnan(plot)])) > plot_threshold:
+    #                 CS2 = ax.contour(
+    #                     m_X, m_Y, plot.T, levels=cbarticks, colors=colors[::-1], linewidths=(1.5,))
+    #             cbar.add_lines(CS2)
+    #         cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
+    #     fig.set_tight_layout(True)
+    #     n_str = ''
+    #     if np.imag(sim_wguide.Eig_values[ival]) < 0:
+    #         k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz' % \
+    #             {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
+    #              'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+    #     else:
+    #         k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz' % \
+    #             {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
+    #              'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+    #     plt.suptitle('Mode #' + str(ival) + '   ' + k_str + '   ' +
+    #                  n_str, fontsize=decorator.get_font_size('title'))
+
+    #     if pdf_png == 'png':
+    #         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
+    #                     {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix})
+    #     elif pdf_png == 'pdf':
+    #         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
+    #                     {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix}, bbox_inches='tight')
+    #     if not keep_plots_open:
+    #         plt.close()
+
+
+# for i_el in range(sim.n_msh_el):
+        #     # triangles
+        #     idx = np.arange(6*i_el, 6*(i_el+1))
+        #     triangles = [[idx[0], idx[3], idx[5]],
+        #                  [idx[1], idx[4], idx[3]],
+        #                  [idx[2], idx[5], idx[4]],
+        #                  [idx[3], idx[4], idx[5]]]
+        #     self.v_triang6p.extend(triangles)

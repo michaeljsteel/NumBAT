@@ -67,20 +67,20 @@ recalc_fields = True     # run the calculation from scratch
 
 if recalc_fields:
     # Calculate Electromagnetic modes.
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
     print('\nSaving EM fields')
-    sim_EM_pump.save_simulation('tut02_wguide_data')
-    sim_EM_Stokes.save_simulation('tut02_wguide_data2')
+    simres_EM_pump.save_simulation('tut02_wguide_data')
+    simres_EM_Stokes.save_simulation('tut02_wguide_data2')
 else:
     # Once npz files have been saved from one simulation run,
     # set recalc_fields=True to use the saved data
-    sim_EM_pump = mode_calcs.load_simulation('tot02_wguide_data')
-    sim_EM_Stokes = mode_calcs.load_simulation('tot02_wguide_data2')
+    simres_EM_pump = mode_calcs.load_simulation('tot02_wguide_data')
+    simres_EM_Stokes = mode_calcs.load_simulation('tot02_wguide_data2')
 
 # Print the wavevectors of EM modes.
-v_kz = sim_EM_pump.kz_EM_all()
+v_kz = simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz):
     print(f'{i:3d}  {np.real(kz):.4e}')
@@ -97,33 +97,33 @@ for (i, kz) in enumerate(v_kz):
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+plotting.plot_mode_fields(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          EM_AC='EM_E', ticks=True)
+                          field_type='EM_E', ticks=True)
 
 # Plot the H field of the pump mode
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+plotting.plot_mode_fields(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          EM_AC='EM_H', ticks=True)
+                          field_type='EM_H', ticks=True)
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff(0))
-print("n_eff", np.round(n_eff_sim, 4))
+n_eff_sim = np.real(simres_EM_pump.neff(0))
+print("n_eff:", np.round(n_eff_sim, 4))
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
+q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
 
 if recalc_fields:
     # Calculate and save acoustic modes.
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+    simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
 
     print('Saving AC fields')
-    sim_AC.save_simulation('tot02_wguide_data_AC')
+    simres_AC.save_simulation('tot02_wguide_data_AC')
 else:
-    sim_AC = mode_calcs.load_simulation('tot02_wguide_data_AC')
+    simres_AC = mode_calcs.load_simulation('tot02_wguide_data_AC')
 
 # Print the frequencies of AC modes.
-v_nu = sim_AC.nu_AC_all()
+v_nu = simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
     print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
@@ -133,7 +133,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-plotting.plot_mode_fields(sim_AC, contours=True,
+plotting.plot_mode_fields(simres_AC, contours=True,
                           ticks=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:
@@ -141,7 +141,7 @@ if recalc_fields:
     # Calculate interaction integrals and SBS gain for PE and MB effects combined,
     # as well as just for PE, and just for MB.
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-        sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
+        simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_ival_pump=EM_ival_pump,
         EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
     # Save the gain calculation results
     np.savez('tut02_wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE,
@@ -158,9 +158,9 @@ else:
 # included in NumBAT. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
 comsol_ivals = 5  # Number of modes contained in data file.
-SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, 'comsol_ac_modes_1-5.dat',
-    comsol_ivals=comsol_ivals)
+#SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
+#    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, 'comsol_ac_modes_1-5.dat',
+#    comsol_ivals=comsol_ivals)
 
 # Print the PE contribution to gain SBS gain of the AC modes.
 print("\n Displaying results of first five modes with negligible components masked out")
@@ -169,24 +169,24 @@ threshold = -1e-3
 masked_PE = np.ma.masked_inside(
     SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :comsol_ivals], 0, threshold)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
-masked = np.ma.masked_inside(
-    SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
-print("SBS_gain [1/(Wm)] python integration routines \n", masked)
-masked = np.ma.masked_inside(
-    SBS_gain_PE_comsol[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
-print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
+#masked = np.ma.masked_inside(
+#    SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+#print("SBS_gain [1/(Wm)] python integration routines \n", masked)
+#masked = np.ma.masked_inside(
+#    SBS_gain_PE_comsol[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+#print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # Hz
-freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+freq_min = np.real(simres_AC.nu_AC_all()[0]) - 2e9  # Hz
+freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 2e9  # Hz
+plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
                            freq_max=freq_max, dB=True, semilogy=True)
 
 # Repeat this plot focusing on one frequency range
 freq_min = 11.5e9  # Hz
 freq_max = 13.5e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                            EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
                            freq_max=freq_max, suffix='_zoom')
 

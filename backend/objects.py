@@ -39,7 +39,7 @@ import numbattools as nbtools
 import materials
 from fortran import NumBAT
 import plotting
-from mode_calcs import Simulation
+from mode_calcs import EMSimulation, ACSimulation
 import nbgmsh
 
 def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
@@ -82,6 +82,16 @@ def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
         wg['wg_template_cls'] = wgcls
 
     return wg_index
+
+class ElasticProps:
+    '''Elastic tensors in zero-indexed form suitable for fortran'''
+    
+    def __init__(self):
+        self.rho = None        # [ntyp_el_AC]
+        self.c_IJ = None       # [3 x 3 x ntyp_el_AC]
+        self.c_ijkz = None     # [3x3x3x1 ntyp_el_AC]
+        self.p_ijkl = None     # [3x3x3x3 ntyp_el_AC]  # why are these needed? why not do all using Voigt form?
+        self.eta_ijkl = None   # [3x3x3x3 ntyp_el_AC]
 
 
 class Structure(object):
@@ -257,15 +267,9 @@ class Structure(object):
 
         # material identities seem to depend on stable ordering of the material dictionary when converted to a list
 
-        # Numpy arrays storing acoustic properties, zero-indexed, for all materials
-        # These are the arrays passed to Fortran
-        self.rho = None          # [ntyp_el_AC]
-        self.c_tensor = None     # [3 x 3 x ntyp_el_AC]
-        self.c_tensor_z = None   # [3x3x3x1 ntyp_el_AC]
-        self.p_tensor = None     # [3x3x3x3 ntyp_el_AC]  # why are these needed? why not do all using Voigt form?
-        self.eta_tensor = None   # [3x3x3x3 ntyp_el_AC]
+       
 
-        
+        self.el_props = ElasticProps()
 
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
@@ -380,16 +384,16 @@ class Structure(object):
         rho = np.zeros(self.n_typ_el_AC)
 
         # stiffness tensor in 6x6 Voigt notation
-        c_tensor = np.zeros((6, 6, self.n_typ_el_AC))
+        actens_c_IJ = np.zeros((6, 6, self.n_typ_el_AC))
 
         # stiffness tensor as rank 4 ijkz tensor
-        c_tensor_z = np.zeros((3, 3, 3, self.n_typ_el_AC))
+        actens_c_ijkz = np.zeros((3, 3, 3, self.n_typ_el_AC))
 
         # photelastic tensor as rank 4 ijkl tensor
-        p_tensor = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
+        actens_p_ijkl = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
 
         # eta tensor as rank 4 ijkl tensor
-        eta_tensor = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
+        actens_eta_ijkl = np.zeros((3, 3, 3, 3, self.n_typ_el_AC))
 
 
         # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
@@ -402,101 +406,101 @@ class Structure(object):
         for k_typ in range(self.n_typ_el_AC):
             if acoustic_props[k_typ]:
                 t_ac = acoustic_props[k_typ]
-                t_ac_c = t_ac.c_tensor
-                t_ac_p = t_ac.p_tensor
-                t_ac_eta = t_ac.eta_tensor
+                t_ac_c_IJ = t_ac.stiffness_c_IJ
+                t_ac_p_IJ = t_ac.photoel_p_IJ
+                t_ac_eta_IJ = t_ac.viscosity_eta_IJ
 
                 rho[k_typ] = t_ac.rho
 
                 if symmetry_flag:  # is it actually worth making this saving?
                     print('Surprise: using symmetry_flag tensor buildings.')
-                    c_tensor[0, 0, k_typ] = t_ac_c[1, 1]
-                    c_tensor[1, 1, k_typ] = t_ac_c[1, 1]
-                    c_tensor[2, 2, k_typ] = t_ac_c[1, 1]
-                    c_tensor[0, 1, k_typ] = t_ac_c[1, 2]
-                    c_tensor[0, 2, k_typ] = t_ac_c[1, 2]
-                    c_tensor[1, 0, k_typ] = t_ac_c[1, 2]
-                    c_tensor[1, 2, k_typ] = t_ac_c[1, 2]
-                    c_tensor[2, 0, k_typ] = t_ac_c[1, 2]
-                    c_tensor[2, 1, k_typ] = t_ac_c[1, 2]
-                    c_tensor[3, 3, k_typ] = t_ac_c[4, 4]
-                    c_tensor[4, 4, k_typ] = t_ac_c[4, 4]
-                    c_tensor[5, 5, k_typ] = t_ac_c[4, 4]
+                    actens_c_IJ[0, 0, k_typ] = t_ac_c_IJ[1, 1]
+                    actens_c_IJ[1, 1, k_typ] = t_ac_c_IJ[1, 1]
+                    actens_c_IJ[2, 2, k_typ] = t_ac_c_IJ[1, 1]
+                    actens_c_IJ[0, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[0, 2, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[1, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[1, 2, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[2, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[2, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_IJ[3, 3, k_typ] = t_ac_c_IJ[4, 4]
+                    actens_c_IJ[4, 4, k_typ] = t_ac_c_IJ[4, 4]
+                    actens_c_IJ[5, 5, k_typ] = t_ac_c_IJ[4, 4]
 
-                    c_tensor_z[2, 2, 2, k_typ] = t_ac_c[1, 1]
-                    c_tensor_z[2, 0, 0, k_typ] = t_ac_c[1, 2]
-                    c_tensor_z[2, 1, 1, k_typ] = t_ac_c[1, 2]
-                    c_tensor_z[1, 1, 2, k_typ] = t_ac_c[4, 4]
-                    c_tensor_z[1, 2, 1, k_typ] = t_ac_c[4, 4]
-                    c_tensor_z[0, 0, 2, k_typ] = t_ac_c[4, 4]
-                    c_tensor_z[0, 2, 0, k_typ] = t_ac_c[4, 4]
+                    actens_c_ijkz[2, 2, 2, k_typ] = t_ac_c_IJ[1, 1]
+                    actens_c_ijkz[2, 0, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_ijkz[2, 1, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    actens_c_ijkz[1, 1, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    actens_c_ijkz[1, 2, 1, k_typ] = t_ac_c_IJ[4, 4]
+                    actens_c_ijkz[0, 0, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    actens_c_ijkz[0, 2, 0, k_typ] = t_ac_c_IJ[4, 4]
 
-                    p_tensor[0, 0, 0, 0, k_typ] = t_ac_p[1, 1]
-                    p_tensor[1, 1, 1, 1, k_typ] = t_ac_p[1, 1]
-                    p_tensor[2, 2, 2, 2, k_typ] = t_ac_p[1, 1]
-                    p_tensor[0, 0, 1, 1, k_typ] = t_ac_p[1, 2]
-                    p_tensor[0, 0, 2, 2, k_typ] = t_ac_p[1, 2]
-                    p_tensor[1, 1, 0, 0, k_typ] = t_ac_p[1, 2]
-                    p_tensor[1, 1, 2, 2, k_typ] = t_ac_p[1, 2]
-                    p_tensor[2, 2, 0, 0, k_typ] = t_ac_p[1, 2]
-                    p_tensor[2, 2, 1, 1, k_typ] = t_ac_p[1, 2]
-                    p_tensor[1, 2, 1, 2, k_typ] = t_ac_p[4, 4]
-                    p_tensor[1, 2, 2, 1, k_typ] = t_ac_p[4, 4]
-                    p_tensor[2, 1, 1, 2, k_typ] = t_ac_p[4, 4]
-                    p_tensor[2, 1, 2, 1, k_typ] = t_ac_p[4, 4]
-                    p_tensor[0, 2, 0, 2, k_typ] = t_ac_p[4, 4]
-                    p_tensor[0, 2, 2, 0, k_typ] = t_ac_p[4, 4]
-                    p_tensor[2, 0, 0, 2, k_typ] = t_ac_p[4, 4]
-                    p_tensor[2, 0, 2, 0, k_typ] = t_ac_p[4, 4]
-                    p_tensor[0, 1, 0, 1, k_typ] = t_ac_p[4, 4]
-                    p_tensor[0, 1, 1, 0, k_typ] = t_ac_p[4, 4]
-                    p_tensor[1, 0, 0, 1, k_typ] = t_ac_p[4, 4]
-                    p_tensor[1, 0, 1, 0, k_typ] = t_ac_p[4, 4]
+                    actens_p_ijkl[0, 0, 0, 0, k_typ] = t_ac_p_IJ[1, 1]
+                    actens_p_ijkl[1, 1, 1, 1, k_typ] = t_ac_p_IJ[1, 1]
+                    actens_p_ijkl[2, 2, 2, 2, k_typ] = t_ac_p_IJ[1, 1]
+                    actens_p_ijkl[0, 0, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[0, 0, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[1, 1, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[1, 1, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[2, 2, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[2, 2, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
+                    actens_p_ijkl[1, 2, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[1, 2, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[2, 1, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[2, 1, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[0, 2, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[0, 2, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[2, 0, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[2, 0, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[0, 1, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[0, 1, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[1, 0, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    actens_p_ijkl[1, 0, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
 
-                    eta_tensor[0, 0, 0, 0, k_typ] = t_ac_eta[1, 1]
-                    eta_tensor[1, 1, 1, 1, k_typ] = t_ac_eta[1, 1]
-                    eta_tensor[2, 2, 2, 2, k_typ] = t_ac_eta[1, 1]
-                    eta_tensor[0, 0, 1, 1, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[0, 0, 2, 2, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[1, 1, 0, 0, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[1, 1, 2, 2, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[2, 2, 0, 0, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[2, 2, 1, 1, k_typ] = t_ac_eta[1, 2]
-                    eta_tensor[1, 2, 1, 2, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[1, 2, 2, 1, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[2, 1, 1, 2, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[2, 1, 2, 1, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[0, 2, 0, 2, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[0, 2, 2, 0, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[2, 0, 0, 2, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[2, 0, 2, 0, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[0, 1, 0, 1, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[0, 1, 1, 0, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[1, 0, 0, 1, k_typ] = t_ac_eta[4, 4]
-                    eta_tensor[1, 0, 1, 0, k_typ] = t_ac_eta[4, 4]
+                    actens_eta_ijkl[0, 0, 0, 0, k_typ] = t_ac_eta_IJ[1, 1]
+                    actens_eta_ijkl[1, 1, 1, 1, k_typ] = t_ac_eta_IJ[1, 1]
+                    actens_eta_ijkl[2, 2, 2, 2, k_typ] = t_ac_eta_IJ[1, 1]
+                    actens_eta_ijkl[0, 0, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[0, 0, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[1, 1, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[1, 1, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[2, 2, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[2, 2, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
+                    actens_eta_ijkl[1, 2, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[1, 2, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[2, 1, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[2, 1, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[0, 2, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[0, 2, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[2, 0, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[2, 0, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[0, 1, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[0, 1, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[1, 0, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    actens_eta_ijkl[1, 0, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
 
                 else:
                     for i in range(6):
                         for j in range(6):
-                            c_tensor[i, j, k_typ] = t_ac_c[i+1, j+1]  # TODO: replace with Voigt.value() ?
+                            actens_c_IJ[i, j, k_typ] = t_ac_c_IJ[i+1, j+1]  # TODO: replace with Voigt.value() ?
 
                     for i in [0, 1, 2]:
                         for j in [0, 1, 2]:
                             I = voigt_map[(i, j)]
                             for k in [0, 1, 2]:
                                 Jz = voigt_map[(k, 2)]
-                                c_tensor_z[i, j, k, k_typ] = t_ac_c[I, Jz]
+                                actens_c_ijkz[i, j, k, k_typ] = t_ac_c_IJ[I, Jz]
                                 for l in [0, 1, 2]:
                                     J = voigt_map[(k, l)]
-                                    p_tensor[i, j, k, l, k_typ] = t_ac_p[I, J]
-                                    eta_tensor[i, j, k, l,
-                                               k_typ] = t_ac_eta[I, J]
+                                    actens_p_ijkl[i, j, k, l, k_typ] = t_ac_p_IJ[I, J]
+                                    actens_eta_ijkl[i, j, k, l,
+                                               k_typ] = t_ac_eta_IJ[I, J]
 
-        self.rho = rho
-        self.c_tensor = c_tensor
-        self.c_tensor_z = c_tensor_z
-        self.p_tensor = p_tensor
-        self.eta_tensor = eta_tensor
+        self.el_props.rho = rho
+        self.el_props.c_IJ = actens_c_IJ
+        self.el_props.c_ijkz = actens_c_ijkz
+        self.el_props.p_ijkl = actens_p_ijkl
+        self.el_props.eta_ijkl = actens_eta_ijkl
 
 
     def get_material(self, k):
@@ -511,7 +515,7 @@ class Structure(object):
         self.shift_ac_x = x*1e-9
         self.shift_ac_y = y*1e-9
 
-    def _new_mesh_required(self):  # TODO: msh_name ?
+    def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME 
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
 
@@ -553,7 +557,7 @@ class Structure(object):
 
                 wg_geom.init_geometry()
 
-                self.n_typ_el = wg_geom.num_type_elements()  # This is number of elements declared by template
+                self.n_typ_el = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
 
                 break
 
@@ -566,7 +570,7 @@ class Structure(object):
         self.curvilinear_element_shapes = []
 
         if wg_geom is not None:
-            if wg_geom.is_curvilinear():
+            if wg_geom.is_curvilinear():  #TODO backwards!
                 self.linear_element_shapes.append(wg_geom.geom_name())
             else:
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
@@ -575,6 +579,13 @@ class Structure(object):
 
         self._build_mesh()
 
+    def using_linear_elements(self):
+        return self.inc_shape in self.linear_element_shapes
+
+    def using_curvilinear_elements(self):
+        return self.inc_shape in self.curvilinear_element_shapes
+
+        
 
     def _build_mesh(self):
         '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh 
@@ -699,15 +710,12 @@ class Structure(object):
             Returns:
                 ``Simulation`` object
         '''
-        sim = Simulation(self, num_modes=num_modes, wl_nm=wl_nm,
-                         n_eff=n_eff, Stokes=Stokes, debug=debug, **args)
+        sim = EMSimulation(self, num_modes=num_modes, wl_nm=wl_nm,
+                         n_eff_target=n_eff, Stokes=Stokes, debug=debug, **args)
 
-        print('Calculating EM modes:')
-        sim.calc_EM_modes()
+        sim.calc_modes()
 
-        # TODO: return an EMSimResult that can plot and analyse but not calculate
-        
-        return sim
+        return sim.get_sim_result()
 
     def calc_AC_modes(self, num_modes, q_AC,
                       shift_Hz=None, EM_sim=None, bcs=None, debug=False, **args):
@@ -724,9 +732,9 @@ class Structure(object):
                     an educated guess if shift_Hz=None.
                     (Technically the shift and invert parameter).
 
-                EM_sim  (``Simulation`` object): Typically an acoustic
+                EM_sim  (``EMSimResult`` object): Typically an acoustic
                     simulation follows on from an optical one.
-                    Supply the EM ``Simulation`` object so the AC FEM mesh
+                    Supply the ``EMSimResult`` object so the AC FEM mesh
                     can be constructed from this.
                     This is done by removing vacuum regions.
 
@@ -734,14 +742,12 @@ class Structure(object):
                 ``Simulation`` object
         '''
 
-        sim = Simulation(self, num_modes=num_modes, q_AC=q_AC,
-                         shift_Hz=shift_Hz, EM_sim=EM_sim, debug=debug, **args)
+        sim = ACSimulation(self, num_modes=num_modes, q_AC=q_AC,
+                         shift_Hz=shift_Hz, simres_EM=EM_sim, debug=debug, **args)
 
-        print('\n\nCalculating elastic modes')
+        sim.calc_modes(bcs)
 
-        sim.calc_AC_modes(bcs)
-        return sim
-
+        return sim.get_sim_result()
 
     def plot_refractive_index_profile(self, prefix, as_epsilon=False):
         print('\n\nPlotting ref index')

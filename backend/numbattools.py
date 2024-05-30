@@ -7,6 +7,7 @@ import time
 import datetime
 import scipy.integrate as sciint
 import numpy as np
+import matplotlib.pyplot as plt
 
 from PIL import Image
 
@@ -24,6 +25,16 @@ def np_min_max(v):
 
 def int2d(mat):
     return sciint.simpson(sciint.simpson(mat))
+
+def save_and_close_figure(fig, fig_fname):
+
+    if fig_fname[-3:-1] == 'png':
+        st = fig.savefig(fig_fname)
+    else:
+        st = fig.savefig(fig_fname, bbox_inches='tight')
+
+    plt.close(fig)
+
 
 def join_figs(l_fns, fnout, clip=None):
 

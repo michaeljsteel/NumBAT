@@ -41,8 +41,10 @@ import matplotlib.ticker as ticker
 
 
 
-import numbattools
+#import numbattools
+
 from  nbtypes import unit_x, unit_y, unit_z
+import modes
 from bulkprops import *
 from voigt import *
 
@@ -140,9 +142,9 @@ class Material(object):
         # a,b,c crystal axes according to standard conventions
         self._crystal_axes = []
 
-        self.c_tensor = None
-        self.eta_tensor = None
-        self.p_tensor = None
+        self.stiffness_c_IJ = None
+        self.viscosity_eta_IJ = None
+        self.photoel_p_IJ = None
 
         self._parse_json_data(json_data, filename)
 
@@ -160,9 +162,9 @@ class Material(object):
 
     def full_str(self):
         s = str(self)
-        s += str(self.c_tensor)
-        s += str(self.eta_tensor)
-        s += str(self.p_tensor)
+        s += str(self.stiffness_c_IJ)
+        s += str(self.viscosity_eta_IJ)
+        s += str(self.photoel_p_IJ)
         return s
 
     def elastic_properties(self):
@@ -177,18 +179,18 @@ class Material(object):
             s += dent + f'Crystal class:  {self.crystal.name}'
             
             if self.is_isotropic():
-                s += dent + f'c11:            {self.c_tensor.mat[1, 1]*1e-9:.3f} GPa'
-                s += dent + f'c12:            {self.c_tensor.mat[1, 2]*1e-9:.3f} GPa'
-                s += dent + f'c44:            {self.c_tensor.mat[4, 4]*1e-9:.3f} GPa'
+                s += dent + f'c11:            {self.stiffness_c_IJ.mat[1, 1]*1e-9:.3f} GPa'
+                s += dent + f'c12:            {self.stiffness_c_IJ.mat[1, 2]*1e-9:.3f} GPa'
+                s += dent + f'c44:            {self.stiffness_c_IJ.mat[4, 4]*1e-9:.3f} GPa'
                 s += dent + f"Young's mod E:  {self.EYoung*1e-9:.3f} GPa"
                 s += dent + f'Poisson ratio:  {self.nuPoisson:.3f}'
                 s += dent + f'Velocity long.: {self.Vac_longitudinal():.3f} m/s'
                 s += dent + f'Velocity shear: {self.Vac_shear():.3f} m/s'
             else:
-                s += dent + 'Stiffness c_IJ:' + str(self.c_tensor) + '\n'
+                s += dent + 'Stiffness c_IJ:' + str(self.stiffness_c_IJ) + '\n'
                 
                 # find wave properties for z propagation
-                v_phase, v_evecs, v_vgroup = solve_christoffel(unit_z, self.c_tensor, self.rho)
+                v_phase, v_evecs, v_vgroup = solve_christoffel(unit_z, self.stiffness_c_IJ, self.rho)
 
                 with np.printoptions(precision=4, floatmode='fixed', sign=' ', suppress=True):
                     for m in range(3):
@@ -208,7 +210,7 @@ class Material(object):
         if not self.rho or self.rho == 0:  # Catch vacuum cases
             return 0.
         else:
-            return math.sqrt(self.c_tensor[1, 1]/self.rho)
+            return math.sqrt(self.stiffness_c_IJ[1, 1]/self.rho)
 
     def Vac_shear(self):
         '''For an isotropic material, returns the shear (S-wave) elastic phase velocity.'''
@@ -217,7 +219,7 @@ class Material(object):
         if not self.rho or self.rho == 0:  # Catch vacuum cases
             return 0.
         else:
-            return math.sqrt(self.c_tensor[4, 4]/self.rho)
+            return math.sqrt(self.stiffness_c_IJ[4, 4]/self.rho)
 
     def has_elastic_properties(self):
         '''Returns true if the material has at least some elastic properties defined.'''
@@ -285,19 +287,15 @@ class Material(object):
 
         if self.crystal == CrystalGroup.Isotropic:
             self.construct_crystal_isotropic()
-
         else:
-            #self.c_tensor = VoigtTensor4(self.material_name, 'c', json_data, 'stiffness', ('GPa', 1.e9))
-            #self.eta_tensor = VoigtTensor4(self.material_name, 'eta', json_data, 'viscosity')
-            #self.p_tensor = VoigtTensor4(self.material_name, 'p', json_data, 'photoelasticity')
-            
             self.construct_crystal_anisotropic()
+            
         self._store_original_tensors()
 
     def _store_original_tensors(self):
-        self._c_tensor_orig = self.c_tensor
-        self._p_tensor_orig = self.p_tensor
-        self._eta_tensor_orig = self.eta_tensor
+        self._stiffness_c_IJ_orig = self.stiffness_c_IJ
+        self._photoel_p_IJ_orig = self.photoel_p_IJ
+        self._viscosity_eta_IJ_orig = self.viscosity_eta_IJ
 
     def is_vacuum(self):
         '''Returns True if the material is the vacuum.'''
@@ -310,49 +308,49 @@ class Material(object):
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
         try:
-            self.c_tensor.read_from_json(1, 1)
-            self.c_tensor.read_from_json(1, 2)
-            self.c_tensor[1, 3] = self.c_tensor[1, 2]
-            self.c_tensor[2, 1] = self.c_tensor[1, 2]
-            self.c_tensor[2, 2] = self.c_tensor[1, 1]
-            self.c_tensor[2, 3] = self.c_tensor[1, 2]
-            self.c_tensor[3, 1] = self.c_tensor[1, 2]
-            self.c_tensor[3, 2] = self.c_tensor[1, 2]
-            self.c_tensor[3, 3] = self.c_tensor[1, 1]
-            self.c_tensor.read_from_json(4, 4)
-            self.c_tensor[5, 5] = self.c_tensor[4, 4]
-            self.c_tensor[6, 6] = self.c_tensor[4, 4]
+            self.stiffness_c_IJ.read_from_json(1, 1)
+            self.stiffness_c_IJ.read_from_json(1, 2)
+            self.stiffness_c_IJ[1, 3] = self.stiffness_c_IJ[1, 2]
+            self.stiffness_c_IJ[2, 1] = self.stiffness_c_IJ[1, 2]
+            self.stiffness_c_IJ[2, 2] = self.stiffness_c_IJ[1, 1]
+            self.stiffness_c_IJ[2, 3] = self.stiffness_c_IJ[1, 2]
+            self.stiffness_c_IJ[3, 1] = self.stiffness_c_IJ[1, 2]
+            self.stiffness_c_IJ[3, 2] = self.stiffness_c_IJ[1, 2]
+            self.stiffness_c_IJ[3, 3] = self.stiffness_c_IJ[1, 1]
+            self.stiffness_c_IJ.read_from_json(4, 4)
+            self.stiffness_c_IJ[5, 5] = self.stiffness_c_IJ[4, 4]
+            self.stiffness_c_IJ[6, 6] = self.stiffness_c_IJ[4, 4]
 
-            self.eta_tensor.read_from_json(1, 1)
-            self.eta_tensor.read_from_json(1, 2)
-            self.eta_tensor[1, 3] = self.eta_tensor[1, 2]
-            self.eta_tensor[2, 1] = self.eta_tensor[1, 2]
-            self.eta_tensor[2, 2] = self.eta_tensor[1, 1]
-            self.eta_tensor[2, 3] = self.eta_tensor[1, 2]
-            self.eta_tensor[3, 1] = self.eta_tensor[1, 2]
-            self.eta_tensor[3, 2] = self.eta_tensor[1, 2]
-            self.eta_tensor[3, 3] = self.eta_tensor[1, 1]
-            self.eta_tensor.read_from_json(4, 4)
-            self.eta_tensor[5, 5] = self.eta_tensor[4, 4]
-            self.eta_tensor[6, 6] = self.eta_tensor[4, 4]
+            self.viscosity_eta_IJ.read_from_json(1, 1)
+            self.viscosity_eta_IJ.read_from_json(1, 2)
+            self.viscosity_eta_IJ[1, 3] = self.viscosity_eta_IJ[1, 2]
+            self.viscosity_eta_IJ[2, 1] = self.viscosity_eta_IJ[1, 2]
+            self.viscosity_eta_IJ[2, 2] = self.viscosity_eta_IJ[1, 1]
+            self.viscosity_eta_IJ[2, 3] = self.viscosity_eta_IJ[1, 2]
+            self.viscosity_eta_IJ[3, 1] = self.viscosity_eta_IJ[1, 2]
+            self.viscosity_eta_IJ[3, 2] = self.viscosity_eta_IJ[1, 2]
+            self.viscosity_eta_IJ[3, 3] = self.viscosity_eta_IJ[1, 1]
+            self.viscosity_eta_IJ.read_from_json(4, 4)
+            self.viscosity_eta_IJ[5, 5] = self.viscosity_eta_IJ[4, 4]
+            self.viscosity_eta_IJ[6, 6] = self.viscosity_eta_IJ[4, 4]
 
-            self.p_tensor.read_from_json(1, 1)
-            self.p_tensor.read_from_json(1, 2)
+            self.photoel_p_IJ.read_from_json(1, 1)
+            self.photoel_p_IJ.read_from_json(1, 2)
 
-            self.p_tensor[1, 3] = self.p_tensor[1, 2]
-            self.p_tensor[2, 1] = self.p_tensor[1, 2]
-            self.p_tensor[2, 2] = self.p_tensor[1, 1]
-            self.p_tensor[2, 3] = self.p_tensor[1, 2]
-            self.p_tensor[3, 1] = self.p_tensor[1, 2]
-            self.p_tensor[3, 2] = self.p_tensor[1, 2]
-            self.p_tensor[3, 3] = self.p_tensor[1, 1]
-            self.p_tensor.read_from_json(4, 4)
+            self.photoel_p_IJ[1, 3] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[2, 1] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[2, 2] = self.photoel_p_IJ[1, 1]
+            self.photoel_p_IJ[2, 3] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[3, 1] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[3, 2] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[3, 3] = self.photoel_p_IJ[1, 1]
+            self.photoel_p_IJ.read_from_json(4, 4)
 
             # According to Powell, for Oh group, these are distinct elements, but no one seems to quote them
-            if not self.p_tensor.read_from_json(5, 5, optional=True):
-                self.p_tensor[5, 5] = self.p_tensor[4, 4]
-            if not self.p_tensor.read_from_json(6, 6, optional=True):
-                self.p_tensor[6, 6] = self.p_tensor[4, 4]
+            if not self.photoel_p_IJ.read_from_json(5, 5, optional=True):
+                self.photoel_p_IJ[5, 5] = self.photoel_p_IJ[4, 4]
+            if not self.photoel_p_IJ.read_from_json(6, 6, optional=True):
+                self.photoel_p_IJ[6, 6] = self.photoel_p_IJ[4, 4]
 
         except Exception:
             reporting.report_and_exit(
@@ -364,7 +362,7 @@ class Material(object):
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
         try:
-            for lintens in [self.c_tensor, self.eta_tensor]:
+            for lintens in [self.stiffness_c_IJ, self.viscosity_eta_IJ]:
                 for (i, j) in [(1, 1), (1, 2), (1, 3), (1, 4), (3, 3), (4, 4)]:
                     lintens.read_from_json(i, j)
 
@@ -386,28 +384,28 @@ class Material(object):
 
             # TODO: confirm correct symmetry properties for p.
             # PreviouslyuUsing trigonal = C3v from Powell, now the paper above
-            self.p_tensor.read_from_json(1, 1)
-            self.p_tensor.read_from_json(1, 2)
-            self.p_tensor.read_from_json(1, 3)
-            self.p_tensor.read_from_json(1, 4)
-            self.p_tensor.read_from_json(3, 1)
-            self.p_tensor.read_from_json(3, 3)
-            self.p_tensor.read_from_json(4, 1)
-            self.p_tensor.read_from_json(4, 4)
+            self.photoel_p_IJ.read_from_json(1, 1)
+            self.photoel_p_IJ.read_from_json(1, 2)
+            self.photoel_p_IJ.read_from_json(1, 3)
+            self.photoel_p_IJ.read_from_json(1, 4)
+            self.photoel_p_IJ.read_from_json(3, 1)
+            self.photoel_p_IJ.read_from_json(3, 3)
+            self.photoel_p_IJ.read_from_json(4, 1)
+            self.photoel_p_IJ.read_from_json(4, 4)
 
-            self.p_tensor[2, 1] = self.p_tensor[1, 2]
-            self.p_tensor[2, 2] = self.p_tensor[1, 1]
-            self.p_tensor[2, 3] = self.p_tensor[1, 3]
-            self.p_tensor[2, 4] = -self.p_tensor[1, 4]
+            self.photoel_p_IJ[2, 1] = self.photoel_p_IJ[1, 2]
+            self.photoel_p_IJ[2, 2] = self.photoel_p_IJ[1, 1]
+            self.photoel_p_IJ[2, 3] = self.photoel_p_IJ[1, 3]
+            self.photoel_p_IJ[2, 4] = -self.photoel_p_IJ[1, 4]
 
-            self.p_tensor[3, 2] = self.p_tensor[3, 1]
+            self.photoel_p_IJ[3, 2] = self.photoel_p_IJ[3, 1]
 
-            self.p_tensor[4, 2] = -self.p_tensor[4, 1]
+            self.photoel_p_IJ[4, 2] = -self.photoel_p_IJ[4, 1]
 
-            self.p_tensor[5, 5] = self.p_tensor[4, 4]
-            self.p_tensor[5, 6] = self.p_tensor[4, 1]
-            self.p_tensor[6, 5] = self.p_tensor[1, 4]
-            self.p_tensor[6, 6] = (self.p_tensor[1, 1] - self.p_tensor[1, 2])/2
+            self.photoel_p_IJ[5, 5] = self.photoel_p_IJ[4, 4]
+            self.photoel_p_IJ[5, 6] = self.photoel_p_IJ[4, 1]
+            self.photoel_p_IJ[6, 5] = self.photoel_p_IJ[1, 4]
+            self.photoel_p_IJ[6, 6] = (self.photoel_p_IJ[1, 1] - self.photoel_p_IJ[1, 2])/2
 
         except Exception:
             reporting.report_and_exit(
@@ -417,9 +415,9 @@ class Material(object):
         try:  # full anisotropic tensor components
             for i in range(1, 7):
                 for j in range(1, 7):
-                    self.c_tensor.read_from_json(i, j)
-                    self.p_tensor.read_from_json(i, j)
-                    self.eta_tensor.read_from_json(i, j)
+                    self.stiffness_c_IJ.read_from_json(i, j)
+                    self.photoel_p_IJ.read_from_json(i, j)
+                    self.viscosity_eta_IJ.read_from_json(i, j)
 
         except KeyError:
             reporting.report_and_exit(
@@ -454,11 +452,11 @@ class Material(object):
         rotation_axis = voigt.parse_rotation_axis(rot_axis_spec)
         matR = voigt._make_rotation_matrix(rotation_axis, theta)
 
-        self.c_tensor.rotate(matR)
-        self.p_tensor.rotate(matR)
-        self.eta_tensor.rotate(matR)
+        self.stiffness_c_IJ.rotate(matR)
+        self.photoel_p_IJ.rotate(matR)
+        self.viscosity_eta_IJ.rotate(matR)
 
-        self.c_tensor.check_symmetries()
+        self.stiffness_c_IJ.check_symmetries()
 
         caxes = self._crystal_axes.copy()
         self.set_crystal_axes(
@@ -468,19 +466,19 @@ class Material(object):
         )
 
         if save_rotated_tensors:
-            np.savetxt('rotated_c_tensor.csv',
-                       self.c_tensor.mat, delimiter=',')
-            np.savetxt('rotated_p_tensor.csv',
-                       self.p_tensor.mat, delimiter=',')
-            np.savetxt('rotated_eta_tensor.csv',
-                       self.eta_tensor.mat, delimiter=',')
+            np.savetxt('rotated_stiffness_c_IJ.csv',
+                       self.stiffness_c_IJ.mat, delimiter=',')
+            np.savetxt('rotated_photoel_p_IJ.csv',
+                       self.photoel_p_IJ.mat, delimiter=',')
+            np.savetxt('rotated_viscosity_eta_IJ.csv',
+                       self.viscosity_eta_IJ.mat, delimiter=',')
 
     # restore orientation to original axes in spec file.
     def reset_orientation(self):
 
-        self.c_tensor = copy.deepcopy(self._c_tensor_orig)
-        self.p_tensor = copy.deepcopy(self._p_tensor_orig)
-        self.eta_tensor = copy.deepcopy(self._eta_tensor_orig)
+        self.stiffness_c_IJ = copy.deepcopy(self._stiffness_c_IJ_orig)
+        self.photoel_p_IJ = copy.deepcopy(self._photoel_p_IJ_orig)
+        self.viscosity_eta_IJ = copy.deepcopy(self._viscosity_eta_IJ_orig)
 
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
@@ -516,17 +514,17 @@ class Material(object):
 
         self._anisotropic = False
 
-        self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
-        self.eta_tensor = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
-        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+        self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.viscosity_eta_IJ = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.photoel_p_IJ = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
 
         
         # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
         if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
-        #    self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params)
-            self.c_tensor.load_isotropic_from_json()
-            mu = self.c_tensor.mat[4, 4]
-            lam = self.c_tensor.mat[1, 2]
+        #    self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params)
+            self.stiffness_c_IJ.load_isotropic_from_json()
+            mu = self.stiffness_c_IJ.mat[4, 4]
+            lam = self.stiffness_c_IJ.mat[1, 2]
             r = lam/mu
             self.nuPoisson = 0.5*r/(1+r)
             self.EYoung = 2*mu*(1+self.nuPoisson)
@@ -538,23 +536,23 @@ class Material(object):
             c12 = self.EYoung*self.nuPoisson / \
                 ((1+self.nuPoisson) * (1-2*self.nuPoisson))
             c11 = c12+2*c44
-            self.c_tensor = VoigtTensor4(self.material_name, 'c')
-            self.c_tensor.make_isotropic_tensor(c11, c12, c44)
+            self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c')
+            self.stiffness_c_IJ.make_isotropic_tensor(c11, c12, c44)
         else:
             reporting.report_and_exit(
                 'Broken isotropic material file:' + self.json_file)
 
-        self.p_tensor.load_isotropic_from_json()
-        self.eta_tensor.load_isotropic_from_json()
+        self.photoel_p_IJ.load_isotropic_from_json()
+        self.viscosity_eta_IJ.load_isotropic_from_json()
 
-        self.c_tensor.check_symmetries()
+        self.stiffness_c_IJ.check_symmetries()
 
     # not do this unless symmetry is off?
     def construct_crystal_anisotropic(self):
 
-        self.c_tensor = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
-        self.eta_tensor = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
-        self.p_tensor = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+        self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.viscosity_eta_IJ = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.photoel_p_IJ = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
             
         self._anisotropic = True
 
@@ -566,7 +564,7 @@ class Material(object):
         elif self.crystal == CrystalGroup.GeneralAnisotropic:
             self.construct_crystal_general()
 
-        self.c_tensor.check_symmetries()
+        self.stiffness_c_IJ.check_symmetries()
 
 
     def _add_3d_dispersion_curves_to_axes(self, ax_ivp=None, ax_vg=None):
@@ -595,7 +593,7 @@ class Material(object):
                 vkap = np.array([np.sin(theta)*np.cos(phi),
                                  np.sin(theta)*np.sin(phi),
                                  np.cos(theta)])
-                v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.c_tensor, self.rho)
+                v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
 
                 # slowness curve  eta(vkap) = 1/v_phase(vkap)
                 ivx[itheta, ip, :] = vkap[0]/v_vphase
@@ -708,7 +706,7 @@ class Material(object):
                 # v_vphase[m]:   |vphase| of modes m=1 to 3
                 # vecs[:,m]:     evecs of modes m=1 to 3
                 # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-                v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.c_tensor, self.rho)
+                v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
 
                 v_vel[ik, :] = v_vphase    # phase velocity
                 v_vgx[ik, :] = v_vgroup[:,0]  # group velocity components
@@ -803,7 +801,7 @@ class Material(object):
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-            v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.c_tensor, self.rho)
+            v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
 
             v_vel[ik, :] = v_vphase    # phase velocity
             #v_vgx[ik, :] = v_vgroup[:,0]  # group velocity components

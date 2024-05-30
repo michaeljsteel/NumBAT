@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+import sys
 
 import numbat
 import plotting
@@ -36,13 +37,12 @@ class MailData:
         self._parse_lines(lines)
 
     def summarise_mesh(self):
-        s = ('Mail mesh has: \n' \
-             f'  {self.n_msh_pts} mesh points \n' \
-             f'  {self.n_msh_elts} elements \n' \
-             f'  {len(self.v_node_physindex)} nodes \n')
+        s = (f'    Initial Gmsh mesh has: {self.n_msh_pts} nodes, {self.n_msh_elts} elements. \n' \
+             #f'  {len(self.v_node_physindex)} nodes \n'
+             )
 
-        s += ' Node types:\n' + str(self.v_node_physindex)
-        s += ' Node table:\n' + str(self.v_elts)
+        #s += ' Node types:\n' + str(self.v_node_physindex)
+        #s += ' Node table:\n' + str(self.v_elts)
 
         print(s)
 
@@ -54,12 +54,11 @@ class MailData:
         cf=axs[0].scatter(self.v_x, self.v_y, s=4, c=self.v_node_physindex, cmap='Dark2')
         
         axs[0].set_title('Mail mesh point types', fontsize=8)
+
         
         
         cbar = fig.colorbar(cf, shrink=.5, pad=.025, location='right')
-        cbar.ax.tick_params(labelsize=8, width=.25)
-        cbar.outline.set_linewidth(1)
-        cbar.set_label(label=f'Phys curve/surface number', fontsize=10)
+        cbar.set_label(label=f'Phys curve/surface number')
 
 
         elts = self.v_elts-1  # built for fortran indexing
@@ -94,15 +93,19 @@ class MailData:
         axs[2].legend(loc='upper right', fontsize=8)
         axs[2].set_xlim(min(self.v_x), max(self.v_x))
         axs[2].set_ylim(min(self.v_y), max(self.v_y))
-        
-        for ax in axs:
-            ax.set_aspect(1.0)
-            ax.tick_params(labelsize=8, width=.25)
-            ax.set_xlabel(r'$x$ [μm]', fontsize=10)
-            ax.set_ylabel(r'$y$ [μm]', fontsize=10)
 
-            for axis in ['top','bottom','left','right']:
-                ax.spines[axis].set_linewidth(1)
+        for ax in axs:
+            ax.set_xlabel(r'$x$ [μm]')
+            ax.set_ylabel(r'$y$ [μm]')
+
+        tidyaxes = plotting.TidyAxes(nax=4, props={'ax_label_fs':8, 'ax_ticklabel_fs':6,
+                                     'ax_tickwidth':0.25, 'ax_linewidth':1, 'aspect':1,
+                                     'cb_linewidth':1, 'cb_label_fs':10, 
+                                     'cb_ticklabel_fs':8, 'cb_tickwidth':0.25})
+                              
+        
+        tidyaxes.apply_to_axes(axs)
+        tidyaxes.apply_to_cbars(cbar)
         
         pref = numbat.NumBATApp().outprefix()
         plotting.save_and_close_figure(fig, pref + '-mailmesh.png')
@@ -148,6 +151,13 @@ class MailData:
             self.v_centx[i] = (vx[eltnds[0]] + vx[eltnds[1]] + vx[eltnds[2]])/3.0
             self.v_centy[i] = (vy[eltnds[0]] + vy[eltnds[1]] + vy[eltnds[2]])/3.0
 
-        self.summarise_mesh()
-        
-        self.plot_mesh()
+        #TODO: make an option somewhere
+        plotmailmesh=True
+        if plotmailmesh:
+            self.summarise_mesh()
+            self.plot_mesh()
+
+
+            
+
+ 
