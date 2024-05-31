@@ -32,7 +32,7 @@ from numbattools import *
 
 from reporting import report_and_exit
 import integration
-import plotmodes
+from plotmodes import Decorator
 from fortran import NumBAT
 from modes import *
 
@@ -390,12 +390,8 @@ class SimResult:
         for m in modes:
             m.analyse_mode(n_points=n_points)
 
-    def get_all_modes(self):
-        '''Returns an array of class `Mode` containing the solved electromagnetic or acoustic modes.
-
-           :rtype: numarray(Mode)
-           '''
-        if not len(self.mode_set):
+    def _build_modes(self):
+        
             for m in range(self.n_modes):
                 if self.is_EM():
                     mode = ModeEM(self, m)
@@ -404,8 +400,20 @@ class SimResult:
                 # awkward and specific to do this here, but might have already been set in the Simulation object befores modes are created
                 mode.set_r0_offset(self.r0_offset[0], self.r0_offset[1])
                 self.mode_set.append(mode)
+                
+    def get_all_modes(self):
+        '''Returns an array of class `Mode` containing the solved electromagnetic or acoustic modes.
 
+           :rtype: numarray(Mode)
+           '''
+        if not len(self.mode_set): self._build_modes()
         return self.mode_set
+
+        
+    def get_mode(self, m):
+        if not len(self.mode_set): self._build_modes()
+        
+        return self.mode_set[m]
 
     def symmetry_classification(self, m):
         '''If the point group of the structure has been specified, returns the symmetry class of the given mode.
@@ -440,6 +448,91 @@ class SimResult:
 
         else:
             print("unknown symmetry properties in mode_calcs")
+
+    def plot_modes(self, ivals=None, n_points=501, quiver_points=30,
+                     xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
+                     field_type='EM_E',
+                     num_ticks=None, colorbar=True, contours=False, contour_lst=None,
+                     stress_fields=False, 
+                     prefix='', suffix='', ticks=True, comps=[], decorator=None,
+                     suppress_imimre=True, modal_gains_PE=None, modal_gains_MB=None, modal_gains=None):
+        """ Plot E or H fields of EM mode, or the AC modes displacement fields.
+
+            Args:
+                sim_result : A ``Struct`` instance that has had calc_modes calculated
+
+            Keyword Args:
+                ivals  (list): mode numbers of modes you wish to plot
+
+                n_points  (int): The number of points across unitcell to
+                    interpolate the field onto
+
+                xlim_min  (float): Limit plotted xrange to xlim_min:(1-xlim_max) of unitcell
+
+                xlim_max  (float): Limit plotted xrange to xlim_min:(1-xlim_max) of unitcell
+
+                ylim_min  (float): Limit plotted yrange to ylim_min:(1-ylim_max) of unitcell
+
+                ylim_max  (float): Limit plotted yrange to ylim_min:(1-ylim_max) of unitcell
+
+                field_type  (str): Either 'EM' or 'AC' modes
+
+                num_ticks  (int): Number of tick marks
+
+                contours  (bool): Controls contours being overlaid on fields
+
+                contour_lst  (list): Specify contour values
+
+                stress_fields  (bool): Calculate acoustic stress fields
+
+                pdf_png  (str): File type to save, either 'png' or 'pdf'
+
+                prefix  (str): Add a string to start of file name
+
+                suffix  (str): Add a string to end of file name.
+
+                modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
+        """
+
+        field_type = FieldType.AC if self.is_AC() else FieldType.from_str(field_type)
+        
+        if field_type == FieldType.EM_H: self.make_H_fields()
+    
+
+        fm = self.fem_mesh
+
+        mode_helper = self.get_mode_helper()
+        mode_helper.setup_plot_grid(n_points=n_points)
+
+        if decorator is None: decorator = Decorator()
+
+        nbapp = numbat.NumBATApp()
+
+        if not prefix: prefix=nbapp.outprefix()
+
+        pf = nbapp.path_fields()
+        if prefix and not Path(pf).exists(): Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
+        
+        mode_helper.update_plot_params({xlim_min : xlim_min, xlim_max : xlim_max, ylim_min : ylim_min, ylim_max : ylim_max,
+                                    field_type : field_type,
+                                    quiver_points : quiver_points,
+                                    num_ticks : num_ticks, colorbar : colorbar, contours : contours, contour_lst : contour_lst,
+                                    prefix : prefix, suffix : suffix, ticks : ticks,  
+                                    decorator : decorator,
+                                    suppress_imimre : suppress_imimre })
+    
+
+        modetype = 'acoustic' if field_type == FieldType.AC else 'em'
+
+        ival_range = ivals if ivals is not None else  range(self.n_modes)
+
+        if len(ival_range) > 1:
+            print(f'Plotting {modetype} modes m={ival_range[0]} to {ival_range[-1]}.')
+        else:
+            print(f'Plotting {modetype} mode m={ival_range[0]}.')
+
+        for m in ival_range: self.get_mode(m).plot_mode(comps, field_type)
+            
 
 
 class EMSimResult(SimResult):

@@ -27,13 +27,14 @@ import numpy as np
 twopi = np.pi * 2.0
 Plancks_h = 6.626_070_15e-34            # Planck's constant in Js (exact)
 speed_c = 299792458                     # Speed of light in vacuum in m/s (exact)
-charge_e = 1.602_176_634e-19            # Charge of an electron in C (exact)
-permittivity_eps0 = 8.854_187_8188e-12
+charge_F = 1.602_176_634e-19            # Charge of an electron in C (exact)
+permittivity_Fps0 = 8.854_187_8188e-12
 permeability_mu0 = 1.256_637_061_27e-6
-vacuum_impedance_Z0 = math.sqrt(permeability_mu0/permittivity_eps0)
+vacuum_impedance_Z0 = math.sqrt(permeability_mu0/permittivity_Fps0)
             
 ###############################################################################
 
+SI_THz = 1.0e12
 SI_GHz = 1.0e9
 SI_MHz = 1.0e6
 
@@ -67,8 +68,7 @@ class FieldType(Enum):
         elif lab == 'AC':
             return FieldType.AC
         else:
-            raise NotImplementedError
-
+            raise ValueError("The value of field_type must be either 'AC', 'EM_E' or 'EM_H'.")
 
 class PointGroup(IntEnum):
     Unknown = 1
@@ -122,33 +122,35 @@ class component_t(object):
             uc = {'Fxr': 'ux', 'Fxi': 'ux', 'Fyr': 'uy', 'Fyi': 'uy',
                   'Fzr': 'uz', 'Fzi': 'uz', 'Fabs': 'uabs', 'Ft': 'ut'}[fc]
         cc = component_t(uc)
-        cc._f_code = fc
+        cc._f_code = fc # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
         return cc
 
-    def __init__(self, uc):  # must be an Ex, Ey style, not an EM_AC,Fxr style
+    def __init__(self, uc):  
+        # uc is an actual field component name:  Ex, Ey, Ez, Et, Eabs, ux, uy etc. 
+        # _f_code is the field-agnostic form starting with F and in the dominant real/imag part
         self._user_code = uc
-        self._E = uc[0]  # E, H, or u
-        self._Ei = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
+        self._F = uc[0]  # E, H, or u
+        self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
         self._xyz = uc[1]  # x, y, z, a, t
-        self._Eimaj = self.reim_major(self._Ei)
-        self._Eimin = self.reim_minor(self._Ei)
+        self._Fimaj = self.reim_major(self._Fi)
+        self._Fimin = self.reim_minor(self._Fi)
 
-        # default real/imag given the _E value
+        # default real/imag given the _F value
         self._f_code = {'Ex': 'Fxr', 'Ey': 'Fyr', 'Ez': 'Fzi', 'Eabs': 'Fabs', 'Et': 'Ft',
                         'Hx': 'Fxr', 'Hy': 'Fyr', 'Hz': 'Fzi', 'Habs': 'Fabs', 'Ht': 'Ft',
                         'ux': 'Fxr', 'uy': 'Fyr', 'uz': 'Fzi', 'uabs': 'Fabs', 'ut': 'Ft',
                         }[self._user_code]
 
     def get_label(self):
-        c = self._E
-        lab = {'Fx': r'Re($E_x$)', 'Fy': r'Re($E_y$)', 'Fz': r'Im($E_z$)', 'Fxr': r'Re($E_x$)',
-               'Fyr': r'Re($E_y$)', 'Fzi': r'Im($E_z$)', 'Fxi': r'Im($E_x$)', 'Fyi': r'Im($E_y$)', 'Fzr': r'Re($E_z$)',
-               'Fabs': r'$|\vec E|^2$', 'Ft': r'$\vec E_t$'}[self._f_code]  # adjusted so that Fabs gives |F|^2
-        return lab.replace('E', c)
+        c = self._F
+        lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',
+               'Fyr': r'Re($F_y$)', 'Fzi': r'Im($F_z$)', 'Fxi': r'Im($F_x$)', 'Fyi': r'Im($F_y$)', 'Fzr': r'Re($F_z$)',
+               'Fabs': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fabs gives |F|^2
+        return lab.replace('F', c)
 
     def is_abs(self): return self._f_code == 'Fabs'
     def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
-    def is_transverse(self): return self._user_code.endswith('t')
+    def is_transverse(self): return self._user_code in ('Ft', 'Ht', 'ut')
     def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
 
     def reim_major(self, fi):

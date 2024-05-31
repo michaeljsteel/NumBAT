@@ -44,6 +44,9 @@ class _NumBATApp(object):
         self._start_time=time.time()
         self._codedir = Path(__file__).parents[0]
 
+        self._plot_extension = '.png'
+        #self._plot_extension = '.pdf'
+        
         self._check_versions()
         self._setup_paths()
         reporting.init_logger()
@@ -55,6 +58,9 @@ class _NumBATApp(object):
             _NumBATApp(outprefix, outdir)  # instance gets attached inside __init__
         return _NumBATApp.__instance
 
+    def plotfile_ext(self):
+        return self._plot_extension 
+        
     def is_linux(self):
         return platform.system()=='Linux'
 

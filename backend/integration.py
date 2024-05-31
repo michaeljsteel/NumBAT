@@ -410,7 +410,6 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     
 
     Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?
-
     
     gain = 2*simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q*np.conj(Q))
     gain_PE = 2*simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE*np.conj(Q_PE))

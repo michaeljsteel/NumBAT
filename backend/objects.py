@@ -36,6 +36,8 @@ import scipy.interpolate
 import numbat
 import reporting
 import numbattools as nbtools
+from nbtypes import *
+
 import materials
 from fortran import NumBAT
 import plotting
@@ -508,14 +510,15 @@ class Structure(object):
 
     def set_xyshift_em(self, x, y):
         # Sets shift in grid from user perspective in nm
-        self.shift_em_x = x*1e-9
-        self.shift_em_y = y*1e-9
+        self.shift_em_x = x * SI_nm
+        self.shift_em_y = y * SI_nm
 
     def set_xyshift_ac(self, x, y):
-        self.shift_ac_x = x*1e-9
-        self.shift_ac_y = y*1e-9
+        self.shift_ac_x = x * SI_nm
+        self.shift_ac_y = y * SI_nm
 
     def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME 
+        msh_name='missing_mesh_name'
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
 

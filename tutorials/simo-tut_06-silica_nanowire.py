@@ -53,51 +53,50 @@ recalc_fields=True     # run the calculation from scratch
 
 # Calculate Electromagnetic Modes
 if recalc_fields:
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
-    #sim_EM_pump.save_simulation('tut_06_pump')
-    #sim_EM_Stokes.save_simulation('tut_06_stokes')
+    #simres_EM_pump.save_simulation('tut_06_pump')
+    #simres_EM_Stokes.save_simulation('tut_06_stokes')
 else:
-    sim_EM_pump = mode_calcs.load_simulation('tut_06_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
+    simres_EM_pump = mode_calcs.load_simulation('tut_06_pump')
+    simres_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
 
 print('\nPlotting EM fields')
 trim=0.4
 #trim=0.0
 
 # Display the wavevectors of EM modes.
-v_kz=sim_EM_pump.kz_EM_all()
+v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
 
-plotting.plot_mode_fields(sim_EM_pump, field_type='EM_E', ivals=range(5),
-        xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
+simres_EM_pump.plot_modes(ivals=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff(0))
+n_eff_sim = np.real(simres_EM_pump.neff(0))
 print("n_eff = {0:.4e}".format(n_eff_sim))
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 shift_Hz = 4e9
 
 # Calculate Acoustic modes.
 if recalc_fields:
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
-    #sim_AC.save_simulation('tut_06_acoustic')
+    simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump, shift_Hz=shift_Hz)
+    #simres_AC.save_simulation('tut_06_acoustic')
 else:
-    sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
+    simres_AC = mode_calcs.load_simulation('tut_06_acoustic')
 
 
 # Print the frequencies of AC modes.
-v_nu=sim_AC.nu_AC_all()
+v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
 
-sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_mode_fields(sim_AC, field_type='AC', )
+simres_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+simres_AC.plot_modes()
 
 set_q_factor = 1000.
 
@@ -105,7 +104,7 @@ print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 sys.exit(0)
@@ -120,7 +119,7 @@ sys.exit(0)
 freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
     )
 

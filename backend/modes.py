@@ -20,11 +20,11 @@ class ModePlotHelper(object):
         self.sim_result = simresult
         self.setup_for_npoints = 0
 
-        # self.field_type = field_type  # Enum.FieldType
         self.plot_params = {}
+        self._init_plot_params()
 
         self.zero_arrays()
-        self.set_plot_params(prefix='')
+      #  self.set_plot_params(prefix='')
 
     def zero_arrays(self):
         self.triang6p = None  #needed after triangularions are built?
@@ -43,6 +43,8 @@ class ModePlotHelper(object):
         self.m_X = None  # mesh grid versions of the same
         self.m_Y = None
 
+        self.xy_outs = {}
+
     def cleanup(self):
         # Now that these are part of the sim object,
         # we need to get rid of them to allow pickling of sim files, as they contain C++ objects
@@ -55,6 +57,8 @@ class ModePlotHelper(object):
         del self.v_x6p, self.v_y6p
         del self.v_Fx6p, self.v_Fy6p, self.v_Fz6p
 
+        self.xy_outs = {}
+        
         self.zero_arrays()
 
 
@@ -62,41 +66,41 @@ class ModePlotHelper(object):
 #        if not self.triang6p is None: del self.triang6p._cpp_triangulation
 #        if not self.triang1p is None: del self.triang1p._cpp_triangulation
 
-    def set_plot_params(self,  # n_points=501, quiver_points=30,
-                        xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
-                        field_type=FieldType.EM_E,
-                        quiver_points=30,
-                        num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
-                        suppress_imimre=True, pdf_png='png',
-                        prefix='tmp', suffix='', decorator=plotting.Decorator(), ):
-        # modal_gains_PE=None,
-        # modal_gains_MB=None,
-        # modal_gains=None):
-
-        pf = numbat.NumBATApp().path_fields()
-        if prefix and not Path(pf).exists(): Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
-
-        if isinstance(field_type, str):  # aim to get rid of this
-            if self.sim_result.is_AC():
-                field_type = FieldType.AC
-            else:
-                try:
-                    # TODO:ugly that this changes from string to enum
-                    field_type = FieldType.from_str(field_type)
-                except Exception as ex:
-                    raise ValueError(
-                        "field_type must be either 'AC', 'EM_E' or 'EM_H'.") from ex
-
-        self.plot_params = {'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min,
-                            'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks': num_ticks,
-                            'colorbar': colorbar, 'contours': contours, 'contour_lst': contour_lst, 'EM_AC': field_type,
-                            'prefix': prefix, 'suffix': suffix, 'pdf_png': pdf_png,
-                            # 'modal_gain':modal_gain,
-                            'decorator': decorator,
-                            'suppress_imimre': suppress_imimre,
-                            # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y,
-                            'quiver_points': quiver_points
+    def _init_plot_params(self):
+        self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0, 
+                            'ticks': True, 'num_ticks': None,
+                            'colorbar': True, 'contours': False, 'contour_lst': None, 
+                            'EM_AC': FieldType.EM_E,
+                            'prefix': 'tmp', 'suffix': '', 
+                            'decorator': plotting.Decorator(),
+                            'suppress_imimre': True,
+                            'quiver_points': 30
                             }
+
+    def update_plot_params(self, d_params):
+        self.plot_params.update(d_params)
+        
+    # def set_plot_params(self,  
+    #                     xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
+    #                     field_type=FieldType.EM_E,
+    #                     quiver_points=30,
+    #                     num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
+    #                     suppress_imimre=True, 
+    #                     prefix='tmp', suffix='', decorator=plotting.Decorator(), ):
+        
+    #     #pf = numbat.NumBATApp().path_fields()
+    #     #if prefix and not Path(pf).exists(): Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
+
+    #     #field_type = FieldType.AC if self.sim_result.is_AC() else FieldType.from_str(field_type)
+        
+    #     self.plot_params = {'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min,
+    #                         'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks': num_ticks,
+    #                         'colorbar': colorbar, 'contours': contours, 'contour_lst': contour_lst, 'EM_AC': field_type,
+    #                         'prefix': prefix, 'suffix': suffix, 
+    #                         'decorator': decorator,
+    #                         'suppress_imimre': suppress_imimre,
+    #                         'quiver_points': quiver_points
+    #                         }
 
 
     def interpolate_mode_i(self, ival, field_type):
@@ -165,25 +169,21 @@ class ModePlotHelper(object):
         # These are the actual x and y domains of the final plots
         self.v_x = np.linspace(x_min, x_max, self.n_pts_x)
         self.v_y = np.linspace(y_min, y_max, self.n_pts_y)
-        self.v_x_out = self.v_x + shiftx
-        self.v_y_out = self.v_y + shifty
-
+        self.m_X, self.m_Y = np.meshgrid(self.v_x, self.v_y)
         
+        self.v_x_out = (self.v_x + shiftx) / SI_um
+        self.v_y_out = (self.v_y + shifty) / SI_um
         self.m_X_out, self.m_Y_out = np.meshgrid(self.v_x_out, self.v_y_out)
 
-        # TODO: 
-        #    make these in microns? but would have to adjust interpolation vectors v_x_flat
-        #    make non-shifted versions for cleaner code. 1D so not expensive.
-
-    
+        # don't make them all members
+        self.xy_outs = {'v_x': self.v_x_out, 'v_y': self.v_y_out, 'm_x': self.m_X_out, 'm_y': self.m_Y_out}
 
         print('''
   Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um),
                 mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
                     '''.format(
-            1e6*self.v_x[0], 1e6*self.v_x[-1],
-            1e6*self.v_y[0], 1e6*self.v_y[-1],
-            1e6*self.v_x_out[0], 1e6*self.v_x_out[-1], 1e6*self.v_y_out[0], 1e6*self.v_y_out[-1]))
+            1e6*self.v_x[0], 1e6*self.v_x[-1], 1e6*self.v_y[0], 1e6*self.v_y[-1],
+            self.v_x_out[0], self.v_x_out[-1], self.v_y_out[0], self.v_y_out[-1]))
         return shiftx, shifty
 
     def _save_triangulation_plots(self):
@@ -284,8 +284,8 @@ class ModePlotHelper(object):
         # create rectangular arrays corresponding to the v_x, v_y grids
 
         # There might be a cleaner way of doing this
-        v_x_flat = self.m_X_out.flatten('F') - shiftx
-        v_y_flat = self.m_Y_out.flatten('F') - shifty
+        v_x_flat = self.m_X.flatten('F') - shiftx
+        v_y_flat = self.m_Y.flatten('F') - shifty
         finder = matplotlib.tri.TrapezoidMapTriFinder(self.triang1p)
         self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
             self.triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(self.n_pts_x, self.n_pts_y)
@@ -400,22 +400,21 @@ class Mode(object):
         mh = mode_helper
         decorator = mh.plot_params['decorator']
 
-        decorator._set_for_multi()
+        decorator.set_for_multi()
         # TODO this is a kludgy way of doing this. send it through separately
         mh.plot_params['EM_AC'] = field_type
 
         # can't do multiplots on a provided axis (would need a provided figure)
         if ax is None:
-            plotting.plot_all_components(mh.v_x_out, mh.v_y_out, mh.m_X_out, mh.m_Y_out, self.d_fields,
+            plotting.plot_all_components(mh.xy_outs, self.d_fields,
                                          mh.plot_params, self.sim_result, self.mode_num)
 
         if len(comps):
-            decorator._set_for_single()
+            decorator.set_for_single()
             # options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut']
             for comp in comps:
                 cc = component_t(comp)
-                plotting.plot_one_component(
-                    mh.m_X_out, mh.m_Y_out, self.d_fields, mh.plot_params, self.sim_result, self.mode_num, cc, ax)
+                plotting.plot_one_component(mh.xy_outs, self.d_fields, mh.plot_params, self.mode_num, cc, ax)
 
     def add_mode_data(self, d):
         '''Adds a dictionary of user-defined information about a mode.
@@ -563,8 +562,8 @@ class Mode(object):
         self.analysed = True
 
         mh = self.get_mode_helper()
-        v_x = mh.v_x_out
-        v_y = mh.v_y_out
+        v_x = mh.v_x_out * SI_um
+        v_y = mh.v_y_out * SI_um
 
         mFs = self.d_fields
 
