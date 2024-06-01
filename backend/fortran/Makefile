@@ -181,13 +181,13 @@ OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
 OBJS = $(subst src,build,$(OBJSA))
 
 #conv_gmsh.f 
-PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_AC.f py_calc_modes.f \
-	EM_mode_energy_int_v2_Ez.f \
-  EM_mode_energy_int_Ez.f photoelastic_int.f photoelastic_int_v2.f \
+PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f \
+	em_mode_energy_int_v2_ez.f \
+  em_mode_energy_int_ez.f photoelastic_int.f photoelastic_int_v2.f \
   ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
-  ac_alpha_int.f ac_alpha_int_v2.f moving_boundary.f array_material_AC.f \
-  ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f EM_mode_E_energy_int.f \
-  H_mode_field_Ez.f array_size.f 
+  ac_alpha_int.f ac_alpha_int_v2.f moving_boundary.f array_material_ac.f \
+  ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f em_mode_e_energy_int.f \
+  h_mode_field_ez.f array_size.f 
 #numbatmod.f
 
 PYINTERFACE_SRCS = $(addprefix src/, $(PYINTERFACE_SRCSA))
