@@ -134,9 +134,19 @@ class Material(object):
         # a,b,c crystal axes according to standard conventions
         self._crystal_axes = []
 
+        self._anisotropic = False
+        self.nuPoisson = 0.0
+        self.EYoung = 0.0
+
         self.stiffness_c_IJ = None
         self.viscosity_eta_IJ = None
         self.photoel_p_IJ = None
+
+        self.refindex_n = 0
+
+        self._stiffness_c_IJ_orig  = None
+        self._photoel_p_IJ_orig = None
+        self._viscosity_eta_IJ_orig = None
 
         self._parse_json_data(json_data, filename)
 
@@ -197,7 +207,7 @@ class Material(object):
 
     def Vac_longitudinal(self):
         '''For an isotropic material, returns the longitudinal (P-wave) elastic phase velocity.'''
-        assert (self.is_isotropic())
+        assert self.is_isotropic()
 
         if not self.rho or self.rho == 0:  # Catch vacuum cases
             return 0.
@@ -206,7 +216,7 @@ class Material(object):
 
     def Vac_shear(self):
         '''For an isotropic material, returns the shear (S-wave) elastic phase velocity.'''
-        assert (self.is_isotropic())
+        assert self.is_isotropic()
 
         if not self.rho or self.rho == 0:  # Catch vacuum cases
             return 0.
@@ -258,7 +268,7 @@ class Material(object):
         Re_n = json_data['Re_n']  # Real part of refractive index []
         # Imaginary part of refractive index []
         Im_n = json_data['Im_n']
-        self.refindex_n = (Re_n + 1j*Im_n)  # Complex refractive index []
+        self.refindex_n = Re_n + 1j*Im_n  # Complex refractive index []
         self.rho = json_data['s']  # Density [kg/m3]
 
         if self.is_vacuum():  # no mechanical properties available
@@ -442,7 +452,7 @@ class Material(object):
         """
 
         rotation_axis = voigt.parse_rotation_axis(rot_axis_spec)
-        matR = voigt._make_rotation_matrix(rotation_axis, theta)
+        matR = voigt.make_rotation_matrix(rotation_axis, theta)
 
         self.stiffness_c_IJ.rotate(matR)
         self.photoel_p_IJ.rotate(matR)
@@ -452,9 +462,9 @@ class Material(object):
 
         caxes = self._crystal_axes.copy()
         self.set_crystal_axes(
-            voigt._rotate_3vector(caxes[0], matR),
-            voigt._rotate_3vector(caxes[1], matR),
-            voigt._rotate_3vector(caxes[2], matR)
+            voigt.rotate_3vector(caxes[0], matR),
+            voigt.rotate_3vector(caxes[1], matR),
+            voigt.rotate_3vector(caxes[2], matR)
         )
 
         if save_rotated_tensors:
@@ -489,7 +499,7 @@ class Material(object):
 
         try:
             ux, uy, uz, rot = map(float, ocode.split(','))
-        except:
+        except Exception:
             reporting.report_and_exit(
                 f"Can't parse crystal orientation code {ocode} for material {self.material_name}.")
         rot_axis = np.array((ux, uy, uz))
@@ -624,7 +634,7 @@ class Material(object):
 
             #ax.set_aspect('equal')
 
-    def plot_bulk_dispersion_3D(self, pref, label=None):
+    def plot_bulk_dispersion_3D(self, pref):
         '''
         Generate isocontour surfaces of the bulk dispersion in 3D k-space.
         '''
@@ -655,7 +665,7 @@ class Material(object):
         ax_sl, ax_vp, ax_vg, ax_ivp_3d = axs
 
         cm = 'cool'  # Color map for polarisation coding
-        self._add_bulk_slowness_curves_to_axes(pref, fig, ax_sl, ax_vp, ax_vg, cm)
+        self.add_bulk_slowness_curves_to_axes(pref, fig, ax_sl, ax_vp, ax_vg, cm)
 
         if label is None:
             label = self.material_name
@@ -665,7 +675,7 @@ class Material(object):
 
         plt.savefig(pref+'-bulkdisp.png')
 
-    def _add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
+    def add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
 
         npolpts = 28
         npolskip = 10  #make bigger
@@ -768,7 +778,7 @@ class Material(object):
 
 
 
-    def _add_bulk_slowness_curves_to_axes_2x1(self, pref, fig, ax_sl, ax_vp, cm, mat1or2):
+    def add_bulk_slowness_curves_to_axes_2x1(self, pref, fig, ax_sl, ax_vp, cm, mat1or2):
 
         npolpts = 28
         npolskip = 10  #make bigger
@@ -776,8 +786,8 @@ class Material(object):
         v_kphi = np.linspace(0., np.pi*2, npts)
         v_vel = np.zeros([npts, 3])
         v_velc = np.zeros([npts, 3])
-        v_vgx = np.zeros([npts, 3])
-        v_vgz = np.zeros([npts, 3])
+        #v_vgx = np.zeros([npts, 3])
+        #v_vgz = np.zeros([npts, 3])
 
 
         cmm = mpl.colormaps[cm]
@@ -868,7 +878,7 @@ class Material(object):
         fn.close()
 
         # run .asy
-        subprocess.run(['asy', fn.name, '-o', f'{pref}-crystal'])
+        subprocess.run(['asy', fn.name, '-o', f'{pref}-crystal'], check=False)
 
 
 def setup_bulk_dispersion_2D_plot():
@@ -894,9 +904,8 @@ def setup_bulk_dispersion_2D_plot():
         ax.axhline(0, c='gray', lw=.5)
         ax.axvline(0, c='gray', lw=.5)
         ax.tick_params(width=.5)
-        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-             ax.get_xticklabels() + ax.get_yticklabels()):
-                item.set_fontsize(10)
+        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
+            item.set_fontsize(10)
         for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
     axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
     return fig, axs
@@ -928,9 +937,8 @@ def setup_bulk_dispersion_2D_plot_2x1():
         ax.axhline(0, c='gray', lw=.5)
         ax.axvline(0, c='gray', lw=.5)
         ax.tick_params(width=.5)
-        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-             ax.get_xticklabels() + ax.get_yticklabels()):
-                item.set_fontsize(12)
+        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] + ax.get_xticklabels() + ax.get_yticklabels()):
+            item.set_fontsize(12)
         for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
     #axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
     return fig, axs
@@ -946,8 +954,8 @@ def compare_bulk_dispersion(mat1, mat2, pref):
     cm1 = 'cool'  # Color map for polarisation coding
     cm2 = 'autumn'  # Color map for polarisation coding
 
-    mat1._add_bulk_slowness_curves_to_axes_2x1(pref+'_mat1', fig, ax_sl, ax_vg, cm1, 1)
-    mat2._add_bulk_slowness_curves_to_axes_2x1(pref+'_mat2', fig, ax_sl, ax_vg, cm2, 2)
+    mat1.add_bulk_slowness_curves_to_axes_2x1(pref+'_mat1', fig, ax_sl, ax_vg, cm1, 1)
+    mat2.add_bulk_slowness_curves_to_axes_2x1(pref+'_mat2', fig, ax_sl, ax_vg, cm2, 2)
 
     ax_sl.text(0.05, 1.15, f'Mat 1: {mat1.material_name}', fontsize=14, style='italic',
             transform=ax_sl.transAxes)
