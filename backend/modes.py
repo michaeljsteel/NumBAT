@@ -388,9 +388,7 @@ class Mode(object):
   
 
     def _plot_me(self, mode_helper, comps, field_type, ax=None):
-        #v_plots = {'Fxr': self.m_ReFx, 'Fyr': self.m_ReFy, 'Fzi': self.m_ImFz,
-        #           'Fxi': self.m_ImFx, 'Fyi': self.m_ImFy, 'Fzr': self.m_ReFz, 'Fabs': self.m_AbsF}
-
+        
         # TODO: weirdly, we only ax != None when there is one component to plot
         if not ax is None and len(comps) != 1:
             print(
