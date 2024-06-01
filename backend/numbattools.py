@@ -9,7 +9,10 @@ import scipy.integrate as sciint
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 from PIL import Image
+
+import reporting
 
 import numbat
 
@@ -27,16 +30,17 @@ def int2d(mat):
     return sciint.simpson(sciint.simpson(mat))
 
 def process_fortran_return(resm, msg):
-        
+
     fort_err, fort_mesg = resm[-2:]
     if fort_err:
         fort_mesg = str(fort_mesg, 'utf-8') # fort_mesg comes back as a byte string.
-        report_and_exit(f'Fortran error in {fort_mesg}: \n'
-                        ' NumBAT Fortran error code = %d. \n Message: \n %s' % (fort_err, fort_mesg))
+        reporting.report_and_exit(f'Fortran error in {msg}: \n'
+                        f' NumBAT Fortran error code = {fort_err}. \n Message: \n {fort_mesg}')
+        return None  # dummy
     else: # everything is fine
         return resm[:-2]
 
-    
+
 
 def save_and_close_figure(fig, fig_fname):
 
@@ -51,7 +55,7 @@ def save_and_close_figure(fig, fig_fname):
 def join_figs(l_fns, fnout, clip=None):
 
     images = []
-    for fn in l_fns: 
+    for fn in l_fns:
         im = Image.open(fn)
 
         if clip is not None:
@@ -82,8 +86,8 @@ def join_figs(l_fns, fnout, clip=None):
         yoffs=[int((images[1].size[1]-images[0].size[1])/2), 0]
 
     for i, im in enumerate(images):
-      new_im.paste(im, (x_offset,yoffs[i]))
-      x_offset += im.size[0]
+        new_im.paste(im, (x_offset,yoffs[i]))
+        x_offset += im.size[0]
 
     new_im.save(fnout)
 
@@ -317,7 +321,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
     report_progress = True
     #verbose=True
 
-    
+
     do_multiproc = numbat.NumBATApp().can_multiprocess()
 
     # Launch processes and keep copies
@@ -328,7 +332,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
 
         if report_progress:
             print(f'Assigning {total_tasks} tasks across {num_processes} processes.')
-    else: 
+    else:
         print('Performing calculation in single processor mode.')
         num_processes = 1
 
@@ -337,7 +341,7 @@ def launch_worker_processes_and_wait(num_processes, caller, q_result, q_work, ve
         pr = CalcProcess(q_work, q_result, caller, verbose)
         print('Starting process:', pr.name)
         if do_multiproc:
-            pr.start() 
+            pr.start()
             processes.append(pr)
         else:
             pr.run()

@@ -31,7 +31,7 @@ charge_F = 1.602_176_634e-19            # Charge of an electron in C (exact)
 permittivity_Fps0 = 8.854_187_8188e-12
 permeability_mu0 = 1.256_637_061_27e-6
 vacuum_impedance_Z0 = math.sqrt(permeability_mu0/permittivity_Fps0)
-            
+
 ###############################################################################
 
 SI_THz = 1.0e12
@@ -125,8 +125,8 @@ class component_t(object):
         cc._f_code = fc # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
         return cc
 
-    def __init__(self, uc):  
-        # uc is an actual field component name:  Ex, Ey, Ez, Et, Eabs, ux, uy etc. 
+    def __init__(self, uc):
+        # uc is an actual field component name:  Ex, Ey, Ez, Et, Eabs, ux, uy etc.
         # _f_code is the field-agnostic form starting with F and in the dominant real/imag part
         self._user_code = uc
         self._F = uc[0]  # E, H, or u
@@ -142,7 +142,7 @@ class component_t(object):
                         }[self._user_code]
 
     def is_AC(self): return self._F == 'u'
-    
+
     def get_label(self):
         c = self._F
         lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',

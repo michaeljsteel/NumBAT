@@ -1,18 +1,20 @@
+
+from math import sqrt
+#from pathlib import Path
+
 import numpy as np
-
-import matplotlib.tri
-from math import *
-from pathlib import Path
-
 import matplotlib.pyplot as plt
+import matplotlib.tri
 
 import numbat
-from nbtypes import *
-from numbattools import *
-import plotting
+from nbtypes import FieldType, component_t, SI_um, vacuum_impedance_Z0, SI_nm
+from numbattools import int2d, np_min_max
 
-class ModePlotHelper(object):
-    '''Helper class for plotting modes. 
+import plotting
+#from mode_calcs import check_triangulation
+
+class ModePlotHelper:
+    '''Helper class for plotting modes.
        Factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim.
        '''
 
@@ -37,7 +39,7 @@ class ModePlotHelper(object):
         self.v_Fy6p = None
         self.v_Fz6p = None
 
-        
+
         self.v_x = None  # final plot coordinate arrays in microns
         self.v_y = None
         self.m_X = None  # mesh grid versions of the same
@@ -58,7 +60,7 @@ class ModePlotHelper(object):
         del self.v_Fx6p, self.v_Fy6p, self.v_Fz6p
 
         self.xy_outs = {}
-        
+
         self.zero_arrays()
 
 
@@ -67,11 +69,11 @@ class ModePlotHelper(object):
 #        if not self.triang1p is None: del self.triang1p._cpp_triangulation
 
     def _init_plot_params(self):
-        self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0, 
+        self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
                             'ticks': True, 'num_ticks': None,
-                            'colorbar': True, 'contours': False, 'contour_lst': None, 
+                            'colorbar': True, 'contours': False, 'contour_lst': None,
                             'EM_AC': FieldType.EM_E,
-                            'prefix': 'tmp', 'suffix': '', 
+                            'prefix': 'tmp', 'suffix': '',
                             'decorator': plotting.Decorator(),
                             'suppress_imimre': True,
                             'quiver_points': 30
@@ -79,24 +81,24 @@ class ModePlotHelper(object):
 
     def update_plot_params(self, d_params):
         self.plot_params.update(d_params)
-        
-    # def set_plot_params(self,  
+
+    # def set_plot_params(self,
     #                     xlim_min=0, xlim_max=0, ylim_min=0, ylim_max=0,
     #                     field_type=FieldType.EM_E,
     #                     quiver_points=30,
     #                     num_ticks=None, ticks=False, colorbar=True, contours=False, contour_lst=None,
-    #                     suppress_imimre=True, 
+    #                     suppress_imimre=True,
     #                     prefix='tmp', suffix='', decorator=plotting.Decorator(), ):
-        
+
     #     #pf = numbat.NumBATApp().path_fields()
     #     #if prefix and not Path(pf).exists(): Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
 
     #     #field_type = FieldType.AC if self.sim_result.is_AC() else FieldType.from_str(field_type)
-        
+
     #     self.plot_params = {'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min,
     #                         'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks': num_ticks,
     #                         'colorbar': colorbar, 'contours': contours, 'contour_lst': contour_lst, 'EM_AC': field_type,
-    #                         'prefix': prefix, 'suffix': suffix, 
+    #                         'prefix': prefix, 'suffix': suffix,
     #                         'decorator': decorator,
     #                         'suppress_imimre': suppress_imimre,
     #                         'quiver_points': quiver_points
@@ -111,8 +113,8 @@ class ModePlotHelper(object):
 
         fem = simres.fem_mesh
 
-        # extract the field data at every node of every elt for the desired mode and field 
-        # v_Fxxx have length 6*n_msh_el 
+        # extract the field data at every node of every elt for the desired mode and field
+        # v_Fxxx have length 6*n_msh_el
         i = 0
         for i_el in range(fem.n_msh_el):
             for i_node in range(6):
@@ -124,14 +126,14 @@ class ModePlotHelper(object):
                     self.v_Fx6p[i] = simres.fem_evecs_H[0, i_node, ival, i_el]
                     self.v_Fy6p[i] = simres.fem_evecs_H[1, i_node, ival, i_el]
                     self.v_Fz6p[i] = simres.fem_evecs_H[2, i_node, ival, i_el]
-                    
+
                 i += 1
 
-        
-        
+
+
         self.v_F6p = np.sqrt(np.abs(self.v_Fx6p)**2 +
                              np.abs(self.v_Fy6p)**2 + np.abs(self.v_Fz6p)**2)
-        
+
         # Always need these ones.
         m_ReFx = self.interper_f(self.v_Fx6p.real)
         m_ReFy = self.interper_f(self.v_Fy6p.real)
@@ -154,10 +156,10 @@ class ModePlotHelper(object):
         self.setup_for_npoints = n_points
 
         fem = self.sim_result.fem_mesh
-        
+
         x_min, x_max = np_min_max(fem.mesh_xy[0,:])
         y_min, y_max = np_min_max(fem.mesh_xy[1,:])
-        
+
         area = abs((x_max-x_min)*(y_max-y_min))
         self.n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
         self.n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
@@ -165,12 +167,12 @@ class ModePlotHelper(object):
         # Now use the coords user would like to think in
         shiftx, shifty = self.sim_result.get_xyshift()
         #self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
-        
+
         # These are the actual x and y domains of the final plots
         self.v_x = np.linspace(x_min, x_max, self.n_pts_x)
         self.v_y = np.linspace(y_min, y_max, self.n_pts_y)
         self.m_X, self.m_Y = np.meshgrid(self.v_x, self.v_y)
-        
+
         self.v_x_out = (self.v_x + shiftx) / SI_um
         self.v_y_out = (self.v_y + shifty) / SI_um
         self.m_X_out, self.m_Y_out = np.meshgrid(self.v_x_out, self.v_y_out)
@@ -197,9 +199,9 @@ class ModePlotHelper(object):
         pref = numbat.NumBATApp().outprefix()
         fname = pref + f'-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png'
         plotting.save_and_close_figure(fig, fname)
-        
-        
- 
+
+
+
     def setup_plot_grid(self, n_points=501):
         '''Define interpolation plotting grids for a nominal n_points**2 points distributed evenly amongst x and y.'''
 
@@ -209,16 +211,16 @@ class ModePlotHelper(object):
         sim = self.sim_result.fem_mesh
 
         shiftx, shifty = self._choose_plot_points(n_points)
-        
+
         # unrolling data for the interpolators
         # TODO: for EM, table_nod seems to be identical to the MailData one
         #       mesh_xy seems to be the same but with some fractional scaling.
 
         # Sim version is in fortran ordering
         # This version is in python ordering.  Eeek!
-        self.table_nod = sim.table_nod.T   
+        self.table_nod = sim.table_nod.T
         self.mesh_xy = sim.mesh_xy.T  # is v_x, v_y  * d_in_m
-        
+
         # dense triangulation with multiple points
         self.v_x6p = np.zeros(6*sim.n_msh_el)
         self.v_y6p = np.zeros(6*sim.n_msh_el)
@@ -227,12 +229,12 @@ class ModePlotHelper(object):
         self.v_Fz6p = np.zeros(6*sim.n_msh_el, dtype=np.complex128)
         self.v_triang6p = []
 
-        # In table_nod 
+        # In table_nod
         # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
         # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
         # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
-        
-        
+
+
         # create sub-triangles from combos of the element nodes
         for idx in range(0, 6*sim.n_msh_el, 6):
             triangles = [[idx+0, idx+3, idx+5],
@@ -240,10 +242,10 @@ class ModePlotHelper(object):
                          [idx+2, idx+5, idx+4],
                          [idx+3, idx+4, idx+5]]
             self.v_triang6p.extend(triangles)
-    
+
 
         tabnod_py = self.table_nod -1  #  shift fortran to python indexing
-        
+
         # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
         # i is the index for the coordinates FIND A BETTER NAME
         i = 0
@@ -254,12 +256,12 @@ class ModePlotHelper(object):
                 self.v_y6p[i] = self.mesh_xy[i_ex, 1]
                 i += 1
 
-        
+
 
         # Interpolate onto triangular grid - honest to FEM elements
         # dense triangulation with unique points
         self.v_triang1p = []
-        table_nod = self.table_nod
+        #table_nod = self.table_nod
         for i_el in np.arange(sim.n_msh_el):
             triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
                          [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
@@ -267,8 +269,8 @@ class ModePlotHelper(object):
                          [tabnod_py[i_el, 3], tabnod_py[i_el, 4], tabnod_py[i_el, 5]]]
             self.v_triang1p.extend(triangles)
 
-        # TODO: There seems to be no difference between v_triang6p and v_triang1p. 
-        
+        # TODO: There seems to be no difference between v_triang6p and v_triang1p.
+
         # This is for testing only. Normally turn off
         if False:
             check_triangulation( self.mesh_xy[:,0], self.mesh_xy[:,1], self.v_triang1p)
@@ -278,7 +280,7 @@ class ModePlotHelper(object):
         self.triang1p = matplotlib.tri.Triangulation(self.mesh_xy[:, 0], self.mesh_xy[:, 1], self.v_triang1p)
 
         self._save_triangulation_plots()
-        
+
         # building interpolators: triang1p for the finder, triang6p for the values
         # TODO: could be more efficient only interpolating the fields which are ultimately to be used?
         # create rectangular arrays corresponding to the v_x, v_y grids
@@ -296,9 +298,9 @@ class ModePlotHelper(object):
 
 
 
-    
 
-class Mode(object):
+
+class Mode:
     '''This is a base class for both EM and AC modes.'''
 
     def __init__(self, sim, m):
@@ -318,33 +320,33 @@ class Mode(object):
         return self.sim_result.get_mode_helper()
 
     def prepare_mode(self, n_points, field_type):
-        
+
         mh = self.get_mode_helper()
 
         mh.setup_plot_grid(n_points=n_points)
-    
+
         if self.is_AC():
             self.field_type = FieldType.AC
         else:
             self.field_type = field_type
 
-        
+
         if not self.interpolated[field_type]:
             self.interpolate_mode(mh)
             self.interpolated[field_type] = True
-        
-        
-    
+
+
+
     def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None,
                   n_points=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
 
 
         self.prepare_mode(n_points, field_type)
-        
-        
+
+
         mh = self.get_mode_helper()
 
-        
+
         # FIX ME
         if not decorator is None:
             mh.plot_params['decorator'] = decorator
@@ -363,7 +365,7 @@ class Mode(object):
         self.clear_mode_plot_data()
 
     def plot_mode_H(self, comps):  # plot magnetic field for EM modes
-        self.plot_mode(comps, EM_field=FieldType.EM_H)
+        self.plot_mode(comps, field_type=FieldType.EM_H)
 
     def plot_strain(self):
         if not self.sim_result.is_AC():
@@ -374,21 +376,18 @@ class Mode(object):
 
     def clear_mode_plot_data(self):
         for k in self.d_fields.keys(): self.d_fields[k] = None
-        
-    def interpolate_mode(self, mode_helper):
-        
-        sim = self.sim_result
 
+    def interpolate_mode(self, mode_helper):
         mh = mode_helper
         self.d_fields = mh.interpolate_mode_i(self.mode_num, self.field_type)
-        
+
         if self.field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
             for m_F in self.d_fields.values():   # Do this when they are first made
                 m_F *= vacuum_impedance_Z0
-  
+
 
     def _plot_me(self, mode_helper, comps, field_type, ax=None):
-        
+
         # TODO: weirdly, we only ax != None when there is one component to plot
         if not ax is None and len(comps) != 1:
             print(
@@ -569,25 +568,25 @@ class Mode(object):
         m_Fy2 = mFs['Fyr']**2 + mFs['Fyi']**2
         m_Fz2 = mFs['Fzr']**2 + mFs['Fzi']**2
         m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2
-        
+
         s_fx = int2d(m_Fx2)
         s_fy = int2d(m_Fy2)
         s_fz = int2d(m_Fz2)
-        
+
         s_f = s_fx+s_fy+s_fz
         f_x = s_fx/s_f
         f_y = s_fy/s_f
         f_t = f_x+f_y
         f_z = s_fz/s_f
         self.fracs = [f_x, f_y, f_t, f_z]
-        
+
 
         [m_x, m_y] = np.meshgrid(v_x, v_y, indexing='ij')  # This is opposite to normal indexing to get image style ordering
         m_yud = np.flipud(m_y)  # Flipping upside down y to get sensible values for r0 position.
-        
+
         m_xmod = m_x * m_Fall2  # could do this by broadcasting without meshgrid?
         m_ymod = m_yud * m_Fall2
-        
+
         x0 = int2d(m_xmod)/s_f
         y0 = int2d(m_ymod)/s_f
         m_x2mod = np.power((m_x-x0), 2) * m_Fall2
@@ -606,13 +605,8 @@ class ModeEM(Mode):
         super().__init__(sim, m)
 
     def __str__(self):
-        s = 'EM mode # {0}'.format(self.mode_num)
+        s = f'EM mode # {self.mode_num}'
         return s
-
-    #def _analyse_mode(self):
-    #    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy,
-    #                          m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
-
 
 class ModeAC(Mode):
     '''Class representing a single acoustic (AC) mode.'''
@@ -625,13 +619,8 @@ class ModeAC(Mode):
         self.gain_MB = {}
 
     def __str__(self):
-        s = 'AC mode # {0}'.format(self.mode_num)
+        s = 'AC mode # {self.mode_num}'
         return s
-
-    #def _analyse_mode(self, v_x, v_y, m_Refx, m_Refy, m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf):
-    #    super()._analyse_mode(v_x, v_y, m_Refx, m_Refy,
-    #                          m_Refz, m_Imfx, m_Imfy, m_Imfz, m_Absf)
-
 
 
 # def plot_strain_mode_i(self, ival):

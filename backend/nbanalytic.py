@@ -82,45 +82,45 @@ def chareq_em_fib2_hy_m(neff, m, k, rco, ncore, nclad):
 
 
 #TODO Seems unused
-def _solve_chareq_em_fib2_disprel_multim(poln, k, nmodes, mlo, mhi, rco, ncore, nclad):
-    # solves for modes with azimuthal order in [mlo, mhi] inclusive
+# def del_solve_chareq_em_fib2_disprel_multim(poln, k, nmodes, mlo, mhi, rco, ncore, nclad):
+#     # solves for modes with azimuthal order in [mlo, mhi] inclusive
 
-    nbrack = 500
-    dn = ncore-nclad
+#     nbrack = 500
+#     dn = ncore-nclad
 
-    # look for up to nmodes in [nclad, ncore]
-    neff = np.linspace(ncore-dn/nbrack, nclad+dn/nbrack, nbrack)
-    sol_neff = np.zeros(nmodes, dtype=np.float64)
-    imode = 0
-    for m in range(mlo, mhi+1):
+#     # look for up to nmodes in [nclad, ncore]
+#     neff = np.linspace(ncore-dn/nbrack, nclad+dn/nbrack, nbrack)
+#     sol_neff = np.zeros(nmodes, dtype=np.float64)
+#     imode = 0
+#     for m in range(mlo, mhi+1):
 
-        last_neff = neff[0]
-        last_res = f_disprel(last_neff, m, k, rco, ncore, nclad)
+#         last_neff = neff[0]
+#         last_res = f_disprel(last_neff, m, k, rco, ncore, nclad)
 
-        nobrack = True  # if we find no roots with a given m, there will be no higher m roots and we can give up
-        ineff = 1
-        while imode < nmodes and ineff < nbrack:
-            t_neff = neff[ineff]
-            t_res = f_disprel(t_neff, m, k, rco, ncore, nclad)
+#         nobrack = True  # if we find no roots with a given m, there will be no higher m roots and we can give up
+#         ineff = 1
+#         while imode < nmodes and ineff < nbrack:
+#             t_neff = neff[ineff]
+#             t_res = f_disprel(t_neff, m, k, rco, ncore, nclad)
 
-            if ((family == EMPoln.HY and last_res * t_res < 0)  # Hybrid eig curves are smooth
-                    or (last_res < 0 and t_res > 0)):  # TE and TM curves have +inf to -inf breaks which are not brackets
-                # a bracket! go find the root
-                nobrack = False
-                # root, rootres
-                root = sciopt.brentq(f_disprel, last_neff, t_neff,
-                                     args=(m, k, rco, ncore, nclad))
-                sol_neff[imode] = root
-                imode += 1
+#             if ((family == EMPoln.HY and last_res * t_res < 0)  # Hybrid eig curves are smooth
+#                     or (last_res < 0 and t_res > 0)):  # TE and TM curves have +inf to -inf breaks which are not brackets
+#                 # a bracket! go find the root
+#                 nobrack = False
+#                 # root, rootres
+#                 root = sciopt.brentq(f_disprel, last_neff, t_neff,
+#                                      args=(m, k, rco, ncore, nclad))
+#                 sol_neff[imode] = root
+#                 imode += 1
 
-            last_neff = t_neff
-            last_res = t_res
-            ineff += 1
+#             last_neff = t_neff
+#             last_res = t_res
+#             ineff += 1
 
-        if nobrack:
-            break  # exhausted all roots at this k
+#         if nobrack:
+#             break  # exhausted all roots at this k
 
-    return sol_neff
+#     return sol_neff
 
 
 def _solve_chareq_em_fib2_disprel(poln, kvec, nmodes, azi_lo, azi_hi, rco, ncore, nclad):

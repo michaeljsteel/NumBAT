@@ -26,11 +26,11 @@ def report_and_exit(msg):
 
 def assertion(assertion_ok, msg, severity='fatal'):
     if not assertion_ok:
-        if severity == 'fatal': 
+        if severity == 'fatal':
             report_and_exit(f'NumBAT assertion failed: {msg}')
         else:
             report(f'NumBAT assertion failed: {msg}')
-        
+
 class NBWarnings(object):
     def __new__(cls):
         if not hasattr(cls, 'instance'):

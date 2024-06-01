@@ -18,44 +18,36 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-import sys
 import os
 import traceback
 import math
 import json
 import re
 import copy
-import numpy as np
-#import numpy.linalg
 import tempfile
 import subprocess
-#import scipy.linalg
 import pathlib
+
+import numpy as np
+
 
 import matplotlib as mpl
 import matplotlib.cm as mplcm
 import matplotlib.pyplot as plt
-import matplotlib.colors as mplcolors
 import matplotlib.ticker as ticker
 
+from  nbtypes import unit_x, unit_y, unit_z, CrystalGroup
+from bulkprops import solve_christoffel
+#from voigt import VoigtTensor4
+import voigt
 
-
-
-#import numbattools
-
-from  nbtypes import unit_x, unit_y, unit_z
-import modes
-from bulkprops import *
-from voigt import *
-
-from nbtypes import CrystalGroup
 import reporting
 
 
 class BadMaterialFileError(Exception):
     pass
 
-        
+
 g_material_library = None
 
 def make_material(s):
@@ -93,12 +85,12 @@ class MaterialLibrary:
     def _load_materials(self):
 
         for fname in pathlib.Path(self._material_data_path).glob('*.json'):
-            
+
             json_data = None
             with open(fname, 'r') as fin:
 
                 # read whole file and remove comments
-                s_in = ''.join(fin.readlines())  
+                s_in = ''.join(fin.readlines())
                 s_in = re.sub(r'//.*\n', '\n', s_in)
 
                 try:
@@ -106,7 +98,7 @@ class MaterialLibrary:
                 except Exception as err:
                     traceback.print_exc()  # TODO: why this traceback?
                     reporting.report_and_exit(
-                        f'JSON parsing error: {err} for file {self.json_file}')
+                        f'JSON parsing error: {err} for file {fname}')
 
             mat_name = json_data['material_name']
 
@@ -119,7 +111,7 @@ class MaterialLibrary:
             except BadMaterialFileError as err:
                 reporting.report_and_exit(str(err))
 
-            
+
             self._materials[mat_name] = new_mat
 
 
@@ -157,7 +149,7 @@ class Material(object):
             s += f'\nComment: {self.comment}'
         return s
 
-    def copy(self): 
+    def copy(self):
         return copy.deepcopy(self)
 
     def full_str(self):
@@ -175,9 +167,9 @@ class Material(object):
             s = f'Elastic properties of material {self.material_name}'
             s += dent + f'Density:        {self.rho:.3f} kg/m^3'
             s += dent + f'Ref. index:     {self.refindex_n:.4f} '
-            
+
             s += dent + f'Crystal class:  {self.crystal.name}'
-            
+
             if self.is_isotropic():
                 s += dent + f'c11:            {self.stiffness_c_IJ.mat[1, 1]*1e-9:.3f} GPa'
                 s += dent + f'c12:            {self.stiffness_c_IJ.mat[1, 2]*1e-9:.3f} GPa'
@@ -188,7 +180,7 @@ class Material(object):
                 s += dent + f'Velocity shear: {self.Vac_shear():.3f} m/s'
             else:
                 s += dent + 'Stiffness c_IJ:' + str(self.stiffness_c_IJ) + '\n'
-                
+
                 # find wave properties for z propagation
                 v_phase, v_evecs, v_vgroup = solve_christoffel(unit_z, self.stiffness_c_IJ, self.rho)
 
@@ -197,7 +189,7 @@ class Material(object):
                         vgabs = np.linalg.norm(v_vgroup[m])
                         s += dent + f'Wave mode {m+1}: v_p={v_phase[m]:.4f} km/s,  |v_g|={vgabs:.4f} km/s,  ' \
                             + 'u_j=' + str(v_evecs[:,m]) + ',  v_g=' + str(v_vgroup[m]) +' km/s'
-                
+
 
         except Exception:
             s = 'Unknown/undefined elastic parameters in material '+self.material_name
@@ -289,7 +281,7 @@ class Material(object):
             self.construct_crystal_isotropic()
         else:
             self.construct_crystal_anisotropic()
-            
+
         self._store_original_tensors()
 
     def _store_original_tensors(self):
@@ -514,11 +506,11 @@ class Material(object):
 
         self._anisotropic = False
 
-        self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
-        self.viscosity_eta_IJ = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
-        self.photoel_p_IJ = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+        self.stiffness_c_IJ = voigt.VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.viscosity_eta_IJ = voigt.VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.photoel_p_IJ = voigt.VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
 
-        
+
         # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
         if 'c_11' in self._params and 'c_12' in self._params and 'c_44' in self._params:
         #    self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params)
@@ -536,7 +528,7 @@ class Material(object):
             c12 = self.EYoung*self.nuPoisson / \
                 ((1+self.nuPoisson) * (1-2*self.nuPoisson))
             c11 = c12+2*c44
-            self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c')
+            self.stiffness_c_IJ = voigt.VoigtTensor4(self.material_name, 'c')
             self.stiffness_c_IJ.make_isotropic_tensor(c11, c12, c44)
         else:
             reporting.report_and_exit(
@@ -550,10 +542,10 @@ class Material(object):
     # not do this unless symmetry is off?
     def construct_crystal_anisotropic(self):
 
-        self.stiffness_c_IJ = VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
-        self.viscosity_eta_IJ = VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
-        self.photoel_p_IJ = VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
-            
+        self.stiffness_c_IJ = voigt.VoigtTensor4(self.material_name, 'c', self._params, 'stiffness', ('GPa', 1.e9))
+        self.viscosity_eta_IJ = voigt.VoigtTensor4(self.material_name, 'eta', self._params, 'viscosity')
+        self.photoel_p_IJ = voigt.VoigtTensor4(self.material_name, 'p', self._params, 'photoelasticity')
+
         self._anisotropic = True
 
         # TODO: change to match/case
@@ -568,12 +560,12 @@ class Material(object):
 
 
     def _add_3d_dispersion_curves_to_axes(self, ax_ivp=None, ax_vg=None):
-        
+
 
         axs = []
         if ax_ivp is not None: axs.append(ax_ivp)
         if ax_vg is not None: axs.append(ax_vg)
-        
+
         # Make data
         tpts = 50
         ppts = 100
@@ -599,13 +591,13 @@ class Material(object):
                 ivx[itheta, ip, :] = vkap[0]/v_vphase
                 ivy[itheta, ip, :] = vkap[1]/v_vphase
                 ivz[itheta, ip, :] = vkap[2]/v_vphase
-                
+
 
                 ivgx[itheta, ip, :] = v_vgroup[:, 0]
                 ivgy[itheta, ip, :] = v_vgroup[:, 1]
                 ivgz[itheta, ip, :] = v_vgroup[:, 2]
-             
-           
+
+
         for i in range(3):
             if ax_ivp:
                 ax_ivp.plot_surface(ivx[:, :, i], ivy[:, :, i], ivz[:, :, i], alpha=.25)
@@ -613,7 +605,7 @@ class Material(object):
             if ax_vg:
                 ax_vg.plot_surface(ivgx[:, :, i], ivgy[:, :, i], ivgz[:, :, i], alpha=.25)
 
-        
+
         if ax_ivp:
             ax_ivp.set_xlabel(r'$1/v_x^{(p)}$ [s/km]', fontsize=8, labelpad=1)
             ax_ivp.set_ylabel(r'$1/v_y^{(p)}$ [s/km]', fontsize=8, labelpad=1)
@@ -622,14 +614,14 @@ class Material(object):
             ax_vg.set_xlabel(r'$v_x^{(g)}$ [km/s]', fontsize=8, labelpad=1)
             ax_vg.set_ylabel(r'$v_y^{(g)}$ [km/s]', fontsize=8, labelpad=1)
             ax_vg.set_zlabel(r'$v_z^{(g)}$ [km/s]', fontsize=8, labelpad=1)
-            
+
 
         for ax in axs:
             for a in ('x', 'y', 'z'):
                 ax.tick_params(axis=a, labelsize=8, pad=0)
             for t_ax in [ax.xaxis, ax.yaxis, ax.zaxis]:
                 t_ax.line.set_linewidth(.5)
-        
+
             #ax.set_aspect('equal')
 
     def plot_bulk_dispersion_3D(self, pref, label=None):
@@ -642,13 +634,13 @@ class Material(object):
 
 
         self._add_3d_dispersion_curves_to_axes(ax_vp, ax_vg)
-    
+
 
         plt.savefig(pref+'-bulkdisp3D.png')
 
     def plot_bulk_dispersion(self, pref, label=None):
         '''Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
-        
+
         Solving the Christoffel equation: D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
         C is the Voigt form stiffness.
         D = [
@@ -661,7 +653,7 @@ class Material(object):
         fig, axs = setup_bulk_dispersion_2D_plot()
 
         ax_sl, ax_vp, ax_vg, ax_ivp_3d = axs
-            
+
         cm = 'cool'  # Color map for polarisation coding
         self._add_bulk_slowness_curves_to_axes(pref, fig, ax_sl, ax_vp, ax_vg, cm)
 
@@ -670,7 +662,7 @@ class Material(object):
         ax_sl.text(-0.1, 1.1, label, fontsize=14, style='italic', transform=ax_sl.transAxes)
 
         self._add_3d_dispersion_curves_to_axes(ax_ivp_3d)
-            
+
         plt.savefig(pref+'-bulkdisp.png')
 
     def _add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
@@ -683,7 +675,7 @@ class Material(object):
         v_velc = np.zeros([npts, 3])
         v_vgx = np.zeros([npts, 3])
         v_vgz = np.zeros([npts, 3])
-        
+
 
         cmm = mpl.colormaps[cm]
         with open(pref+'-bulkdisp.dat', 'w') as fout:
@@ -715,7 +707,7 @@ class Material(object):
                 ycomp = np.abs(vecs[1,:])                  # $\unity \cdot u_i$
                 kapcomp = np.abs(np.matmul(vkap, vecs))  # component of vkap along each evec
                 v_velc[ik, :] = kapcomp    # phase velocity color by polarisation
-                
+
 
                 for iv in range(3):
                     fout.write(f'{v_vphase[iv]*1000:10.4f}  ')
@@ -730,7 +722,7 @@ class Material(object):
                 rad = 0.07*v_vel[0, 0]  # length of polarisation sticks
                 lwstick = .9
                 srad = 5  # diameter of polarisation dots
-                if ik % npolskip == 0: 
+                if ik % npolskip == 0:
 
                     for i in range(3):
                         radsl = 1/v_vel[ik, i]
@@ -747,7 +739,7 @@ class Material(object):
                         ptm = radvp*np.array([np.cos(kphi), np.sin(kphi)])
                         pt0 = np.real(ptm - vecs[0:3:2, i]*rad)
                         pt1 = np.real(ptm + vecs[0:3:2, i]*rad)
-                        
+
                         ax_vp.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
                         ax_vp.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
 
@@ -766,11 +758,11 @@ class Material(object):
             tax.set_major_locator(ticker.MultipleLocator(2.0
                                                          #, offset=0
                                                          ))
-        
+
         make_axes_square(np.abs(1/v_vel).max(), ax_sl)
         make_axes_square(np.abs(v_vel).max(), ax_vp)
         make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
-        
+
         #fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_vp, shrink=.5,
         #             pad=.025, location='top', label='$\hat{e} \cdot \hat{\kappa}$')
 
@@ -786,10 +778,10 @@ class Material(object):
         v_velc = np.zeros([npts, 3])
         v_vgx = np.zeros([npts, 3])
         v_vgz = np.zeros([npts, 3])
-        
+
 
         cmm = mpl.colormaps[cm]
-        
+
         kapcomp = np.zeros(3)
         ycomp = np.zeros(3)
         for ik, kphi in enumerate(v_kphi):
@@ -810,15 +802,15 @@ class Material(object):
             ycomp = np.abs(vecs[1,:])                  # $\unity \cdot u_i$
             kapcomp = np.abs(np.matmul(vkap, vecs))  # component of vkap along each evec
             v_velc[ik, :] = kapcomp    # phase velocity color by polarisation
-            
 
-            
+
+
             # Draw polarisation ball and stick notations
             irad = 0.07/v_vel[0, 0]  # length of polarisation sticks
             rad = 0.07*v_vel[0, 0]  # length of polarisation sticks
             lwstick = .9
             srad = 5  # diameter of polarisation dots
-            if ik % npolskip == 0: 
+            if ik % npolskip == 0:
 
                 for i in range(3):
                     radsl = 1/v_vel[ik, i]
@@ -835,7 +827,7 @@ class Material(object):
                     ptm = radvp*np.array([np.cos(kphi), np.sin(kphi)])
                     pt0 = np.real(ptm - vecs[0:3:2, i]*rad)
                     pt1 = np.real(ptm + vecs[0:3:2, i]*rad)
-                    
+
                     #ax_vp.plot((pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
                     #ax_vp.plot(ptm[0], ptm[1], 'o', c=polc, markersize=srad*ycomp[i])
 
@@ -852,18 +844,18 @@ class Material(object):
         # Tick location seems to need help here
         #for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
          #   tax.set_major_locator(ticker.MultipleLocator(2.0, offset=0))
-        
+
         make_axes_square(np.abs(1/v_vel).max(), ax_sl)
         #make_axes_square(np.abs(v_vel).max(), ax_vp)
         #make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
-        
+
         cbar=fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_sl, shrink=.5,
                      pad=.025, location='right')
         cbar.ax.tick_params(labelsize=6, width=.25)
-        
+
         cbar.outline.set_linewidth(1)
         cbar.set_label(label=f'Mat {mat1or2} ' +r'$\hat{e} \cdot \hat{\kappa}$', fontsize=10)
-        
+
 
     def make_crystal_axes_plot(self, pref):
         '''Build crystal coordinates diagram using call to external asymptote application.'''
@@ -881,11 +873,11 @@ class Material(object):
 
 def setup_bulk_dispersion_2D_plot():
     '''Plots both slowness and ray normal contours.'''
-    
+
     fig, axs = plt.subplots(2,2, figsize=(7,6))
     fig.subplots_adjust(hspace=.35, wspace=0)
-    
-    ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0] 
+
+    ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0]
 
     axs[1,1].set_axis_off()  # Hide axis 2,2
 
@@ -897,7 +889,7 @@ def setup_bulk_dispersion_2D_plot():
     ax_vp.set_ylabel(r'$v^{(p)}_{z}$ [s/km]')
     ax_vg.set_xlabel(r'$v^{(g)}_{x}$ [km/s]')
     ax_vg.set_ylabel(r'$v^{(g)}_{z}$ [km/s]')
-    
+
     for ax in axs.flat[:3]:  # Don't write to axis 2,2
         ax.axhline(0, c='gray', lw=.5)
         ax.axvline(0, c='gray', lw=.5)
@@ -906,20 +898,20 @@ def setup_bulk_dispersion_2D_plot():
              ax.get_xticklabels() + ax.get_yticklabels()):
                 item.set_fontsize(10)
         for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
-    axs = ax_sl, ax_vp, ax_vg, ax_ivp3d    
+    axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
     return fig, axs
 
 
 def setup_bulk_dispersion_2D_plot_2x1():
     '''Plots both slowness and ray normal contours.'''
-    
+
     fig, axs = plt.subplots(1,1, figsize=(6,4))
     #fig.subplots_adjust(hspace=.35, wspace=0)
     axs = axs,
     #ax_sl, ax_vg = axs
     ax_sl = axs[0]
-    
-    #ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0] 
+
+    #ax_sl, ax_vp, ax_vg = axs[0,0], axs[0,1], axs[1,0]
 
     #axs[1,1].set_axis_off()  # Hide axis 2,2
 
@@ -931,7 +923,7 @@ def setup_bulk_dispersion_2D_plot_2x1():
     #ax_vp.set_ylabel(r'$v^{(p)}_{z}$ [s/km]')
     #ax_vg.set_xlabel(r'$v^{(g)}_{x}$ [km/s]')
     #ax_vg.set_ylabel(r'$v^{(g)}_{z}$ [km/s]')
-    
+
     for ax in axs:  # Don't write to axis 2,2
         ax.axhline(0, c='gray', lw=.5)
         ax.axvline(0, c='gray', lw=.5)
@@ -940,17 +932,17 @@ def setup_bulk_dispersion_2D_plot_2x1():
              ax.get_xticklabels() + ax.get_yticklabels()):
                 item.set_fontsize(12)
         for t_ax in ['top','bottom','left','right']: ax.spines[t_ax].set_linewidth(.5)
-    #axs = ax_sl, ax_vp, ax_vg, ax_ivp3d    
+    #axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
     return fig, axs
 
 
 def compare_bulk_dispersion(mat1, mat2, pref):
     fig, axs = setup_bulk_dispersion_2D_plot_2x1()
 
-    #ax_sl, ax_vg = axs 
+    #ax_sl, ax_vg = axs
     ax_sl=axs[0]
     ax_vg=None
-    
+
     cm1 = 'cool'  # Color map for polarisation coding
     cm2 = 'autumn'  # Color map for polarisation coding
 

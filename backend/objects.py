@@ -36,7 +36,7 @@ import scipy.interpolate
 import numbat
 import reporting
 import numbattools as nbtools
-from nbtypes import *
+from nbtypes import SI_nm
 
 import materials
 from fortran import NumBAT
@@ -85,18 +85,154 @@ def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
 
     return wg_index
 
+class ElectromagneticProps:
+    '''EM properties in unit-indexed forms suitable for fortran'''
+
+    def __init__(self, v_mats_em, n_mats_em, loss):
+
+
+        self.n_mats_em = n_mats_em
+
+        #matitems = list(struc.d_materials.items())[:self.n_mats_em]
+        matvals = v_mats_em[:n_mats_em]
+
+        self.v_refindexn =np.array([m.refindex_n for m in matvals])
+        self.el_conv_table_n = {i:i for i in range(1, self.n_mats_em+1)}
+        if not loss:
+            self.v_refindexn = self.v_refindexn.real
+
+
 class ElasticProps:
-    '''Elastic tensors in zero-indexed form suitable for fortran'''
-    
-    def __init__(self):
-        self.rho = None        # [ntyp_el_AC]
-        self.c_IJ = None       # [3 x 3 x ntyp_el_AC]
-        self.c_ijkz = None     # [3x3x3x1 ntyp_el_AC]
-        self.p_ijkl = None     # [3x3x3x3 ntyp_el_AC]  # why are these needed? why not do all using Voigt form?
-        self.eta_ijkl = None   # [3x3x3x3 ntyp_el_AC]
+    '''Elastic tensors in unit-indexed forms suitable for fortran'''
+
+    def __init__(self, v_acoustic_mats, symmetry_flag):
+
+        self.n_mats_ac = len(v_acoustic_mats)
+
+        #self.rho = None        # [n_mats_ac]
+        #self.c_IJ = None       # [3 x 3  x  n_mats_ac]
+        ##self.c_ijkz = None     # [3x3x3x1  x  n_mats_ac]
+        #elf.p_ijkl = None     # [3x3x3x3  x  n_mats_ac]
+        #self.eta_ijkl = None   # [3x3x3x3  x  n_mats_ac]
 
 
-class Structure(object):
+        # density  shape = [n_mats_ac]
+        self.rho = np.zeros(self.n_mats_ac)
+
+        # stiffness tensor in 6x6 Voigt notation [3 x 3  x  n_mats_ac]
+        self.c_IJ = np.zeros((6, 6, self.n_mats_ac))
+
+        # stiffness tensor as rank 4 ijkz tensor [3x3x3x1  x  n_mats_ac]
+        self.c_ijkz = np.zeros((3, 3, 3, self.n_mats_ac))
+
+        # photelastic tensor as rank 4 ijkl tensor  # [3x3x3x3  x  n_mats_ac]
+        self.p_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
+
+        # eta tensor as rank 4 ijkl tensor [3x3x3x3  x  n_mats_ac]
+        self.eta_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
+
+
+        # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
+        # TODO: use a zero-indexed form of toVoigt map
+        voigt_map = {(0, 0): 1, (1, 1): 2, (2, 2): 3, (2, 1): 4,
+                     (2, 0): 5, (0, 1): 6, (1, 2): 4, (0, 2): 5, (1, 0): 6}
+
+
+        # Build zero-based material tensors from unit-based
+        for k_typ in range(self.n_mats_ac):
+            if v_acoustic_mats[k_typ]:
+                t_ac = v_acoustic_mats[k_typ]
+                t_ac_c_IJ = t_ac.stiffness_c_IJ
+                t_ac_p_IJ = t_ac.photoel_p_IJ
+                t_ac_eta_IJ = t_ac.viscosity_eta_IJ
+
+                self.rho[k_typ] = t_ac.rho
+
+                if symmetry_flag:  # is it actually worth making this saving?
+                    print('Surprise: using symmetry_flag tensor buildings.')
+                    self.c_IJ[0, 0, k_typ] = t_ac_c_IJ[1, 1]
+                    self.c_IJ[1, 1, k_typ] = t_ac_c_IJ[1, 1]
+                    self.c_IJ[2, 2, k_typ] = t_ac_c_IJ[1, 1]
+                    self.c_IJ[0, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[0, 2, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[1, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[1, 2, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[2, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[2, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_IJ[3, 3, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_IJ[4, 4, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_IJ[5, 5, k_typ] = t_ac_c_IJ[4, 4]
+
+                    self.c_ijkz[2, 2, 2, k_typ] = t_ac_c_IJ[1, 1]
+                    self.c_ijkz[2, 0, 0, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_ijkz[2, 1, 1, k_typ] = t_ac_c_IJ[1, 2]
+                    self.c_ijkz[1, 1, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_ijkz[1, 2, 1, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_ijkz[0, 0, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_ijkz[0, 2, 0, k_typ] = t_ac_c_IJ[4, 4]
+
+                    self.p_ijkl[0, 0, 0, 0, k_typ] = t_ac_p_IJ[1, 1]
+                    self.p_ijkl[1, 1, 1, 1, k_typ] = t_ac_p_IJ[1, 1]
+                    self.p_ijkl[2, 2, 2, 2, k_typ] = t_ac_p_IJ[1, 1]
+                    self.p_ijkl[0, 0, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[0, 0, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[1, 1, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[1, 1, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[2, 2, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[2, 2, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
+                    self.p_ijkl[1, 2, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[1, 2, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[2, 1, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[2, 1, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[0, 2, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[0, 2, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[2, 0, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[2, 0, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[0, 1, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[0, 1, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[1, 0, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
+                    self.p_ijkl[1, 0, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
+
+                    self.eta_ijkl[0, 0, 0, 0, k_typ] = t_ac_eta_IJ[1, 1]
+                    self.eta_ijkl[1, 1, 1, 1, k_typ] = t_ac_eta_IJ[1, 1]
+                    self.eta_ijkl[2, 2, 2, 2, k_typ] = t_ac_eta_IJ[1, 1]
+                    self.eta_ijkl[0, 0, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[0, 0, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[1, 1, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[1, 1, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[2, 2, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[2, 2, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
+                    self.eta_ijkl[1, 2, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[1, 2, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[2, 1, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[2, 1, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[0, 2, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[0, 2, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[2, 0, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[2, 0, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[0, 1, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[0, 1, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[1, 0, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
+                    self.eta_ijkl[1, 0, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
+
+                else:
+                    for i in range(6):
+                        for j in range(6):
+                            self.c_IJ[i, j, k_typ] = t_ac_c_IJ[i+1, j+1]  # TODO: replace with Voigt.value() ?
+
+                    for i in [0, 1, 2]:
+                        for j in [0, 1, 2]:
+                            I = voigt_map[(i, j)]
+                            for k in [0, 1, 2]:
+                                Jz = voigt_map[(k, 2)]
+                                self.c_ijkz[i, j, k, k_typ] = t_ac_c_IJ[I, Jz]
+                                for l in [0, 1, 2]:
+                                    J = voigt_map[(k, l)]
+                                    self.p_ijkl[i, j, k, l, k_typ] = t_ac_p_IJ[I, J]
+                                    self.eta_ijkl[i, j, k, l, k_typ] = t_ac_eta_IJ[I, J]
+
+
+class Structure:
     ''' Represents the geometry and  material properties (elastic and electromagnetic) of a waveguide structure.
 
         Args:
@@ -221,7 +357,7 @@ class Structure(object):
                 f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
         else:
             cls._waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
-        
+
         if not pmsh_index_user.exists():
             reporting.register_warning(
                 f"Couldn't find user waveguide template index file: {pmsh_index_user}")
@@ -231,7 +367,7 @@ class Structure(object):
 
 
 
-    def __init__(self, inc_shape=None, unitcell_x=None, unitcell_y=None, 
+    def __init__(self, inc_shape=None, unitcell_x=None, unitcell_y=None,
                  inc_a_x=None, inc_a_y=None, inc_b_x=None, inc_b_y=None,
                  inc_c_x=None, inc_d_x=None, inc_e_x=None, inc_f_x=None,
                  inc_g_x=None, inc_h_x=None, inc_i_x=None, inc_j_x=None,
@@ -264,14 +400,12 @@ class Structure(object):
             reporting.register_warning(
                 'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
-        self.n_mats_em = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
-        self.n_mats_ac = 0  # total number of materials with elastic properties in the structure (ie not vacuum)
+        #self.n_mats_em = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
 
         # material identities seem to depend on stable ordering of the material dictionary when converted to a list
 
-       
-
-        self.el_props = ElasticProps()
+        self.optical_props = None
+        self.elastic_props = None
 
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
@@ -292,7 +426,7 @@ class Structure(object):
 
         # Fill up dictionary with all mats 'bkg' to 'r' with vacuum if needed.
         # TODO: Why do this. Better to leave undefined and fail if needed materials are missing.
-        
+
         for (tag, mat) in mat_pairs.items():
             self.d_materials[tag] = mat if (mat is not None) else copy.deepcopy(mat_vac)
 
@@ -330,8 +464,9 @@ class Structure(object):
         self.loss = loss       # TODO: Boolean. Needs better name
         self.force_mesh = force_mesh
 
+        n_mats_em = 0
         if make_mesh_now:
-            self.build_waveguide_geometry(self.d_materials)
+            n_mats_em = self.build_waveguide_geometry(self.d_materials)
         else:  # TODO: this seems to be broken. But also not really worth supporting? Mesh construction is not hard
             print(f"Using mesh from existing file '{mesh_file}'.")
             self.mesh_mail_fname = mesh_file
@@ -362,7 +497,7 @@ class Structure(object):
         # print('symflag', symmetry_flag)
         # el_conv_table = {}
         # i = 1; j = 1
-        # for matter in acoustic_props:
+        # for matter in v_acoustic_mats:
         #     if matter != None:
         #         el_conv_table[i] = j
         #         j += 1
@@ -370,140 +505,20 @@ class Structure(object):
         # self.typ_el_AC = el_conv_table
         # print el_conv_table
 
+        self.optical_props = ElectromagneticProps(list(self.d_materials.values()), n_mats_em, self.loss)
+
         self._build_elastic_tensors(symmetry_flag)
+
 
     def _build_elastic_tensors(self, symmetry_flag):
         '''Put all elastic tensor properties into single 3 x 3 x num_material arrays, zero-indexed'''
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
-        # Any material not given acoustic_props assumed to be vacuum.
-        
-        acoustic_props = [m for m in self.d_materials.values() if m.has_elastic_properties()]
+        # Any material not given v_acoustic_mats assumed to be vacuum.
 
-        # Number of different acoustic materials
-        self.n_mats_ac = len(acoustic_props)
+        v_acoustic_mats = [m for m in self.d_materials.values() if m.has_elastic_properties()]
 
-        rho = np.zeros(self.n_mats_ac)
-
-        # stiffness tensor in 6x6 Voigt notation
-        actens_c_IJ = np.zeros((6, 6, self.n_mats_ac))
-
-        # stiffness tensor as rank 4 ijkz tensor
-        actens_c_ijkz = np.zeros((3, 3, 3, self.n_mats_ac))
-
-        # photelastic tensor as rank 4 ijkl tensor
-        actens_p_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
-
-        # eta tensor as rank 4 ijkl tensor
-        actens_eta_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
-
-
-        # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
-        # TODO: use a zero-indexed form of toVoigt map
-        voigt_map = {(0, 0): 1, (1, 1): 2, (2, 2): 3, (2, 1): 4,
-                     (2, 0): 5, (0, 1): 6, (1, 2): 4, (0, 2): 5, (1, 0): 6}
-
-
-        # Build zero-based material tensors from unit-based
-        for k_typ in range(self.n_mats_ac):
-            if acoustic_props[k_typ]:
-                t_ac = acoustic_props[k_typ]
-                t_ac_c_IJ = t_ac.stiffness_c_IJ
-                t_ac_p_IJ = t_ac.photoel_p_IJ
-                t_ac_eta_IJ = t_ac.viscosity_eta_IJ
-
-                rho[k_typ] = t_ac.rho
-
-                if symmetry_flag:  # is it actually worth making this saving?
-                    print('Surprise: using symmetry_flag tensor buildings.')
-                    actens_c_IJ[0, 0, k_typ] = t_ac_c_IJ[1, 1]
-                    actens_c_IJ[1, 1, k_typ] = t_ac_c_IJ[1, 1]
-                    actens_c_IJ[2, 2, k_typ] = t_ac_c_IJ[1, 1]
-                    actens_c_IJ[0, 1, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[0, 2, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[1, 0, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[1, 2, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[2, 0, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[2, 1, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_IJ[3, 3, k_typ] = t_ac_c_IJ[4, 4]
-                    actens_c_IJ[4, 4, k_typ] = t_ac_c_IJ[4, 4]
-                    actens_c_IJ[5, 5, k_typ] = t_ac_c_IJ[4, 4]
-
-                    actens_c_ijkz[2, 2, 2, k_typ] = t_ac_c_IJ[1, 1]
-                    actens_c_ijkz[2, 0, 0, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_ijkz[2, 1, 1, k_typ] = t_ac_c_IJ[1, 2]
-                    actens_c_ijkz[1, 1, 2, k_typ] = t_ac_c_IJ[4, 4]
-                    actens_c_ijkz[1, 2, 1, k_typ] = t_ac_c_IJ[4, 4]
-                    actens_c_ijkz[0, 0, 2, k_typ] = t_ac_c_IJ[4, 4]
-                    actens_c_ijkz[0, 2, 0, k_typ] = t_ac_c_IJ[4, 4]
-
-                    actens_p_ijkl[0, 0, 0, 0, k_typ] = t_ac_p_IJ[1, 1]
-                    actens_p_ijkl[1, 1, 1, 1, k_typ] = t_ac_p_IJ[1, 1]
-                    actens_p_ijkl[2, 2, 2, 2, k_typ] = t_ac_p_IJ[1, 1]
-                    actens_p_ijkl[0, 0, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[0, 0, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[1, 1, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[1, 1, 2, 2, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[2, 2, 0, 0, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[2, 2, 1, 1, k_typ] = t_ac_p_IJ[1, 2]
-                    actens_p_ijkl[1, 2, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[1, 2, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[2, 1, 1, 2, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[2, 1, 2, 1, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[0, 2, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[0, 2, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[2, 0, 0, 2, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[2, 0, 2, 0, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[0, 1, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[0, 1, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[1, 0, 0, 1, k_typ] = t_ac_p_IJ[4, 4]
-                    actens_p_ijkl[1, 0, 1, 0, k_typ] = t_ac_p_IJ[4, 4]
-
-                    actens_eta_ijkl[0, 0, 0, 0, k_typ] = t_ac_eta_IJ[1, 1]
-                    actens_eta_ijkl[1, 1, 1, 1, k_typ] = t_ac_eta_IJ[1, 1]
-                    actens_eta_ijkl[2, 2, 2, 2, k_typ] = t_ac_eta_IJ[1, 1]
-                    actens_eta_ijkl[0, 0, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[0, 0, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[1, 1, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[1, 1, 2, 2, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[2, 2, 0, 0, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[2, 2, 1, 1, k_typ] = t_ac_eta_IJ[1, 2]
-                    actens_eta_ijkl[1, 2, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[1, 2, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[2, 1, 1, 2, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[2, 1, 2, 1, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[0, 2, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[0, 2, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[2, 0, 0, 2, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[2, 0, 2, 0, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[0, 1, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[0, 1, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[1, 0, 0, 1, k_typ] = t_ac_eta_IJ[4, 4]
-                    actens_eta_ijkl[1, 0, 1, 0, k_typ] = t_ac_eta_IJ[4, 4]
-
-                else:
-                    for i in range(6):
-                        for j in range(6):
-                            actens_c_IJ[i, j, k_typ] = t_ac_c_IJ[i+1, j+1]  # TODO: replace with Voigt.value() ?
-
-                    for i in [0, 1, 2]:
-                        for j in [0, 1, 2]:
-                            I = voigt_map[(i, j)]
-                            for k in [0, 1, 2]:
-                                Jz = voigt_map[(k, 2)]
-                                actens_c_ijkz[i, j, k, k_typ] = t_ac_c_IJ[I, Jz]
-                                for l in [0, 1, 2]:
-                                    J = voigt_map[(k, l)]
-                                    actens_p_ijkl[i, j, k, l, k_typ] = t_ac_p_IJ[I, J]
-                                    actens_eta_ijkl[i, j, k, l,
-                                               k_typ] = t_ac_eta_IJ[I, J]
-
-        self.el_props.rho = rho
-        self.el_props.c_IJ = actens_c_IJ
-        self.el_props.c_ijkz = actens_c_ijkz
-        self.el_props.p_ijkl = actens_p_ijkl
-        self.el_props.eta_ijkl = actens_eta_ijkl
-
+        self.elastic_props = ElasticProps(v_acoustic_mats, symmetry_flag)
 
     def get_material(self, k):
         return self.d_materials[k]
@@ -517,7 +532,7 @@ class Structure(object):
         self.shift_ac_x = x * SI_nm
         self.shift_ac_y = y * SI_nm
 
-    def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME 
+    def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME
         msh_name='missing_mesh_name'
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
@@ -544,14 +559,14 @@ class Structure(object):
         self.msh_location_in = Path(this_directory, 'msh')
         self.msh_location_out = Path(self.msh_location_in, 'build')
 
-        
+
         if not self.msh_location_out.is_dir():
             self.msh_location_out.mkdir()
 
         self.wg_geom = None
 
-        found = False 
-        for wg in Structure._waveguide_templates: 
+        found = False
+        for wg in Structure._waveguide_templates:
             if self.inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
                 found = True
 
@@ -560,7 +575,7 @@ class Structure(object):
 
                 wg_geom.init_geometry()
 
-                self.n_mats_em = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
+                n_mats_em = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
 
                 break
 
@@ -582,20 +597,22 @@ class Structure(object):
 
         self._build_mesh()
 
+        return n_mats_em
+
     def using_linear_elements(self):
         return self.inc_shape in self.linear_element_shapes
 
     def using_curvilinear_elements(self):
         return self.inc_shape in self.curvilinear_element_shapes
 
-        
+
 
     def _build_mesh(self):
-        '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh 
+        '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
         to generate the NumBAT .mail file.'''
 
         print('  Processing Gmsh')
-        
+
         msh_template = self.wg_geom.gmsh_template_filename()
         msh_fname = self.wg_geom.get_instance_filename()
 
@@ -611,7 +628,7 @@ class Structure(object):
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
             assertions_on = False
-            
+
             err_no, err_msg = NumBAT.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:
 
@@ -650,7 +667,8 @@ class Structure(object):
         tdir = tempfile.TemporaryDirectory()
         tmpoutpref = str(Path(tdir.name, outpref))
 
-        conv_tmp = open(Path(self.msh_location_in, 'geo2png.scr'), 'r').read()
+        with open(Path(self.msh_location_in, 'geo2png.scr'), 'r') as fin:
+            conv_tmp = fin.read()
         conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_geom')
 
         fn_scr = Path(self.msh_location_out, self.msh_name + '_geo2png.scr')
@@ -664,7 +682,8 @@ class Structure(object):
 
         os.wait()
 
-        conv_tmp = open(Path(self.msh_location_in, 'msh2png.scr'), 'r').read()
+        with open(Path(self.msh_location_in, 'msh2png.scr'), 'r') as fin:
+            conv_tmp = fin.read()
         conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_nodes')
 
         fn_scr = Path(self.msh_location_out, self.msh_name + '_msh2png.scr')
@@ -755,7 +774,7 @@ class Structure(object):
     def plot_refractive_index_profile(self, prefix, as_epsilon=False):
         print('\n\nPlotting ref index')
 
-        
+
         mail = self.mail_data
         v_x, v_y = mail.v_centx, mail.v_centy
         v_elt_indices = mail.v_elts[:,-1]  # the elt number column
@@ -765,10 +784,10 @@ class Structure(object):
 
         uniq_elts = set(list(v_elt_indices))
 
-        
+
         # find ref index at each centroid
         v_elt_refindex = np.zeros(len(uniq_elts))
-        
+
         for i in range(len(v_elt_refindex)):
             v_elt_refindex[i] = np.real(list(self.d_materials.values())[i].refindex_n)
 
@@ -788,15 +807,15 @@ class Structure(object):
         n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
         n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
 
-        
+
         v_regx = np.linspace(x_min, x_max, n_pts_x)
         v_regy = np.linspace(y_min, y_max, n_pts_y)
         m_regx, m_regy = np.meshgrid(v_regx, v_regy)
 
         xy_in = np.array([v_x, v_y]).T
         xy_out = np.vstack([m_regx.ravel(), m_regy.ravel()]).T
-        
-        
+
+
         v_regindex = scipy.interpolate.griddata(xy_in, v_refindex, xy_out).reshape([n_pts_y, n_pts_x])
         fig, ax = plt.subplots()
 
@@ -811,15 +830,15 @@ class Structure(object):
         ax.set_xlabel(r'$x$')
         ax.set_ylabel(r'$y$')
         fig.colorbar(cf)
-        
+
 
         plotting.save_and_close_figure(fig, prefix+'refn.png')
-        
-              
+
+
     def plot_phase_velocity_z_profile(self, prefix):
         print('plotting phasevel index')
-    
-    
+
+
 # called at startup from NumBATApp.__init__
 def initialise_waveguide_templates(numbatapp):
     Structure.initialise_waveguide_templates(numbatapp)
