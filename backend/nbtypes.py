@@ -141,6 +141,7 @@ class component_t(object):
                         'ux': 'Fxr', 'uy': 'Fyr', 'uz': 'Fzi', 'uabs': 'Fabs', 'ut': 'Ft',
                         }[self._user_code]
 
+    def is_AC(self): return self._U == 'u'
     def get_label(self):
         c = self._F
         lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',

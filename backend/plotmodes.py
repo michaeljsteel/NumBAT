@@ -56,32 +56,45 @@ class TidyAxes:
         self._nax = nax
         self._set_defaults_for_num_axes(nax)
         self._props.update(props)
+
+    def update_property(self, k, v):
+        self._props[k]=v    
         
     def _set_defaults_for_num_axes(self, nax):
         props = {}
         
         if nax in (4,6):
             props['ax_label_fs'] = 10
+            props['ax_label_xpad'] = ''
+            props['ax_label_ypad'] = ''
+            
+            
             props['ax_ticklabel_fs'] = 10
             props['ax_tickwidth'] = .25
             props['ax_linewidth'] = 1
         elif nax == 2:
             props['ax_label_fs'] = 12
+            props['ax_label_pad'] = 5
             props['ax_ticklabel_fs'] =  10
             props['ax_tickwidth'] = 1
             props['ax_linewthidth'] = 1
         else:
             props['ax_label_fs'] =  12
+            props['ax_label_pad'] = 5
             props['ax_ticklabel_fs'] =  10
             props['ax_tickwidth'] =  1
             props['ax_linewidth'] =  1
 
         props['aspect'] = 0.0
 
+        props['axes_color'] = 'gray'
+
         props['cb_linewidth'] = 1 
         props['cb_label_fs'] = 10 
         props['cb_ticklabel_fs'] = 8 
         props['cb_tickwidth'] = 0.25
+
+        props['cb_edgecolor'] = 'gray'
 
         props['cb_shrink'] = 0  # possible?
         props['cb_pad'] = 0.    # possible?
@@ -107,9 +120,21 @@ class TidyAxes:
             
             ax.xaxis.label.set_size(pr['ax_label_fs'])
             ax.yaxis.label.set_size(pr['ax_label_fs'])
+            
+            xpad = self._props['ax_label_xpad']
+            ypad = self._props['ax_label_ypad']
+            if xpad:
+                xlab = ax.xaxis.get_label_text()
+                ax.set_xlabel(xlab, labelpad=xpad)
+            if ypad:
+                ylab = ax.yaxis.get_label_text()
+                ax.set_ylabel(ylab, labelpad=ypad)
+            
 
             for axis in ['top','bottom','left','right']:
                 ax.spines[axis].set_linewidth(pr['ax_linewidth'])
+                ax.spines[axis].set_color(pr['axes_color'])
+                
 
     def apply_to_cbars(self, cbs):
         if not isinstance(cbs, Iterable):
@@ -122,6 +147,8 @@ class TidyAxes:
             cb.set_label(lab, size=pr['cb_label_fs'])
             
             cb.outline.set_linewidth(pr['cb_linewidth'])
+            cb.outline.set_color(pr['cb_edgecolor'])
+            
             
             cb.ax.tick_params(labelsize=pr['cb_ticklabel_fs'], 
                            width=pr['cb_tickwidth'])        
@@ -136,21 +163,27 @@ class TidyAxes:
 class Decorator(object):
 
     def __init__(self, multi=False):
-        mp_base_font = 18
-        sp_base_font = 24
+        mp_base_fs = 18
+        sp_base_fs = 24
         
-        self._multiplot_props = {'title_fs': mp_base_font-2, 'subplot_title_fs': mp_base_font-5,
-                                     'ax_label_fs': mp_base_font-10, 'data_label_fs': mp_base_font-8,
-                                     'ax_tick_fs': mp_base_font-10, 'cbar_tick_fs': mp_base_font-12, 
-                                     'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .2,
-                                     'linewidth': '.75', 'edgecolor': 'gray', 'title_pad': 5, 'cbar_size': '5%', 'cbar_pad': '4%'}
+        self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .4,
+                             'title_fs': mp_base_fs-2, 'subtitle_fs': mp_base_fs-5,
+                             'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10, 
+                             'data_label_fs': mp_base_fs-8,
+                             'cbar_tick_fs': mp_base_fs-12, 
+                             'linewidth': '.75', 'edgecolor': 'gray', 
+                             'cbar_size': '5%', 'cbar_pad': '6%'}
         
-        self._singleplot_props = {
-            'title': sp_base_font-2, 'ax_label_fs': 20, 'subplot_title_fs': 25, 'cbar_tick_fs': 20, 'ax_tick_fs': 20,
-            'linewidth': '.75', 'edgecolor': 'gray', 'title_pad': 20, 'cbar_size': '5%', 'cbar_pad': '2%',
-            'data_label_fs': mp_base_font-8}
+        self._single_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .2,
+                              'title_fs': sp_base_fs-2,  'subtitle_fs': sp_base_fs-3, 
+                              'title_pad': 20, 'subtitle_pad': 20, 
+                              'ax_label_fs': 20, 'ax_label_pad': 20, 'ax_tick_fs': 20,
+                              'data_label_fs': sp_base_fs-8,
+                              'cbar_tick_fs': 20, 
+                              'linewidth': '.75', 'edgecolor': 'gray', 
+                              'cbar_size': '5%', 'cbar_pad': '2%'}
 
-        self._props = self._multiplot_props if multi else self._singleplot_props 
+        self._props = self._multi_props if multi else self._single_props 
         #self._is_single = True
         self._cmap_limits = {}
         self._title = ''
@@ -165,18 +198,18 @@ class Decorator(object):
 
     #def _fontsizes(self):
     #    if self._is_single:
-    #        return self._singleplot_fontsizes
+    #        return self._single_fontsizes
     ##    else:
-      #      return self._multiplot_fontsizes
+      #      return self._multi_fontsizes
 
     def _get_props(self):
         return self._props
 
-    def _set_for_single(self):
-        self._props = self._singleplot_props
+    def set_for_single(self):
+        self._props.update(self._single_props)
 
-    def _set_for_multi(self):
-        self._props = self._multiplot_props
+    def set_for_multi(self):
+        self._props.update(self._multi_props)
 
     def set_cmap_limits(self, d):
         '''Specify the lower and upper contour plot limits for a field component plot.
@@ -188,13 +221,6 @@ class Decorator(object):
     def get_cmap_limits(self, comp):
         return self._cmap_limits.get(comp)
 
-    # def get_property(self, lab):
-    #     fs = 10
-    #     try:
-    #         fs = self._fontsizes()[lab]
-    #     except Exception:
-    #         print(f'Warning: unknown fontsize label "{lab}" in Decorator::get_property()')
-    #     return fs
 
     def get_property(self, lab):
         ans=''
@@ -213,18 +239,6 @@ class Decorator(object):
         '''Add or override an axes property for a single plot corresponding to the given label.'''
         self._props[label] = prop
 
-    # def set_multiplot_axes_property(self, label, prop):
-    #     '''Add or override an axes property for a multiple axes plot corresponding to the given label.'''
-    #     self._multiplot_axesprops[label] = prop
-
-    # def set_singleplot_fontsize(self, label, sz):
-    #     '''Override a font size for a single plot corresponding to the given label.'''
-    #     self._singleplot_fontsizes[label] = sz
-
-    # def set_multiplot_fontsize(self, label, sz):
-    #     '''Override a font size for a mutiple axes plot corresponding to the given label.'''
-    #     self._multiplot_fontsizes[label] = sz
-
     def set_title(self, t): self._title = t
 
     def add_title(self, ax):
@@ -239,6 +253,8 @@ class Decorator(object):
           users may add extra features to a plot.
           '''
         pass
+
+
 
 def plot_set_ticks(ax, plps):
     if plps['ticks']:
@@ -257,8 +273,8 @@ def plot_set_axes_style(ax, plps, decorator):
 
 def plot_set_title(ax, comp_label, plps, decorator):
     if plps.get('add_title', True):
-        ax.set_title(comp_label, fontsize=decorator.get_property('subplot_title_fs'),
-                     pad=decorator.get_property('title_pad'))
+        ax.set_title(comp_label, fontsize=decorator.get_property('subtitle_fs'),
+                     pad=decorator.get_property('subtitle_pad'))
 
 
 def get_quiver_skip_range(npts, skip):
@@ -330,6 +346,7 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
     do_cbar = plps['colorbar']
     do_contours = plps['contours']
 
+    cbar = None
     if do_cbar or do_contours:
         if plps['contour_lst']:
             cbarticks = plps['contour_lst']
@@ -358,15 +375,19 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
             if do_cbar:
                 cbar.add_lines(CS2)
 
-    return im_co
+    return im_co, cbar
 
-def add_quiver_plot(ax, d_xy, v_fields, cc_quiver, plps, decorator, do_cont):
+def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     quiver_points = plps.get('quiver_points', 20)
-    xlmi = plps.get('xlim_min', 0)
-    xlma = plps.get('xlim_max', 0)
-    ylmi = plps.get('ylim_min', 0)
-    ylma = plps.get('ylim_max', 0)
+
+    # give a little space around elastic profiles
+    deftrim = -.05 if cc._F=='u' else 0.0  
+        
+    xlmi = plps.get('xlim_min', deftrim)
+    xlma = plps.get('xlim_max', deftrim)
+    ylmi = plps.get('ylim_min', deftrim)
+    ylma = plps.get('ylim_max', deftrim)
 
     v_x, v_y = d_xy['v_x'], d_xy['v_y']
 
@@ -424,45 +445,67 @@ def add_quiver_plot(ax, d_xy, v_fields, cc_quiver, plps, decorator, do_cont):
 
 
     
-def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_cont=None, cc_quiver=None):
+def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None):
 
     v_x, v_y, m_X, m_Y = list(d_xy.values())
     
-    do_cont = not cc_cont is None
-    do_quiv = not cc_quiver is None
+    do_cont = not cc_scalar is None
+    do_quiv = not cc_vector is None
 
     decorator = plps['decorator']
-    
+
+    cbar = None
     if do_cont:
-        im_co = add_contour_plot(ax, d_xy, v_fields[cc_cont._f_code], cc_cont, plps, decorator)
+        im_co, cbar = add_contour_plot(ax, d_xy, v_fields[cc_scalar._f_code], cc_scalar, plps, decorator)
         
     if do_quiv:
-        add_quiver_plot(ax, d_xy, v_fields, cc_quiver, plps, decorator, do_cont)
+        add_quiver_plot(ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
     
     # Adjustments to the visible plot domain
-    xlmi = plps.get('xlim_min', 0)
-    xlma = plps.get('xlim_max', 0)
-    ylmi = plps.get('ylim_min', 0)
-    ylma = plps.get('ylim_max', 0)
+    # By default, give a little space around elastic profiles
+    is_AC = (cc_scalar and cc_scalar.is_AC()) or (cc_vector and cc_vector.is_AC()) 
+    deftrim = -.05 
+        
+    xlmi = plps.get('xlim_min', deftrim)
+    xlma = plps.get('xlim_max', deftrim)
+    ylmi = plps.get('ylim_min', deftrim)
+    ylma = plps.get('ylim_max', deftrim)
 
-    if xlmi > 0 or xlma > 0:
+    if uc=='u':
+        if not xlmi: xlmi = deftrim 
+        if not xlma: xlma = deftrim 
+        if not ylmi: ylmi = deftrim     
+        if not ylma: ylma = deftrim 
+    
+    
+    if xlmi != 0 or xlma != 0:
         xmin, xmax = ax.get_xlim()
         width_x = xmax-xmin
         ax.set_xlim(xmin+xlmi*width_x, xmax-xlma*width_x)
 
-    if ylmi > 0 or ylma > 0:
+
+    if ylmi != 0 or ylma != 0:
         ymin, ymax = ax.get_ylim()
         width_y = ymax-ymin
         ax.set_ylim(ymin+ylmi*width_y, ymax-ylma*width_y)
 
+    
     labs = []
-    if do_cont: labs.append(cc_cont.get_label())
-    if do_quiv: labs.append(cc_quiver.get_label())
+    if do_cont: labs.append(cc_scalar.get_label())
+    if do_quiv: labs.append(cc_vector.get_label())
     comp_label = ', '.join(labs)
 
-    tidy = TidyAxes(nax=4)
+    lw = decorator.get_property('linewidth')
+    ec = decorator.get_property('edgecolor')
+
+    tidy = TidyAxes(nax=6, 
+                    props={'axes_color':ec, 'cb_edgecolor':ec,
+                        'ax_label_xpad':3, 'ax_label_ypad':1 })
 
     tidy.apply_to_axes(ax)
+    if cbar:
+        tidy.apply_to_cbars(cbar)
+    
     
     plot_set_ticks(ax, plps)
     #plot_set_axes_style(ax, plps, decorator)
@@ -477,7 +520,7 @@ def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_cont=None, cc_quiver=No
 
 
 
-def write_mode_data(ax, plps, sim_result, ival, v_x, v_y):  # mode data summary
+def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
 
     decorator = plps['decorator']
     fs = decorator.get_property('data_label_fs')
@@ -510,7 +553,7 @@ def write_mode_data(ax, plps, sim_result, ival, v_x, v_y):  # mode data summary
     _write_line(x0-.05, y0, f'Mode properties: m={ival}', fs+2); y0 -= dy
     
     if sim_result.is_EM():
-        _write_line(x0, y0, r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*1.e12):.5f} THz') ; y0 -= dy
+        _write_line(x0, y0, r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz') ; y0 -= dy
         _write_line(x0, y0, r'$k$: ' + f'{sim_result.kz_EM(ival)/1.e6:.5f} ' + r'μm$^{{-1}}$');  y0 -= dy
 
         neff = sim_result.neff(ival)
@@ -527,7 +570,7 @@ def write_mode_data(ax, plps, sim_result, ival, v_x, v_y):  # mode data summary
         _write_line(x0, y0, 
                    f'$q$: {q_AC * SI_um:.5f} ' + r'μm$^{{-1}}$, $\lambda:$ '+ f'{twopi/q_AC/SI_um:.5f} ' + r'μm') ;y0 -= dy
         
-        _write_line(x0, y0, r'$q/2\pi$: ' + f'{q_AC/(SI_um * twopi):.5f} '+ r'μm$^{{-1}}$'); y0 -= dy
+        _write_line(x0, y0, r'$q/2\pi$: ' + f'{q_AC*SI_um/twopi:.5f} '+ r'μm$^{{-1}}$'); y0 -= dy
         _write_line(x0, y0, r'$\Omega/(2\pi)$: ' + f'{nu_AC/SI_GHz:.5f} GHz' ); y0 -= dy
         if sim_result.vgroup_AC_available(): 
             vg = sim_result.vg_AC(ival)  
@@ -589,32 +632,32 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     figsz = decorator.get_property('figsize')
     ws = decorator.get_property('subplots_wspace')
     hs = decorator.get_property('subplots_hspace')
-    lw = decorator.get_property('linewidth')
-    ec = decorator.get_property('edgecolor')
+    
 
     decorator.set_frame_drawer(sim_result._structure.wg_geom)
 
-    v_x, v_y, m_X, m_Y = list(d_xy.values())
         
     hide_minors = plps['suppress_imimre']
     rows = 2 if hide_minors else 3
         
-    fig, axs = plt.subplots(rows, 3, figsize=figsz)
+    fig, axs = plt.subplots(rows, 3, figsize=figsz, )
+    fig.subplots_adjust(hspace=hs, wspace=ws) 
+           
     axs = axs.flat
     axi = 0
 
     ax = axs[axi]; axi += 1
-    write_mode_data(ax, plps, sim_result, ival, v_x, v_y)  # mode data summary
+    write_mode_data(ax, plps, sim_result, ival)  # mode data summary
     
     ft = plps['EM_AC']
     cc_scal = field_type_to_intensity_code(ft)
     cc_transvec = field_type_to_vector_code(ft)
     
     ax = axs[axi]; axi += 1
-    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_cont=cc_scal, cc_quiver=cc_transvec)  # the whole field 
+    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)  # the whole field 
 
     ax = axs[axi]; axi += 1
-    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_quiver=cc_scal)  # the intensity 
+    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_vector=cc_transvec)  # the intensity 
 
     for (flab, field) in v_plots.items():
         cc = component_t.make_comp(ft, flab)
@@ -623,7 +666,7 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
             continue
 
         ax = axs[axi]; axi += 1
-        plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_cont=cc)  # the scalar plots
+        plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
     
 
     fig_fname = modeplot_filename(plps, ival)
@@ -634,8 +677,6 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
 
 def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
 
-    v_x, v_y, m_X, m_Y = list(d_xy.values())
-    
     decorator = plps['decorator']
 
     if axis is None:
@@ -648,7 +689,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
     cc_transvec = field_type_to_vector_code(ft)
 
 
-    plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_cont=cc_scal, cc_quiver=cc_transvec)
+    plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename(plps, ival, cc._user_code)
