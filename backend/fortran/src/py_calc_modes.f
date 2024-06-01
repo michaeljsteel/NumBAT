@@ -69,11 +69,9 @@ c   ls_material  - (1, nodes_per_el+7, n_msh_el)
 
       subroutine calc_EM_modes(
 c     Inputs
-     *    lambda, dimscale_in_m, bloch_vec, shift_ksqr, E_H_field,
-     *    n_modes, mesh_file, n_msh_pts, 
-     *    n_msh_el, n_typ_el, v_refindex_n, 
-     *    bnd_cdn_i, itermax, debug, 
-
+     *    n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
+     *    E_H_field, bnd_cdn_i, itermax, debug, 
+     *    mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, 
 c     Outputs
      *    beta1, sol1, mode_pol,
      *    table_nod, type_el, type_nod, mesh_xy, ls_material,

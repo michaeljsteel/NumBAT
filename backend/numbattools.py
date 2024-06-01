@@ -26,6 +26,18 @@ def np_min_max(v):
 def int2d(mat):
     return sciint.simpson(sciint.simpson(mat))
 
+def process_fortran_return(resm, msg):
+        
+    fort_err, fort_mesg = resm[-2:]
+    if fort_err:
+        fort_mesg = str(fort_mesg, 'utf-8') # fort_mesg comes back as a byte string.
+        report_and_exit(f'Fortran error in {fort_mesg}: \n'
+                        ' NumBAT Fortran error code = %d. \n Message: \n %s' % (fort_err, fort_mesg))
+    else: # everything is fine
+        return resm[:-2]
+
+    
+
 def save_and_close_figure(fig, fig_fname):
 
     if fig_fname[-3:-1] == 'png':
