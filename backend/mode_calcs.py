@@ -38,15 +38,7 @@ from modes import *
 
 
 
-def process_fortran_return(resm, msg):
-        
-    fort_err, fort_mesg = resm[-2:]
-    if fort_err:
-        fort_mesg = str(fort_mesg, 'utf-8') # fort_mesg comes back as a byte string.
-        report_and_exit(f'Fortran error in {fort_mesg}: \n'
-                        ' NumBAT Fortran error code = %d. \n Message: \n %s' % (fort_err, fort_mesg))
-    else: # everything is fine
-        return resm[:-2]
+
 
 
 
@@ -124,6 +116,7 @@ class FemMesh:
         self.mesh_xy = None             # physical scaled x-y, locations of every node  shape= (n_msh_pts,2)
 
         self.n_nodes = 6                # Nodes per each element (is always 6)
+        self.ac_mesh_from_em = True
         
 
 
@@ -210,7 +203,6 @@ class FemMesh:
         # Take existing msh from EM FEM and manipulate mesh to exclude vacuum areas.
         #simres_EM = self.simres_EM
         #if simres_EM:  # Invariably the case
-        ac_mesh_from_em = True
 
         n_msh_el = em_fem.n_msh_el
         type_el = em_fem.type_el       # material index of each element into list self.v_refindexn (unit-based)
@@ -321,10 +313,10 @@ class FemMesh:
         for nm,mat in d_mats_AC.items():
             print(f'   {nm+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.')
         
-        self.table_nod_AC = table_nod_AC
-        self.type_el_AC = type_el_AC
-        self.mesh_xy_AC = mesh_xy_AC
-        self.node_physindex_AC = node_physindex_AC
+        self.table_nod = table_nod_AC
+        self.type_el = type_el_AC
+        self.mesh_xy = mesh_xy_AC
+        self.node_physindex = node_physindex_AC
 
 
 
@@ -930,21 +922,24 @@ class EMSimulation(Simulation):
         EM_FEM_debug = 0
 
         fm = self.fem_mesh
-        
-        resm = NumBAT.calc_em_modes(self.lambda_m, self.d_in_m, self.k_perp, shift_ksqr, 
-                                    self.E_H_field, self.n_modes, 
-                                    fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, fm.n_mats_em, fm.v_refindexn, 
-                                    bnd_cdn_i, itermax, EM_FEM_debug)
+            
+        resm = NumBAT.calc_em_modes(self.n_modes, self.lambda_m, self.d_in_m, self.k_perp, shift_ksqr, 
+                                    self.E_H_field, bnd_cdn_i, itermax, EM_FEM_debug,
+                                    fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, fm.n_mats_em, 
+                                    fm.v_refindexn)  # v_refindex should really be in an em_props
 
 
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)
         
         # TODO: compare these outputs (node_physindex, type_el, mesh_xy, table_nod), to the ones generated in Mail file.
-        self.eigs_kz, self.fem_evecs, self.mode_pol, self.table_nod, \
-            self.type_el, self.node_physindex, \
-                self.mesh_xy, self.ls_material = process_fortran_return(resm, 'solving for electromagnetic modes') 
+
         
+        self.eigs_kz, self.fem_evecs, self.mode_pol, self.table_nod, \
+            self.type_el, self.node_physindex, self.mesh_xy, self.ls_material \
+                    = process_fortran_return(resm, 'solving for electromagnetic modes') 
+        
+        print('modepol', self.mode_pol)
         
         self.fem_mesh.store_em_mode_outputs(self.type_el, self.node_physindex, self.table_nod, self.mesh_xy )
 
@@ -956,8 +951,8 @@ class EMSimulation(Simulation):
             # Integration using analytically evaluated basis function integrals. Fast.
             self.EM_mode_power = NumBAT.em_mode_energy_int_v2_ez(
                 self.k_0, self.n_modes, 
-                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, fm.table_nod, fm.mesh_xy, 
-                self.eigs_kz, self.fem_evecs)
+                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, 
+                fm.table_nod, fm.mesh_xy, self.eigs_kz, self.fem_evecs)
         else:
             if not tstruc.using_curvilinear_elements():
                 print("Warning: em_mode_energy_int - not sure if mesh contains curvi-linear elements",
@@ -965,8 +960,8 @@ class EMSimulation(Simulation):
         # Integration by quadrature. Slowest.
             self.EM_mode_power = NumBAT.em_mode_energy_int_ez(
                 self.k_0, self.n_modes, 
-                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, fm.table_nod, fm.mesh_xy, 
-                self.eigs_kz, self.fem_evecs)
+                fm.n_msh_el, fm.n_msh_pts, fm.n_nodes, 
+                fm.table_nod, fm.mesh_xy, self.eigs_kz, self.fem_evecs)
         # Bring Kokou's def into line with CW formulation.
         self.EM_mode_power = 2.0*self.EM_mode_power
 
@@ -976,11 +971,7 @@ class EMSimulation(Simulation):
             print("Calculating EM mode energies...")
             
             if tstruc.using_linear_elements():
-                # # Semi-analytic integration. Fastest!
-                # else:
-                #     if tstruc.inc_shape not in tstruc.curvilinear_element_shapes:
-                #         print("Warning: em_mode_e_energy_int - not sure if mesh contains curvi-linear elements",
-                #             "\n using slow quadrature integration by default.\n\n")
+
                 # # Integration by quadrature. Slowest.
                 self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
                     self.n_modes, fm.n_msh_el, fm.n_msh_pts, fm.n_nodes,
@@ -1109,18 +1100,17 @@ class ACSimulation(Simulation):
         el_props = self.structure.el_props
 
         fort_err = 0
-        ac_mesh_from_em = True
         show_mem_est = False
 
         # TODO: rmove _AC suffixes from fm.fields_AC
         resm = NumBAT.calc_ac_modes(
-            self.n_modes, self.q_AC,  self.d_in_m, shift_nu, 
-            fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el, 
-            tstruc.symmetry_flag, tstruc.n_mats_ac, el_props.c_IJ, el_props.rho,
-            bnd_cdn_i, itermax, ARPACK_tol,
-            fm.node_physindex_AC,
-            ac_mesh_from_em, AC_FEM_debug, show_mem_est,
-            fm.table_nod_AC, fm.type_el_AC, fm.mesh_xy_AC  # these ones also come back as outputs
+            self.n_modes, self.q_AC,  self.d_in_m, shift_nu,    # scalar params 
+            bnd_cdn_i, itermax, ARPACK_tol, AC_FEM_debug, show_mem_est,
+            tstruc.symmetry_flag, tstruc.n_mats_ac,             # waveguide and material props
+            el_props.c_IJ, el_props.rho,
+            fm.ac_mesh_from_em, fm.mesh_mail_fname, fm.n_msh_pts, fm.n_msh_el,      # mesh properties in
+            fm.node_physindex,
+            fm.table_nod, fm.type_el, fm.mesh_xy  # these ones also come back as outputs
             )
 
 
@@ -1136,7 +1126,7 @@ class ACSimulation(Simulation):
         
         # Retrieve the material properties of each mesh point.
         self.ls_material = NumBAT.array_material_ac(
-            fm.n_msh_el, tstruc.n_mats_ac, fm.type_el_AC,
+            fm.n_msh_el, tstruc.n_mats_ac, fm.type_el,
             el_props.rho, el_props.c_IJ, el_props.p_ijkl, el_props.eta_ijkl)
 
         # Calc unnormalised power in each AC mode - PRA Eq. 18.

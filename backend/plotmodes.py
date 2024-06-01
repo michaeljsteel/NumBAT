@@ -462,7 +462,7 @@ def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=
         add_quiver_plot(ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
     
     # Adjustments to the visible plot domain
-    # By default, give a little space around elastic profiles
+    
     is_AC = (cc_scalar and cc_scalar.is_AC()) or (cc_vector and cc_vector.is_AC()) 
     deftrim = -.05 
         
@@ -471,7 +471,7 @@ def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=
     ylmi = plps.get('ylim_min', deftrim)
     ylma = plps.get('ylim_max', deftrim)
 
-    if uc=='u':
+    if is_AC: # By default, give a little space around elastic profiles
         if not xlmi: xlmi = deftrim 
         if not xlma: xlma = deftrim 
         if not ylmi: ylmi = deftrim     

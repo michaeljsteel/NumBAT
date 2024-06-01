@@ -3,15 +3,15 @@
 
       subroutine calc_AC_modes(
 c     Explicit inputs
-     *    num_modes, q_ac, 
-     *    d_in_m, shift_nu,
+     *    num_modes, q_ac, d_in_m, shift_nu,
+     *    i_bnd_cdns, itermax, tol, debug, show_mem_est, 
+     *    symmetry_flag, n_typ_el, 
+     *    c_tensor, rho, 
+     *    supplied_geo_flag, 
      *    mesh_file, n_msh_pts, n_msh_el,
-     *    symmetry_flag, n_typ_el, c_tensor, rho, 
-     *    i_bnd_cdns, itermax, tol,
 c    *    plot_modes, 
 c    *    cmplx_max, real_max, int_max, 
      *    type_nod, 
-     *    supplied_geo_flag, debug, show_mem_est, 
 c     Inputs and outputs
      *    table_nod, type_el, x_arr,
 c     Outputs

@@ -184,9 +184,9 @@ OBJS = $(subst src,build,$(OBJSA))
 PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_AC.f py_calc_modes.f \
 	EM_mode_energy_int_v2_Ez.f \
   EM_mode_energy_int_Ez.f photoelastic_int.f photoelastic_int_v2.f \
-  AC_mode_power_int.f AC_mode_power_int_v2.f AC_mode_power_int_v4.f \
-  AC_alpha_int.f AC_alpha_int_v2.f moving_boundary.f array_material_AC.f \
-  AC_mode_elastic_energy_int.f AC_mode_elastic_energy_int_v4.f EM_mode_E_energy_int.f \
+  ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
+  ac_alpha_int.f ac_alpha_int_v2.f moving_boundary.f array_material_AC.f \
+  ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f EM_mode_E_energy_int.f \
   H_mode_field_Ez.f array_size.f 
 #numbatmod.f
 
