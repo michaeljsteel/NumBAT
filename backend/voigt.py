@@ -19,19 +19,19 @@ def strain_6col_to_3mat(Sv):
         [   Sv[0], .5*Sv[5], .5*Sv[4]],
         [.5*Sv[5],    Sv[1], .5*Sv[3]],
         [.5*Sv[4], .5*Sv[3],    Sv[2]]])
-    
+
 def stress_6col_to_3mat(Tv):
     return np.array([
         [Tv[0], Tv[5], Tv[4]],
         [Tv[5], Tv[1], Tv[3]],
         [Tv[4], Tv[3], Tv[2]]])
-    
+
 def strain_3mat_to_6col(Sm):
     return np.array([Sm[0,0], Sm[1,1], Sm[2,2], 2*Sm[1,2], 2*Sm[0,2], 2*Sm[0,1] ])
-    
+
 def stress_3mat_to_6col(Tm):
     return np.array([Tm[0,0], Tm[1,1], Tm[2,2], Tm[1,2], Tm[0,2], Tm[0,1] ])
-    
+
 
 def kvec_to_symmetric_gradient(kvec):
     '''Calculates 6x3 symmetric gradient operator for plane wave of wavevector kvec=(kx,ky,kz).
@@ -39,7 +39,7 @@ def kvec_to_symmetric_gradient(kvec):
     See Auld I, eq 1.53
     '''
     kx, ky, kz = kvec
-    
+
     nabla_IJ = np.array([
         [kx,   0.0, 0.0],
         [0.0,  ky,  0.0],
@@ -136,7 +136,7 @@ def _make_rotation_matrix(rot_axis_spec, theta):
 
 
 def _rotate_3vector(vec3, mat_R):
-    
+
 
     #vrot = 0*vec
     #for i in range(3):
@@ -145,7 +145,7 @@ def _rotate_3vector(vec3, mat_R):
 
     return np.matmul(mat_R, vec3)
 
-    
+
 
 def _rotate_Voigt_tensor(T_PQ, mat_R):
     """
@@ -231,7 +231,7 @@ class VoigtTensor4(object):
 
     def read_from_json(self, m, n, optional=False):
         '''Looks for data in the _json_data dict in form c_12, eta_23, etc.'''
-        
+
         elt = f'{self.symbol}_{m}{n}'
 
         if elt not in self._json_data:
@@ -251,7 +251,7 @@ class VoigtTensor4(object):
         self.make_isotropic_tensor(self.mat[1, 1], self.mat[1, 2], self.mat[4, 4])
 
     def make_isotropic_tensor(self, m11, m12, m44):
-        '''Build Voigt matrix from 3 parameters for isotropic geometry. 
+        '''Build Voigt matrix from 3 parameters for isotropic geometry.
         (Actually, only two are independent.)'''
 
         self.mat[1, 1] = m11
@@ -268,7 +268,7 @@ class VoigtTensor4(object):
         self.mat[3, 1] = self.mat[1, 2]
         self.mat[3, 2] = self.mat[1, 2]
 
-    def check_symmetries(self, sym=None):
+    def check_symmetries(self):
         # Check matrix is symmetric and positive definite
 
         rtol = 1e-12

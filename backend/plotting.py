@@ -18,9 +18,11 @@
 
 import math
 import numpy as np
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
-from pathlib import Path
+
 #from mpl_toolkits.axes_grid1 import make_axes_locatable
 #from collections.abc import Iterable
 
@@ -180,7 +182,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         # set up an interpolation for summing all the gain peaks
         v_gain_global += np.interp(nu_grid, v_nu_loc, v_gain_loc)
 
-    return_interp_values = v_gain_global
+    #return_interp_values = v_gain_global
 
     if mode_comps:  # TODO: delete this as no longer important?
         ax.plot(nu_grid_GHz, np.abs(v_gain_global),
@@ -311,7 +313,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         # dB_const = dB_peak_amp/(4.34*max_G)
         # ax.plot(nu_grid_GHz, np.abs(10*np.log10(np.exp(abs(interp_values)*dB_const))), 'b', linewidth=3, label="Total")
         v_scale = dB_peak_amp * Leff*math.log10(math.exp(1.0))
-        v_amp = v_scale * abs(v_gain_global_tot)
+        #v_amp = v_scale * abs(v_gain_global_tot)
         if do_PE:
             ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
         if do_MB:

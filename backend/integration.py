@@ -17,7 +17,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-import time
 import csv
 import numpy as np
 from scipy import interpolate
@@ -284,18 +283,19 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     sim_EM_pump = simres_EM_pump._sim
     sim_EM_Stokes = simres_EM_Stokes._sim
     sim_AC = simres_AC._sim
-    
+
     Fortran_debug = 0
     ncomps = 3
     nnodes = 6
-    
+
     n_modes_EM_pump = sim_EM_pump.n_modes
     n_modes_EM_Stokes = sim_EM_Stokes.n_modes
     n_modes_AC = sim_AC.n_modes
 
     fem_ac = sim_AC.fem_mesh
     struc = sim_EM_pump.structure
-    
+    opt_props = struc.optical_props
+
     #n_msh_el_AC = sim_AC.fem_mesh.n_msh_el
 
     trimmed_EM_pump_field = np.zeros((ncomps, nnodes, n_modes_EM_pump, fem_ac.n_msh_el), dtype=complex)
@@ -305,7 +305,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
         new_el = fem_ac.el_convert_tbl[el]
         for n in range(nnodes):
             for x in range(ncomps):
-                
+
                 for ival in range(n_modes_EM_pump):
                     trimmed_EM_pump_field[x,n,ival,el] = sim_EM_pump.fem_evecs[x,n,ival,new_el]
 
@@ -313,9 +313,9 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.fem_evecs[x,n,ival,new_el]
 
     relevant_eps_effs =[]
-    for el_typ in range(struc.n_mats_em):
+    for el_typ in range(opt_props.n_mats_em):
         if el_typ+1 in fem_ac.typ_el_AC:
-            relevant_eps_effs.append(sim_EM_pump.fem_mesh.v_refindexn[el_typ]**2)
+            relevant_eps_effs.append(opt_props.v_refindexn[el_typ]**2)
 
     sim_AC.calc_acoustic_losses(fixed_Q)
 
@@ -329,7 +329,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 #                alpha = NumBAT.ac_alpha_int_v2(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
-#                    sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.eta_ijkl,
+#                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
 #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
@@ -340,7 +340,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 #                alpha = NumBAT.ac_alpha_int(sim_AC.n_modes,
 #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
 #                    sim_AC.table_nod, sim_AC.type_el, sim_AC.mesh_xy,
-#                    sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.eta_ijkl,
+#                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
 #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
 #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
 #                    sim_AC.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
@@ -367,9 +367,10 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 
     # Calc Q_photoelastic Eq. 33
 
-    
+
     alpha = simres_AC.alpha_t_AC_all()
-    
+    elastic_props = sim_AC.structure.elastic_props
+
     print('\n Photoelastic calc')
     if struc.using_linear_elements():
         Q_PE = NumBAT.photoelastic_int_v2(
@@ -377,7 +378,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             EM_ival_Stokes_fortran, AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes,
             fem_ac.table_nod, fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.p_ijkl,
+            elastic_props.n_mats_ac, elastic_props.p_ijkl,
             q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
     else:
@@ -389,7 +390,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             EM_ival_Stokes_fortran, AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes,
             fem_ac.table_nod, fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_mats_ac, sim_AC.structure.el_props.p_ijkl,
+            elastic_props.n_mats_ac, elastic_props.p_ijkl,
             q_AC, trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
 
@@ -404,13 +405,13 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
             AC_ival_fortran, fem_ac.n_msh_el,
             fem_ac.n_msh_pts, nnodes, fem_ac.table_nod,
             fem_ac.type_el, fem_ac.mesh_xy,
-            sim_AC.structure.n_mats_ac, typ_select_in, typ_select_out,
+            elastic_props.n_mats_ac, typ_select_in, typ_select_out,
             trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
             relevant_eps_effs, Fortran_debug)
-    
+
 
     Q = Q_PE + Q_MB   #TODO: the Q couplings come out as non trivially complex. Why?
-    
+
     gain = 2*simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q*np.conj(Q))
     gain_PE = 2*simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE*np.conj(Q_PE))
     gain_MB = 2*simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_MB*np.conj(Q_MB))
@@ -887,7 +888,7 @@ def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
         for k in range(3):
             for l in range(3):
                 for j in range(3):
-                    integrand = del_u_mat[i,j]*del_u_mat_star[k,l]*sim_AC_structure.el_props.eta_ijkl[i,j,k,l]
+                    integrand = del_u_mat[i,j]*del_u_mat_star[k,l]*sim_AC_structure.elastic_props.eta_ijkl[i,j,k,l]
                     I = np.zeros( n_pts_x )
                     for r in range(n_pts_x):
                         I[r] = np.trapz( np.real(integrand[r,:]), dx=dy )
@@ -905,8 +906,8 @@ def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
         for k in range(3):
             for l in range(3):
                 for j in range(3):
-                    # integrand_PE = relevant_eps_effs[0]**2 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.el_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
-                    integrand_PE = m_n**4 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.el_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
+                    # integrand_PE = relevant_eps_effs[0]**2 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.elastic_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
+                    integrand_PE = m_n**4 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.elastic_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
                     I = np.zeros( n_pts_x )
                     for r in range(n_pts_x):
                         I[r] = np.trapz( np.real(integrand_PE[r,:]), dx=dy )
@@ -926,7 +927,7 @@ def gain_python(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, coms
     """
 
     print('gain python is out of action')
-    return 
+    return
     n_modes_EM = sim_EM_pump.n_modes
     #n_modes_AC = sim_AC.n_modes
     EM_ival_pump = 0

@@ -1,11 +1,11 @@
 import platform
-import reporting
 import os
 import shutil
 import time
 import datetime
 from pathlib import Path
 
+import reporting
 import objects
 
 
@@ -18,7 +18,7 @@ def _confirm_file_exists(nm, path, evar=''):
             s += f'You may need to set the environment variable {evar}.'
         reporting.report_and_exit(s)
 
-class _NumBATApp(object):
+class _NumBATApp:
     my_num_instances = 0
 
     __instance = None
@@ -46,7 +46,7 @@ class _NumBATApp(object):
 
         self._plot_extension = '.png'
         #self._plot_extension = '.pdf'
-        
+
         self._check_versions()
         self._setup_paths()
         reporting.init_logger()
@@ -59,8 +59,8 @@ class _NumBATApp(object):
         return _NumBATApp.__instance
 
     def plotfile_ext(self):
-        return self._plot_extension 
-        
+        return self._plot_extension
+
     def is_linux(self):
         return platform.system()=='Linux'
 
@@ -158,4 +158,3 @@ def NumBATApp(outprefix='', outdir='.'):
 def assert_numbat_object_created():
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
-
