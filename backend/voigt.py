@@ -109,7 +109,7 @@ def parse_rotation_axis(rot_axis_spec):
     return rot_axis/nvec
 
 
-def _make_rotation_matrix(rot_axis_spec, theta):
+def make_rotation_matrix(rot_axis_spec, theta):
     """
     Return the SO(3) matrix corresponding to a rotation of theta radians the specified rotation_axis.
 
@@ -135,7 +135,7 @@ def _make_rotation_matrix(rot_axis_spec, theta):
     return mat_R
 
 
-def _rotate_3vector(vec3, mat_R):
+def rotate_3vector(vec3, mat_R):
 
 
     #vrot = 0*vec

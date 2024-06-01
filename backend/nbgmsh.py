@@ -1,7 +1,8 @@
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-import sys
 
 import numbat
 import plotting
@@ -58,7 +59,7 @@ class MailData:
 
 
         cbar = fig.colorbar(cf, shrink=.5, pad=.025, location='right')
-        cbar.set_label(label=f'Phys curve/surface number')
+        cbar.set_label(label='Phys curve/surface number')
 
 
         elts = self.v_elts-1  # built for fortran indexing
@@ -156,8 +157,3 @@ class MailData:
         if plotmailmesh:
             self.summarise_mesh()
             self.plot_mesh()
-
-
-
-
-

@@ -286,7 +286,6 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
 
     Fortran_debug = 0
     ncomps = 3
-    nnodes = 6
 
     n_modes_EM_pump = sim_EM_pump.n_modes
     n_modes_EM_Stokes = sim_EM_Stokes.n_modes
@@ -296,7 +295,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     struc = sim_EM_pump.structure
     opt_props = struc.optical_props
 
-    #n_msh_el_AC = sim_AC.fem_mesh.n_msh_el
+    nnodes = fem_ac.n_nodes
 
     trimmed_EM_pump_field = np.zeros((ncomps, nnodes, n_modes_EM_pump, fem_ac.n_msh_el), dtype=complex)
     trimmed_EM_Stokes_field = np.zeros((ncomps, nnodes, n_modes_EM_Stokes, fem_ac.n_msh_el), dtype=complex)

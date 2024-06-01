@@ -45,9 +45,9 @@ def process_fortran_return(resm, msg):
 def save_and_close_figure(fig, fig_fname):
 
     if fig_fname[-3:-1] == 'png':
-        st = fig.savefig(fig_fname)
+        fig.savefig(fig_fname)
     else:
-        st = fig.savefig(fig_fname, bbox_inches='tight')
+        fig.savefig(fig_fname, bbox_inches='tight')
 
     plt.close(fig)
 
@@ -143,22 +143,22 @@ class CalcThread(threading.Thread):
                     task = self.q_work.get_nowait()
 
             except queue.Empty:
-                if self.verbose: print('{0} out of work, wrapping up.'.format(self.name))
+                if self.verbose: print(f'{self.name} out of work, wrapping up.')
                 break
 
-            if self.verbose: print('{0} is starting task i={1}, needs plotting: {2}.'.format(
-                self.name, task[0], self.doing_plot_work ))
+            if self.verbose:
+                print(f'{self.name} is starting task i={task[0]}, needs plotting: ', self.doing_plot_work )
 
             try:
                 MAGIC_TASK = (-10, -10, -10, -10)  # trigger an easy first task to get around GIL issues
                 if task == MAGIC_TASK: # complete immediately to try and release the GIL
-                    print('{0} is doing the magic task!')
+                    print(f'{self.name} is doing the magic task!')
                     #res = MAGIC_TASK
 
                 else:
                     res = self.f_work(task)   # Here is the main piece of work
 
-                    if self.verbose: print('{0} produced outcome:'.format(self.name), res)
+                    if self.verbose: print(f'{self.name} produced outcome: ', res)
 
                     self.q_result.put(res)
 
@@ -292,7 +292,7 @@ class CalcProcess(multiprocessing.Process):
                 #  or else, we wait to acquire a lock on the queue, before testing get_nowait()
                 task = self.q_work.get(block=True, timeout=5)
 
-            except queue.Empty as err:
+            except queue.Empty:
                 if self.verbose: print(f'{self.name} out of work, wrapping up.')
                 break
 

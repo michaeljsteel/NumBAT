@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Iterable
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
-from pathlib import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from collections.abc import Iterable
 
 import numbat
-from numbattools import *
-from nbtypes import *
+from numbattools import save_and_close_figure
+from nbtypes import component_t, FieldType, SI_THz, SI_GHz, SI_um, twopi
 
 
 def modeplot_filename(plps, ival, label=''):
@@ -230,10 +230,10 @@ class Decorator(object):
             print(f'Warning: unknown fontsize label "{lab}" in Decorator::get_property()')
         return ans
 
-    def is_single_plot(self):
-        '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
-           '''
-        return self._is_single
+    # def is_single_plot(self):
+    #     '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
+    #        '''
+    #     return self._is_single
 
     def set_property(self, label, prop):
         '''Add or override an axes property for a single plot corresponding to the given label.'''
@@ -420,8 +420,8 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     # TODO: why no transpose on these fields?
     m_ReEx_q = v_fields['Fxr'][qrange_x[:, np.newaxis], qrange_y]
     m_ReEy_q = v_fields['Fyr'][qrange_x[:, np.newaxis], qrange_y]
-    m_ImEx_q = v_fields['Fxi'][qrange_x[:, np.newaxis], qrange_y]
-    m_ImEy_q = v_fields['Fyi'][qrange_x[:, np.newaxis], qrange_y]
+    #m_ImEx_q = v_fields['Fxi'][qrange_x[:, np.newaxis], qrange_y]
+    #m_ImEy_q = v_fields['Fyi'][qrange_x[:, np.newaxis], qrange_y]
 
 
     # Ignore all imaginary values. If there are significant imag values,
@@ -447,7 +447,7 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None):
 
-    v_x, v_y, m_X, m_Y = list(d_xy.values())
+    #v_x, v_y, m_X, m_Y = list(d_xy.values())
 
     do_cont = not cc_scalar is None
     do_quiv = not cc_vector is None
@@ -659,7 +659,7 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     ax = axs[axi]; axi += 1
     plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_vector=cc_transvec)  # the intensity
 
-    for (flab, field) in v_plots.items():
+    for flab in v_plots.keys():
         cc = component_t.make_comp(ft, flab)
 
         if (hide_minors and not cc.is_dominant()) or not cc.is_signed_field():
@@ -677,7 +677,7 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
 
 def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
 
-    decorator = plps['decorator']
+    #decorator = plps['decorator']
 
     if axis is None:
         fig, ax = plt.subplots(figsize=(12, 10))
@@ -714,7 +714,7 @@ def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
                     modal_gains=None):
 
     print('Warning: "plt_mode_fields" is deprecated, use "plot_mode_fields"')
-    plot_mode_fields(sim_result, ivals, n_points, quiver_points,
+    sim_result.plot_mode_fields(ivals, n_points, quiver_points,
                      xlim_min, xlim_max, ylim_min, ylim_max,
                      field_type, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png,
                      prefix, suffix, ticks, comps, decorator,
