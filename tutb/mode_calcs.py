@@ -370,7 +370,7 @@ class SimResult:
            '''
         if self.point_group == PointGroup.Unknown:
             return ''
-        return f'{self.point_group.name}:{self.sym_reps[m].name}'
+        return '{0}:{1}'.format(self.point_group.name, self.sym_reps[m].name)
 
     def analyse_symmetries(self, ptgrp):
 
