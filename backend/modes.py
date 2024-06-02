@@ -69,12 +69,8 @@ class ModePlotHelper:
         self.xy_out = {}
 
         # try to remove all these
-        self.n_pts_x = 0
-        self.n_pts_y = 0
-        self.table_nod_T = None
-        self.mesh_xy_T = None
-
-
+        self.loc_n_pts_x = 0
+        self.loc_n_pts_y = 0
 
         self.interper_f = None
 
@@ -168,16 +164,16 @@ class ModePlotHelper:
         y_min, y_max = np_min_max(fm.mesh_xy[1,:])
 
         area = abs((x_max-x_min)*(y_max-y_min))
-        self.n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
-        self.n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+        self.loc_n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
+        self.loc_n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
 
         # Now use the coords user would like to think in
         shiftx, shifty = self.sim_result.get_xyshift()
         #self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
 
         # These are the actual x and y domains of the final plots
-        v_x = np.linspace(x_min, x_max, self.n_pts_x)
-        v_y = np.linspace(y_min, y_max, self.n_pts_y)
+        v_x = np.linspace(x_min, x_max, self.loc_n_pts_x)
+        v_y = np.linspace(y_min, y_max, self.loc_n_pts_y)
         m_X, m_Y = np.meshgrid(v_x, v_y)
 
         self.xy_raw = {'v_x': v_x, 'v_y': v_y, 'm_x': m_X, 'm_y': m_Y}
@@ -188,21 +184,19 @@ class ModePlotHelper:
 
         self.xy_out = {'v_x': v_x_out, 'v_y': v_y_out, 'm_x': m_X_out, 'm_y': m_Y_out}
 
-        print('''
-  Structure has raw domain(x,y)   = [{0:.5f}, {1:.5f}] x [ {2:.5f}, {3:.5f}] (um),
-                mapped to (x',y') = [{4:.5f}, {5:.5f}] x [ {6:.5f}, {7:.5f}] (um)
-                    '''.format(
-            v_x[0]/SI_um, v_x[-1]/SI_um, v_y[0]/SI_um, v_y[-1]/SI_um,
-            v_x_out[0], v_x_out[-1], v_y_out[0], v_y_out[-1]))
+        print(f'Structure has raw domain (x,y) = ' \
+            + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0]/SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),' \
+            + "\n             mapped to (x',y') = " \
+            + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
         return shiftx, shifty
 
-    def _save_triangulation_plots(self, triang1p, triang6p):
+    def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy_T):
         fig, axs=plt.subplots(1,2)
         axs[0].triplot(triang1p, linewidth=.5)
         axs[1].triplot(triang6p, linewidth=.5)
         for ax in axs:
             ax.set_aspect(1.0)
-            ax.scatter(self.mesh_xy_T[:,0],self.mesh_xy_T[:,1], s=2, c='red')
+            ax.scatter(mesh_xy_T[:,0], mesh_xy_T[:,1], s=2, c='red')
 
         pref = numbat.NumBATApp().outprefix()
         fname = pref + f'-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png'
@@ -225,9 +219,8 @@ class ModePlotHelper:
 
         # Sim version is in fortran ordering
         # This version is in python ordering.  Eeek!
-        self.table_nod_T = fm.table_nod.T
-        self.mesh_xy_T = fm.mesh_xy.T  # is v_x, v_y  * d_in_m
-        tabnod_py = self.table_nod_T -1  #  shift fortran to python indexing
+        mesh_xy_T = fm.mesh_xy.T  # is v_x, v_y  * d_in_m
+        tabnod_py = fm.table_nod.T -1  #  shift fortran to python indexing
 
         # dense triangulation with multiple points
         v_x6p = np.zeros(6*fm.n_msh_el)
@@ -256,8 +249,8 @@ class ModePlotHelper:
         for i_el in range(fm.n_msh_el):
             for i_node in range(6):
                 i_ex = tabnod_py[i_el, i_node]
-                v_x6p[i] = self.mesh_xy_T[i_ex, 0]
-                v_y6p[i] = self.mesh_xy_T[i_ex, 1]
+                v_x6p[i] = mesh_xy_T[i_ex, 0]
+                v_y6p[i] = mesh_xy_T[i_ex, 1]
                 i += 1
 
 
@@ -276,14 +269,14 @@ class ModePlotHelper:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation( self.mesh_xy_T[:,0], self.mesh_xy_T[:,1], self.v_triang1p)
+            check_triangulation( mesh_xy_T[:,0], mesh_xy_T[:,1], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        tri_triang1p = matplotlib.tri.Triangulation(self.mesh_xy_T[:, 0], self.mesh_xy_T[:, 1], v_triang1p)
+        tri_triang1p = matplotlib.tri.Triangulation(mesh_xy_T[:, 0], mesh_xy_T[:, 1], v_triang1p)
 
 
-        self._save_triangulation_plots(tri_triang1p, tri_triang6p)
+        self._save_triangulation_plots(tri_triang1p, tri_triang6p, mesh_xy_T)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         # create rectangular arrays corresponding to the v_x, v_y grids
@@ -295,7 +288,7 @@ class ModePlotHelper:
         finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
 
         self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(self.n_pts_x, self.n_pts_y)
+            tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(self.loc_n_pts_x, self.loc_n_pts_y)
 
 
 
