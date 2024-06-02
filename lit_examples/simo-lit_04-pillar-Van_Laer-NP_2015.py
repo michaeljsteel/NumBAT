@@ -66,7 +66,7 @@ n_eff = wguide.get_material('a').refindex_n-0.1
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
-plotting.plot_mode_fields(sim_EM_pump, ivals=[EM_ival_pump],
+plotting.plot_modes(sim_EM_pump, ivals=[EM_ival_pump],
                          xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.2,
                          field_type='EM_E', )
 
@@ -79,7 +79,7 @@ shift_Hz = 8e9
 # Calculate Acoustic Modes
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-plotting.plot_mode_fields(sim_AC, )
+plotting.plot_modes(sim_AC, )
 
 set_q_factor = 306
 

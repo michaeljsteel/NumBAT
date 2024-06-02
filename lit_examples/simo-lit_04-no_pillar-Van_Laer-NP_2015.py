@@ -99,7 +99,7 @@ if doem:
   #npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
   #sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-  plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
+  plotting.plot_modes(sim_EM_pump, xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
                            ylim_min=0.43, ylim_max=0.43, field_type='EM_E',
                            n_points=2000, quiver_points=10,  decorator=emdecorate)
 
@@ -121,7 +121,7 @@ if doac:
     npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
     sim_AC = npzfile['sim_AC'].tolist()
 
-  plotting.plot_mode_fields(sim_AC, ivals=range(20), )
+  plotting.plot_modes(sim_AC, ivals=range(20), )
 
 set_q_factor = 306
 

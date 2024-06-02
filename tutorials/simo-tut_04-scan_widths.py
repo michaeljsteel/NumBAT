@@ -90,7 +90,7 @@ for width in waveguide_widths:
     inc_a_x = width
     inc_a_y = 0.9*inc_a_x
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),
@@ -129,10 +129,10 @@ for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
     width, sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz = width_obj
 
-    plotting.plot_mode_fields(
+    plotting.plot_modes(
         sim_EM_pump,  suffix='_wid_%d' % i_w, ivals=range(5))
 
-    plotting.plot_mode_fields(sim_AC,
+    plotting.plot_modes(sim_AC,
                               suffix='_wid_%d' % i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).

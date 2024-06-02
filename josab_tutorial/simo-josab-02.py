@@ -5,10 +5,13 @@ Script to evaluate backward Brillouin scattering in a rectangular Si waveguide
 # Import the necessary packages
 
 
-import numpy as np
+
 import sys
 import math
+import numpy as np
+
 sys.path.append("../backend/")
+
 import numbat
 import materials
 import mode_calcs
@@ -85,7 +88,7 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
 # Generating images for the EM modes involved in the calculation
 print("Plotting EM fields ")
-plotting.plot_mode_fields(sim_EM_pump,
+sim_EM_pump.plot_modes(sim_EM_pump,
                          ivals=[EM_ival_pump],
                          field_type='EM_E', num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
                           quiver_points=40,
@@ -135,7 +138,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=np.argmax(abs(masked.data)) ;
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC,  ivals=[maxGainloc],
+sim_AC.plot_modes(ivals=[maxGainloc],
                          num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection

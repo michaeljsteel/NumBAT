@@ -84,7 +84,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
 sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=range(5),
+plotting.plot_modes(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ivals=range(5),
                          ylim_min=0.2, ylim_max=0.2, field_type='EM_E', )
 
 # Print the wavevectors of EM modes.
@@ -106,7 +106,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
-plotting.plot_mode_fields(sim_AC,  ivals=range(40))
+plotting.plot_modes(sim_AC,  ivals=range(40))
 
 set_q_factor = 680.
 

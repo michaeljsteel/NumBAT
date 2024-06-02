@@ -17,22 +17,25 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import math
-import numpy as np
+
 from pathlib import Path
 
+import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mplcolors
+
+#import matplotlib.colors as mplcolors
 
 #from mpl_toolkits.axes_grid1 import make_axes_locatable
 #from collections.abc import Iterable
 
 import numbat
-from numbattools import *
+from numbattools import save_and_close_figure
 #from nbtypes import QAcMethod, FieldType, component_t, twopi
 #from fortran import NumBAT
 import reporting
-from plotmodes import *
+from plotmodes import Decorator
 
+from nbtypes import SI_GHz
 
 # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 keep_plots_open = False
@@ -121,7 +124,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     if decorator is None:
         decorator = Decorator()
-    decorator._set_for_single()
+    decorator.set_for_single()
 
     # This is expensive but helps to get the peaks in most cases.
     tune_steps = 50000
@@ -136,7 +139,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     nu_grid = np.linspace(freq_min, freq_max, num_interp_pts)
 
-    nu_grid_GHz = nu_grid * 1e-9
+    nu_grid_GHz = nu_grid / SI_GHz
     nu_min_GHz = nu_grid_GHz[0]
     nu_max_GHz = nu_grid_GHz[-1]
     if freq_min:
@@ -153,16 +156,16 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     fig, ax = plt.subplots()
 
-    lw = decorator.get_axes_property('linewidth')
-    fs = decorator.get_font_size('ax_label')
-    ts = decorator.get_font_size('ax_tick')
+    lw = decorator.get_property('linewidth')
+    fs = decorator.get_property('ax_label_fs')
+    ts = decorator.get_property('ax_tick_fs')
 
     ivals = []
     if AC_ival is None or AC_ival == 'All':
         ivals = range(num_modes)
     else:
         try:
-            ivals = [i for i in AC_ival if (0 <= i < num_modes)]
+            ivals = [i for i in AC_ival if 0 <= i < num_modes]
         except Exception:
             reporting.report_and_exit(
                 'AC_ival in gain_spectra() must be "All" or a list of mode numbers.')

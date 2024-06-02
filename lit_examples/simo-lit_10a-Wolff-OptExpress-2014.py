@@ -85,7 +85,7 @@ else:
 sim_EM_pump.analyse_symmetries(PointGroup.C2V)
 sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
+plotting.plot_modes(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
                          ylim_min=0.2, ylim_max=0.2, EM_AC='EM_E', num_ticks=3, ticks=True,
                          )
 
@@ -147,7 +147,7 @@ print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
 print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
 print("SBS_gain [1/(Wm)] total \n", masked)
 
-plotting.plot_mode_fields(sim_AC,
+plotting.plot_modes(sim_AC,
      num_ticks=3, xlim_min=0.1, xlim_max=0.1,
      #modal_gains_PE=SBS_gain_PE[EM_ival_pump, EM_ival_Stokes,:],
      #modal_gains_MB=SBS_gain_MB[EM_ival_pump, EM_ival_Stokes,:],

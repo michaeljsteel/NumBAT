@@ -44,7 +44,7 @@ mat_bkg=materials.make_material("Vacuum")
 mat_a=materials.make_material("As2S3_2021_Poulton")
 mat_b=materials.make_material("SiO2_2021_Poulton")
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x,
                            inc_b_x=inc_b_x,  # first annulus width
                            material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
                            lc_bkg=.1, lc_refine_1=2.0*refine_fac, lc_refine_2=2*refine_fac)
@@ -88,8 +88,8 @@ print("n_eff", np.round(n_eff_sim, 4))
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # simres_EM_Stokes = npzfile['simres_EM_Stokes'].tolist()
 
-plotting.plot_mode_fields(simres_EM_pump, ivals=range(10), field_type='EM_E')
-plotting.plot_mode_fields(simres_EM_pump, ivals=range(10), field_type='EM_H')
+plotting.plot_modes(simres_EM_pump, ivals=range(10), field_type='EM_E')
+plotting.plot_modes(simres_EM_pump, ivals=range(10), field_type='EM_H')
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
@@ -114,7 +114,7 @@ for m in range(num_modes_AC):
 
 #simres_AC.calc_acoustic_losses()
 
-plotting.plot_mode_fields(simres_AC, xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
+plotting.plot_modes(simres_AC, xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
                            ivals=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

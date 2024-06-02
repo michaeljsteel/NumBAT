@@ -81,7 +81,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 # npzfile = np.load('wguide_data.npz')
 # sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
+plotting.plot_modes(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.3, ylim_max=0.3, field_type='EM_E', num_ticks=3,
                          )
 
@@ -110,7 +110,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # npzfile = np.load('wguide_data_AC.npz')
 # sim_AC = npzfile['sim_AC'].tolist()
 
-plotting.plot_mode_fields(sim_AC,  num_ticks=3, xlim_min=0.1, xlim_max=0.1)
+plotting.plot_modes(sim_AC,  num_ticks=3, xlim_min=0.1, xlim_max=0.1)
 
 # Print the frequencies of AC modes.
 print('\n Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))

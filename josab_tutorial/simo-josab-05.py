@@ -5,9 +5,10 @@ Script to evaluate intermodal forward Brillouin scattering in a cylindrical SiO2
 # Import the necessary packages
 
 
-import numpy as np
 import sys
 import math
+import numpy as np
+
 sys.path.append("../backend/")
 import numbat
 import materials
@@ -71,8 +72,7 @@ sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
 
 # Generate images for the EM modes involved in the calculation
 print("Starting EM field plotting ")
-plotting.plot_mode_fields(sim_EM_pump,
-                         ivals=[EM_ival_pump,EM_ival_Stokes],
+sim_EM_pump.plot_modes(ivals=[EM_ival_pump,EM_ival_Stokes],
                          field_type='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
                           quiver_points=40,
                          n_points=1000, colorbar=True)
@@ -129,7 +129,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=6; #note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
 
 print("Plotting acoustic mode corresponding to maximum")
-plotting.plot_mode_fields(sim_AC,  ivals=range(15),
+sim_AC.plot_modes(ivals=range(15),
                           num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection

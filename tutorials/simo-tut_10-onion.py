@@ -41,7 +41,7 @@ d_lo = 400
 mat_hi = materials.make_material("Si_2016_Smith")
 mat_lo = materials.make_material("SiO2_2016_Smith")
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=d_lo, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=d_lo,
                            inc_b_x=d_hi,
                            inc_c_x=d_lo, inc_d_x=d_hi, inc_e_x=d_lo, inc_f_x=d_hi,
                            inc_g_x=d_lo, inc_h_x=d_hi, inc_i_x=d_lo, inc_j_x=d_hi,
@@ -93,11 +93,11 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Plot the E fields of the EM modes fields - specified with EM_AC='EM_E'.
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (ival = 0) mode.
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+plotting.plot_modes(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_E',
                            ticks=True, quiver_points=20)
 
-plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+plotting.plot_modes(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_H',
                            ticks=True, quiver_points=20)
 
@@ -118,7 +118,7 @@ print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
   print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
 
-plotting.plot_mode_fields(sim_AC, contours=False,
+plotting.plot_modes(sim_AC, contours=False,
                            ticks=True, ivals=[10], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

@@ -389,7 +389,7 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     ylmi = plps.get('ylim_min', deftrim)
     ylma = plps.get('ylim_max', deftrim)
 
-    v_x, v_y = d_xy['v_x'], d_xy['v_y']
+    v_x, v_y, m_x, m_y = d_xy.values()
 
     # shapes:
     # m_X and other matrices are stored with y points as rows but upside down
@@ -401,7 +401,7 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     #         [y1, y1, y1, ...]
     #         [y2, y2, y2, ...]
 
-    n_pts_y, n_pts_x = len(v_x), len(v_y)
+    n_pts_x, n_pts_y = len(v_x), len(v_y)
 
 
     # grid points to skip for each arrow
@@ -414,8 +414,12 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     qrange_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
     qrange_y = get_quiver_skip_range(n_pts_y, quiver_skip_y)
 
+    #print('pts', n_pts_x, n_pts_y, m_x.shape, m_y.shape, v_fields['Fxr'].shape, qrange_x, #qrange_y)
     v_x_q = v_x[qrange_x]
     v_y_q = v_y[qrange_y]
+    m_x_q = (m_x.T)[qrange_x[:, np.newaxis], qrange_y]  # TODO: track down why m_x/y need .T but fields don't
+    m_y_q = (m_y.T)[qrange_x[:, np.newaxis], qrange_y]
+
 
     # TODO: why no transpose on these fields?
     m_ReEx_q = v_fields['Fxr'][qrange_x[:, np.newaxis], qrange_y]
@@ -429,10 +433,10 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     d_quiv_kw = {'linewidths': (0.2,), 'edgecolors': ('gray'), 'pivot':'mid', 'headlength':5}
     if do_cont:  # no colours in the quiver
         d_quiv_kw['color'] = 'gray'
-        ax.quiver(v_x_q, v_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw)
+        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw)
     else:
         m_arrcolour = np.sqrt(m_ReEx_q*m_ReEx_q + m_ReEy_q*m_ReEy_q)
-        ax.quiver(v_x_q, v_y_q, m_ReEx_q, m_ReEy_q, m_arrcolour, ** d_quiv_kw)
+        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q, m_arrcolour, ** d_quiv_kw)
 
 
     if not do_cont:
@@ -713,8 +717,8 @@ def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
                     modal_gains_MB=None,
                     modal_gains=None):
 
-    print('Warning: "plt_mode_fields" is deprecated, use "plot_mode_fields"')
-    sim_result.plot_mode_fields(ivals, n_points, quiver_points,
+    print('Warning: "plt_mode_fields" is deprecated, use "plot_modes"')
+    sim_result.plot_modes(ivals, n_points, quiver_points,
                      xlim_min, xlim_max, ylim_min, ylim_max,
                      field_type, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png,
                      prefix, suffix, ticks, comps, decorator,

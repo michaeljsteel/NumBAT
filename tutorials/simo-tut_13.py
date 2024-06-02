@@ -203,7 +203,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, simres_EM, cmat):
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            plotting.plot_mode_fields(simres_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
+            plotting.plot_modes(simres_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
 
         return (iq, tq, v_nu_num)
 
@@ -392,7 +392,7 @@ def do_main():
     mat_core = mat_As2S3
     mat_bkg  = mat_vac
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y,
                                   acore, inc_b_x  =rcore*.1,
                             material_bkg=mat_bkg, material_a=mat_core,
                             lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)

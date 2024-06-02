@@ -19,7 +19,7 @@
 
 
 import copy
-from math import sqrt
+#from math import sqrt
 from pathlib import Path
 import numpy as np
 
@@ -29,7 +29,7 @@ from numbattools import process_fortran_return
 
 from modes import ModeAC, ModeEM, ModePlotHelper
 from plotmodes import Decorator
-from reporting import report_and_exit
+#from reporting import report_and_exit
 import integration
 from fortran import NumBAT
 
@@ -42,51 +42,6 @@ from fortran import NumBAT
 # TODO move this to NBApp interface
 #def load_simulation(prefix):
 #    return Simulation.load_simulation(prefix)
-
-# Checks of mesh and triangles satisfy conditions for triangulation
-# Quadratic algorithm. Use on the smallest grid possible
-def check_triangulation(vx, vy, triangs):
-    # are points unique
-    print('\n\nChecking triangulation goodness')
-    npts = len(vx)
-    dsepmin = 1e6
-    dsi=0
-    dsj=0
-    for i in range(npts):
-        for j in range(i+1, npts):
-            dsep = sqrt( (vx[i]-vx[j])**2 +(vy[i]-vy[j])**2)
-            if dsep < dsepmin:
-                dsepmin = dsep
-                dsi=i
-                dsj=j
-
-
-    print('  Closest space of triangle points was', dsepmin)
-    if dsepmin < 1e-11:
-        msg=f'Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
-        msg+='\nIt seems the mesh grid reordering has failed.'
-        report_and_exit(msg)
-
-    #print('Raw points')
-    #for i in range(npts):
-    #    print(i, vx[i], vy[i])
-
-
-    # is list of triangles unique
-    s_vtri = set()
-    clean = True
-    for tri in triangs:
-        stri = str(tri)
-        if stri in s_vtri:
-            print("        Double triangle at", stri)
-            clean = False
-        else:
-            s_vtri.add(stri)
-    if clean:
-        print("  No doubled triangles found")
-    else:
-        print("  Found doubled triangles")
-
 
 
 
@@ -326,6 +281,7 @@ class SimResult:
         self._structure = sim.structure  #TODO: limit and ultimately remove access to these
         self._sim=sim
         self._mode_plot_helper = None
+        self.sim_type = None  # Unknown at this point
 
         self.n_modes = sim.n_modes
         self.mode_set = []

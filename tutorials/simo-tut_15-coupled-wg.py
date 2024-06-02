@@ -86,9 +86,9 @@ for m in range(num_modes_EM_pump):
 n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
-plotting.plot_mode_fields(sim_EM_pump, ivals=range(8), contours=True, EM_AC='EM_E', ticks=True, quiver_points=20)
+plotting.plot_modes(sim_EM_pump, ivals=range(8), contours=True, EM_AC='EM_E', ticks=True, quiver_points=20)
 
-plotting.plot_mode_fields(sim_EM_pump,  ivals=range(8), contours=True, EM_AC='EM_H',
+plotting.plot_modes(sim_EM_pump,  ivals=range(8), contours=True, EM_AC='EM_H',
                            ticks=True, quiver_points=20)
 
 # Acoustic wavevector
@@ -114,7 +114,7 @@ for m in range(num_modes_AC):
 
 sim_AC.calc_acoustic_losses()
 
-plotting.plot_mode_fields(sim_AC, contours=False,
+plotting.plot_modes(sim_AC, contours=False,
                           ticks=True, ivals=range(10), quiver_points=20)
 
 print(nbapp.final_report())

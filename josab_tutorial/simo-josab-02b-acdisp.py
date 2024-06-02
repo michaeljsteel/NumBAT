@@ -5,9 +5,10 @@ Calculate dispersion diagram of the acoustic modes in a rectangular Si waveguide
 # Import the necessary packages
 
 
-import numpy as np
+
 import sys
 import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append("../backend/")
 import numbat

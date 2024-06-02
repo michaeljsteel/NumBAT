@@ -50,8 +50,8 @@ lc_corner = 6
 lc_norm = 1
 lc_corner = 1
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
-                              inc_b_x = inc_b_x, inc_b_y = inc_b_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+                              inc_b_x = inc_b_x, inc_b_y = inc_b_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
@@ -77,7 +77,7 @@ sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre
 sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
-plotting.plot_mode_fields(sim_EM_pump, EM_AC='EM_E', ivals=[0])
+plotting.plot_modes(sim_EM_pump, EM_AC='EM_E', ivals=[0])
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
@@ -101,7 +101,7 @@ else:
     sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
 
 sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', )
+plotting.plot_modes(sim_AC, EM_AC='AC', )
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()

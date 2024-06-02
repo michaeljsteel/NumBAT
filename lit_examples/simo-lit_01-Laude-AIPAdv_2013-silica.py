@@ -62,7 +62,7 @@ if recalc:
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
-    plotting.plot_mode_fields(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
+    plotting.plot_modes(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.4, ylim_max=0.4, )
 else:
     sim_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
@@ -110,7 +110,7 @@ high_g_indices = (np.abs(gains).argsort()[-nplot:])
 high_g_indices.sort()
 
 if recalc:
-    plotting.plot_mode_fields(sim_AC,  ivals=high_g_indices)
+    plotting.plot_modes(sim_AC,  ivals=high_g_indices)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9  # Hz

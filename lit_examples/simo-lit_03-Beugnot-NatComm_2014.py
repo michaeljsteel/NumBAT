@@ -129,7 +129,7 @@ def modes_n_gain(diam):
 
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
-    #plotting.plot_mode_fields(sim_EM_pump, ivals=range(5), field_type='EM_E', )
+    #plotting.plot_modes(sim_EM_pump, ivals=range(5), field_type='EM_E', )
 
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
@@ -164,9 +164,9 @@ def modes_n_gain(diam):
     if abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
         #pass
 
-        plotting.plot_mode_fields(sim_EM_pump, field_type = 'EM_E', ivals=range(10),
+        plotting.plot_modes(sim_EM_pump, field_type = 'EM_E', ivals=range(10),
                                   prefix=prefix+f'-diam-{round(diam):04d}')
-        plotting.plot_mode_fields(sim_AC, ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
+        plotting.plot_modes(sim_AC, ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
         for m in range(num_modes_AC):
             print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gainbox.gain_total(m):.3e}, ',
                  f'{gainbox.gain_PE(m):.4e}, {gainbox.gain_MB(m):.4e}')
