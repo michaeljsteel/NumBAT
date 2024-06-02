@@ -62,7 +62,7 @@ if recalc:
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
-    plotting.plot_modes(sim_EM_pump, xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
+    sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.4, ylim_max=0.4, )
 else:
     sim_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
@@ -102,15 +102,15 @@ gains = SBS_gain[EM_ival_pump, EM_ival_Stokes, :]
 print('Acoustic modes')
 print('m      Freq (GHz)      Total gain (1/(Wm))')
 for m in range(len(nus)):
-    print('{0:3d} {1:11.6f}       {2:8.4f}'.format(m, np.real(nus[m])*1e-9, gains[m]))
+    print(f'{m:3d} {np.real(nus[m])*1e-9:11.6f}       {gains[m]:8.4f}')
 
 # find indices selection of nplot highest gain modes to plot
 nplot=min(20, len(nus))
-high_g_indices = (np.abs(gains).argsort()[-nplot:])
+high_g_indices = np.abs(gains).argsort()[-nplot:]
 high_g_indices.sort()
 
 if recalc:
-    plotting.plot_modes(sim_AC,  ivals=high_g_indices)
+    sim_AC.plot_modes(ivals=high_g_indices)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9  # Hz

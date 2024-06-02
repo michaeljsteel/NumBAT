@@ -9,70 +9,70 @@ allfast: flit01 flit02 flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit
 fast1: flit03 flit04a flit04b flit05 flit06a flit06b flit07 flit08 flit09 flit10
 
 lit01: 
-	$(PYTHON) simo-lit_01-Laude-AIPAdv_2013-silica.py
+	$(PYTHON) sim-lit_01-Laude-AIPAdv_2013-silica.py
 flit01: 
-	$(PYTHON) simo-lit_01-Laude-AIPAdv_2013-silica.py fast=1
+	$(PYTHON) sim-lit_01-Laude-AIPAdv_2013-silica.py fast=1
 
 lit02: 
-	$(PYTHON) simo-lit_02-Laude-AIPAdv_2013-silicon.py
+	$(PYTHON) sim-lit_02-Laude-AIPAdv_2013-silicon.py
 flit02: 
-	$(PYTHON) simo-lit_02-Laude-AIPAdv_2013-silicon.py fast=1
+	$(PYTHON) sim-lit_02-Laude-AIPAdv_2013-silicon.py fast=1
 
 lit03: 
-	$(PYTHON) simo-lit_03-Beugnot-NatComm_2014.py
-	$(PYTHON) simo-lit_03-Beugnot-NatComm_2014.py widerange
+	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py
+	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py widerange
 flit03: 
-	$(PYTHON) simo-lit_03-Beugnot-NatComm_2014.py fast=1
-	$(PYTHON) simo-lit_03-Beugnot-NatComm_2014.py fast=1 widerange
+	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py fast=1
+	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py fast=1 widerange
 
 lit04a: 
-	$(PYTHON) simo-lit_04-no_pillar-Van_Laer-NP_2015.py
+	$(PYTHON) sim-lit_04-no_pillar-Van_Laer-NP_2015.py
 flit04a: 
-	$(PYTHON) simo-lit_04-no_pillar-Van_Laer-NP_2015.py fast=1
+	$(PYTHON) sim-lit_04-no_pillar-Van_Laer-NP_2015.py fast=1
 
 lit04b: 
-	$(PYTHON) simo-lit_04-pillar-Van_Laer-NP_2015.py
+	$(PYTHON) sim-lit_04-pillar-Van_Laer-NP_2015.py
 flit04b: 
-	$(PYTHON) simo-lit_04-pillar-Van_Laer-NP_2015.py fast=1
+	$(PYTHON) sim-lit_04-pillar-Van_Laer-NP_2015.py fast=1
 
 lit05: 
-	$(PYTHON) simo-lit_05-Van_Laer-NJP_2015.py
+	$(PYTHON) sim-lit_05-Van_Laer-NJP_2015.py
 flit05: 
-	$(PYTHON) simo-lit_05-Van_Laer-NJP_2015.py fast=1
+	$(PYTHON) sim-lit_05-Van_Laer-NJP_2015.py fast=1
 
 lit06a: 
-	$(PYTHON) simo-lit_06_1-Florez-NatComm_2016-d550nm.py
+	$(PYTHON) sim-lit_06_1-Florez-NatComm_2016-d550nm.py
 flit06a: 
-	$(PYTHON) simo-lit_06_1-Florez-NatComm_2016-d550nm.py fast=1
+	$(PYTHON) sim-lit_06_1-Florez-NatComm_2016-d550nm.py fast=1
 
 lit06b: 
-	$(PYTHON) simo-lit_06_2-Florez-NatComm_2016-d1160nm.py
+	$(PYTHON) sim-lit_06_2-Florez-NatComm_2016-d1160nm.py
 flit06b: 
-	$(PYTHON) simo-lit_06_2-Florez-NatComm_2016-d1160nm.py fast=1
+	$(PYTHON) sim-lit_06_2-Florez-NatComm_2016-d1160nm.py fast=1
 
 lit07: 
-	$(PYTHON) simo-lit_07-Kittlaus-NatPhot_2016.py
+	$(PYTHON) sim-lit_07-Kittlaus-NatPhot_2016.py
 flit07: 
-	$(PYTHON) simo-lit_07-Kittlaus-NatPhot_2016.py fast=1
+	$(PYTHON) sim-lit_07-Kittlaus-NatPhot_2016.py fast=1
 
 lit08: 
-	$(PYTHON) simo-lit_08-Kittlaus-NatComm_2017.py
+	$(PYTHON) sim-lit_08-Kittlaus-NatComm_2017.py
 flit08: 
-	$(PYTHON) simo-lit_08-Kittlaus-NatComm_2017.py fast=1
+	$(PYTHON) sim-lit_08-Kittlaus-NatComm_2017.py fast=1
 
 lit09: 
-	$(PYTHON) simo-lit_09-Morrison-Optica_2017.py
+	$(PYTHON) sim-lit_09-Morrison-Optica_2017.py
 flit09: 
-	$(PYTHON) simo-lit_09-Morrison-Optica_2017.py fast=1
+	$(PYTHON) sim-lit_09-Morrison-Optica_2017.py fast=1
 
 lit10: 
-	$(PYTHON) simo-lit_10a-Wolff-OptExpress-2014.py
-	$(PYTHON) simo-lit_10b-Wolff-OptExpress-2014.py
+	$(PYTHON) sim-lit_10a-Wolff-OptExpress-2014.py
+	$(PYTHON) sim-lit_10b-Wolff-OptExpress-2014.py
 flit10: 
-	$(PYTHON) simo-lit_10a-Wolff-OptExpress-2014.py fast=1
-	$(PYTHON) simo-lit_10b-Wolff-OptExpress-2014.py fast=1
+	$(PYTHON) sim-lit_10a-Wolff-OptExpress-2014.py fast=1
+	$(PYTHON) sim-lit_10b-Wolff-OptExpress-2014.py fast=1
 
 clean:
-	-rm -rf lit_*-fields
+	-rm -rf lit_*-fields *-out __pycache__
 	-rm -rf flit_*-fields
 	-rm lit* flit*

@@ -102,7 +102,7 @@ print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
   print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
-plotting.plot_modes(sim_AC, xlim_min=-.2, xlim_max=-.2, ylim_min=-.2, ylim_max=-.2,
+sim_AC.plot_modes(xlim_min=-.2, xlim_max=-.2, ylim_min=-.2, ylim_max=-.2,
                            ivals=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

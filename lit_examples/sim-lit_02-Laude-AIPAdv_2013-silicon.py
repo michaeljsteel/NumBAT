@@ -8,7 +8,6 @@
     Note requirement for lots of modes and therefore lots of memory.
 """
 
-import time
 import sys
 import numpy as np
 
@@ -59,7 +58,7 @@ n_eff = 3.4
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-plotting.plot_modes(sim_EM_pump, xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
+sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
                          ylim_min=0.2, ylim_max=0.2, )
 
 # Print the wavevectors of EM modes.
@@ -77,7 +76,7 @@ shift_Hz = 31e9
 # Calculate Acoustic modes.
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-plotting.plot_modes(sim_AC, )
+sim_AC.plot_modes()
 
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))

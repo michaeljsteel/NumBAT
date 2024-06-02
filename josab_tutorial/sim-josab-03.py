@@ -5,9 +5,10 @@ Script to evaluate forward Brillouin scattering in a cylindrical SiO2 waveguide
 # Import the necessary packages
 
 
-import numpy as np
+
 import sys
 import math
+import numpy as np
 
 sys.path.append("../backend/")
 import numbat
@@ -131,7 +132,7 @@ print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
 print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
 print("SBS_gain [1/(Wm)] total \n", masked)
 #determining the location of the maximum gain
-maxGainloc=7 ;  #note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
+maxGainloc=7  #note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
 
 print("Plotting acoustic modes")
 
@@ -152,7 +153,7 @@ print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc]/(1e9*2*math.pi) )
 print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc]/1e6)
 
 #since the overlap is not returned directly we'll have to deduce it
-absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc]);
+absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
 absQtot = pow(absQtot2,1/2)
 print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
 
