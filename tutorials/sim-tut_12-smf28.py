@@ -987,7 +987,7 @@ def do_main():
     wguide.plot_mesh(prefix)
     # solve one EM step to prop the waveguide meshing
     sim_EM = wguide.calc_EM_modes(40, 1550, 1.5)
-    # plotting.plot_modes(sim_EM, EM_AC='EM_E', ivals=range(5), )
+    # sim_EM.plot_modes(ivals=range(5), )
     # sim_EM=None
 
     solve_elastic_dispersion(prefix, ssys, wguide, sim_EM, rcore, mat_core)

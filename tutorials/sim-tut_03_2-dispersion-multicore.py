@@ -89,7 +89,7 @@ n_qs = 50  # start with a low number of q_AC values to get an idea of the scale 
 acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 
 # Output the normalisation k value for reference
-print("The acoustic wavevector 2*kp = %f" % q_AC)
+print(f"The acoustic wavevector 2*kp = {q_AC:f}")
 
 multiproc = False
 

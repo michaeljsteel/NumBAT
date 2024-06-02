@@ -57,7 +57,7 @@ sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 # Print EM mode info
 v_kz=sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 n_eff_sim = np.real(sim_EM_pump.neff(EM_ival_pump))
 print("\n Fundamental optical mode ")
