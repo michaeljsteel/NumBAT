@@ -98,7 +98,7 @@ sim_EM_pump.plot_modes(
 v_kz = sim_EM_pump.kz_EM_all()
 print("\n k_z of EM modes [1/m]:")
 for i, kz in enumerate(v_kz):
-    print("{0:3d}  {1:.4e}".format(i, np.real(kz)))
+    print(f"{i:3d}  {np.real(kz):.4e}")
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -117,7 +117,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, debug=Fals
 AC_freqs_GHz = sim_AC.nu_AC_all() * 1e-9
 print("\n Freq of AC modes (GHz):")
 for i, nu in enumerate(AC_freqs_GHz):
-    print("{0:3d}  {1:.4e}".format(i, np.real(nu)))
+    print(f"{i:3d}  {np.real(nu):.4e}")
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions, as
 # well as other important quantities

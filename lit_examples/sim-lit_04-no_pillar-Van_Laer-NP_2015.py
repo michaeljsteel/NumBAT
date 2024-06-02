@@ -137,8 +137,7 @@ gains = SBS_gain[EM_ival_pump, EM_ival_Stokes, :]
 print('Acoustic modes')
 print('m      Freq (GHz)      Total gain (1/(Wm))')
 for m in range(len(nus)):
-    print('{0:3d}    {1:12.6f}   {2:8.4f}'.format(
-        m, np.real(nus[m])*1e-9, gains[m]))
+    print(f'{m:3d}    {np.real(nus[m]) * 1e-09:12.6f}   {gains[m]:8.4f}')
 
 
 # Mask negligible gain values to improve clarity of print out.

@@ -222,6 +222,6 @@ ax2.set_yscale('log')  # , nonposx='clip')
 fig.savefig(nbapp.outpath()+'-convergence-gain_MB.png', bbox_inches='tight')
 
 print("Calculation times (secs.): ", ', '.join(
-    map(lambda x: '%.2f' % x, time_list)))
+    map(lambda x: f'{x:.2f}', time_list)))
 
 print(nbapp.final_report())

@@ -112,7 +112,7 @@ if new_calcs:
     v_width_data = np.array(l_width_data, dtype=object)
 
     # This generates a warning abut ragged nested sequences. Is there an option to pool.map that would clean this up?
-    np.savez('%s_simo_results' % prefix, width_objs=v_width_data)
+    np.savez(f'{prefix}_simo_results', width_objs=v_width_data)
 
 else:
     npzfile = np.load(f'{prefix}_simo_results.npz', allow_pickle=True)

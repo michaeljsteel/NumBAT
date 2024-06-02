@@ -89,16 +89,8 @@ else:
 sim_EM_pump.analyse_symmetries(PointGroup.C2V)
 sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
-sim_EM_pump.plot_modes(
-    xlim_min=0.2,
-    xlim_max=0.2,
-    ivals=[EM_ival_pump],
-    ylim_min=0.2,
-    ylim_max=0.2,
-    EM_AC="EM_E",
-    num_ticks=3,
-    ticks=True,
-)
+sim_EM_pump.plot_modes( xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
+    ylim_min=0.2, ylim_max=0.2, num_ticks=3, ticks=True,)
 
 if not reuse_fields:
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
@@ -111,7 +103,7 @@ else:
 v_kz = sim_EM_pump.kz_EM_all()
 print("\n k_z of EM modes [1/m]:")
 for i, kz in enumerate(v_kz):
-    print("{0:3d}  {1:.4e}".format(i, np.real(kz)))
+    print(f"{i:3d}  {np.real(kz):.4e}")
 
 
 # Calculate the EM effective index of the waveguide.
@@ -140,7 +132,7 @@ sim_AC.set_r0_offset(3.0e-6, -2.250e-6)
 v_nu = sim_AC.nu_AC_all()
 print("\n Freq of AC modes (GHz):")
 for i, nu in enumerate(v_nu):
-    print("{0:3d}  {1:.4e}".format(i, np.real(nu) * 1e-9))
+    print(f"{i:3d}  {np.real(nu) * 1e-09:.4e}")
 
 
 # set_Q_factor = 190 # set the mechanic Q manually

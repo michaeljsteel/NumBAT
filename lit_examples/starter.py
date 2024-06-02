@@ -2,7 +2,7 @@
 
 def read_args(enum, argv, sub=''):
 
-    prefix_str = 'lit_{0:02d}'.format(enum)
+    prefix_str = f'lit_{enum:02d}'
     prefix_str+=sub 
 
     if len(argv)>1 and argv[1]=='fast=1':  # choose between faster or more accurate calculation

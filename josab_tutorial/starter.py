@@ -2,7 +2,7 @@
 
 def read_args(enum, argv, sub='', dflt_refine=5):
 
-    prefix_str = 'josab_{0:02d}'.format(enum)
+    prefix_str = f'josab_{enum:02d}'
     prefix_str+=sub 
 
     if len(argv)>1 and argv[1]=='fast=1':  # choose between faster or more accurate calculation
