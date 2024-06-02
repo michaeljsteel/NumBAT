@@ -74,8 +74,7 @@ neff_EM = simres_EM_pump.neff_all()
 ng_EM = simres_EM_pump.ngroup_EM_all()
 print('m    |   k_z [1/micron]  | neff  | ng')
 for m in range(num_modes_EM_pump):
-    print('{0:4d}  {1:12.6f}  {2:12.6f}  {3:12.6f}'.format(
-        m, kz_EM_mu[m], neff_EM[m], ng_EM[m]))
+    print(f'{m:4d}  {kz_EM_mu[m]:12.6f}  {neff_EM[m]:12.6f}  {ng_EM[m]:12.6f}')
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
@@ -88,8 +87,8 @@ print("n_eff", np.round(n_eff_sim, 4))
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # simres_EM_Stokes = npzfile['simres_EM_Stokes'].tolist()
 
-plotting.plot_modes(simres_EM_pump, ivals=range(10), field_type='EM_E')
-plotting.plot_modes(simres_EM_pump, ivals=range(10), field_type='EM_H')
+simres_EM_pump.plot_modes(ivals=range(10), field_type='EM_E')
+simres_EM_pump.plot_modes(ivals=range(10), field_type='EM_H')
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
@@ -109,12 +108,11 @@ vp_AC = np.real(simres_AC.vp_AC_all())
 vg_AC = np.real(simres_AC.vg_AC_all())
 print('m    |   nu [GHz]  | vp [m/s]  | vg [m/s]')
 for m in range(num_modes_AC):
-    print('{0:4d}  {1:12.6f}  {2:12.2f}  {3:12.2f}'.format(
-        m, nu_AC[m], vp_AC[m], vg_AC[m]))
+    print(f'{m:4d}  {nu_AC[m]:12.6f}  {vp_AC[m]:12.2f}  {vg_AC[m]:12.2f}')
 
 #simres_AC.calc_acoustic_losses()
 
-plotting.plot_modes(simres_AC, xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
+simres_AC.plot_modes(xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
                            ivals=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

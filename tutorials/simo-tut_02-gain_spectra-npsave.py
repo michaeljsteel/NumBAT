@@ -97,12 +97,12 @@ for (i, kz) in enumerate(v_kz):
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-plotting.plot_modes(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+simres_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
                           field_type='EM_E', ticks=True)
 
 # Plot the H field of the pump mode
-plotting.plot_modes(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+simres_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
                           field_type='EM_H', ticks=True)
 
@@ -133,7 +133,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-plotting.plot_modes(simres_AC, contours=True,
+simres_AC.plot_modes(contours=True,
                           ticks=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:

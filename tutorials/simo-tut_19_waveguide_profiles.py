@@ -1,13 +1,9 @@
 
 import sys
-import numpy as np
 
 sys.path.append("../backend/")
 import numbat
 import materials
-import mode_calcs
-import integration
-import plotting
 
 import starter
 
@@ -35,7 +31,7 @@ prefix, refine_fac = starter.read_args(19, sys.argv, sub='b')
 
 nbapp = numbat.NumBATApp(prefix)
 
-refine_fac = 1;
+refine_fac = 1
 lc_bkg = .1 * refine_fac
 lc_norm = 3
 lc_corner = 6
@@ -43,8 +39,8 @@ lc_corner = 6
 lc_norm = 1
 lc_corner = 1
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
-                              inc_b_x = inc_b_x, inc_b_y = inc_b_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+                              inc_b_x = inc_b_x, inc_b_y = inc_b_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
@@ -54,4 +50,3 @@ wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_
 wguide.plot_refractive_index_profile(prefix, as_epsilon=True)
 
 #wguide.plot_phase_velocity_z_profile(prefix)
-

@@ -502,7 +502,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
         if doplot:  # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            plotting.plot_modes(sim_AC, ivals=range(
+            sim_AC.plot_modes(ivals=range(
                 nmodes), prefix=prefix+'_%d' % iq)
 
         return (iq, tq, nu_num)
@@ -886,7 +886,7 @@ def solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad):
         neff_num[ik] = np.sort(np.real(sim_EM.neff_all()))[-nmodes:]
 
         if ik % field_out_skip == 0:  # Time for some field plots!
-            plotting.plot_modes(sim_EM, EM_AC='EM_E', ivals=range(nmodes),
+            sim_EM.plot_modes(ivals=range(nmodes),
                                       prefix=prefix+'_%d' % ik, ticks=True)
 
     make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,

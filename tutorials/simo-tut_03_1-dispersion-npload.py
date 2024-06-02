@@ -34,7 +34,7 @@ prefix, refine_fac = starter.read_args(3, sys.argv, 'a')
 
 nbapp = numbat.NumBATApp(prefix)
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)

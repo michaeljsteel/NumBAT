@@ -38,7 +38,7 @@ prefix, refine_fac = starter.read_args(6, sys.argv)
 
 nbapp = numbat.NumBATApp(prefix)
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
                         #lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
@@ -69,13 +69,13 @@ trim=0.4
 # Display the wavevectors of EM modes.
 v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 simres_EM_pump.plot_modes(ivals=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
-print("n_eff = {0:.4e}".format(n_eff_sim))
+print(f"n_eff = {n_eff_sim:.4e}")
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_ival_Stokes))
@@ -93,7 +93,7 @@ else:
 # Print the frequencies of AC modes.
 v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
 simres_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 simres_AC.plot_modes()
@@ -107,7 +107,6 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
-sys.exit(0)
 # np.savez('wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE, SBS_gain_MB=SBS_gain_MB, alpha=alpha)
 # npzfile = np.load('wguide_data_AC_gain.npz')
 # SBS_gain = npzfile['SBS_gain']

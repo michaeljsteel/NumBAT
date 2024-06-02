@@ -5,9 +5,10 @@
 
 
 import sys
+import time
+
 import numpy as np
 import matplotlib.pyplot as plt
-import time
 
 sys.path.append("../backend/")
 import numbat
@@ -51,7 +52,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     print("\n Running simulation", i_lc+1, "/", nu_lcs)
     lc_refine_2 = lc_ref/2
     lc_bkg = lc_bkg_list[i_lc]
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),

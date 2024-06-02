@@ -8,9 +8,7 @@ import sys
 import copy
 import multiprocessing
 import math
-#import scipy.signal
-#import scipy.optimize as sciopt
-#import scipy.special as sp
+
 
 import matplotlib.pyplot as plt
 import numpy as np

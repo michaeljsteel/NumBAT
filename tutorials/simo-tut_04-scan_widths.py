@@ -84,7 +84,7 @@ waveguide_widths = np.linspace(300, 350, n_widths)
 l_wguides = []
 # Scale meshing to new structures.
 for width in waveguide_widths:
-    msh_ratio = (width/known_geo)
+    msh_ratio = width/known_geo
     unitcell_x = 1.5*lambda_nm*msh_ratio
     unitcell_y = unitcell_x
     inc_a_x = width
@@ -103,20 +103,20 @@ for width in waveguide_widths:
 new_calcs = True
 if new_calcs:
   # Run widths in parallel across num_cores CPUs using multiprocessing package.
-  if use_multiproc:
-      pool = Pool(num_cores)
-      l_width_data = pool.map(modes_n_gain, l_wguides)
-  else:
-      l_width_data = list(map(modes_n_gain, l_wguides))
+    if use_multiproc:
+        with Pool(num_cores) as pool:
+            l_width_data = pool.map(modes_n_gain, l_wguides)
+    else:
+        l_width_data = list(map(modes_n_gain, l_wguides))
 
-  v_width_data = np.array(l_width_data, dtype=object)
+    v_width_data = np.array(l_width_data, dtype=object)
 
-  # This generates a warning abut ragged nested sequences. Is there an option to pool.map that would clean this up?
-  np.savez('%s_simo_results' % prefix, width_objs=v_width_data)
+    # This generates a warning abut ragged nested sequences. Is there an option to pool.map that would clean this up?
+    np.savez('%s_simo_results' % prefix, width_objs=v_width_data)
 
 else:
-  npzfile = np.load(f'{prefix}_simo_results.npz', allow_pickle=True)
-  v_width_data = npzfile['width_objs'].tolist()
+    npzfile = np.load(f'{prefix}_simo_results.npz', allow_pickle=True)
+    v_width_data = npzfile['width_objs'].tolist()
 
 n_effs = []
 freqs_gains = []
@@ -129,11 +129,9 @@ for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
     width, sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz = width_obj
 
-    plotting.plot_modes(
-        sim_EM_pump,  suffix='_wid_%d' % i_w, ivals=range(5))
+    sim_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
 
-    plotting.plot_modes(sim_AC,
-                              suffix='_wid_%d' % i_w, ivals=range(20))
+    sim_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
     # np.round(np.real((q_AC/2.)*((lambda_nm*1e-9)/(2.*np.pi))), 4)
