@@ -1,6 +1,5 @@
 # Plots dispersion as a function of rod width for elastic problem of a single rod in vacuum
 import os
-import time
 import sys
 import queue
 import copy
@@ -17,9 +16,8 @@ import numpy as np
 sys.path.append("../backend/")
 import numbat
 import materials
-import plotting
 from numbattools import launch_worker_threads_and_wait
-from nbanalytic import TwoLayerFiberEM, EMPoln, ElasticRod
+from nbanalytic import TwoLayerFiberEM, ElasticRod
 
 import starter
 
@@ -358,8 +356,8 @@ def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
     nu_an=np.zeros([phi-plo+1, len(diams), nmodes], dtype=float)
     q_an=np.zeros([len(diams)], dtype=float)
     while not q_result.empty():  #only one thread now, so no blocking to worry about
-        (p, q, id, v_Om_modes) = q_result.get()
-        nu_an[p+1, id,:len(v_Om_modes)] = v_Om_modes/twopi
+        (p, q, jobid, v_Om_modes) = q_result.get()
+        nu_an[p+1, jobid,:len(v_Om_modes)] = v_Om_modes/twopi
         q_an[id] = q # will be refilled for each p but doesn't matter
 
 
@@ -430,7 +428,7 @@ def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
 #              r'$d\, [\mathrm{μm}^{-1}]$ ', r'$\bar{n}=v_s/v$',
 #              (0, diams[-1]*1e-3), (.4,1.2), legend_ncol=2)
 
-    #return nu_an
+    return nu_an
 
 def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
 
@@ -455,7 +453,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            plotting.plot_modes(sim_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
+            sim_AC.plot_modes(ivals=range(nmodes), prefix=prefix+'_%d'%iq)
 
         return (iq, tq, v_nu_num)
 
@@ -467,7 +465,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
 
     # Create work queues
     for iq, tq in enumerate(qvec):
-        doplot =  (iq % field_out_skip == 0) # Time for some field plots!
+        doplot =  iq % field_out_skip == 0 # Time for some field plots!
         wg = copy.deepcopy(wguide)  # wguide and sim are not thread-safe when we plot mode profiles
         if doplot:
             q_work_plot.put((iq, tq, doplot, wg))

@@ -77,7 +77,7 @@ sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre
 sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
-plotting.plot_modes(sim_EM_pump, EM_AC='EM_E', ivals=[0])
+sim_EM_pump.plot_modes(EM_AC='EM_E', ivals=[0])
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
@@ -101,7 +101,7 @@ else:
     sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
 
 sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_modes(sim_AC, EM_AC='AC', )
+sim_AC.plot_modes(EM_AC='AC', )
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()

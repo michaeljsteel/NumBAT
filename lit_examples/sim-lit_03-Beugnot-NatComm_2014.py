@@ -7,10 +7,11 @@
 
 
 import time
-import numpy as np
+
 import sys
 from multiprocessing import Pool
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 sys.path.append("../backend/")
@@ -18,8 +19,6 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
-import reporting
 
 import starter
 
@@ -43,7 +42,7 @@ def make_gain_plot(m_gain, extents, pref, swap_axes):
         ax1.set_xlabel('Acoustic frequency (GHz)')
 
     for axis in ['top', 'bottom','left','right']:
-     ax1.spines[axis].set_linewidth(1)
+        ax1.spines[axis].set_linewidth(1)
 
     cb=fig.colorbar(im, ax=ax1)
     cb.outline.set_visible(False)
@@ -129,7 +128,7 @@ def modes_n_gain(diam):
 
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
-    #plotting.plot_modes(sim_EM_pump, ivals=range(5), field_type='EM_E', )
+    #sim_EM_pump.plot_modes(ivals=range(5), field_type='EM_E', )
 
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
@@ -164,9 +163,9 @@ def modes_n_gain(diam):
     if abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
         #pass
 
-        plotting.plot_modes(sim_EM_pump, field_type = 'EM_E', ivals=range(10),
+        sim_EM_pump.plot_modes(ivals=range(10),
                                   prefix=prefix+f'-diam-{round(diam):04d}')
-        plotting.plot_modes(sim_AC, ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
+        sim_AC.plot_modes(ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
         for m in range(num_modes_AC):
             print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gainbox.gain_total(m):.3e}, ',
                  f'{gainbox.gain_PE(m):.4e}, {gainbox.gain_MB(m):.4e}')
@@ -176,8 +175,8 @@ def modes_n_gain(diam):
 
 # Run diams in parallel across num_cores CPUs using multiprocessing package.
 if num_cores>1:
-    pool = Pool(num_cores)
-    gain_specs = pool.map(modes_n_gain, v_diams)
+    with Pool(num_cores) as pool:
+        gain_specs = pool.map(modes_n_gain, v_diams)
 else:
     gain_specs = map(modes_n_gain, v_diams)
 
