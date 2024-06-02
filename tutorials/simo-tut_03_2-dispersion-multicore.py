@@ -42,7 +42,7 @@ prefix, refine_fac = starter.read_args(3, sys.argv, 'b')
 nbapp = numbat.NumBATApp(prefix)
 
 # Note that this mesh is quite fine, may not be required if purely using dispersive sims
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -99,8 +99,8 @@ qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
 if multiproc:  # TODO: seems to stall right now.
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
     num_cores = 2
-    pool = Pool(num_cores)
-    pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
+    with  Pool(num_cores) as pool:
+        pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 # Note pool.map() doesn't pass errors back from fortran routines very well.
 # It's good practise to run the extrema of your simulation range through map()
 # before launching full multicore simulation.

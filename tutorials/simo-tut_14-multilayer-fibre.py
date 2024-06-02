@@ -228,7 +228,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
         if doplot: # Only worker 1 will ever do this
             #print('{0} is plotting elastic modes at ik = {1:d} of [0..{2:d}].'.format(
             #    threading.current_thread().name, ik, len(kvec)-1))
-            plotting.plot_modes(sim_EM, EM_AC='EM_E', ivals=range(nmodes),
+            sim_EM.plot_modes(ivals=range(nmodes),
                                       prefix=prefix+'_%d'%ik, ticks=True)
 
         return (ik, tk, neff_k)

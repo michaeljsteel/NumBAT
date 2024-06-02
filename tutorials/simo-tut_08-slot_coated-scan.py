@@ -49,7 +49,7 @@ nbapp = numbat.NumBATApp(prefix)
 def ac_mode_freqs(coat_y):
     print(f'Commencing mode calculation for coat_y = {coat_y}')
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                             slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                             coat_y=coat_y,
                             material_bkg=materials.make_material("Vacuum"),            # background
@@ -96,7 +96,7 @@ def ac_mode_freqs(coat_y):
     wguide = sim_EM_pump = sim_EM_Stokes = sim_AC = None
     SBS_gain = SBS_gain_PE = SBS_gain_MB = linewidth_Hz = Q_factors = alpha = None
 
-    print('Completed mode calculation for coating coat_y = %f'% coat_y)
+    print(f'Completed mode calculation for coating coat_y = {coat_y}')
 
     # Return the frequencies and simulated k_ac value in a list
     return mode_freqs

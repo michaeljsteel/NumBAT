@@ -1,17 +1,13 @@
 
 import sys
-import numpy as np
-
-sys.path.append("../backend/")
-import numbat
-import materials
-import mode_calcs
-import integration
-import plotting
 from math import pi
 import copy
 
-import starter
+import numpy as np
+
+sys.path.append("../backend/")
+
+import materials
 
 np.set_printoptions( precision=4)
 # Geometric Parameters - all in nm.
@@ -61,18 +57,15 @@ mat_ds[3].rotate((1,1,1), pi/4)
 
 #for mats in (mat_as, mat_bs, mat_cs, mat_ds):
 ##for mats in (mat_as,):
-#    for im,m in enumerate(mats): 
+#    for im,m in enumerate(mats):
 #        m.make_crystal_axes_plot(pref+f'{im:d}')
 #    #for m in mats: m.plot_bulk_dispersion(pref)
 
 #for am,mats in enumerate((mat_as, mat_bs, mat_cs, mat_ds)):
 for am,mats in enumerate((mat_ds,)):
     for im,m in enumerate(mats):
-     m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
-     m.plot_bulk_dispersion_3D(pref+f'-3d-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
+        m.plot_bulk_dispersion(pref+f'-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
+        m.plot_bulk_dispersion_3D(pref+f'-3d-{am:d}-{im:d}', label=m.material_name+f': Ori. {im:d}')
 #$
 #materials.compare_bulk_dispersion(mat_as[3], mat_cs[3], pref)
 #mat_as[0].plot_bulk_dispersion(pref)
-
-
-

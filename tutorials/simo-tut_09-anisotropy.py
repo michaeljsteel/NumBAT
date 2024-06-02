@@ -38,7 +38,7 @@ prefix, refine_fac = starter.read_args(9, sys.argv)
 nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_test_anisotropic"),
                         lc_bkg=1, lc_refine_1=200.0*refine_fac, lc_refine_2=1.0*refine_fac)
@@ -53,7 +53,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical
@@ -77,7 +77,7 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
@@ -101,7 +101,7 @@ print("\nContributions to SBS gain [1/(WM)]")
 print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
 
 for (m, gpe, gmb, gt) in zip(range(num_modes_AC), SBS_gain_PE_ij, SBS_gain_MB_ij, SBS_gain_tot_ij):
-    print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
+    print(f'{m:12d}  {gpe:19.6e}  {gmb:19.6e}  {gt:16.6e}')
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
@@ -113,7 +113,7 @@ print("\n Displaying gain results with negligible components masked out:")
 
 print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
 for (m, gpe, gmb, gt) in zip( range(num_modes_AC), masked_PE, masked_MB, masked_tot):
-    print('{0:12d}  {1:19.6e}  {2:19.6e}  {3:16.6e}'.format(m, gpe, gmb, gt))
+    print(f'{m:12d}  {gpe:19.6e}  {gmb:19.6e}  {gt:16.6e}')
 
 
 print(nbapp.final_report())

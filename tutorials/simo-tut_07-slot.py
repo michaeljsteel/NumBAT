@@ -39,7 +39,7 @@ prefix, refine_fac = starter.read_args(7, sys.argv)
 
 nbapp = numbat.NumBATApp(prefix)
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                         material_bkg=materials.make_material("Vacuum"),            # background
                         material_a=materials.make_material("As2S3_2017_Morrison"), # slot
@@ -77,7 +77,7 @@ simres_EM_pump.plot_modes(quiver_points = 20, xlim_min=0.2, xlim_max=0.2,
 # Display the wavevectors of EM modes.
 v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))

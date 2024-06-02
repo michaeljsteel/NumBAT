@@ -20,7 +20,7 @@ import numbat
 import materials
 import plotting
 from numbattools import launch_worker_threads_and_wait
-from nbanalytic import ElasticRod
+from nbanalytic import ElasticRod, chareq_elastic_rod
 
 import starter
 
@@ -215,7 +215,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, simres_EM, cmat):
 
     # Create work queues
     for iq, tq in enumerate(qvec):
-        doplot =  (iq % field_out_skip == 0) # Time for some field plots!
+        doplot =  iq % field_out_skip == 0  # Time for some field plots!
         wg = copy.deepcopy(wguide)  # wguide and sim are not thread-safe when we plot mode profiles
         if doplot:
             q_work_plot.put((iq, tq, doplot, wg))

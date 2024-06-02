@@ -2,12 +2,9 @@
     to simulate a circular Si waveguide clad in SiO2.
 """
 
-import time
-import numpy as np
 import sys
-import matplotlib
-matplotlib.use('pdf')
 
+import numpy as np
 
 sys.path.append("../backend/")
 import numbat
@@ -84,7 +81,7 @@ else:
 v_kz = sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz):
-    print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+    print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
@@ -93,11 +90,11 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Plot the E fields of the EM modes fields - specified with EM_AC='EM_E'.
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (ival = 0) mode.
-plotting.plot_modes(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_E',
                            ticks=True, quiver_points=20)
 
-plotting.plot_modes(sim_EM_pump, xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
+sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                           ylim_max=0.3, ivals=range(10), contours=True, EM_AC='EM_H',
                            ticks=True, quiver_points=20)
 
@@ -107,18 +104,18 @@ q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
 
 # Calculate Acoustic modes.
 if new_calcs:
-  sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
-  sim_AC.save_simulation('tut_10_acoustic')
+    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+    sim_AC.save_simulation('tut_10_acoustic')
 else:
-  sim_AC = mode_calcs.load_simulation('tut_10_acoustic')
+    sim_AC = mode_calcs.load_simulation('tut_10_acoustic')
 
 # Print the frequencies of AC modes.
 v_nu = sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
-  print('{0:3d}  {1:.4e}'.format(i, np.real(nu)*1e-9))
+    print('{i:3d}  {np.real(nu)*1e-9:.4e}')
 
-plotting.plot_modes(sim_AC, contours=False,
+sim_AC.plot_modes(contours=False,
                            ticks=True, ivals=[10], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

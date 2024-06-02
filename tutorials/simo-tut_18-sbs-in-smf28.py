@@ -91,17 +91,17 @@ else:
 print('\nPlotting EM fields')
 #trim=0.4
 trim=0
-plotting.plot_modes(sim_EM_pump, EM_AC='EM_E', ivals=range(5),
+sim_EM_pump.plot_modes(ivals=range(5),
         xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
-for (i, kz) in enumerate(v_kz): print('{0:3d}  {1:.4e}'.format(i, np.real(kz)))
+for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))
-print("n_eff = {0:.4e}".format(n_eff_sim))
+print(f"n_eff = {n_eff_sim:.4e}".format())
 
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
@@ -123,12 +123,12 @@ else:
     sim_AC = mode_calcs.load_simulation('tut_18_acoustic')
 
 #sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_modes(sim_AC, EM_AC='AC', )
+sim_AC.plot_modes()
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(v_nu): print('{0:3d}  {1:.5f}'.format(i, np.real(nu)*1e-9))
+for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
 set_q_factor = 1000.
 
