@@ -364,7 +364,7 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
         cbar = plt.colorbar(im_co, cax=cax)
         if not cbarticks is None:
             cbar.set_ticks(cbarticks)
-            cbarlabels = [f'{t:.2f}' for t in cbarticks]
+            cbarlabels = ['%.2f' % t for t in cbarticks]
             cbar.set_ticklabels(cbarlabels)
         cbar.ax.tick_params(labelsize=decorator.get_property('cbar_tick_fs'))
 
