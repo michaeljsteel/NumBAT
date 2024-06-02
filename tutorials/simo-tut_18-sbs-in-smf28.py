@@ -1,4 +1,4 @@
-""" 
+"""
     Calculate the backward SBS gain spectra of a silicon waveguide
     surrounded by vacuum (air).
 """
@@ -56,13 +56,13 @@ else:
     inc_a_x = clad_a
 
 if onion:
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=core_a, 
-                              inc_b_x = clad_a-core_a, 
-                              material_bkg=mat_vac, material_a=mat_core, material_b=mat_clad, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=core_a,
+                              inc_b_x = clad_a-core_a,
+                              material_bkg=mat_vac, material_a=mat_core, material_b=mat_clad,
                               lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 else:
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=inc_a_x, 
-                              material_bkg=mat_vac, material_a=mat_core, 
+    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=inc_a_x,
+                              material_bkg=mat_vac, material_a=mat_core,
                               lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 
 
@@ -91,7 +91,7 @@ else:
 print('\nPlotting EM fields')
 #trim=0.4
 trim=0
-plotting.plot_mode_fields(sim_EM_pump, EM_AC='EM_E', ivals=range(5),
+plotting.plot_modes(sim_EM_pump, EM_AC='EM_E', ivals=range(5),
         xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Display the wavevectors of EM modes.
@@ -123,7 +123,7 @@ else:
     sim_AC = mode_calcs.load_simulation('tut_18_acoustic')
 
 #sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-plotting.plot_mode_fields(sim_AC, EM_AC='AC', )
+plotting.plot_modes(sim_AC, EM_AC='AC', )
 
 # Print the frequencies of AC modes.
 v_nu=sim_AC.nu_AC_all()

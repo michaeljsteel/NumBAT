@@ -1,11 +1,14 @@
-import sys
+#import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 import numbat
-import plotting
+#import plotting
+
+from plotmodes import TidyAxes
+from numbattools import save_and_close_figure
 
 class MailData:
     '''Native representation of the Gmsh mesh and node/element structures.
@@ -99,7 +102,7 @@ class MailData:
             ax.set_xlabel(r'$x$ [μm]')
             ax.set_ylabel(r'$y$ [μm]')
 
-        tidyaxes = plotting.TidyAxes(nax=4, props={'ax_label_fs':8, 'ax_ticklabel_fs':6,
+        tidyaxes = TidyAxes(nax=4, props={'ax_label_fs':8, 'ax_ticklabel_fs':6,
                                      'ax_tickwidth':0.25, 'ax_linewidth':1, 'aspect':1,
                                      'cb_linewidth':1, 'cb_label_fs':10,
                                      'cb_ticklabel_fs':8, 'cb_tickwidth':0.25})
@@ -109,7 +112,7 @@ class MailData:
         tidyaxes.apply_to_cbars(cbar)
 
         pref = numbat.NumBATApp().outprefix()
-        plotting.save_and_close_figure(fig, pref + '-mailmesh.png')
+        save_and_close_figure(fig, pref + '-mailmesh.png')
 
 
     def _parse_lines(self, lines):

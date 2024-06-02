@@ -74,7 +74,7 @@ def ac_mode_freqs(coat_y):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
     if coat_y == 20.0: # Shouldn't really test equality on floats like this
-        plotting.plot_mode_fields(sim_AC,  suffix='_%i' %int(coat_y))
+        sim_AC.plot_modes(sim_AC,  suffix='_%i' %int(coat_y))
 
     set_q_factor = 1000.
 

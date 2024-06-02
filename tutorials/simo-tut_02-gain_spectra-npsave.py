@@ -51,7 +51,7 @@ print('\nCommencing NumBAT tutorial 2\n')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y, 
+wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -97,12 +97,12 @@ for (i, kz) in enumerate(v_kz):
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-plotting.plot_mode_fields(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+plotting.plot_modes(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
                           field_type='EM_E', ticks=True)
 
 # Plot the H field of the pump mode
-plotting.plot_mode_fields(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
+plotting.plot_modes(simres_EM_pump, xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
                           ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
                           field_type='EM_H', ticks=True)
 
@@ -133,7 +133,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-plotting.plot_mode_fields(simres_AC, contours=True,
+plotting.plot_modes(simres_AC, contours=True,
                           ticks=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:
