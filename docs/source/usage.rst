@@ -20,11 +20,11 @@ Tutorial 1 -- Basic SBS Gain Calculation
 
 Simulations with |NUMBAT| are generally carried out using a python script file.
 
-This example, contained in ``<NumBAT>tutorials/simo-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
+This example, contained in ``<NumBAT>tutorials/sim-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
 
 Move into the tutorials directory and then run the script by entering::
 
-    $ python3 simo-tut_01-first_calc.py
+    $ python3 sim-tut_01-first_calc.py
 
 
 After a short while, you should see some values for the SBS gain printed to the screen.
@@ -66,7 +66,7 @@ in the standard SI base units.
 
 Here's the full source code for this tutorial:
 
-.. literalinclude:: ../../tutorials/simo-tut_01-first_calc.py
+.. literalinclude:: ../../tutorials/sim-tut_01-first_calc.py
     :lines: 0-
 
 
@@ -89,17 +89,17 @@ These files can be edited using your choice of text editor (for instance ``nano`
 
 To save the results from a simulation that are displayed upon execution (the print statements in your script) use::
 
-    $ python3 ./simo-tut_01-first_calc.py | tee log-simo.log
+    $ python3 ./sim-tut_01-first_calc.py | tee log-simo.log
 
 
 To have direct access to the simulation objects upon the completion of a script use::
 
-    $ python3 -i ./simo-tut_01-first_calc.py 
+    $ python3 -i ./sim-tut_01-first_calc.py
 
 This will execute the python script and then return you into an interactive
 python session within the terminal. This terminal session provides the user
 experience of an ipython type shell where the python environment and all the
-simulation objects are in the same state as in the script when it has finished executing. In this session you can access the docstrings of objects, 
+simulation objects are in the same state as in the script when it has finished executing. In this session you can access the docstrings of objects,
 classes and methods. For example::
 
     >>> from pydoc import help
@@ -369,17 +369,17 @@ is a helpful model to follow.
          create two ``Line`` objects joining the same two points. This will
          produce designs that look correct, but lead to poorly formed meshes
          that will fail when |NUMBAT| runs.
-         
+
        - That all ``Line Loop`` elements defining a particular region
          are defined with the same handedness. The natural choice is to go
          around the loop anti-clockwise.  Remember to include a minus sign for
          any line element that is traversed in the backwards sense.
 
        - That all regions that define a single physical structure with a common
-         material are grouped together as a single ``Surface`` 
+         material are grouped together as a single ``Surface``
          and then ``Physical Surface``.
 
-       - That the outer boundary is grouped as a ``Line Loop`` and 
+       - That the outer boundary is grouped as a ``Line Loop`` and
          then a ``Physical Line``.
 
        - That the origin of coordinates is placed in a sensible position, such
@@ -387,7 +387,7 @@ is a helpful model to follow.
          fields to be concentrated.  This doesn't actually affect |NUMBAT|
          calculations but will produce more natural axis scales in output
          plots.
-         
+
     You can see all examples of these principles followed in the mesh
     structures supplied with |NUMBAT|.
 
@@ -404,8 +404,8 @@ is a helpful model to follow.
   - Fill in values for the ``wg_impl`` (the name of the python *file*
     implementing your waveguide geometry), ``wg_class`` (the name of the python
     *class* corresponding to your waveguide) and ``inc_shape`` (the waveguide
-    *template name*) fields.  
-    
+    *template name*) fields.
+
       - The value of ``inc_shape`` will normally be the your chosen template
         name, in this case ``mywaveguide``.  The other parameters can be chosen
         as you wish. It is natural to choose a class name which matches your
@@ -421,7 +421,7 @@ is a helpful model to follow.
 
       -  Then save and close this file.
 
-  - Open or create the python file you just specified in the ``wg_impl`` field. 
+  - Open or create the python file you just specified in the ``wg_impl`` field.
     This file must be placed in the ``<NumBAT>/backend/msh`` directory.
 
       - The python file must include the  import line  ``from usermesh import
@@ -451,7 +451,7 @@ is a helpful model to follow.
         ``Rectangular`` and ``TwoIncl`` provide good models for this method.
 
 
-Designing and implementing a few waveguide structure should not be a daunting task but some steps can be confusing the first time round. If you hit any hiccups or have suggestions for trouble-shooting, please let us know. 
+Designing and implementing a few waveguide structure should not be a daunting task but some steps can be confusing the first time round. If you hit any hiccups or have suggestions for trouble-shooting, please let us know.
 
 
 Mesh parameters

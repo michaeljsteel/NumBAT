@@ -17,7 +17,7 @@ We note the particular importance of examples 5-8 which include experimental and
 
 Example 1 -- BSBS in a silica rectangular waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example ``simo-lit_01-Laude-AIPAdv_2013-silica.py``
+This example ``sim-lit_01-Laude-AIPAdv_2013-silica.py``
 is based on the calculation of backward SBS
 in a small rectangular silica waveguide described in V. Laude and J.-C. Beugnot,
 `Generation of phonons from electrostriction in small-core optical waveguides
@@ -119,7 +119,7 @@ paper are inconsistent.  The axial plot is the correct one for this mode.
 Example 2 -- BSBS in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example in ``simo-lit_02-Laude-AIPAdv_2013-silicon.py`` again follows the paper of V. Laude and J.-C. Beugnot,
+This example in ``sim-lit_02-Laude-AIPAdv_2013-silicon.py`` again follows the paper of V. Laude and J.-C. Beugnot,
 `Generation of phonons from electrostriction in small-core optical waveguides
 <http://dx.doi.org/10.1063/1.4801936>`_, *AIP Advances* **3**, 042109 (2013),
 but this time looks at the *silicon* waveguide case.
@@ -191,7 +191,7 @@ THINGS TO DO
 Example 3 -- BSBS in a tapered fibre - scanning widths
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example, in ``simo-lit_03-Beugnot-NatComm_2014.py``,
+This example, in ``sim-lit_03-Beugnot-NatComm_2014.py``,
 is based on the calculation of backward SBS
 in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
 `Brillouin light scattering from surface elastic waves in a subwavelength-diameter optical fibre
@@ -319,7 +319,7 @@ It is also illuminating to look at the elastic dispersion for a wide range of mi
 
 Example 4 -- FSBF in a waveguide on a pedestal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example, in ``simo-lit_04-pillar-Van_Laer-NatPhot_2015.py``,
+This example, in ``sim-lit_04-pillar-Van_Laer-NatPhot_2015.py``,
 is based on the calculation of forward SBS
 in a pedestal silicon waveguide described in R. Van Laer *et al.*,
 `Interaction between light and highly confined hypersound in a silicon photonic nanowire
@@ -330,7 +330,7 @@ causes a problem where the slab layer significantly distorting elastic modes.
 Adding this feature is a priority for a future release of |NUMBAT|.
 The following example shows an approximate way to avoid the problem for now.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_04-pillar-Van_Laer-NP_2015.py
+.. .. literalinclude:: images/lit_examples/sim-lit_04-pillar-Van_Laer-NP_2015.py
     :lines: 0-
 
 
@@ -364,7 +364,7 @@ which gives good agreement for the gain spectrum:
 Example 5 -- FSBF in a waveguide without a pedestal
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example, in ``simo-lit_05-Van_Laer-NJP_2015.py``, continues
+This example, in ``sim-lit_05-Van_Laer-NJP_2015.py``, continues
 the study of forward SBS
 in a pedestal silicon waveguide described in R. Van Laer *et al.*,
 `Interaction between light and highly confined hypersound in a silicon photonic nanowire
@@ -374,7 +374,7 @@ In this case, we simply remove the pedestal and model the main rectangular waveg
 This makes the elastic loss calculation incorrect but avoids the problem of elastic
 energy being excessively concentrated in the substrate.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_05-Van_Laer-NJP_2015.py
+.. .. literalinclude:: images/lit_examples/sim-lit_05-Van_Laer-NJP_2015.py
     :lines: 0-
 
 
@@ -397,13 +397,13 @@ energy being excessively concentrated in the substrate.
 Example 6 -- BSBS self-cancellation in a tapered fibre (small fibre)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example, in ``simo-lit_06_1-Florez-NatComm_2016-d550nm.py``,
+This example, in ``sim-lit_06_1-Florez-NatComm_2016-d550nm.py``,
 looks at the phenomenon of Brillouin "self-cancellation" due to
 the electrostrictive and radiation pressure effects acting with opposite sign.
 This was described in O. Florez *et al.*, `Brillouin self-cancellation
 <http://dx.doi.org/10.1038/ncomms11759>`_, *Nature Communications* **7**, 11759 (2016).
 
-.. .. literalinclude:: images/lit_examples/simo-lit_06_1-Florez-NatComm_2016-d550nm.py
+.. .. literalinclude:: images/lit_examples/sim-lit_06_1-Florez-NatComm_2016-d550nm.py
     :lines: 0-
 
 
@@ -445,11 +445,11 @@ This was described in O. Florez *et al.*, `Brillouin self-cancellation
 
 Example 6b -- BSBS self-cancellation in a tapered fibre (large fibre)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example, in ``simo-lit_06_2-Florez-NatComm_2016-1160nm.py``, again looks at the paper
+This example, in ``sim-lit_06_2-Florez-NatComm_2016-1160nm.py``, again looks at the paper
 O. Florez *et al.*, `Brillouin self-cancellation <http://dx.doi.org/10.1038/ncomms11759>`_, *Nature Communications* **7**, 11759 (2016),
 but now for a wider core.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_06_2-Florez-NatComm_2016-d1160nm.py
+.. .. literalinclude:: images/lit_examples/sim-lit_06_2-Florez-NatComm_2016-d1160nm.py
     :lines: 0-
 
 
@@ -472,13 +472,13 @@ but now for a wider core.
 Example 7 -- FSBF in a silicon rib waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This example, in ``simo-lit_07-Kittlaus-NatPhot_2016.py``,
+This example, in ``sim-lit_07-Kittlaus-NatPhot_2016.py``,
 explores a first geometry showing large forward SBS in silicon
 as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
 <http://dx.doi.org/10.1038/nphoton.2016.112>`_, *Nature Photonics* **10**, 463 (2016).
 
 
-.. .. literalinclude:: images/lit_examples/simo-lit_07-Kittlaus-NatPhot_2016.py
+.. .. literalinclude:: images/lit_examples/sim-lit_07-Kittlaus-NatPhot_2016.py
     :lines: 0-
 
 
@@ -506,9 +506,9 @@ as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
 
 Example 8 -- Intermodal FSBF in a silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example (``simo-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale group,  examines intermode forward Brillouin scattering in silicon.
+This example (``sim-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale group,  examines intermode forward Brillouin scattering in silicon.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_08-Kittlaus-NatComm_2017.py
+.. .. literalinclude:: images/lit_examples/sim-lit_08-Kittlaus-NatComm_2017.py
     :lines: 0-
 
 
@@ -542,9 +542,9 @@ This example (``simo-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale grou
 
 Example 9 -- BSBS in a chalcogenide rib waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example, in ``simo-lit_09-Morrison-Optica_2017.py``, from the Sydney group examines backward SBS in a chalcogenide rib waveguide.
+This example, in ``sim-lit_09-Morrison-Optica_2017.py``, from the Sydney group examines backward SBS in a chalcogenide rib waveguide.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_09-Morrison-Optica_2017.py
+.. .. literalinclude:: images/lit_examples/sim-lit_09-Morrison-Optica_2017.py
     :lines: 0-
 
 
@@ -555,15 +555,15 @@ This example, in ``simo-lit_09-Morrison-Optica_2017.py``, from the Sydney group 
 
 Example 10 -- SBS in the mid-infrared
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This example, in ``simo-lit_10-Wolff-OptExpress-2014.py`` and ``simo-lit_10a-Wolff-OptExpress-2014.py``, by C. Wolff and collaborators examines backward SBS in the mid-infrared using germanium
+This example, in ``sim-lit_10-Wolff-OptExpress-2014.py`` and ``sim-lit_10a-Wolff-OptExpress-2014.py``, by C. Wolff and collaborators examines backward SBS in the mid-infrared using germanium
 as the core material in a rectangular waveguide with a silicon nitride cladding.
 
 The second of these two files illustrates the rotation of the core material from the [100] orientation to the [110] orientation. The second file prints out the full elastic properties of the germanium material in both orientations which are seen to match the values in the paper by Wolff et al.
 
-.. .. literalinclude:: images/lit_examples/simo-lit_10-Wolff-OptExpress-2014.py
+.. .. literalinclude:: images/lit_examples/sim-lit_10-Wolff-OptExpress-2014.py
     :lines: 0-
 
-.. .. literalinclude:: images/lit_examples/simo-lit_10a-Wolff-OptExpress-2014.py
+.. .. literalinclude:: images/lit_examples/sim-lit_10a-Wolff-OptExpress-2014.py
     :lines: 0-
 
 

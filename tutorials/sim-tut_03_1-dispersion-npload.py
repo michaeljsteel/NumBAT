@@ -43,7 +43,7 @@ wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
-# Assuming this calculation is run directly after simo-tut_02
+# Assuming this calculation is run directly after sim-tut_02
 # we don't need to recalculate EM modes, but can load them in.
 sim_EM_pump = mode_calcs.load_simulation('tut02_wguide_data')
 sim_EM_Stokes = mode_calcs.load_simulation('tut02_wguide_data2')

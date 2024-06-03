@@ -46,7 +46,9 @@ import sys
 #sys.path.insert(0, os.path.abspath('../../backend/'))
 #
 
-sys.path.insert(0, '../backend')
+#sys.path.insert(0, '../backend')
+sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

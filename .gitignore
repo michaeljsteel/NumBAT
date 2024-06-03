@@ -34,7 +34,7 @@ tutorials/*-fields
 
 
 docs/build/*
-*.mod 
+*.mod
 *.so
 
-tutorials/.simo-tut_17-rotations.py.swp
+tutorials/.sim-tut_17-rotations.py.swp

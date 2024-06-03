@@ -68,10 +68,6 @@ class ModePlotHelper:
         self.xy_raw = {}
         self.xy_out = {}
 
-        # try to remove all these
-        self.loc_n_pts_x = 0
-        self.loc_n_pts_y = 0
-
         self.interper_f = None
 
         self._init_plot_params()
@@ -154,9 +150,9 @@ class ModePlotHelper:
 
         return d_fields
 
-    def _choose_plot_points(self, n_points):
+    def _choose_plot_points(self, n_pts):
         '''Picks actual data points for the plot grid based on requested resolution.'''
-        self.setup_for_npoints = n_points
+        self.setup_for_npoints = n_pts
 
         fm = self.sim_result.fem_mesh
 
@@ -164,16 +160,16 @@ class ModePlotHelper:
         y_min, y_max = np_min_max(fm.mesh_xy[1,:])
 
         area = abs((x_max-x_min)*(y_max-y_min))
-        self.loc_n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
-        self.loc_n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+        n_pts_x = int(n_pts*abs(x_max-x_min)/np.sqrt(area))
+        n_pts_y = int(n_pts*abs(y_max-y_min)/np.sqrt(area))
 
         # Now use the coords user would like to think in
         shiftx, shifty = self.sim_result.get_xyshift()
         #self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
 
         # These are the actual x and y domains of the final plots
-        v_x = np.linspace(x_min, x_max, self.loc_n_pts_x)
-        v_y = np.linspace(y_min, y_max, self.loc_n_pts_y)
+        v_x = np.linspace(x_min, x_max, n_pts_x)
+        v_y = np.linspace(y_min, y_max, n_pts_y)
         m_X, m_Y = np.meshgrid(v_x, v_y)
 
         self.xy_raw = {'v_x': v_x, 'v_y': v_y, 'm_x': m_X, 'm_y': m_Y}
@@ -184,42 +180,41 @@ class ModePlotHelper:
 
         self.xy_out = {'v_x': v_x_out, 'v_y': v_y_out, 'm_x': m_X_out, 'm_y': m_Y_out}
 
-        print(f'Structure has raw domain (x,y) = ' \
+        print('Structure has raw domain (x,y) = ' \
             + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0]/SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),' \
             + "\n             mapped to (x',y') = " \
             + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
         return shiftx, shifty
 
-    def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy_T):
+    def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy):
         fig, axs=plt.subplots(1,2)
         axs[0].triplot(triang1p, linewidth=.5)
         axs[1].triplot(triang6p, linewidth=.5)
         for ax in axs:
             ax.set_aspect(1.0)
-            ax.scatter(mesh_xy_T[:,0], mesh_xy_T[:,1], s=2, c='red')
+            ax.scatter(mesh_xy[1,:], mesh_xy[1,:], s=2, c='red')
 
         pref = numbat.NumBATApp().outprefix()
         fname = pref + f'-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png'
         save_and_close_figure(fig, fname)
 
 
-    def setup_plot_grid(self, n_points=501):
-        '''Define interpolation plotting grids for a nominal n_points**2 points distributed evenly amongst x and y.'''
+    def setup_plot_grid(self, n_pts=501):
+        '''Define interpolation plotting grids for a nominal n_pts**2 points distributed evenly amongst x and y.'''
 
-        if self.setup_for_npoints == n_points:
+        if self.setup_for_npoints == n_pts:
             return  # only need to repeat if the grid density changes
 
         fm = self.sim_result.fem_mesh
 
-        shiftx, shifty = self._choose_plot_points(n_points)
+        shiftx, shifty = self._choose_plot_points(n_pts)
 
         # unrolling data for the interpolators
         # TODO: for EM, table_nod seems to be identical to the MailData one
         #       mesh_xy seems to be the same but with some fractional scaling.
 
-        # Sim version is in fortran ordering
-        # This version is in python ordering.  Eeek!
-        mesh_xy_T = fm.mesh_xy.T  # is v_x, v_y  * d_in_m
+        mesh_xy = fm.mesh_xy  # is in fortran order so indexing below looks backward
+
         tabnod_py = fm.table_nod.T -1  #  shift fortran to python indexing
 
         # dense triangulation with multiple points
@@ -249,8 +244,8 @@ class ModePlotHelper:
         for i_el in range(fm.n_msh_el):
             for i_node in range(6):
                 i_ex = tabnod_py[i_el, i_node]
-                v_x6p[i] = mesh_xy_T[i_ex, 0]
-                v_y6p[i] = mesh_xy_T[i_ex, 1]
+                v_x6p[i] = mesh_xy[0, i_ex]
+                v_y6p[i] = mesh_xy[1, i_ex]
                 i += 1
 
 
@@ -269,14 +264,14 @@ class ModePlotHelper:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation( mesh_xy_T[:,0], mesh_xy_T[:,1], self.v_triang1p)
+            check_triangulation(mesh_xy[0,:], mesh_xy[1,:], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        tri_triang1p = matplotlib.tri.Triangulation(mesh_xy_T[:, 0], mesh_xy_T[:, 1], v_triang1p)
+        tri_triang1p = matplotlib.tri.Triangulation(mesh_xy[0,:], mesh_xy[1,:], v_triang1p)
 
 
-        self._save_triangulation_plots(tri_triang1p, tri_triang6p, mesh_xy_T)
+        self._save_triangulation_plots(tri_triang1p, tri_triang6p, mesh_xy)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         # create rectangular arrays corresponding to the v_x, v_y grids
@@ -287,8 +282,10 @@ class ModePlotHelper:
 
         finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
 
+        nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
         self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(self.loc_n_pts_x, self.loc_n_pts_y)
+            tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(
+                nx, ny)
 
 
 
@@ -313,11 +310,11 @@ class Mode:
     def get_mode_helper(self):
         return self.sim_result.get_mode_helper()
 
-    def prepare_mode(self, n_points, field_type):
+    def prepare_mode(self, n_pts, field_type):
 
         mh = self.get_mode_helper()
 
-        mh.setup_plot_grid(n_points=n_points)
+        mh.setup_plot_grid(n_pts=n_pts)
 
         if self.is_AC():
             self.field_type = FieldType.AC
@@ -332,10 +329,10 @@ class Mode:
 
 
     def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None,
-                  n_points=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
+                  n_pts=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
 
 
-        self.prepare_mode(n_points, field_type)
+        self.prepare_mode(n_pts, field_type)
 
 
         mh = self.get_mode_helper()
@@ -529,7 +526,7 @@ class Mode:
       '''
         self.r0_offset = (x0, y0)
 
-    def analyse_mode(self, n_points=501, EM_field=FieldType.EM_E):
+    def analyse_mode(self, n_pts=501, EM_field=FieldType.EM_E):
         '''Perform a series of measurements on the mode *f* to determine polarisation fractions, second moment widths etc.
 
            :param array v_x: Vector of x points.
@@ -542,13 +539,11 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
-        self.prepare_mode(n_points, EM_field)
+        self.prepare_mode(n_pts, EM_field)
 
         self.analysed = True
 
         mh = self.get_mode_helper()
-        v_x = mh.xy_out['v_x']
-        v_y = mh.xy_out['v_y']
 
         # Tranposed indexing to get image style ordering
         m_x = mh.xy_out['m_x'].T

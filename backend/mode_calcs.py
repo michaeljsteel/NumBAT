@@ -54,33 +54,35 @@ class FemMesh:
                                     # (maybe different to origianl underlying mesh)
         self.n_msh_el =  0          # Number of elements in .msh mesh file
 
-        self.n_mats_em = 0              # There is only n_type_el, but there is both  type_el and typ_el
-
-
         # made by python
-        #self.v_refindex = None         # refractive index at each node
-        self.type_el =  None           # index of elt's material in list of active materials. Values: 1..n_mats_em
-        #self.el_conv_table_n = None
+        self.type_el =  None        # Array[0:n_msh_el] of index of elt's material into list of active em or materials.
+                                    #    Values in range:  em simulation - [1, optical_props.n_mats_em]
+                                    #                      ac simulation - [1, elastic_props.n_mats_ac]
+                                    # Rename to .elt_2_material_index
+
+        self.typ_el_AC = None       # An elastic el_conv_tbl_n  (a dictionary!), completely diff to self.type_el
+                                    # Rename to .active_material_index
+                                    # Belongs in ElasticProperties, not FemMesh
 
         # made by fortran
-        self.table_nod = None
-        self.node_physindex = None      # line or surface index of a a node
-        self.mesh_xy = None             # physical scaled x-y, locations of every node  shape= (n_msh_pts,2)
+        self.table_nod = None         # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
+        self.node_physindex = None    # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
+        self.mesh_xy = None           # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
 
         self.n_nodes = 6                # Nodes per each element (is always 6)
-        self.ac_mesh_from_em = True
+        self.ac_mesh_from_em = True     # Always True
+
+        self.el_convert_tbl = None       # Dict map of elastically active mesh elements into original em mesh elements.
+                                         #    Length: n_msh_el(ac).   Values in [1..n_msh_el(em)]
+        self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
+        self.node_convert_tbl = None
 
 
 
     def build_from_gmsh_mail(self, struc):
         # Takes list of all material refractive indices
         # Discards any that are zero
-        # Set up mapping table for refractive indices
-        # (Why we need this is mystery)
-        # el_conv_table_n maps the number of the material to the position in the nonzero v_refindexn
-        # el_conv_table_n[ith material] = index into v_refindexn  of non-zero refractive indices
-        # Except for zero index materials,
-        #  it will always be {1:1, 2:2, 3:3, .., num_mats:num_mats}
+
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
 
 
@@ -97,29 +99,34 @@ class FemMesh:
 
         print(f'\n The EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials).')
 
-#        matitems = list(struc.d_materials.items())[:self.n_mats_em]
-        matvals = list(struc.d_materials.values())[:self.n_mats_em]
-
-        #self.v_refindexn =np.array([m.refindex_n for m in matvals])
-        #self.el_conv_table_n = {i:i for i in range(1, self.n_mats_em+1)}
-        #if not struc.loss:
-        #    self.v_refindexn = self.v_refindexn.real
+        matvals = list(struc.d_materials.values())[:opt_props.n_mats_em]
 
         print(' The material index table is:', opt_props.el_conv_table_n, '\n')
         print(f' There are {opt_props.n_mats_em} active materials:')
         for im, m in enumerate(matvals):
             print(f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.')  # +1 because materials are reported by their Fortran index
 
+
+
+
     def store_em_mode_outputs(self, type_el, node_physindex, table_nod, mesh_xy):
         self.type_el = type_el
-        self.node_physindex = node_physindex
         self.table_nod = table_nod
         self.mesh_xy = mesh_xy
+        self.node_physindex = node_physindex
+
+        print('EM mesh properties:')
+        print('  type_el', list(self.type_el), self.type_el.shape)
+        print('  elt2nodes index map', self.table_nod, self.table_nod.shape)
+        print('  node_physindex index map', self.node_physindex, self.node_physindex.shape)
 
     def store_ac_mode_outputs(self, type_el, table_nod, mesh_xy):
         self.type_el = type_el
         self.table_nod = table_nod
         self.mesh_xy = mesh_xy
+        print('AC after sim mesh properties:')
+        print('  type_el', list(self.type_el), self.type_el.shape)
+        print('  elt2nodes index map', self.table_nod)
 
 
     def ac_build_from_em(self, structure, em_fem):
@@ -136,6 +143,8 @@ class FemMesh:
 
         d_mats_AC = {}
 
+
+        # Move to ElasticProperties
         el_conv_table = {}
         oldloc = 1
         newloc = 1
@@ -154,6 +163,12 @@ class FemMesh:
         #TODO: are these two in any way different?
         print('building elastic lists', el_conv_table,  self.typ_el_AC)
 
+
+
+
+
+
+
         # Take existing msh from EM FEM and manipulate mesh to exclude vacuum areas.
         #simres_EM = self.simres_EM
         #if simres_EM:  # Invariably the case
@@ -165,7 +180,7 @@ class FemMesh:
 
         n_el_kept = 0
         n_msh_pts_AC = 0
-        type_el_AC = []
+        type_el_AC = []  # material index for each element (length = n_msh_el)
         table_nod_AC_tmp = np.zeros(np.shape(table_nod), dtype=np.int64)   #  fortran ordered table
         el_convert_tbl = {}
         el_convert_tbl_inv = {}
@@ -222,6 +237,8 @@ class FemMesh:
         for node in unique_nodes:
             mesh_xy_AC[:, node_convert_tbl[node]] = (mesh_xy[:, node-1])
 
+
+
         self.el_convert_tbl = el_convert_tbl
         self.el_convert_tbl_inv = el_convert_tbl_inv
         self.node_convert_tbl = node_convert_tbl
@@ -262,7 +279,7 @@ class FemMesh:
 
         print(f'\n The elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(self.typ_el_AC)} element types (materials).')
 
-        print(f' The material index table is:', self.typ_el_AC, '\n')
+        print(' The material index table is:', self.typ_el_AC, '\n')
         print(f' There are {len(self.typ_el_AC)} active materials:')
         for nm,mat in d_mats_AC.items():
             print(f'   {nm+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.')
@@ -272,6 +289,11 @@ class FemMesh:
         self.mesh_xy = mesh_xy_AC
         self.node_physindex = node_physindex_AC
 
+        print('AC mesh properties:')
+        print('  type_el', self.type_el)
+        print('  typ_el_AC', self.typ_el_AC)
+        print('  el_convert_tbl', self.el_convert_tbl)
+        print('  elt2nodes index map', self.table_nod)
 
 
 
@@ -293,6 +315,9 @@ class SimResult:
     def is_EM(self): return False
 
     def is_AC(self): return False
+
+    def make_H_fields(self):  # keep linter quiet, should never be called
+        pass
 
     def clean_for_save(self):
         if self._mode_plot_helper is not None:
@@ -446,7 +471,7 @@ class SimResult:
 
 
         mode_helper = self.get_mode_helper()
-        mode_helper.setup_plot_grid(n_points=n_points)
+        mode_helper.setup_plot_grid(n_pts=n_points)
 
         if decorator is None: decorator = Decorator()
 
@@ -756,15 +781,14 @@ class Simulation:
         # just off normal incidence to avoid degeneracies
         self.k_perp = np.array([1e-16, 1e-16])
 
-
-
+        self.sim_type = None
 
         # Some of these values depend on whether EM or AC simulation because domain vacuum trimming
 
+        #Keep linter quiet
         self.fem_mesh = None
-
-        self.sim_result=None
-
+        self.simres_EM = None
+        self.sim_result = None
 
     def get_sim_result(self):
         return self.sim_result
@@ -892,7 +916,11 @@ class EMSimulation(Simulation):
             type_el, node_physindex, mesh_xy, self.ls_material \
                     = process_fortran_return(resm, 'solving for electromagnetic modes')
 
+        # TODO: ls_material is just refractive index of each element (13 reps for some reason)
+        #       clean up and give to FemMesh
+
         print('modepol', self.mode_pol)
+        print('ls material: n', self.ls_material, self.ls_material.shape)
 
         self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, table_nod, mesh_xy )
 
@@ -1013,6 +1041,8 @@ class ACSimulation(Simulation):
         self.fem_mesh.ac_build_from_em(structure, self.simres_EM.fem_mesh)
 
 
+
+
     def calc_modes(self, bcs=None):
         """ Run a Fortran FEM calculation to find the acoustic modes.
 
@@ -1080,6 +1110,11 @@ class ACSimulation(Simulation):
         self.ls_material = NumBAT.array_material_ac(
             fm.n_msh_el, elastic_props.n_mats_ac, fm.type_el,
             elastic_props.rho, elastic_props.c_IJ, elastic_props.p_ijkl, elastic_props.eta_ijkl)
+
+        print('ac ls material: n', self.ls_material, self.ls_material.shape)
+        #TODO: ls_material is isotropic parts of all elastic properties (repeated 6 times) by mesh elt: [10 x 6 xn_msh_el]
+        # rho, c11, c12, c44, p11, p12, p44, eta11, eta12, eta44
+        # doesn't seem very useful. May as well turn off.
 
         # Calc unnormalised power in each AC mode - PRA Eq. 18.
         if self.calc_AC_mode_power:

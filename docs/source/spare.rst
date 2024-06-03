@@ -36,7 +36,7 @@ To open a new screen session::
 We can start a new calculation here::
 
     $ cd NumBAT/tutorials/
-    $ python simo-tut_01-first_calc.py
+    $ python sim-tut_01-first_calc.py
 
 We can then detach from the session (leaving everything in the screen running) by typing::
 
