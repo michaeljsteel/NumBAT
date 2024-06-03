@@ -16,15 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from enum import Enum, IntEnum, auto
+
 import math
-import numpy as np
+from enum import Enum, IntEnum, auto
+from numpy import array
+
 
 #### Natural constants ########################################################
 
 # These are all SI 2019 values
 
-twopi = np.pi * 2.0
+twopi = math.pi * 2.0
 Plancks_h = 6.626_070_15e-34            # Planck's constant in Js (exact)
 speed_c = 299792458                     # Speed of light in vacuum in m/s (exact)
 charge_F = 1.602_176_634e-19            # Charge of an electron in C (exact)
@@ -44,9 +46,9 @@ SI_to_gmpercc = 0.001
 ###########################################
 
 
-unit_x = np.array([1.0, 0.0, 0.0])
-unit_y = np.array([0.0, 1.0, 0.0])
-unit_z = np.array([0.0, 0.0, 1.0])
+unit_x = array([1.0, 0.0, 0.0])
+unit_y = array([0.0, 1.0, 0.0])
+unit_z = array([0.0, 0.0, 1.0])
 
 
 class SimType(Enum):

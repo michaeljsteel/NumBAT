@@ -36,12 +36,11 @@ import matplotlib.cm as mplcm
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
-from  nbtypes import unit_x, unit_y, unit_z, CrystalGroup
+import reporting
+from nbtypes import unit_x, unit_y, unit_z, CrystalGroup
 from bulkprops import solve_christoffel
-#from voigt import VoigtTensor4
 import voigt
 
-import reporting
 
 
 class BadMaterialFileError(Exception):

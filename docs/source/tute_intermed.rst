@@ -1,23 +1,23 @@
 
 .. include:: numbatdefs.txt
 
-Tutorial 9 -- Anisotropic Elastic Materials 
+Tutorial 9 -- Anisotropic Elastic Materials
 --------------------------------------------
-This tutorial, contained in ``simo-tut_09-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
+This tutorial, contained in ``sim-tut_09-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
 
-The data below compares the gain spectrum compared to that found with the simpler 
+The data below compares the gain spectrum compared to that found with the simpler
 isotropic stiffness model used in Tutorial 2.
-The results are very similar but the isotropic model shows two smaller peaks at high 
+The results are very similar but the isotropic model shows two smaller peaks at high
 frequency.
 
 .. figure:: ./images/tutorial/tut_09-gain_spectra.png
    :width: 10cm
-   
+
    Gain spectrum with anisotropic stiffness model of silicon.
 
 .. figure:: ./images/tutorial/tut_02-gain_spectra.png
    :width: 10cm
-   
+
    Gain spectrum from Tutorial 2 with  isotropic stiffness model of silicon.
 
 
@@ -29,16 +29,16 @@ frequency.
 
 Tutorial 11 -- Two-layered 'Onion'
 ----------------------------------------
-This tutorial, contained in ``simo-tut_11a-onion2.py`` demonstrates use of a two-layer ``onion`` structure for a backward intra-modal SBS configuration.
+This tutorial, contained in ``sim-tut_11a-onion2.py`` demonstrates use of a two-layer ``onion`` structure for a backward intra-modal SBS configuration.
 Note that with the inclusion of the background layer, the two-layer onion effectively creates a three-layer geometry with  core, cladding, and background surroundings. This is the ideal structure for investigating the cladding modes of an optical fibre. It can be seen by looking through the optical mode profiles in ``tut_11a-fields/EM*.png``
 that this particular structure supports five cladding modes in addition to the three guided modes (the :math:`\mbox{TM}_0` mode is very close to cutoff).
 
-Next, the gain spectrum and the mode profiles of the main peaks indicate as expected, 
+Next, the gain spectrum and the mode profiles of the main peaks indicate as expected,
 that the gain is optimal for modes that are predominantly longitudinal in character.
 
-The accompanying tutorial ``simo-tut_11b-onion3.py`` introduces one additional layer and would be suitable for studying the influence of the outer polymer coating of an optical fibre or depressed cladding W fibre.
+The accompanying tutorial ``sim-tut_11b-onion3.py`` introduces one additional layer and would be suitable for studying the influence of the outer polymer coating of an optical fibre or depressed cladding W fibre.
 
-.. .. literalinclude:: ./images/tutorial/simo-tut_11a-onion2.py
+.. .. literalinclude:: ./images/tutorial/sim-tut_11a-onion2.py
 
 
 .. figure:: ./images/tutorial/tut_11a-gain_spectra.png
@@ -98,23 +98,23 @@ Tutorial 12 -- Valdiating the calculation of the EM dispersion of a two-layer fi
 ------------------------------------------------------------------------------------
 
 How can we be confident that |NUMBAT|'s calculations are actually correct?
-This tutorial and the next one look at rigorously validating some of the modal 
+This tutorial and the next one look at rigorously validating some of the modal
 calculations produced by |NUMBAT|.
 
-This tutorial, contained in ``simo-tut_12.py``, 
-compares analytic and numerical calculations for the dispersion relation of the electromagnetic 
-modes of a cylindrical waveguide. 
-This can be done in both a low-index contrast (SMF-28 fibre) and high-index contrast (silicon rod in silica) context. We calculate the effective index :math:`\bar{n}` and normalised 
-waveguide parameter :math:`b=(\bar{n}^2-n_\text{cl}^2)/(n_\text{co}^2-n_\text{cl}^2)` 
-as a function of the normalised freqency :math:`V=k a \sqrt{n_\text{co}^2-n_\text{cl}^2}` 
+This tutorial, contained in ``sim-tut_12.py``,
+compares analytic and numerical calculations for the dispersion relation of the electromagnetic
+modes of a cylindrical waveguide.
+This can be done in both a low-index contrast (SMF-28 fibre) and high-index contrast (silicon rod in silica) context. We calculate the effective index :math:`\bar{n}` and normalised
+waveguide parameter :math:`b=(\bar{n}^2-n_\text{cl}^2)/(n_\text{co}^2-n_\text{cl}^2)`
+as a function of the normalised freqency :math:`V=k a \sqrt{n_\text{co}^2-n_\text{cl}^2}`
 for radius :math:`a` and wavenumber :math:`k=2\pi/\lambda`. As in several previous examples, this is accomplished by a scan over the wavenumber :math:`k`.
 
-The numerical results (marked with crosses) are compared to the modes found from the 
-roots of the rigorous  
-analytic dispersion relation (solid lines). We also show the predictions for the group 
+The numerical results (marked with crosses) are compared to the modes found from the
+roots of the rigorous
+analytic dispersion relation (solid lines). We also show the predictions for the group
 index :math:`n_g=\bar{n} + V \frac{d\bar{n}}{dV}`.
-The only noticeable departures are right at the low :math:`V`-number regime where the 
-fields become very extended into the cladding and interact 
+The only noticeable departures are right at the low :math:`V`-number regime where the
+fields become very extended into the cladding and interact
 significantly with the boundary.
 The results could be improved in this regime by choosing a larger domain at the expense of a longer calculation.
 
@@ -160,27 +160,27 @@ Threads are light-weight and can be started more efficiently than separate proce
     \clearpage
 
 
-Tutorial 13 -- Valdiating the calculation of the dispersion of an elastic rod in vacuum 
+Tutorial 13 -- Valdiating the calculation of the dispersion of an elastic rod in vacuum
 -------------------------------------------------------------------------------------------------
 
-The tutorial ``simo-tut_13.py`` performs the same kind of calculation as in the previous
-tutorial for the acoustic problem. 
+The tutorial ``sim-tut_13.py`` performs the same kind of calculation as in the previous
+tutorial for the acoustic problem.
 In this case there is no simple analytic solution possible for the two-layer cylinder.
 Instead we create a structure of a single elastic rod surrounded by vacuum.
-|NUMBAT| removes the vacuum region and imposes a free boundary condition at the boundary 
+|NUMBAT| removes the vacuum region and imposes a free boundary condition at the boundary
 of the rod. The modes found are then compared to the analytic solution
-of a free homonegenous cylindrical rod in vacuum. 
+of a free homonegenous cylindrical rod in vacuum.
 
 We find excellent agreement between the analytical (coloured lines) and numerical (crosses) results.
 Observe the existence of two classes of modes with azimuthal index :math:`p=0`, corresponding to the pure torsional modes, which for the lowest band propagate at the bulk shear velocity,
-and the so-called Pochammer hybrid modes, which are predominantly longitudinal, 
+and the so-called Pochammer hybrid modes, which are predominantly longitudinal,
 but must necessarily involve some shear motion to satisfy mass conservation.
 
 It is instructive to examine the mode profiles in ``tut_13-fields`` and track the different
-field profiles and degeneracies found for each value of :math:`p`. 
-By basic group theory arguments, we know that every mode with :math:`p\ne 0` must 
-come as a degenerate pair and this is satisfied to around 5 significant figures in the calculated results.  It is interesting to repeat the calculation with a silicon (cubic symmetry) rod rather 
-than chalcogenide (isotropic).  
+field profiles and degeneracies found for each value of :math:`p`.
+By basic group theory arguments, we know that every mode with :math:`p\ne 0` must
+come as a degenerate pair and this is satisfied to around 5 significant figures in the calculated results.  It is interesting to repeat the calculation with a silicon (cubic symmetry) rod rather
+than chalcogenide (isotropic).
 In that case, the lower symmetry of silicon causes splitting of a number of modes,
 so that a larger number of modes are found to be singly degenerate, though invariably with a
 partner state at a nearby frequency.
@@ -190,13 +190,13 @@ partner state at a nearby frequency.
 .. figure:: ./images/tutorial/tut_13-acdisp_qnu.png
    :width: 10cm
 
-   Elastic frequency as a function of normalised wavenumber for a chalcogenide rod 
+   Elastic frequency as a function of normalised wavenumber for a chalcogenide rod
    in vacuum.
 
 .. figure:: ./images/tutorial/tut_13-acdisp_qneff.png
    :width: 10cm
 
-   Elastic "effective index" defined as the ratio of the bulk shear velocity to the phase velocity 
+   Elastic "effective index" defined as the ratio of the bulk shear velocity to the phase velocity
    :math:`n_\text{eff}=V_s/V`,
    for a chalcogenide rod in vacuum.
 
@@ -208,18 +208,18 @@ partner state at a nearby frequency.
 
 Tutorial 14 -- Multilayered 'Onion'
 ----------------------------------------
-This tutorial, contained in ``simo-tut_14-multilayer-fibre.py`` shows how one can create 
+This tutorial, contained in ``sim-tut_14-multilayer-fibre.py`` shows how one can create
 a circular waveguide with many concentric layers of different thickness.
 In this case, the layers are chosen to create a concentric Bragg grating of alternating
-high and low index layers. As shown in C. M. de Sterke, I. M. Bassett and A. G. Street, `"Differential losses in Bragg fibers" <https://doi.org/10.1063/1.357811>`_, 
+high and low index layers. As shown in C. M. de Sterke, I. M. Bassett and A. G. Street, `"Differential losses in Bragg fibers" <https://doi.org/10.1063/1.357811>`_,
 J. Appl. Phys. **76**, 680 (1994), the fundamental mode of such a fibre is the fully
-azimuthally symmetric :math:`\mathrm{TE}_0` mode rather than the usual 
+azimuthally symmetric :math:`\mathrm{TE}_0` mode rather than the usual
 :math:`\mathrm{HE}_{11}` quasi-linearly polarised mode that is found in standard
 two-layer fibres.
 
 
 
-.. .. literalinclude:: ./images/tutorial/simo-tut_10-onion.py
+.. .. literalinclude:: ./images/tutorial/sim-tut_10-onion.py
 
 .. figure:: ./images/tutorial/tut_14_0-fields/EM_E_field_00.png
    :width: 10cm
@@ -243,9 +243,9 @@ two-layer fibres.
 
 
 
-Tutorial 15 -- Coupled waveguides 
+Tutorial 15 -- Coupled waveguides
 ----------------------------------
-This tutorial, contained in ``tutorials/simo-tut_14-coupled-wg.py`` demonstrates the supermode behaviour
+This tutorial, contained in ``tutorials/sim-tut_14-coupled-wg.py`` demonstrates the supermode behaviour
 of both electromagnetic and elastic modes in a pair of closely adjacent waveguides.
 
 

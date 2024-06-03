@@ -4,11 +4,11 @@
 Tutorial 2 -- SBS Gain Spectra
 ----------------------------------
 The first example we met in the previous chapter only printed numerical data to the screen with no graphical output.
-This example, contained in ``<NUMBAT>/tutorials/simo-tut_02-gain_spectra-npsave.py`` considers the same silicon-in-air structure but adds plotting of fields, gain spectra and techniques for saving and reusing data from earlier calculations.
+This example, contained in ``<NUMBAT>/tutorials/sim-tut_02-gain_spectra-npsave.py`` considers the same silicon-in-air structure but adds plotting of fields, gain spectra and techniques for saving and reusing data from earlier calculations.
 
 As before, move to the ``<NUMBAT>/tutorials`` directory, and then run the calculation by entering::
 
-    $ python3 simo-tut_02-gain_spectra-npsave.py
+    $ python3 sim-tut_02-gain_spectra-npsave.py
 
 Or you can take advantage of the ``Makefile`` provided in the directory and just type::
 
@@ -18,7 +18,7 @@ Some of the tutorial problems can take a little while to run, especially if your
 is not especially fast. To save time, you can run most
 problems with a coarser mesh at the cost of somewhat reduced accuracy,  by adding the flag ``fast=1`` to the command line::
 
-    $ python3 simo-tut_02-gain_spectra-npsave.py fast=1
+    $ python3 sim-tut_02-gain_spectra-npsave.py fast=1
 
 Or using the makefile technique, simply ::
 
@@ -137,7 +137,7 @@ Here are some further elements to note about this example:
 
 The full code for this simulation is as follows:
 
-.. literalinclude:: ../../tutorials/simo-tut_02-gain_spectra-npsave.py
+.. literalinclude:: ../../tutorials/sim-tut_02-gain_spectra-npsave.py
     :lines: 0-
 
 .. raw:: latex
@@ -147,7 +147,7 @@ The full code for this simulation is as follows:
 
 Tutorial 3a -- Investigating Dispersion and np.save/np.load
 ------------------------------------------------------------
-This example, contained in ``tutorials/simo-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q`
+This example, contained in ``tutorials/sim-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q`
 and frequency :math:`\Omega`-- for the problem in the previous tutorial.
 This is done by scanning over the elastic wavenumber ``q_AC`` and finding the
 eigenfrequencies for each value.
@@ -188,7 +188,7 @@ to the relevant files in the ``<NumBAT>/tutorials`` directory.
 
 Tutorial 3b -- Investigating Dispersion and Multiprocessing
 ------------------------------------------------------------
-This tutorial, contained in ``simo-tut_03_2-dispersion-multicore.py`` continues the study of acoustic dispersion and demonstrates the use of Python multiprocessor calls using the ``multiprocessing`` library to increase speed of execution.
+This tutorial, contained in ``sim-tut_03_2-dispersion-multicore.py`` continues the study of acoustic dispersion and demonstrates the use of Python multiprocessor calls using the ``multiprocessing`` library to increase speed of execution.
 
 In this code as in the previous example, the acoustic modal problem is
 repeatedly solved at a range of different :math:`q` values to build up a set of
@@ -220,7 +220,7 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 
 Tutorial 4 -- Parameter Scan of Widths
 ----------------------------------------
-This tutorial, contained in ``simo-tut_04_scan_widths.py`` demonstrates the use of a
+This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a
 parameter scan of a waveguide property, in this case over the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
 
 The results are displayed in a 3D plot. This may not be the most effective
@@ -241,7 +241,7 @@ width rather than just 6.
 
 Tutorial 5 -- Convergence Study
 ----------------------------------------
-This tutorial, contained in ``simo-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our by now familiar silicon-in-air problem to test the convergence of the calculation results.
+This tutorial, contained in ``sim-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our by now familiar silicon-in-air problem to test the convergence of the calculation results.
 This is done by scanning the value of the ``lc_refine`` parameters.
 The number of mesh elements (and simulation time) increases with roughly the square of the
 mesh refinement factor.
@@ -298,7 +298,7 @@ results before reporting them.
 
 Tutorial 6 -- Silica Nanowire
 ----------------------------------------
-In this tutorial, contained in ``simo-tut_06_silica_nanowire.py`` we start
+In this tutorial, contained in ``sim-tut_06_silica_nanowire.py`` we start
 to explore the Brillouin gain properties in a range of different structures,
 in this case a silica nanowire surrounded by vacuum.
 
@@ -347,7 +347,7 @@ It is important to remember that the total gain is not the simple sum of the pho
 
 Tutorial 7 -- Slot Waveguide
 ----------------------------------------
-This tutorial, contained in ``simo-tut_07-slot.py`` examines backward SBS in a more complex structure: chalcogenide soft glass (:math:`\text{As}_2\text{S}_3`) embedded in a silicon slot waveguide on a silica slab. This structure takes advantage of the
+This tutorial, contained in ``sim-tut_07-slot.py`` examines backward SBS in a more complex structure: chalcogenide soft glass (:math:`\text{As}_2\text{S}_3`) embedded in a silicon slot waveguide on a silica slab. This structure takes advantage of the
 slot effect which expels the optical field into the lower index medium, enhancing the fraction of the EM field inside the soft chalcogenide glass which guides the acoustic mode
 and increasing the gain.
 
@@ -394,7 +394,7 @@ the :math:`m=1` mode gives zero gain due to its anti-symmetry relative to the pu
 
 Tutorial 8 -- Slot Waveguide Cover Width Scan
 ----------------------------------------------
-This tutorial, contained in ``simo-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by examining the dependence of the acoustic spectrum on the thickness of a silica capping layer.  As before, this parameter scan is accelerated by the use
+This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by examining the dependence of the acoustic spectrum on the thickness of a silica capping layer.  As before, this parameter scan is accelerated by the use
 of multi-processing.
 
 It is interesting to look at different mode profiles and try to understand why

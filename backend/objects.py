@@ -17,6 +17,9 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+
+#TODO: reduce number of imports
+
 import os
 import subprocess
 import copy
@@ -91,15 +94,28 @@ class ElectromagneticProps:
     def __init__(self, v_mats_em, n_mats_em, loss):
 
 
-        self.n_mats_em = n_mats_em
+        self.n_mats_em = n_mats_em         # number of materials with em properties (basically all used by structure)
 
-        #matitems = list(struc.d_materials.items())[:self.n_mats_em]
-        matvals = v_mats_em[:n_mats_em]
+        matvals = v_mats_em[:n_mats_em]    # Material objects of those
+
+        # Set up mapping tables for refractive indices
+        # (Why we need el_conv_table_n is mystery)
+        # el_conv_table_n maps the number of the material to the position in the nonzero v_refindexn
+        # el_conv_table_n[ith material] = index into v_refindexn  of non-zero refractive indices
+        # Except for zero index materials,
+        #  it will always be {1:1, 2:2, 3:3, .., num_mats:num_mats}
+
+        # trivial identity map of index to active material
+        self.el_conv_table_n = {i:i for i in range(1, self.n_mats_em+1)}   #_n for refractive index n
+
+
+        # Array[0:n_mats_em] - refractive index of each active material
 
         self.v_refindexn =np.array([m.refindex_n for m in matvals])
-        self.el_conv_table_n = {i:i for i in range(1, self.n_mats_em+1)}
         if not loss:
             self.v_refindexn = self.v_refindexn.real
+
+
 
 
 class ElasticProps:
@@ -131,6 +147,10 @@ class ElasticProps:
         # eta tensor as rank 4 ijkl tensor [3x3x3x3  x  n_mats_ac]
         self.eta_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
 
+        self.fill_tensors(v_acoustic_mats, symmetry_flag)
+
+
+    def fill_tensors(self, v_acoustic_mats, symmetry_flag):
 
         # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
         # TODO: use a zero-indexed form of toVoigt map

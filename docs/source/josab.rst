@@ -12,7 +12,7 @@ Introduction
 
 Dr Christian  Wolff and colleagues  have used |NUMBAT| throughout their 2021 SBS tutorial paper
 `Brillouin scattering—theory and experiment: tutorial <http://dx.doi.org/10.1364/JOSAB.416747>`_ published in J. Opt. Soc. Am. B.
-This set of examples works through their discussions of backward SBS, 
+This set of examples works through their discussions of backward SBS,
 forward Brillouin scattering, and intermodal forward Brillouin scattering.
 
 
@@ -21,10 +21,10 @@ tutorials, we do not bother to include the original figures.
 
 
 
-Example 1 -- Backward SBS in a circular silica waveguide 
+Example 1 -- Backward SBS in a circular silica waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Figure 15 in the paper shows the fundamental optical field of a silica 1 micron waveguide, with the gain and other parameters shown in Table 2.
-The corresponding results generated with ``simo-josab-01.py`` are as follows:
+The corresponding results generated with ``sim-josab-01.py`` are as follows:
 
 
 .. figure:: ../../josab_tutorial/josab_01-fields/EM_E_field_01.png
@@ -49,11 +49,11 @@ The corresponding results generated with ``simo-josab-01.py`` are as follows:
     \clearpage
 
 
-Example 2 -- Backward SBS in a rectangular silicon waveguide 
+Example 2 -- Backward SBS in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Figure 14 in the paper calculates the backwards SBS properties  of a 
+Figure 14 in the paper calculates the backwards SBS properties  of a
 rectangular :math:`450x200` nm silicon waveguide.
-The corresponding results generated with ``simo-josab-02.py`` are as follows:
+The corresponding results generated with ``sim-josab-02.py`` are as follows:
 
 
 .. figure:: ../../josab_tutorial/josab_02a-gain_spectra.png
@@ -74,11 +74,11 @@ The fields and gain parameters are as follows:
    Fundamental elastic mode fields.
 
 We can reproduce Fig. 13 showing the elastic dispersion of this waveguide
-silicon waveguide using ``simo-josab-02b-acdisp.py``.  
+silicon waveguide using ``sim-josab-02b-acdisp.py``.
 
 .. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
    :width: 15cm
-   
+
    Acoustic dispersion diagram with modes categorised by symmetry as in Table 1 of "Formal selection rules for Brillouin scattering in integrated waveguides and structured fibers" by C. Wolff, M. J. Steel, and C. G. Poulton ``https://doi.org/10.1364/OE.22.032489``
 
 .. raw:: latex
@@ -87,13 +87,13 @@ silicon waveguide using ``simo-josab-02b-acdisp.py``.
 
 
 
-Example 3 -- Forward Brillouin scattering in a circular silica waveguide 
+Example 3 -- Forward Brillouin scattering in a circular silica waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Figure 16 and Table 3 examine the same waveguides in the case of forward
-Brillouin scattering. 
+Brillouin scattering.
 
-These results can be generated with ``simo-josab-03.py`` and ``simo-josab-04.py``.
+These results can be generated with ``sim-josab-03.py`` and ``sim-josab-04.py``.
 
 Let's see the results for the silica cylinder first:
 
@@ -127,9 +127,9 @@ Let's see the results for the silica cylinder first:
 
 
 
-Example 4 -- Forward Brillouin scattering in a rectangular silicon waveguide 
+Example 4 -- Forward Brillouin scattering in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The corresopnding results for the silicon waveguide can be generated with ``simo-josab-04.py``:
+The corresopnding results for the silicon waveguide can be generated with ``sim-josab-04.py``:
 
 .. figure:: ../../josab_tutorial/josab_04-gain_spectra.png
    :width: 15cm
@@ -153,7 +153,7 @@ The corresopnding results for the silicon waveguide can be generated with ``simo
 
 
 
-Example 5 -- Intermodal Forward Brillouin scattering in a circular silica waveguide 
+Example 5 -- Intermodal Forward Brillouin scattering in a circular silica waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For the problem of intermodal FBS, the paper considers coupling between the two lowest optical modes. The elastic mode of highest gain is actually a degenerate pair:
@@ -187,7 +187,7 @@ For the problem of intermodal FBS, the paper considers coupling between the two 
 
 
 
-Example 6 -- Intermodal Forward Brillouin scattering in a rectangular silicon waveguide 
+Example 6 -- Intermodal Forward Brillouin scattering in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Finally, the silicon waveguide generates extraordinarily high gain when operated

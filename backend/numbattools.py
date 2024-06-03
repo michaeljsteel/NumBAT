@@ -6,15 +6,15 @@ import queue
 import time
 import datetime
 import scipy.integrate as sciint
+from PIL import Image
 import numpy as np
+
 import matplotlib.pyplot as plt
 
 
-from PIL import Image
-
+import numbat
 import reporting
 
-import numbat
 
 
 def almost_zero(x, tol=1e-10):

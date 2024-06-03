@@ -16,7 +16,7 @@ docker run -it morblockdock/numbat zsh
 from which you can navigate to the example files and run them as described
 elsewhere in the docs.
 
- 
+
 
 To have local access to the source files and simulation results the process is a
 bit more involved.
@@ -42,7 +42,7 @@ docker run --rm --entrypoint tar morblockdock/numbat cC /home/NumBAT/ . | tar xv
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This command runs the docker image, copies the source code and then removes the
-running docker container. 
+running docker container.
 
 Now we run the image as before, but in addition we mount the local directory,
 allowing us to modify the files and obtain the results directly:
@@ -61,10 +61,10 @@ Scripts can be run directly in a container by passing the path, for
 example:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-docker run -v $(pwd)/NumBAT-local/:/home/NumBAT/ -it morblockdock/numbat python3 /home/NumBAT/tutorials/simo-tut_01-first_calc.py
+docker run -v $(pwd)/NumBAT-local/:/home/NumBAT/ -it morblockdock/numbat python3 /home/NumBAT/tutorials/sim-tut_01-first_calc.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Runs the `simo-tut_01-first_calc.py` script directly from the local commandline
+Runs the `sim-tut_01-first_calc.py` script directly from the local commandline
 (without having to enter the docker container manually).
 
 Finally, one can access a `jupyterlab` instance and run NumBAT in interactive jupyter notebooks from docker with the following:
