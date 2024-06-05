@@ -116,7 +116,8 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
          nod_el_p(j) = j1
          xel(1,j) = x(1,j1)
          xel(2,j) = x(2,j1)
-         val_exp(j) = 1.0d0
+
+         val_exp(j) = D_ONE
       enddo
 
       call curved_elem_tri (nnodes, xel, info_curved, r_tmp1)

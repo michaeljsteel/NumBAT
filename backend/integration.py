@@ -294,6 +294,7 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     fem_ac = sim_AC.fem_mesh
     struc = sim_EM_pump.structure
     opt_props = struc.optical_props
+    el_props = struc.elastic_props
 
     nnodes = fem_ac.n_nodes
 
@@ -311,9 +312,9 @@ def gain_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
                 for ival in range(n_modes_EM_Stokes):
                     trimmed_EM_Stokes_field[x,n,ival,el] = sim_EM_Stokes.fem_evecs[x,n,ival,new_el]
 
-    relevant_eps_effs =[]
+    relevant_eps_effs =[]   # TODO: move this into ElProps
     for el_typ in range(opt_props.n_mats_em):
-        if el_typ+1 in fem_ac.typ_el_AC:
+        if el_typ+1 in el_props.typ_el_AC:
             relevant_eps_effs.append(opt_props.v_refindexn[el_typ]**2)
 
     sim_AC.calc_acoustic_losses(fixed_Q)

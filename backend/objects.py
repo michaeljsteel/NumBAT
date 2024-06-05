@@ -150,6 +150,34 @@ class ElasticProps:
         self.fill_tensors(v_acoustic_mats, symmetry_flag)
 
 
+    def extract_elastic_mats(self, structure, opt_props):
+        el_conv_table = {}
+        oldloc = 1
+        newloc = 1
+        d_mats_AC = {}
+
+            #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
+        for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:  
+            if mat.has_elastic_properties():
+                el_conv_table[oldloc] = newloc
+                newloc += 1
+                d_mats_AC[mat.material_name] = mat
+            oldloc += 1
+
+        self.typ_el_AC = {}
+        for k, v in el_conv_table.items():
+            # now keeps its own rather than take from simres_EM which might not exist
+            self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
+
+        #TODO: are these two in any way different?
+        print('building elastic lists', el_conv_table,  self.typ_el_AC)
+
+    def is_elastic_material_index(self, idx):
+        return idx in self.typ_el_AC
+
+    def active_material_index(self, idx):
+        return self.typ_el_AC[idx]
+
     def fill_tensors(self, v_acoustic_mats, symmetry_flag):
 
         # map a zero-indexed 3x3 elt to unit indexed 6x1 form.  eg x,x == 0,0 == 1
