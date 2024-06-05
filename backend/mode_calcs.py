@@ -36,9 +36,6 @@ from fortran import NumBAT
 
 
 
-
-
-
 # TODO move this to NBApp interface
 #def load_simulation(prefix):
 #    return Simulation.load_simulation(prefix)
@@ -140,28 +137,32 @@ class FemMesh:
         # rename  el_conv_table -> mat_conv_table
 
         opt_props = structure.optical_props
+        el_props = structure.elastic_props
+
+
+        el_props.extract_elastic_mats(structure, opt_props)
 
         d_mats_AC = {}
 
 
-        # Move to ElasticProperties
-        el_conv_table = {}
-        oldloc = 1
-        newloc = 1
-        for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:  #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
-            if mat.has_elastic_properties():
-                el_conv_table[oldloc] = newloc
-                newloc += 1
-                d_mats_AC[mat.material_name] = mat
-            oldloc += 1
+        # # Move to ElasticProperties
+        # el_conv_table = {}
+        # oldloc = 1
+        # newloc = 1
+        # for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:  #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
+        #     if mat.has_elastic_properties():
+        #         el_conv_table[oldloc] = newloc
+        #         newloc += 1
+        #         d_mats_AC[mat.material_name] = mat
+        #     oldloc += 1
 
-        self.typ_el_AC = {}
-        for k, v in el_conv_table.items():
-            # now keeps its own rather than take from simres_EM which might not exist
-            self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
+        # self.typ_el_AC = {}
+        # for k, v in el_conv_table.items():
+        #     # now keeps its own rather than take from simres_EM which might not exist
+        #     self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
 
-        #TODO: are these two in any way different?
-        print('building elastic lists', el_conv_table,  self.typ_el_AC)
+        # #TODO: are these two in any way different?
+        # print('building elastic lists', el_conv_table,  self.typ_el_AC)
 
 
 
@@ -178,7 +179,7 @@ class FemMesh:
         table_nod = em_fem.table_nod
         mesh_xy = em_fem.mesh_xy
 
-        n_el_kept = 0
+        n_msh_el_AC = 0
         n_msh_pts_AC = 0
         type_el_AC = []  # material index for each element (length = n_msh_el)
         table_nod_AC_tmp = np.zeros(np.shape(table_nod), dtype=np.int64)   #  fortran ordered table
@@ -189,18 +190,28 @@ class FemMesh:
         # Find all elements that have elastic properties (basically drop vacuum borders)
         for el in range(n_msh_el):
             # print type_el[el]
-            if type_el[el] in self.typ_el_AC:  # if material of this element is in the list of active elastic materials
+            #if type_el[el] in self.typ_el_AC:  # if material of this element is in the list of active elastic materials
+
+            if el_props.is_elastic_material_index(type_el[el]):
                 # print "in", type_el[el]
 
-                type_el_AC.append(self.typ_el_AC[type_el[el]])   # map this element to place in the new elastic only material list
-                el_convert_tbl[n_el_kept] = el
-                el_convert_tbl_inv[el] = n_el_kept
-                for i in range(6):
-                    # Leaves node numbering untouched
-                    table_nod_AC_tmp[i][n_el_kept] = table_nod[i][el]
-                n_el_kept += 1
+                #type_el_AC.append(self.typ_el_AC[type_el[el]])   # map this element to place in the new elastic only material list
+                type_el_AC.append(el_props.active_material_index(type_el[el])) #could do this and if test with try/catch
 
-        n_msh_el_AC = n_el_kept
+                el_convert_tbl[n_msh_el_AC] = el
+                #el_convert_tbl_inv[el] = n_msh_el_AC
+                #for i in range(6):
+                    # Leaves node numbering untouched
+                 #   table_nod_AC_tmp[i][n_msh_el_AC] = table_nod[i][el]  #TODO: do as slice copy, not 1 by 1
+
+                table_nod_AC_tmp[:,n_msh_el_AC] = table_nod[:,el]  #TODO: do as slice copy, not 1 by 1
+                n_msh_el_AC += 1
+
+#        n_msh_el_AC = n_msh_el_AC
+
+
+        # inverse mapping using map and reversed.  Relies on map being a bijection
+        el_convert_tbl_inv = dict(map(reversed, el_convert_tbl.items()))
 
         # Now we have the elastic elements, need to get all the nodes encompassed by these elements
         # Each node appearing once. (To essentially make the top half of the mail file.)
@@ -229,19 +240,17 @@ class FemMesh:
             for el in range(n_msh_el_AC):
                 el_tbl.append(node_convert_tbl[table_nod_AC_tmp[i][el]])
             table_nod_AC.append(el_tbl)
+
         table_nod_AC = np.array(table_nod_AC) + 1   # list to np array and adjust to fortran indexing
 
 
-        # Find the coordinates of chosen nodes.
+        # Find the physical x-y coordinates of the chosen AC nodes.
         mesh_xy_AC = np.zeros((2, n_msh_pts_AC))
         for node in unique_nodes:
             mesh_xy_AC[:, node_convert_tbl[node]] = (mesh_xy[:, node-1])
 
 
 
-        self.el_convert_tbl = el_convert_tbl
-        self.el_convert_tbl_inv = el_convert_tbl_inv
-        self.node_convert_tbl = node_convert_tbl
 
         # AC FEM uses Neumann B.C.s so node_physindex is totally irrelevant!
         # # Find nodes on boundaries of materials
@@ -257,41 +266,32 @@ class FemMesh:
         #             if node_array[node - 1] != type_el[el]:
         #                 interface_nodes.append(node)
         # interface_nodes = list(set(interface_nodes))
+
         node_physindex_AC = np.zeros(n_msh_pts_AC)
 
+        self.el_convert_tbl = el_convert_tbl
+        self.el_convert_tbl_inv = el_convert_tbl_inv
+        self.node_convert_tbl = node_convert_tbl
 
         self.n_msh_pts = n_msh_pts_AC
         self.n_msh_el = n_msh_el_AC
-
-        # else:  # No EM mesh data supplied
-
-        #     report_and_exit('Mesh reading from file for elastic calculations is not currently supported.')
-        #     ac_mesh_from_em = 0
-        #     with open(structure.mesh_file) as f:
-        #         self.n_msh_pts, self.n_msh_el = [
-        #             int(i) for i in f.readline().split()]
-        #     table_nod_AC = np.zeros((6, self.n_msh_el))
-        #     type_el_AC = np.zeros(self.n_msh_el)
-        #     mesh_xy_AC = np.zeros((2, self.n_msh_pts))
-        #     node_physindex_AC = np.zeros(self.n_msh_pts)
-
-
-
-        print(f'\n The elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(self.typ_el_AC)} element types (materials).')
-
-        print(' The material index table is:', self.typ_el_AC, '\n')
-        print(f' There are {len(self.typ_el_AC)} active materials:')
-        for nm,mat in d_mats_AC.items():
-            print(f'   {nm+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.')
-
         self.table_nod = table_nod_AC
         self.type_el = type_el_AC
         self.mesh_xy = mesh_xy_AC
-        self.node_physindex = node_physindex_AC
+        self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
+
+
+        print(f'\n The elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials).')
+
+        print(' The material index table is:', el_props.typ_el_AC, '\n')
+        print(f' There are {len(el_props.typ_el_AC)} active materials:')
+        for nm,mat in d_mats_AC.items():
+            print(f'   {nm+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.')
+
 
         print('AC mesh properties:')
         print('  type_el', self.type_el)
-        print('  typ_el_AC', self.typ_el_AC)
+        print('  typ_el_AC', el_props.typ_el_AC)
         print('  el_convert_tbl', self.el_convert_tbl)
         print('  elt2nodes index map', self.table_nod)
 
@@ -1295,3 +1295,15 @@ def fwd_Stokes_modes(EM_sim):    #TODO: make a member function
 
 
 
+
+        # else:  # No EM mesh data supplied
+
+        #     report_and_exit('Mesh reading from file for elastic calculations is not currently supported.')
+        #     ac_mesh_from_em = 0
+        #     with open(structure.mesh_file) as f:
+        #         self.n_msh_pts, self.n_msh_el = [
+        #             int(i) for i in f.readline().split()]
+        #     table_nod_AC = np.zeros((6, self.n_msh_el))
+        #     type_el_AC = np.zeros(self.n_msh_el)
+        #     mesh_xy_AC = np.zeros((2, self.n_msh_pts))
+        #     node_physindex_AC = np.zeros(self.n_msh_pts)
