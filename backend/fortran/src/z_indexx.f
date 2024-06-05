@@ -1,3 +1,9 @@
+c     This subroutine takes an array of complex numbers, computes their squared magnitudes, 
+c     and sorts the indices of these magnitudes in descending order using a hybrid quicksort-insertion 
+c     sort algorithm. 
+c     The sorted indices are stored in the indx array, which can be used to
+c     reorder the original array cor for other purposes where sorted order is required.
+
       SUBROUTINE z_indexx(n,arr,indx)
 
       INTEGER*8 n,indx(n),M,NSTACK

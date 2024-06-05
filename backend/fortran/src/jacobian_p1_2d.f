@@ -9,17 +9,15 @@ c
       subroutine jacobian_p1_2d (x, xel, nnodes, 
      *  x_g, det_jacobian, mat_B_0, mat_T)
 c
-      implicit none
+      use numbatmod
+
       integer*8 nnodes
       double precision x(2), xel(2,nnodes)
       double precision mat_B(2,2), mat_T(2,2), mat_B_0(2,2)
       double precision det_jacobian, x_g(2)
       integer*8 i, j
-c
-      double precision ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
-c     32-but integers for BLAS and LAPACK
+
+c     32-bit integers for BLAS and LAPACK
       integer*4 INFO_32, LDB_32, LDT_32
       integer*4 IPIV_32(2), NRHS_32, N_32
 c
@@ -57,8 +55,8 @@ c     Initialisation for DGEMV X_g = xel(1:2,1)
         X_g(i) = xel(i,1)
       enddo
 c     DGEMV  performs one of the matrix-vector operations
-      call DGEMV('No transpose', N_32, N_32, ONE, mat_B, 
-     *  LDB_32, X, 1, ONE, X_g, 1)
+      call DGEMV('No transpose', N_32, N_32, D_ONE, mat_B, 
+     *  LDB_32, X, 1, D_ONE, X_g, 1)
 c
 c     Initialisation for DGESV: mat_T = identity
       do i=1,2

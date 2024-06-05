@@ -4,36 +4,37 @@ c
 c
 c***********************************************************************
 c
-      subroutine periodic_cond (i_cond, n_ddl, neq, type_N_E_F, 
+      subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F, 
      *      ip_period_E_F, ineq, debug)
 
 c
 c***********************************************************************
 c
 c
-c   i_cond = 0 => Dirichlet boundary condition
-c   i_cond = 1 => Neumann boundary condition
-c   i_cond = 2 => Periodic boundary condition
+c   bdy_cdn = 0 => Dirichlet boundary condition
+c   bdy_cdn = 1 => Neumann boundary condition
+c   bdy_cdn = 2 => Periodic boundary condition
 c
 c***********************************************************************
 c
-      implicit none
-      integer*8 i_cond, n_ddl, neq
+          use numbatmod
+      integer*8 bdy_cdn, n_ddl, neq
       integer*8 ip_period_E_F(n_ddl), type_N_E_F(2,n_ddl)
       integer*8 ineq(3,n_ddl), debug
 
       integer*8 i, j, k, i_boundary, i_dim
 c
       if (debug .eq. 1) then
-        write(*,*) "periodic_cond: i_cond = ", i_cond
+        write(*,*) "periodic_cond: bdy_cdn = ", bdy_cdn
       endif
-        if(i_cond .eq. 2) then
+
+        if(bdy_cdn .eq. BCS_PERIODIC) then
           if (debug .eq. 1) then
             write(*,*) "periodic_cond: Periodic boundary conditions"
           endif
         else
-        write(*,*) "periodic_cond: problem : i_cond !=2 : ", i_cond
-        write(*,*) "i_cond should be 2 for Periodic boundary conditions"
+        write(*,*) "periodic_cond: problem : bdy_cdn !=2 : ", bdy_cdn
+        write(*,*) "bdy_cdn should be 2 for Periodic bcs"
         write(*,*) "periodic_cond: Aborting..."
         stop
         endif
@@ -79,7 +80,7 @@ c     check ...
         endif
       enddo
 c
-      if(i_cond .eq. 2) then
+      if(bdy_cdn .eq. 2) then
 c       Periodic boundary condition: all points have a degree of freedom
         neq = 0
         do i=1,n_ddl
@@ -106,7 +107,7 @@ C             ! each nodee is associated to 1 Degree Of Freedom (DOF)
               neq = neq + 1
             else
               write(*,*) "bound_cond: i_dim has invalid value : ", i_dim
-              write(*,*) "bound_cond: i_cond = ", i_cond
+              write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
               write(*,*) "bound_cond: i = ", i
               write(*,*) "bound_cond: Aborting..."
               stop
@@ -140,7 +141,7 @@ C               ! each nodee is associated to 1 Degree Of Freedom (DOF)
               else
                 write(*,*) "bound_cond: i_dim has invalid value : ", 
      *            i_dim
-                write(*,*) "bound_cond: i_cond = ", i_cond
+                write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
                 write(*,*) "bound_cond: i = ", i
                 write(*,*) "bound_cond: Aborting..."
                 stop
@@ -173,7 +174,7 @@ c       set the equation for the "other" (or "destination") periodic node
       else
         write(*,*)
         write(*,*) "  ???"
-        write(*,*) "period_cond: i_cond has invalid value : ", i_cond
+        write(*,*) "period_cond: bdy_cdn has invalid value : ", bdy_cdn
         write(*,*) "period_cond: Aborting..."
         stop
       endif

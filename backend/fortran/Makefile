@@ -175,10 +175,22 @@ endif
 
 # TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
 #       find a better way
+SRCS_MODS = src/nbconsts_module.f95 src/numbatmod_module.f95 src/nbinterfaces_module.f95
 SRCS_F = $(wildcard src/*.f) 
 SRCS_F95 = $(wildcard src/*.f95)
+
 OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
 OBJS = $(subst src,build,$(OBJSA))
+
+OBJS_MODA = $(SRCS_MODS:.f95=.o)
+#OBJS_MOD= $(subst src,build,$(OBJS_MODA))
+MODULES_MODS = build/nbconsts_module.mod build/numbatmod_module.mod
+
+tt:
+	echo $(SRCS_F)
+	echo $(SRCS_MODS)
+	echo $(OBJS_MOD)
+	echo $(MODULES_MODS)
 
 #conv_gmsh.f 
 PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f \
@@ -203,13 +215,21 @@ UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build 
+F95FLAGS=$(F77FLAGS)
+
+mods: $(MODULES_MODS)
+
 # -std=f95
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops 
 
-build/%.o : src/%.f95
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
+build/%.mod : src/%.f95 
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
 
-build/%.o : src/%.f
+# Any module file change will cause rebuilding of all .f files
+build/%.o : src/%.f95 $(MODULES_MODS)
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
+
+build/%.o : src/%.f $(MODULES_MODS)
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
 
 build/%.o : src/%.c
@@ -258,10 +278,11 @@ $(FMETHOD).pyf: $(SRCS)
 
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
+#build/$(NumBAT_MOD)-f2pywrappers2.f90 
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
-$(CMETHOD).so: $(CMETHOD).pyf $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+$(CMETHOD).so: $(CMETHOD).pyf $(MODULES_MOD) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 	echo "New compilation method Step B"
 	#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
 	#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
