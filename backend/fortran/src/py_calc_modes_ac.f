@@ -4,14 +4,14 @@
       subroutine calc_AC_modes(
 c     Explicit inputs
      *    num_modes, q_ac, d_in_m, shift_nu,
-     *    i_bnd_cdns, itermax, tol, debug, show_mem_est, 
-     *    symmetry_flag, n_typ_el, 
-     *    c_tensor, rho, 
-     *    supplied_geo_flag, 
+     *    i_bnd_cdns, itermax, tol, debug, show_mem_est,
+     *    symmetry_flag, n_typ_el,
+     *    c_tensor, rho,
+     *    supplied_geo_flag,
      *    mesh_file, n_msh_pts, n_msh_el,
-c    *    plot_modes, 
-c    *    cmplx_max, real_max, int_max, 
-     *    type_nod, 
+c    *    plot_modes,
+c    *    cmplx_max, real_max, int_max,
+     *    type_nod,
 c     Inputs and outputs
      *    table_nod, type_el, x_arr,
 c     Outputs
@@ -21,14 +21,14 @@ c         q_ac :   acoustic wave number (q_ac)
 c         num_modes:  desired number of solved acoustic modes
 c         n_msh_pts:  number of nodes in mesh
 c         n_msh_el:   number of (triang) elements in mesh
-c         n_type_el:  number of types of material 
-c         type_nod:    ?? 
-c         table_nod:    
+c         n_type_el:  number of types of material
+c         type_nod:    ??
+c         table_nod:
 c         type_el:
 c         x_arr
 c         v_nu_out:  eigen frequencies nu=omega/(2pi) for each mode
 c         sol1:
-c         mode_pol:  
+c         mode_pol:
 
 C***********************************************************************
 C
@@ -44,7 +44,7 @@ C
       implicit none
 C  Local parameters:
 C       ! Propagation constant
-      complex*16 q_ac 
+      complex*16 q_ac
       integer*8 int_max, cmplx_max, int_used, cmplx_used
       integer*8 real_max, real_used
 C     integer*8  plot_modes
@@ -53,11 +53,11 @@ C     integer*8  plot_modes
 
       integer :: stat=0
 C       !  (int_max)
-      integer*8, dimension(:), allocatable :: a   
+      integer*8, dimension(:), allocatable :: a
 C       !  (cmplx_max)
-      complex*16, dimension(:), allocatable :: b   
+      complex*16, dimension(:), allocatable :: b
 C       !  (real_max)
-      double precision, dimension(:), allocatable :: c   
+      double precision, dimension(:), allocatable :: c
       integer*8 supplied_geo_flag, symmetry_flag
 
 C  Declare the pointers of the integer super-vector
@@ -89,7 +89,7 @@ c     Declare the pointers of for sparse matrix storage
 
 C     ! Number of nodes per element
       parameter(nodes_per_el=6)
-      integer*8 type_nod(n_msh_pts), type_el(n_msh_el) 
+      integer*8 type_nod(n_msh_pts), type_el(n_msh_el)
       integer*8 table_nod(nodes_per_el, n_msh_el)
 
       double precision pi
@@ -117,8 +117,8 @@ C  Variable used by valpr
 
 C  Names and Controls
       character mesh_file*1000, gmsh_file*1000, log_file*1000
-      character gmsh_file_pos*1000, dir_name*1000
-      character*1000 tchar
+      character gmsh_file_pos*1000
+
 
 c     new breed of variables to prise out of a, b and c
       double precision x_arr(2,n_msh_pts)
@@ -158,7 +158,7 @@ C
 C     Set parameter for the super-vectors of integer and real numbers
 C
 C       !ui = Unite dImpression
-      ui = 6     
+      ui = 6
 C      nodes_per_el = 6 ! Number of nodes per element
       pi = 3.141592653589793d0
       ii = cmplx(0.0d0, 1.0d0, 8)
@@ -171,28 +171,28 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
       errco= 0
       emsg = ""
- 
+
 c     Declare work space arrays
 
-      call array_size(n_msh_pts, n_msh_el, num_modes, 
+      call array_size(n_msh_pts, n_msh_el, num_modes,
      *  int_max, cmplx_max, real_max, emsg, errco)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(a(int_max), STAT=stat)
       call check_alloc(stat, int_max, "a", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(b(cmplx_max), STAT=stat)
       call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(c(real_max), STAT=stat)
       call check_alloc(stat, real_max, "c", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(iindex(num_modes), STAT=stat)
       call check_alloc(stat, num_modes, "iindex", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
@@ -207,7 +207,7 @@ C     clean mesh_format
       endif
 
 C       ! initial time  in unit = sec.
-      call cpu_time(time1)  
+      call cpu_time(time1)
       call date_and_time ( start_date, start_time )
 C
 C      tol = 0.0 ! ARPACK accuracy (0.0 for machine precision)
@@ -223,7 +223,7 @@ C####################  Start FEM PRE-PROCESSING  #######################
 C
 
 C       ! pointer to FEM connectivity table
-      ip_visite = 1 
+      ip_visite = 1
       ip_eq = ip_visite + n_msh_pts
       jp_x = 1
 C
@@ -264,7 +264,7 @@ C       endif
 
 
       if (debug .eq. 1) then
-        write(ui,*) "py_calc_modes_AC: n_msh_pts, n_msh_el = ", 
+        write(ui,*) "py_calc_modes_AC: n_msh_pts, n_msh_el = ",
      *    n_msh_pts, n_msh_el
       endif
 
@@ -289,12 +289,12 @@ c     Sparse matrix storage
      *    "py_calc_modes_AC: nonz_max = ", nonz_max,
      *    "py_calc_modes_AC: increase the size of int_max"
          errco = -3
-         return 
+         return
       endif
 c
       ip_row = ip_col_ptr + neq + 1
 
-      call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, 
+      call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el,
      *  table_nod, a(ip_eq), a(ip_row), a(ip_col_ptr), nonz_max,
      *  nonz, max_row_len, ip, int_max, debug)
 
@@ -321,7 +321,7 @@ c     sorting csr ...
      *   "integer super-vec: int_max  = ", int_max,
      *   "integer super-vec: int_used = ", int_used
         errco = -4
-        return 
+        return
       endif
 
       jp_rhs = jp_x + 2*n_msh_pts
@@ -333,7 +333,7 @@ c     jp_rhs will also be used (in gmsh_post_process) to store a solution
       jp_resid = jp_workd + 3*neq
       jp_eigenum_modes_tmp = jp_resid+3*nodes_per_el*num_modes*n_msh_el
 C       ! Eigenvectors
-      jp_vschur = jp_eigenum_modes_tmp + num_modes + 1     
+      jp_vschur = jp_eigenum_modes_tmp + num_modes + 1
       jp_eigen_pol = jp_vschur + neq*nvect
       jp_trav = jp_eigen_pol + num_modes*4
 
@@ -346,7 +346,7 @@ C       ! Eigenvectors
      *   "complex super-vec: cmplx_max  = ", cmplx_max,
      *   "complex super-vec: cmplx_used = ", cmplx_used
          errco = -5
-         return 
+         return
       endif
 
 c
@@ -373,7 +373,7 @@ c
      *    "real super-vec: real_used = ", real_used
 
         errco = -6
-        return 
+        return
       endif
 
 c
@@ -416,13 +416,13 @@ C     Assemble the coefficient matrix K and M of the finite element equations
      *  shift_omsq, q_ac, n_typ_el, rho, c_tensor,
      *  table_nod, type_el, a(ip_eq),
      *  x_arr, nonz, a(ip_row), a(ip_col_ptr),
-     *  c(kp_mat1_re), c(kp_mat1_im), b(jp_mat2), a(ip_work), 
+     *  c(kp_mat1_re), c(kp_mat1_im), b(jp_mat2), a(ip_work),
      *  symmetry_flag, debug)
 
       call get_clocks(stime2, time2)
-      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), 
+      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1),
      *   ' secs.'
-      write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1), 
+      write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1),
      *   ' secs.'
 
 C       if (debug .eq. 1) then
@@ -434,10 +434,10 @@ C       endif
 
       call valpr_64_AC (i_base, nvect, num_modes, neq, itermax, ltrav,
      *  tol, nonz, a(ip_row), a(ip_col_ptr), c(kp_mat1_re),
-     *  c(kp_mat1_im), b(jp_mat2), 
-     *  b(jp_vect1), b(jp_vect2), b(jp_workd), b(jp_resid), 
-     *     b(jp_vschur), v_nu_out, b(jp_trav), b(jp_vp), 
-     *  c(kp_rhs_re), c(kp_rhs_im), c(kp_lhs_re), c(kp_lhs_im), n_conv, 
+     *  c(kp_mat1_im), b(jp_mat2),
+     *  b(jp_vect1), b(jp_vect2), b(jp_workd), b(jp_resid),
+     *     b(jp_vschur), v_nu_out, b(jp_trav), b(jp_vp),
+     *  c(kp_rhs_re), c(kp_rhs_im), c(kp_lhs_re), c(kp_lhs_im), n_conv,
      *  debug, show_mem_est, errco, emsg)
 
 
@@ -446,18 +446,18 @@ C       endif
       endif
 
       call get_clocks(stime2, time2)
-      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), 
+      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1),
      *   ' secs.'
       write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1),
      *   ' secs.'
 
 
       if (n_conv .ne. num_modes) then
-         write(emsg, '(A,I5,I5)') 
+         write(emsg, '(A,I5,I5)')
      *    "py_calc_modes_AC: convergence problem " //
      *    "in valpr_64: n_conv != num_modes  ", n_conv, num_modes
          errco = -7
-         return 
+         return
       endif
 C
       do i=1,num_modes
@@ -477,8 +477,8 @@ C                 using the permutation vector iindex
       if (debug .eq. 1) then
         write(ui,*) "py_calc_modes_AC: call to array_sol"
       endif
-        call array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq, 
-     *   nodes_per_el, iindex, table_nod, type_el, a(ip_eq), x_arr, 
+        call array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq,
+     *   nodes_per_el, iindex, table_nod, type_el, a(ip_eq), x_arr,
      *   v_nu_out,  b(jp_eigenum_modes_tmp), mode_pol, b(jp_vp), sol1)
 
       if (debug .eq. 1) then
@@ -496,7 +496,7 @@ C         write(ui,*) "sqrt(shift_omsq)/(2*pi) = ", sqrt(omsq) / (2.0d0 * pi)
           write(ui,"(i4,2(g22.14),2(g18.10))") i, v_nu_out(i)
         enddo
       endif
-      
+
 CC    Save Original solution
 C      if (plot_modes .eq. 1) then
 C        dir_name = "AC_fields"
@@ -508,7 +508,7 @@ CC    *       mesh_file, n_conv, dir_name)
 C        tchar = "AC_fields/All_plots_png_abs2_eE.geo"
 C        open (unit=34,file=tchar)
 C          do i=1,num_modes
-C            call gmsh_post_process_AC (i, num_modes, n_msh_el, 
+C            call gmsh_post_process_AC (i, num_modes, n_msh_el,
 C     *         n_msh_pts, nodes_per_el, table_nod, type_el,
 C     *         x_arr, v_nu_out, sol1, b(jp_rhs), a(ip_visite),
 C     *         gmsh_file_pos, dir_name, d_in_m, debug)
@@ -538,7 +538,7 @@ C
         write(26,*) "q_ac = ", q_ac
         write(26,*) "shift_omsq= ", shift_omsq
         write(26,*)
-        write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, 
+        write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts,
      *               n_msh_el, nodes_per_el
         write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
         write(26,*) " lat_vecs:  = "

@@ -882,7 +882,8 @@ class EMSimulation(Simulation):
 
 
         self.E_H_field = 1  # Selected formulation (1=E-Field, 2=H-Field)
-        bnd_cdn_i = 2       # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        #bnd_cdn_i = 2       # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        bnd_cdn_i = 0       # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)  TODO: this has been set to periodic for some time?!
 
         itermax = 30                # Maximum number of iterations for convergence
         EM_FEM_debug = self.debug  # Fortran routines will display & save add. info

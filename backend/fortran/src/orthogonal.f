@@ -1,22 +1,22 @@
 C   Calculate the Overlap integral of the prime and adjoint Plane Waves
 C
-      subroutine orthogonal (nval, nel, npt, 
+      subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, 
      *  nnodes, nb_typ_el, pp, table_nod, 
      *  type_el, x, beta1, beta2,
      *  soln_k1, soln_k2, mat_overlap, overlap_file, PrintAll,
      *  pair_warning, k_0)
 c
       implicit none
-      integer*8 nval, nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel)
-      integer*8 table_nod(nnodes,nel)
-      double precision x(2,npt)
-      complex*16 soln_k1(3,nnodes+7,nval,nel)
-      complex*16 soln_k2(3,nnodes+7,nval,nel)
+      integer*8 n_modes, n_msh_el, n_msh_pts, nnodes, nb_typ_el
+      integer*8 type_el(n_msh_el)
+      integer*8 table_nod(nnodes,n_msh_el)
+      double precision x(2,n_msh_pts)
+      complex*16 soln_k1(3,nnodes+7,n_modes,n_msh_el)
+      complex*16 soln_k2(3,nnodes+7,n_modes,n_msh_el)
       complex*16 pp(nb_typ_el)
-      complex*16 beta1(nval), beta2(nval)
-C      complex*16 mat_overlap(nval,nval)
-      complex*16, dimension(nval,nval) :: mat_overlap
+      complex*16 beta1(n_modes), beta2(n_modes)
+C      complex*16 mat_overlap(n_modes,n_modes)
+      complex*16, dimension(n_modes,n_modes) :: mat_overlap
       character overlap_file*100
       double precision k_0
 c     Local variables
@@ -53,8 +53,8 @@ c     NQUAD: The number of quadrature points used in each element.
 C     Mode ordering
       integer*8 skip, PrintAll, pair_warning
       complex*16 betatmp1(1), betatmp2(1)
-      complex*16 soltmp1(3,nnodes+7,nel,1)
-      complex*16 soltmp2(3,nnodes+7,nel,1)
+      complex*16 soltmp1(3,nnodes+7,n_msh_el,1)
+      complex*16 soltmp2(3,nnodes+7,n_msh_el,1)
       integer*8 compcount, elcount, nodecount, redo, j2
       double precision val_max_diag, val_max_off
 C
@@ -83,14 +83,14 @@ C
 C      !second rearranged overlap
 122   continue               
 C
-      do jval=1,nval
-        do ival=1,nval
+      do jval=1,n_modes
+        do ival=1,n_modes
           mat_overlap(ival,jval) = 0.0d0
         enddo
       enddo
 c
       n_curved = 0
-      do iel=1,nel
+      do iel=1,n_msh_el
         typ_e = type_el(iel)
         do j=1,nnodes
           j1 = table_nod(j,iel)
@@ -195,7 +195,7 @@ C                z_tmp1 = ddot(2, vec_phi_i, 1, vec_phi_j, 1)
           enddo
         enddo
 cccccccccc
-        do ival=1,nval
+        do ival=1,n_modes
           do i=1,nnodes
             do j=1,2
 c             The 2 transverse components of the mode ival
@@ -205,7 +205,7 @@ c             The 2 transverse components of the mode ival
             enddo
           enddo
 cccccccccc
-          do jval=1,nval
+          do jval=1,n_modes
             z_beta_1 = beta1(jval)
             do i=1,nnodes
               do j=1,2
@@ -259,7 +259,7 @@ C  reorder complex conjugate douplets
       if (redo .eq. 2) goto 123
 
 121   continue
-      if (j .gt. nval) then 
+      if (j .gt. n_modes) then 
       goto 122 
 C       if all is well - correct orthogonality with its self
       elseif (abs(mat_overlap(j,j)) .gt. 1.0d-7) then
@@ -267,18 +267,18 @@ C       if all is well - correct orthogonality with its self
         goto 121
 C       first of a wrongly ordered complex conjugate pair (save values)
       elseif (skip .eq. 0) then
-        if (j .eq. nval) then
+        if (j .eq. n_modes) then
           pair_warning = pair_warning + 1
         endif
 C       find jvals (j and j2) of swaped pair and switch
-        do j2 = j+1,nval
+        do j2 = j+1,n_modes
           if (abs(mat_overlap(j2,j)) .gt. 1.0d-7) then
           betatmp1(1) = beta2(j)
           betatmp2(1) = beta2(j2)
           beta2(j)  = betatmp2(1)
           beta2(j2) = betatmp1(1)
             do compcount = 1,3
-              do elcount = 1,nel
+              do elcount = 1,n_msh_el
                 do nodecount = 1,nnodes+7
               soltmp1(compcount,nodecount,elcount,1)
      *          = soln_k2(compcount,nodecount,j,elcount)
@@ -310,8 +310,8 @@ C
       open(3,file=overlap_file)
       val_max_diag = 0.0d0
       val_max_off = 0.0d0
-      do jval=1,nval
-        do ival=1,nval
+      do jval=1,n_modes
+        do ival=1,n_modes
           r_tmp1 = abs(mat_overlap(ival,jval))
           if (ival .eq. jval) then 
             if (val_max_diag .lt. r_tmp1) then
