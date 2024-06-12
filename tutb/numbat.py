@@ -74,6 +74,7 @@ class _NumBATApp:
         return self.is_linux()
 
     # Only needed to change prefix at some point
+    # TODO: seems to be unused. Remove.
     def set_outprefix(self, s): # change to getter/setter
         self._outprefix=s
 
@@ -110,6 +111,10 @@ class _NumBATApp:
         return s
 
     def make_structure(self, *args, **kwargs):
+        # User function
+        '''
+        Build the waveguide struccture according to the specified parameters of objects.Structure.
+        '''
         return objects.Structure(*args, direct_call=False, **kwargs)
 
 
@@ -149,12 +154,14 @@ class _NumBATApp:
 
 # always returns the singleton NumBATApp object
 def NumBATApp(outprefix='', outdir='.'):
-    '''Returns the same singleton NumBATApp object on every call.'''
+    '''Returns the top-level NumBAT Application object.
+
+    The same singleton object is returned on subsequent calls.'''
 
     nba = _NumBATApp.get_instance(outprefix, outdir)
     return nba
 
 
-def assert_numbat_object_created():
+def assert_numbat_object_created():  # Called from objects.py to catch old style calls. Remove eventually.
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')

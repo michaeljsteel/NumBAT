@@ -114,10 +114,10 @@ class MaterialLibrary:
             self._materials[mat_name] = new_mat
 
 
-class Material(object):
+class Material:
     """Class representing a waveguide material.
 
-    This should not be constructed directly but by calling materials.get_material()
+    This should not be constructed directly but by calling materials.make_material()
 
       Materials include the following properties and corresponding units:
           -  Refractive index []

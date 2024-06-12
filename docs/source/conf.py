@@ -59,12 +59,13 @@ sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.napoleon',
     'sphinx.ext.autodoc',
 #    'sphinx.ext.coverage',
 #    'sphinx.ext.mathjax',
 #    'sphinx.ext.viewcode',
 #    'sphinx.ext.githubpages',
-#    'sphinx.ext.napoleon',
+#
      'nbsphinx',
 ]
 

@@ -12,12 +12,26 @@ Python Interface API
 
 This chapter provides a technical auto-generated summary  of the NumBAT Python API.
 
-The API consists of five core modules\:
+The API consists of several core modules\:
+
+  - ``numbat``, for creating the top-level |NUMBAT| application;
   - ``materials``, for defining waveguide materials and their properties;
   - ``objects``, for constructing waveguides from materials;
   - ``mode_calcs``, for the core calculation of electromagnetic and acoustic modes;
   - ``integration``, for performing calculations relating to SBS gain;
   - ``plotting``, for creating output plots of modes and gain functions.
+
+numbat module
+=============
+
+The ``numpy`` module contains the :class:`NumBATApp` through which the bulk of the |NUMBAT| API is accessed.
+
+Creating a :class:`NumBATApp` object is normally the first main step in a |NUMBAT| script.
+
+.. automodule:: numbat
+    :members:
+    :undoc-members:
+    :show-inheritance:
 
 materials module
 ================
