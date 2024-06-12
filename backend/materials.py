@@ -607,11 +607,16 @@ class Material(object):
         self.stiffness_c_IJ.check_symmetries()
 
     def _add_3d_dispersion_curves_to_axes(self, ax_ivp=None, ax_vg=None):
+        '''
+        Draw phase and group velocity surfaces on 3D axes.
+
+        :param ax_ivp: 3D axes for the slowness (reciprocal phase velocity).
+        :param ax_vg: 3D axes for the group velocity.
+        '''
         axs = []
-        if ax_ivp is not None:
-            axs.append(ax_ivp)
-        if ax_vg is not None:
-            axs.append(ax_vg)
+
+        if ax_ivp is not None: axs.append(ax_ivp)
+        if ax_vg is not None: axs.append(ax_vg)
 
         # Make data
         tpts = 50
