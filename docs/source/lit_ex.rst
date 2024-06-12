@@ -311,7 +311,7 @@ It is also illuminating to look at the elastic dispersion for a wide range of mi
 
 .. figure:: images/lit_examples/lit_03-exactdisp_wide-acdisp_qnu_exact.png
 
-   Exact analytic disperion relation for modes of elastic rod in air for comparison with gain spectra.
+   Exact analytic dispersion relation for modes of elastic rod in air for comparison with gain spectra.
 
 .. raw:: latex
 

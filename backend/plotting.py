@@ -29,13 +29,12 @@ import matplotlib.pyplot as plt
 #from collections.abc import Iterable
 
 import numbat
-from numbattools import save_and_close_figure
-#from nbtypes import QAcMethod, FieldType, component_t, twopi
-#from fortran import NumBAT
 import reporting
-from plotmodes import Decorator
 
 from nbtypes import SI_GHz
+from plottools import save_and_close_figure
+from plotmodes import Decorator
+
 
 # setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
 keep_plots_open = False

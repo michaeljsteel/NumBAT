@@ -24,7 +24,7 @@ import matplotlib.colors as mplcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import numbat
-from numbattools import save_and_close_figure
+from plottools import save_and_close_figure
 from nbtypes import component_t, FieldType, SI_THz, SI_GHz, SI_um, twopi
 
 
@@ -325,7 +325,7 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
 
     d_kw = {'origin':'lower', 'extent':extents, 'interpolation':interp, 'cmap':cmap}
 
-    if decorator.get_cmap_limits(cc_cont._xyz) != None:
+    if decorator.get_cmap_limits(cc_cont._xyz) is not None:
         (act_zlo, act_zhi) = decorator.get_cmap_limits(cc_cont._xyz)
         tsnorm = mplcolors.TwoSlopeNorm(
             vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)

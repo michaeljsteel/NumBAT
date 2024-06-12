@@ -1,15 +1,15 @@
-from enum import Enum
 import math
-import numpy as np
-import scipy.special as sp
-import scipy.optimize as sciopt
-import scipy.signal
+from enum import Enum
+
 import matplotlib.pyplot as plt
 
+import numpy as np
+import scipy.optimize as sciopt
+import scipy.signal
+import scipy.special as sp
 
-import reporting
 import nbtypes
-
+import reporting
 
 twopi = 2*math.pi
 cvac = nbtypes.speed_c

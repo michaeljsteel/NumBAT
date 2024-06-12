@@ -124,13 +124,7 @@ class ElasticProps:
     def __init__(self, v_acoustic_mats, symmetry_flag):
 
         self.n_mats_ac = len(v_acoustic_mats)
-
-        #self.rho = None        # [n_mats_ac]
-        #self.c_IJ = None       # [3 x 3  x  n_mats_ac]
-        ##self.c_ijkz = None     # [3x3x3x1  x  n_mats_ac]
-        #elf.p_ijkl = None     # [3x3x3x3  x  n_mats_ac]
-        #self.eta_ijkl = None   # [3x3x3x3  x  n_mats_ac]
-
+        self.v_active_mats = v_acoustic_mats
 
         # density  shape = [n_mats_ac]
         self.rho = np.zeros(self.n_mats_ac)
@@ -157,7 +151,7 @@ class ElasticProps:
         d_mats_AC = {}
 
             #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
-        for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:  
+        for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:
             if mat.has_elastic_properties():
                 el_conv_table[oldloc] = newloc
                 newloc += 1

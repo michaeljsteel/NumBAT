@@ -227,8 +227,8 @@ Double inclusion waveguides with surrounding medium
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 These structures consist of a pair of waveguides with a single common background material.
-The dimesions are set by ``inc_a_x/inc_a_y`` and  ``inc_b_x/inc_b_y``. They are separated
-horintally by ``two_inc_sep`` and the right waveguide has a vertical offset of ``y_off``.
+The dimensions are set by ``inc_a_x/inc_a_y`` and  ``inc_b_x/inc_b_y``. They are separated
+horizontally by ``two_inc_sep`` and the right waveguide has a vertical offset of ``y_off``.
 
 .. figure::  images/meshes/twoincl_rect_wg-mesh.png
    :width: 15cm
@@ -239,7 +239,7 @@ horintally by ``two_inc_sep`` and the right waveguide has a vertical offset of `
    :width: 15cm
 
    Coupled circular waveguides using shape ``circular`` (template ``twoincl_msh``).
-   There appers to be a bug here!
+   There appears to be a bug here!
 
 
 Rib waveguides
@@ -304,7 +304,7 @@ Layered circular waveguides
 These waveguides consist of a set of concentric circular rings of a desired
 number of layers in either a square or circular outer domain.
 Note that ``inc_a_x`` specifies the innermost *diameter*.
-The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thickness of each succssive layer.
+The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thickness of each successive layer.
 
 
 .. figure:: images/meshes/onion_wg-mesh.png
@@ -510,7 +510,7 @@ Viewing the mesh
 ----------------------
 
 When |NUMBAT| constructs a waveguide, the template ``geo`` file is converted to
-a concrete instatiation with the ``lc_refine`` and geometric parameters
+a concrete instantiation with the ``lc_refine`` and geometric parameters
 adjusted to the requested values. This file is then converted into a ``gmsh``
 ``.msh`` file. When exploring new structures and their convergence behaviour,
 it is a very good idea to view the generated mesh frequently.

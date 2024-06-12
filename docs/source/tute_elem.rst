@@ -306,7 +306,7 @@ The ``gain-spectra`` plot below shows the Brillouin gain as a function of
 Stokes shift.  Each resonance peak is marked with the number of the acoustic
 mode associated with the resonance.  This is very helpful in identifying which
 acoustic mode profiles to examine more closely.  In this case, modes 5, 8 and
-23 give the most signifcant Brillouin gain.  The number of modes labelled in the gain spectrum can
+23 give the most significant Brillouin gain.  The number of modes labelled in the gain spectrum can
 be controlled using the parameter ``mark_mode_thresh`` in the function
 ``plotting.plot_gain_spectra`` to avoid many labels from modes giving
 negligible gain.
