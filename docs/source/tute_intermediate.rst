@@ -94,7 +94,7 @@ The accompanying tutorial ``sim-tut_11b-onion3.py`` introduces one additional la
     \clearpage
 
 
-Tutorial 12 -- Valdiating the calculation of the EM dispersion of a two-layer fibre
+Tutorial 12 -- Validating the calculation of the EM dispersion of a two-layer fibre
 ------------------------------------------------------------------------------------
 
 How can we be confident that |NUMBAT|'s calculations are actually correct?
@@ -160,7 +160,7 @@ Threads are light-weight and can be started more efficiently than separate proce
     \clearpage
 
 
-Tutorial 13 -- Valdiating the calculation of the dispersion of an elastic rod in vacuum
+Tutorial 13 -- Validating the calculation of the dispersion of an elastic rod in vacuum
 -------------------------------------------------------------------------------------------------
 
 The tutorial ``sim-tut_13.py`` performs the same kind of calculation as in the previous
@@ -169,7 +169,7 @@ In this case there is no simple analytic solution possible for the two-layer cyl
 Instead we create a structure of a single elastic rod surrounded by vacuum.
 |NUMBAT| removes the vacuum region and imposes a free boundary condition at the boundary
 of the rod. The modes found are then compared to the analytic solution
-of a free homonegenous cylindrical rod in vacuum.
+of a free homogeneous cylindrical rod in vacuum.
 
 We find excellent agreement between the analytical (coloured lines) and numerical (crosses) results.
 Observe the existence of two classes of modes with azimuthal index :math:`p=0`, corresponding to the pure torsional modes, which for the lowest band propagate at the bulk shear velocity,

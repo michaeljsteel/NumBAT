@@ -1,14 +1,12 @@
-#import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 
 import numbat
-#import plotting
 
 from plotmodes import TidyAxes
-from numbattools import save_and_close_figure
+from plottools import save_and_close_figure
 
 class MailData:
     '''Native representation of the Gmsh mesh and node/element structures.

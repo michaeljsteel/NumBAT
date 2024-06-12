@@ -5,7 +5,7 @@ import matplotlib.patches as mplpatches
 
 from usermesh import UserGeometryBase
 
-nmtoum = 1.e-3   # template radii are in nm but matplotlib plots are in microns
+nmtoum = 0.001   # template radii are in nm but matplotlib plots are in microns
 
 
 def _process_one_and_two_incls(params):
@@ -194,13 +194,13 @@ class Triangular(UserGeometryBase):
 
 
     def apply_parameters(self):
-        subs = [('dx_in_nm = 1000.0;',    'dx_in_nm = %f;',       self.get_param('unitcell_x')), 
-                ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')), 
-                ('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')), 
-                ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')), 
-                ('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')), 
-                ('lc = 0.1;',             'lc = %f;',             self.get_param('lc')), 
-                ('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')), 
+        subs = [('dx_in_nm = 1000.0;',    'dx_in_nm = %f;',       self.get_param('unitcell_x')),
+                ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')),
+                ('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')),
+                ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')),
+                ('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')),
+                ('lc = 0.1;',             'lc = %f;',             self.get_param('lc')),
+                ('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')),
                 ('lc_refine_2 = lc/3.0;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2'))
                 ]
 
@@ -209,6 +209,7 @@ class Triangular(UserGeometryBase):
 
     def draw_mpl_frame(self, ax):
 
+        # TODO: make mpl frame work for this geometry
         wid = self.get_param('inc_a_x') * nmtoum
         hgt = self.get_param('inc_a_y') * nmtoum
 
@@ -254,12 +255,12 @@ def draw_onion_frame(ax, umb):
 
     rad = 0
     for sl in layers:
-        l = umb.get_param(sl)
-        if l is not None:
+        lwid = umb.get_param(sl)
+        if lwid is not None:
             if sl == 'inc_a_x':
-                rad += l/2  # inc_a_x is diameter
+                rad += lwid/2  # inc_a_x is diameter
             else:
-                rad += l
+                rad += lwid
             ax.add_patch( mplpatches.Circle((0, 0), rad*nmtoum,
                              facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
@@ -406,7 +407,7 @@ class TrapezoidalRib(UserGeometryBase):
 
         Materials are:
           # material_bkg - background
-          # material_a   - rib 
+          # material_a   - rib
           # material_b   - substrate
 
         Grid parameters are:

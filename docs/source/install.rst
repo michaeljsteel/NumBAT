@@ -64,7 +64,7 @@ Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
     $ sudo apt-get upgrade
 
 #. Create a python virtual environment for working with |NUMBAT|.
-   You can use any name and location for your tree. 
+   You can use any name and location for your tree.
    To specify a virtual environment tree called `nbpy3` in your home directory, enter ::
 
     $ cd ~
@@ -139,7 +139,7 @@ The following steps have worked for us:
 
    **Note** that there is a different version of the Xcode tools for each major release of MacOS. If you have upgraded your OS, say from Ventura to Sonoma, you must install the corresponding version of Xcode.
 
-   If the installer says Xcode is installed but an upgrade exists, you almost certainly want to apply that upgrade. 
+   If the installer says Xcode is installed but an upgrade exists, you almost certainly want to apply that upgrade.
 
 #. Make a folder for |NUMBAT| studies and clone the github repository::
 
@@ -148,12 +148,12 @@ The following steps have worked for us:
    $ git clone https://github.com/michaeljsteel/NumBAT.git
    $ cd NumBAT
 
-#. If it is not already on your system, install the MacPorts package manager at `this page <https://macports.org/install.php>`_.
+#. If it is not already on your system, install the  `MacPorts package manager <https://macports.org/install.php>`_.
 
-#. Install the Gmsh mesh generation tool at `this page <https://gmsh.info>`_.
+#. Install the  `Gmsh  <https://gmsh.info>`_ mesh generation tool.
    Just the main Gmsh installer is fine. The SDK and other features are not required.
 
-   **Note:** After the installer has run, you must move the Gmsh application into your Applications 
+   **Note:** After the installer has run, you must move the Gmsh application into your Applications
    folder by dragging the Gmsh icon into Applications.
 
 
@@ -217,11 +217,11 @@ The following steps have worked for us:
 
    $ cd backend/fortran
 
-#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that: 
-   
-     - The line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol. 
+#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that:
+
+     - The line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol.
      - The value of `MYPYENV` matches the folder of your python virtual environment set up above.
-     - The value of `PYVERMAJMIN` and `SYSTEMPYINC` are set appropriately.  
+     - The value of `PYVERMAJMIN` and `SYSTEMPYINC` are set appropriately.
 
 #. Now at last, we can build |NUMBAT| ::
 

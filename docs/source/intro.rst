@@ -88,7 +88,7 @@ Some key changes you will need to make are as follows:
  * The waveguide class ``Struct`` has been renamed to ``Structure``.
  * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
  * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
- * To access an existing material in an  existing ``Struture`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
+ * To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
  * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
  * The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
  * Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
@@ -108,7 +108,7 @@ What does |NUMBAT| actually calculate?
 
 
 Here we specify the precise mathematical problems been solved.
-For further details, see  the |NUMBAT| paper in the Journal of Lightwave Technolgoy at
+For further details, see  the |NUMBAT| paper in the Journal of Lightwave Technology at
 at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 Electromagnetic modal problem
@@ -124,15 +124,15 @@ where the *real-valued* electric field has the following form for modal propagat
 CHECK THE FACTOR of HALF here.
 
 .. math::
-   :nowrap:   
+   :nowrap:
 
    \begin{align*}
    \vec E(x,y,z,t) = & \frac{1}{2} \left ( {\vec \cal E}(\vec r) e^{- i  \omega t } + {\vec \cal E}^* (\vec r) e^{- i  \omega t } \right) \\
                    = & \frac{1}{2} \left ( a(z) \vec e(x,y) e^{i (kz-\omega t) } + a^*(z) \vec e(x,y) e^{-i (kz-\omega t) } \right),
    \end{align*}
-   
 
-in terms of the complex field amplitude :math:`\mathcal{E}(\vec r)`, the mode profile :math:`\vec e(x,y)` and the complex slowly-varying envelope function :math:`a(z)`. 
+
+in terms of the complex field amplitude :math:`\mathcal{E}(\vec r)`, the mode profile :math:`\vec e(x,y)` and the complex slowly-varying envelope function :math:`a(z)`.
 
 By Faraday's law the complex magnetic field amplitude is given by
 
@@ -217,7 +217,7 @@ Then the peak SBS gain :math:`\Gamma` is given by
 
 where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`.
 
-Here :math:`\alpha_t` is the temporal elastic loss coefficent in :math:`\mathrm{s}^{-1}`.
+Here :math:`\alpha_t` is the temporal elastic loss coefficient in :math:`\mathrm{s}^{-1}`.
 It is related to the spatial attenuation coefficient by
 :math:`\alpha_s = \alpha_t /v_{\mathrm{p}}^{(\mathrm{a})}` with :math:`v_{\mathrm{p}}^{(\mathrm{a})}` being the elastic phase velocity.
 

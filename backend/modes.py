@@ -7,8 +7,8 @@ import matplotlib.tri
 
 import numbat
 from nbtypes import FieldType, component_t, SI_um, vacuum_impedance_Z0
-from numbattools import int2d, np_min_max, save_and_close_figure
-
+from numbattools import int2d, np_min_max
+from plottools import save_and_close_figure
 import plotmodes
 import reporting
 
@@ -339,7 +339,7 @@ class Mode:
 
 
         # FIX ME
-        if not decorator is None:
+        if decorator is not None:
             mh.plot_params['decorator'] = decorator
         elif mh.plot_params['decorator'] is None:
             # don't want to do this.
@@ -374,7 +374,7 @@ class Mode:
     def _plot_me(self, mode_helper, comps, field_type, ax=None):
 
         # TODO: weirdly, we only ax != None when there is one component to plot
-        if not ax is None and len(comps) != 1:
+        if ax is not None and len(comps) != 1:
             print(
                 '\nError: when providing an axis to plot on, must specify exactly one modal component.')
             return

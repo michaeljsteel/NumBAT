@@ -1,5 +1,5 @@
 # the base ubuntu LTS image
-FROM ubuntu:24.04
+FROM ubuntu:18.04
 
 # Install Ubuntu package dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,6 +36,10 @@ ENV PYTHONPATH "${PYTHONPATH}:/home/NumBAT/backend/"
 # Add the matplotlib stylefile to the correct location
 WORKDIR /root/.config/matplotlib
 RUN mkdir stylelib && cp /home/NumBAT/backend/NumBATstyle.mplstyle stylelib/
+
+# Run the tests
+WORKDIR /home/NumBAT/tests/
+RUN nosetests3
 
 # Change the working directory to final spot
 WORKDIR /home/NumBAT/

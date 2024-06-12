@@ -1,4 +1,4 @@
- 
+
 .. include:: numbatdefs.txt
 
 .. _chap-fem-label:
@@ -41,7 +41,7 @@ We then add a further layer on top of the bottom slab, this time using a placeho
     s2 = slab2/d_in_nm;
     Point(7) = {0, -h+s1+s2, 0, lc};
     Point(8) = {d, -h+s1+s2, 0, lc};
- 
+
 We next define the peak of the rib, which involves a width and a height, ::
 
     ribx = 200;
@@ -71,14 +71,14 @@ Step 2
 ~~~~~~~~~~~~~~~~~~~~
 
 To create the lines that connect the points, and the mesh surfaces it is easiest to use gmsh (although it can also be written directly in code). Open your geometry file in gmsh::
-    
+
     NumBAT/backend/fortran/msh$ gmsh rib_coated_msh_template.geo
 
 Navigate through the side menu to Modules/Geometry/Elementary entities/Add and click "Straight line". Now click consecutively on the point you wish to connect.
 
 Navigate through the side menu to Modules/Geometry/Elementary entities/Add and click "Plane surface". Now click on the boundary of each enclosed area. Remember to separate out your inclusion from the background by highlighting it when asked for “hole boundaries". If the inclusion is complicated it is best to carve up the background area into smaller simpler areas that don't have any inclusions ("holes"), for example see slot coated.
 
-Navigate through the side menu to Modules/Geometry/Physical groups/Add and click "Line". Now click on the lines that make up each side of the unit cell boundary, pressing the "e" key to end your selection once the each side is fully highlighted. 
+Navigate through the side menu to Modules/Geometry/Physical groups/Add and click "Line". Now click on the lines that make up each side of the unit cell boundary, pressing the "e" key to end your selection once the each side is fully highlighted.
 
 Navigate through the side menu to Modules/Geometry/Physical groups/Add and click "Surface". Now click on all the surfaces of a given material type (in this example there is only one surface per material). It is crucial to remember the order you defined the physical surfaces in. Now open the .geo file in your favorite text editor, scroll to the bottom, and change the numbering of the physical surfaces to start at 1, and to increase by one per surface type. Eg. by tradition 1 is the background material, 2 is the waveguide, 3 is the bottom substrate, and 4 is the cladding. ::
 
@@ -114,18 +114,18 @@ There are 2 main errors that can be easily triggered within the Fortran FEM rout
 
 The first of these is ::
 
-    VALPR_64: info_32 != 0 : 
-    VALPR_64: iparam_32(5) = 
-    VALPR_64: number of converged values =    
+    VALPR_64: info_32 != 0 :
+    VALPR_64: iparam_32(5) =
+    VALPR_64: number of converged values =
     py_calc_modes.f: convergence problem with valpr_64
     py_calc_modes.f: You should probably increase resolution of mesh!
     py_calc_modes.f: n_conv != nval :
 
-Long story short, this indicates that the FEM mesh is too coarse for solutions for higher order Bloch modes (Eigenvaules) to converge. 
+Long story short, this indicates that the FEM mesh is too coarse for solutions for higher order Bloch modes (Eigenvalues) to converge.
 This error is easily fixed by increasing the mesh resolution. Decrease 'lc_bkg' and/or increase 'lc_refine_1' etc.
 
 
-The second error is :: 
+The second error is ::
 
     Error with _naupd, info_32 =           -8
     Check the documentation in _naupd.

@@ -129,7 +129,7 @@ Let's see the results for the silica cylinder first:
 
 Example 4 -- Forward Brillouin scattering in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The corresopnding results for the silicon waveguide can be generated with ``sim-josab-04.py``:
+The corresponding results for the silicon waveguide can be generated with ``sim-josab-04.py``:
 
 .. figure:: ../../josab_tutorial/josab_04-gain_spectra.png
    :width: 15cm
