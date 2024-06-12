@@ -182,12 +182,9 @@ C     character*(8) start_date, end_date
 C  Names and Controls
       character mesh_file*1000, gmsh_file*1000, log_file*1000
       character gmsh_file_pos*1000
-      character overlap_file*1000, dir_name*1000, msg*20
-      character*1000 tchar
+      character overlap_file*1000,  msg*20
       integer*8 namelength, PrintAll
-      integer*8 plot_modes
       integer*8 pair_warning, homogeneous_check
-      integer*8 q_average, plot_real, plot_imag, plot_abs
       complex*16 ii
 
 c     Declare the pointers of the real super-vector

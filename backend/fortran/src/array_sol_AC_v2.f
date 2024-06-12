@@ -99,9 +99,9 @@ c
       y_mid = (y_min + y_max) / 2.0d0
 
 C       !  Length in the x direction
-      lx = x_max - x_min  
+      lx = x_max - x_min
 C       !  Length in the y direction
-      ly = y_max - y_min  
+      ly = y_max - y_min
 
       rx = sqrt(n_msh_el * lx / (2.0d0 * ly))
       ry = rx * ly/lx
@@ -168,7 +168,7 @@ c
             xel(2,inod) = x(2,j)
           enddo
           do inod=1,nnodes
-            jp = table_nod(inod,iel) 
+            jp = table_nod(inod,iel)
             do j_eq=1,3
               ind_jp = ineq(j_eq,jp)
               if (ind_jp .gt. 0) then
@@ -208,7 +208,9 @@ c         Add the contribution of the element iel to the mode component
             mode_pol(j,ival) = mode_pol(j,ival) + mode_comp(j)
           enddo
 
-          n_core(1)=-1000  ! TODO: THIS COLULD SEEMS NEVER TO BE CALLED, THESE BAD VALUES TO TRY TO MAKE IT FAIL IF IT DOES
+          ! TODO: THIS CODE SEEMS NEVER TO BE CALLED
+          ! THESE BAD VALUES TO TRY TO MAKE IT FAIL IF IT DOES
+          n_core(1)=-1000
           n_core(2)=-1000
 
           if (typ_e .eq. n_core(1) .or. typ_e .eq. n_core(2)) then

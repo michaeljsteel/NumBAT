@@ -198,6 +198,7 @@
         "zjkl",
         "zwrapper"
     ],
-    "python.defaultInterpreterPath": "/home/msteel/mypy3-12"
+    "python.defaultInterpreterPath": "/home/msteel/mypy3-12",
+    "python.analysis.typeCheckingMode": "basic"
 }
 
