@@ -1,7 +1,7 @@
 C   Calculate the Overlap integral of the prime and adjoint Plane Waves
 C
-      subroutine orthogonal (nval, nel, npt, 
-     *  nnodes, nb_typ_el, pp, table_nod, 
+      subroutine orthogonal (nval, nel, npt,
+     *  nnodes, nb_typ_el, pp, table_nod,
      *  type_el, x, beta1, beta2,
      *  soln_k1, soln_k2, mat_overlap, overlap_file, PrintAll,
      *  pair_warning, k_0)
@@ -75,13 +75,13 @@ C
 c
       call quad_triangle (nquad, nquad_max, wq, xq, yq)
       if (debug .eq. 1) then
-        write(ui,*) "orthogonal: nquad, nquad_max = ", 
+        write(ui,*) "orthogonal: nquad, nquad_max = ",
      *              nquad, nquad_max
       endif
 C
       redo = 0
 C      !second rearranged overlap
-122   continue               
+122   continue
 C
       do jval=1,nval
         do ival=1,nval
@@ -120,10 +120,10 @@ c          grad2_mat0 = gradient on the reference triangle (P2 element)
            call phi2_2d_mat(xx, phi2_list, grad2_mat0)
 c          grad3_mat0 = gradient on the reference triangle (P3 element)
            call phi3_2d_mat(xx, phi3_list, grad3_mat0)
-c         
+c
           if (info_curved .eq. 0) then
 c           Rectilinear element
-            call jacobian_p1_2d(xx, xel, nnodes, 
+            call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)
 c            if (det .le. 0) then
             if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
@@ -132,7 +132,8 @@ c            if (det .le. 0) then
             endif
           else
 c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list, 
+            ! 24/6/12 Deleting first broken argument xx: p2_2d is diff to p1_2d.
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
 C            if(abs(det) .lt. 1.0d-10) then
@@ -168,11 +169,11 @@ c                 Determine the basis vector
                   enddo
                   vec_phi_j(j_eq) = phi2_list(jtest)
 c                  z_tmp1 = ddot(2, vec_phi_i, 1, vec_phi_j, 1)
-                  z_tmp1 = vec_phi_i(1)*vec_phi_j(1) + 
+                  z_tmp1 = vec_phi_i(1)*vec_phi_j(1) +
      *                        vec_phi_i(2)*vec_phi_j(2)
                   z_tmp1 = coeff_1 * z_tmp1
                   z_tmp1 = z_tmp1/k_0
-                  mat_scal(ind_ip,ind_jp) = 
+                  mat_scal(ind_ip,ind_jp) =
      *              mat_scal(ind_ip,ind_jp) + z_tmp1
                 enddo
               enddo
@@ -184,11 +185,11 @@ c               Determine the basis vector
                   vec_phi_j(i) = -grad3_mat(i,jtest)
                 enddo
 C                z_tmp1 = ddot(2, vec_phi_i, 1, vec_phi_j, 1)
-                z_tmp1 = vec_phi_i(1)*vec_phi_j(1) + 
+                z_tmp1 = vec_phi_i(1)*vec_phi_j(1) +
      *                        vec_phi_i(2)*vec_phi_j(2)
                 z_tmp1 = coeff_1 * z_tmp1
                 z_tmp1 = z_tmp1/k_0
-                mat_scal(ind_ip,ind_jp) = 
+                mat_scal(ind_ip,ind_jp) =
      *            mat_scal(ind_ip,ind_jp) + z_tmp1
               enddo
             enddo
@@ -259,8 +260,8 @@ C  reorder complex conjugate douplets
       if (redo .eq. 2) goto 123
 
 121   continue
-      if (j .gt. nval) then 
-      goto 122 
+      if (j .gt. nval) then
+      goto 122
 C       if all is well - correct orthogonality with its self
       elseif (abs(mat_overlap(j,j)) .gt. 1.0d-7) then
         j = j+1
@@ -291,7 +292,7 @@ C       find jvals (j and j2) of swaped pair and switch
                enddo
              enddo
            enddo
-          endif  
+          endif
         enddo
         skip = 1
         j = j+1
@@ -300,7 +301,7 @@ C  dont touch second half of pair (as already switched)
       elseif (skip .gt. 0) then
         skip = 0
         j = j+1
-        goto 121 
+        goto 121
       endif
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
@@ -313,7 +314,7 @@ C
       do jval=1,nval
         do ival=1,nval
           r_tmp1 = abs(mat_overlap(ival,jval))
-          if (ival .eq. jval) then 
+          if (ival .eq. jval) then
             if (val_max_diag .lt. r_tmp1) then
               val_max_diag = r_tmp1
             endif
@@ -325,11 +326,11 @@ C
           write(3,12) ival, jval, mat_overlap(ival,jval),
      *      abs(mat_overlap(ival,jval)),
      *      abs(beta1(ival)-beta2(jval)), beta1(ival), beta2(jval),
-     *      abs(mat_overlap(ival,jval) - 
+     *      abs(mat_overlap(ival,jval) -
      *      conjg(mat_overlap(jval,ival)))
         enddo
       enddo
-      write(3,*) "val_max_diag, val_max_off = ", 
+      write(3,*) "val_max_diag, val_max_off = ",
      *      val_max_diag, val_max_off
       close(3)
 12    format(2(I4),2(g25.17), 2(g16.8), 8(g18.10))

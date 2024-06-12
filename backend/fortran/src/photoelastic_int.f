@@ -3,7 +3,7 @@ C using numerical quadrature.
 C
       subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,
      *  ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
-     *  nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC, 
+     *  nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,
      *  eps_lst, debug, overlap)
 c
       implicit none
@@ -36,7 +36,7 @@ c
 c     NQUAD: The number of quadrature points used in each element.
       integer*8 nquad, nquad_max, iq
 C       ! Limit to P2 polynomials
-      parameter (nquad_max = 16) 
+      parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
@@ -135,8 +135,8 @@ c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)
           else
-c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list,
+c           Isoparametric element ! fixed 2024/6/12
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
            if(abs(det) .lt. 1.0d-20) then
@@ -231,7 +231,7 @@ C If only want overlap of one given combination of EM modes and AC mode.
           enddo
 C
 C If want overlap of given EM mode 1 and 2 and all AC modes.
-        else if (ival1 .ge. 0 .and. ival2 .ge. 0 .and. 
+        else if (ival1 .ge. 0 .and. ival2 .ge. 0 .and.
      *                                           ival3 .eq. -1) then
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -261,7 +261,7 @@ C If want overlap of given EM mode 1 and 2 and all AC modes.
           enddo
 C
 C If want overlap of given EM mode 1 and all EM modes 2 and all AC modes.
-        else if (ival1 .ge. 0 .and. ival2 .eq. -1 .and. 
+        else if (ival1 .ge. 0 .and. ival2 .eq. -1 .and.
      *                                            ival3 .eq. -1) then
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -293,7 +293,7 @@ C If want overlap of given EM mode 1 and all EM modes 2 and all AC modes.
           enddo
 C
 C If want overlap of given EM mode 2 and all EM modes 1 and all AC modes.
-        else if (ival1 .eq. -1 .and. ival2 .ge. 0 .and. 
+        else if (ival1 .eq. -1 .and. ival2 .ge. 0 .and.
      *                                            ival3 .eq. -1) then
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -325,7 +325,7 @@ C If want overlap of given EM mode 2 and all EM modes 1 and all AC modes.
           enddo
 C
 C If want overlap of all EM mode 1, all EM modes 2 and all AC modes.
-        else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and. 
+        else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                                             ival3 .eq. -1) then
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -359,7 +359,7 @@ C If want overlap of all EM mode 1, all EM modes 2 and all AC modes.
         enddo
 C
 C If want overlap of all EM mode 1, all EM modes 2 and one AC mode.
-        else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and. 
+        else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                                             ival3 .ge. 0) then
           do itrial=1,nnodes0
             do i_eq=1,3

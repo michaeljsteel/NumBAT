@@ -3,7 +3,7 @@
 C----------------------------------------------------------------------------------------
 
 c     subroutine prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
-c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
+c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L,
 c    *     iindex, errco, emsg)
 c
 c     integer*8 int_max, cmplx_max, real_max
@@ -20,48 +20,48 @@ c     character*2048 emsg
 c
 c     call array_size(n_msh_pts, n_msh_el, n_modes,
 c    *     int_max, cmplx_max, real_max, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     allocate(bwk(cmplx_max), STAT=stat)
 c     call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     allocate(cwk(real_max), STAT=stat)
 c     call check_alloc(stat, real_max, "c", -1, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     allocate(awk(int_max), STAT=stat)
 c     call check_alloc(stat, int_max, "a", -1, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     allocate(overlap_L(n_modes,n_modes), STAT=stat)
-c     call check_alloc(stat, n_modes*n_modes, 
+c     call check_alloc(stat, n_modes*n_modes,
 c    *   "overlap_L", -1, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     allocate(iindex(n_modes), STAT=stat)
 c     call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 c
 c     end subroutine prepare_workspaces
 C----------------------------------------------------------------------------------------
 
 
-       
+
 c   lambda       - free space wavelength in m
 c   n_modes    - desired number of eigenvectors
-c   n_msh_pts    - number of FEM mesh points  
+c   n_msh_pts    - number of FEM mesh points
 c   n_msh_el     - number of FEM (triang) elements
 c   n_typ_el     - number of types of elements (and therefore elements)
 c   v_refindex_n - array of effective index of materials
 c   bloch_vec    - in-plane k-vector (normally tiny just to avoid degeneracies)
 c   shift_ksqr   - k_est^2 = n^2 k_0^2  : estimate of eigenvalue k^2
-c   bnd_cnd_i    - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)   
+c   bnd_cnd_i    - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
 c   beta1        - array of eigenvalues kz
 c   sol1         - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
 c   mode_pol     - unknown - never used in python
 c   table_nod    - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
-c                  Points where type_el[mp] is not the same for all 6 nodes must be interface points 
+c                  Points where type_el[mp] is not the same for all 6 nodes must be interface points
 c   type_el      - n_msh_el array: material index for each element
 c   type_nod     - is boundary node?
 c   mesh_xy        - (2 , n_msh_pts)  x,y coords?
@@ -69,9 +69,9 @@ c   ls_material  - (1, nodes_per_el+7, n_msh_el)
 
       subroutine calc_EM_modes(
 c     Inputs
-     *    n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
-     *    E_H_field, bnd_cdn_i, itermax, debug, 
-     *    mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, 
+     *    n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
+     *    E_H_field, bnd_cdn_i, itermax, debug,
+     *    mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n,
 c     Outputs
      *    beta1, sol1, mode_pol,
      *    table_nod, type_el, type_nod, mesh_xy, ls_material,
@@ -133,7 +133,7 @@ C     ! Number of nodes per element
 
 
       integer*8 table_nod(nodes_per_el, n_msh_el)
-      
+
 C, len_skyl, nsym
 c     E_H_field = 1 => Electric field formulation (E-Field)
 c     E_H_field = 2 => Magnetic field formulation (H-Field)
@@ -181,12 +181,9 @@ C     character*(8) start_date, end_date
 C  Names and Controls
       character mesh_file*1000, gmsh_file*1000, log_file*1000
       character gmsh_file_pos*1000
-      character overlap_file*1000, dir_name*1000, msg*20
-      character*1000 tchar
+      character overlap_file*1000,  msg*20
       integer*8 namelength, PrintAll
-      integer*8 plot_modes
       integer*8 pair_warning, homogeneous_check
-      integer*8 q_average, plot_real, plot_imag, plot_abs
       complex*16 ii
 
 c     Declare the pointers of the real super-vector
@@ -249,12 +246,12 @@ C     Old inputs now internal to here and commented out by default.
 C      mesh_format = 1
 C      Checks = 0 ! check completeness, energy conservation
 C       ! only need to print when debugging J overlap, orthogonal
-      PrintAll = debug 
+      PrintAll = debug
 C       ! ARPACK accuracy (0.0 for machine precision)
 C       lx=1.0 ! Diameter of unit cell. Default, lx = 1.0.
 C       ly=1.0 ! NOTE: currently requires ly=lx, ie rectangular unit cell.
 
-      tol = 0.0 
+      tol = 0.0
 
       errco= 0
       emsg = ""
@@ -262,34 +259,34 @@ C       ly=1.0 ! NOTE: currently requires ly=lx, ie rectangular unit cell.
 c     Declare work space arrays
 
 c     call prepare_workspaces( n_msh_pts, n_msh_el, n_modes,
-c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L, 
+c    *     int_max, cmplx_max, real_max, awk, bwk, cwk, overlap_L,
 c    *     iindex, errco, emsg)
-c     RETONERROR(errco) 
+c     RETONERROR(errco)
 
       call array_size(n_msh_pts, n_msh_el, n_modes,
      *     int_max, cmplx_max, real_max, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(bwk(cmplx_max), STAT=stat)
       call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(cwk(real_max), STAT=stat)
       call check_alloc(stat, real_max, "c", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(awk(int_max), STAT=stat)
       call check_alloc(stat, int_max, "a", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(overlap_L(n_modes,n_modes), STAT=stat)
-      call check_alloc(stat, n_modes*n_modes, 
+      call check_alloc(stat, n_modes*n_modes,
      *   "overlap_L", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
       allocate(iindex(n_modes), STAT=stat)
       call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
 
 CCCCCCCCCCCCCCCCC POST F2PY CCCCCCCCCCCCCCCCCCCCCCCCC
@@ -333,7 +330,7 @@ C
       call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el,
      *     dim_x, dim_y, type_nod, type_el, table_nod,
      *     mesh_xy, mesh_file, errco, emsg)
-      RETONERROR(errco) 
+      RETONERROR(errco)
 
 
 C
@@ -362,12 +359,12 @@ C
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge,
      *    type_nod, table_nod,
      *    awk(ip_table_E), awk(ip_table_N_E_F), awk(ip_visite))
-      call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, 
+      call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge,
      *    n_msh_pts_p3, table_nod, awk(ip_table_N_E_F), awk(ip_visite))
       n_ddl = n_edge + n_face + n_msh_pts_p3
 C
       if (debug .eq. 1) then
-        write(ui,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", 
+        write(ui,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ",
      *     n_msh_pts, n_msh_el
         write(ui,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
         write(ui,*) "py_calc_modes.f: n_vertex, n_edge, n_face,",
@@ -386,14 +383,14 @@ c
       ip_type_N_E_F = ip_table_E + 4*n_edge
 C
       jp_x_N_E_F = 1
-      call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, 
+      call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el,
      *      n_ddl, type_nod, table_nod, awk(ip_table_N_E_F),
      *      awk(ip_visite), awk(ip_type_N_E_F),
      *      mesh_xy, bwk(jp_x_N_E_F))
 C
       call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl,
      *      table_nod, type_nod, awk(ip_table_N_E_F),
-     *      awk(ip_type_N_E_F), mesh_xy, bwk(jp_x_N_E_F), 
+     *      awk(ip_type_N_E_F), mesh_xy, bwk(jp_x_N_E_F),
      *      awk(ip_visite))
 C
         ip_period_N = ip_type_N_E_F + 2*n_ddl
@@ -403,7 +400,7 @@ C
         ip_eq = ip_nperiod_N_E_F + n_ddl
 C
 C     Dirichlet or Neumann conditions
-      if (bnd_cdn_i .eq. 0 .or. bnd_cdn_i .eq. 1) then 
+      if (bnd_cdn_i .eq. 0 .or. bnd_cdn_i .eq. 1) then
         call bound_cond (bnd_cdn_i, n_ddl, neq, awk(ip_type_N_E_F),
      *    awk(ip_eq))
 
@@ -433,7 +430,7 @@ C TODO: this will never happen because of python checks
      *       bnd_cdn_i
         write(ui,*) "py_calc_modes.f: Aborting..."
         errco = -10
-        return 
+        return
       endif
 C
       if (debug .eq. 1) then
@@ -475,13 +472,13 @@ c      ip = ip_col_ptr + neq + 1 + nonz_max
      *    ip, int_max, "py_calc_modes.f: nonz_max = ", nonz_max,
      *   "py_calc_modes.f: increase the size of int_max"
         errco = -11
-        return 
+        return
       endif
 c
       ip_row = ip_col_ptr + neq + 1
 
-      call csr_length (n_msh_el, n_ddl, neq, nodes_per_el, 
-     *   awk(ip_table_N_E_F), awk(ip_eq), awk(ip_row), awk(ip_col_ptr), 
+      call csr_length (n_msh_el, n_ddl, neq, nodes_per_el,
+     *   awk(ip_table_N_E_F), awk(ip_eq), awk(ip_row), awk(ip_col_ptr),
      *  nonz_max, nonz, max_row_len, ip, int_max, debug)
 
       ip_work = ip_row + nonz
@@ -507,7 +504,7 @@ c     sorting csr ...
      *   'integer super-vec: int_max  = ', int_max,
      *   'integer super-vec: int_used = ', int_used
         errco = -12
-        return 
+        return
       endif
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -534,7 +531,7 @@ C
      *   'complex super-vec: int_max  = ', cmplx_max,
      *   'complex super-vec: int_used = ', cmplx_used
         errco = -13
-        return 
+        return
       endif
 c
       kp_rhs_re = 1
@@ -551,7 +548,7 @@ c
      *  'real super-vec: real_max  = ', real_max,
      *  'real super-vec: real_used = ', real_used
         errco = -14
-        return 
+        return
       endif
 c
 c
@@ -608,7 +605,7 @@ C  Check that the layer is not in fact homogeneous
      *              "FEM routine cannot handle homogeneous layers.",
      *     "Define layer as object.ThinFilm"
          errco = -17
-         return 
+         return
         endif
 C Parameter for shift-and-invert method - now given as input from python
 C      shift_ksqr = 1.01d0*Dble(v_refindex_n(n_core(1)))**2 * k_0**2
@@ -641,7 +638,7 @@ C     Can't happen
      *                  E_H_field
         write(ui,*) "Aborting..."
          errco = -18
-         return 
+         return
       endif
 C
 CCCCCCCCCCCCCCCCCCCC  Loop over Adjoint and Prime  CCCCCCCCCCCCCCCCCCCCCC
@@ -671,14 +668,14 @@ C       endif
       call get_clocks(stime1, time1)
 
       call asmbly (bnd_cdn_i, i_base, n_msh_el, n_msh_pts, n_ddl, neq,
-     *  nodes_per_el, shift_ksqr, bloch_vec_k, n_typ_el, pp, qq, 
+     *  nodes_per_el, shift_ksqr, bloch_vec_k, n_typ_el, pp, qq,
      * table_nod, awk(ip_table_N_E_F), type_el, awk(ip_eq),
-     *  awk(ip_period_N), awk(ip_period_N_E_F), mesh_xy, 
-     *  bwk(jp_x_N_E_F), nonz, awk(ip_row), awk(ip_col_ptr), 
+     *  awk(ip_period_N), awk(ip_period_N_E_F), mesh_xy,
+     *  bwk(jp_x_N_E_F), nonz, awk(ip_row), awk(ip_col_ptr),
      *  cwk(kp_mat1_re), cwk(kp_mat1_im), bwk(jp_mat2), awk(ip_work))
 
       call get_clocks(stime2, time2)
-      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), 
+      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1),
      *   ' secs.'
       write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1),
      *   ' secs.'
@@ -706,11 +703,11 @@ C       endif
      *  cwk(kp_lhs_re), cwk(kp_lhs_im), n_conv, ls_data,
      *  numeric, control, info_umf, debug, errco, emsg)
       call get_clocks(stime2, time2)
-      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), 
+      write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1),
      *   ' secs.'
       write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1),
      *   ' secs.'
-c   
+c
       if (errco .ne. 0) then
           return
       endif
@@ -724,7 +721,7 @@ c        write(ui,*) "n_core(1), v_refindex_n(n_core(1)) = ",
 c    *                n_core(1), v_refindex_n(n_core(1))
          write(ui,*) "py_calc_modes.f: Aborting..."
          errco = -19
-         return 
+         return
       endif
 c
       time1_fact = ls_data(1)
@@ -757,10 +754,10 @@ C
 C       The eigenvectors will be stored in the array sol
 C       The eigen_modesues and eigenvectors will be renumbered
 C                 using the permutation vector iindex
-        call array_sol (bnd_cdn_i, n_modes, n_msh_el, n_msh_pts, 
-     *  n_ddl, neq, nodes_per_el, n_core, bloch_vec_k, iindex, 
-     *   table_nod, awk(ip_table_N_E_F), type_el, awk(ip_eq), 
-     *   awk(ip_period_N), awk(ip_period_N_E_F), mesh_xy, 
+        call array_sol (bnd_cdn_i, n_modes, n_msh_el, n_msh_pts,
+     *  n_ddl, neq, nodes_per_el, n_core, bloch_vec_k, iindex,
+     *   table_nod, awk(ip_table_N_E_F), type_el, awk(ip_eq),
+     *   awk(ip_period_N), awk(ip_period_N_E_F), mesh_xy,
      *   bwk(jp_x_N_E_F), beta, mode_pol, bwk(jp_vp), sol)
 C
       if(debug .eq. 1) then
@@ -813,19 +810,19 @@ C  Orthogonal integral
      *  (time2_J-time1_J)
       endif
 
-c     The z-component must be multiplied by -ii*beta in order to 
+c     The z-component must be multiplied by -ii*beta in order to
 C     get the physical, un-normalised z-component
 C     (see Eq. (25) of the JOSAA 2012 paper)
       do ival=1,n_modes
         do iel=1,n_msh_el
           do inod=1,nodes_per_el+7
-            sol1(3,inod,ival,iel) 
+            sol1(3,inod,ival,iel)
      *        = ii * beta(ival) * sol1(3,inod,ival,iel)
           enddo
         enddo
       enddo
 
-      call array_material_EM (n_msh_el, 
+      call array_material_EM (n_msh_el,
      *  n_typ_el, v_refindex_n, type_el, ls_material)
 
 C
@@ -842,7 +839,7 @@ cC     *       bloch_vec, dir_name)
 c        tchar = "Bloch_fields/PDF/All_plots_pdf.geo"
 c        open (unit=34,file=tchar)
 c          do i=1,n_modes
-c            call gmsh_post_process (i, E_H_field, n_modes, n_msh_el, 
+c            call gmsh_post_process (i, E_H_field, n_modes, n_msh_el,
 c     *        n_msh_pts, nodes_per_el, table_nod, type_el, n_typ_el,
 c     *        v_refindex_n, mesh_xy, beta1, sol1,
 c     *        awk(ip_visite), gmsh_file_pos, dir_name,
@@ -857,7 +854,7 @@ c Normalisation
         write(ui,*) "py_calc_modes.f: Field  Normalisation"
       endif
       call get_clocks(stime1_J, time1_J)
-      call normalisation (n_modes, n_msh_el, nodes_per_el, sol1, sol2, 
+      call normalisation (n_modes, n_msh_el, nodes_per_el, sol1, sol2,
      *   overlap_L)
       call get_clocks(stime2_J, time2_J)
       if (debug .eq. 1) then
@@ -911,7 +908,7 @@ C    *         (time1_asmbl-time1),
 C    *         100*(time1_asmbl-time1)/(time2-time1),"%"
         write(26,*)
         write(26,*) "lambda  = ", lambda
-        write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, 
+        write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts,
      *    n_msh_el, nodes_per_el
         write(26,*) "neq, bnd_cdn_i = ", neq, bnd_cdn_i
         if ( E_H_field .eq. 1) then
@@ -925,7 +922,7 @@ C    *         100*(time1_asmbl-time1)/(time2-time1),"%"
      *                 E_H_field
           write(ui,*) "Aborting..."
          errco = -20
-         return 
+         return
         endif
         write(26,*) "   bloch_vec = ", bloch_vec
         write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/pi,i=1,2)
@@ -941,7 +938,7 @@ C    *         100*(time1_asmbl-time1)/(time2-time1),"%"
         write(26,*) "real_used, real_max, real_max/real_used = ",
      *     real_used, real_max, dble(real_max)/dble(real_used)
         write(26,*)
-        write(26,*) "n_modes, nvect, n_conv = ", n_modes, nvect, 
+        write(26,*) "n_modes, nvect, n_conv = ", n_modes, nvect,
      *     n_conv
         write(26,*) "nonz, n_msh_pts*n_modes, ",
      *     "nonz/(n_msh_pts*n_modes) = ",

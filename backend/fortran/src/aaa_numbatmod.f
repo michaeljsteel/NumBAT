@@ -6,13 +6,13 @@
 
       implicit none
 
-         integer, parameter :: STRINGLEN = D_STRINGLEN  ! defined in numbat_decl.h
-        
+         integer, parameter :: STRINGLEN = D_STRINGLEN
+
          integer, parameter :: MAX_N_PTS = 250000
          integer, parameter :: MAX_N_ELTS = 120000
-         
+
          integer, parameter :: MAX_LONG_ADJ = 2500000
-         
+
 
       contains
 
