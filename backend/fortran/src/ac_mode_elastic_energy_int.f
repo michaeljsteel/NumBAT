@@ -1,7 +1,7 @@
 C Calculate the elastic energy overlap integral of an AC mode with itself using
-C numerical quadrature.  
+C numerical quadrature.
 C
-      subroutine AC_mode_elastic_energy_int (nval, 
+      subroutine AC_mode_elastic_energy_int (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, rho, Omega_AC, soln_AC,
      *  debug, overlap)
@@ -100,8 +100,8 @@ cccccccccc
         enddo
         enddo
 cccccccccc
-C For each quadrature point evaluate overlap of Lagrange polynomials 
-C or derivative of Lagrange polynomials 
+C For each quadrature point evaluate overlap of Lagrange polynomials
+C or derivative of Lagrange polynomials
         do iq=1,nquad
           xx(1) = xq(iq)
           xx(2) = yq(iq)
@@ -118,7 +118,9 @@ c           Rectilinear element
      *               xx_g, det, mat_B, mat_T)
           else
 c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list,
+            ! 2024/06/12 Remove incorrect xx first elt.
+            ! jacobian_p2_2d  != jacobian_p1_2d
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
            if(abs(det) .lt. 1.0d-20) then
@@ -130,12 +132,12 @@ c           Isoparametric element
            endif
 
           coeff_1 = ww * abs(det)
-C Calculate overlap of basis functions at quadrature point, 
+C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
           do itrial=1,nnodes0
             do jtest=1,nnodes0
-              basis_overlap(itrial,jtest) = 
-     *          basis_overlap(itrial,jtest) + 
+              basis_overlap(itrial,jtest) =
+     *          basis_overlap(itrial,jtest) +
      *          coeff_1 * phi2_list(itrial) * phi2_list(jtest)
             enddo
           enddo
@@ -149,7 +151,7 @@ C now multiply by specific field values for modes of interest.
               do k_eq=1,3
                 Ustar = conjg(soln_AC(k_eq,itrial,ival,iel))
                 U = soln_AC(k_eq,jtest,ival,iel)
-                overlap(ival) = overlap(ival) + 
+                overlap(ival) = overlap(ival) +
      *          rho(typ_e) * Ustar * U * basis_overlap(itrial,jtest)
               enddo
             enddo
@@ -166,7 +168,7 @@ C Multiply through prefactor
 
 C        open (unit=26,file="Output/overlap_elastic.txt")
 C        do i=1,nval
-C          write(26,*) i, Omega_AC(i), abs(overlap(i)), 
+C          write(26,*) i, Omega_AC(i), abs(overlap(i)),
 C      *              overlap(i)
 C        enddo
 C        do i=1,nval

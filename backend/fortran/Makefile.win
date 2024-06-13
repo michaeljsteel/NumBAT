@@ -1,8 +1,12 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
+
+RM=del /q
+MKDIR=mkdir
+
 NumBAT_MOD=NumBAT
 
-all: $(NumBAT_MOD).so
+all: $(NumBAT_MOD).dll
 
 ## Set your python virtualenv platform
 MYPYENV = c:\users\mq98002769\mypy3-11
@@ -208,12 +212,16 @@ $(error "Unknown platform: $(NUMBAT_PLATFORM)" )
 endif
 
 
-# TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
-#       find a better way
+
+SRCS_MODS = src\nbconsts_module.f95 src\numbatmod_module.f95 src\nbinterfaces_module.f95
 SRCS_F = $(wildcard src/*.f)
 SRCS_F95 = $(wildcard src/*.f95)
+
 OBJSA = $(SRCS_F:.f=.obj) $(SRCS_F95:.f95=.obj)
 OBJS = $(subst src,build,$(OBJSA))
+
+OBJS_MODA = $(SRCS_MODS:.f95=.obj)
+MODULES_MODS = build\nbconsts_module.mod build\numbatmod_module.mod
 
 #conv_gmsh.f
 PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f \
@@ -240,13 +248,23 @@ UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
 # -std=f95
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
-F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:modss
+F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:themodules
+F95FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:themodules
+
 CFLAGS=  /nologo /Ot /warn:all
 
-build/%.obj : src/%.f95
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
+ttt:
+	echo $(MODULES_MODS)
 
-build/%.obj : src/%.f
+mods: $(MODULES_MODS)
+
+build/%.mod : src/%.f95
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
+
+build/%.obj : src/%.f95 $(MODULES_MODS)
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
+
+build/%.obj : src/%.f $(MODULES_MODS)
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
 
 build/%.obj : src/%.c
@@ -270,13 +288,13 @@ build/%.e : build/%.c
 F2PYLINK=Ccomp
 #F2PYLINK=Fcomp
 
-ifeq ($(F2PYLINK), Ccomp)
-FMETHOD=null
+#ifeq ($(F2PYLINK), Ccomp)
+#FMETHOD=null
 CMETHOD=$(NumBAT_MOD)
-else
-FMETHOD=$(NumBAT_MOD)
-CMETHOD=null
-endif
+#else
+#FMETHOD=$(NumBAT_MOD)
+#CMETHOD=null
+#endif
 
 check:
 	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
@@ -299,18 +317,18 @@ F2PY_OBJSA = $(F2PY_SRCS:.c=.obj)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.obj)
 
 $(CMETHOD).pyf: $(SRCS)
-	echo "New compilation method Step A"
 	-del $(F2PY_SRCS)
-	-mkdir build
+	-$(MKDIR) build themodules
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	copy $(NUMPYDIR)\f2py\src\fortranobject.c build
 
-$(CMETHOD).so: $(CMETHOD).pyf $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-	echo "New compilation method Step B"
-	#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).so
+$(CMETHOD).dll: $(CMETHOD).pyf $(MODULES_MOD) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).dll
+
+#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).dll
+#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).dll
+
 
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
@@ -318,9 +336,9 @@ $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 
 
 
-RM=del /q
 clean:
 	- $(RM)  $(SS_WRAP)\*.obj
+	- $(RM) themodules
 	- $(RM)  build\*.obj build\*.f build\*.c
 	- $(RM) .\*.mod src\*.mod build\*.mod
 	- $(RM)  $(NumBAT_MOD).pyf $(NumBAT_MOD).dll $(NumBAT_MOD).*.dll
