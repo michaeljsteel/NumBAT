@@ -821,7 +821,7 @@ C     (see Eq. (25) of the JOSAA 2012 paper)
         do iel=1,n_msh_el
           do inod=1,nodes_per_el+7
             sol1(3,inod,ival,iel)
-     *        = ii * beta(ival) * sol1(3,inod,ival,iel)
+     *        = C_IM_ONE* beta(ival) * sol1(3,inod,ival,iel)
           enddo
         enddo
       enddo

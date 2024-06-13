@@ -20,7 +20,7 @@ c     Local variables
       double precision p2_p2(6,6)
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
-      complex*16 ii, z_tmp1
+      complex*16  z_tmp1
       integer*8 i, j
       integer*8 debug
 
@@ -33,8 +33,6 @@ ccccccccccccccccccccccccccccccccccccccc
 c
       debug = 0
 
-c  ii = sqrt(-1)
-      ii = dcmplx(0.0d0, 1.0d0)
 
       do i=1,2
         do j=1,2

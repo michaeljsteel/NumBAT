@@ -1,12 +1,12 @@
 C   Calculate the Overlap integral of the prime and adjoint Plane Waves
 C
-      subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, 
-     *  nnodes, nb_typ_el, pp, table_nod, 
+      subroutine orthogonal (n_modes, n_msh_el, n_msh_pts,
+     *  nnodes, nb_typ_el, pp, table_nod,
      *  type_el, x, beta1, beta2,
      *  soln_k1, soln_k2, mat_overlap, overlap_file, PrintAll,
      *  pair_warning, k_0)
 c
-      implicit none
+      use numbatmod
       integer*8 n_modes, n_msh_el, n_msh_pts, nnodes, nb_typ_el
       integer*8 type_el(n_msh_el)
       integer*8 table_nod(nnodes,n_msh_el)
@@ -20,8 +20,7 @@ C      complex*16 mat_overlap(n_modes,n_modes)
       character overlap_file*100
       double precision k_0
 c     Local variables
-      integer*8 nnodes_0
-      parameter (nnodes_0 = 6)
+
       integer*8 nod_el_p(nnodes_0)
       complex*16 sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
       complex*16 vec_1(2*nnodes_0)
@@ -37,9 +36,7 @@ c     Local variables
       double precision phi3_list(10), grad3_mat0(2,10)
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
-      double precision ZERO, ONE, r_tmp1
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
+      double precision  r_tmp1
       complex*16 z_tmp1, z_tmp2, z_beta_1, coeff_1
 c
 c     NQUAD: The number of quadrature points used in each element.
@@ -147,10 +144,10 @@ C            if(abs(det) .lt. 1.0d-10) then
 c          grad_i  = gradient on the actual triangle
 c          grad_i  = Transpose(mat_T)*grad_i0
 c          Calculation of the matrix-matrix product:
-          call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
-     *      grad2_mat0, 2, ZERO, grad2_mat, 2)
-          call DGEMM('Transpose','N', 2, 10, 2, ONE, mat_T, 2,
-     *      grad3_mat0, 2, ZERO, grad3_mat, 2)
+          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,
+     *      grad2_mat0, 2, D_ZERO, grad2_mat, 2)
+          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2,
+     *      grad3_mat0, 2, D_ZERO, grad3_mat, 2)
           coeff_1 = ww * abs(det) * pp(typ_e)
           do itrial=1,nnodes_0
             do i_eq=1,2
@@ -260,8 +257,8 @@ C  reorder complex conjugate douplets
       if (redo .eq. 2) goto 123
 
 121   continue
-      if (j .gt. n_modes) then 
-      goto 122 
+      if (j .gt. n_modes) then
+      goto 122
 C       if all is well - correct orthogonality with its self
       elseif (abs(mat_overlap(j,j)) .gt. 1.0d-7) then
         j = j+1

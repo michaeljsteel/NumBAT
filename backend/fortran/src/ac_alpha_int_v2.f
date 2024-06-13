@@ -1,12 +1,12 @@
 C Calculate the overlap integral of an AC mode with itself using
 C Direct integration
 C
-      subroutine AC_alpha_int_v2 (nval, 
+      subroutine AC_alpha_int_v2 (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, eta_tensor, beta_AC, Omega_AC, soln_AC,
      *  AC_mode_energy_elastic, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval, ival
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel)
@@ -30,21 +30,18 @@ c     Local variables
       integer*8 iel, ind_ip, i_eq, k_eq
       integer*8 ltest, ind_lp, l_eq, j_eq
       integer*8 itrial, ui
-      complex*16 z_tmp1, ii
+      complex*16 z_tmp1
 
       double precision p2_p2(6,6), p2_p2x(6,6), p2_p2y(6,6)
       double precision p2x_p2x(6,6), p2y_p2y(6,6), p2x_p2y(6,6)
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
 c
-      double precision ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
       complex*16 coeff
 C
 C
 Cf2py intent(in) nval, nel, npt, nnodes, table_nod
-Cf2py intent(in) type_el, x, nb_typ_el, eta_tensor, beta_AC 
+Cf2py intent(in) type_el, x, nb_typ_el, eta_tensor, beta_AC
 Cf2py intent(in) soln_AC, debug, Omega_AC, AC_mode_energy_elastic
 C
 Cf2py depend(table_nod) nnodes, nel
@@ -62,7 +59,7 @@ CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       z_tmp1=0.d0
       ui = 6
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "AC_alpha_int_v2: problem nnodes = ", nnodes
@@ -136,7 +133,7 @@ c                     See Eq. (45) of C. Wolff et al. PRB (2015)
                         z_tmp1 = p2x_p2y(itrial,ltest)
                       elseif(j_eq == 1 .and. k_eq == 3) then
                         z_tmp1 = p2_p2x(ltest,itrial)
-                        z_tmp1 = z_tmp1 * (ii * beta_AC)
+                        z_tmp1 = z_tmp1 * (C_IM_ONE* beta_AC)
 cccccccccccccccccccccc
                       elseif(j_eq == 2 .and. k_eq == 1) then
                         z_tmp1 = p2x_p2y(ltest,itrial)
@@ -144,14 +141,14 @@ cccccccccccccccccccccc
                         z_tmp1 = p2y_p2y(itrial,ltest)
                       elseif(j_eq == 2 .and. k_eq == 3) then
                         z_tmp1 = p2_p2y(ltest,itrial)
-                        z_tmp1 = z_tmp1 * (ii * beta_AC)
+                        z_tmp1 = z_tmp1 * (C_IM_ONE* beta_AC)
 cccccccccccccccccccccc
                       elseif(j_eq == 3 .and. k_eq == 1) then
                         z_tmp1 = p2_p2x(itrial,ltest)
-                        z_tmp1 = z_tmp1 * (-ii * beta_AC)
+                        z_tmp1 = z_tmp1 * (-C_IM_ONE* beta_AC)
                       elseif(j_eq == 3 .and. k_eq == 2) then
                         z_tmp1 = p2_p2y(itrial,ltest)
-                        z_tmp1 = z_tmp1 * (-ii * beta_AC)
+                        z_tmp1 = z_tmp1 * (-C_IM_ONE* beta_AC)
                       elseif(j_eq == 3 .and. k_eq == 3) then
                         z_tmp1 = p2_p2(itrial,ltest)
                         z_tmp1 = z_tmp1 *  beta_AC**2
@@ -204,7 +201,7 @@ C       Flipped sign as assuming did not do integration by parts - going off CW 
 
 C       open (unit=26,file="Output/overlap_alpha_v2.txt")
 C       do i=1,nval
-C         write(26,*) i, Omega_AC(i), abs(overlap(i)), overlap(i), 
+C         write(26,*) i, Omega_AC(i), abs(overlap(i)), overlap(i),
 C      *              AC_mode_energy_elastic(i)
 C       enddo
 C       close (unit=26)

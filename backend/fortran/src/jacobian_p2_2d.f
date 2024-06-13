@@ -13,10 +13,10 @@ c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c
-      subroutine jacobian_p2_2d (xel, nnodes, p2_list, 
+      subroutine jacobian_p2_2d (xel, nnodes, p2_list,
      *     grad_p2_mat, x_g, det_jacobian, mat_B_0, mat_T)
 c
-      implicit none
+      use numbatmod
       integer*8 nnodes
       double precision xel(2,nnodes)
       double precision p2_list(nnodes), grad_p2_mat(2,nnodes)
@@ -25,9 +25,6 @@ c
       integer*8 inode, i, j
       double precision phi, grad_phi
 c
-      double precision ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
 c     32-but integers for BLAS and LAPACK
       integer*4 INFO_32, LDB_32, LDT_32
       integer*4 IPIV_32(2), NRHS_32, N_32
@@ -61,13 +58,13 @@ ccccccccccccccccccccccccccccc
 c        mat_T = mat_B
 c
 C       ! The order of the matrix mat_B
-      N_32 = 2 
+      N_32 = 2
 C       ! The number of right hand sides
-      NRHS_32 = N_32 
+      NRHS_32 = N_32
 C       ! The leading dimension of the array mat_B
-      LDB_32 = N_32 
+      LDB_32 = N_32
 C       ! The leading dimension of the array mat_T
-      LDT_32 = N_32 
+      LDT_32 = N_32
 c
 c     Initialisation for DGESV: mat_T = identity
       do i=1,2
@@ -76,11 +73,11 @@ c     Initialisation for DGESV: mat_T = identity
         enddo
           mat_T(i,i) = 1.0d0
       enddo
-      call DGESV( N_32, NRHS_32, mat_B, LDB_32, IPIV_32, 
+      call DGESV( N_32, NRHS_32, mat_B, LDB_32, IPIV_32,
      *   mat_T, LDT_32, INFO_32 )
 c
       if(INFO_32 .ne. 0) then
-        write(*,*) 
+        write(*,*)
         write(*,*) 'jacobian_p2_2d: TRANSF_MAT: ATTENTION, INFO_32 = ',
      *   INFO_32
          do i=1,nnodes

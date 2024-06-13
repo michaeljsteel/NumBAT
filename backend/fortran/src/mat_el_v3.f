@@ -9,7 +9,7 @@ c
 c
 c***********************************************************************
 c
-      implicit none
+      use numbatmod
       double precision xel(2,6)
       complex*16 beta
       complex*16 mat_K(18,18), mat_M(18,18)
@@ -21,7 +21,7 @@ c     Local variables
       double precision p2x_p2x(6,6), p2y_p2y(6,6), p2x_p2y(6,6)
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
-      complex*16 ii, z_tmp1, z_tmp2
+      complex*16 z_tmp1, z_tmp2
       complex*16 z_mat_xyz(6,6,3,3), z_beta, z_tensor
       integer*8 i, j, i_p, j_p, i_xyz,  j_xyz
       integer*8 i_u_xyz,  j_u_xyz, i_ind, j_ind
@@ -37,33 +37,32 @@ ccccccccccccccccccccccccccccccccccccccc
 c
       debug = 0
 
-c  ii = sqrt(-1)
-      ii = dcmplx(0.0d0, 1.0d0)
+
 
 c     S_index(i_xyz,i_u_xyz): index of S_{i_xyz,i_u_xyz} in the Voigt notation
 c     i_xyz represents the x,y, or z-derivative
 c     i_u_xyz represents the x,y, or z-field component
 
 C       ! S_xx => 1
-      S_index(1,1) = 1  
+      S_index(1,1) = 1
 C       ! S_yx => 6
-      S_index(2,1) = 6  
+      S_index(2,1) = 6
 C       ! S_zx => 5
-      S_index(3,1) = 5  
+      S_index(3,1) = 5
 
 C       ! S_xy => 6
-      S_index(1,2) = 6  
+      S_index(1,2) = 6
 C       ! S_yy => 2
-      S_index(2,2) = 2  
+      S_index(2,2) = 2
 C       ! S_zy => 4
-      S_index(3,2) = 4  
+      S_index(3,2) = 4
 
 C       ! S_xz => 5
-      S_index(1,3) = 5  
+      S_index(1,3) = 5
 C       ! S_yz => 4
-      S_index(2,3) = 4  
+      S_index(2,3) = 4
 C       ! S_zz => 3
-      S_index(3,3) = 3  
+      S_index(3,3) = 3
 
       do i=1,2
         do j=1,2
@@ -72,7 +71,7 @@ C       ! S_zz => 3
       enddo
       det_b = mat_B(1,1) * mat_B(2,2) - mat_B(1,2) * mat_B(2,1)
 C       ! TEMPORARY CHANGE
-      if (abs(det_b) .le. 1.0d-22) then  
+      if (abs(det_b) .le. 1.0d-22) then
 cc      if (abs(det_b) .le. 1.0d-8) then
         write(*,*) '?? mat_el_v3: Determinant = 0 :', det_b
         write(*,*) "xel = ", xel
@@ -121,7 +120,7 @@ c     z_mat_xyz: contains the overlap integrals of the x,y and z-derivatives
                 z_tmp1 = p2x_p2y(i,j)
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 1 .and. j_xyz == 3) then
-                z_beta = ii * beta
+                z_beta = C_IM_ONE* beta
                 z_tmp1 = p2_p2x(j,i) * z_beta
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 2 .and. j_xyz == 1) then
@@ -131,17 +130,17 @@ c     z_mat_xyz: contains the overlap integrals of the x,y and z-derivatives
                 z_tmp1 = p2y_p2y(i,j)
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 2 .and. j_xyz == 3) then
-                z_beta = ii * beta
+                z_beta = C_IM_ONE* beta
                 z_tmp1 = p2_p2y(j,i) * z_beta
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 3 .and. j_xyz == 1) then
 C                 ! Conjugate
-                z_beta = - ii * beta         
+                z_beta = - C_IM_ONE* beta
                 z_tmp1 = p2_p2x(i,j) * z_beta
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 3 .and. j_xyz == 2) then
 C                 ! Conjugate
-                z_beta = - ii * beta         
+                z_beta = - C_IM_ONE* beta
                 z_tmp1 = p2_p2y(i,j) * z_beta
                 z_mat_xyz(i,j,i_xyz,j_xyz) = z_tmp1
               elseif (i_xyz == 3 .and. j_xyz == 3) then
@@ -165,7 +164,7 @@ c=================  Construction of the matrix mat_M =================
 c     Integral [rho * P(i) * P(i)]
       do i=1,6
 C         ! The components x, y and z
-        do i_xyz=1,3  
+        do i_xyz=1,3
           i_p = 3*(i-1) + i_xyz
           do j=1,6
             j_xyz = i_xyz
@@ -180,29 +179,29 @@ c=================  Construction of the matrix mat_K =================
 c     Integral [K_{ij} = Gradient_s(conjg(P_k(i))) x c_tensor x Gradient_s(P_k(j))], where k=x,y,z
 c     Reference: see Eqs. (7) and (8) in:
 c     A.-C. Hladky-Hennion
-c     "Finite element analysis of the propagation of acoustic waves in waveguides," 
-c     Journal of Sound and Vibration, vol. 194, no. 2, pp. 119-136, 1996. 
+c     "Finite element analysis of the propagation of acoustic waves in waveguides,"
+c     Journal of Sound and Vibration, vol. 194, no. 2, pp. 119-136, 1996.
       do i=1,6
 C         ! Components of the displacement vector
-        do i_u_xyz=1,3  
+        do i_u_xyz=1,3
           i_p = 3*(i-1) + i_u_xyz
           do j=1,6
 C             ! Components of the displacement vector
-            do j_u_xyz=1,3  
+            do j_u_xyz=1,3
               j_p = 3*(j-1) + j_u_xyz
 C               ! Derivatives
-              do i_xyz=1,3  
+              do i_xyz=1,3
                 i_ind = S_index(i_xyz,i_u_xyz)
 C                 ! Derivatives
-                do j_xyz=1,3  
+                do j_xyz=1,3
                   j_ind = S_index(j_xyz,j_u_xyz)
                   z_tensor = c_tensor_el(i_ind,j_ind)
                   z_tmp1 = z_mat_xyz(i,j,i_xyz,j_xyz)
                   if (i_u_xyz == 3) then
-                    z_tmp1 = -ii * z_tmp1
+                    z_tmp1 = -C_IM_ONE* z_tmp1
                   endif
                   if (j_u_xyz == 3) then
-                    z_tmp1 = ii * z_tmp1
+                    z_tmp1 = C_IM_ONE* z_tmp1
                   endif
                   z_tmp2 = z_tmp1 * z_tensor
                   mat_K(i_p,j_p) = mat_K(i_p,j_p) + z_tmp2

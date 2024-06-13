@@ -7,7 +7,7 @@ C
 c
 C     k_0 = 2 pi / lambda, where lambda in meters.
 C
-      implicit none
+      use numbatmod
       integer*8 nval, nel, npt, nnodes_P2
       integer*8 table_nod(nnodes_P2,nel)
       double precision x(2,npt)
@@ -27,13 +27,13 @@ c     Local variables
       complex*16 E_field_el(3,nnodes_P2_0)
       complex*16 H_field_el(3,nnodes_P2_0)
 C       !  P3 Ez-field
-      complex*16 Ez_field_el_P3(nnodes_P3_0)  
+      complex*16 Ez_field_el_P3(nnodes_P3_0)
       double precision p2_p2(nnodes_P2_0,nnodes_P2_0)
       integer*8 i, j, j1
       integer*8 iel, ival
       integer*8 itrial, jtest, ui
       complex*16 vec_i(3), vec_j(3)
-      complex*16 z_tmp1, ii
+      complex*16 z_tmp1
 
       double precision mat_B(2,2), mat_T(2,2), det_b
 C
@@ -53,7 +53,7 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 C
       if ( nnodes_P2 .ne. 6 ) then
         write(ui,*) "EM_mode_en_int_v2: problem nnodes = ", nnodes_P2
@@ -106,23 +106,23 @@ c         The components (E_x,E_y) of the mode ival
             E_field_el(j,i) = z_tmp1
           enddo
 c         The component E_z of the mode ival. The FEM code uses the scaling:
-c         E_z = ii * beta1 * \hat{E}_z
+c         E_z = C_IM_ONE* beta1 * \hat{E}_z
           j=3
             z_tmp1 = soln_k1(j,i,ival,iel)
-            E_field_el(j,i) = z_tmp1 * ii * beta1
+            E_field_el(j,i) = z_tmp1 * C_IM_ONE* beta1
         enddo
 c       E_z-field:
         do i=1,3
 c         The longitudinal component at the vertices (P3 elements)
           j=3
           z_tmp1 = soln_k1(j,i,ival,iel)
-          Ez_field_el_P3(i) = z_tmp1 * ii * beta1
+          Ez_field_el_P3(i) = z_tmp1 * C_IM_ONE* beta1
         enddo
         do i=4,nnodes_P3_0
 c         The longitudinal component at the edge nodes and interior node (P3 elements)
           j=3
           z_tmp1 = soln_k1(j,i+nnodes_P2-3,ival,iel)
-          Ez_field_el_P3(i) = z_tmp1 * ii * beta1
+          Ez_field_el_P3(i) = z_tmp1 * C_IM_ONE* beta1
         enddo
 c
         call get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T,

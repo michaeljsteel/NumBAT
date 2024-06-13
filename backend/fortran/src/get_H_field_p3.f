@@ -2,17 +2,17 @@
 c     For a waveguide mode: compute the H-field from the E-field
 C     This program used Maxwell's equation to compute the magnetic field H from the electric field E
 C
-      subroutine get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T, 
+      subroutine get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T,
      *    E_field_el, Ez_field_el_P3, H_field_el)
 C
-      implicit none
+      use numbatmod
 C
       integer*8 nnodes_P2
       double precision k_0, mat_T(2,2)
       complex*16 beta1
       complex*16 E_field_el(3,nnodes_P2)
 C        !  P3 Ez-field
-      complex*16 Ez_field_el_P3(10) 
+      complex*16 Ez_field_el_P3(10)
       complex*16 H_field_el(3,nnodes_P2)
 
 c     Local variables
@@ -20,18 +20,15 @@ c     Local variables
       integer*8 nnodes_P2_0, nnodes_P3_0
       parameter (nnodes_P2_0 = 6)
       parameter (nnodes_P3_0 = 10)
-      double precision vec_grad_P2(2,nnodes_P2_0), mu_0
-      double precision vec_grad_P3(2,nnodes_P3_0), speed_c, omega
+      double precision vec_grad_P2(2,nnodes_P2_0)
+      double precision vec_grad_P3(2,nnodes_P3_0),  omega
       integer*8 j, inod, jnod
-      complex*16 ii, z_tmp1, z_tmp2
+      complex*16  z_tmp1, z_tmp2
       complex*16 Maxwell_coeff
 C
 CCCCCCCCCCCCCCCCCCCCCCCCC
 C
-c  ii = sqrt(-1)
-      ii = dcmplx(0.0d0, 1.0d0)
-      speed_c = 299792458
-      mu_0 = 1.2566370614d-6
+
 C
 c      By applying the Maxwell's equations to the E-field of a waveguide mode, we get:
 c      H_x = [-beta*E_y + D(E_z,y)] * Coefficient
@@ -45,8 +42,8 @@ c       The components (H_x,H_y,H_z) the mode ival
         enddo
       enddo
       do inod=1,nnodes_P2
-        z_tmp1 = -beta1 * E_field_el(2,inod) * ii
-        z_tmp2 =  beta1 * E_field_el(1,inod) * ii
+        z_tmp1 = -beta1 * E_field_el(2,inod) * C_IM_ONE
+        z_tmp2 =  beta1 * E_field_el(1,inod) * C_IM_ONE
         H_field_el(1,inod) = H_field_el(1,inod) + z_tmp1
         H_field_el(2,inod) = H_field_el(2,inod) + z_tmp2
       enddo
@@ -67,11 +64,11 @@ c       vec_grad_p2: contains the gradients of all 6 basis polynomials at the no
         enddo
       enddo
 c     The curl of the E-field must be multiplied by a coefficient in order to get the H-field
-c     For example: Maxwell_coeff = 1/ (i * k0 * mu) 
-      omega = k_0 * speed_c
-C       Maxwell_coeff = 1.0d0 / (ii * omega)
-      Maxwell_coeff = 1.0d0 / (ii * omega * mu_0)
-C       Maxwell_coeff = 1.0d0 / (ii * k_0)
+c     For example: Maxwell_coeff = 1/ (i * k0 * mu)
+      omega = k_0 * SI_C_SPEED
+C       Maxwell_coeff = 1.0d0 / (C_IM_ONE* omega)
+      Maxwell_coeff = 1.0d0 / (C_IM_ONE* omega * SI_MU_0)
+C       Maxwell_coeff = 1.0d0 / (C_IM_ONE* k_0)
       do inod=1,nnodes_P2
         do j=1,3
           H_field_el(j,inod) = H_field_el(j,inod) * Maxwell_coeff
@@ -83,5 +80,5 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCC
 C
       return
-      end 
+      end
 

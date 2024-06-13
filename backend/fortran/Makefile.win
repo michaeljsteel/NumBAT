@@ -1,8 +1,8 @@
-# Makefile for NumBAT. May require some adjustment to reflect your installation.
+# Windows Makefile for NumBAT. May require some adjustment to reflect your installation.
 
 NumBAT_MOD=NumBAT
 
-all: $(NumBAT_MOD).so
+all: $(NumBAT_MOD).dll
 
 ## Set your python virtualenv platform
 MYPYENV = c:\users\mq98002769\mypy3-11
@@ -12,32 +12,13 @@ PYVERMAJ=3
 PYVERMAJMIN=3.11
 
 
-## Set your other libraries
-
-#MYPLAT="linux_inteloneapi"
-#MYPLAT="linux_vanilla"
-#MYPLAT="MacOS"
-#MYPLAT="myplatform"
 MYPLAT="windows_inteloneapi"
-
 
 # virtual env doesn't contain Python.h, so we grab it from here:
 SYSTEMPYINC=C:\Users\mq98002769\AppData\Local\anaconda3\include
 
 
 PLAT = $(MYPLAT)
-
-# or set it from an environment variable
-#ifeq ($(origin NUMBAT_PLATFORM), environment)
-#PLAT=$(NUMBAT_PLATFORM)
-#endif
-
-ifndef PLAT
-$(error 'Error: Must define MYPLAT variable in Makefile or environment variable NUMBAT_PLATFORM')
-endif
-
-UNAME_S := $(shell uname -s)
-
 
 
 ifeq ($(PLAT), "linux_vanilla")   ##### LINUX VANILLA

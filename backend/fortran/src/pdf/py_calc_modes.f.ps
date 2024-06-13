@@ -16,7 +16,7 @@
 %%+ font Symbol
 %%+ font Times-Bold
 %%+ font Times-Roman
-%%DocumentProcessColors: Black Blue Green Red 
+%%DocumentProcessColors: Black Blue Green Red
 %%DocumentSuppliedResources: procset a2ps-color-prolog
 %%+ encoding ISO-8859-1Encoding
 %%EndComments
@@ -35,13 +35,13 @@ a2psdict begin
 /BeginInclude {
   /b4_Inc_state save def    		% Save state for cleanup
   /dict_count countdictstack def	% Count objects on dict stack
-  /op_count count 1 sub def		% Count objects on operand stack 
+  /op_count count 1 sub def		% Count objects on operand stack
   userdict begin
     0 setgray 0 setlinecap
     1 setlinewidth 0 setlinejoin
     10 setmiterlimit [ ] 0 setdash newpath
     gs_languagelevel 1 ne {
-      false setstrokeadjust false setoverprint 
+      false setstrokeadjust false setoverprint
     } if
 } bind def
 
@@ -79,7 +79,7 @@ a2psdict begin
 
 % Function c-show (str => -)
 % centers text only according to x axis.
-/c-show { 
+/c-show {
   dup stringwidth pop
   2 div neg 0 rmoveto
   show
@@ -88,8 +88,8 @@ a2psdict begin
 % Function l-show (str => -)
 % prints texts so that it ends at currentpoint
 /l-show {
-  dup stringwidth pop neg 
-  0 
+  dup stringwidth pop neg
+  0
   rmoveto show
 } bind def
 
@@ -104,7 +104,7 @@ a2psdict begin
     exch div
     currentfont exch scalefont setfont
   } { % ifelse
-    pop pop 
+    pop pop
   }
   ifelse
   c-show			% center title
@@ -126,7 +126,7 @@ a2psdict begin
   dup length 5 add dict begin
     { %forall
       % <vector> <key> <val>
-      1 index /FID ne 
+      1 index /FID ne
       { def }{ pop pop } ifelse
     } forall
     /Encoding exch def % -
@@ -161,7 +161,7 @@ a2psdict begin
     } ifelse
 
     currentdict
-  end 
+  end
 } bind def
 
 % composite fonts for ASCII-EUC mixed strings
@@ -228,7 +228,7 @@ a2psdict begin
 		    {
 			13 dict begin
 			    /EUCFont EUCFont def
-			    /UpperByte exch 16#80 add def	
+			    /UpperByte exch 16#80 add def
 			    % /FontName
 			    /FontInfo (EUC lower byte font) readonly def
 			    /PaintType 0 def
@@ -292,7 +292,7 @@ a2psdict begin
     }{
 	pop findfont 0 copyfont
     } ifelse
-} def	
+} def
 
 /slantfont {	% FontName slant-degree  slantfont  font'
     exch findfont 1 copyfont begin
@@ -436,12 +436,12 @@ a2psdict begin
 %%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
 % Function title: prints page header.
 % <ct> <rt> <lt> are passed as argument
-/title { 
+/title {
   % 1. Draw the background
   x v get y v get moveto
   0 setgray
   gsave
-    0 th 2 div neg rmoveto 
+    0 th 2 div neg rmoveto
     th setlinewidth
     0.5 0.5 1 setrgbcolor
     pw 0 rlineto stroke
@@ -480,7 +480,7 @@ a2psdict begin
   gsave
     pw 3 1 roll
     % stk: ct pw ltw rtw
-    3 copy 
+    3 copy
     % Move to the center of the left room
     sub add 2 div hm rmoveto
     % What is the available space in here?
@@ -533,7 +533,7 @@ a2psdict begin
 
   snx sny moveto
   l-show
-  
+
   fnx fny moveto
   c-show
 } bind def
@@ -655,38 +655,38 @@ a2psdict begin
 %%IncludeResource: font Symbol
 %%BeginResource: encoding ISO-8859-1Encoding
 /ISO-8859-1Encoding [
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright 
-/parenleft /parenright /asterisk /plus /comma /minus /period /slash 
-/zero /one /two /three /four /five /six /seven 
-/eight /nine /colon /semicolon /less /equal /greater /question 
-/at /A /B /C /D /E /F /G 
-/H /I /J /K /L /M /N /O 
-/P /Q /R /S /T /U /V /W 
-/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
-/quoteleft /a /b /c /d /e /f /g 
-/h /i /j /k /l /m /n /o 
-/p /q /r /s /t /u /v /w 
-/x /y /z /braceleft /bar /braceright /asciitilde /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
-/space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
-/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron 
-/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet 
-/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown 
-/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
-/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis 
-/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
-/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls 
-/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
-/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis 
-/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
-/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash
+/zero /one /two /three /four /five /six /seven
+/eight /nine /colon /semicolon /less /equal /greater /question
+/at /A /B /C /D /E /F /G
+/H /I /J /K /L /M /N /O
+/P /Q /R /S /T /U /V /W
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore
+/quoteleft /a /b /c /d /e /f /g
+/h /i /j /k /l /m /n /o
+/p /q /r /s /t /u /v /w
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis
 ] def
 %%EndResource
 % Initialize page description variables.
@@ -2677,7 +2677,7 @@ x0 y0 moveto
 (do) K
 ( inod=1,nodes_per_el+7) p n
 (            sol1\(3,inod,ival,iel\) ) N
-(     *        = ii * beta\(ival\) * sol1\(3,inod,ival,iel\)) N
+(     *        = C_IM_ONE* beta\(ival\) * sol1\(3,inod,ival,iel\)) N
 (          ) S
 (enddo) K n
 (        ) p

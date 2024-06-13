@@ -98,7 +98,7 @@ C     ! Number of nodes per element
 
       complex*16 shift_nu, shift_omsq
       integer*8  i_base
-      complex*16 ii
+
 
 C  Variable used by valpr
       integer*8 ltrav, n_conv
@@ -161,7 +161,7 @@ C       !ui = Unite dImpression
       ui = 6
 C      nodes_per_el = 6 ! Number of nodes per element
       pi = 3.141592653589793d0
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 
 C       nvect = 2*num_modes + num_modes/2 +3
       nvect = 3*num_modes + 3

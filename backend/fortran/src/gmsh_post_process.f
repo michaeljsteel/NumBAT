@@ -9,7 +9,7 @@ c
      *     gmsh_file_pos, dir_name,
      *     q_average, plot_real, plot_imag, plot_abs)
 
-      implicit none
+      use numbatmod
       integer*8 nval, nel, npt, nnodes, plot_val, E_H_field
       integer*8 nb_typ_el
       integer*8 table_nod(nnodes,nel), type_el(nel)
@@ -21,8 +21,6 @@ c
 
       complex*16 val_cmplx(nval)
 
-      integer*8 nnodes_0
-      parameter (nnodes_0 = 6)
 
       double precision xel(3,nnodes_0), xel_p1(3,3)
       complex*16 sol_el(3,nnodes_0), sol_max(4)
@@ -38,15 +36,13 @@ C      double precision ls_abs_index(nnodes_0), abs_index
       integer*8 q_average, plot_imag, plot_real, plot_abs
       integer*8 debug, ui
       complex*16 z_tmp1
-      complex*16 ii
       character*(*) gmsh_file_pos, dir_name
       character*1000 tchar
       character tval*4, buf*3
       character*1 tE_H
       integer*8 namelength
 c
-c  ii = sqrt(-1)
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 c
       ui = 6
       debug = 0
@@ -112,7 +108,7 @@ c
       endif
 c
       v_re = dble(val_cmplx(plot_val))
-      v_im = -dble(ii*val_cmplx(plot_val))
+      v_im = -dble(C_IM_ONE*val_cmplx(plot_val))
 c
       if (plot_val .lt. 1000) then
         write(buf,'(i3.3)') plot_val
