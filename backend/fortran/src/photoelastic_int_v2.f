@@ -1,12 +1,12 @@
 C Calculate the overlap integral of two EM modes and an AC mode using
 C analytic expressions for basis function overlaps on linear elements.
 C
-      subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC, 
+      subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,
      *  ival1, ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
-     *  nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC, 
+     *  nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,
      *  eps_lst, debug, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel), debug
@@ -31,20 +31,17 @@ c     Local variables
       integer*8 ltest, ind_lp, l_eq
       integer*8 itrial, ui, ival1s, ival2s, ival3s
       complex*16 eps_lst(nb_typ_el)
-      complex*16 zt1, ii
+      complex*16 zt1
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
-      double precision det_b, eps_0
+      double precision det_b
 c
 c     NQUAD: The number of quadrature points used in each element.
       integer*8 nquad, nquad_max
       ! Limit to P2 polynomials
-      parameter (nquad_max = 16) 
+      parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
 cc      integer*8 info_curved, n_curved
-      double precision ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
       complex*16 coeff
 
       double precision p2_p2_p2(6,6,6)
@@ -70,8 +67,8 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      eps_0 = 8.854187817d-12
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
+
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "photoelastic_int_v2: problem nnodes = ", nnodes
@@ -168,7 +165,7 @@ C               Gradient of transverse components of basis function
                         zt1 = p2_p2_p2y(itrial,jtest,ltest)
                       elseif ( k_eq .eq. 3) then
                         zt1 = p2_p2_p2(itrial,jtest,ltest)
-                        zt1 = zt1 * (-ii * beta_AC)
+                        zt1 = zt1 * (-C_IM_ONE* beta_AC)
                       else
                         write(*,*) "--- photoelastic_int_v2: "
                         write(*,*) "k_eq has illegal value:"
@@ -386,7 +383,7 @@ C Apply scaling that sits outside of integration.
       do i=1,nval_EM_S
         do j=1,nval_EM_p
           do k=1,nval_AC
-            overlap(i,j,k) = overlap(i,j,k) * (-1.0d0) * eps_0
+            overlap(i,j,k) = overlap(i,j,k) * (-1.0d0) * SI_EPS_0
           enddo
         enddo
       enddo
@@ -399,8 +396,8 @@ C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 C
 C       open (unit=26,file="Output/overlap_v2.txt")
-C         write(26,*) "overlap, eps_0 = "
-C         write(26,*) overlap, eps_0
+C         write(26,*) "overlap, SI_EPS_0 = "
+C         write(26,*) overlap, SI_EPS_0
 C       close (unit=26)
 C         open(4,file="Output/basis_overlap_v2.txt",status='unknown')
 C           iel = nel

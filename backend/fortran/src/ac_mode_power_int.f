@@ -6,7 +6,7 @@ C
      *  nb_typ_el, c_tensor_z, beta_AC, Omega_AC, soln_AC,
      *  debug, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval, ival
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel), debug
@@ -20,17 +20,16 @@ c      complex*16 x(2,npt)
       complex*16 c_tensor_z(3,3,3,nb_typ_el)
 
 c     Local variables
-      integer*8 nnodes0
-      parameter (nnodes0 = 6)
-      integer*8 nod_el_p(nnodes0)
-      double precision xel(2,nnodes0)
-      complex*16 basis_overlap(3*nnodes0,3,3*nnodes0)
+
+      integer*8 nod_el_p(nnodes_0)
+      double precision xel(2,nnodes_0)
+      complex*16 basis_overlap(3*nnodes_0,3,3*nnodes_0)
       complex*16 U, Ustar
       integer*8 i, j, k, l, j1, typ_e
       integer*8 iel, ind_ip, i_eq, k_eq
       integer*8 ltest, ind_lp, l_eq
       integer*8 itrial, ui
-      complex*16 z_tmp1, ii
+      complex*16 z_tmp1
       double precision mat_B(2,2), mat_T(2,2)
 c
 c     NQUAD: The number of quadrature points used in each element.
@@ -40,9 +39,7 @@ c     NQUAD: The number of quadrature points used in each element.
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
       integer*8 info_curved, n_curved
-      double precision r_tmp1, ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
+      double precision r_tmp1
       complex*16 coeff_1, coeff_2
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
@@ -65,7 +62,6 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      ii = cmplx(0.0d0, 1.0d0, 8)
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "AC_mode_power_int: problem nnodes = ", nnodes
@@ -125,9 +121,7 @@ c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)
           else
-c           Isoparametric element
-            ! 2024/06/12 Remove incorrect xx first elt.
-            ! jacobian_p2_2d  != jacobian_p1_2d
+c           Isoparametric element, 2024-06-13 fixed version
             call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
@@ -141,17 +135,17 @@ c           Isoparametric element
 c          grad_i  = gradient on the actual triangle
 c          grad_i  = Transpose(mat_T)*grad_i0
 c          Calculation of the matrix-matrix product:
-          call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
-     *           grad2_mat0, 2, ZERO, grad2_mat, 2)
+          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,
+     *           grad2_mat0, 2, D_ZERO, grad2_mat, 2)
           coeff_1 = ww * abs(det)
 C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
 C             Gradient of transverse components of basis function
               do k_eq=1,2
-                do ltest=1,nnodes0
+                do ltest=1,nnodes_0
                   do l_eq=1,3
                     ind_lp = l_eq + 3*(ltest-1)
                     z_tmp1 = phi2_list(itrial) * grad2_mat(k_eq,ltest)
@@ -166,11 +160,11 @@ C             Gradient of longitudinal components of basis function,
 C             which is i*beta*phi because field is assumed to be of
 C             form e^{i*beta*z} phi.
               k_eq=3
-              do ltest=1,nnodes0
+              do ltest=1,nnodes_0
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   z_tmp1 = phi2_list(itrial)
-     *                    * phi2_list(ltest) * ii * beta_AC
+     *                    * phi2_list(ltest) * C_IM_ONE* beta_AC
                   coeff_2 = c_tensor_z(i_eq,k_eq,l_eq,typ_e)
                   basis_overlap(ind_ip,k_eq,ind_lp) =
      *              basis_overlap(ind_ip,k_eq,ind_lp)
@@ -184,11 +178,11 @@ cccccccccc
 C Having calculated overlap of basis functions on element
 C now multiply by specific field values for modes of interest.
         do ival=1,nval
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               Ustar = conjg(soln_AC(i_eq,itrial,ival,iel))
-              do ltest=1,nnodes0
+              do ltest=1,nnodes_0
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   U = soln_AC(l_eq,ltest,ival,iel)
@@ -207,7 +201,7 @@ cccccccccccc
       enddo
 C Multiply through prefactor
       do i=1,nval
-        overlap(i) = -2.0 * ii * Omega_AC(i) * overlap(i)
+        overlap(i) = -2.0 * C_IM_ONE* Omega_AC(i) * overlap(i)
       enddo
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

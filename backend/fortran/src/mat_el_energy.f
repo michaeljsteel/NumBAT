@@ -12,7 +12,7 @@ c
 c
 c***********************************************************************
 c
-      implicit none
+      use numbatmod
       double precision xel(2,6)
       complex*16 beta
       complex*16 mat_P(18,18)
@@ -23,7 +23,7 @@ c     Local variables
       double precision p2_p2(6,6), p2_p2x(6,6), p2_p2y(6,6)
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
-      complex*16 ii, z_tmp1
+      complex*16 z_tmp1
       integer*8 i, j, i_p, j_p, i_xyz,  j_xyz
       integer*8 debug
 
@@ -36,8 +36,6 @@ ccccccccccccccccccccccccccccccccccccccc
 c
       debug = 0
 
-c  ii = sqrt(-1)
-      ii = dcmplx(0.0d0, 1.0d0)
 
       do i=1,2
         do j=1,2
@@ -46,7 +44,7 @@ c  ii = sqrt(-1)
       enddo
       det_b = mat_B(1,1) * mat_B(2,2) - mat_B(1,2) * mat_B(2,1)
 C       ! TEMPORARY CHANGE
-      if (abs(det_b) .le. 1.0d-22) then  
+      if (abs(det_b) .le. 1.0d-22) then
 cc      if (abs(det_b) .le. 1.0d-8) then
         write(*,*) '?? mat_el_energy: Determinant = 0 :', det_b
         write(*,*) "xel = ", xel
@@ -85,41 +83,41 @@ c                   (integral of the z-component of the acoustic Poynting vector
             do j_xyz=1,3
               j_p = 3*(j-1) + j_xyz
               if (i_xyz == 1 .and. j_xyz == 1) then
-                z_tmp1 = p2_p2(i,j) * beta * ii
+                z_tmp1 = p2_p2(i,j) * beta * C_IM_ONE
 C                 !!!!!! C(5,5) * u_x * S_zx
-                z_tmp1 = z_tmp1 * c_tensor_el(5,5)  
+                z_tmp1 = z_tmp1 * c_tensor_el(5,5)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
               elseif (i_xyz == 1 .and. j_xyz == 3) then
                 z_tmp1 = p2_p2x(i,j)
 C                 !!!!!! C(5,5) * u_x * S_xz
-                z_tmp1 = z_tmp1 * c_tensor_el(5,5)  
+                z_tmp1 = z_tmp1 * c_tensor_el(5,5)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
 cccccccccccccc
               elseif (i_xyz == 2 .and. j_xyz == 2) then
-                z_tmp1 = p2_p2(i,j) * beta * ii
+                z_tmp1 = p2_p2(i,j) * beta * C_IM_ONE
 C                 !!!!!! C(4,4) * u_x * S_zy
-                z_tmp1 = z_tmp1 * c_tensor_el(4,4)  
+                z_tmp1 = z_tmp1 * c_tensor_el(4,4)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
               elseif (i_xyz == 2 .and. j_xyz == 3) then
                 z_tmp1 = p2_p2y(i,j)
 C                 !!!!!! C(4,4) * u_x * S_yz
-                z_tmp1 = z_tmp1 * c_tensor_el(4,4)  
+                z_tmp1 = z_tmp1 * c_tensor_el(4,4)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
 cccccccccccccc
               elseif (i_xyz == 3 .and. j_xyz == 1) then
                 z_tmp1 = p2_p2x(i,j)
 C                 !!!!!! C(3,1) * u_x * S_xx
-                z_tmp1 = z_tmp1 * c_tensor_el(3,1)  
+                z_tmp1 = z_tmp1 * c_tensor_el(3,1)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
               elseif (i_xyz == 3 .and. j_xyz == 2) then
                 z_tmp1 = p2_p2y(i,j)
 C                 !!!!!! C(3,2) * u_x * S_yy
-                z_tmp1 = z_tmp1 * c_tensor_el(3,2)  
+                z_tmp1 = z_tmp1 * c_tensor_el(3,2)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
               elseif (i_xyz == 3 .and. j_xyz == 3) then
-                z_tmp1 = p2_p2(i,j) * beta * ii
+                z_tmp1 = p2_p2(i,j) * beta * C_IM_ONE
 C                 !!!!!! C(3,3) * u_x * S_zz
-                z_tmp1 = z_tmp1 * c_tensor_el(3,3)  
+                z_tmp1 = z_tmp1 * c_tensor_el(3,3)
                 mat_P(i_p,j_p) = mat_P(i_p,j_p) - z_tmp1
               endif
             enddo

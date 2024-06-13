@@ -27,13 +27,13 @@ c     Local variables
       complex*16 E_field_el(3,nnodes_P2_0)
       complex*16 H_field_el(3,nnodes_P2_0)
 C       !  P3 Ez-field
-      complex*16 Ez_field_el_P3(nnodes_P3_0)  
+      complex*16 Ez_field_el_P3(nnodes_P3_0)
       double precision p2_p2(nnodes_P2_0,nnodes_P2_0)
       integer*8 i, j, j1
       integer*8 iel, ival
       integer*8 itrial, jtest, ui
       complex*16 vec_i(3), vec_j(3)
-      complex*16 z_tmp1, ii
+      complex*16 z_tmp1
 
       double precision mat_B(2,2), mat_T(2,2), det_b
 C
@@ -53,7 +53,6 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      ii = cmplx(0.0d0, 1.0d0, 8)
 C
       if ( nnodes_P2 .ne. 6 ) then
         write(ui,*) "EM_mode_en_int_v2: problem nnodes = ", nnodes_P2
@@ -82,7 +81,7 @@ c       maps the current triangle to the reference triangle.
         enddo
         det_b = mat_B(1,1) * mat_B(2,2) - mat_B(1,2) * mat_B(2,1)
 C         ! TEMPORARY CHANGE
-        if (abs(det_b) .le. 1.0d-22) then  
+        if (abs(det_b) .le. 1.0d-22) then
 cc        if (abs(det_b) .le. 1.0d-8) then
           write(*,*) '?? EM_mode_energy_int_v2_Ez: Deter. = 0 :', det_b
           write(*,*) "xel = ", xel
@@ -107,7 +106,7 @@ c         The components (E_x,E_y) of the mode ival
             E_field_el(j,i) = z_tmp1
           enddo
 c         The component E_z of the mode ival. The FEM code uses the scaling:
-c         E_z = ii * beta1 * \hat{E}_z
+c         E_z = C_IM_ONE* beta1 * \hat{E}_z
           j=3
             z_tmp1 = soln_k1(j,i,ival,iel)
             E_field_el(j,i) = z_tmp1
