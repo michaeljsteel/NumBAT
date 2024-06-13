@@ -13,7 +13,7 @@
 subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
    n_ddl, neq, nnodes, n_core, bloch_vec, iindex, table_nod, &
    table_N_E_F, type_el, ineq,      ip_period_N, ip_period_N_E_F, &
-   mesh_xy, x_N_E_F,      v_eigs_beta, mode_pol, sol_0, sol)
+   mesh_xy, x_N_E_F, v_eigs_beta, mode_pol, sol_0, sol)
 
    use numbatmod
 
