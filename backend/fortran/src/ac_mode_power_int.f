@@ -1,7 +1,7 @@
 C Calculate the overlap integral of an AC mode with itself using
-C numerical quadrature. 
+C numerical quadrature.
 C
-      subroutine AC_mode_power_int (nval, 
+      subroutine AC_mode_power_int (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, c_tensor_z, beta_AC, Omega_AC, soln_AC,
      *  debug, overlap)
@@ -49,7 +49,7 @@ c     NQUAD: The number of quadrature points used in each element.
 C
 C
 Cf2py intent(in) nval, nel, npt, nnodes, table_nod
-Cf2py intent(in) type_el, x, nb_typ_el, c_tensor_z, beta_AC 
+Cf2py intent(in) type_el, x, nb_typ_el, c_tensor_z, beta_AC
 Cf2py intent(in) soln_AC, debug, Omega_AC
 C
 Cf2py depend(table_nod) nnodes, nel
@@ -108,8 +108,8 @@ cccccccccc
           enddo
         enddo
 cccccccccc
-C For each quadrature point evaluate overlap of Lagrange polynomials 
-C or derivative of Lagrange polynomials 
+C For each quadrature point evaluate overlap of Lagrange polynomials
+C or derivative of Lagrange polynomials
         do iq=1,nquad
           xx(1) = xq(iq)
           xx(2) = yq(iq)
@@ -126,7 +126,9 @@ c           Rectilinear element
      *               xx_g, det, mat_B, mat_T)
           else
 c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list,
+            ! 2024/06/12 Remove incorrect xx first elt.
+            ! jacobian_p2_2d  != jacobian_p1_2d
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
            if(abs(det) .lt. 1.0d-20) then
@@ -142,7 +144,7 @@ c          Calculation of the matrix-matrix product:
           call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
      *           grad2_mat0, 2, ZERO, grad2_mat, 2)
           coeff_1 = ww * abs(det)
-C Calculate overlap of basis functions at quadrature point, 
+C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -155,7 +157,7 @@ C             Gradient of transverse components of basis function
                     z_tmp1 = phi2_list(itrial) * grad2_mat(k_eq,ltest)
                     coeff_2 = c_tensor_z(i_eq,k_eq,l_eq,typ_e)
                     basis_overlap(ind_ip,k_eq,ind_lp) =
-     *                basis_overlap(ind_ip,k_eq,ind_lp) 
+     *                basis_overlap(ind_ip,k_eq,ind_lp)
      *                + coeff_1 * coeff_2 * z_tmp1
                   enddo
                 enddo

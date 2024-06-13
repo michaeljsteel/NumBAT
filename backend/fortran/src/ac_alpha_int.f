@@ -1,7 +1,7 @@
 ! Calculate the overlap integral of an AC mode with itself using
-! numerical quadrature.  
+! numerical quadrature.
 !
-      subroutine AC_alpha_int (nval, 
+      subroutine AC_alpha_int (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, eta_tensor, beta_AC, Omega_AC, soln_AC,
      *  AC_mode_energy_elastic, debug, overlap)
@@ -49,7 +49,7 @@ c     NQUAD: The number of quadrature points used in each element.
 C
 C
 Cf2py intent(in) nval, nel, npt, nnodes, table_nod
-Cf2py intent(in) type_el, x, nb_typ_el, eta_tensor, beta_AC 
+Cf2py intent(in) type_el, x, nb_typ_el, eta_tensor, beta_AC
 Cf2py intent(in) soln_AC, debug, Omega_AC, AC_mode_energy_elastic
 C
 Cf2py depend(table_nod) nnodes, nel
@@ -111,8 +111,8 @@ cccccccccc
           enddo
         enddo
 cccccccccc
-C For each quadrature point evaluate overlap of Lagrange polynomials 
-C or derivative of Lagrange polynomials 
+C For each quadrature point evaluate overlap of Lagrange polynomials
+C or derivative of Lagrange polynomials
         do iq=1,nquad
           xx(1) = xq(iq)
           xx(2) = yq(iq)
@@ -129,7 +129,9 @@ c           Rectilinear element
      *               xx_g, det, mat_B, mat_T)
           else
 c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list,
+
+
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
            if(abs(det) .lt. 1.0d-20) then
@@ -145,7 +147,7 @@ c          Calculation of the matrix-matrix product:
           call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
      *           grad2_mat0, 2, ZERO, grad2_mat, 2)
           coeff_1 = ww * abs(det)
-C Calculate overlap of basis functions at quadrature point, 
+C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
           do itrial=1,nnodes0
             do i_eq=1,3
@@ -248,7 +250,7 @@ C       Flipped sign as assuming did not do integration by parts - going off CW 
 
 C       open (unit=26,file="Output/overlap_alpha.txt")
 C       do i=1,nval
-C         write(26,*) i, Omega_AC(i), abs(overlap(i)), overlap(i), 
+C         write(26,*) i, Omega_AC(i), abs(overlap(i)), overlap(i),
 C      *              AC_mode_energy_elastic(i)
 C       enddo
 C       close (unit=26)

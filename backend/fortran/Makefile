@@ -211,7 +211,7 @@ endif
 # TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
 #       find a better way
 SRCS_MODS = src/nbconsts_module.f95 src/numbatmod_module.f95 src/nbinterfaces_module.f95
-SRCS_F = $(wildcard src/*.f) 
+SRCS_F = $(wildcard src/*.f)
 SRCS_F95 = $(wildcard src/*.f95)
 
 OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
@@ -247,14 +247,14 @@ SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build 
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
 F95FLAGS=$(F77FLAGS)
 
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
 mods: $(MODULES_MODS)
 
-build/%.mod : src/%.f95 
+build/%.mod : src/%.f95
 	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
 
 # Any module file change will cause rebuilding of all .f files
@@ -296,43 +296,53 @@ endif
 check:
 	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
 
-$(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
-	echo "Old compilation method Step B"
-	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
-					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
-			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild
+# $(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
+# 	echo "Old compilation method Step B"
+# 	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+# 					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
+# 			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild
 
-$(FMETHOD).pyf: $(SRCS)
-	echo "Old compilation method Step A"
-	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower
-	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
-	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
+# $(FMETHOD).pyf: $(SRCS)
+# 	echo "Old compilation method Step A"
+# 	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower
+# 	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
+# 	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
-#build/$(NumBAT_MOD)-f2pywrappers2.f90 
+#build/$(NumBAT_MOD)-f2pywrappers2.f90
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
-$(CMETHOD).so: $(CMETHOD).pyf $(MODULES_MOD) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-	echo "New compilation method Step B"
-	#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-
-$(UMFPACK_WRAPPER): $(UMFPACK_SRC)
-	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
-		-fPIC -o $(UMFPACK_WRAPPER)
+SHLIB=dll
 
 $(CMETHOD).pyf: $(SRCS)
 	echo "New compilation method Step A"
 	-rm $(F2PY_SRCS)
 	-mkdir build
-	#cp /Library/Frameworks/Python.framework/Headers/Python.h src
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
-	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
+
+#cp /Library/Frameworks/Python.framework/Headers/Python.h src
+#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
+
+
+$(CMETHOD).$(SHLIB): $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+	echo "New compilation method Step B"
+	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
+
+$(UMFPACK_WRAPPER): $(UMFPACK_SRC)
+	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
+		-fPIC -o $(UMFPACK_WRAPPER)
+
+# gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+# $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
+# gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+# $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
+
+
+
 
 
 
