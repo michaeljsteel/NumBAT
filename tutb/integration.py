@@ -899,7 +899,7 @@ def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
     alpha_py = np.real(F_alpha*sim_AC_Omega_AC[AC_ival]**2/energy_py)
 
     # PE gain integral
-    eps_0 = 8.854187817e-12
+
     F_PE = 0
     for i in range(3):
         for k in range(3):
@@ -915,7 +915,7 @@ def grid_integral(m_n, sim_AC_structure, sim_AC_Omega_AC, n_pts_x, n_pts_y,
                     for r in range(n_pts_x):
                         I[r] = np.trapz( np.imag(integrand_PE[r,:]), dx=dy )
                     F_PE += 1j*np.trapz( I, dx=dx )
-    Q_PE_py = F_PE*eps_0
+    Q_PE_py = F_PE*SI_EPS_0
 
     return energy_py, alpha_py, Q_PE_py
 

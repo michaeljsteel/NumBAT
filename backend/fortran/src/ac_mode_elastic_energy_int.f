@@ -6,7 +6,7 @@ C
      *  nb_typ_el, rho, Omega_AC, soln_AC,
      *  debug, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval, ival
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel), debug
@@ -36,9 +36,7 @@ c     NQUAD: The number of quadrature points used in each element.
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
       integer*8 info_curved, n_curved
-      double precision r_tmp1, ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
+      double precision r_tmp1
       complex*16 coeff_1
       double precision phi2_list(6), grad2_mat0(2,6)
 C
@@ -117,9 +115,7 @@ c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)
           else
-c           Isoparametric element
-            ! 2024/06/12 Remove incorrect xx first elt.
-            ! jacobian_p2_2d  != jacobian_p1_2d
+c           Isoparametric element, 2024-06-13 fixed version
             call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif

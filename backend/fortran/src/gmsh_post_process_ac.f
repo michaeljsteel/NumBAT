@@ -3,49 +3,66 @@ c  P1-element is used to represent the  3D vector field.
 c  P2-element is used to represent each component of the 3D vector field.
 c
 
-      subroutine gmsh_post_process (plot_val, E_H_field, nval,
-     *     nel, npt, nnodes, table_nod, type_el, nb_typ_el,
-     *     n_eff, x, val_cmplx, sol, visite,
-     *     gmsh_file_pos, dir_name,
-     *     q_average, plot_real, plot_imag, plot_abs)
+      subroutine gmsh_post_process_AC (plot_val, nval,
+     *     nel, npt, nnodes, table_nod, type_el,
+     *  x, val_cmplx, sol, sol_avg, visite,
+     *  gmsh_file_pos, dir_name, d_in_nm, debug)
 
       use numbatmod
-      integer*8 nval, nel, npt, nnodes, plot_val, E_H_field
-      integer*8 nb_typ_el
+      integer*8 nval, nel, npt, nnodes, plot_val
       integer*8 table_nod(nnodes,nel), type_el(nel)
       integer*8 visite(npt)
       double precision x(2,npt)
-      complex*16 sol(3,nnodes+7,nval,nel), n_eff(nb_typ_el)
-      integer alloc_stat
-      complex*16, dimension(:,:), allocatable :: sol_avg
+      complex*16 sol(3,nnodes,nval,nel)
+      complex*16 sol_avg(3,npt)
 
       complex*16 val_cmplx(nval)
 
 
       double precision xel(3,nnodes_0), xel_p1(3,3)
-      complex*16 sol_el(3,nnodes_0), sol_max(4)
-      double precision sol_el_abs2(nnodes_0)
+      complex*16 sol_el(3,nnodes_0)
+      double precision sol_el_abs2(nnodes_0), sol_max(4)
       double precision sol_el_abs2_eE(nnodes_0)
 C      double precision sol_el_abs2_iD(nnodes_0)
       double precision ls_index(nnodes_0), r_index, zz
 C      double precision ls_im_index(nnodes_0), im_index
 C      double precision ls_abs_index(nnodes_0), abs_index
+
       double precision v_im, v_re
 
       integer*8 i, j, i1, iel, namelen, namelen2, typ_e
       integer*8 q_average, plot_imag, plot_real, plot_abs
       integer*8 debug, ui
       complex*16 z_tmp1
+
       character*(*) gmsh_file_pos, dir_name
       character*1000 tchar
       character tval*4, buf*3
       character*1 tE_H
       integer*8 namelength
+
+      double precision d_in_nm
 c
 
 c
       ui = 6
-      debug = 0
+
+      if (plot_val == 1) then
+        do i=1,npt
+          x(1,i) = x(1,i) / d_in_nm
+          x(2,i) = x(2,i) / d_in_nm
+        enddo
+      endif
+
+C       ! q_average : at a discontinuity, use average value if q_average = 1
+      q_average = 0
+C       ! plot_real : plot real part if plot_real = 1
+      plot_real = 1
+C       ! plot_imag : plot real part if plot_imag = 1
+      plot_imag = 1
+C       ! plot_abs  : plot absolute values of each component if plot_abs = 1
+      plot_abs  = 1
+
 c
       if ( nnodes .ne. 6 ) then
         write(ui,*) "gmsh_post_process: problem nnodes = ", nnodes
@@ -54,28 +71,9 @@ c
         stop
       endif
 C
-      alloc_stat = 0
-      allocate(sol_avg(3,npt), STAT=alloc_stat)
-      if (alloc_stat /= 0) then
-        write(*,*) "gmsh_post_process: Mem. allocation is unseccesfull"
-        write(*,*) "alloc_stat (sol_avg) = ", alloc_stat
-        write(*,*) "Aborting..."
-        stop
-      endif
-C
-
       if (plot_val .eq. 0) return
 c
-      if (E_H_field .eq. 1) then
-        tE_H = "E"
-      elseif(E_H_field .eq. 2) then
-        tE_H = "H"
-      else
-        write(ui,*) "gmsh_post_process: E_H_field has invalid value: ",
-     *    E_H_field
-        write(ui,*) "Aborting..."
-        stop
-      endif
+        tE_H = "U"
 c
       if (q_average .eq. 1) then
         do i=1,npt
@@ -125,60 +123,20 @@ c
       if (plot_real .eq. 1) then
 
 c    All_plots.geo (unit=34)
-C      if (plot_val .eq. 1) then
-C      tchar = """../../"//dir_name(1:namelength)// "/"
-C     *  //"interface_c4.geo"";"
-C      namelen2 = len_trim(tchar)
-C        write(34,*) "Merge ", tchar(1:namelen2)
-C      else
-C        write(34,*)
-C        write(34,*) "Delete View[0];"
-C      endif
-C
-C
-C Convert from gmsh format to pdf
-      write(34,*) "Delete View[0];"
+      if (plot_val .eq. 1) then
+      tchar = """../../"//dir_name(1:namelength)// "/"
+     *  //"interface_cyl.geo"";"
+      namelen2 = len_trim(tchar)
+        write(34,*) "Merge ", tchar(1:namelen2)
+      else
+        write(34,*)
+        write(34,*) "Delete View[0];"
+      endif
       tchar = '../../'//dir_name(1:namelength)// '/'
      *  //gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
       namelen2 = len_trim(tchar)
       write(34,*) " Include """, tchar(1:namelen2), """;"
-      tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pdf'
-      namelen2 = len_trim(tchar)
-      write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-C
-      write(34,*) "Delete View[0];"
-      tchar = '../../'//dir_name(1:namelength)// '/'
-     *  //gmsh_file_pos(1:namelen) // '_' // tval // 'v_re.pos'
-      namelen2 = len_trim(tchar)
-      write(34,*) " Include """, tchar(1:namelen2), """;"
-      tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'v_re.pdf'
-      namelen2 = len_trim(tchar)
-      write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-C
-      write(34,*) "Delete View[0];"
-      tchar = '../../'//dir_name(1:namelength)// '/'
-     *  //gmsh_file_pos(1:namelen) // '_' // tval // 'x_re.pos'
-      namelen2 = len_trim(tchar)
-      write(34,*) " Include """, tchar(1:namelen2), """;"
-      tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'x_re.pdf'
-      namelen2 = len_trim(tchar)
-      write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-C
-      write(34,*) "Delete View[0];"
-      tchar = '../../'//dir_name(1:namelength)// '/'
-     *  //gmsh_file_pos(1:namelen) // '_' // tval // 'y_re.pos'
-      namelen2 = len_trim(tchar)
-      write(34,*) " Include """, tchar(1:namelen2), """;"
-      tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'y_re.pdf'
-      namelen2 = len_trim(tchar)
-      write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-C
-      write(34,*) "Delete View[0];"
-      tchar = '../../'//dir_name(1:namelength)// '/'
-     *  //gmsh_file_pos(1:namelen) // '_' // tval // 'z_re.pos'
-      namelen2 = len_trim(tchar)
-      write(34,*) " Include """, tchar(1:namelen2), """;"
-      tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'z_re.pdf'
+      tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.png'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
 C
@@ -188,7 +146,7 @@ C
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2.pos'
         namelen2 = len_trim(tchar)
         write(26,*) " Include """, tchar(1:namelen2), """;"
-C        write(26,*) "Merge ""interface_c4.geo"";"
+        write(26,*) "Merge ""interface_cyl.geo"";"
       close (unit=26)
 C
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
@@ -197,7 +155,7 @@ C
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
         namelen2 = len_trim(tchar)
         write(32,*) " Include """, tchar(1:namelen2), """;"
-C        write(32,*) "Merge ""interface_c4.geo"";"
+        write(32,*) "Merge ""interface_cyl.geo"";"
       close (unit=32)
 
 C      tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
@@ -206,18 +164,13 @@ C      open (unit=33,file=tchar)
 C      tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
 C        namelen2 = len_trim(tchar)
 C        write(33,*) " Include """, tchar(1:namelen2), """;"
-C        write(33,*) "Merge ""interface_c4.geo"";"
+C        write(33,*) "Merge ""interface_cyl.geo"";"
 C      close (unit=33)
 
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // '_abs2.pos'
       open (unit=26,file=tchar)
-        write(26,*) "View.ArrowSizeMax = 40;"
-        write(26,*) "View.ArrowSizeMin = 0;"
-        write(26,*) "General.Color.Background = {255,255,255};"
-        write(26,*) "General.Color.BackgroundGradient={255,255,255};"
         write(26,*) "View.AdaptVisualizationGrid =1;"
-        write(26,*) "View.MaxRecursionLevel = 2;"
         write(26,*) "View.IntervalsType = 3;"
         write(26,*) "View.Light = 0;"
 c        write(26,*) "View ""|E|^2: n = ", "|",tE_H,"|^2",
@@ -228,12 +181,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *            // '_' // tval // 'x_re.pos'
       open (unit=27,file=tchar)
-        write(27,*) "View.ArrowSizeMax = 40;"
-        write(27,*) "View.ArrowSizeMin = 0;"
-        write(27,*) "General.Color.Background = {255,255,255};"
-        write(27,*) "General.Color.BackgroundGradient={255,255,255};"
         write(27,*) "View.AdaptVisualizationGrid =1;"
-        write(27,*) "View.MaxRecursionLevel = 2;"
         write(27,*) "View.IntervalsType = 3;"
         write(27,*) "View.Light = 0;"
 c        write(27,*) "View ""Re Ex: n = ",
@@ -243,12 +191,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'y_re.pos'
       open (unit=28,file=tchar)
-        write(28,*) "View.ArrowSizeMax = 40;"
-        write(28,*) "View.ArrowSizeMin = 0;"
-        write(28,*) "General.Color.Background = {255,255,255};"
-        write(28,*) "General.Color.BackgroundGradient={255,255,255};"
         write(28,*) "View.AdaptVisualizationGrid =1;"
-        write(28,*) "View.MaxRecursionLevel = 2;"
         write(28,*) "View.IntervalsType = 3;"
         write(28,*) "View.Light = 0;"
         write(28,*) "View ""Re ",tE_H,"y: n = ",
@@ -257,12 +200,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'z_re.pos'
       open (unit=29,file=tchar)
-        write(29,*) "View.ArrowSizeMax = 40;"
-        write(29,*) "View.ArrowSizeMin = 0;"
-        write(29,*) "General.Color.Background = {255,255,255};"
-        write(29,*) "General.Color.BackgroundGradient={255,255,255};"
         write(29,*) "View.AdaptVisualizationGrid =1;"
-        write(29,*) "View.MaxRecursionLevel = 2;"
         write(29,*) "View.IntervalsType = 3;"
         write(29,*) "View.Light = 0;"
         write(29,*) "View ""Re ",tE_H,"z: n = ",
@@ -271,12 +209,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'v_re.pos'
       open (unit=30,file=tchar)
-        write(30,*) "View.ArrowSizeMax = 40;"
-        write(30,*) "View.ArrowSizeMin = 0;"
-        write(30,*) "General.Color.Background = {255,255,255};"
-        write(30,*) "General.Color.BackgroundGradient={255,255,255};"
         write(30,*) "View.AdaptVisualizationGrid =1;"
-        write(30,*) "View.MaxRecursionLevel = 2;"
         write(30,*) "View.IntervalsType = 3;"
         write(30,*) "View.Light = 0;"
         write(30,*) "View ""Re ",tE_H,": n = ",
@@ -285,12 +218,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           //'_ind.pos'
       open (unit=31,file=tchar)
-        write(31,*) "View.ArrowSizeMax = 40;"
-        write(31,*) "View.ArrowSizeMin = 0;"
-        write(31,*) "General.Color.Background = {255,255,255};"
-        write(31,*) "General.Color.BackgroundGradient={255,255,255};"
         write(31,*) "View.AdaptVisualizationGrid =1;"
-        write(31,*) "View.MaxRecursionLevel = 2;"
         write(31,*) "View.IntervalsType = 3;"
         write(31,*) "View.Light = 0;"
         write(31,*) "View ""Refrac. index ", " "" {"
@@ -298,12 +226,7 @@ C
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // '_abs2_eE.pos'
       open (unit=32,file=tchar)
-        write(32,*) "View.ArrowSizeMax = 40;"
-        write(32,*) "View.ArrowSizeMin = 0;"
-        write(32,*) "General.Color.Background = {255,255,255};"
-        write(32,*) "General.Color.BackgroundGradient={255,255,255};"
         write(32,*) "View.AdaptVisualizationGrid =1;"
-        write(32,*) "View.MaxRecursionLevel = 2;"
         write(32,*) "View.IntervalsType = 3;"
         write(32,*) "View.Light = 0;"
         write(32,*) "View ""|",tE_H,"|^2: n = ",
@@ -321,16 +244,15 @@ C
         sol_max(4) = 0.0d0
         do iel=1,nel
           typ_e = type_el(iel)
-          r_index = real(n_eff(typ_e))
-C          im_index = imag(sqrt(eps_eff(typ_e)))
-C          abs_index = abs(sqrt(eps_eff(typ_e)))
+          r_index = typ_e
           zz = 0.0d0
           do i=1,nnodes
             i1 = table_nod(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
-            ls_index(i) = r_index
+            ls_index(i) = 1
+cc            ls_index(i) = r_index
 C            ls_im_index(i) = im_index
 C            ls_abs_index(i) = abs_index
           enddo
@@ -352,8 +274,6 @@ C            sol_el_abs2_iD(i) = 0.0
                 sol_el_abs2(i) = sol_el_abs2(i) + abs(z_tmp1)**2
                 sol_el_abs2_eE(i) = sol_el_abs2_eE(i) +
      *               ls_index(i)**2 * abs(z_tmp1)**2
-C                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
-C     *               ls_im_index(i)**2 * abs(z_tmp1)**2
               enddo
             else
               do j=1,3
@@ -362,14 +282,12 @@ C     *               ls_im_index(i)**2 * abs(z_tmp1)**2
                 sol_el_abs2(i) = sol_el_abs2(i) + abs(z_tmp1)**2
                 sol_el_abs2_eE(i) = sol_el_abs2_eE(i) +
      *               ls_index(i)**2 * abs(z_tmp1)**2
-C                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
-C     *               ls_im_index(i)**2 * abs(z_tmp1)**2
               enddo
             endif
-            if (dble(sol_max(4)) .lt. sol_el_abs2(i)) then
-              sol_max(1) = sol_el(1,i)
-              sol_max(2) = sol_el(2,i)
-              sol_max(3) = sol_el(3,i)
+            if (sol_max(4) .lt. sol_el_abs2(i)) then
+              sol_max(1) = real(sol_el(1,i))
+              sol_max(2) = real(sol_el(2,i))
+              sol_max(3) = real(sol_el(3,i))
               sol_max(4) = sol_el_abs2(i)
             endif
           enddo
@@ -408,12 +326,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'x_im.pos'
       open (unit=27,file=tchar)
-        write(27,*) "View.ArrowSizeMax = 40;"
-        write(27,*) "View.ArrowSizeMin = 0;"
-        write(27,*) "General.Color.Background = {255,255,255};"
-        write(27,*) "General.Color.BackgroundGradient={255,255,255};"
         write(27,*) "View.AdaptVisualizationGrid =1;"
-        write(27,*) "View.MaxRecursionLevel = 2;"
         write(27,*) "View.IntervalsType = 3;"
         write(27,*) "View.Light = 0;"
         write(27,*) "View ""Im ",tE_H,"x: n = ",
@@ -422,12 +335,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'y_im.pos'
       open (unit=28,file=tchar)
-        write(28,*) "View.ArrowSizeMax = 40;"
-        write(28,*) "View.ArrowSizeMin = 0;"
-        write(28,*) "General.Color.Background = {255,255,255};"
-        write(28,*) "General.Color.BackgroundGradient={255,255,255};"
         write(28,*) "View.AdaptVisualizationGrid =1;"
-        write(28,*) "View.MaxRecursionLevel = 2;"
         write(28,*) "View.IntervalsType = 3;"
         write(28,*) "View.Light = 0;"
         write(28,*) "View ""Im ",tE_H,"y: n = ",
@@ -436,12 +344,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'z_im.pos'
       open (unit=29,file=tchar)
-        write(29,*) "View.ArrowSizeMax = 40;"
-        write(29,*) "View.ArrowSizeMin = 0;"
-        write(29,*) "General.Color.Background = {255,255,255};"
-        write(29,*) "General.Color.BackgroundGradient={255,255,255};"
         write(29,*) "View.AdaptVisualizationGrid =1;"
-        write(29,*) "View.MaxRecursionLevel = 2;"
         write(29,*) "View.IntervalsType = 3;"
         write(29,*) "View.Light = 0;"
         write(29,*) "View ""Im ",tE_H,"z: n = ",
@@ -450,12 +353,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'v_im.pos'
       open (unit=30,file=tchar)
-        write(30,*) "View.ArrowSizeMax = 40;"
-        write(30,*) "View.ArrowSizeMin = 0;"
-        write(30,*) "General.Color.Background = {255,255,255};"
-        write(30,*) "General.Color.BackgroundGradient={255,255,255};"
         write(30,*) "View.AdaptVisualizationGrid =1;"
-        write(30,*) "View.MaxRecursionLevel = 2;"
         write(30,*) "View.IntervalsType = 3;"
         write(30,*) "View.Light = 0;"
         write(30,*) "View ""Im ",tE_H,": n = ",
@@ -516,12 +414,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'x_abs.pos'
       open (unit=27,file=tchar)
-        write(27,*) "View.ArrowSizeMax = 40;"
-        write(27,*) "View.ArrowSizeMin = 0;"
-        write(27,*) "General.Color.Background = {255,255,255};"
-        write(27,*) "General.Color.BackgroundGradient={255,255,255};"
         write(27,*) "View.AdaptVisualizationGrid =1;"
-        write(27,*) "View.MaxRecursionLevel = 2;"
         write(27,*) "View.IntervalsType = 3;"
         write(27,*) "View.Light = 0;"
         write(27,*) "View ""|",tE_H,"x|: n = ",
@@ -530,12 +423,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'y_abs.pos'
       open (unit=28,file=tchar)
-        write(28,*) "View.ArrowSizeMax = 40;"
-        write(28,*) "View.ArrowSizeMin = 0;"
-        write(28,*) "General.Color.Background = {255,255,255};"
-        write(28,*) "General.Color.BackgroundGradient={255,255,255};"
         write(28,*) "View.AdaptVisualizationGrid =1;"
-        write(28,*) "View.MaxRecursionLevel = 2;"
         write(28,*) "View.IntervalsType = 3;"
         write(28,*) "View.Light = 0;"
         write(28,*) "View ""|",tE_H,"y|: n = ",
@@ -544,12 +432,7 @@ c
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
      *           // '_' // tval // 'z_abs.pos'
       open (unit=29,file=tchar)
-        write(29,*) "View.ArrowSizeMax = 40;"
-        write(29,*) "View.ArrowSizeMin = 0;"
-        write(29,*) "General.Color.Background = {255,255,255};"
-        write(29,*) "General.Color.BackgroundGradient={255,255,255};"
         write(29,*) "View.AdaptVisualizationGrid =1;"
-        write(29,*) "View.MaxRecursionLevel = 2;"
         write(29,*) "View.IntervalsType = 3;"
         write(29,*) "View.Light = 0;"
         write(29,*) "View ""|",tE_H,"z|: n = ",
@@ -594,14 +477,14 @@ c
 c###############################################
 c
 c     ST : Scalar triangle
-10    format("ST2(",f10.6,17(",",f10.6),"){",
+10    format("ST2(",f16.6,17(",",f16.6),"){",
      *     g24.16,5(",",g24.16),"};")
 
 c     VT : Vector triangle
-11    format("VT(",f10.6,8(",",f10.6),"){",
+11    format("VT(",f16.6,8(",",f16.6),"){",
      *     g24.16,8(",",g24.16),"};")
 
-c 11    format("VT2(",f10.6,17(",",f10.6),"){",
+c 11    format("VT2(",f16.6,17(",",f16.6),"){",
 c     *     g24.16,17(",",g24.16),"};")
 
       if (debug .eq. 1) then
@@ -609,8 +492,6 @@ c     *     g24.16,17(",",g24.16),"};")
         write(ui,*) "gmsh_post_process: plot_val = ", plot_val
         write(ui,*) "gmsh_post_process: sol_max = ", sol_max
       endif
-C
-      deallocate(sol_avg)
-C
+c
       return
       end

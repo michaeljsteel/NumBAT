@@ -6,7 +6,7 @@ C
      *  nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,
      *  eps_lst, debug, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel), debug
@@ -19,10 +19,9 @@ c
       complex*16 p_tensor(3,3,3,3,nb_typ_el)
 
 c     Local variables
-      integer*8 nnodes0
-      parameter (nnodes0 = 6)
-      double precision xel(2,nnodes0)
-      complex*16 basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
+
+      double precision xel(2,nnodes_0)
+      complex*16 basis_overlap(3*nnodes_0,3*nnodes_0,3,3*nnodes_0)
       complex*16 E1star, E2, Ustar, eps
       integer*8 i, j, k, l, j1, typ_e
       integer*8 iel, ind_ip, i_eq
@@ -30,8 +29,8 @@ c     Local variables
       integer*8 ltest, ind_lp, l_eq
       integer*8 itrial, ui, ival1s, ival2s, ival3s
       complex*16 eps_lst(nb_typ_el)
-      complex*16 zt1, ii
-      double precision mat_B(2,2), mat_T(2,2), eps_0
+      complex*16 zt1
+      double precision mat_B(2,2), mat_T(2,2)
 c
 c     NQUAD: The number of quadrature points used in each element.
       integer*8 nquad, nquad_max, iq
@@ -41,9 +40,7 @@ C       ! Limit to P2 polynomials
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
       integer*8 info_curved, n_curved
-      double precision r_tmp1, ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
+      double precision r_tmp1
       complex*16 coeff_1, coeff_2
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
@@ -69,8 +66,8 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      eps_0 = 8.854187817d-12
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
+
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "photoelastic_int: problem nnodes = ", nnodes
@@ -149,20 +146,20 @@ c           Isoparametric element ! fixed 2024/6/12
 c          grad_i  = gradient on the actual triangle
 c          grad_i  = Transpose(mat_T)*grad_i0
 c          Calculation of the matrix-matrix product:
-          call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
-     *           grad2_mat0, 2, ZERO, grad2_mat, 2)
+          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,
+     *           grad2_mat0, 2, D_ZERO, grad2_mat, 2)
           coeff_1 = ww * abs(det)
 C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
-              do jtest=1,nnodes0
+              do jtest=1,nnodes_0
                 do j_eq=1,3
                   ind_jp = j_eq + 3*(jtest-1)
 C                 Gradient of transverse components of basis function
                   do k_eq=1,2
-                    do ltest=1,nnodes0
+                    do ltest=1,nnodes_0
                       do l_eq=1,3
                         ind_lp = l_eq + 3*(ltest-1)
                         zt1 = phi2_list(itrial) * phi2_list(jtest)
@@ -180,11 +177,11 @@ C                 Gradient of longitudinal components of basis function,
 C                 which is i*beta*phi because field is assumed to be of
 C                 form e^{i*beta*z} phi.
                   k_eq=3
-                  do ltest=1,nnodes0
+                  do ltest=1,nnodes_0
                     do l_eq=1,3
                       ind_lp = l_eq + 3*(ltest-1)
                       zt1 = phi2_list(itrial) * phi2_list(jtest)
-     *                        * phi2_list(ltest) * (-ii * beta_AC)
+     *                        * phi2_list(ltest) * (-C_IM_ONE* beta_AC)
                       coeff_2 = p_tensor(i_eq,j_eq,k_eq,l_eq,typ_e)
                       eps = eps_lst(typ_e)
                       zt1 = coeff_1 * coeff_2 * eps**2 * zt1
@@ -205,15 +202,15 @@ C now multiply by specific field values for modes of interest.
 C
 C If only want overlap of one given combination of EM modes and AC mode.
         if (ival1 .ge. 0 .and. ival2 .ge. 0 .and. ival3 .ge. 0) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               E1star = conjg(soln_EM_S(i_eq,itrial,ival1,iel))
-              do jtest=1,nnodes0
+              do jtest=1,nnodes_0
                 do j_eq=1,3
                   ind_jp = j_eq + 3*(jtest-1)
                   E2 = soln_EM_p(j_eq,jtest,ival2,iel)
-                  do ltest=1,nnodes0
+                  do ltest=1,nnodes_0
                     do l_eq=1,3
                       ind_lp = l_eq + 3*(ltest-1)
                       Ustar = conjg(soln_AC(l_eq,ltest,ival3,iel))
@@ -233,15 +230,15 @@ C
 C If want overlap of given EM mode 1 and 2 and all AC modes.
         else if (ival1 .ge. 0 .and. ival2 .ge. 0 .and.
      *                                           ival3 .eq. -1) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
                 E1star = conjg(soln_EM_S(i_eq,itrial,ival1,iel))
-              do jtest=1,nnodes0
+              do jtest=1,nnodes_0
                 do j_eq=1,3
                   ind_jp = j_eq + 3*(jtest-1)
                   E2 = soln_EM_p(j_eq,jtest,ival2,iel)
-                  do ltest=1,nnodes0
+                  do ltest=1,nnodes_0
                     do l_eq=1,3
                       ind_lp = l_eq + 3*(ltest-1)
                       do ival3s = 1,nval_AC
@@ -263,16 +260,16 @@ C
 C If want overlap of given EM mode 1 and all EM modes 2 and all AC modes.
         else if (ival1 .ge. 0 .and. ival2 .eq. -1 .and.
      *                                            ival3 .eq. -1) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               E1star = conjg(soln_EM_S(i_eq,itrial,ival1,iel))
-              do jtest=1,nnodes0
+              do jtest=1,nnodes_0
                 do j_eq=1,3
                   ind_jp = j_eq + 3*(jtest-1)
                   do ival2s = 1,nval_EM_p
                     E2 = soln_EM_p(j_eq,jtest,ival2s,iel)
-                    do ltest=1,nnodes0
+                    do ltest=1,nnodes_0
                       do l_eq=1,3
                         ind_lp = l_eq + 3*(ltest-1)
                         do ival3s = 1,nval_AC
@@ -295,16 +292,16 @@ C
 C If want overlap of given EM mode 2 and all EM modes 1 and all AC modes.
         else if (ival1 .eq. -1 .and. ival2 .ge. 0 .and.
      *                                            ival3 .eq. -1) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               do ival1s = 1,nval_EM_S
                 E1star = conjg(soln_EM_S(i_eq,itrial,ival1s,iel))
-                do jtest=1,nnodes0
+                do jtest=1,nnodes_0
                   do j_eq=1,3
                     ind_jp = j_eq + 3*(jtest-1)
                     E2 = soln_EM_p(j_eq,jtest,ival2,iel)
-                    do ltest=1,nnodes0
+                    do ltest=1,nnodes_0
                       do l_eq=1,3
                         ind_lp = l_eq + 3*(ltest-1)
                         do ival3s = 1,nval_AC
@@ -327,17 +324,17 @@ C
 C If want overlap of all EM mode 1, all EM modes 2 and all AC modes.
         else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                                             ival3 .eq. -1) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               do ival1s = 1,nval_EM_S
                 E1star = conjg(soln_EM_S(i_eq,itrial,ival1s,iel))
-                do jtest=1,nnodes0
+                do jtest=1,nnodes_0
                   do j_eq=1,3
                     ind_jp = j_eq + 3*(jtest-1)
                     do ival2s = 1,nval_EM_p
                     E2 = soln_EM_p(j_eq,jtest,ival2s,iel)
-                    do ltest=1,nnodes0
+                    do ltest=1,nnodes_0
                       do l_eq=1,3
                         ind_lp = l_eq + 3*(ltest-1)
                         do ival3s = 1,nval_AC
@@ -361,17 +358,17 @@ C
 C If want overlap of all EM mode 1, all EM modes 2 and one AC mode.
         else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                                             ival3 .ge. 0) then
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               do ival1s = 1,nval_EM_S
                 E1star = conjg(soln_EM_S(i_eq,itrial,ival1s,iel))
-                do jtest=1,nnodes0
+                do jtest=1,nnodes_0
                   do j_eq=1,3
                     ind_jp = j_eq + 3*(jtest-1)
                     do ival2s = 1,nval_EM_p
                       E2 = soln_EM_p(j_eq,jtest,ival2s,iel)
-                      do ltest=1,nnodes0
+                      do ltest=1,nnodes_0
                         do l_eq=1,3
                           ind_lp = l_eq + 3*(ltest-1)
                           Ustar = conjg(soln_AC(l_eq,ltest,ival3,iel))
@@ -398,7 +395,7 @@ C Apply scaling that sits outside of integration.
       do i=1,nval_EM_S
         do j=1,nval_EM_p
           do k=1,nval_AC
-            overlap(i,j,k) = overlap(i,j,k) * (-1.0d0) * eps_0
+            overlap(i,j,k) = overlap(i,j,k) * (-1.0d0) * SI_EPS_0
           enddo
         enddo
       enddo

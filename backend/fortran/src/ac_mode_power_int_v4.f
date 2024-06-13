@@ -1,12 +1,12 @@
 C Calculate the overlap integral of an AC mode with itself using
-C analytic expressions for basis function overlaps on linear elements. 
+C analytic expressions for basis function overlaps on linear elements.
 C
-      subroutine AC_mode_power_int_v4 (nval, 
+      subroutine AC_mode_power_int_v4 (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, c_tensor, beta_AC, Omega_AC, soln_AC,
      *  overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nval, ival
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel)
@@ -20,23 +20,22 @@ c      complex*16 x(2,npt)
       complex*16 c_tensor(6,6,nb_typ_el)
 
 c     Local variables
-      integer*8 nnodes0
-      parameter (nnodes0 = 6)
-      integer*8 nod_el_p(nnodes0)
-      double precision xel(2,nnodes0)
-      complex*16 basis_overlap(3*nnodes0,3*nnodes0)
+
+      integer*8 nod_el_p(nnodes_0)
+      double precision xel(2,nnodes_0)
+      complex*16 basis_overlap(3*nnodes_0,3*nnodes_0)
       complex*16 U, Ustar
       integer*8 i, j, j1, typ_e
       integer*8 iel, ind_ip, i_eq
       integer*8 ltest, ind_lp, l_eq
       integer*8 itrial, ui
 
-      complex*16 z_tmp1, ii, c_tensor_el(6,6)
+      complex*16 z_tmp1, c_tensor_el(6,6)
 
 C
 C
 Cf2py intent(in) nval, nel, npt, nnodes, table_nod
-Cf2py intent(in) type_el, x, nb_typ_el, c_tensor, beta_AC 
+Cf2py intent(in) type_el, x, nb_typ_el, c_tensor, beta_AC
 Cf2py intent(in) soln_AC, Omega_AC
 C
 Cf2py depend(table_nod) nnodes, nel
@@ -52,10 +51,9 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      ii = cmplx(0.0d0, 1.0d0, 8)
 C
       if ( nnodes .ne. 6 ) then
-        write(ui,*) "AC_mode_power_int_v4: problem nnodes = ", 
+        write(ui,*) "AC_mode_power_int_v4: problem nnodes = ",
      *              nnodes
         write(ui,*) " --------- nnodes should be equal to 6 !"
         write(ui,*) "AC_mode_power_int_v4: Aborting..."
@@ -89,11 +87,11 @@ cccccccccc
 C Having calculated overlap of basis functions on element
 C now multiply by specific field values for modes of interest.
         do ival=1,nval
-          do itrial=1,nnodes0
+          do itrial=1,nnodes_0
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               Ustar = conjg(soln_AC(i_eq,itrial,ival,iel))
-              do ltest=1,nnodes0
+              do ltest=1,nnodes_0
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   U = soln_AC(l_eq,ltest,ival,iel)
@@ -110,12 +108,12 @@ cccccccccccc
       enddo
 C Multiply through prefactor
       do i=1,nval
-        overlap(i) = 2.0d0 * ii * Omega_AC(i) * overlap(i)
+        overlap(i) = 2.0d0 * C_IM_ONE* Omega_AC(i) * overlap(i)
       enddo
 
 C       open (unit=26,file="Output/overlap_v4.txt")
 C       do i=1,nval
-C         write(26,*) i, Omega_AC(i), abs(overlap(i)), 
+C         write(26,*) i, Omega_AC(i), abs(overlap(i)),
 C      *              overlap(i)
 C       enddo
 C       do i=1,nval

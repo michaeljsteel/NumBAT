@@ -12,8 +12,8 @@ c
 c     nvect (I)              : dimension de l'espace de Krylov
 c     n_modes (I)               : nombre de valeurs propres desirees.
 c     neq (I)                : nombre d'equations
-c     workd (DP)             : matrice de travail pour dnaupd, 
-c                              taille  3 neq 
+c     workd (DP)             : matrice de travail pour dnaupd,
+c                              taille  3 neq
 c     resid   (DP)           : vecteur de trvail pour dnaupd,
 c                              taille neq
 c     v (DP)                 : matrice des vecteurs de Schur,
@@ -28,7 +28,7 @@ c     long (I)               : longueur des super-vecteurs pour
 c                              les matrices.
 c     ddot (DP)              : fonction appelee pour calculer
 c                              le produit scalaire
-c     trav(DP)               : espace de travail pour dnaupd, 
+c     trav(DP)               : espace de travail pour dnaupd,
 c                              taille ltrav>= 3*nvect^2+6*nvect
 c     action                 : 0: redemarrage avec un vecteur aleatoire
 c                              1: lire une vecteur initial                                 c
@@ -37,18 +37,18 @@ c     ---------------------
 c
 c     reel (DP)              : parties reelles, taille nvect
 c     imag (DP)              : parties imaginaires, taille nvect
-c     
+c
 c     ------------------------------------------------------------------
 c
-      subroutine valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, 
+      subroutine valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav,
      *  tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
-     *  vect1, vect2, workd, resid, v, d, trav, vp,   
+     *  vect1, vect2, workd, resid, v, d, trav, vp,
      *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv, ls_data,
      *  numeric, control, info_umf, debug, errno_arpack, emsg_arpack)
 c
 c     ------------------------------------------------------------------
 c
-      implicit none
+      use numbatmod
 c
       integer*8 neq, nonz, n_conv, i_base
       integer*8 row_ind(nonz), col_ptr(neq+1)
@@ -76,15 +76,15 @@ c      integer*8 max_nvect
 c      parameter(max_nvect=3000) ! previously 1500
 c
       integer alloc_stat
-C       !  (3*max_nvect), 
-      complex*16, dimension(:), allocatable :: workev 
+C       !  (3*max_nvect),
+      complex*16, dimension(:), allocatable :: workev
 C       !  (max_nvect)
-      double precision, dimension(:), allocatable :: rwork  
+      double precision, dimension(:), allocatable :: rwork
 C       !  (max_nvect)
-      logical, dimension(:), allocatable :: select  
+      logical, dimension(:), allocatable :: select
 
       integer*8 errno_arpack
-      character*2048 emsg_arpack
+      character(len=EMSG_LENGTH) emsg_arpack
 
 
 c     Local variables
@@ -166,7 +166,7 @@ c       set default parameters
 c
 c     umfpack * report status (print level = control(1)) :
 c     print level = 0 or less : No output, even when an error occurs.
-c     print level = 1 (default value) : then error messages are printed, 
+c     print level = 1 (default value) : then error messages are printed,
 c                      and nothing is printed if the status is UMFPACK OK.
 c     print level = 2 or more : then the status is always printed.
 c
@@ -176,7 +176,7 @@ c       error messages only
         call umf4zpcon (control)
 
 c       pre-order and symbolic analysis
-        call umf4zsym (neq, neq, col_ptr, row_ind, 
+        call umf4zsym (neq, neq, col_ptr, row_ind,
      *         mat1_re, mat1_im, symbolic, control, info_umf)
 c
 c       print statistics computed so far
@@ -204,7 +204,7 @@ c       check umf4zsym error condition
         endif
 
 c       numeric factorization
-        call umf4znum (col_ptr, row_ind, mat1_re, 
+        call umf4znum (col_ptr, row_ind, mat1_re,
      *         mat1_im, symbolic, numeric, control, info_umf)
 
 c       print statistics for the numeric factorization
@@ -258,9 +258,9 @@ c
       ls_data(2) = time2_fact
       if (debug .eq. 1) then
         write(ui,*) "valpr_64: factorisation completed"
-        write(ui,*) "LU factorisation : CPU time = ",  
+        write(ui,*) "LU factorisation : CPU time = ",
      *         (time2_fact-time1_fact)
-c , 
+c ,
 c     *         100*(time2_fact-time1_fact)/(time2-time1),"%"
       endif
 c
@@ -287,7 +287,7 @@ c
 c     On commence le travail avec znaupd
 c     ----------------------------------
 c
-c      ------------------------------------------------------------ 
+c      ------------------------------------------------------------
 c     | Le parametre IDO_32 est utilise pour la communication.        |
 c     | A l'etape initiale il doit valoir 0.                       |
 c     | Le choix INFO_32=0 correspond a la construction par           |
@@ -302,7 +302,7 @@ c      ------------------------------------------------------------
       nvect_32 = int(nvect, 4)
       ltrav_32 = int(ltrav, 4)
 
-      ido_32 = 0 
+      ido_32 = 0
       iparam_32(1) = 1
       iparam_32(3) = int(itermax, 4)
 c      iparam_32(7) = 3
@@ -311,9 +311,9 @@ c      iparam_32(7) = 3
 ccccccccccccccccccc
 c
       compteur = 0
- 
+
 c      ----------------------------------------------------
-c     | Boucle principale en mode de communication inverse | 
+c     | Boucle principale en mode de communication inverse |
 c      ----------------------------------------------------
 c
       call cpu_time(time1_arpack)
@@ -321,8 +321,8 @@ c
 c
 20    continue
 c
-      call znaupd (ido_32, bmat, neq_32, which, n_modes_32, tol, 
-     *             resid, nvect_32, v, neq_32, iparam_32, 
+      call znaupd (ido_32, bmat, neq_32, which, n_modes_32, tol,
+     *             resid, nvect_32, v, neq_32, iparam_32,
      *             ipntr_32, workd, trav, ltrav_32, rwork, info_32)
 c
       compteur = compteur + 1
@@ -337,7 +337,7 @@ c     | x = workd(ipntr_32(1)) et y = workd(ipntr_32(2))           |
 c      ------------------------------------------------------
 
          call zcopy(neq_32, workd(ipntr_32(1)), 1,vect1, 1)
-         call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, 
+         call z_mxv_csc (neq, vect1, vect2, nonz, row_ind,
      *     col_ptr, mat2)
 c
          do i=1,neq
@@ -347,7 +347,7 @@ c
 c
 c       solve Ax=b, without iterative refinement
         sys = 0
-        call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im, 
+        call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im,
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
@@ -359,7 +359,7 @@ c       solve Ax=b, without iterative refinement
 c
          call zcopy(neq_32, vect2, 1, workd(ipntr_32(2)), 1)
          go to 20
-c            
+c
          else if (ido_32.eq.2) then
 c
          write(ui,*) 'VALPR_64: ATTENTION ido_32 = ', ido_32
@@ -371,7 +371,7 @@ c          | x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2)) |
 c           ----------------------------------------------
 
             call zcopy(neq_32, workd(ipntr_32(1)), 1, vect1, 1)
-            call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, 
+            call z_mxv_csc (neq, vect1, vect2, nonz, row_ind,
      *        col_ptr, mat2)
 c
          do i=1,neq
@@ -381,7 +381,7 @@ c
 c
 c       solve Ax=b, without iterative refinement
         sys = 0
-        call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im, 
+        call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im,
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
@@ -392,8 +392,8 @@ c       solve Ax=b, without iterative refinement
         enddo
             call zcopy(neq_32, vect2,1, workd(ipntr_32(2)), 1)
             go to 20
-           
-         end if 
+
+         end if
 
 c      ---------------------------------------------------
 c     | Either we have convergence, or there is an error. |
@@ -411,7 +411,7 @@ c      ---------------------------------------------------
           write(ui,*) " Requested eigen_modesues = ", iparam_32(5)
           write(ui,*) " Converged eigen_modesues = ", n_modes_32
           write(ui,*) " You might try:"
-          write(ui,*) "  1) Increasing the requested number", 
+          write(ui,*) "  1) Increasing the requested number",
      *     " of eigen_modesues"
           write(ui,*) "  2) Increasing the grid resolution"
         endif
@@ -419,9 +419,9 @@ c      ---------------------------------------------------
           write(ui,*) "VALPR_64: Shift could not be applied."
         endif
         write(ui,*) "VALPR_64: For details on znaupd errors see",
-     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html" 
+     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html"
 c        write(ui,*) "VALPR_64: iparam_32(5) = ", iparam_32(5), n_modes_32
-c        write(ui,*) "VALPR_64: number of converged values = ", 
+c        write(ui,*) "VALPR_64: number of converged values = ",
 c     *                iparam_32(5)
         write(ui,*)
       endif
@@ -438,18 +438,18 @@ c                          possibly from a previous run.
 c          Error flag on output.
 c          =  0: Normal exit.
 c          =  1: Maximum number of iterations taken.
-c                All possible eigen_modesues of OP has been found. IPARAM(5)  
+c                All possible eigen_modesues of OP has been found. IPARAM(5)
 c                returns the number of wanted converged Ritz values.
 c          =  2: No longer an informational error. Deprecated starting
 c                with release 2 of ARPACK.
-c          =  3: No shifts could be applied during a cycle of the 
-c                Implicitly restarted Arnoldi iteration. One possibility 
-c                is to increase the size of NCV relative to NEV. 
+c          =  3: No shifts could be applied during a cycle of the
+c                Implicitly restarted Arnoldi iteration. One possibility
+c                is to increase the size of NCV relative to NEV.
 c                See remark 4 below.
 c          = -1: N must be positive.
 c          = -2: NEV must be positive.
 c          = -3: NCV-NEV >= 2 and less than or equal to N.
-c          = -4: The maximum number of Arnoldi update iteration 
+c          = -4: The maximum number of Arnoldi update iteration
 c                must be greater than zero.
 c          = -5: WHICH must be one of 'LM', 'SM', 'LR', 'SR', 'LI', 'SI'
 c          = -6: BMAT must be one of 'I' or 'G'.
@@ -470,11 +470,11 @@ c      ---------------------------------------------------
         write(ui,*) "VALPR_64: The znaupd error flag has the value ",
      *   "info_32=", info_32
          write(ui,*) "VALPR_64: For details on znaupd errors see",
-     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html" 
+     *    " https://www.caam.rice.edu/software/ARPACK/UG/node138.html"
          write(ui,*) 'Aborting...'
          stop
 
-      else 
+      else
 
 c      -------------------------------------
 c     | Ici on recupere les valeurs propres |
@@ -482,10 +482,10 @@ c      -------------------------------------
 
          rvec = .true.
 
-         call zneupd (rvec, 'A', select, d, v, neq_32, shift2, 
-     *                workev, bmat, neq_32, which, n_modes_32, tol, 
-     *                resid, nvect_32, v, neq_32, iparam_32, ipntr_32, 
-     *                workd, trav, ltrav_32, rwork, ierr_32)        
+         call zneupd (rvec, 'A', select, d, v, neq_32, shift2,
+     *                workev, bmat, neq_32, which, n_modes_32, tol,
+     *                resid, nvect_32, v, neq_32, iparam_32, ipntr_32,
+     *                workd, trav, ltrav_32, rwork, ierr_32)
 c      ------------------------------------------------------------
 c     | La partie reelle d'une valeur propre se trouve dans la     |
 c     | premiere colonne du tableau D, la partie imaginaire est    |
@@ -501,7 +501,7 @@ c      -----------------------------------------------------
 c     | Error condition: Check the documentation of DNEUPD. |
 c      -----------------------------------------------------
 
-            write(ui,*) 'VALPR_64:' 
+            write(ui,*) 'VALPR_64:'
             write(ui,*) ' Error with _neupd, info_32 = ', ierr_32
             write(ui,*) ' Check the documentation of _neupd. '
             write(ui,*) 'Aborting...'
@@ -531,5 +531,5 @@ c
       deallocate(workev, rwork, STAT=alloc_stat)
       deallocate(select)
 c
-      return 
+      return
       end
