@@ -20,8 +20,8 @@ MYPLAT="linux_inteloneapi"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
-#COMPILER_VENDOR="gcc"
-COMPILER_VENDOR="intel"
+COMPILER_VENDOR="gcc"
+#COMPILER_VENDOR="intel"
 
 
 ifeq ($(COMPILER_VENDOR), "gcc")
@@ -35,13 +35,13 @@ CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
 else
 
-INTELCOMPDIR=/opt/intel/oneapi/compiler/latest
+INTELCOMPDIR=/opt/intel/oneapi/compiler/latest/bin
 #F_COMP_EXE = $(INTELCOMPDIR)/ifx
 F_COMP_EXE = $(INTELCOMPDIR)/ifx
 C_COMP_EXE = $(INTELCOMPDIR)/icx
 
-F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:modss
-CFLAGS=  /nologo /Ot /warn:all
+F77FLAGS= -nologo -fpp -O2 -warn all -warn noexternals -module mods
+CFLAGS=  -nologo -O2 -warn all
 F95FLAGS=$(F77FLAGS)
 
 
@@ -111,11 +111,6 @@ ifneq ($(UNAME_S), Linux)
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
 endif
 
-#F_COMP_EXE = g95
-F_COMP_EXE = f95
-F2PY = f2py3
-C_COMP_EXE = gcc
-
 ## Check from here until EndDefs
 ARPACK_INCL = -I /usr/local/include
 ARPACK_LIB  = -L /usr/local/lib -larpack
@@ -130,6 +125,8 @@ PYROOT = $(MYPYENV)
 PYBIN = $(PYROOT)/bin
 PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
 PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
+
+F2PY = $(PYBIN)/f2py
 
 MKL_INCL = -I $(MKLROOT)/include
 MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
@@ -202,18 +199,16 @@ $(error "Unknown platform: $(NUMBAT_PLATFORM)" )
 endif
 
 
-# TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
-#       find a better way
-SRCS_MODS = src/nbconsts_module.f95 src/numbatmod_module.f95 src/nbinterfaces_module.f95
+SRCS_MODS = src/numbatmod_module.f90 src/nbinterfaces_module.f90
 SRCS_F = $(wildcard src/*.f)
-SRCS_F95 = $(wildcard src/*.f95)
+SRCS_F95 = $(wildcard src/*.f90)
 
-OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
+OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f90=.o)
 OBJS = $(subst src,build,$(OBJSA))
 
-OBJS_MODA = $(SRCS_MODS:.f95=.o)
+OBJS_MODA = $(SRCS_MODS:.f90=.o)
 #OBJS_MOD= $(subst src,build,$(OBJS_MODA))
-MODULES_MODS = build/nbconsts_module.mod build/numbatmod_module.mod
+MODULES_MODS = build/numbatmod_module.mod build/nbinterfaces_module.mod
 
 tt:
 	echo $(SRCS_F)
@@ -221,7 +216,7 @@ tt:
 	echo $(OBJS_MOD)
 	echo $(MODULES_MODS)
 
-PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f95 \
+PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f90 \
 	em_mode_energy_int_v2_ez.f \
   em_mode_energy_int_ez.f photoelastic_int.f photoelastic_int_v2.f \
   ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
@@ -245,11 +240,11 @@ UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 mods: $(MODULES_MODS)
 
-build/%.mod : src/%.f95
+build/%.mod : src/%.f90
 	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
 
 # Any module file change will cause rebuilding of all .f files
-build/%.o : src/%.f95 $(MODULES_MODS)
+build/%.o : src/%.f90
 	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
 
 build/%.o : src/%.f $(MODULES_MODS)
@@ -284,57 +279,44 @@ FMETHOD=$(NumBAT_MOD)
 CMETHOD=null
 endif
 
-check:
-	echo $(F2PYLINK) $(FMETHOD) $(CMETHOD)
-
-$(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
-	echo "Old compilation method Step B"
-	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
-					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
-			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild
-
-$(FMETHOD).pyf: $(SRCS)
-	echo "Old compilation method Step A"
-	$(F2PY)  -h $(FMETHOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature  --lower
-	$(F2PY) -m $(FMETHOD)  $(PYINTERFACE_SRCS) --overwrite-signature  --lower  --build-dir build
-	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
-
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
 #build/$(NumBAT_MOD)-f2pywrappers2.f90
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
-$(CMETHOD).so: $(CMETHOD).pyf $(MODULES_MOD) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-	echo "New compilation method Step B"
-	#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-	#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).so
+$(CMETHOD).pyf: $(SRCS)
+	-rm $(F2PY_SRCS)
+	-mkdir build
+	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
+	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
+	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
+
+
+$(CMETHOD).so: $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).so
 
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
 		-fPIC -o $(UMFPACK_WRAPPER)
 
-$(CMETHOD).pyf: $(SRCS)
-	echo "New compilation method Step A"
-	-rm $(F2PY_SRCS)
-	-mkdir build
-	#cp /Library/Frameworks/Python.framework/Headers/Python.h src
-	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
-	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
-	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
 
 
 clean:
 	-rm -f $(SS_WRAP)/*.o
-	-rm -f build/*.o build/*.f build/*.c
-	-rm ./*.mod src/*.mod build/*.mod
+	-rm -f build/*.o build/*.f build/*.c build/*.f90
+	-rm ./*.mod src/*.mod build/*.mod 
+	-rm mods/*.mod mods/*genmod.mod mods/*genmod.f90
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 
 
+	#cp /Library/Frameworks/Python.framework/Headers/Python.h src
+	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
+
+#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
+#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $
 #TRASH SECTION
 
 

@@ -787,7 +787,7 @@ x0 y0 moveto
 (c     integer*8, dimension\(:\), allocatable :: iindex) N
 (c     complex*16, dimension\(:,:\), allocatable :: overlap_L) N
 (c     integer*8 errco) N
-(c     character*2048 emsg) N
+(c     character(len=EMSG_LENGTH) emsg) N
 (c) N
 (c     call array_size\(n_msh_pts, n_msh_el, n_modes,) N
 (c    *     int_max, cmplx_max, real_max, errco, emsg\)) N

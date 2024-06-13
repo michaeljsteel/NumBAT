@@ -46,7 +46,6 @@ c     NQUAD: The number of quadrature points used in each element.
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
       double precision mat_B(2,2), mat_T(2,2)
-      double precision pi
 C     Mode ordering
       integer*8 skip, PrintAll, pair_warning
       complex*16 betatmp1(1), betatmp2(1)
@@ -61,7 +60,6 @@ C
       ui = 6
       debug = 0
 c
-      pi = 3.141592653589793d0
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "orthogonal: problem nnodes = ", nnodes
@@ -129,7 +127,8 @@ c            if (det .le. 0) then
             endif
           else
 c           Isoparametric element
-            ! 24/6/12 Deleting first broken argument xx: p2_2d is diff to p1_2d.
+            ! 24/6/12 Deleting first broken argument xx:
+            ! p2_2d is diff to p1_2d.
             call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif

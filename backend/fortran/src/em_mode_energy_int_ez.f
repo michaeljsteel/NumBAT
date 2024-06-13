@@ -130,8 +130,8 @@ c            if (det .le. 0) then
               write(*,*) "EM_m_en_int: det <= 0: iel, det ", iel, det
             endif
           else
-c           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list,
+c           Isoparametric element, 2024-6-13 new form
+            call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
            if(abs(det) .lt. 1.0d-20) then

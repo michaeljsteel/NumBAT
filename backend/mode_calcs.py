@@ -328,8 +328,6 @@ class SimResult:
             m.analyse_mode(n_points=n_points)
 
     def _build_modes(self):
-        print('_building modes')
-
         for m in range(self.n_modes):
             if self.is_EM():
                 mode = ModeEM(self, m)
@@ -352,7 +350,6 @@ class SimResult:
         if not self.mode_set:
             self._build_modes()
 
-        print('mode', m, self.mode_set)
         return self.mode_set[m]
 
     def symmetry_classification(self, m):
