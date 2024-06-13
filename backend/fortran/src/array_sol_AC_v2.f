@@ -12,7 +12,8 @@ c
      *     x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
 
-      implicit none
+      use numbatmod
+
       integer*8 num_modes, n_msh_el, n_msh_pts, neq, nnodes
 c TODO: n_core seems to be never initialised. Is that code ever called?
       integer*8 n_core(2), type_el(n_msh_el)
@@ -28,22 +29,16 @@ c     sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 
 
 
 c     Local variables
-      integer*8 nnodes_0
-c     32-but integers for BLAS and LAPACK
-      parameter (nnodes_0 = 6)
-c
+
       double precision mode_comp(4)
       integer*8 nod_el_p(nnodes_0)
       double precision xel(2,nnodes_0)
       complex*16 sol_el(3,nnodes_0)
 
-      double precision ZERO, ONE
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
-c
+
       integer*8 j, i1, j1, inod, typ_e, debug
       integer*8 iel, ival, ival2, jp, ind_jp, j_eq
-      complex*16 ii, z_tmp1, z_tmp2, z_sol_max
+      complex*16 z_tmp1, z_tmp2, z_sol_max
 
       double precision x_min, x_max, y_min, y_max
       double precision x_mid, y_mid
@@ -53,9 +48,7 @@ c
       integer*8 i_sol_max, i_sol_max_tmp
       integer*8 i_component, i_component_tmp
 
-c
-c  ii = sqrt(-1)
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 c
       debug = 0
 c
@@ -180,14 +173,14 @@ c
             enddo
 c           The z-compoenent must be multiplied by ii in order to get the un-normalised z-compoenent
             j_eq=3
-                sol_el(j_eq,inod) = ii * sol_el(j_eq,inod)
+                sol_el(j_eq,inod) = C_IM_ONE* sol_el(j_eq,inod)
             do j=1,3
               z_tmp2 = sol_el(j,inod)
               sol(j,inod,ival,iel) = z_tmp2
               if (abs(z_sol_max) .lt. abs(z_tmp2)) then
                 z_sol_max = z_tmp2
 c               We want to normalise such the the z-component is purely imaginary complex number
-                if (j == 3) z_sol_max = - ii * z_sol_max
+                if (j == 3) z_sol_max = - C_IM_ONE* z_sol_max
                 i_sol_max = table_nod(inod,iel)
                 i_component = j
               endif

@@ -18,6 +18,10 @@ module numbatmod
    double precision, parameter :: D_ZERO = 0.0d0
    complex*16, parameter :: C_IM_ONE = cmplx(0.0d0, 1.0d0, 8)
 
+   double precision, parameter :: SI_C_SPEED = 299792458.0d0
+   double precision, parameter :: SI_EPS_0 = 8.8541878188d-12
+   double precision, parameter :: SI_MU_0 = 1.25663706127d-6
+
    integer*8, parameter :: nnodes_0 = 6
    integer*8, parameter :: nddl_t = 4
 

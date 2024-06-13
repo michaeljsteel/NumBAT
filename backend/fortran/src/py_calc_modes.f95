@@ -163,9 +163,9 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
 !  Declare work space arrays
 
-  call prepare_workspaces( n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
-  a_iwork, b_zwork, c_dwork, overlap_L, iindex, errco, emsg)
-  RETONERROR(errco)
+   call prepare_workspaces( n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
+      a_iwork, b_zwork, c_dwork, overlap_L, iindex, errco, emsg)
+   RETONERROR(errco)
 
 
 !CCCCCCCCCCCCCCCC POST F2PY CCCCCCCCCCCCCCCCCCCCCCCCC
@@ -258,14 +258,9 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 !
    ip_type_N_E_F = ip_table_E + 4*n_edge
 !
-   jp_x_N_E_F = 1
-   call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-      a_iwork(ip_table_N_E_F), a_iwork(ip_visite), a_iwork(ip_type_N_E_F), mesh_xy, b_zwork(jp_x_N_E_F))
-!
-   call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-      a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, b_zwork(jp_x_N_E_F), a_iwork(ip_visite))
 
    ! Offsets into the a_iwork workspace
+   jp_x_N_E_F = 1
    ip_period_N = ip_type_N_E_F + 2*n_ddl
    ip_nperiod_N = ip_period_N + n_msh_pts
    ip_period_N_E_F = ip_nperiod_N + n_msh_pts
@@ -273,9 +268,17 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    ip_eq = ip_nperiod_N_E_F + n_ddl
 
 
+   call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
+      a_iwork(ip_table_N_E_F), a_iwork(ip_visite), a_iwork(ip_type_N_E_F), mesh_xy, b_zwork(jp_x_N_E_F))
+!
+   call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
+      a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, b_zwork(jp_x_N_E_F), a_iwork(ip_visite))
+
+
+
 
    call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-   type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, b_zwork, int_max, cmplx_max, debug)
+      type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, b_zwork, int_max, cmplx_max, debug)
 
 ! !  Dirichlet or Neumann conditions
 !    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then

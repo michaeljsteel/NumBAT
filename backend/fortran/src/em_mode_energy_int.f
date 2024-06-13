@@ -1,5 +1,5 @@
 C Calculate the overlap integral of an EM mode with itself using
-C numerical quadrature.  
+C numerical quadrature.
 C
       subroutine EM_mode_energy_int (k_0, nval, nel, npt,
      *  nnodes, table_nod,
@@ -7,7 +7,7 @@ C
 c
 C     k_0 = 2 pi / lambda, where lambda in meters.
 C
-      implicit none
+      use numbatmod
       integer*8 nval, nel, npt, nnodes
       integer*8 table_nod(nnodes,nel)
       double precision x(2,npt)
@@ -18,8 +18,7 @@ C
       double precision k_0
 
 c     Local variables
-      integer*8 nnodes_0
-      parameter (nnodes_0 = 6)
+
       integer*8 nod_el_p(nnodes_0)
       complex*16 sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
       complex*16 vec_1(2*nnodes_0)
@@ -35,17 +34,16 @@ c     Local variables
       double precision phi3_list(10), grad3_mat0(2,10)
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
-      double precision ZERO, ONE, r_tmp1
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
-      complex*16 z_tmp1, z_tmp2, coeff_1, ii
+      double precision  r_tmp1
+
+      complex*16 z_tmp1, z_tmp2, coeff_1
 c
 c     NQUAD: The number of quadrature points used in each element.
       integer*8 nquad, nquad_max, iq
       parameter (nquad_max = 25)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
-      double precision xx(2), xx_g(2), ww, det, speed_c, mu_0
+      double precision xx(2), xx_g(2), ww, det
       double precision mat_B(2,2), mat_T(2,2)
 C
 C
@@ -64,9 +62,6 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
-      speed_c = 299792458
-      mu_0 = 1.2566370614d-6
-      ii = cmplx(0.0d0, 1.0d0, 8)
 
       debug = 0
 C
@@ -142,10 +137,10 @@ c           Isoparametric element
 c          grad_i  = gradient on the actual triangle
 c          grad_i  = Transpose(mat_T)*grad_i0
 c          Calculation of the matrix-matrix product:
-          call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
-     *      grad2_mat0, 2, ZERO, grad2_mat, 2)
-          call DGEMM('Transpose','N', 2, 10, 2, ONE, mat_T, 2,
-     *      grad3_mat0, 2, ZERO, grad3_mat, 2)
+          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,
+     *      grad2_mat0, 2, D_ZERO, grad2_mat, 2)
+          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2,
+     *      grad3_mat0, 2, D_ZERO, grad3_mat, 2)
           coeff_1 = ww * abs(det)
           do itrial=1,nnodes_0
             do i_eq=1,2
@@ -165,7 +160,7 @@ c                 Determine the basis vector
                   vec_phi_j(j_eq) = phi2_list(jtest)
                   z_tmp1 = vec_phi_i(1)*vec_phi_j(1) +
      *                        vec_phi_i(2)*vec_phi_j(2)
-                  z_tmp1 = coeff_1 * z_tmp1 / (k_0 * speed_c * mu_0)
+            z_tmp1 = coeff_1 * z_tmp1 / (k_0 * SI_C_SPEED * SI_MU_0)
                   basis_overlap(ind_ip,ind_jp) =
      *              basis_overlap(ind_ip,ind_jp) + z_tmp1
                 enddo
@@ -179,7 +174,7 @@ c               Determine the basis vector
                 enddo
                 z_tmp1 = vec_phi_i(1)*vec_phi_j(1) +
      *                        vec_phi_i(2)*vec_phi_j(2)
-                z_tmp1 = coeff_1 * z_tmp1 / (k_0 * speed_c * mu_0)
+                z_tmp1 = coeff_1 * z_tmp1 / (k_0 * SI_C_SPEED * SI_MU_0)
                 basis_overlap(ind_ip,ind_jp) =
      *            basis_overlap(ind_ip,ind_jp) + z_tmp1
               enddo

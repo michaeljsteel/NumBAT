@@ -1,11 +1,11 @@
 C Calculate the energy (not power) overlap integral of an EM mode with itself using
-C numerical quadrature.  
+C numerical quadrature.
 C
       subroutine EM_mode_E_energy_int (nval, nel, npt,
      *  nnodes, table_nod, type_el, nb_typ_el, n_lst,
      *  x, soln_EM, overlap)
 C
-      implicit none
+      use numbatmod
       integer*8 nval, nel, npt, nnodes
       integer*8 table_nod(nnodes,nel), nb_typ_el
       integer*8 type_el(nel)
@@ -15,8 +15,6 @@ C
       complex*16, dimension(nval) :: overlap
 
 c     Local variables
-      integer*8 nnodes_0
-      parameter (nnodes_0 = 6)
       integer*8 nod_el_p(nnodes_0)
       complex*16 basis_overlap(nnodes_0)
       integer*8 i, j, j1, typ_e
@@ -26,9 +24,7 @@ c     Local variables
       double precision xel(2,nnodes_0)
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
-      double precision ZERO, ONE, r_tmp1
-      parameter (ZERO = 0.0D0)
-      parameter (ONE = 1.0D0)
+      double precision  r_tmp1
       complex*16 coeff_1
       complex*16 E, Estar
 c
@@ -38,7 +34,7 @@ c     NQUAD: The number of quadrature points used in each element.
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
-      double precision mat_B(2,2), mat_T(2,2), eps_0
+      double precision mat_B(2,2), mat_T(2,2)
 C
 C
 Cf2py intent(in) nval, nel, npt
@@ -58,7 +54,7 @@ CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       ui = 6
       debug = 0
-      eps_0 = 8.854187817d-12
+
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "EM_mode_E_energy_int: problem nnodes = ", nnodes
@@ -134,13 +130,13 @@ c           Isoparametric element
 c          grad_i  = gradient on the actual triangle
 c          grad_i  = Transpose(mat_T)*grad_i0
 c          Calculation of the matrix-matrix product:
-          call DGEMM('Transpose','N', 2, 6, 2, ONE, mat_T, 2,
-     *      grad2_mat0, 2, ZERO, grad2_mat, 2)
+          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,
+     *      grad2_mat0, 2, D_ZERO, grad2_mat, 2)
           coeff_1 = ww * abs(det)
-C Calculate overlap of basis functions at quadrature point, 
+C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
           do itrial=1,nnodes_0
-            basis_overlap(itrial) = basis_overlap(itrial) + 
+            basis_overlap(itrial) = basis_overlap(itrial) +
      *        coeff_1 * phi2_list(itrial) * phi2_list(itrial)
           enddo
         enddo
@@ -152,7 +148,7 @@ C now multiply by specific field values for modes of interest.
             do i_eq=1,3
               Estar = conjg(soln_EM(i_eq,itrial,ival,iel))
               E = soln_EM(i_eq,itrial,ival,iel)
-              overlap(ival) = overlap(ival) + 
+              overlap(ival) = overlap(ival) +
      *          eps_lst(typ_e) * Estar * E * basis_overlap(itrial)
             enddo
           enddo
@@ -163,7 +159,7 @@ cccccccccccc
       enddo
 C Multiply through prefactor
       do i=1,nval
-        overlap(i) = 2.0 * overlap(i) * eps_0
+        overlap(i) = 2.0 * overlap(i) * SI_EPS_0
       enddo
 C
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

@@ -15,10 +15,38 @@ PYVERMAJMIN=3.12
 ## Set your other libraries
 
 MYPLAT="linux_inteloneapi"
+#MYPLAT="linux_intel_ifx"
 #MYPLAT="linux_vanilla"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
-MYPLAT="windows_inteloneapi"
+
+#COMPILER_VENDOR="gcc"
+COMPILER_VENDOR="intel"
+
+
+ifeq ($(COMPILER_VENDOR), "gcc")
+#F_COMP_EXE = g95
+F_COMP_EXE = f95
+C_COMP_EXE = gcc
+
+F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
+F95FLAGS=$(F77FLAGS)
+CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
+
+else
+
+INTELCOMPDIR=/opt/intel/oneapi/compiler/latest
+#F_COMP_EXE = $(INTELCOMPDIR)/ifx
+F_COMP_EXE = $(INTELCOMPDIR)/ifx
+C_COMP_EXE = $(INTELCOMPDIR)/icx
+
+F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:modss
+CFLAGS=  /nologo /Ot /warn:all
+F95FLAGS=$(F77FLAGS)
+
+
+endif
+
 
 
 # virtual env doesn't contain Python.h, so we grab it from here:
@@ -47,9 +75,7 @@ ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
 endif
 
-F_COMPILER = g95
-F_COMP_EXE = f95
-C_COMP_EXE = gcc
+
 
 ## Check from here until EndDefs
 ARPACK_INCL = -I /usr/local/include
@@ -78,14 +104,14 @@ NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
 
-else ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI
+else ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI with gfortran
 # Uses BLAS and LAPACK from free Intel OneApi MKL library
 
 ifneq ($(UNAME_S), Linux)
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
 endif
 
-F_COMPILER = g95
+#F_COMP_EXE = g95
 F_COMP_EXE = f95
 F2PY = f2py3
 C_COMP_EXE = gcc
@@ -115,6 +141,7 @@ GENLIB = -lrt
 NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
+else ifeq ($(PLAT), "MacOS")
 
 else ifeq ($(PLAT), "MacOS")
 # MacOS with standard LAPACK, BLAS and ARPACK
@@ -126,7 +153,7 @@ endif
 GCCROOT = /opt/local
 GCCBIN = $(GCCROOT)/bin
 GCCVER = mp-13
-F_COMPILER = $(GCCBIN)/gfortran-$(GCCVER)
+#F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
 F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
 C_COMP_EXE = $(GCCBIN)/gcc-$(GCCVER)
 
@@ -163,39 +190,6 @@ PYLIB = -L $(PYFRAMEWORK)/lib -l$(PYNAME)
 OSF77FLAGS = -D __APPLE__
 F2PY = $(PYROOT)/bin/f2py
 
-else ifeq ($(PLAT), "windows_inteloneapi")
-
-F_COMPILER = ifx
-F_COMP_EXE = ifx
-F2PY = f2py
-C_COMP_EXE = icc
-
-## Check from here until EndDefs
-#ARPACK_INCL = -I /usr/local/include
-#ARPACK_LIB  = -L /usr/local/lib -larpack
-
-#MKLROOT = /opt/intel/oneapi/mkl/latest
-
-#UMFPACK_INC = -I/usr/include/suitesparse
-#UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-## EndDefs
-
-PYROOT = $(MYPYENV)
-PYBIN = $(PYROOT)\bin
-PYBASEINC= $(PYROOT)\include\python$(PYVERMAJMIN)
-PYPACKAGES = $(PYROOT)\lib\python$(PYVERMAJMIN)\site-packages
-
-#MKL_INCL = -I $(MKLROOT)/include
-#MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
-
-MATHINC = $(ARPACK_INCL) $(MKL_INCL)
-MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
-#GENLIB = -lrt
-
-NUMPYDIR = $(PYPACKAGES)\numpy
-PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)\core\include/ -I $(NUMPYDIR)\f2py\src\ -I $(SYSTEMPYINC)
-
-
 
 else ifeq ($(PLAT), "myplatform")
 # You complete me!
@@ -211,7 +205,7 @@ endif
 # TODO: this relies on modfile aaa_numbatmod.f being compiled first alphabetically
 #       find a better way
 SRCS_MODS = src/nbconsts_module.f95 src/numbatmod_module.f95 src/nbinterfaces_module.f95
-SRCS_F = $(wildcard src/*.f) 
+SRCS_F = $(wildcard src/*.f)
 SRCS_F95 = $(wildcard src/*.f95)
 
 OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f95=.o)
@@ -227,7 +221,7 @@ tt:
 	echo $(OBJS_MOD)
 	echo $(MODULES_MODS)
 
-PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f \
+PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f95 \
 	em_mode_energy_int_v2_ez.f \
   em_mode_energy_int_ez.f photoelastic_int.f photoelastic_int_v2.f \
   ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
@@ -247,14 +241,11 @@ SS_VER=7.1.0_linux
 UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build 
-F95FLAGS=$(F77FLAGS)
 
-CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
 
 mods: $(MODULES_MODS)
 
-build/%.mod : src/%.f95 
+build/%.mod : src/%.f95
 	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
 
 # Any module file change will cause rebuilding of all .f files
@@ -298,7 +289,7 @@ check:
 
 $(FMETHOD).so: $(FMETHOD).pyf $(SRCS)  $(UMFPACK_WRAPPER)
 	echo "Old compilation method Step B"
-	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+	$(F2PY) -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
 					--f77flags=$(F77FLAGS) --f90flags=$(F77FLAGS)  $(DEFS) \
 			 	$(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) --build-dir tbuild
 
@@ -310,7 +301,7 @@ $(FMETHOD).pyf: $(SRCS)
 
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
-#build/$(NumBAT_MOD)-f2pywrappers2.f90 
+#build/$(NumBAT_MOD)-f2pywrappers2.f90
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
@@ -348,14 +339,14 @@ clean:
 
 
 #NumBAT.so: NumBAT.pyf $(SRCS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)
-#	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+#	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
 #	$(DEFS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)   \
 #	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB)
 
 
 #$(FMETHOD).so: NumBAT.pyf $(OBJS)  $(UMFPACK_WRAPPER)
 #	echo "Old compilation method"
-#	f2py3 -c NumBAT.pyf $(OBJS) --verbose --fcompiler=$(F_COMPILER) --f77exec=$(F_COMP_EXE) \
+#	f2py3 -c NumBAT.pyf $(OBJS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
 #	$(DEFS)  $(UMFPACK_WRAPPER) \
 ##	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB) --build-dir tbuild
 

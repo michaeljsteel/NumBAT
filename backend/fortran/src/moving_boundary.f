@@ -3,11 +3,11 @@ cccccccccccccccccccccccccccccccccccccccccccccccccc
 c
       subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival1,
      *    ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
-     *    nb_typ_el, typ_select_in, typ_select_out, 
-     *    soln_EM_p, soln_EM_S, 
+     *    nb_typ_el, typ_select_in, typ_select_out,
+     *    soln_EM_p, soln_EM_S,
      *    soln_AC, eps_lst, debug, overlap)
 c
-      implicit none
+      use numbatmod
       integer*8 nel, npt, nnodes, nb_typ_el
       integer*8 type_el(nel)
       integer*8 table_nod(6,nel)
@@ -34,13 +34,12 @@ c     Local variables
       double precision xy_1(2), xy_2(2), xy_3(2), ls_xy(2,3)
       double precision edge_vec(2), edge_perp(2), vec_0(2)
       double precision edge_length, r_tmp
-      double precision eps_0
       complex*16 ls_n_dot(3), ls_n_cross(3,3)
       complex*16 vec(3,3)
       complex*16 n_dot_d(2)
       complex*16 eps_a, eps_b, tmp1, tmp2
       double precision p2_p2_p2_1d(3,3,3)
-      complex*16 ii
+
 C
 C
 Cf2py intent(in) nval_EM_p, nval_EM_S, nval_AC
@@ -66,7 +65,7 @@ c     When nb_visite(j) is not zero: nb_visite(j) indicates the number of elemen
 c
 ccccccccccccccccccccccccccccccccccccc
 c
-      ii = cmplx(0.0d0, 1.0d0, 8)
+
 
 c     Initialisation
       do inod=1,npt
@@ -101,16 +100,16 @@ ccccccccccccccccccccccccccccccccccccc
       enddo
 cccccccccccc
 C
-      eps_0 = 8.854187817d-12
+
 C
       do iel=1,nel
         typ_e = type_el(iel)
         if(typ_e == typ_select_in) then
 C           ! Scan the edges
-          do inod=4,6  
+          do inod=4,6
             j = table_nod(inod,iel)
 C             ! Will indicate the number of
-            nb_visite(j) = nb_visite(j) + 1  
+            nb_visite(j) = nb_visite(j) + 1
           enddo
         endif
       enddo
@@ -135,7 +134,7 @@ c     Outward pointing normal vector to the interface edges
         typ_e = type_el(iel)
         if(typ_e == typ_select_in) then
 C           ! Scan the edges
-          do inod=4,6  
+          do inod=4,6
             j = table_nod(inod,iel)
             if (nb_visite(j) == 1) then
               inod_1 = edge_endpoints(1,inod-3)
@@ -193,7 +192,7 @@ c     Numerical integration
             eps_b = eps_lst(typ_select_out)
           endif
 C           ! Scan the edges
-          do inod=4,6  
+          do inod=4,6
             j = table_nod(inod,iel)
             xy_3(1) = x(1,j)
             xy_3(2) = x(2,j)
@@ -207,17 +206,17 @@ C               write(*,*) "an edge"
               xy_2(2) = x(2,inod_2)
 c             List of the nodes coordinates
 C               ! x-coord. of node 1
-              ls_xy(1,1) = xy_1(1) 
+              ls_xy(1,1) = xy_1(1)
 C               ! y-coord. of node 1
-              ls_xy(2,1) = xy_1(2) 
+              ls_xy(2,1) = xy_1(2)
 C               ! x-coord. of node 2
-              ls_xy(1,2) = xy_2(1) 
+              ls_xy(1,2) = xy_2(1)
 C               ! y-coord. of node 2
-              ls_xy(2,2) = xy_2(2) 
+              ls_xy(2,2) = xy_2(2)
 C               ! x-coord. of mid-edge node
-              ls_xy(1,3) = xy_3(1) 
+              ls_xy(1,3) = xy_3(1)
 C               ! y-coord. of mid-edge node
-              ls_xy(2,3) = xy_3(2) 
+              ls_xy(2,3) = xy_3(2)
 c
               edge_vec(1) = ls_xy(1,2) - ls_xy(1,1)
               edge_vec(2) = ls_xy(2,2) - ls_xy(2,1)
@@ -239,7 +238,7 @@ c             Identification number of the two end-points and mid-edge point
               ls_inod(3) = inod
 c
 C If only want overlap of one given combination of EM modes and AC mode.
-              if (ival1 .ge. 0 .and. ival2 .ge. 0 .and. 
+              if (ival1 .ge. 0 .and. ival2 .ge. 0 .and.
      *            ival3 .ge. 0) then
 c             Nodes of the edge
               do j_1=1,3
@@ -274,16 +273,16 @@ c                   (x,y,z)-components of the acoustic field
 c                   ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                     ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                  + vec(2,3) * edge_perp(2)
-                    tmp1 = (eps_a - eps_b)*eps_0
+                    tmp1 = (eps_a - eps_b)*SI_EPS_0
                     tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                    + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                    + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                    n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                    n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                    tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/eps_0)
+                    n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                    n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                    tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                     tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                     r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                    overlap(ival1,ival2,ival3) = 
+                    overlap(ival1,ival2,ival3) =
      *                            overlap(ival1,ival2,ival3) +
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                   enddo
@@ -327,16 +326,16 @@ c                     (x,y,z)-components of the acoustic field
 c                     ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                       ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                              + vec(2,3) * edge_perp(2)
-                      tmp1 = (eps_a - eps_b)*eps_0
+                      tmp1 = (eps_a - eps_b)*SI_EPS_0
                       tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                      + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                      + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                      n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                      n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                      tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/eps_0)
+                      n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                      n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                  tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                       tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                       r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                      overlap(ival1,ival2,ival3s) = 
+                      overlap(ival1,ival2,ival3s) =
      *                            overlap(ival1,ival2,ival3s) +
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                     enddo
@@ -345,7 +344,7 @@ c                     ls_n_dot(3): scalar product of vec(:,3) and normal vector 
               enddo
 C
 C If want overlap of given EM mode 1 and all EM modes 2 and all AC modes.
-              else if (ival1 .ge. 0 .and. ival2 .eq. -1 .and. 
+              else if (ival1 .ge. 0 .and. ival2 .eq. -1 .and.
      *                 ival3 .eq. -1) then
 c             Nodes of the edge
               do j_1=1,3
@@ -382,16 +381,17 @@ c                       (x,y,z)-components of the acoustic field
 c                       ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                         ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                                + vec(2,3) * edge_perp(2)
-                        tmp1 = (eps_a - eps_b)*eps_0
+                        tmp1 = (eps_a - eps_b)*SI_EPS_0
                         tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                        + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                        + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                        n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                        n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                        tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/eps_0)
+                        n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                        n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+
+                  tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                         tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                         r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                        overlap(ival1,ival2s,ival3s) = 
+                        overlap(ival1,ival2s,ival3s) =
      *                            overlap(ival1,ival2s,ival3s)+
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                       enddo
@@ -401,7 +401,7 @@ c                       ls_n_dot(3): scalar product of vec(:,3) and normal vecto
               enddo
 C
 C If want overlap of given EM mode 2 and all EM modes 1 and all AC modes.
-              else if (ival1 .eq. -1 .and. ival2 .ge. 0 .and. 
+              else if (ival1 .eq. -1 .and. ival2 .ge. 0 .and.
      *                 ival3 .eq. -1) then
 c             Nodes of the edge
               do ival1s = 1,nval_EM_S
@@ -438,16 +438,16 @@ c                       (x,y,z)-components of the acoustic field
 c                       ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                         ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                                + vec(2,3) * edge_perp(2)
-                        tmp1 = (eps_a - eps_b)*eps_0
+                        tmp1 = (eps_a - eps_b)*SI_EPS_0
                         tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                        + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                        + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                        n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                        n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                        tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/eps_0)
+                        n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                        n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                    tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                         tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                         r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                        overlap(ival1s,ival2,ival3s) = 
+                        overlap(ival1s,ival2,ival3s) =
      *                            overlap(ival1s,ival2,ival3s)+
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                       enddo
@@ -457,7 +457,7 @@ c                       ls_n_dot(3): scalar product of vec(:,3) and normal vecto
               enddo
 C
 C If want overlap of all EM mode 1, all EM modes 2 and all AC modes.
-              else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and. 
+              else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                 ival3 .eq. -1) then
 c             Nodes of the edge
               do ival1s = 1,nval_EM_S
@@ -495,16 +495,16 @@ c                         (x,y,z)-components of the acoustic field
 c                         ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                           ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                                  + vec(2,3) * edge_perp(2)
-                          tmp1 = (eps_a - eps_b)*eps_0
+                          tmp1 = (eps_a - eps_b)*SI_EPS_0
                           tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                          + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                          + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                          n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                          n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                          tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/eps_0)
+                          n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                          n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                      tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                           tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                           r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                          overlap(ival1s,ival2s,ival3s) = 
+                          overlap(ival1s,ival2s,ival3s) =
      *                            overlap(ival1s,ival2s,ival3s)+
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                         enddo
@@ -515,7 +515,7 @@ c                         ls_n_dot(3): scalar product of vec(:,3) and normal vec
               enddo
 C
 C If want overlap of all EM mode 1, all EM modes 2 and one AC mode.
-              else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and. 
+              else if (ival1 .eq. -1 .and. ival2 .eq. -1 .and.
      *                 ival3 .ge. 0) then
 c             Nodes of the edge
               do ival1s = 1,nval_EM_S
@@ -552,16 +552,16 @@ c                       (x,y,z)-components of the acoustic field
 c                       ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                         ls_n_dot(3) = vec(1,3) * edge_perp(1)
      *                                + vec(2,3) * edge_perp(2)
-                        tmp1 = (eps_a - eps_b)*eps_0
+                        tmp1 = (eps_a - eps_b)*SI_EPS_0
                         tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2)
      *                        + (ls_n_cross(2,1))*ls_n_cross(2,2)
      *                        + (ls_n_cross(3,1))*ls_n_cross(3,2))
-                        n_dot_d(1) = eps_0*eps_a * ls_n_dot(1)
-                        n_dot_d(2) = eps_0*eps_a * ls_n_dot(2)
-                        tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/eps_0)
+                        n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                        n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                   tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                         tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                         r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-                        overlap(ival1s,ival2s,ival3) = 
+                        overlap(ival1s,ival2s,ival3) =
      *                            overlap(ival1s,ival2s,ival3) +
      *                            r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
                       enddo
@@ -604,9 +604,9 @@ C       debug = 1
 C       if (debug .eq. 1) then
 C         version_number = 2.2
 C ! An integer equal to 0 in the ASCII file format
-C         file_type = 0  
+C         file_type = 0
 C ! An integer equal to the size of the floating point numbers used in the file
-C         data_size = 8 
+C         data_size = 8
 C         open (unit=27,file="../Output/edge_data.msh")
 C         write(27,'(a11)') "$MeshFormat"
 C         write(27,'((f4.1,1x,I1,1x,I1,1x))') version_number,
@@ -628,7 +628,7 @@ C         write(27,'(a9)') "$EndNodes"
 C         write(27,'(a9)') "$Elements"
 C         write(27,'(I0.1)') nb_interface_edges
 C ! 1-node point
-C         element_type = 15  
+C         element_type = 15
 C         number_of_tags = 2
 C         j = 0
 C         do inod=1,npt
@@ -652,11 +652,11 @@ C         write(27,*) number_of_real_tags
 C         write(27,*) 0.0
 C         write(27,*) number_of_integer_tags
 C ! the time step (0; time steps always start at 0)
-C         write(27,*) 0 
+C         write(27,*) 0
 C ! 3-component (vector) field
-C         write(27,*) 3 
+C         write(27,*) 3
 C ! Number of associated nodal values
-C         write(27,*) nb_interface_edges 
+C         write(27,*) nb_interface_edges
 C c        node-number value
 C         zz = 0.0d0
 C         j = 0
@@ -689,11 +689,11 @@ C         write(27,*) number_of_real_tags
 C         write(27,*) 0.0
 C         write(27,*) number_of_integer_tags
 C ! the time step (0; time steps always start at 0)
-C         write(27,*) 0 
+C         write(27,*) 0
 C ! 3-component (vector) field
-C         write(27,*) 3 
+C         write(27,*) 3
 C ! Number of associated nodal values
-C         write(27,*) nb_interface_edges 
+C         write(27,*) nb_interface_edges
 C c        node-number value
 C         zz = 0.0d0
 C         j = 0
