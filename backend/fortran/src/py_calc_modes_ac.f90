@@ -125,8 +125,8 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
     double precision tol
 
     !  Names and Controls
-    character mesh_file*1000, gmsh_file*1000, log_file*1000
-    character gmsh_file_pos*1000
+
+    character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos
 
 
     integer*8 is_em

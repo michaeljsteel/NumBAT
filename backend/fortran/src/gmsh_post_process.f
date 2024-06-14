@@ -10,6 +10,7 @@ c
      *     q_average, plot_real, plot_imag, plot_abs)
 
       use numbatmod
+
       integer*8 nval, nel, npt, nnodes, plot_val, E_H_field
       integer*8 nb_typ_el
       integer*8 table_nod(nnodes,nel), type_el(nel)
@@ -36,8 +37,8 @@ C      double precision ls_abs_index(nnodes_0), abs_index
       integer*8 q_average, plot_imag, plot_real, plot_abs
       integer*8 debug, ui
       complex*16 z_tmp1
-      character*(*) gmsh_file_pos, dir_name
-      character*1000 tchar
+
+      character(len=FNAME_LENGTH) tchar, gmsh_file_pos, dir_name
       character tval*4, buf*3
       character*1 tE_H
       integer*8 namelength
