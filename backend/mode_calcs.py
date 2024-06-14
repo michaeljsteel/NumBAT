@@ -1138,7 +1138,7 @@ class ACSimulation(Simulation):
             fm.v_el_2_mat_idx,
             fm.mesh_xy,  # these ones also come back as outputs
         )
-        print('done AC cal')
+        print('done AC cal', resm[-2], resm[-1])
 
         (
             table_nod_out,
@@ -1149,11 +1149,13 @@ class ACSimulation(Simulation):
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
+        print('done AC cal 2')
         self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, mesh_xy_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME
 
+        print('done AC cal 3')
         # Retrieve the material properties of each mesh point.
         self.ls_material = NumBAT.array_material_ac(
             fm.n_msh_el,
@@ -1164,6 +1166,7 @@ class ACSimulation(Simulation):
             elastic_props.p_ijkl,
             elastic_props.eta_ijkl,
         )
+        print('done AC cal 4')
 
         print("ac ls material: n", self.ls_material, self.ls_material.shape)
         # TODO: ls_material is isotropic parts of all elastic properties (repeated 6 times) by mesh elt: [10 x 6 xn_msh_el]

@@ -15,7 +15,6 @@ PYVERMAJMIN=3.12
 ## Set your other libraries
 
 MYPLAT="linux_inteloneapi"
-#MYPLAT="linux_intel_ifx"
 #MYPLAT="linux_vanilla"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
@@ -189,7 +188,6 @@ PYLIB = -L $(PYFRAMEWORK)/lib -l$(PYNAME)
 OSF77FLAGS = -D __APPLE__
 F2PY = $(PYROOT)/bin/f2py
 
-
 else ifeq ($(PLAT), "myplatform")
 # You complete me!
 MATHINC =
@@ -307,13 +305,6 @@ $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 $(CMETHOD).$(SHLIB): $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 	echo "New compilation method Step B"
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
-
-
-# gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-# $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
-# gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-# $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
-
 
 
 
