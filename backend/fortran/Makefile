@@ -32,17 +32,20 @@ C_COMP_EXE = gcc
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
 F95FLAGS=$(F77FLAGS)
 CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
+COMP_LIB = -l gfortran
 
 else
 
+INTELONEAPIDIR=/opt/intel/oneapi
 INTELCOMPDIR=/opt/intel/oneapi/compiler/latest/bin
 #F_COMP_EXE = $(INTELCOMPDIR)/ifx
 F_COMP_EXE = $(INTELCOMPDIR)/ifx
 C_COMP_EXE = $(INTELCOMPDIR)/icx
 
-F77FLAGS= -nologo -fpp -O2 -warn all -warn noexternals -module mods
-CFLAGS=  -nologo -O2 -warn all
+F77FLAGS= -nologo -fpp -fPIC -O2 -warn all -warn noexternals -module mods
+CFLAGS=  -O2 -Wall -fPIC
 F95FLAGS=$(F77FLAGS)
+COMP_LIB = -L $(INTELONEAPIDIR)/2024.1/lib -limf
 
 
 endif
@@ -216,8 +219,8 @@ tt:
 	echo $(OBJS_MOD)
 	echo $(MODULES_MODS)
 
-PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f90 \
-	em_mode_energy_int_v2_ez.f \
+PYINTERFACE_SRCSA = pyinterfaces.f90 py_calc_modes_ac.f90 py_calc_modes.f90 \
+	em_mode_energy_int_v2_ez.f conv_gmsh.f90 \
   em_mode_energy_int_ez.f photoelastic_int.f photoelastic_int_v2.f \
   ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
   ac_alpha_int.f ac_alpha_int_v2.f moving_boundary.f array_material_ac.f \
@@ -289,12 +292,12 @@ $(CMETHOD).pyf: $(SRCS)
 	-rm $(F2PY_SRCS)
 	-mkdir build
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
+	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"../src/myhead.h\"
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 
 
 $(CMETHOD).so: $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).so
+	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -o $(NumBAT_MOD).so
 
 $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
@@ -306,9 +309,6 @@ $(CMETHOD).$(SHLIB): $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPA
 	echo "New compilation method Step B"
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
 
-$(UMFPACK_WRAPPER): $(UMFPACK_SRC)
-	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
-		-fPIC -o $(UMFPACK_WRAPPER)
 
 # gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
 # $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)

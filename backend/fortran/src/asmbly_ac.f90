@@ -35,6 +35,7 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 
 !  The CSC indexing, i.e., col_ptr, is 1-based
 !  But valpr.f may have changed the CSC indexing to 0-based indexing)
+   debug = 0
 
    if (i_base .eq. 0) then
       i_base2 = 1

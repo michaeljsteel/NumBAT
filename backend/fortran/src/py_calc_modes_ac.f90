@@ -34,8 +34,9 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
     !    Bjorn Sturmberg & Kokou B. Dossou
     !
     !***********************************************************************
-    !
+
     use numbatmod
+    !f2py integer, parameter :: EMSG_LENGTH
     integer*8 n_modes
 
     complex*16 q_ac
@@ -128,7 +129,7 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
     character gmsh_file_pos*1000
 
 
-
+    integer*8 is_em
 
 
     !f2py intent(in) q_ac, n_modes
@@ -196,11 +197,14 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
     !    call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
     !    RETONERROR(errco)
 
+    write(*,*) 'pycalcac s1'
 
-    call prepare_workspaces_ac(0, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
+    is_em = 0
+    call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
         a_iwork, b_zwork, c_dwork, d_dwork, iindex, dummy_overlap_L, errco, emsg)
     RETONERROR(errco)
 
+    write(*,*) 'pycalcac s1a'
     !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     !
     !     clean mesh_format
@@ -223,6 +227,7 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
     dim_y= dimscale_in_m
     shift_omsq= (2*D_PI*shift_nu)**2
 
+    write(*,*) 'pycalcac s1b'
     !
     !####################  Start FEM PRE-PROCESSING  #######################
     !
@@ -240,6 +245,7 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
         endif
     endif
 
+    write(*,*) 'pycalcac s2'
     call lattice_vec (n_msh_pts, x_arr, lat_vecs, debug)
 
     !       if (debug .eq. 1) then
@@ -350,6 +356,7 @@ subroutine calc_AC_modes( n_modes, q_ac, dimscale_in_m, shift_nu, &
         errco = -5
         return
     endif
+    write(*,*) 'pycalcac s3'
 
     !
     !ccccccccccccccccccccccccccccccccccccccccccccccccc

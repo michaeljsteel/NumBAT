@@ -9,10 +9,8 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    use numbatmod
 
    integer*8 :: is_em
-   integer*8 int_max, cmplx_max, real_max
-   integer*8 n_msh_el, n_msh_pts, n_modes
-   integer*8 n_ddl
-   integer :: stat=0
+   integer*8 :: int_max, cmplx_max, real_max
+   integer*8 :: n_msh_el, n_msh_pts, n_modes
 
    integer*8, dimension(:), allocatable :: a_iwork
    complex*16, dimension(:), allocatable :: b_zwork
@@ -21,20 +19,28 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
    integer*8, dimension(:), allocatable :: iindex
    complex*16, dimension(:,:), allocatable :: overlap_L
-   integer*8 errco
-   character(len=EMSG_LENGTH) emsg
+   integer*8 :: errco
+   character(len=EMSG_LENGTH) :: emsg
 
+   integer*8 n_ddl
+   integer :: stat=0
+
+   write(*,*) 'pw1', n_msh_pts, n_msh_el
    call array_size(n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, n_ddl, errco, emsg)
    RETONERROR(errco)
 
+   write(*,*) 'pw1b', int_max, cmplx_max, n_ddl
    allocate(a_iwork(int_max), STAT=stat)
+   write(*,*) 'stat', stat
    call check_alloc(stat, int_max, "a", -1, errco, emsg)
    RETONERROR(errco)
 
+   write(*,*) 'pw2'
    allocate(b_zwork(cmplx_max), STAT=stat)
    call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
    RETONERROR(errco)
 
+   write(*,*) 'pw3'
    allocate(c_dwork(real_max), STAT=stat)
    call check_alloc(stat, real_max, "c", -1, errco, emsg)
    RETONERROR(errco)
@@ -43,9 +49,10 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
    RETONERROR(errco)
 
+   write(*,*) 'pw4'
    if (is_em > 0) then
        allocate(d_dwork(2,n_ddl), STAT=stat)
-       call check_alloc(stat, 2, n_ddl, "d_dwork", -1, errco, emsg)
+       call check_alloc(stat, 2*n_ddl, "d_dwork", -1, errco, emsg)
        RETONERROR(errco)
 
        allocate(overlap_L(n_modes,n_modes), STAT=stat)
@@ -54,7 +61,7 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
 
    endif
-
+write(*,*) 'pw6'
 
 end subroutine prepare_workspaces
 
@@ -67,7 +74,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_
     use numbatmod
 
     integer*8 :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, nodes_per_el
-    integer*8 :: ip_type_N_E_F, ip_eq, jp_x_n_e_f, int_max, cmplx_max
+    integer*8 :: ip_type_N_E_F, ip_eq, jp_x_n_e_f, int_max
     integer*8 :: ip_period_N, ip_nperiod_N, ip_period_N_E_F, ip_nperiod_N_E_F
     integer*8 :: debug
     double precision mesh_xy(2,n_msh_pts)

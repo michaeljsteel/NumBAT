@@ -10,7 +10,6 @@
 subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
 
    use numbatmod
-   implicit none
 
    character(len=FNAME_LENGTH) geoname
    integer assertions_on, errco
@@ -146,9 +145,8 @@ end
 !##################################################################################
 subroutine make_msh_file(fname_geo, fname_msh, sysret)
    use numbatmod
-   implicit none
-   character fname_geo*(STRINGLEN), fname_msh*(STRINGLEN)
-   character com_line*(STRINGLEN)
+   character fname_geo*(FNAME_LENGTH), fname_msh*(FNAME_LENGTH)
+   character com_line*(FNAME_LENGTH)
    integer sysret
 
 #ifdef __APPLE__
@@ -176,13 +174,13 @@ subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
    integer n_pts, n_elts
    integer errco
    character(len=EMSG_LENGTH) emsg
-   character fname_msh*(STRINGLEN)
+   character fname_msh*(FNAME_LENGTH)
 
    integer v_ipts(MAX_N_PTS)
    integer v_ielts(MAX_N_ELTS), v_gmsh_elt_type(MAX_N_ELTS)
    double precision vx(MAX_N_PTS), vy(MAX_N_PTS)
 
-   character str_in*(STRINGLEN)
+   character str_in*(FNAME_LENGTH)
    integer ui_in, i, j, tmp1
 
 !     Check size of .msh file
@@ -291,8 +289,8 @@ subroutine decode_element_tags(fname_msh, gmsh_version, &
 
    integer errco
    character(len=EMSG_LENGTH) emsg
-   character fname_msh*(STRINGLEN)
-   character str_in*(STRINGLEN)
+   character fname_msh*(FNAME_LENGTH)
+   character str_in*(FNAME_LENGTH)
    integer ui_in
    integer dummy(10), n_pretags, physmat_tag, i,j,k
    double precision tmp1, tmp2, tmp3
@@ -408,7 +406,7 @@ subroutine write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
    implicit none
    integer ui_out, i, k
 
-   character fname_mail*(STRINGLEN)
+   character fname_mail*(FNAME_LENGTH)
    integer n_pts,  n_gelts_triangs
 
    integer v_triang_nodes(6,MAX_N_ELTS)

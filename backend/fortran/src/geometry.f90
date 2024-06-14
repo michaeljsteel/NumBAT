@@ -1,3 +1,4 @@
+#include "numbat_decl.h"
 
 !     Construct the FEM mesh
 !

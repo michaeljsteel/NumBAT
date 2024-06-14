@@ -917,6 +917,8 @@ class EMSimulation(Simulation):
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)
 
+        return   #REMOVE ME JUNE 
+
         # TODO: compare these outputs (node_physindex, type_el, mesh_xy, table_nod), to the ones generated in Mail file.
 
         (
@@ -1113,6 +1115,7 @@ class ACSimulation(Simulation):
 
         show_mem_est = False
 
+        print('doing AC cal')
         # TODO: rmove _AC suffixes from fm.fields_AC
         resm = NumBAT.calc_ac_modes(
             self.n_modes,
@@ -1137,6 +1140,7 @@ class ACSimulation(Simulation):
             fm.v_el_2_mat_idx,
             fm.mesh_xy,  # these ones also come back as outputs
         )
+        print('done AC cal')
 
         (
             table_nod_out,
