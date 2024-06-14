@@ -82,9 +82,9 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 !       If c_tensor has regular symmetries use more efficient formulation
 
       if (symmetry_flag .eq. 1) then
-         call mat_el_v2 (xel,beta,c_tensor_el,rho_el,mat_K,mat_M,debug)
+         call mat_el_v2 (xel,beta,c_tensor_el,rho_el,mat_K,mat_M)
       elseif (symmetry_flag .eq. 0) then
-         call mat_el_v3 (xel,beta,c_tensor_el,rho_el,mat_K,mat_M,debug)
+         call mat_el_v3 (xel,beta,c_tensor_el,rho_el,mat_K,mat_M)
       else
          write(*,*) "asmbly_AC: problem with symmetry_flag "
          write(*,*) "asmbly_AC: c_tensor = ", symmetry_flag

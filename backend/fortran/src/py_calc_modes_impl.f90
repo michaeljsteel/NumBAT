@@ -62,7 +62,7 @@ end subroutine prepare_workspaces
 
 subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
         type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, &
-        a_iwork, d_dwork, int_max, cmplx_max, debug)
+        a_iwork, d_dwork, int_max, debug)
 
     use numbatmod
 
