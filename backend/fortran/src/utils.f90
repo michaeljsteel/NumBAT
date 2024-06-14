@@ -1,3 +1,5 @@
+#include "numbat_decl.h"
+
 subroutine check_alloc(stat, reqsz, nm, ec, errco, emsg)
 
    use numbatmod

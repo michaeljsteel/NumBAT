@@ -1,4 +1,6 @@
 
+#include "numbat_decl.h"
+
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c  Estimates the work space sizes that will be needed

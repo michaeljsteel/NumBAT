@@ -1,12 +1,11 @@
 
-
-!#include "numbat_decl.h"
+#include "numbat_decl.h"
 
 module numbatmod
 
    implicit none
 
-   integer, parameter :: STRINGLEN = 1024
+!   integer, parameter :: STRINGLEN = 1024
    integer, parameter :: EMSG_LENGTH = 2048
    integer, parameter :: FNAME_LENGTH = 1024
 

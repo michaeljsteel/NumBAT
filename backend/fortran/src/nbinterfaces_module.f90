@@ -1,4 +1,6 @@
 
+#include "numbat_decl.h"
+
 module nbinterfaces
 
 
@@ -19,8 +21,10 @@ module nbinterfaces
             double precision, dimension(:,:), allocatable :: dwk
             integer*8, dimension(:), allocatable :: iindex
             complex*16, dimension(:,:), allocatable :: overlap_L
+
             integer*8 errco
             character(len=EMSG_LENGTH) emsg
+
         end subroutine prepare_workspaces
 
     end interface
