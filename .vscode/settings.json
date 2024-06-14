@@ -199,6 +199,7 @@
         "zwrapper"
     ],
     "python.defaultInterpreterPath": "/home/msteel/mypy3-12",
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "fortran.fortls.disabled": true
 }
 

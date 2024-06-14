@@ -12,6 +12,8 @@
 *.py.swp
 .*.py.swp
 out
+*__genmod.f90
+*__genmod.mod
 
 backend/msh/*.msh
 backend/msh/*.geo

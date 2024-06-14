@@ -183,8 +183,8 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
                write(ui,*)
             endif
          elseif (info_curved .eq. 1) then
-!           Isoparametric element
-            call jacobian_p2_2d(xx, xel, nnodes, phi2_list, &
+!           Isoparametric element, 2024-06 fix
+            call jacobian_p2_2d(xel, nnodes, phi2_list, &
                grad2_mat0, xx_g, det, mat_B, mat_T)
          else
             write(ui,*) "asmbly: info_curved has an invalid value : ", &

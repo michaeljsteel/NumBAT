@@ -334,7 +334,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
       ! TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
    call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-      type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, d_dwork, int_max, cmplx_max, debug)
+      type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, d_dwork, int_max, debug)
 
 
 

@@ -169,8 +169,8 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
                endif
 
             else
-!             Isoparametric element
-               call jacobian_p2_2d (xx, el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
+!             Isoparametric element, 2024-06-14 fix
+               call jacobian_p2_2d (el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
             endif
 
 !             if(abs(det) < 1.0d-10) then
@@ -391,9 +391,9 @@ end
 subroutine zvec_reorder_by_index(v_src_dest, iindex, num_elts)
 
 
+   integer*8 :: num_elts
    complex*16 :: v_src_dest(num_elts)
    integer*8 :: iindex(num_elts)
-   integer*8 :: num_elts
 
    complex*16 ::  v_tmp(num_elts)
    integer*8 :: j, j1
