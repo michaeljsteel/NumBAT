@@ -9,6 +9,7 @@ c
      *  gmsh_file_pos, dir_name, d_in_nm, debug)
 
       use numbatmod
+
       integer*8 nval, nel, npt, nnodes, plot_val
       integer*8 table_nod(nnodes,nel), type_el(nel)
       integer*8 visite(npt)
@@ -35,8 +36,9 @@ C      double precision ls_abs_index(nnodes_0), abs_index
       integer*8 debug, ui
       complex*16 z_tmp1
 
-      character*(*) gmsh_file_pos, dir_name
-      character*1000 tchar
+
+
+      character(len=FNAME_LENGTH) tchar, gmsh_file_pos, dir_name
       character tval*4, buf*3
       character*1 tE_H
       integer*8 namelength

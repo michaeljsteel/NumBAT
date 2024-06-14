@@ -1,4 +1,3 @@
-#include "numbat_decl.h"
 
 subroutine check_alloc(stat, reqsz, nm, ec, errco, emsg)
 
@@ -6,7 +5,7 @@ subroutine check_alloc(stat, reqsz, nm, ec, errco, emsg)
 
    character(len=EMSG_LENGTH) emsg
 
-   character*2048 :: nm
+   character(len=EMSG_LENGTH) :: nm
    integer*8      :: ec, errco, reqsz
    integer :: stat
 

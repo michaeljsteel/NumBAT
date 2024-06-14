@@ -122,9 +122,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    character*(10) start_time, end_time
 
    !Names and Controls
-   character mesh_file*1000, gmsh_file*1000, log_file*1000
-   character gmsh_file_pos*1000
-   character overlap_file*1000
+   character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos, overlap_file
 
    character msg*20
    integer*8 namelength
@@ -191,8 +189,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
       a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
    RETONERROR(errco)
 
-   deallocate(a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L)  ! REMOVE ME
-   return
+
 
 !CCCCCCCCCCCCCCCC POST F2PY CCCCCCCCCCCCCCCCCCCCCCCCC
 

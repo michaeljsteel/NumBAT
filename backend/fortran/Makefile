@@ -141,7 +141,6 @@ GENLIB = -lrt
 NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
-else ifeq ($(PLAT), "MacOS")
 
 else ifeq ($(PLAT), "MacOS")
 # MacOS with standard LAPACK, BLAS and ARPACK
@@ -153,7 +152,7 @@ endif
 GCCROOT = /opt/local
 GCCBIN = $(GCCROOT)/bin
 GCCVER = mp-13
-#F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
+
 F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
 C_COMP_EXE = $(GCCBIN)/gcc-$(GCCVER)
 
@@ -204,9 +203,9 @@ endif
 
 SRCS_MODS = src/numbatmod_module.f90 src/nbinterfaces_module.f90
 SRCS_F = $(wildcard src/*.f)
-SRCS_F95 = $(wildcard src/*.f90)
+SRCS_F90 = $(wildcard src/*.f90)
 
-OBJSA = $(SRCS_F:.f=.o) $(SRCS_F95:.f90=.o)
+OBJSA = $(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o)
 OBJS = $(subst src,build,$(OBJSA))
 
 OBJS_MODA = $(SRCS_MODS:.f90=.o)
@@ -284,7 +283,7 @@ endif
 
 
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
-#build/$(NumBAT_MOD)-f2pywrappers2.f90
+
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
@@ -328,30 +327,6 @@ clean:
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 
 
-	#cp /Library/Frameworks/Python.framework/Headers/Python.h src
-	#mv $(NumBAT_MOD)-f2pywrappers.f $(NumBAT_MOD)module.c build
 
 
-#gcc -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) -lgfortran -lm -o $(NumBAT_MOD).so
-#gfortran -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) $(UMFPACK_LIB) $(MATHINCL) $(MATHLIB) $(GENLIB) -lgfortran -lm -o $
-#TRASH SECTION
 
-
-#NumBAT.so: NumBAT.pyf $(SRCS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)
-#	f2py3 -c NumBAT.pyf $(SRCS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
-#	$(DEFS)  $(SS_LIB_LOCATION)/$(UMFPACK_NAME)   \
-#	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB)
-
-
-#$(FMETHOD).so: NumBAT.pyf $(OBJS)  $(UMFPACK_WRAPPER)
-#	echo "Old compilation method"
-#	f2py3 -c NumBAT.pyf $(OBJS) --verbose --fcompiler=$(F_COMP_EXE) --f77exec=$(F_COMP_EXE) \
-#	$(DEFS)  $(UMFPACK_WRAPPER) \
-##	$(MATHINCL) $(MATHLIB)  $(UMFPACK_LIB) --build-dir tbuild
-
-
-#F77FLAGS=-Wall  -fPIC -Ofast -funroll-loops
-#CFLAGS=-Wall -Wno-format -g0 -Ofast -fwrapv
-
-
-#DEFS = -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION

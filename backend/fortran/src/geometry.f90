@@ -23,9 +23,9 @@ subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
    double precision dim_x, dim_y
    double precision mesh_xy(2,n_msh_pts)
 
-   character mesh_file*1000
+   character(len=FNAME_LENGTH) mesh_file
    integer*8 errco
-   character(len=EMSG_LENGTH) emsg
+   character(len=EMSG_LENGTH) :: emsg
 
 
 !     local vars
@@ -33,11 +33,9 @@ subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
 
    integer*8 max_typ_el, n_typ_el2
    parameter (max_typ_el=10)
-   integer*8 n_msh_pts2, n_msh_el2, ui
+   integer*8 n_msh_pts2, n_msh_el2
    integer*8 i, j, k
-!
-   ui = 6
-!
+
 
    ! check the mesh file is consistent with what we expect
    open (unit=24,file=mesh_file, status='old')

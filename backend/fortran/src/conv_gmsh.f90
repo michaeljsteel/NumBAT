@@ -53,7 +53,7 @@ subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
    i_sym = 0   ! symmetry is off
 
    namelength2 = len_trim(geoname)
-   if (namelength2 .ge. 1024) then
+   if (namelength2 .ge. FNAME_LENGTH) then
       write(emsg, *) "Name of .geo file is too long extend in ",&
          "conv_gmsh_py.f"
       errco = 1
