@@ -357,7 +357,9 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -B build -T "fortran=ifx" .
+    $ cmake -B build -T "fortran=ifx" -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF .
+
+    (Note the final dot!)
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 

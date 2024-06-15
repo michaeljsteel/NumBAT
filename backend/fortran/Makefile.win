@@ -54,10 +54,14 @@ PYINC = /I $(SYSTEMPYINC) $(NUMPY_VINC)
 ONEAPI="C:\Program Files (x86)\Intel\oneAPI"
 MKLROOT=$(ONEAPI)\mkl\latest
 MKL_INCL=/I $(MKLROOT)\include
+
 MKL_LIB=$(MKLROOT)\lib\mkl_lapack95_lp64.lib $(MKLROOT)\lib\mkl_blas95_lp64.lib $(MKLROOT)\lib\mkl_rt.lib
+MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
+	$(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
+
 
 ARPACK_INC =
-ARPACK_LIB =
+ARPACK_LIB = $(NB_USRLOCAL)\lib\arpack.lib
 
 #MATH_INC = $(ARPACK_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
@@ -176,13 +180,11 @@ $(NumBAT_MOD).pyf: $(SRCS)
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"..\src\myhead.h\"
 
 $(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
-	$(C_COMP_EXE) /nologo /Wall  /LD \
+	$(C_COMP_EXE) /nologo /Wall  /LD -o $(NumBAT_MOD).dll  \
 	$(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
-	 $(MATHLIB) \
+	/link /nodefaultlib:msvcrt.lib $(MATHLIB) \
 	 $(GENLIB) \
-	 $(SYSTEMPYLIB)  \
-	 -o $(NumBAT_MOD).dll
-
+	 $(SYSTEMPYLIB)
 
 
 
