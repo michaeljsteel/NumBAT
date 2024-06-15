@@ -17,7 +17,7 @@ SYSTEMPYINC= $(SYSTEMPY)\include
 SYSTEMPYLIB= $(SYSTEMPY)\libs\python311.lib
 
 # Set your python virtualenv platform
-MYPYENV = c:\users\mq98002769\mypy3-11
+PY_VENV = c:\users\mq98002769\mypy3-11
 PYVERMAJ=3
 PYVERMAJMIN=3.11
 
@@ -25,13 +25,13 @@ PYVERMAJMIN=3.11
 
 # Location of support libraries: SuiteSparse etc
 # Think of this as a linux /usr/local
-NB_USRLOCAL = C:\Users\mq98002769\numbat\local
+NB_USRLOCAL = C:\Users\mq98002769\numbat\usr_local
 
 UMFPACK_INC = /I $(NB_USRLOCAL)\include
 UMFPACK_LIB = $(NB_USRLOCAL)\lib\libumfpack.lib $(NB_USRLOCAL)\lib\libcholmod.lib \
 	$(NB_USRLOCAL)\lib\libamd.lib $(NB_USRLOCAL)\lib\suitesparseconfig.lib
 
-PYROOT = $(MYPYENV)
+PYROOT = $(PY_VENV)
 PYBIN = $(PYROOT)\Scripts
 F2PY = $(PYBIN)\f2py
 
@@ -40,12 +40,16 @@ F2PY = $(PYBIN)\f2py
 PYBASEINC=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\python-3.11.8-he1021f5_0\include
 
 #NUMPYDIR = $(PYPACKAGES)\numpy
-NUMPYDIR=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
-#PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)\core\include -I $(NUMPYDIR)\f2py\src\ -I $(SYSTEMPYINC)
-#PYINC = -I $(SYSTEMPYINC) -I $(NUMPYDIR)\core\include
-PYINC = -I $(SYSTEMPYINC) -I $(NUMPYDIR)\f2py\src\core\include
+NUMPY_SYS=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
+NUMPY_SYSINC = /I $(NUMPY_SYS)\core\include
 
+#PYINC = /I $(PYBASEINC) /I $(NUMPYDIR)\core\include /I $(NUMPYDIR)\f2py\src\ /I $(SYSTEMPYINC)
+#PYINC = /I $(SYSTEMPYINC) /I $(NUMPYDIR)\core\include
+NUMPY_VENV = $(PY_VENV)\Lib\site-packages\numpy
+NUMPY_VINC = /I $(NUMPY_VENV)\core\include
 
+#$(NUMPY_SYSINCB) # don't need?
+PYINC = /I $(SYSTEMPYINC) $(NUMPY_VINC)
 
 ONEAPI="C:\Program Files (x86)\Intel\oneAPI"
 MKLROOT=$(ONEAPI)\mkl\latest
@@ -55,7 +59,7 @@ MKL_LIB=$(MKLROOT)\lib\mkl_lapack95_lp64.lib $(MKLROOT)\lib\mkl_blas95_lp64.lib 
 ARPACK_INC =
 ARPACK_LIB =
 
-MATH_INC = $(ARPACK_INC)
+#MATH_INC = $(ARPACK_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 
 
@@ -92,9 +96,9 @@ PYINTERFACE_SRCS = $(addprefix src\,$(PYINTERFACE_SRCS_IN))
 
 # Local SuiteSparse wrapper
 SSWRAP_DIR = sswrap
-SS_VER=7.1.0_linux
+SS_VER=7.1.0_win
 SSWRAP_OBJ = build\umf4_f77zwrapper64.obj
-SSWRAP_SRC = $(SS_WRAP)\umf4_f77zwrapper_SS_$(SS_VER).c
+SSWRAP_SRC = $(SSWRAP_DIR)\umf4_f77zwrapper_SS_$(SS_VER).c
 
 $(SSWRAP_OBJ): $(SSWRAP_SRC)
 	$(C_COMP_EXE) $(CFLAGS) /I $(SSWRAP_DIR) /D ZLONG $(UMFPACK_INC) -c $< -o $@
@@ -109,12 +113,16 @@ F77FLAGS= /nologo /fpp /O2 /warn:all /warn:noexternals /module:mods
 F95FLAGS= /nologo /fpp /O2 /warn:all /warn:noexternals /module:mods
 CFLAGS= /nologo /O2 /warn:all
 
+check1:
+	echo $(PYINC)
 
 check:
-	echo objs: $(OBJS)
-	echo f2pyobjs: $(F2PY_OBJS)
-	echo mods: $(SRCS_MODS)
-	echo mods: $(MODULES_MODS)
+	# echo objs: $(OBJS)
+	# echo f2pyobjs: $(F2PY_OBJS)
+	# echo mods: $(SRCS_MODS)
+	# echo mods: $(MODULES_MODS)
+	echo $(PYINC)
+	# echo $(MATH_INC)
 
 mods: $(MODULES_MODS)
 
@@ -127,23 +135,34 @@ build\\%.obj : src\%.f90 $(MODULES_MODS)
 build\\%.obj : src\%.f $(MODULES_MODS)
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATH_INC) $< -o $@
 
+
 build\\%.obj : src\%.c
-	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
+	$(C_COMP_EXE) -c $< -o $@ \
+	$(CFLAGS) $(PYINC)
 
 build\\%.obj : build\%.f
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATH_INCL) $< -o $@
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATH_INC) $< -o $@
 
+# For building NumBATmodule.c
 build\\%.obj : build\%.c
-	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) /D UPPERCASE_FORTRAN /D NO_APPEND_FORTRAN $< -o $@
+	$(C_COMP_EXE) -c $< -o $@ \
+	$(CFLAGS) /D UPPERCASE_FORTRAN /D NO_APPEND_FORTRAN \
+	$(PYINC)
 
 build\\%.e : src\%.f
-	cpp -I src $< -o $@
+	cpp /I src $< -o $@
 
 build\\%.e : src\\%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
 build\\%.e : build\\%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
+
+FORTMOD=build\fortranobject.c
+
+build\fortranobject.c:
+	copy $(NUMPY_VENV)\f2py\src\fortranobject.c build
+	copy $(NUMPY_VENV)\f2py\src\fortranobject.h build
 
 
 F2PY_SRCS = build\$(NumBAT_MOD)module.c build\$(NumBAT_MOD)-f2pywrappers.f build\fortranobject.f
@@ -154,11 +173,9 @@ $(NumBAT_MOD).pyf: $(SRCS)
 	-$(RM) $(F2PY_SRCS)
 	-$(MKDIR) build mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
-	copy $(NUMPYDIR)\f2py\src\fortranobject.c build
-	copy $(NUMPYDIR)\f2py\src\fortranobject.h build
+	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"..\src\myhead.h\"
 
-$(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ)
+$(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
 	$(C_COMP_EXE) /nologo /Wall  /LD \
 	$(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
 	 $(MATHLIB) \
