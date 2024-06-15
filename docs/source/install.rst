@@ -252,58 +252,53 @@ with installing the additional required packages may be quite painful.
 Installing the Native Windows version
 -------------------------------------------
 There is now an experimental version of |NUMBAT| built entirely using the native Windows toolchain including
-Visual Studio and the Intel Fortran compiler.
-
-Python environment
-^^^^^^^^^^^^^^^^^^^^^^^^^
-The standard Python solution for Windows is the Anaconda distribution.
-
-If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
-
-Windows build tools
-^^^^^^^^^^^^^^^^^^^^^^^^^
-The following tools are all free but will use several GB of disk space.
-
-Visual Studio
-""""""""""""""
-This is the primary Microsoft development environment.
-
-To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
-
-Intel OneAPI Base Toolkit
-""""""""""""""""""""""""""
-This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
-
-Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
+Visual Studio and the Intel Fortran compiler. There are a surprising number of steps and tools required, but it should go relatively smoothly.
 
 
-Intel OneAPI HPC Toolkit
-""""""""""""""""""""""""""
-This adds the Intel Fortran compiler amongst other HPC tools.
+#. **Python environment**
 
-Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
+    The standard Python solution for Windows is the Anaconda distribution.
 
+    If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
 
-Git
-"""""""""""""""""""
-This is a source control that we use to download |NUMBAT| and some other tools.
+#. **Windows build tools**
 
+    The following tools are all free but will use several GB of disk space.
 
-Download and run the  `latest Git for Windows release <https://git-scm.com/download/win>`_, accepting all defaults.
+    - *Visual Studio*:
+        This is the primary Microsoft development environment.
 
-Some users may prefer to use a graphical interface such as `GitHub Desktop <https://desktop.github.com/>`_. This is fine too.
+        To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
 
-CMake
-"""""""""""""""""""
-This is a cross-platform build tool we will need for building some of the libraries.
+    - *Intel OneAPI Base Toolkit*:
+        This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
 
-Download and run the  `latest release <latest >`_ accepting all defaults.
+        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
 
 
-https://cmake.org/download/
+    - *Intel OneAPI HPC Toolkit*
+        This adds the Intel Fortran compiler amongst other HPC tools.
+
+        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
+
+
+    - *Git*
+        This is a source control that we use to download |NUMBAT| and some other tools.
+
+
+        Download and run the  `latest Git for Windows release <https://git-scm.com/download/win>`_, accepting all defaults.
+
+        Some users may prefer to use a graphical interface such as `GitHub Desktop <https://desktop.github.com/>`_. This is fine too.
+
+    - *CMake*
+        This is a cross-platform build tool we will need for building some of the libraries.
+
+        Download and run the  `latest release <https://cmake.org/download/>`_ accepting all defaults.
+
 
 NumBAT code and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+We can now build the supporting libraries, and then |NUMBAT| itself.
 
 #. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
     say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
@@ -311,23 +306,23 @@ NumBAT code and libraries
 #. Use the Start Menu to open the *Intel OneAPI Command Prompt for Intel 64 for Visual Studio 2022*.
    This is simply a Windows terminal with some Intel compiler environment variables pre-defined.
 
-#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands.
+#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands::
 
-   $ mkdir nb_releases
-   $ mkdir usr_local
-   $ mkdir usr_local\include
-   $ mkdir usr_local\lib
-   $ mkdir usr_local\packages
-   $ cd usr_local\packages
-   $ git clone https://github.com/opencollab/arpack-ng.git arpack-ng
-   $ git clone https://github.com/jlblancoc/suitesparse-metis-for-windows.git suitesparse-metis
-   $ cd ..\nb_releases
-   $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
+    $ mkdir nb_releases
+    $ mkdir usr_local
+    $ mkdir usr_local\include
+    $ mkdir usr_local\lib
+    $ mkdir usr_local\packages
+    $ cd usr_local\packages
+    $ git clone https://github.com/opencollab/arpack-ng.git arpack-ng
+    $ git clone https://github.com/jlblancoc/suitesparse-metis-for-windows.git suitesparse-metis
+    $ cd ..\nb_releases
+    $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
 #. Your ``<NumBAT_BASE>`` tree should now look like this:
 
-.. figure:: ./images/win_install_free.png
-   :width: 10cm
+.. figure:: ./images/win_install_tree.png
+   :width: 6cm
 
 
 Building SuiteSparse
@@ -335,7 +330,8 @@ Building SuiteSparse
 This library performs sparse matrix algebra, used in the eigensolving routines of |NUMBAT|.
 
 1. In the Intel command terminal, cd to ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis``.
-2. Enter the following command. It may take a minute or two to complete.
+
+2. Enter the following command. It may take a minute or two to complete::
 
     $ cmake -B build .
 
@@ -343,7 +339,7 @@ This library performs sparse matrix algebra, used in the eigensolving routines o
 
 4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
 
-5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands:
+5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
     $ copy packages\suitesparse-metis\build\lib\*.dll lib
     $ copy packages\suitesparse-metis\build\lib\*.lib lib
@@ -358,7 +354,8 @@ Building Arpack-ng
 This library performs an iterative algorithm for finding matrix eigensolutions.
 
 1. In the Intel command terminal, cd to ``<NumBAT_BASE>\usr_local\packages\arpack-ng``.
-2. Enter the following command. It may take a minute or two to complete.
+
+2. Enter the following command. It may take a minute or two to complete::
 
     $ cmake -B build -T "fortran=ifx" .
 
@@ -366,7 +363,7 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
 
-5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands:
+5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
     $ copy packages\arpack-ng\Release\* lib
     $ copy packages\arpack-ng\ICB\*.h include
@@ -393,7 +390,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
     $ pip3 install numpy matplotlib scipy psutils
 
-#. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself:
+#. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
     $ cd ``<NumBAT_BASE>``
     $ cd nb_releases\nb_latest
@@ -406,6 +403,8 @@ At long last, we are ready to build |NUMBAT| itself.
 
    $ cd backend\fortran
    $ make -f Makefile.win
+
+   This should take 2 to 3 minutes.
 
 #. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
 
