@@ -235,6 +235,9 @@ The following steps have worked for us:
 Installing on Windows
 ================================
 
+Installing the Linux version via a Virtual Machine
+------------------------------------------------------
+
 The easiest way to run |NUMBAT| on  Windows is usually by installing Ubuntu as
 a virtual machine using either `Microsoft Hyper-V
 <https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box
@@ -246,6 +249,85 @@ using the `Windows Subsystem for Linux
 <https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
 with installing the additional required packages may be quite painful.
 
+Installing the Native Windows version
+-------------------------------------------
+There is now an experimental version built entirely using the native Windows toolchain including
+Visual Studio and the Intel Fortran compiler.
+
+Windows build tools
+^^^^^^^^^^^^^^^^^^^^^^^^^
+The following tools are all free but will use several GB of disk space.
+
+Visual Studio
+""""""""""""""
+This is the primary Microsoft development environment.
+
+To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
+
+Intel OneAPI Base Toolkit
+""""""""""""""""""""""""""
+This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
+
+Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
+
+
+Intel OneAPI HPC Toolkit
+""""""""""""""""""""""""""
+This adds the Intel Fortran compiler amongst other HPC tools.
+
+Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
+
+
+Git
+"""""""""""""""""""
+This is a source control that we use to download |NUMBAT| and some other tools.
+
+
+Download and run the  `latest Git for Windows release <https://git-scm.com/download/win>`_, accepting all defaults.
+
+Some users may prefer to use a graphical interface such as `GitHub Desktop <https://desktop.github.com/>`_. This is fine too.
+
+CMake
+"""""""""""""""""""
+This is a cross-platform build tool we will need for building some of the libraries.
+
+Download and run the  `latest release <latest >`_ accepting all defaults.
+
+
+https://cmake.org/download/
+
+NumBAT code and libraries
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+#. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
+    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT>``.
+
+#. Use the Start Menu to open the *Intel OneAPI Command Prompt for Intel 64 for Visual Studio 2022*.
+   This is simply a Windows terminal with some Intel compiler environment variables pre-defined.
+
+#. In the terminal window, change to the ``<NumBAT>`` directory, then execute the following commands.
+
+   $ mkdir nb_releases
+   $ mkdir usr_local
+   $ mkdir usr_local\include
+   $ mkdir usr_local\lib
+   $ mkdir usr_local\packages
+   $ cd usr_local\packages
+   $ git clone https://github.com/opencollab/arpack-ng.git arpack-ng
+   $ git clone https://github.com/jlblancoc/suitesparse-metis-for-windows.git suitesparse-metis
+   $ cd ..\nb_releases
+   $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
+
+
+
+
+
+
+
+#. Your ``<NumBAT>`` tree should now look like this:
+
+Installing via Docker
+----------------------------------
 
 There is also an outdated Docker package for Windows that could be updated to support the current version of |NUMBAT| if there is demand. Let us know.
 
