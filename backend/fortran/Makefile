@@ -229,8 +229,8 @@ PYINTERFACE_SRCS = $(addprefix src/, $(PYINTERFACE_SRCS_IN))
 # Local SuiteSparse wrapper
 SSWRAP_DIR = sswrap
 SS_VER=7.1.0_linux
-SSWRAP_OBJ = build\umf4_f77zwrapper64.o
-SSWRAP_SRC = $(SS_WRAP)\umf4_f77zwrapper_SS_$(SS_VER).c
+SSWRAP_OBJ = build/umf4_f77zwrapper64.o
+SSWRAP_SRC = $(SSWRAP_DIR)/umf4_f77zwrapper_SS_$(SS_VER).c
 
 $(SSWRAP_OBJ): $(SSWRAP_SRC)
 	$(C_COMP_EXE) $(CFLAGS) -I $(SSWRAP_DIR) -D ZLONG $(UMFPACK_INC) -c $< -o $@
