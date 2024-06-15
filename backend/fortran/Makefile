@@ -235,26 +235,6 @@ SSWRAP_SRC = $(SSWRAP_DIR)/umf4_f77zwrapper_SS_$(SS_VER).c
 $(SSWRAP_OBJ): $(SSWRAP_SRC)
 	$(C_COMP_EXE) $(CFLAGS) -I $(SSWRAP_DIR) -D ZLONG $(UMFPACK_INC) -c $< -o $@
 
-# $(UMFPACK_WRAPPER): $(UMFPACK_SRC)
-# 	$(C_COMP_EXE) -O5 -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) \
-# 		-fPIC -o $(UMFPACK_WRAPPER)
-
-
-# #SuiteSparse details
-# SS_WRAP = lib
-# UMFPACK_OBJ = umf4_f77zwrapper64.o
-# UMFPACK_WRAPPER = $(SS_WRAP)/$(UMFPACK_OBJ)
-# #SSP_VER=3.7.1
-# #SSP_VER=4.2.0
-# SS_VER=7.1.0_linux
-# UMFPACK_SRC = $(SS_WRAP)/umf4_f77zwrapper_SS_$(SS_VER).c
-
-check:
-	echo objs: $(OBJS)
-	echo f2pyobjs: $(F2PY_OBJS)
-	echo mods: $(SRCS_MODS)
-	echo mods: $(MODULES_MODS)
-
 
 mods: $(MODULES_MODS)
 
@@ -286,18 +266,6 @@ build/%.e : src/%.c
 build/%.e : build/%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
-# F2PYLINK=Ccomp
-# #F2PYLINK=Fcomp
-
-# ifeq ($(F2PYLINK), Ccomp)
-# FMETHOD=null
-# CMETHOD=$(NumBAT_MOD)
-# else
-# FMETHOD=$(NumBAT_MOD)
-# CMETHOD=null
-# endif
-
-
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
@@ -315,15 +283,6 @@ $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRA
 	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -o $(NumBAT_MOD).so
 
 
-
-
-
-# $(CMETHOD).$(SHLIB): $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
-# 	echo "New compilation method Step B"
-# 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)  $(MATHLIB) $(GENLIB) $(PYLIB) -lgfortran -lm -o $(NumBAT_MOD).$(SHLIB)
-
-
-
 clean:
 	-rm -f $(SS_WRAP)/*.o
 	-rm -f build/*.o build/*.f build/*.c build/*.f90
@@ -331,6 +290,12 @@ clean:
 	-rm mods/*.mod mods/*genmod.mod mods/*genmod.f90
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 
+
+check:
+	echo objs: $(OBJS)
+	echo f2pyobjs: $(F2PY_OBJS)
+	echo mods: $(SRCS_MODS)
+	echo mods: $(MODULES_MODS)
 
 
 
