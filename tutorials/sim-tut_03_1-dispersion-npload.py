@@ -7,7 +7,9 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
+
 import numbat
 import integration
 import mode_calcs

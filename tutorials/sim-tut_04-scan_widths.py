@@ -15,7 +15,9 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 #from matplotlib.colors import colorConverter
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
+
 
 import numbat
 import materials

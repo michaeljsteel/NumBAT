@@ -22,8 +22,8 @@ MYPLAT="linux_inteloneapi"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
-COMPILER_VENDOR="gcc"
-#COMPILER_VENDOR="intel"
+#COMPILER_VENDOR="gcc"
+COMPILER_VENDOR="intel"
 
 
 ifeq ($(COMPILER_VENDOR), "gcc")
@@ -40,7 +40,7 @@ else
 #TODO: smooth selection of version folders
 ONEAPI=/opt/intel/oneapi
 ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
-COMP_LIB = -L $(ONEAPI)/2024.1/lib -limf
+COMP_LIB = -L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
 
 F_COMP_EXE = $(ONEAPICOMP)/ifx
 C_COMP_EXE = $(ONEAPICOMP)/icx

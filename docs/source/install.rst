@@ -98,16 +98,25 @@ Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
 #. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
 
 
-Other build configurations
---------------------------
-
-The Fortran components (|NUMBAT| source code and libraries) have been successfully compiled with Intel's ``ifortran`` as well as GCC's open-source ``gfortran``. In this documentation we use ``gfortran``, but this can be easily adjusted in ``|NUMBAT|/backend/fortran/Makefile``
 
 
 Other build configurations
 --------------------------
 
-The Fortran components (NumBAT source code and libraries) have been successfully compiled with Intel's ``ifortran`` as well as GCC's open-source ``gfortran``. In this documentation we use ``gfortran``, but this can be easily adjusted in ``NumBAT/backend/fortran/Makefile``
+The default compiler for Linux is GCC's ``gfortran``.
+
+It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's free OneAPI HPC toolkit.
+
+To do so,
+
+#. Install the Intel OneAPI Base and HPC Toolkits.
+#. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/2024.1/lib``.
+#. Change the ``COMPILER_VENDOR`` switch in ``<NumBAT>/backend/fortran/Makefile``.
+#. In ``<NumBAT>/backend/fortran``, run::
+
+    $ make clean
+    $ make
+
 
 Installing without root access
 ----------------------------------------------------

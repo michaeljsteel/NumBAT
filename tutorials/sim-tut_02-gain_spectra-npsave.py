@@ -12,8 +12,10 @@
 import sys
 import numpy as np
 
-sys.path.append(r"..\backend")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 
+print(sys.path)
 
 import numbat
 import plotting
