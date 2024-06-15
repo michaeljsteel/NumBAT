@@ -11,30 +11,30 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    table_nod, type_el, mesh_xy, &
    v_eigs_nu, sol1, mode_pol, errco, emsg)
 
-! q_ac :   acoustic wave number (q_ac)
-! n_modes:  desired number of solved acoustic modes
-! n_msh_pts:  number of nodes in mesh
-! n_msh_el:   number of (triang) elements in mesh
-! n_type_el:  number of types of material
-! type_nod:    ??
-! table_nod:
-! type_el:
-! mesh_xy
-! v_eigs_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
-! sol1:
-! mode_pol:
+   ! q_ac :   acoustic wave number (q_ac)
+   ! n_modes:  desired number of solved acoustic modes
+   ! n_msh_pts:  number of nodes in mesh
+   ! n_msh_el:   number of (triang) elements in mesh
+   ! n_type_el:  number of types of material
+   ! type_nod:    ??
+   ! table_nod:
+   ! type_el:
+   ! mesh_xy
+   ! v_eigs_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
+   ! sol1:
+   ! mode_pol:
 
-!***********************************************************************
-!
-! Program:
-! FEM solver of Acoustic waveguide problems.
-! This subroutine is compiled by f2py & called in mode_calcs.py
-!
-! Authors:
-! Bjorn Sturmberg & Kokou B. Dossou
-!
-!***********************************************************************
-!
+   !***********************************************************************
+   !
+   ! Program:
+   ! FEM solver of Acoustic waveguide problems.
+   ! This subroutine is compiled by f2py & called in mode_calcs.py
+   !
+   ! Authors:
+   ! Bjorn Sturmberg & Kokou B. Dossou
+   !
+   !***********************************************************************
+   !
    use numbatmod
    !f2py integer, parameter :: EMSG_LENGTH
    integer*8 n_modes
@@ -43,7 +43,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    double precision dimscale_in_m
    complex*16 shift_nu
    integer*8 int_max, cmplx_max, int_used, cmplx_used
-   integer*8 real_max, real_used
+   integer*8 real_max, real_used, n_ddl
    integer errco
    character(len=EMSG_LENGTH) emsg
 
@@ -73,7 +73,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    double precision, dimension(:), allocatable :: c_dwork
 
    !double precision, dimension(:,:), allocatable :: d_dwork
-    !complex*16, dimension(:,:), allocatable :: dummy_overlap_L  ! not actually used.
+   !complex*16, dimension(:,:), allocatable :: dummy_overlap_L  ! not actually used.
 
    !  Declare the pointers of the integer super-vector
    integer*8 ip_eq
@@ -129,7 +129,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos
 
 
-   integer*8 is_em
+   integer :: is_em
 
 
    !f2py intent(in) q_ac, n_modes
@@ -178,33 +178,31 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    debug=1
 
 
-      call array_size(n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, errco, emsg)
-      RETONERROR(errco)
+   call array_size(n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
+      n_ddl, errco, emsg)
+   RETONERROR(errco)
 
-      allocate(a_iwork(int_max), STAT=stat)
-      call check_alloc(stat, int_max, "a", -1, errco, emsg)
-      RETONERROR(errco)
+   allocate(a_iwork(int_max), STAT=stat)
+   call check_alloc(stat, int_max, "a", -1, errco, emsg)
+   RETONERROR(errco)
 
-      allocate(b_zwork(cmplx_max), STAT=stat)
-      call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
-      RETONERROR(errco)
+   allocate(b_zwork(cmplx_max), STAT=stat)
+   call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+   RETONERROR(errco)
 
-      allocate(c_dwork(real_max), STAT=stat)
-      call check_alloc(stat, real_max, "c", -1, errco, emsg)
-      RETONERROR(errco)
+   allocate(c_dwork(real_max), STAT=stat)
+   call check_alloc(stat, real_max, "c", -1, errco, emsg)
+   RETONERROR(errco)
 
-      allocate(iindex(n_modes), STAT=stat)
-      call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
-      RETONERROR(errco)
+   allocate(iindex(n_modes), STAT=stat)
+   call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
+   RETONERROR(errco)
 
-   write(*,*) 'pycalcac s1'
+   is_em = 0
+   !    call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
+   !       a_iwork, b_zwork, c_dwork, d_dwork, iindex, dummy_overlap_L, errco, emsg)
+   !    RETONERROR(errco)
 
-!    is_em = 0
-!    call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
-!       a_iwork, b_zwork, c_dwork, d_dwork, iindex, dummy_overlap_L, errco, emsg)
-!    RETONERROR(errco)
-
-   write(*,*) 'pycalcac s1a'
    !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
    !
    !     clean mesh_format
@@ -227,10 +225,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    dim_y= dimscale_in_m
    shift_omsq= (2*D_PI*shift_nu)**2
 
-   write(*,*) 'pycalcac s1b'
-   !
    !####################  Start FEM PRE-PROCESSING  #######################
-   !
 
    !       ! pointer to FEM connectivity table
    ip_visite = 1
@@ -245,7 +240,6 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       endif
    endif
 
-   write(*,*) 'pycalcac s2'
    call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
 
    !       if (debug .eq. 1) then
@@ -356,7 +350,6 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       errco = -5
       return
    endif
-   write(*,*) 'pycalcac s3'
 
    !
    !ccccccccccccccccccccccccccccccccccccccccccccccccc

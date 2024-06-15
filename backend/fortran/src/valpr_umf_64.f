@@ -44,7 +44,7 @@ c
      *  tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
      *  vect1, vect2, workd, resid, v, d, trav, vp,
      *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv, ls_data,
-     *  numeric, control, info_umf, debug, errno_arpack, emsg_arpack)
+     *  numeric, control, info_umf, debug, errco, emsg)
 c
 c     ------------------------------------------------------------------
 c
@@ -59,7 +59,7 @@ c
       double precision ls_data(10)
 c
       double precision time1_fact, time2_fact
-      double precision time1_arpack, time2_arpack
+      double precision time1, time2
 c
       double precision control (20), info_umf (90)
       integer*8 numeric, symbolic, sys
@@ -83,8 +83,8 @@ C       !  (max_nvect)
 C       !  (max_nvect)
       logical, dimension(:), allocatable :: select
 
-      integer*8 errno_arpack
-      character(len=EMSG_LENGTH) emsg_arpack
+      integer errco
+      character(len=EMSG_LENGTH) emsg
 
 
 c     Local variables
@@ -112,8 +112,8 @@ c
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-      errno_arpack = 0
-      emsg_arpack = ""
+      errco = 0
+      emsg = ""
 
       alloc_stat = 0
       allocate(workev(3*nvect), rwork(nvect), STAT=alloc_stat)
@@ -316,8 +316,8 @@ c      ----------------------------------------------------
 c     | Boucle principale en mode de communication inverse |
 c      ----------------------------------------------------
 c
-      call cpu_time(time1_arpack)
-      ls_data(3) = time1_arpack
+      call cpu_time(time1)
+      ls_data(3) = time1
 c
 20    continue
 c
@@ -519,8 +519,8 @@ c
 c       free the numeric factorization
         call umf4zfnum (numeric)
 c
-      call cpu_time(time2_arpack)
-      ls_data(4) = time2_arpack
+      call cpu_time(time2)
+      ls_data(4) = time2
 c
 c      if (debug .eq. 1) then
 c        do i=1,n_modes

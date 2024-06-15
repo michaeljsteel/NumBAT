@@ -7,7 +7,7 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
    use numbatmod
 
-   integer*8 :: is_em
+   integer :: is_em
    integer*8 :: int_max, cmplx_max, real_max
    integer*8 :: n_msh_el, n_msh_pts, n_modes
 

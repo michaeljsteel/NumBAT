@@ -1,7 +1,4 @@
 
-!#include "numbat_decl.h"
-
-
 subroutine conv_gmsh(geoname, assertions_on, errco, emsg)
 
    use numbatmod

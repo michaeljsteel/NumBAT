@@ -10,8 +10,9 @@ module nbinterfaces
 
          use numbatmod
 
-         integer*8 is_em, n_msh_el, n_msh_pts, n_modes
-         integer*8 int_max, cmplx_max, real_max
+         integer :: is_em
+         integer*8 :: n_msh_el, n_msh_pts, n_modes
+         integer*8 :: int_max, cmplx_max, real_max
 
 
          integer*8, dimension(:), allocatable :: a_iwork
@@ -21,7 +22,7 @@ module nbinterfaces
          integer*8, dimension(:), allocatable :: iindex
          complex*16, dimension(:,:), allocatable :: overlap_L
 
-         integer errco
+         integer :: errco
          character(len=EMSG_LENGTH) emsg
 
       end subroutine prepare_workspaces
