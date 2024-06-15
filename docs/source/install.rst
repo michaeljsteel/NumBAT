@@ -251,8 +251,14 @@ with installing the additional required packages may be quite painful.
 
 Installing the Native Windows version
 -------------------------------------------
-There is now an experimental version built entirely using the native Windows toolchain including
+There is now an experimental version of |NUMBAT| built entirely using the native Windows toolchain including
 Visual Studio and the Intel Fortran compiler.
+
+Python environment
+^^^^^^^^^^^^^^^^^^^^^^^^^
+The standard Python solution for Windows is the Anaconda distribution.
+
+If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
 
 Windows build tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -300,12 +306,12 @@ NumBAT code and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 #. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
-    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT>``.
+    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
 
 #. Use the Start Menu to open the *Intel OneAPI Command Prompt for Intel 64 for Visual Studio 2022*.
    This is simply a Windows terminal with some Intel compiler environment variables pre-defined.
 
-#. In the terminal window, change to the ``<NumBAT>`` directory, then execute the following commands.
+#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands.
 
    $ mkdir nb_releases
    $ mkdir usr_local
@@ -318,13 +324,94 @@ NumBAT code and libraries
    $ cd ..\nb_releases
    $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
+#. Your ``<NumBAT_BASE>`` tree should now look like this:
+
+.. figure:: ./images/win_install_free.png
+   :width: 10cm
 
 
+Building SuiteSparse
+""""""""""""""""""""""
+This library performs sparse matrix algebra, used in the eigensolving routines of |NUMBAT|.
+
+1. In the Intel command terminal, cd to ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis``.
+2. Enter the following command. It may take a minute or two to complete.
+
+    $ cmake -B build .
+
+3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis\build\SuiteSparseProject.sln`` with Visual Studio 2022.
+
+4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+
+5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands:
+
+    $ copy packages\suitesparse-metis\build\lib\*.dll lib
+    $ copy packages\suitesparse-metis\build\lib\*.lib lib
+    $ copy packages\suitesparse-metis\build\lib\*.lib lib
+    $ copy packages\suitesparse-metis\SuiteSparse\AMD\Include\*.h include
+    $ copy packages\suitesparse-metis\SuiteSparse\UMFPACK\Include\*.h include
+    $ copy packages\suitesparse-metis\SuiteSparse\SuiteSparse_config\*.h include
 
 
+Building Arpack-ng
+""""""""""""""""""""""
+This library performs an iterative algorithm for finding matrix eigensolutions.
+
+1. In the Intel command terminal, cd to ``<NumBAT_BASE>\usr_local\packages\arpack-ng``.
+2. Enter the following command. It may take a minute or two to complete.
+
+    $ cmake -B build -T "fortran=ifx" .
+
+3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
+
+4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+
+5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands:
+
+    $ copy packages\arpack-ng\Release\* lib
+    $ copy packages\arpack-ng\ICB\*.h include
 
 
-#. Your ``<NumBAT>`` tree should now look like this:
+Building |NUMBAT|
+""""""""""""""""""""""
+At long last, we are ready to build |NUMBAT| itself.
+
+1. Create a python virtual environment for working with |NUMBAT|.
+   You can use any name and location for your environment.
+   To specify a virtual environment tree called `nbpy3` in your home directory, open the *Anaconda prompt* from the Start Menu
+   and  enter ::
+
+    $ cd
+    $ python3 -m virtualenv nbpy3
+
+
+#. Activate the new python virtual environment ::
+
+    $ source ~/nbpy3/bin/activate
+
+#. Install the necessary python libraries ::
+
+    $ pip3 install numpy matplotlib scipy psutils
+
+#. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself:
+
+    $ cd ``<NumBAT_BASE>``
+    $ cd nb_releases\nb_latest
+
+   From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
+
+#. Open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username.
+
+#. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+
+   $ cd backend\fortran
+   $ make -f Makefile.win
+
+#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+
+#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+
+
 
 Installing via Docker
 ----------------------------------
