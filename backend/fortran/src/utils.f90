@@ -3,11 +3,14 @@ subroutine check_alloc(stat, reqsz, nm, ec, errco, emsg)
 
    use numbatmod
 
-   character(len=EMSG_LENGTH) emsg
+   character(len=*), intent(in) :: nm
 
-   character(len=EMSG_LENGTH) :: nm
-   integer*8      :: ec, errco, reqsz
+
+   integer*8 :: reqsz
+   integer   :: ec, errco 
    integer :: stat
+
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
    errco = 0
    if (stat .ne. 0) then

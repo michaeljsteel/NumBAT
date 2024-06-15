@@ -154,7 +154,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
    integer *8:: ilo, ihi
 
-   integer*8 :: is_em
+   integer :: is_em
 
 
 
@@ -231,7 +231,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
    ! Fill:  mesh_xy, type_nod, type_el, table_nod
    call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
-   mesh_xy, type_nod, type_el, table_nod,  errco, emsg)
+      mesh_xy, type_nod, type_el, table_nod,  errco, emsg)
    RETONERROR(errco)
 
 
@@ -320,26 +320,26 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    ! Should be using c_dwork for x_E_F ?
    call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
       a_iwork(ip_table_N_E_F), a_iwork(ip_visited), a_iwork(ip_type_N_E_F), mesh_xy, &
-      b_zwork(jp_x_N_E_F) &
-      !d_dwork &
+      !b_zwork(jp_x_N_E_F) &
+   d_dwork &
       )
 
 
    ! Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
       a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, &
-      b_zwork(jp_x_N_E_F), &
-      !d_dwork, &
+      !b_zwork(jp_x_N_E_F), &
+   d_dwork, &
       a_iwork(ip_visited))
 
 
 
 
-      ! TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
+   ! TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
    call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
       type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, &
-      b_zwork, &
-      !d_dwork,  &
+      !b_zwork, &
+   d_dwork,  &
       int_max, debug)
 
 
@@ -561,8 +561,8 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
       call asmbly ( bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
          bloch_vec_k, n_typ_el, pp, qq, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), &
          a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), mesh_xy, &
-         b_zwork(jp_x_N_E_F), &
-         !d_dwork, &
+         !b_zwork(jp_x_N_E_F), &
+      d_dwork, &
          nonz, a_iwork(ip_row), &
          a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
 
@@ -643,7 +643,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, n_core, &
          bloch_vec_k, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), a_iwork(ip_period_N), &
          a_iwork(ip_period_N_E_F), mesh_xy, &
-         !b_zwork(jp_x_N_E_F),
+      !b_zwork(jp_x_N_E_F),
          d_dwork, &
          beta, mode_pol, b_zwork(jp_vp), sol)
 !
