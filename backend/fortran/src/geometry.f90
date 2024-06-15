@@ -24,7 +24,7 @@ subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
    double precision mesh_xy(2,n_msh_pts)
 
    character(len=FNAME_LENGTH) mesh_file
-   integer*8 errco
+   integer errco
    character(len=EMSG_LENGTH) :: emsg
 
 

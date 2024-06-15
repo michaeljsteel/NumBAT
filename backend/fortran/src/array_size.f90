@@ -14,7 +14,7 @@
       integer*8 n_msh_pts, n_msh_el, n_modes
       integer*8 int_size, cmplx_size, real_size, n_ddl
 
-      integer*8 errco
+      integer errco
       character(len=EMSG_LENGTH) emsg
 
 

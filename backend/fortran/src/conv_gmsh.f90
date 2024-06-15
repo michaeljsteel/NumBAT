@@ -14,6 +14,7 @@ subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
    character(len=FNAME_LENGTH) geoname
    integer assertions_on, errco
    character(len=EMSG_LENGTH) emsg
+
    integer i_sym, gmsh_version
 
    character(len=FNAME_LENGTH) fname_geo, fname_msh, fname_mail
@@ -271,7 +272,6 @@ subroutine decode_element_tags(fname_msh, gmsh_version, &
    errco, emsg)
 
    use numbatmod
-   implicit none
 
    ! Format of Gmsh Element lines
    ! GMSH_TYPE_LINE2NODE = 8

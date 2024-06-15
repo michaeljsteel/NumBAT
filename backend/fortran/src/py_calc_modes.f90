@@ -48,7 +48,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
 
    complex*16  v_refindex_n(n_typ_el)
-   integer*8 errco
+   integer errco
    character(len=EMSG_LENGTH) emsg
 
 
