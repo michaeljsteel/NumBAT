@@ -9,7 +9,9 @@
 import sys
 import numpy as np
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
+
 import numbat
 import materials
 import mode_calcs

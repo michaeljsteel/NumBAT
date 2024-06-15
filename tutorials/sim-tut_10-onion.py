@@ -6,7 +6,9 @@ import sys
 
 import numpy as np
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
+
 import numbat
 import materials
 import mode_calcs
@@ -87,11 +89,11 @@ for (i, kz) in enumerate(v_kz):
 n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
-# # Plot the E fields of the EM modes fields 
+# # Plot the E fields of the EM modes fields
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (ival = 0) mode.
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, ivals=range(10), contours=True, 
+                          ylim_max=0.3, ivals=range(10), contours=True,
                            ticks=True, quiver_points=20)
 
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,

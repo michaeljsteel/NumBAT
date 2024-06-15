@@ -10,7 +10,9 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
+
 import numbat
 import materials
 import mode_calcs
