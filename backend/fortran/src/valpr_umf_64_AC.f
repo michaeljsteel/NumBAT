@@ -10,7 +10,7 @@ c     ------------------------------------------------------------------
      *  ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,
      *  vect1, vect2, workd, resid, vschur, nu_out, trav, vp,
      *  rhs_re, rhs_im, lhs_re, lhs_im, n_conv,
-     *  debug, show_mem_est, errno_arp, emsg_arp)
+     *  debug, show_mem_est, errno, emsg)
 
 c     ------------------------------------------------------------------
 
@@ -19,8 +19,8 @@ c
       integer*8 neq, nonz, n_conv, i_base, nvect, n_modes, ltrav
       integer*8 row_ind(nonz), col_ptr(neq+1)
 
-      integer*8 errno_arp
-      character(len=EMSG_LENGTH) emsg_arp
+      integer errno
+      character(len=EMSG_LENGTH) emsg
 
 
       double precision mat1_re(nonz), mat1_im(nonz)
@@ -72,8 +72,8 @@ c
 c     ------------------------------------------------------------------
 c
       ui = 6
-      errno_arp = 0
-      emsg_arp = ""
+      errno = 0
+      emsg = ""
 
       call cpu_time(time1_fact)
 
@@ -104,8 +104,8 @@ c     print statistics computed so far
 c     call umf4zpinf (control, info_umf) could also be done.
       call report_stats_umf4zsym(debug, show_mem_est, info_umf)
       if (info_umf (1) .lt. 0) then
-          write(emsg_arp,*) 'Error occurred in umf4zsym: ', info_umf (1)
-          errno_arp = -104
+          write(emsg,*) 'Error occurred in umf4zsym: ', info_umf (1)
+          errno = -104
           return
       endif
 
@@ -119,27 +119,27 @@ c     call umf4zpinf (control, info_umf) could also be done.
       call report_stats_umf4znum(debug, show_mem_est, info_umf)
 
       if (info_umf (1) .lt. 0) then
-        write(emsg_arp,*) 'Error occurred in umf4znum: ', info_umf(1)
-        errno_arp = -105
+        write(emsg,*) 'Error occurred in umf4znum: ', info_umf(1)
+        errno = -105
         return
       endif
 
       alloc_stat = 0
       allocate(workev(3*nvect), rwork(nvect), STAT=alloc_stat)
       if (alloc_stat /= 0) then
-        write(emsg_arp,*) "VALPR_64: Mem. allocation is unsuccessfull ",
+        write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",
      *  "for the arrays workev, rwork",
      *  "alloc_stat, nvect = ", alloc_stat, nvect
-        errno_arp = -100
+        errno = -100
         return
       endif
 
       allocate(selecto(nvect), STAT=alloc_stat)
       if (alloc_stat /= 0) then
-        write(emsg_arp,*) "VALPR_64: Mem. allocation is unsuccessfull ",
+        write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",
      *  "for the array selecto",
      *  "alloc_stat, nvect = ", alloc_stat, nvect
-        errno_arp = -101
+        errno = -101
         return
       endif
 
@@ -152,9 +152,9 @@ c
 c       ##################################################################
 c
       if (i_base .ne. 0) then
-        write(emsg_arp,*) "valpr_64: i_base != 0 : ", i_base,
+        write(emsg,*) "valpr_64: i_base != 0 : ", i_base,
      *   "valpr_64: UMFPACK requires 0-based indexing"
-        errno_arp = -102
+        errno = -102
       endif
 c
 
@@ -250,11 +250,11 @@ c     Test for N=neq_32, NEV=n_modes_32, NCV=nvect_32
 c     Need 0<n_modes_32<neq_32-1, 1<= nvect_32-n_modes_32, nvect_32<=neq_32
       if ((neq_32-1 .le. n_modes_32) .or. (nvect_32-n_modes_32 .lt. 1)
      *    .or.  nvect_32 > neq_32) then
-        write(emsg_arp,'(A,A)') 'ARPACK eigensolver dimensional'//
+        write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//
      *   ' conditions failed (would generate ARPACK znaupd error ' //
      *   'code of -3).' // NEW_LINE('A'),
      *   'You should probably increase the grid resolution.'
-         errno_arp = -106
+         errno = -106
           return
       endif
 
@@ -288,8 +288,8 @@ c       solve Ax=b, without iterative refinement
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-            emsg_arp = 'Error occurred in umf4zsol: '
-            errno_arp = -107
+            emsg = 'Error occurred in umf4zsol: '
+            errno = -107
             return
         endif
         do i=1,neq
@@ -324,8 +324,8 @@ c       solve Ax=b, without iterative refinement
      *     numeric, control, info_umf)
         if (info_umf (1) .lt. 0) then
             write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-            emsg_arp = 'Error occurred in umf4zsol: '
-            errno_arp = -108
+            emsg = 'Error occurred in umf4zsol: '
+            errno = -108
             return
         endif
         do i=1,neq
@@ -390,7 +390,7 @@ c                   factorization.
 
 c      ---------------------------------------------------
 
-         write(emsg_arp, '(A,I5,/,A)') 'Error occurred in _naupd:'//
+         write(emsg, '(A,I5,/,A)') 'Error occurred in _naupd:'//
      *       ' ARPACK error code = ', info_32,
      *       ' You should probably increase the grid resolution.'
 
@@ -420,11 +420,11 @@ c     | trouve une base orthogonale de l'espace propre.            |
 c      ------------------------------------------------------------
 
       if (ierr_32.ne.0) then
-         write(emsg_arp,*) 'VALPR_64:' ,
+         write(emsg,*) 'VALPR_64:' ,
      *     ' Error with _neupd, info_32 = ', ierr_32,
      *     ' Check the documentation of zneupd. ',
      *     ' This error can occur if the mesh is too coarse.'
-         errno_arp = -109
+         errno = -109
          return
 
       else
