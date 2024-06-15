@@ -44,7 +44,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    complex*16 shift_nu
    integer*8 int_max, cmplx_max, int_used, cmplx_used
    integer*8 real_max, real_used
-   integer*8 errco
+   integer errco
    character(len=EMSG_LENGTH) emsg
 
 

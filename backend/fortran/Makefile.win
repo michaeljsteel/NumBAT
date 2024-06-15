@@ -4,165 +4,134 @@
 RM=del /q
 MKDIR=mkdir
 
-NumBAT_MOD=NumBAT
-
-all: $(NumBAT_MOD).dll
-
-## Set your python virtualenv platform
-MYPYENV = c:\users\mq98002769\mypy3-11
-PYVERMAJ=3
-#PYVERMAJMIN=$(origin NUMBAT_PYVER),3.12)
-#PYVERMAJMIN=3.12
-PYVERMAJMIN=3.11
-
-
-MYPLAT="windows_inteloneapi"
-
-# virtual env doesn't contain Python.h, so we grab it from here:
-SYSTEMPY = C:\Users\mq98002769\AppData\Local\anaconda3
-SYSTEMPYINC= $(SYSTEMPY)\include
-
-
-PLAT = $(MYPLAT)
-
-
-ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI
-# Uses BLAS and LAPACK from free Intel OneApi MKL library
-
-ifneq ($(UNAME_S), Linux)
-$(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
-endif
-
-F_COMP_EXE = f95
-C_COMP_EXE = gcc
-
-## Check from here until EndDefs
-ARPACK_INCL = -I /usr/local/include
-ARPACK_LIB  = -L /usr/local/lib -larpack
-
-MKLROOT = /opt/intel/oneapi/mkl/latest
-
-UMFPACK_INC = -I/usr/include/suitesparse
-UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
-## EndDefs
-
-PYROOT = $(MYPYENV)
-PYBIN = $(PYROOT)/bin
-PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
-PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
-F2PY = $(PYBIN)/f2py3
-
-MKL_INCL = -I $(MKLROOT)/include
-MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
-
-MATHINC = $(ARPACK_INCL) $(MKL_INCL)
-MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
-GENLIB = -lrt
-
-NUMPYDIR = $(PYPACKAGES)/numpy
-PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
-
-
-else
+# Intel compilers
 F_COMP_EXE = ifx
 C_COMP_EXE = icx
 
-## Check from here until EndDefs
-#ARPACK_INCL = /I /usr/local/include
-#ARPACK_LIB  = /L /usr/local/lib -larpack
+NumBAT_MOD=NumBAT
+all: $(NumBAT_MOD).dll
+
+# Location of System Python (virtual envs don't contain Python.h, so we grab it from here)
+SYSTEMPY = C:\Users\mq98002769\AppData\Local\anaconda3
+SYSTEMPYINC= $(SYSTEMPY)\include
+SYSTEMPYLIB= $(SYSTEMPY)\libs\python311.lib
+
+# Set your python virtualenv platform
+MYPYENV = c:\users\mq98002769\mypy3-11
+PYVERMAJ=3
+PYVERMAJMIN=3.11
 
 
+
+# Location of support libraries: SuiteSparse etc
+# Think of this as a linux /usr/local
 NB_USRLOCAL = C:\Users\mq98002769\numbat\local
-UMFPACK_INC = /I $(NB_USRLOCAL)\include
-UMFPACK_LIB = $(NB_USRLOCAL)\lib\libumfpack.lib $(NB_USRLOCAL)\lib\libcholmod.lib  $(NB_USRLOCAL)\lib\libamd.lib $(NB_USRLOCAL)\lib\suitesparseconfig.lib
 
-## EndDefs
+UMFPACK_INC = /I $(NB_USRLOCAL)\include
+UMFPACK_LIB = $(NB_USRLOCAL)\lib\libumfpack.lib $(NB_USRLOCAL)\lib\libcholmod.lib \
+	$(NB_USRLOCAL)\lib\libamd.lib $(NB_USRLOCAL)\lib\suitesparseconfig.lib
 
 PYROOT = $(MYPYENV)
 PYBIN = $(PYROOT)\Scripts
-#PYBASEINC= $(PYROOT)\include\python$(PYVERMAJMIN)
-PYPACKAGES = C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy\f2py\src
-
-PYBASEINC=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\python-3.11.8-he1021f5_0\include
-
-PYLIB= $(SYSTEMPY)\libs\python311.lib
-
 F2PY = $(PYBIN)\f2py
 
-MKLROOT = "C:\Program Files (x86)\Intel\oneAPI\mkl\latest"
-MKL_INCL = -I $(MKLROOT)\include
-MKL_LIB  = $(MKLROOT)\lib\mkl_lapack95_lp64.lib $(MKLROOT)\lib\mkl_blas95_lp64.lib $(MKLROOT)\lib\mkl_rt.lib
+#Make these nicer.  Are they not in the virtual env $(PYROOT) tree?
+#PYPACKAGES = C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy\f2py\src
+PYBASEINC=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\python-3.11.8-he1021f5_0\include
 
-MATHINC = $(ARPACK_INCL) $(MKL_INCL)
+#NUMPYDIR = $(PYPACKAGES)\numpy
+NUMPYDIR=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
+#PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)\core\include -I $(NUMPYDIR)\f2py\src\ -I $(SYSTEMPYINC)
+#PYINC = -I $(SYSTEMPYINC) -I $(NUMPYDIR)\core\include
+PYINC = -I $(SYSTEMPYINC) -I $(NUMPYDIR)\f2py\src\core\include
+
+
+
+ONEAPI="C:\Program Files (x86)\Intel\oneAPI"
+MKLROOT=$(ONEAPI)\mkl\latest
+MKL_INCL=/I $(MKLROOT)\include
+MKL_LIB=$(MKLROOT)\lib\mkl_lapack95_lp64.lib $(MKLROOT)\lib\mkl_blas95_lp64.lib $(MKLROOT)\lib\mkl_rt.lib
+
+ARPACK_INC =
+ARPACK_LIB =
+
+MATH_INC = $(ARPACK_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
-#GENLIB = -lrt
 
-NUMPYDIR = $(PYPACKAGES)\numpy
-PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)\core\include -I $(NUMPYDIR)\f2py\src\ -I $(SYSTEMPYINC)
-
-PYINC = -I $(SYSTEMPYINC) -I $(NUMPYDIR)\core\include
-
-endif
 
 
 
 SRCS_F = $(wildcard src/*.f)
-SRCS_F95 = $(wildcard src/*.f90)
-OBJSA = $(SRCS_F:.f=.obj) $(SRCS_F95:.f90=.obj)
-OBJS = $(subst src/,build\,$(OBJSA))
+SRCS_F90 = $(wildcard src/*.f90)
+#OBJSA = $(SRCS_F:.f=.obj) $(SRCS_F90:.f90=.obj)
+#OBJS = $(subst src/,build\,$(OBJSA))
+OBJS = $(subst src/,build\,$(SRCS_F:.f=.obj) $(SRCS_F90:.f90=.obj))
 
+
+# The build order of these matters
 SRCS_MODS = src\numbatmod_module.f90 src\nbinterfaces_module.f90
-OBJS_MODA = $(SRCS_MODS:.f90=.obj)
-MODULES_MODS = build\numbatmod_module.mod build\nbinterfaces_module.mod
+#SRCS_MODS = $(wildcard src/*_module.f90)
+#OBJS_MODA = $(SRCS_MODS:.f90=.obj)
+#MODULES_MODS = build\numbatmod_module.mod build\nbinterfaces_module.mod
+MODULES_MODS = $(subst src\,build\,$(SRCS_MODS:.f90=.mod))
 
-#conv_gmsh.f
-PYINTERFACE_SRCSA = pyinterfaces.f py_calc_modes_ac.f py_calc_modes.f \
-	em_mode_energy_int_v2_ez.f \
-  em_mode_energy_int_ez.f photoelastic_int.f photoelastic_int_v2.f \
-  ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
-  ac_alpha_int.f ac_alpha_int_v2.f moving_boundary.f array_material_ac.f \
-  ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f em_mode_e_energy_int.f \
-  h_mode_field_ez.f array_size.f
-#numbatmod.f
+# Files that contain functions directly callable from Python.
+# It must be possible to shorten this
+PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
+	em_mode_energy_int_v2_ez.f em_mode_energy_int_ez.f em_mode_e_energy_int.f \
+	h_mode_field_ez.f \
+	ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
+	ac_mode_elastic_energy_int.	f ac_mode_elastic_energy_int_v4.f \
+	ac_alpha_int.f ac_alpha_int_v2.f  \
+	array_size.f array_material_ac.f \
+	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f \
+	py_calc_modes.f90 py_calc_modes_ac.f90
 
-PYINTERFACE_SRCS = $(addprefix src\, $(PYINTERFACE_SRCSA))
 
-#SuiteSparse details
-SS_WRAP = lib
-UMFPACK_OBJ = umf4_f77zwrapper64.obj
-UMFPACK_WRAPPER = $(SS_WRAP)\$(UMFPACK_OBJ)
-UMFPACK_WRAPPER = build\$(UMFPACK_OBJ)
+PYINTERFACE_SRCS = $(addprefix src\,$(PYINTERFACE_SRCS_IN))
 
-#SSP_VER=3.7.1
-#SSP_VER=4.2.0
+# Local SuiteSparse wrapper
+SSWRAP_DIR = sswrap
 SS_VER=7.1.0_linux
-UMFPACK_SRC = $(SS_WRAP)\umf4_f77zwrapper_SS_$(SS_VER).c
+SSWRAP_OBJ = build\umf4_f77zwrapper64.obj
+SSWRAP_SRC = $(SS_WRAP)\umf4_f77zwrapper_SS_$(SS_VER).c
+
+$(SSWRAP_OBJ): $(SSWRAP_SRC)
+	$(C_COMP_EXE) $(CFLAGS) /I $(SSWRAP_DIR) /D ZLONG $(UMFPACK_INC) -c $< -o $@
 
 
-F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:mods
-F95FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:mods
 
-CFLAGS=  /nologo /Ot /warn:all
 
-ttt:
-	echo $(CFLAGS)
+#F77FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:mods
+#F95FLAGS= /nologo /fpp /Ot /Qm64 /warn:all /warn:noexternals /module:mods
+#CFLAGS= /nologo /Ot /warn:all
+F77FLAGS= /nologo /fpp /O2 /warn:all /warn:noexternals /module:mods
+F95FLAGS= /nologo /fpp /O2 /warn:all /warn:noexternals /module:mods
+CFLAGS= /nologo /O2 /warn:all
+
+
+check:
+	echo objs: $(OBJS)
+	echo f2pyobjs: $(F2PY_OBJS)
+	echo mods: $(SRCS_MODS)
+	echo mods: $(MODULES_MODS)
 
 mods: $(MODULES_MODS)
 
 build\\%.mod : src\%.f90
-	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATH_INC) $< -o $@
 
 build\\%.obj : src\%.f90 $(MODULES_MODS)
-	$(F_COMP_EXE) -c $(F95FLAGS) $(MATHINCL) $< -o $@
+	$(F_COMP_EXE) -c $(F95FLAGS) $(MATH_INC) $< -o $@
 
 build\\%.obj : src\%.f $(MODULES_MODS)
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATH_INC) $< -o $@
 
 build\\%.obj : src\%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
 build\\%.obj : build\%.f
-	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINCL) $< -o $@
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATH_INCL) $< -o $@
 
 build\\%.obj : build\%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) /D UPPERCASE_FORTRAN /D NO_APPEND_FORTRAN $< -o $@
@@ -176,46 +145,34 @@ build\\%.e : src\\%.c
 build\\%.e : build\\%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
-F2PYLINK=Ccomp
 
-CMETHOD=$(NumBAT_MOD)
-
-
-check:
-	echo mods: $(MODULES_MODS)
-	echo objs: $(OBJS)
-
-NUMPYDIR=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
 F2PY_SRCS = build\$(NumBAT_MOD)module.c build\$(NumBAT_MOD)-f2pywrappers.f build\fortranobject.f
 F2PY_OBJSA = $(F2PY_SRCS:.c=.obj)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.obj)
 
-$(CMETHOD).pyf: $(SRCS)
-	-del $(F2PY_SRCS)
+$(NumBAT_MOD).pyf: $(SRCS)
+	-$(RM) $(F2PY_SRCS)
 	-$(MKDIR) build mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower
 	copy $(NUMPYDIR)\f2py\src\fortranobject.c build
 	copy $(NUMPYDIR)\f2py\src\fortranobject.h build
 
-
-$(CMETHOD).dll: $(CMETHOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER)
+$(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ)
 	$(C_COMP_EXE) /nologo /Wall  /LD \
-	$(OBJS) $(F2PY_OBJS) $(UMFPACK_WRAPPER) \
+	$(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
 	 $(MATHLIB) \
 	 $(GENLIB) \
-	 $(PYLIB)  \
+	 $(SYSTEMPYLIB)  \
 	 -o $(NumBAT_MOD).dll
 
-
-$(UMFPACK_WRAPPER): $(UMFPACK_SRC)
-	$(C_COMP_EXE) $(CFLAGS) -I lib -DZLONG $(UMFPACK_INC) -c $(UMFPACK_SRC) -o $(UMFPACK_WRAPPER)
 
 
 
 clean:
 	- $(RM)  $(SS_WRAP)\*.obj
 	- $(RM) mods
+	- $(RM) .\*.lib .\*.exp
 	- $(RM)  build\*.obj build\*.f build\*.c
 	- $(RM) .\*.mod src\*.mod build\*.mod
 	- $(RM)  $(NumBAT_MOD).pyf $(NumBAT_MOD).dll $(NumBAT_MOD).*.dll

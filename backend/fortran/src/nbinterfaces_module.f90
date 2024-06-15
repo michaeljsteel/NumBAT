@@ -21,7 +21,7 @@ module nbinterfaces
          integer*8, dimension(:), allocatable :: iindex
          complex*16, dimension(:,:), allocatable :: overlap_L
 
-         integer*8 errco
+         integer errco
          character(len=EMSG_LENGTH) emsg
 
       end subroutine prepare_workspaces

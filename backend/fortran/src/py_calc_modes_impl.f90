@@ -18,7 +18,7 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
    integer*8, dimension(:), allocatable :: iindex
    complex*16, dimension(:,:), allocatable :: overlap_L
-   integer*8 :: errco
+   integer :: errco
    character(len=EMSG_LENGTH) :: emsg
 
    integer*8 n_ddl
