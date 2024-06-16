@@ -671,7 +671,9 @@ class Structure:
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
             assertions_on = False
 
+            print('callin into fortran')
             err_no, err_msg = NumBAT.conv_gmsh(str(fname), assertions_on)
+            print('back from fortran')
             if err_no != 0:
 
                 s = f'Terminating after Fortran error in processing .geo file "{fname}%s.geo".'
