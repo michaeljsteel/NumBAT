@@ -3,6 +3,12 @@
 
 module numbatmod
 
+    ! Use intel compiler to check passing conventions
+#ifdef __INTEL_COMPILER
+    use ifport
+#endif
+
+
    implicit none
 
    integer, parameter :: EMSG_LENGTH = 2048
