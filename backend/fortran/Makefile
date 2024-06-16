@@ -22,8 +22,8 @@ MYPLAT="linux_inteloneapi"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
-#COMPILER_VENDOR="gcc"
-COMPILER_VENDOR="intel"
+COMPILER_VENDOR="gcc"
+#COMPILER_VENDOR="intel"
 
 
 ifeq ($(COMPILER_VENDOR), "gcc")
