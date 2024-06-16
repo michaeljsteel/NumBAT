@@ -331,7 +331,8 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             ax.text(nuloc, abs(Gm)*v_scale, m, fontsize=fs, horizontalalignment='left',
                     verticalalignment='top')
 
-        save_and_close_figure(fig, f'{pathpref}-gain_spectra-dB{suffix}.{pdf_png}')
+        #save_and_close_figure(fig, f'{pathpref}-gain_spectra-dB{suffix}.{pdf_png}')
+        save_and_close_figure(fig, f'{pathpref}-dB{suffix}.{pdf_png}')
 
         if save_txt:
             dB_const=1.0
@@ -353,7 +354,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             ax.text(nuloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
                     verticalalignment='top')
 
-        save_and_close_figure(fig, f'{pathpref}-gain_spectra-logy{suffix}.{pdf_png}')
+        save_and_close_figure(fig, f'{pathpref}-logy{suffix}.{pdf_png}')
 
     return v_gain_global, v_gain_global_PE, v_gain_global_MB
 

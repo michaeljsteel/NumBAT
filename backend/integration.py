@@ -355,6 +355,8 @@ def gain_and_qs(
     # ww weight function
     # coeff numerical integration
 
+    print('Note:, integration.gain_and_qs is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs')
+
     if EM_ival_pump == "All":
         EM_ival_pump_fortran = -1
     else:
