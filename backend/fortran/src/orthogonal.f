@@ -7,7 +7,8 @@ C
      *  pair_warning, k_0)
 c
       use numbatmod
-      integer*8 n_modes, n_msh_el, n_msh_pts, nnodes, nb_typ_el
+      integer*8 :: n_modes
+      integer*8 n_msh_el, n_msh_pts, nnodes, nb_typ_el
       integer*8 type_el(n_msh_el)
       integer*8 table_nod(nnodes,n_msh_el)
       double precision x(2,n_msh_pts)

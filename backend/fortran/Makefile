@@ -274,7 +274,8 @@ F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
 
 $(NumBAT_MOD).pyf: $(SRCS)
 	-rm $(F2PY_SRCS)
-	-mkdir build
+	-mkdir -p build
+	-mkdir -p mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"../src/myhead.h\"
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build

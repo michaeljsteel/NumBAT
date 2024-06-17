@@ -33,7 +33,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
    double precision lambda, dimscale_in_m, bloch_vec(2)
 
-   integer n_modes
+   integer*8 :: n_modes
    integer*8 n_typ_el
    integer*8 n_msh_el, n_msh_pts,  bdy_cdn, itermax
    integer*8 neq, debug

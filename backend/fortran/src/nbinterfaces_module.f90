@@ -10,7 +10,8 @@ module nbinterfaces
 
          use numbatmod
 
-         integer :: is_em, n_modes
+         integer :: is_em
+         integer*8 :: n_modes
          integer*8 :: n_msh_el, n_msh_pts
          integer*8 :: int_max, cmplx_max, real_max
 

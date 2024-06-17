@@ -30,7 +30,7 @@ import matplotlib
 
 from numbattools import np_min_max
 import plotting
-from fortran import NumBAT
+from fortran import nb_fortran
 import reporting
 
 
@@ -437,7 +437,7 @@ def gain_and_qs(
     #        start = time.time()
     #        try:
     #            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
-    #                alpha = NumBAT.ac_alpha_int_v2(sim_AC.n_modes,
+    #                alpha = nb_fortran.ac_alpha_int_v2(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
     #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.mesh_xy,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
@@ -448,7 +448,7 @@ def gain_and_qs(
     #                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
     #                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
     #                        "\n using slow quadrature integration by default.\n\n")
-    #                alpha = NumBAT.ac_alpha_int(sim_AC.n_modes,
+    #                alpha = nb_fortran.ac_alpha_int(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
     #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.mesh_xy,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
@@ -483,7 +483,7 @@ def gain_and_qs(
 
     print("\n Photoelastic calc")
     if struc.using_linear_elements():
-        Q_PE = NumBAT.photoelastic_int_v2(
+        Q_PE = nb_fortran.photoelastic_int_v2(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -511,7 +511,7 @@ def gain_and_qs(
                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                 "\n using slow quadrature integration by default.\n\n",
             )
-        Q_PE = NumBAT.photoelastic_int(
+        Q_PE = nb_fortran.photoelastic_int(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -541,7 +541,7 @@ def gain_and_qs(
     elif typ_select_out is None:
         typ_select_out = -1
     print("\n Moving boundary calc")
-    Q_MB = NumBAT.moving_boundary(
+    Q_MB = nb_fortran.moving_boundary(
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
         sim_AC.n_modes,
