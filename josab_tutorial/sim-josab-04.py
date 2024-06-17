@@ -9,14 +9,13 @@ import math
 
 import numpy as np
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
-
 
 import starter
 
@@ -123,8 +122,7 @@ for i, nu in enumerate(AC_freqs_GHz):
     print(f"{i:3d}  {np.real(nu):.4e}")
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions etc
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = (
-    integration.gain_and_qs(
+gain= integration.get_gains_and_qs(
         sim_EM_pump,
         sim_EM_Stokes,
         sim_AC,
@@ -133,32 +131,17 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = (
         EM_ival_Stokes=EM_ival_Stokes,
         AC_ival=AC_ival,
     )
-)
+
 
 freq_min = 7.5e9
 freq_max = 9.5e9
-plotting.plot_gain_spectra(
-    sim_AC,
-    SBS_gain,
-    SBS_gain_PE,
-    SBS_gain_MB,
-    linewidth_Hz,
-    EM_ival_pump,
-    EM_ival_Stokes,
-    AC_ival,
-    freq_min=freq_min,
-    freq_max=freq_max,
-)
+gain.plot_spectra(freq_min=freq_min,freq_max=freq_max)
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
-masked_PE = np.ma.masked_inside(
-    SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :], 0, threshold
-)
-masked_MB = np.ma.masked_inside(
-    SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :], 0, threshold
-)
-masked = np.ma.masked_inside(SBS_gain[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+masked_PE = np.ma.masked_inside(gain.gain_PE_all(), 0, threshold)
+masked_MB = np.ma.masked_inside(gain.gain_MB_all(), 0, threshold)
+masked = np.ma.masked_inside(gain.gain_total_all(), 0, threshold)
 
 # Display these in terminal
 print("\n Displaying results with negligible components masked out")
@@ -190,7 +173,7 @@ print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc] / 1e6)
 
 # since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (
-    alpha[maxGainloc]
+    gain.alpha[maxGainloc]
     * sim_EM_pump.EM_mode_power[EM_ival_pump]
     * sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]
     * sim_AC.AC_mode_energy[maxGainloc]

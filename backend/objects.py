@@ -38,12 +38,12 @@ import scipy.interpolate
 
 import numbat
 import reporting
-import numbattools as nbtools
 from nbtypes import SI_nm
 
 import materials
 from fortran import NumBAT
 import plotting
+import plottools
 from mode_calcs import EMSimulation, ACSimulation
 import nbgmsh
 
@@ -741,7 +741,7 @@ class Structure:
 
         os.wait()
 
-        nbtools.join_figs([tmpoutpref+'-mesh_geom.png',
+        plottools.join_figs([tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',],
                           str(outprefix)+'-mesh.png',
                           clip=(60,50,60,50))

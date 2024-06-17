@@ -11,7 +11,8 @@ import sys
 import copy
 import numpy as np
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 
 from plotting import Decorator
 import plotting

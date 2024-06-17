@@ -110,6 +110,16 @@ class Gain(object):
     def gain_MB_all(self):
         return self._gain_MB[self.def_m_pump, self.def_m_Stokes, :]
 
+    def gain_total_all_by_em_modes(self, m_pump, m_Stokes):
+        return self._gain_tot[m_pump, m_Stokes, :]
+
+    def gain_PE_all_by_em_modes(self, m_pump, m_Stokes):
+        return self._gain_PE[m_pump, m_Stokes, :]
+
+    def gain_MB_all_by_em_modes(self, m_pump, m_Stokes):
+        return self._gain_MB[m_pump, m_Stokes, :]
+
+
     def alpha_all(self):
         return self.alpha
 
@@ -239,6 +249,7 @@ def get_gains_and_qs(
         AC_ival,
         fixed_Q,
         typ_select_out,
+        new_call_format=True
     )
 
     gain = Gain()
@@ -269,6 +280,7 @@ def gain_and_qs(
     AC_ival=0,
     fixed_Q=None,
     typ_select_out=None,
+    new_call_format=False
 ):
     r""" Calculate interaction integrals and SBS gain.
 
@@ -355,7 +367,8 @@ def gain_and_qs(
     # ww weight function
     # coeff numerical integration
 
-    print('Note:, integration.gain_and_qs is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs')
+    if not new_call_format:
+        print('Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()')
 
     if EM_ival_pump == "All":
         EM_ival_pump_fortran = -1

@@ -12,7 +12,6 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
 
 import starter
 
@@ -84,19 +83,18 @@ for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
-SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-plotting.plot_gain_spectra(sim_AC, SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival='All',
-                           freq_min=0, freq_max=30e9, )
+gain_box.plot_spectra(freq_min=0, freq_max=30e9, )
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:
-SBS_gain_PE_ij = SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:]
-SBS_gain_MB_ij = SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:]
-SBS_gain_tot_ij = SBS_gain_tot[EM_ival_pump,EM_ival_Stokes,:]
+SBS_gain_PE_ij = gain_box.gain_PE_all()
+SBS_gain_MB_ij = gain_box.gain_MB_all()
+SBS_gain_tot_ij = gain_box.gain_total_all()
+
 
 # Print the Backward SBS gain of the AC modes.
 print("\nContributions to SBS gain [1/(WM)]")

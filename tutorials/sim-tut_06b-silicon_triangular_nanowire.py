@@ -16,7 +16,6 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
 
 import starter
 
@@ -115,7 +114,7 @@ set_q_factor = 1000.
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
@@ -130,8 +129,6 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    )
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 
 print(nbapp.final_report())

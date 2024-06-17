@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 import numbat
 import materials
 from numbattools import launch_worker_threads_and_wait
