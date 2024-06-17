@@ -11,7 +11,8 @@
  int_size, cmplx_size, real_size, n_ddl, errco, emsg)
 
       use numbatmod
-      integer*8 n_msh_pts, n_msh_el, n_modes
+      integer*8 n_msh_pts, n_msh_el
+      integer*8 :: n_modes
       integer*8 int_size, cmplx_size, real_size, n_ddl
 
       integer errco

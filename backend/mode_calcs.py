@@ -23,7 +23,7 @@ from pathlib import Path
 import integration
 import numbat
 import numpy as np
-from fortran import NumBAT
+from fortran import nb_fortran
 from modes import ModeAC, ModeEM, ModePlotHelper
 from nbtypes import (
     FieldType,
@@ -526,7 +526,7 @@ class EMSimResult(SimResult):
     def make_H_fields(self):
         n_modes = len(self.eigs_kz)
         fm = self.fem_mesh
-        self.fem_evecs_H = NumBAT.h_mode_field_ez(
+        self.fem_evecs_H = nb_fortran.h_mode_field_ez(
             self.k_0,
             n_modes,
             fm.n_msh_el,
@@ -897,7 +897,7 @@ class EMSimulation(Simulation):
         fm = self.fem_mesh
         opt_props = tstruc.optical_props
 
-        resm = NumBAT.calc_em_modes(
+        resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
             self.d_in_m,
@@ -942,7 +942,7 @@ class EMSimulation(Simulation):
         print("  Calculating EM mode powers...")
         if tstruc.using_linear_elements():
             # Integration using analytically evaluated basis function integrals. Fast.
-            self.EM_mode_power = NumBAT.em_mode_energy_int_v2_ez(
+            self.EM_mode_power = nb_fortran.em_mode_energy_int_v2_ez(
                 self.k_0,
                 self.n_modes,
                 fm.n_msh_el,
@@ -960,7 +960,7 @@ class EMSimulation(Simulation):
                     "\n using slow quadrature integration by default.\n\n",
                 )
             # Integration by quadrature. Slowest.
-            self.EM_mode_power = NumBAT.em_mode_energy_int_ez(
+            self.EM_mode_power = nb_fortran.em_mode_energy_int_ez(
                 self.k_0,
                 self.n_modes,
                 fm.n_msh_el,
@@ -981,7 +981,7 @@ class EMSimulation(Simulation):
             if tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
-                self.EM_mode_energy = NumBAT.em_mode_e_energy_int(
+                self.EM_mode_energy = nb_fortran.em_mode_e_energy_int(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1115,7 +1115,7 @@ class ACSimulation(Simulation):
 
         print('doing AC cal')
         # TODO: rmove _AC suffixes from fm.fields_AC
-        resm = NumBAT.calc_ac_modes(
+        resm = nb_fortran.calc_ac_modes(
             self.n_modes,
             self.q_AC,
             self.d_in_m,
@@ -1157,7 +1157,7 @@ class ACSimulation(Simulation):
 
         print('done AC cal 3')
         # Retrieve the material properties of each mesh point.
-        self.ls_material = NumBAT.array_material_ac(
+        self.ls_material = nb_fortran.array_material_ac(
             fm.n_msh_el,
             elastic_props.n_mats_ac,
             fm.v_el_2_mat_idx,
@@ -1178,7 +1178,7 @@ class ACSimulation(Simulation):
             print("doing AC mode power")
             if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
-                self.AC_mode_power = NumBAT.ac_mode_power_int_v4(
+                self.AC_mode_power = nb_fortran.ac_mode_power_int_v4(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1199,7 +1199,7 @@ class ACSimulation(Simulation):
                         "\n using slow quadrature integration by default.\n\n",
                     )
                 # Integration by quadrature. Slowest.
-                self.AC_mode_power = NumBAT.ac_mode_power_int(
+                self.AC_mode_power = nb_fortran.ac_mode_power_int(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1220,7 +1220,7 @@ class ACSimulation(Simulation):
 
         if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
-            self.AC_mode_energy = NumBAT.ac_mode_elastic_energy_int_v4(
+            self.AC_mode_energy = nb_fortran.ac_mode_elastic_energy_int_v4(
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
@@ -1240,7 +1240,7 @@ class ACSimulation(Simulation):
                     "\n using slow quadrature integration by default.\n\n",
                 )
             # Integration by quadrature. Slowest.
-            self.AC_mode_energy = NumBAT.ac_mode_elastic_energy_int(
+            self.AC_mode_energy = nb_fortran.ac_mode_elastic_energy_int(
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
@@ -1300,7 +1300,7 @@ class ACSimulation(Simulation):
             print("Acoustic loss calc")
 
             if tstruc.using_linear_elements():
-                alpha = NumBAT.ac_alpha_int_v2(
+                alpha = nb_fortran.ac_alpha_int_v2(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1325,7 +1325,7 @@ class ACSimulation(Simulation):
                 Fortran_debug = 0
                 # not sure why this is needed by ac_alpha_int
                 # overlap = np.zeros(self.n_modes, dtype=complex)
-                alpha = NumBAT.ac_alpha_int(
+                alpha = nb_fortran.ac_alpha_int(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,

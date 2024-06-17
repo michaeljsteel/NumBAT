@@ -16,7 +16,8 @@ c     ------------------------------------------------------------------
 
       use numbatmod
 c
-      integer*8 neq, nonz, n_conv, i_base, nvect, n_modes, ltrav
+      integer*8 :: n_modes
+      integer*8 neq, nonz, n_conv, i_base, nvect, ltrav
       integer*8 row_ind(nonz), col_ptr(neq+1)
 
       integer errno

@@ -64,7 +64,8 @@ c
       double precision control (20), info_umf (90)
       integer*8 numeric, symbolic, sys
 c
-      integer*8 itermax, nvect, n_modes, i, j, ltrav
+      integer*8 itermax, nvect, i, j, ltrav
+      integer*8 :: n_modes
       integer*8 compteur
       complex*16 resid(neq), v(neq,nvect), workd(3*neq)
       complex*16 vect1(neq), vect2(neq), trav(ltrav)

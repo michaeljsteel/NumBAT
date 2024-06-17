@@ -37,7 +37,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    use numbatmod
    !f2py integer, parameter :: EMSG_LENGTH
-   integer*8 n_modes
+   integer*8 :: n_modes
 
    complex*16 q_ac
    double precision dimscale_in_m
@@ -66,7 +66,8 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
 
 
-   integer :: stat=0
+   integer :: allocstat
+   integer*8 :: allocsz
 
    integer*8, dimension(:), allocatable :: a_iwork
    complex*16, dimension(:), allocatable :: b_zwork
@@ -182,20 +183,21 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       n_ddl, errco, emsg)
    RETONERROR(errco)
 
-   allocate(a_iwork(int_max), STAT=stat)
-   call check_alloc(stat, int_max, "a", -1, errco, emsg)
+   allocate(a_iwork(int_max), STAT=allocstat)
+   call check_alloc(allocstat, int_max, "a", -1, errco, emsg)
    RETONERROR(errco)
 
-   allocate(b_zwork(cmplx_max), STAT=stat)
-   call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+   allocate(b_zwork(cmplx_max), STAT=allocstat)
+   call check_alloc(allocstat, cmplx_max, "b", -1, errco, emsg)
    RETONERROR(errco)
 
-   allocate(c_dwork(real_max), STAT=stat)
-   call check_alloc(stat, real_max, "c", -1, errco, emsg)
+   allocate(c_dwork(real_max), STAT=allocstat)
+   call check_alloc(allocstat, real_max, "c", -1, errco, emsg)
    RETONERROR(errco)
 
-   allocate(iindex(n_modes), STAT=stat)
-   call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
+   allocate(iindex(n_modes), STAT=allocstat)
+   allocsz = n_modes * 1   ! to match type of check_alloc. A better way?!
+   call check_alloc(allocstat, allocsz, "iindex", -1, errco, emsg)
    RETONERROR(errco)
 
    is_em = 0
@@ -244,7 +246,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    !       if (debug .eq. 1) then
    !       open (unit=64, file="msh_check.txt",
-   !      *         status="unknown")
+   !      *         allocstatus="unknown")
    !         do i=1,n_msh_el
    !           write(64,*) i, type_el(i)
    !         enddo

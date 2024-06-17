@@ -9,7 +9,8 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
    integer :: is_em
    integer*8 :: int_max, cmplx_max, real_max
-   integer*8 :: n_msh_el, n_msh_pts, n_modes
+   integer*8 :: n_msh_el, n_msh_pts
+   integer*8 :: n_modes
 
    integer*8, dimension(:), allocatable :: a_iwork
    complex*16, dimension(:), allocatable :: b_zwork
@@ -22,7 +23,7 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    character(len=EMSG_LENGTH) :: emsg
 
    integer*8 n_ddl
-   integer :: stat=0
+   integer :: allocstat=0
 
    write(*,*) 'pw1', n_msh_pts, n_msh_el
    call array_size(n_msh_pts, n_msh_el, n_modes, &
@@ -30,33 +31,33 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    RETONERROR(errco)
 
    write(*,*) 'pw1b', int_max, cmplx_max, n_ddl
-   allocate(a_iwork(int_max), STAT=stat)
-   write(*,*) 'stat', stat
-   call check_alloc(stat, int_max, "a", -1, errco, emsg)
+   allocate(a_iwork(int_max), STAT=allocstat)
+   write(*,*) 'allocstat', allocstat
+   call check_alloc(allocstat, int_max, "a", -1, errco, emsg)
    RETONERROR(errco)
 
    write(*,*) 'pw2'
-   allocate(b_zwork(cmplx_max), STAT=stat)
-   call check_alloc(stat, cmplx_max, "b", -1, errco, emsg)
+   allocate(b_zwork(cmplx_max), STAT=allocstat)
+   call check_alloc(allocstat, cmplx_max, "b", -1, errco, emsg)
    RETONERROR(errco)
 
    write(*,*) 'pw3'
-   allocate(c_dwork(real_max), STAT=stat)
-   call check_alloc(stat, real_max, "c", -1, errco, emsg)
+   allocate(c_dwork(real_max), STAT=allocstat)
+   call check_alloc(allocstat, real_max, "c", -1, errco, emsg)
    RETONERROR(errco)
 
-   allocate(iindex(n_modes), STAT=stat)
-   call check_alloc(stat, n_modes, "iindex", -1, errco, emsg)
+   allocate(iindex(n_modes), STAT=allocstat)
+   call check_alloc(allocstat, n_modes, "iindex", -1, errco, emsg)
    RETONERROR(errco)
 
    write(*,*) 'pw4'
    if (is_em > 0) then
-      allocate(d_dwork(2,n_ddl), STAT=stat)
-      call check_alloc(stat, 2*n_ddl, "d_dwork", -1, errco, emsg)
+      allocate(d_dwork(2,n_ddl), STAT=allocstat)
+      call check_alloc(allocstat, 2*n_ddl, "d_dwork", -1, errco, emsg)
       RETONERROR(errco)
 
-      allocate(overlap_L(n_modes,n_modes), STAT=stat)
-      call check_alloc(stat, n_modes*n_modes, "overlap_L", -1, errco, emsg)
+      allocate(overlap_L(n_modes,n_modes), STAT=allocstat)
+      call check_alloc(allocstat, n_modes*n_modes, "overlap_L", -1, errco, emsg)
       RETONERROR(errco)
 
 
