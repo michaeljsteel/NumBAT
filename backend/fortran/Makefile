@@ -1,8 +1,10 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
-NumBAT_MOD=NumBAT
+NumBAT_MOD=nb_fortran
 
 all: $(NumBAT_MOD).so
+
+CCACHE=ccache
 
 ## Set your python virtualenv platform
 MYPYENV = $(HOME)/mypy3-12
@@ -27,8 +29,8 @@ COMPILER_VENDOR="gcc"
 
 
 ifeq ($(COMPILER_VENDOR), "gcc")
-F_COMP_EXE = f95
-C_COMP_EXE = gcc
+F_COMP_EXE = $(CCACHE) f95
+C_COMP_EXE = $(CCACHE) gcc
 
 F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
 F95FLAGS=$(F77FLAGS)
@@ -42,8 +44,8 @@ ONEAPI=/opt/intel/oneapi
 ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
 COMP_LIB = -L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
 
-F_COMP_EXE = $(ONEAPICOMP)/ifx
-C_COMP_EXE = $(ONEAPICOMP)/icx
+F_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/ifx
+C_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/icx
 
 F77FLAGS= -nologo -fpp -fPIC -O2 -warn all -warn noexternals -module mods
 CFLAGS=  -fPIC -O2 -Wall
