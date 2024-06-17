@@ -162,11 +162,8 @@ subroutine make_msh_file(fname_geo, fname_msh, sysret)
    com_line = trim(gmsh_app) // " " // "-0 -2  -order 2 -v 0 -o " // &
        trim(fname_msh) // " " // trim(fname_geo)
 
-#ifdef __INTEL_COMPILER
-   sysret = system(com_line)
-#else
-   call system(com_line, sysret)
-#endif
+
+   sysret = nb_system(com_line)
 
 
    end
@@ -436,8 +433,10 @@ subroutine make_msh_file(fname_geo, fname_msh, sysret)
                enddo
 
                do i=1,n_gelts_triangs
-               write(ui_out,*) i, (v_triang_nodes(k,i), k=1,6), &
-                   v_eltint_physsurf(i)
+               !write(ui_out,*) i, (v_triang_nodes(k,i), k=1,6), &
+               !    v_eltint_physsurf(i)
+               write(ui_out,'(2x, i9, i9, i9, i9, i9, i9, i9, i9)') &
+                   i, (v_triang_nodes(k,i), k=1,6), v_eltint_physsurf(i)
                enddo
                close(ui_out)
 

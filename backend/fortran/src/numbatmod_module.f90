@@ -49,6 +49,22 @@ module numbatmod
 
 contains
 
+    integer function nb_system(cmd) 
+        implicit none
+
+        integer errco
+        character(len=*), intent(in) :: cmd
+
+#ifdef __INTEL_COMPILER
+   errco = system(cmd)
+#else
+   call system(cmd, errco)
+#endif
+
+    nb_system = errco
+
+    end function
+
     subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
 
         implicit none
