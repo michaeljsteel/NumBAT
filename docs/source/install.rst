@@ -107,6 +107,8 @@ The default compiler for Linux is GCC's ``gfortran``.
 
 It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's free OneAPI HPC toolkit.
 
+**This is experimental and likely to fail for you.**
+
 To do so,
 
 #. Install the Intel OneAPI Base and HPC Toolkits.
@@ -260,6 +262,9 @@ with installing the additional required packages may be quite painful.
 
 Installing the Native Windows version
 -------------------------------------------
+
+**This build is experimental and very likely to fail for you.**
+
 There is now an experimental version of |NUMBAT| built entirely using the native Windows toolchain including
 Visual Studio and the Intel Fortran compiler. There are a surprising number of steps and tools required, but it should go relatively smoothly.
 
