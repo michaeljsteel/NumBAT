@@ -7,30 +7,30 @@ C
      *  overlap)
 c
       use numbatmod
-      integer*8 nval, ival
-      integer*8 nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel)
-      integer*8 table_nod(nnodes,nel)
+      integer(8) nval, ival
+      integer(8) nel, npt, nnodes, nb_typ_el
+      integer(8) type_el(nel)
+      integer(8) table_nod(nnodes,nel)
       double precision x(2,npt)
-c      complex*16 x(2,npt)
-      complex*16 soln_AC(3,nnodes,nval,nel)
-      complex*16 Omega_AC(nval)
-      complex*16 beta_AC
-      complex*16, dimension(nval) :: overlap
-      complex*16 c_tensor(6,6,nb_typ_el)
+c      complex(8) x(2,npt)
+      complex(8) soln_AC(3,nnodes,nval,nel)
+      complex(8) Omega_AC(nval)
+      complex(8) beta_AC
+      complex(8), dimension(nval) :: overlap
+      complex(8) c_tensor(6,6,nb_typ_el)
 
 c     Local variables
 
-      integer*8 nod_el_p(nnodes_0)
+      integer(8) nod_el_p(nnodes_0)
       double precision xel(2,nnodes_0)
-      complex*16 basis_overlap(3*nnodes_0,3*nnodes_0)
-      complex*16 U, Ustar
-      integer*8 i, j, j1, typ_e
-      integer*8 iel, ind_ip, i_eq
-      integer*8 ltest, ind_lp, l_eq
-      integer*8 itrial, ui
+      complex(8) basis_overlap(3*nnodes_0,3*nnodes_0)
+      complex(8) U, Ustar
+      integer(8) i, j, j1, typ_e
+      integer(8) iel, ind_ip, i_eq
+      integer(8) ltest, ind_lp, l_eq
+      integer(8) itrial, ui
 
-      complex*16 z_tmp1, c_tensor_el(6,6)
+      complex(8) z_tmp1, c_tensor_el(6,6)
 
 C
 C

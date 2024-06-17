@@ -8,21 +8,21 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    use numbatmod
 
    integer :: is_em
-   integer*8 :: int_max, cmplx_max, real_max
-   integer*8 :: n_msh_el, n_msh_pts
-   integer*8 :: n_modes
+   integer(8) :: int_max, cmplx_max, real_max
+   integer(8) :: n_msh_el, n_msh_pts
+   integer(8) :: n_modes
 
-   integer*8, dimension(:), allocatable :: a_iwork
-   complex*16, dimension(:), allocatable :: b_zwork
+   integer(8), dimension(:), allocatable :: a_iwork
+   complex(8), dimension(:), allocatable :: b_zwork
    double precision, dimension(:), allocatable :: c_dwork
    double precision, dimension(:,:), allocatable :: d_dwork
 
-   integer*8, dimension(:), allocatable :: iindex
-   complex*16, dimension(:,:), allocatable :: overlap_L
+   integer(8), dimension(:), allocatable :: iindex
+   complex(8), dimension(:,:), allocatable :: overlap_L
    integer :: errco
    character(len=EMSG_LENGTH) :: emsg
 
-   integer*8 n_ddl
+   integer(8) n_ddl
    integer :: alloc_stat=0
 
    call array_size(n_msh_pts, n_msh_el, n_modes, &
@@ -67,16 +67,16 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_
 
    use numbatmod
 
-   integer*8 :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, nodes_per_el
-   integer*8 :: ip_type_N_E_F, ip_eq, jp_x_n_e_f, int_max
-   integer*8 :: ip_period_N, ip_nperiod_N, ip_period_N_E_F, ip_nperiod_N_E_F
-   integer*8 :: debug
+   integer(8) :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, nodes_per_el
+   integer(8) :: ip_type_N_E_F, ip_eq, jp_x_n_e_f, int_max
+   integer(8) :: ip_period_N, ip_nperiod_N, ip_period_N_E_F, ip_nperiod_N_E_F
+   integer(8) :: debug
    double precision mesh_xy(2,n_msh_pts)
-   integer*8 type_nod(n_msh_pts)
-   integer*8 table_nod(nodes_per_el, n_msh_el)
+   integer(8) type_nod(n_msh_pts)
+   integer(8) table_nod(nodes_per_el, n_msh_el)
 
    ! is this the right way to pass these?
-   integer*8, dimension(int_max) :: a_iwork
+   integer(8), dimension(int_max) :: a_iwork
    double precision, dimension(2,n_ddl) :: d_dwork
 
    double precision, dimension(2,2) :: lat_vecs

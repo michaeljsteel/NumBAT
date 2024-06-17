@@ -4,7 +4,7 @@ ccccccccccccccccccccccccccccccc
 c
 c       Compute the gradient of the 10 P3 Lagrange polynomial basis function at the 6 P2 Lagrange nodes
 c
-c       Note that if grad_i_0 is the gradient on the reference triangle, 
+c       Note that if grad_i_0 is the gradient on the reference triangle,
 c       then the gradient on the actual triangle is:
 c       grad_i  = Transpose(mat_T)*grad_i0
 c
@@ -14,19 +14,19 @@ c
 
 c
       implicit none
-      integer*8 inode, nnodes_P3
+      integer(8) inode, nnodes_P3
       double precision vec_grad(2,nnodes_P3)
       double precision mat_jac(2,2)
 
 c     Local variables
       double precision c(2,2)
-      integer*8 nnodes_P2_0
+      integer(8) nnodes_P2_0
       parameter (nnodes_P2_0 = 6)
       double precision xel_0(2,nnodes_P2_0)
       double precision phi_xi, phi_yi
       double precision phi0_xi, phi0_yi
       double precision x, y
-      integer*8 i
+      integer(8) i
 
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -56,15 +56,15 @@ c
 c
       i = 1
 C         ! x-derivative over the reference triangle
-        phi0_xi = (-11 - 27*x**2 + x*(36 - 54*y)   
+        phi0_xi = (-11 - 27*x**2 + x*(36 - 54*y)
 C      ! y-derivative over the reference triangle
-     *                + 36*y - 27*y**2)/2.0d0 
-        phi0_yi = (-11 - 27*x**2 + x*(36 - 54*y) 
+     *                + 36*y - 27*y**2)/2.0d0
+        phi0_yi = (-11 - 27*x**2 + x*(36 - 54*y)
      *                + 36*y - 27*y**2)/2.0d0
 C         ! x-derivative over the current triangle
-        phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi 
+        phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
 C         ! y-derivative over the current triangle
-        phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi 
+        phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
         vec_grad(1,i) = phi_xi
         vec_grad(2,i) = phi_yi
       i = 2
@@ -82,7 +82,7 @@ C         ! y-derivative over the current triangle
         vec_grad(1,i) = phi_xi
         vec_grad(2,i) = phi_yi
       i = 4
-        phi0_xi = (9*(2 + 9*x**2 - 5*y + 3*y**2 
+        phi0_xi = (9*(2 + 9*x**2 - 5*y + 3*y**2
      *                + 2*x*(-5 + 6*y)))/2.0d0
         phi0_yi = (9*x*(-5 + 6*x + 6*y))/2.0d0
         phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
@@ -119,7 +119,7 @@ C         ! y-derivative over the current triangle
         vec_grad(2,i) = phi_yi
       i = 9
         phi0_xi = (9*y*(-5 + 6*x + 6*y))/2.0d0
-        phi0_yi = (9*(2 + 3*x**2 - 10*y + 9*y**2 
+        phi0_yi = (9*(2 + 3*x**2 - 10*y + 9*y**2
      *                + x*(-5 + 12*y)))/2.0d0
         phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
         phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi

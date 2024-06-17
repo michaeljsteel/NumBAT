@@ -8,36 +8,36 @@ c
      *    soln_AC, eps_lst, debug, overlap)
 c
       use numbatmod
-      integer*8 nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel)
-      integer*8 table_nod(6,nel)
+      integer(8) nel, npt, nnodes, nb_typ_el
+      integer(8) type_el(nel)
+      integer(8) table_nod(6,nel)
       double precision x(2,npt)
-      integer*8 nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
-      integer*8 ival3s, ival2s, ival1s
-      integer*8 typ_select_in, typ_select_out
-      complex*16 soln_EM_p(3,nnodes,nval_EM_p,nel)
-      complex*16 soln_EM_S(3,nnodes,nval_EM_S,nel)
-      complex*16 soln_AC(3,nnodes,nval_AC,nel)
-      complex*16 eps_lst(nb_typ_el)
-      complex*16 overlap(nval_EM_S, nval_EM_p, nval_AC)
+      integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
+      integer(8) ival3s, ival2s, ival1s
+      integer(8) typ_select_in, typ_select_out
+      complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
+      complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
+      complex(8) soln_AC(3,nnodes,nval_AC,nel)
+      complex(8) eps_lst(nb_typ_el)
+      complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC)
 
 c     Local variables
       integer debug
-      integer*8 nb_visite(npt)
-      integer*8 ls_edge_endpoint(2,npt)
-      integer*8 edge_direction(npt)
-      integer*8 iel, inod, typ_e
-      integer*8 inod_1, inod_2, inod_3, ls_inod(3)
-      integer*8 j, j_1, j_2, j_3, i, k
-      integer*8 nb_edges, nb_interface_edges
-      integer*8 edge_endpoints(2,3), opposite_node(3)
+      integer(8) nb_visite(npt)
+      integer(8) ls_edge_endpoint(2,npt)
+      integer(8) edge_direction(npt)
+      integer(8) iel, inod, typ_e
+      integer(8) inod_1, inod_2, inod_3, ls_inod(3)
+      integer(8) j, j_1, j_2, j_3, i, k
+      integer(8) nb_edges, nb_interface_edges
+      integer(8) edge_endpoints(2,3), opposite_node(3)
       double precision xy_1(2), xy_2(2), xy_3(2), ls_xy(2,3)
       double precision edge_vec(2), edge_perp(2), vec_0(2)
       double precision edge_length, r_tmp
-      complex*16 ls_n_dot(3), ls_n_cross(3,3)
-      complex*16 vec(3,3)
-      complex*16 n_dot_d(2)
-      complex*16 eps_a, eps_b, tmp1, tmp2
+      complex(8) ls_n_dot(3), ls_n_cross(3,3)
+      complex(8) vec(3,3)
+      complex(8) n_dot_d(2)
+      complex(8) eps_a, eps_b, tmp1, tmp2
       double precision p2_p2_p2_1d(3,3,3)
 
 C

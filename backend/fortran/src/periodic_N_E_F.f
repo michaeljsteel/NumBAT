@@ -1,8 +1,8 @@
 c
 c***********************************************************************
 c
-      subroutine periodic_N_E_F (n_ddl, 
-     *      type_N_E_F, x_N_E_F, ip_period_N_E_F, 
+      subroutine periodic_N_E_F (n_ddl,
+     *      type_N_E_F, x_N_E_F, ip_period_N_E_F,
      *      n_period_N_E_F, lat_vecs)
 c
 c***********************************************************************
@@ -15,17 +15,17 @@ c
 c***********************************************************************
 c
       implicit none
-      integer*8 n_ddl
-      integer*8 type_N_E_F(2,n_ddl), ip_period_N_E_F(n_ddl)
-      integer*8 n_period_N_E_F(n_ddl)
+      integer(8) n_ddl
+      integer(8) type_N_E_F(2,n_ddl), ip_period_N_E_F(n_ddl)
+      integer(8) n_period_N_E_F(n_ddl)
       double precision lat_vecs(2,2)
       double precision x_N_E_F(2,n_ddl)
-      integer*8 i, j, i1, j1, i_not_periodic
-      integer*8 i_boundary1, i_dim1, i_boundary2, i_dim2
+      integer(8) i, j, i1, j1, i_not_periodic
+      integer(8) i_boundary1, i_dim1, i_boundary2, i_dim2
       double precision tmp1, tmp2, tol
       double precision delta_v(2),  vec(2)
-      integer*8 ix, iy, test_lattice
-      integer*8 k, debug
+      integer(8) ix, iy, test_lattice
+      integer(8) k, debug
 c
       debug = 0
       tol = 1.0d-6
@@ -40,7 +40,7 @@ c
           do j=i+1,n_ddl
             i_boundary2 = type_N_E_F(1,j)
             i_dim2 = type_N_E_F(2,j)
-            if(i_boundary2 .ne. 0  .and. i_dim2 .eq. i_dim1 
+            if(i_boundary2 .ne. 0  .and. i_dim2 .eq. i_dim1
      *          .and. ip_period_N_E_F(j) .eq. 0) then
               delta_v(1) = x_N_E_F(1,j) - x_N_E_F(1,i)
               delta_v(2) = x_N_E_F(2,j) - x_N_E_F(2,i)
@@ -98,7 +98,7 @@ c
             open (unit=11,file="not_period.txt",status='unknown')
           endif
         i_not_periodic = i_not_periodic + 1
-        write(11,*) i, i_boundary1, i_dim1, ip_period_N_E_F(i), 
+        write(11,*) i, i_boundary1, i_dim1, ip_period_N_E_F(i),
      *       n_period_N_E_F(i)
         endif
       enddo
@@ -119,7 +119,7 @@ c
         do i=1,n_ddl
           i_boundary1 = type_N_E_F(1,i)
           i_dim1 = type_N_E_F(2,i)
-          write(10,*) i, i_boundary1, i_dim1, ip_period_N_E_F(i), 
+          write(10,*) i, i_boundary1, i_dim1, ip_period_N_E_F(i),
      *       n_period_N_E_F(i), "     ", (x_N_E_F(j,i),j=1,2)
         enddo
       close ( unit = 10)

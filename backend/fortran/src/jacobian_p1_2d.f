@@ -6,16 +6,16 @@ c      x_g = Corresponding coordinatate in the actual tetrahedron
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
-      subroutine jacobian_p1_2d (x, xel, nnodes, 
+      subroutine jacobian_p1_2d (x, xel, nnodes,
      *  x_g, det_jacobian, mat_B_0, mat_T)
 c
       use numbatmod
 
-      integer*8 nnodes
+      integer(8) nnodes
       double precision x(2), xel(2,nnodes)
       double precision mat_B(2,2), mat_T(2,2), mat_B_0(2,2)
       double precision det_jacobian, x_g(2)
-      integer*8 i, j
+      integer(8) i, j
 
 c     32-bit integers for BLAS and LAPACK
       integer*4 INFO_32, LDB_32, LDT_32
@@ -44,10 +44,10 @@ c
 ccccccccccccccccccccccccccccc
 c        mat_T = mat_B
 c
-      N_32 = 2 
-      NRHS_32 = N_32 
-      LDB_32 = N_32 
-      LDT_32 = N_32 
+      N_32 = 2
+      NRHS_32 = N_32
+      LDB_32 = N_32
+      LDT_32 = N_32
 c
 c     X_g = B X + (x_0, y_0, z_0)^t
 c     Initialisation for DGEMV X_g = xel(1:2,1)
@@ -55,7 +55,7 @@ c     Initialisation for DGEMV X_g = xel(1:2,1)
         X_g(i) = xel(i,1)
       enddo
 c     DGEMV  performs one of the matrix-vector operations
-      call DGEMV('No transpose', N_32, N_32, D_ONE, mat_B, 
+      call DGEMV('No transpose', N_32, N_32, D_ONE, mat_B,
      *  LDB_32, X, 1, D_ONE, X_g, 1)
 c
 c     Initialisation for DGESV: mat_T = identity
@@ -65,11 +65,11 @@ c     Initialisation for DGESV: mat_T = identity
         enddo
           mat_T(i,i) = 1.0d0
       enddo
-      call DGESV( N_32, NRHS_32, mat_B, LDB_32, IPIV_32, 
+      call DGESV( N_32, NRHS_32, mat_B, LDB_32, IPIV_32,
      *            mat_T, LDT_32, INFO_32 )
 c
       if(INFO_32 .ne. 0) then
-        write(*,*) 
+        write(*,*)
         write(*,*) "jacobian_p1_2d: TRANSF_MAT: ATTENTION, INFO_32 = ",
      *   INFO_32
         stop

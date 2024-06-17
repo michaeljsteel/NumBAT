@@ -4,14 +4,14 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
    table_edge, table_edge_face, visite)
 
    implicit none
-   integer*8 n_msh_el, n_msh_pts, nodes_per_el
-   integer*8 n_edge
-   integer*8 type_nod(n_msh_pts), visite(n_msh_pts)
-   integer*8 table_nod(nodes_per_el,n_msh_el)
-   integer*8 table_edge_face(14,n_msh_el)
-   integer*8 table_edge(4,n_msh_pts)
-   integer*8 i, j, k, j1, j2, n_face, debug
-   integer*8 list_end(2,3)
+   integer(8) n_msh_el, n_msh_pts, nodes_per_el
+   integer(8) n_edge
+   integer(8) type_nod(n_msh_pts), visite(n_msh_pts)
+   integer(8) table_nod(nodes_per_el,n_msh_el)
+   integer(8) table_edge_face(14,n_msh_el)
+   integer(8) table_edge(4,n_msh_pts)
+   integer(8) i, j, k, j1, j2, n_face, debug
+   integer(8) list_end(2,3)
 
 !     Endpoints of the 6 edges (mid-point) of the reference tetrahedron
 

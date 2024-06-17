@@ -12,7 +12,7 @@ c
       implicit none
       double precision mat(6,6), det_b
       double precision dt, factor, factor2
-      integer*8 i, j
+      integer(8) i, j
 
       dt=dabs(det_b)
 

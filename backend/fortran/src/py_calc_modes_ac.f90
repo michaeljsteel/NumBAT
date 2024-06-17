@@ -37,82 +37,82 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    use numbatmod
    !f2py integer, parameter :: EMSG_LENGTH
-   integer*8 :: n_modes
+   integer(8) :: n_modes
 
-   complex*16 q_ac
+   complex(8) q_ac
    double precision dimscale_in_m
-   complex*16 shift_nu
-   integer*8 int_max, cmplx_max, int_used, cmplx_used
-   integer*8 real_max, real_used, n_ddl
+   complex(8) shift_nu
+   integer(8) int_max, cmplx_max, int_used, cmplx_used
+   integer(8) real_max, real_used, n_ddl
    integer errco
    character(len=EMSG_LENGTH) emsg
 
 
 
-   integer*8 n_msh_el, n_msh_pts, i_bnd_cdns, neq
-   integer*8 debug, show_mem_est
+   integer(8) n_msh_el, n_msh_pts, i_bnd_cdns, neq
+   integer(8) debug, show_mem_est
 
    !     ! Number of nodes per element
-   integer*8 , parameter :: nodes_per_el =6
-   integer*8 type_nod(n_msh_pts), type_el(n_msh_el)
-   integer*8 table_nod(nodes_per_el, n_msh_el)
+   integer(8) , parameter :: nodes_per_el =6
+   integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
+   integer(8) table_nod(nodes_per_el, n_msh_el)
 
    double precision mesh_xy(2,n_msh_pts)
-   complex*16, target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
-   complex*16, target :: v_eigs_nu(n_modes)
-   complex*16 mode_pol(4,n_modes)
+   complex(8), target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
+   complex(8), target :: v_eigs_nu(n_modes)
+   complex(8) mode_pol(4,n_modes)
 
-   integer*8 supplied_geo_flag, symmetry_flag
+   integer(8) supplied_geo_flag, symmetry_flag
 
 
 
    integer :: alloc_stat
 
-   integer*8, dimension(:), allocatable :: a_iwork
-   complex*16, dimension(:), allocatable :: b_zwork
+   integer(8), dimension(:), allocatable :: a_iwork
+   complex(8), dimension(:), allocatable :: b_zwork
    double precision, dimension(:), allocatable :: c_dwork
 
    !double precision, dimension(:,:), allocatable :: d_dwork
-   !complex*16, dimension(:,:), allocatable :: dummy_overlap_L  ! not actually used.
+   !complex(8), dimension(:,:), allocatable :: dummy_overlap_L  ! not actually used.
 
    !  Declare the pointers of the integer super-vector
-   integer*8 ip_eq
-   integer*8 ip_visite
+   integer(8) ip_eq
+   integer(8) ip_visite
 
    !  Declare the pointers of the real super-vector
-   integer*8 jp_x, jp_mat2
-   integer*8 jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-   integer*8 jp_trav, jp_vp, jp_rhs
-   integer*8 jp_eigenum_modes_tmp, jp_eigen_pol
+   integer(8) jp_x, jp_mat2
+   integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
+   integer(8) jp_trav, jp_vp, jp_rhs
+   integer(8) jp_eigenum_modes_tmp, jp_eigen_pol
 
    !     Declare the pointers of the real super-vector
-   integer*8 kp_mat1_re, kp_mat1_im
-   integer*8 kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
+   integer(8) kp_mat1_re, kp_mat1_im
+   integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
 
    !     Declare the pointers of for sparse matrix storage
-   integer*8 ip_col_ptr, ip_row
-   integer*8 ip_work, ip_work_sort, ip_work_sort2
-   integer*8 nonz, nonz_max, max_row_len
+   integer(8) ip_col_ptr, ip_row
+   integer(8) ip_work, ip_work_sort, ip_work_sort2
+   integer(8) nonz, nonz_max, max_row_len
 
-   integer*8 n_typ_el
-   complex*16 c_tensor(6,6,n_typ_el)
-   complex*16 rho(n_typ_el)
+   integer(8) n_typ_el
+   complex(8) c_tensor(6,6,n_typ_el)
+   complex(8) rho(n_typ_el)
 
-   integer*8 i, j, ip
-   integer*8 ui,  namelength
+   integer(8) i, j, ip
+   integer(8) ui,  namelength
 
 
    double precision lat_vecs(2,2)
    double precision dim_x, dim_y
 
-   complex*16 shift_omsq
-   integer*8  i_base
+   complex(8) shift_omsq
+   integer(8)  i_base
 
 
    !  Variable used by valpr
-   integer*8 ltrav, n_conv
-   complex*16 z_beta, z_tmp, z_tmp0
-   integer*8, dimension(:), allocatable :: iindex
+   integer(8) ltrav, n_conv
+   complex(8) z_beta, z_tmp, z_tmp0
+   integer(8), dimension(:), allocatable :: iindex
    !     variable used by UMFPACK
 
    double precision time1, time2
@@ -121,7 +121,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    character*(10) start_time, end_time
 
    !  Variable used by valpr
-   integer*8  nvect, itermax
+   integer(8)  nvect, itermax
    double precision tol
 
    !  Names and Controls

@@ -1,9 +1,9 @@
       SUBROUTINE z_indexx_AC(n,arr,indx)
 
-      INTEGER*8 n,indx(n),M,NSTACK
-      complex*16 arr(n)
+      integer(8) n,indx(n),M,NSTACK
+      complex(8) arr(n)
       PARAMETER (M=7,NSTACK=1000)
-      INTEGER*8 i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
+      integer(8) i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
       double precision a
       double precision arr_0(NSTACK), r_tmp
 c

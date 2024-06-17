@@ -10,20 +10,20 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
 
    use numbatmod
 
-   integer*8 nel, npt, n_ddl, neq, nnodes
-   integer*8 i_cond, i_base, i_base2, nb_typ_el, nonz
-   integer*8 ip_period_N(npt), ip_period_E_F(n_ddl)
-   integer*8 row_ind(nonz), col_ptr(neq+1)
-   integer*8 type_el(nel)
-   integer*8 table_nod(nnodes,nel), ineq(3,n_ddl)
-   integer*8 table_N_E_F(14,nel)
-   integer*8 i_work(3*n_ddl)
+   integer(8) nel, npt, n_ddl, neq, nnodes
+   integer(8) i_cond, i_base, i_base2, nb_typ_el, nonz
+   integer(8) ip_period_N(npt), ip_period_E_F(n_ddl)
+   integer(8) row_ind(nonz), col_ptr(neq+1)
+   integer(8) type_el(nel)
+   integer(8) table_nod(nnodes,nel), ineq(3,n_ddl)
+   integer(8) table_N_E_F(14,nel)
+   integer(8) i_work(3*n_ddl)
    double precision x(2,npt), x_N_E_F(2,n_ddl)
-   complex*16 pp(nb_typ_el), qq(nb_typ_el), shift
-   complex*16 mat2(nonz)
+   complex(8) pp(nb_typ_el), qq(nb_typ_el), shift
+   complex(8) mat2(nonz)
    double precision mat1_re(nonz), mat1_im(nonz)
 
-   integer*8 nquad, nquad_max
+   integer(8) nquad, nquad_max
    parameter (nquad_max = 25)
    double precision wq(nquad_max)
    double precision xq(nquad_max), yq(nquad_max)
@@ -32,12 +32,12 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
    double precision grad_i(2), grad_j(2)
    double precision phi_z_i, phi_z_j
 
-   integer*8  nddl_0,  ui
+   integer(8)  nddl_0,  ui
 
    parameter (nddl_0 = 14)
    !parameter (nddl_t=4)
 
-   integer*8 nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
+   integer(8) nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
    double precision xel(2,nnodes_0)
 
    double precision phi1_list(3), grad1_mat0(2,3), grad1_mat(2,3)
@@ -50,19 +50,19 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
 
    double precision vec_phi_j(2), curl_phi_j
    double precision vec_phi_i(2), curl_phi_i
-   complex*16 val_exp(nddl_0), z_phase_fact
+   complex(8) val_exp(nddl_0), z_phase_fact
 
-   integer*8 i, j, k, j1, iel, iq, typ_e
-   integer*8 jtest, jp, ind_jp, j_eq
-   integer*8 itrial, ip, ind_ip, i_eq
-   integer*8 info_curved, n_curved, debug, col_start, col_end
-   complex*16 z_tmp1, z_tmp2
+   integer(8) i, j, k, j1, iel, iq, typ_e
+   integer(8) jtest, jp, ind_jp, j_eq
+   integer(8) itrial, ip, ind_ip, i_eq
+   integer(8) info_curved, n_curved, debug, col_start, col_end
+   complex(8) z_tmp1, z_tmp2
 
    double precision bloch_vec(2), r_tmp1, r_tmp2
    double precision delta_xx(2)
    double precision ddot
-   complex*16 M_tt, M_zz, M_tz, M_zt
-   complex*16 K_tt, K_zz, K_tz, K_zt
+   complex(8) M_tt, M_zz, M_tz, M_zt
+   complex(8) K_tt, K_zz, K_tz, K_zt
 
 !
 !cccccccccccccccccccccccccccccccccccccc

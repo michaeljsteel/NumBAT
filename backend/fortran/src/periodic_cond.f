@@ -4,7 +4,7 @@ c
 c
 c***********************************************************************
 c
-      subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F, 
+      subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,
      *      ip_period_E_F, ineq, debug)
 
 c
@@ -18,11 +18,11 @@ c
 c***********************************************************************
 c
           use numbatmod
-      integer*8 bdy_cdn, n_ddl, neq
-      integer*8 ip_period_E_F(n_ddl), type_N_E_F(2,n_ddl)
-      integer*8 ineq(3,n_ddl), debug
+      integer(8) bdy_cdn, n_ddl, neq
+      integer(8) ip_period_E_F(n_ddl), type_N_E_F(2,n_ddl)
+      integer(8) ineq(3,n_ddl), debug
 
-      integer*8 i, j, k, i_boundary, i_dim
+      integer(8) i, j, k, i_boundary, i_dim
 c
       if (debug .eq. 1) then
         write(*,*) "periodic_cond: bdy_cdn = ", bdy_cdn
@@ -45,7 +45,7 @@ c
         j = ip_period_E_F(i)
         if (i_boundary .ne. 0 .and. j .le. 0) then
           write(*,*) "period_cond: ???"
-          write(*,*) "i, i_boundary, i_period = ", 
+          write(*,*) "i, i_boundary, i_period = ",
      *         i, i_boundary, j
           write(*,*) "A boundary point should be periodic:"
           write(*,*) "i_period != 0 when i_boundary != 0"
@@ -71,7 +71,7 @@ c     check ...
         j = ip_period_E_F(i)
         if (i_boundary .eq. 0 .and. j .ne. 0) then
         write(*,*) "period_cond: ???"
-        write(*,*) "i, i_boundary, i_period = ", 
+        write(*,*) "i, i_boundary, i_period = ",
      *         i, i_boundary, j
         write(*,*) "An interior point should not be periodic:"
         write(*,*) "i_period = 0 when i_boundary = 0"
@@ -88,19 +88,19 @@ c       Periodic boundary condition: all points have a degree of freedom
           i_dim = type_N_E_F(2,i)
           if (i_boundary .eq. 0) then
 C             ! each element is associated to 3 interior Degrees Of Freedom (DOF)
-            if (i_dim .eq. 2) then 
+            if (i_dim .eq. 2) then
               ineq(1,i) = neq + 1
               ineq(2,i) = neq + 2
               ineq(3,i) = neq + 3
               neq = neq + 3
 C             ! each edge is associated to 3 Degrees Of Freedom (DOF)
-            elseif (i_dim .eq. 1) then 
+            elseif (i_dim .eq. 1) then
               ineq(1,i) = neq + 1
               ineq(2,i) = neq + 2
               ineq(3,i) = neq + 3
               neq = neq + 3
 C             ! each nodee is associated to 1 Degree Of Freedom (DOF)
-            elseif (i_dim .eq. 0) then 
+            elseif (i_dim .eq. 0) then
               ineq(1,i) = neq + 1
               ineq(2,i) = 0
               ineq(3,i) = 0
@@ -121,25 +121,25 @@ C             ! each nodee is associated to 1 Degree Of Freedom (DOF)
             j = ip_period_E_F(i)
             if(j .eq. i) then
 C               ! each element is associated to 3 interior Degrees Of Freedom (DOF)
-              if (i_dim .eq. 2) then 
+              if (i_dim .eq. 2) then
                 ineq(1,i) = neq + 1
                 ineq(2,i) = neq + 2
                 ineq(3,i) = neq + 3
                 neq = neq + 3
 C               ! each edge is associated to 3 Degrees Of Freedom (DOF)
-              elseif (i_dim .eq. 1) then 
+              elseif (i_dim .eq. 1) then
                 ineq(1,i) = neq + 1
                 ineq(2,i) = neq + 2
                 ineq(3,i) = neq + 3
                 neq = neq + 3
 C               ! each nodee is associated to 1 Degree Of Freedom (DOF)
-              elseif (i_dim .eq. 0) then 
+              elseif (i_dim .eq. 0) then
                 ineq(1,i) = neq + 1
                 ineq(2,i) = 0
                 ineq(3,i) = 0
                 neq = neq + 1
               else
-                write(*,*) "bound_cond: i_dim has invalid value : ", 
+                write(*,*) "bound_cond: i_dim has invalid value : ",
      *            i_dim
                 write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
                 write(*,*) "bound_cond: i = ", i
@@ -162,7 +162,7 @@ c       set the equation for the "other" (or "destination") periodic node
                   write(*,*)
                   write(*,*) "  ???"
                   write(*,*) "period_cond: ineq(j)  <= 0 or j <=0 : "
-                  write(*,*) "period_cond: i, j, k, neq(k,j) = ", 
+                  write(*,*) "period_cond: i, j, k, neq(k,j) = ",
      *              i, j, k, ineq(k,j)
                   write(*,*) "period_cond: Aborting..."
                   stop

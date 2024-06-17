@@ -2,20 +2,20 @@
      *  rho, c_tensor, p_tensor, eta_tensor, ls_material)
 
       implicit none
-      integer*8 nnodes_0
+      integer(8) nnodes_0
       parameter (nnodes_0 = 6)
-      integer*8 nel, nb_typ_el
-      integer*8 type_el(nel)
-      complex*16 rho(nb_typ_el), c_tensor(6,6,nb_typ_el)
-      complex*16 p_tensor(3,3,3,3,nb_typ_el)
-      complex*16 eta_tensor(3,3,3,3,nb_typ_el)
-      complex*16 ls_material(10,nnodes_0,nel)
+      integer(8) nel, nb_typ_el
+      integer(8) type_el(nel)
+      complex(8) rho(nb_typ_el), c_tensor(6,6,nb_typ_el)
+      complex(8) p_tensor(3,3,3,3,nb_typ_el)
+      complex(8) eta_tensor(3,3,3,3,nb_typ_el)
+      complex(8) ls_material(10,nnodes_0,nel)
 
 c     Local variables
-      integer*8 debug, k_typ
-      integer*8 i, iel, inod
-      complex*16 rho_el, c_11, c_12, c_44
-      complex*16 p_11, p_12, p_44, eta_11, eta_12, eta_44
+      integer(8) debug, k_typ
+      integer(8) i, iel, inod
+      complex(8) rho_el, c_11, c_12, c_44
+      complex(8) p_11, p_12, p_44, eta_11, eta_12, eta_44
 
 Cf2py intent(in) nel, nb_typ_el, type_el
 Cf2py intent(in) rho, c_tensor, p_tensor

@@ -25,12 +25,12 @@ c
 c***********************************************************************
 c
       implicit none
-      integer*8 nquad, nquad_max
+      integer(8) nquad, nquad_max
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
 
 c     Local variables
-      integer*8 i
+      integer(8) i
       double precision poidbar, coorbar
       double precision poid1, coor1grp1, coor2grp1
       double precision poid2, coor1grp2, coor2grp2

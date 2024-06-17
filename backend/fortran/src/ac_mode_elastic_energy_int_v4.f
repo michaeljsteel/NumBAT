@@ -1,33 +1,33 @@
 C Calculate the elastic energy overlap integral of an AC mode with itself using
-C analytic expressions for basis function overlaps on linear elements.  
+C analytic expressions for basis function overlaps on linear elements.
 C
-      subroutine AC_mode_elastic_energy_int_v4 (nval, 
+      subroutine AC_mode_elastic_energy_int_v4 (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, rho, Omega_AC, soln_AC,
      *  overlap)
 c
       implicit none
-      integer*8 nval, ival
-      integer*8 nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel)
-      integer*8 table_nod(nnodes,nel)
+      integer(8) nval, ival
+      integer(8) nel, npt, nnodes, nb_typ_el
+      integer(8) type_el(nel)
+      integer(8) table_nod(nnodes,nel)
       double precision x(2,npt)
-      complex*16 soln_AC(3,nnodes,nval,nel)
-      complex*16 Omega_AC(nval)
-      complex*16, dimension(nval) :: overlap
-      complex*16 rho(nb_typ_el)
+      complex(8) soln_AC(3,nnodes,nval,nel)
+      complex(8) Omega_AC(nval)
+      complex(8), dimension(nval) :: overlap
+      complex(8) rho(nb_typ_el)
 
 c     Local variables
-      integer*8 nnodes0
+      integer(8) nnodes0
       parameter (nnodes0 = 6)
-      integer*8 nod_el_p(nnodes0)
+      integer(8) nod_el_p(nnodes0)
       double precision xel(2,nnodes0)
-      complex*16 basis_overlap(nnodes0,nnodes0)
-      complex*16 U, Ustar
-      integer*8 i, j, j1, typ_e
-      integer*8 iel, k_eq
-      integer*8 itrial, jtest, ui
-      complex*16 rho_el, z_tmp1
+      complex(8) basis_overlap(nnodes0,nnodes0)
+      complex(8) U, Ustar
+      integer(8) i, j, j1, typ_e
+      integer(8) iel, k_eq
+      integer(8) itrial, jtest, ui
+      complex(8) rho_el, z_tmp1
 
 C
 C
@@ -50,7 +50,7 @@ C
       ui = 6
 C
       if ( nnodes .ne. 6 ) then
-        write(ui,*) "AC_mode_elastic_energy_int_v4: problem nnodes = ", 
+        write(ui,*) "AC_mode_elastic_energy_int_v4: problem nnodes = ",
      *              nnodes
         write(ui,*) " --------- nnodes should be equal to 6 !"
         write(ui,*) "AC_mode_elastic_energy_int_v4: Aborting..."
@@ -102,7 +102,7 @@ C Multiply through prefactor
 
 C        open (unit=26,file="Output/overlap_elastic_v4.txt")
 C        do i=1,nval
-C          write(26,*) i, Omega_AC(i), abs(overlap(i)), 
+C          write(26,*) i, Omega_AC(i), abs(overlap(i)),
 C      *              overlap(i)
 C        enddo
 C        do i=1,nval

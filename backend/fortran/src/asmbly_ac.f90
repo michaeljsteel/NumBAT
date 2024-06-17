@@ -6,32 +6,32 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 
    use numbatmod
 
-   integer*8 nel, npt, neq, nnodes
-   integer*8 i_base, nb_typ_el, nonz
-   integer*8 row_ind(nonz), col_ptr(neq+1)
-   integer*8 type_el(nel)
-   integer*8 table_nod(nnodes,nel), ineq(3,npt)
-   integer*8 i_work(3*npt), symmetry_flag
-   complex*16 shift, beta
+   integer(8) nel, npt, neq, nnodes
+   integer(8) i_base, nb_typ_el, nonz
+   integer(8) row_ind(nonz), col_ptr(neq+1)
+   integer(8) type_el(nel)
+   integer(8) table_nod(nnodes,nel), ineq(3,npt)
+   integer(8) i_work(3*npt), symmetry_flag
+   complex(8) shift, beta
    double precision x(2,npt)
 
-   complex*16 rho(nb_typ_el), c_tensor(6,6,nb_typ_el)
-   complex*16 mat2(nonz)
+   complex(8) rho(nb_typ_el), c_tensor(6,6,nb_typ_el)
+   complex(8) mat2(nonz)
    double precision mat1_re(nonz), mat1_im(nonz)
 
 
-   integer*8 nod_el(nnodes_0)
+   integer(8) nod_el(nnodes_0)
    double precision xel(2,nnodes_0)
 
-   integer*8 i_base2, debug, typ_e
-   integer*8 i, j, k, iel, j1
-   integer*8 jtest, jp, ind_jp, j_eq
-   integer*8 itrial, ip, ind_ip, i_eq
-   integer*8 col_start, col_end
+   integer(8) i_base2, debug, typ_e
+   integer(8) i, j, k, iel, j1
+   integer(8) jtest, jp, ind_jp, j_eq
+   integer(8) itrial, ip, ind_ip, i_eq
+   integer(8) col_start, col_end
 
-   complex*16 mat_K(18,18), mat_M(18,18)
-   complex*16 c_tensor_el(6,6), rho_el
-   complex*16 z_tmp1, z_tmp2
+   complex(8) mat_K(18,18), mat_M(18,18)
+   complex(8) c_tensor_el(6,6), rho_el
+   complex(8) z_tmp1, z_tmp2
 
 !  The CSC indexing, i.e., col_ptr, is 1-based
 !  But valpr.f may have changed the CSC indexing to 0-based indexing)

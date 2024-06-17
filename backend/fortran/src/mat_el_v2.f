@@ -11,9 +11,9 @@ c***********************************************************************
 c
       implicit none
       double precision xel(2,6)
-      complex*16 beta
-      complex*16 mat_K(18,18), mat_M(18,18)
-      complex*16 c_tensor_el(6,6), rho_el
+      complex(8) beta
+      complex(8) mat_K(18,18), mat_M(18,18)
+      complex(8) c_tensor_el(6,6), rho_el
 
 c     Local variables
 
@@ -21,9 +21,9 @@ c     Local variables
       double precision p2x_p2x(6,6), p2y_p2y(6,6), p2x_p2y(6,6)
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
-      complex*16 z_tmp1
-      integer*8 i, j, i_p, j_p, i_xyz,  j_xyz
-      integer*8 debug
+      complex(8) z_tmp1
+      integer(8) i, j, i_p, j_p, i_xyz,  j_xyz
+      integer(8) debug
 
 c    Compute the Affine mappings from the current triangle to the
 c     reference unit triangle.

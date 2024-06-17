@@ -7,42 +7,42 @@ C
      *  eps_lst, debug, overlap)
 c
       use numbatmod
-      integer*8 nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
-      integer*8 nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel), debug
-      integer*8 table_nod(nnodes,nel)
+      integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
+      integer(8) nel, npt, nnodes, nb_typ_el
+      integer(8) type_el(nel), debug
+      integer(8) table_nod(nnodes,nel)
       double precision x(2,npt)
-c      complex*16 x(2,npt)
-      complex*16 soln_EM_p(3,nnodes,nval_EM_p,nel)
-      complex*16 soln_EM_S(3,nnodes,nval_EM_S,nel)
-      complex*16 soln_AC(3,nnodes,nval_AC,nel)
-      complex*16 overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
-      complex*16 p_tensor(3,3,3,3,nb_typ_el)
+c      complex(8) x(2,npt)
+      complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
+      complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
+      complex(8) soln_AC(3,nnodes,nval_AC,nel)
+      complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
+      complex(8) p_tensor(3,3,3,3,nb_typ_el)
 
 c     Local variables
-      integer*8 nnodes0
+      integer(8) nnodes0
       parameter (nnodes0 = 6)
       double precision xel(2,nnodes0)
-      complex*16 basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
-      complex*16 E1star, E2, Ustar
-      integer*8 i, j, k, l, j1, typ_e
-      integer*8 iel, ind_ip, i_eq
-      integer*8 jtest, ind_jp, j_eq, k_eq
-      integer*8 ltest, ind_lp, l_eq
-      integer*8 itrial, ui, ival1s, ival2s, ival3s
-      complex*16 eps_lst(nb_typ_el)
-      complex*16 zt1
+      complex(8) basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
+      complex(8) E1star, E2, Ustar
+      integer(8) i, j, k, l, j1, typ_e
+      integer(8) iel, ind_ip, i_eq
+      integer(8) jtest, ind_jp, j_eq, k_eq
+      integer(8) ltest, ind_lp, l_eq
+      integer(8) itrial, ui, ival1s, ival2s, ival3s
+      complex(8) eps_lst(nb_typ_el)
+      complex(8) zt1
       double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
       double precision det_b
 c
 c     NQUAD: The number of quadrature points used in each element.
-      integer*8 nquad, nquad_max
+      integer(8) nquad, nquad_max
       ! Limit to P2 polynomials
       parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
-cc      integer*8 info_curved, n_curved
-      complex*16 coeff
+cc      integer(8) info_curved, n_curved
+      complex(8) coeff
 
       double precision p2_p2_p2(6,6,6)
       double precision p2_p2_p2x(6,6,6), p2_p2_p2y(6,6,6)

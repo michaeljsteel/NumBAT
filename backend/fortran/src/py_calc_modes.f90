@@ -29,80 +29,80 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    use nbinterfaces
 
 
-   integer*8, parameter :: nodes_per_el = 6
+   integer(8), parameter :: nodes_per_el = 6
 
    double precision lambda, dimscale_in_m, bloch_vec(2)
 
-   integer*8 :: n_modes
-   integer*8 n_typ_el
-   integer*8 n_msh_el, n_msh_pts,  bdy_cdn, itermax
-   integer*8 neq, debug
-   complex*16 shift_ksqr
+   integer(8) :: n_modes
+   integer(8) n_typ_el
+   integer(8) n_msh_el, n_msh_pts,  bdy_cdn, itermax
+   integer(8) neq, debug
+   complex(8) shift_ksqr
 
-   integer*8 type_el(n_msh_el), type_nod(n_msh_pts)
-   integer*8 table_nod(nodes_per_el, n_msh_el)
-   integer*8 E_H_field
+   integer(8) type_el(n_msh_el), type_nod(n_msh_pts)
+   integer(8) table_nod(nodes_per_el, n_msh_el)
+   integer(8) E_H_field
 
-   complex*16 ls_material(1,nodes_per_el+7,n_msh_el)
+   complex(8) ls_material(1,nodes_per_el+7,n_msh_el)
    double precision mesh_xy(2,n_msh_pts)
-   complex*16 mode_pol(4,n_modes)
+   complex(8) mode_pol(4,n_modes)
 
 
-   complex*16  v_refindex_n(n_typ_el)
+   complex(8)  v_refindex_n(n_typ_el)
    integer errco
    character(len=EMSG_LENGTH) emsg
 
 
 
 
-   integer*8 int_max, cmplx_max, int_used, cmplx_used
-   integer*8 real_max, real_used
+   integer(8) int_max, cmplx_max, int_used, cmplx_used
+   integer(8) real_max, real_used
 
-   integer*8, dimension(:), allocatable :: a_iwork
-   complex*16, dimension(:), allocatable :: b_zwork
+   integer(8), dimension(:), allocatable :: a_iwork
+   complex(8), dimension(:), allocatable :: b_zwork
    double precision, dimension(:), allocatable :: c_dwork
    double precision, dimension(:,:), allocatable :: d_dwork
-   integer*8, dimension(:), allocatable :: iindex
-   complex*16, dimension(:,:), allocatable :: overlap_L
+   integer(8), dimension(:), allocatable :: iindex
+   complex(8), dimension(:,:), allocatable :: overlap_L
 !
 !  Declare the pointers of the integer super-vector
-   integer*8 ip_table_E, ip_table_N_E_F, ip_visited
-   integer*8 ip_type_N_E_F, ip_eq
-   integer*8 ip_period_N, ip_nperiod_N
-   integer*8 ip_period_N_E_F, ip_nperiod_N_E_F
+   integer(8) ip_table_E, ip_table_N_E_F, ip_visited
+   integer(8) ip_type_N_E_F, ip_eq
+   integer(8) ip_period_N, ip_nperiod_N
+   integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
 
 !  Declare the pointers of the real super-vector
-   integer*8 jp_x_N_E_F
+   integer(8) jp_x_N_E_F
 
-   integer*8 jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-   integer*8 jp_trav, jp_vp
-   complex*16 pp(n_typ_el), qq(n_typ_el)
-   complex*16 eps_eff(n_typ_el)
+   integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
+   integer(8) jp_trav, jp_vp
+   complex(8) pp(n_typ_el), qq(n_typ_el)
+   complex(8) eps_eff(n_typ_el)
 !
 
 
 
 
 
-   integer*8 n_msh_pts_p3, ui
+   integer(8) n_msh_pts_p3, ui
 
 !  Variable used by valpr
-   integer*8 nvect, ltrav
-   integer*8 n_conv, i_base
+   integer(8) nvect, ltrav
+   integer(8) n_conv, i_base
    double precision ls_data(10)
 
-   integer*8 n_core(2)  ! index of highest epsilon material, seems funky
-   complex*16 z_beta, z_tmp, z_tmp0
-   integer*8 n_edge, n_face, n_ddl, n_ddl_max, n_k
+   integer(8) n_core(2)  ! index of highest epsilon material, seems funky
+   complex(8) z_beta, z_tmp, z_tmp0
+   integer(8) n_edge, n_face, n_ddl, n_ddl_max, n_k
 
 !  variable used by UMFPACK
    double precision control (20), info_umf (90)
-   integer*8 numeric
+   integer(8) numeric
 
 
 
-   integer*8 i
-   integer*8 ival, iel, inod
+   integer(8) i
+   integer(8) ival, iel, inod
 
 
    double precision freq, tol
@@ -126,30 +126,30 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos, overlap_file
 
    character msg*20
-   integer*8 namelength
-   integer*8 pair_warning, homogeneous_check
+   integer(8) namelength
+   integer(8) pair_warning, homogeneous_check
 
 !  Declare the pointers of the real super-vector
-   integer*8 kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
-   integer*8 kp_mat1_re, kp_mat1_im
+   integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
+   integer(8) kp_mat1_re, kp_mat1_im
 
 !  Declare the pointers of for sparse matrix storage
-   integer*8 ip_col_ptr, ip_row
-   integer*8 jp_mat2
-   integer*8 ip_work, ip_work_sort, ip_work_sort2
-   integer*8 nonz, nonz_max, max_row_len
+   integer(8) ip_col_ptr, ip_row
+   integer(8) jp_mat2
+   integer(8) ip_work, ip_work_sort, ip_work_sort2
+   integer(8) nonz, nonz_max, max_row_len
 
-   integer*8 ip
+   integer(8) ip
 
 !  new breed of variables to prise out of a_iwork, b_zwork and c_dwork
 
-   complex*16, target :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
-   complex*16, target :: sol2(3,nodes_per_el+7,n_modes,n_msh_el)
-   complex*16, pointer :: sol(:,:,:,:)
+   complex(8), target :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
+   complex(8), target :: sol2(3,nodes_per_el+7,n_modes,n_msh_el)
+   complex(8), pointer :: sol(:,:,:,:)
 
 
-   complex*16, target :: v_eigs_beta(n_modes), beta2(n_modes)
-   complex*16, pointer :: beta(:)
+   complex(8), target :: v_eigs_beta(n_modes), beta2(n_modes)
+   complex(8), pointer :: beta(:)
 
 
 
@@ -321,16 +321,16 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    ! Should be using c_dwork for x_E_F ?
    call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
       a_iwork(ip_table_N_E_F), a_iwork(ip_visited), a_iwork(ip_type_N_E_F), mesh_xy, &
-      !b_zwork(jp_x_N_E_F) &
-   d_dwork &
+   !b_zwork(jp_x_N_E_F) &
+      d_dwork &
       )
 
 
    ! Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
       a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, &
-      !b_zwork(jp_x_N_E_F), &
-   d_dwork, &
+   !b_zwork(jp_x_N_E_F), &
+      d_dwork, &
       a_iwork(ip_visited))
 
 
@@ -339,8 +339,8 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    ! TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
    call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
       type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, &
-      !b_zwork, &
-   d_dwork,  &
+   !b_zwork, &
+      d_dwork,  &
       int_max, debug)
 
 
@@ -487,11 +487,19 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 !  Check that the layer is not in fact homogeneous
    homogeneous_check = 0
    do i=1,n_typ_el-1
-      if(dble(eps_eff(i)) .ne. dble(eps_eff(i+1))) then
+
+      if (.not. almost_equal(dble(eps_eff(i)), dble(eps_eff(i+1)))) then
          homogeneous_check = 1
-      elseif(dimag(eps_eff(i)) .ne. dimag(eps_eff(i+1))) then
+      elseif (.not. almost_equal(dimag(eps_eff(i)), dimag(eps_eff(i+1)))) then
          homogeneous_check = 1
       endif
+      !if(dble(eps_eff(i)) .ne. dble(eps_eff(i+1))) then
+      !!   homogeneous_check = 1
+      !!elseif(dimag(eps_eff(i)) .ne. dimag(eps_eff(i+1))) then
+      ! homogeneous_check = 1
+      !endif
+
+
    enddo
 
    if(homogeneous_check .eq. 0) then
@@ -562,8 +570,8 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
       call asmbly ( bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
          bloch_vec_k, n_typ_el, pp, qq, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), &
          a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), mesh_xy, &
-         !b_zwork(jp_x_N_E_F), &
-      d_dwork, &
+      !b_zwork(jp_x_N_E_F), &
+         d_dwork, &
          nonz, a_iwork(ip_row), &
          a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
 

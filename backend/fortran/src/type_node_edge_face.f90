@@ -6,17 +6,17 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 !***********************************************************************
 !
    implicit none
-   integer*8 n_msh_el, n_msh_pts, nodes_per_el, n_ddl
-   integer*8 type_nod(n_msh_pts)
-   integer*8 table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
-   integer*8 visite(n_ddl), type_N_E_F(2,n_ddl)
+   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
+   integer(8) type_nod(n_msh_pts)
+   integer(8) table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) visite(n_ddl), type_N_E_F(2,n_ddl)
    double precision mesh_xy(2,n_msh_pts), x_E_F(2,n_ddl)
 
 
-   integer*8 i, j, j1
-   integer*8 type_n(10)
-!      integer*8 list_point_F(6,4)
-   integer*8 nddl_0
+   integer(8) i, j, j1
+   integer(8) type_n(10)
+!      integer(8) list_point_F(6,4)
+   integer(8) nddl_0
    parameter (nddl_0 = 14)
    double precision xel(2,6)
 

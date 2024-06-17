@@ -58,10 +58,10 @@ c     This subroutine set the boundary condition parameters
 
       use numbatmod
 
-      integer*8 bdy_cdn, n_ddl, neq
-      integer*8 ineq(3,n_ddl), type_N_E_F(2,n_ddl)
+      integer(8) bdy_cdn, n_ddl, neq
+      integer(8) ineq(3,n_ddl), type_N_E_F(2,n_ddl)
 
-      integer*8 i, i_boundary, i_dim
+      integer(8) i, i_boundary, i_dim
 c
       if(bdy_cdn .eq. BCS_DIRICHLET) then
 c       Dirichlet boundary condition: all points have a degree of freedom

@@ -56,7 +56,7 @@
 ! This subroutine is typically used in finite element analysis where higher-order elements (like P3 elements) are used to achieve more accurate results. It ensures that each node is uniquely identified across the entire mesh, which is crucial for assembling the global system of equations.
 
 ! Notes:
-! The subroutine uses integer*8 for large integer values, which allows handling large meshes.
+! The subroutine uses integer(8) for large integer values, which allows handling large meshes.
 ! It uses some Fortran-specific features like parameter and implicit none for better code clarity and safety.
 ! The subroutine includes detailed error messages and stops execution if a problem is detected, aiding in debugging.
 ! This subroutine is a critical part of pre-processing in finite element analysis, ensuring that the mesh nodes are correctly numbered and identified for subsequent calculations.
@@ -67,20 +67,20 @@ subroutine list_node_P3 (nel, npt, nnodes, n_edge,&
 
 
    implicit none
-   integer*8 nel, npt, nnodes
-   integer*8 n_edge, npt_p3
-   integer*8 visited(npt)
+   integer(8) nel, npt, nnodes
+   integer(8) n_edge, npt_p3
+   integer(8) visited(npt)
 
-   integer*8 table_nod(nnodes,nel), table_N_E_F(14,nel)
+   integer(8) table_nod(nnodes,nel), table_N_E_F(14,nel)
 
 !     Local variables
-   integer*8 nnodes_0
+   integer(8) nnodes_0
    parameter (nnodes_0 = 6)
-   integer*8 nod_el_p(nnodes_0)
-   integer*8 j, k, j1, m1, m2
-   integer*8 iel, inod, iel2, inod2, n_face
-   integer*8 mm, nn, mm2
-   integer*8 vert_1(2), vert_2(2)
+   integer(8) nod_el_p(nnodes_0)
+   integer(8) j, k, j1, m1, m2
+   integer(8) iel, inod, iel2, inod2, n_face
+   integer(8) mm, nn, mm2
+   integer(8) vert_1(2), vert_2(2)
 
    n_face = nel
 

@@ -8,32 +8,32 @@ c
 C     k_0 = 2 pi / lambda, where lambda in meters.
 C
       use numbatmod
-      integer*8 nval, nel, npt, nnodes_P2
-      integer*8 table_nod(nnodes_P2,nel)
+      integer(8) nval, nel, npt, nnodes_P2
+      integer(8) table_nod(nnodes_P2,nel)
       double precision x(2,npt)
-      complex*16 soln_k1(3,nnodes_P2+7,nval,nel)
-      complex*16 beta1, overlap1
-      complex*16 betas(nval)
-      complex*16, dimension(nval) :: overlap
+      complex(8) soln_k1(3,nnodes_P2+7,nval,nel)
+      complex(8) beta1, overlap1
+      complex(8) betas(nval)
+      complex(8), dimension(nval) :: overlap
       double precision k_0
 
 c     Local variables
 
-      integer*8 nnodes_P2_0, nnodes_P3_0
+      integer(8) nnodes_P2_0, nnodes_P3_0
       parameter (nnodes_P2_0 = 6)
       parameter ( nnodes_P3_0 = 10)
-      integer*8 nod_el_p(nnodes_P2_0)
+      integer(8) nod_el_p(nnodes_P2_0)
       double precision xel(2,nnodes_P2_0)
-      complex*16 E_field_el(3,nnodes_P2_0)
-      complex*16 H_field_el(3,nnodes_P2_0)
+      complex(8) E_field_el(3,nnodes_P2_0)
+      complex(8) H_field_el(3,nnodes_P2_0)
 C       !  P3 Ez-field
-      complex*16 Ez_field_el_P3(nnodes_P3_0)
+      complex(8) Ez_field_el_P3(nnodes_P3_0)
       double precision p2_p2(nnodes_P2_0,nnodes_P2_0)
-      integer*8 i, j, j1
-      integer*8 iel, ival
-      integer*8 itrial, jtest, ui
-      complex*16 vec_i(3), vec_j(3)
-      complex*16 z_tmp1
+      integer(8) i, j, j1
+      integer(8) iel, ival
+      integer(8) itrial, jtest, ui
+      complex(8) vec_i(3), vec_j(3)
+      complex(8) z_tmp1
 
       double precision mat_B(2,2), mat_T(2,2), det_b
 C

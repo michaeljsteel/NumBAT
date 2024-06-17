@@ -8,25 +8,25 @@ c
 C     k_0 = 2 pi / lambda, where lambda in meters.
 C
       use numbatmod
-      integer*8 nval, nel, npt, nnodes
-      integer*8 table_nod(nnodes,nel)
+      integer(8) nval, nel, npt, nnodes
+      integer(8) table_nod(nnodes,nel)
       double precision x(2,npt)
-      complex*16 soln_k1(3,nnodes+7,nval,nel)
-      complex*16 beta1
-      complex*16 betas(nval)
-      complex*16, dimension(nval) :: overlap
+      complex(8) soln_k1(3,nnodes+7,nval,nel)
+      complex(8) beta1
+      complex(8) betas(nval)
+      complex(8), dimension(nval) :: overlap
       double precision k_0
 
 c     Local variables
-      integer*8 nod_el_p(nnodes_0)
-      complex*16 sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
-      complex*16 vec_1(2*nnodes_0)
-      complex*16 basis_overlap(2*nnodes_0,2*nnodes_0+10)
-      integer*8 i, j, j1
-      integer*8 iel, ival
-      integer*8 jtest, ind_jp, j_eq
-      integer*8 itrial, ind_ip, i_eq
-      integer*8 info_curved, n_curved, debug, ui
+      integer(8) nod_el_p(nnodes_0)
+      complex(8) sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
+      complex(8) vec_1(2*nnodes_0)
+      complex(8) basis_overlap(2*nnodes_0,2*nnodes_0+10)
+      integer(8) i, j, j1
+      integer(8) iel, ival
+      integer(8) jtest, ind_jp, j_eq
+      integer(8) itrial, ind_ip, i_eq
+      integer(8) info_curved, n_curved, debug, ui
       double precision xel(2,nnodes_0)
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
@@ -34,10 +34,10 @@ c     Local variables
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
       double precision  r_tmp1
-      complex*16 z_tmp1, z_tmp2, coeff_1
+      complex(8) z_tmp1, z_tmp2, coeff_1
 c
 c     NQUAD: The number of quadrature points used in each element.
-      integer*8 nquad, nquad_max, iq
+      integer(8) nquad, nquad_max, iq
       parameter (nquad_max = 25)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)

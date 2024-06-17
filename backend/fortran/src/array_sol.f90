@@ -17,29 +17,29 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
    use numbatmod
 
-   integer*8 i_cond, num_modes, n_msh_el, n_msh_pts, n_ddl
-   integer*8 neq, nnodes
-   integer*8 n_core(2)
-   integer*8 type_el(n_msh_el)
-   integer*8 ineq(3,n_ddl)   ! bc info
-   integer*8 iindex(*)
-   integer*8 ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
-   integer*8 table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) i_cond, num_modes, n_msh_el, n_msh_pts, n_ddl
+   integer(8) neq, nnodes
+   integer(8) n_core(2)
+   integer(8) type_el(n_msh_el)
+   integer(8) ineq(3,n_ddl)   ! bc info
+   integer(8) iindex(*)
+   integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
+   integer(8) table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
    double precision bloch_vec(2), mesh_xy(2,n_msh_pts)
    double precision x_N_E_F(2,n_ddl)
-   complex*16 sol_0(neq,num_modes)
+   complex(8) sol_0(neq,num_modes)
 
 !     sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
 !     sol(3, nnodes+1..nnodes+7,num_modes, n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
-   complex*16 sol(3,nnodes+7,num_modes,n_msh_el)
-   complex*16 v_eigs_beta(num_modes)
-   complex*16 mode_pol(4,num_modes)
+   complex(8) sol(3,nnodes+7,num_modes,n_msh_el)
+   complex(8) v_eigs_beta(num_modes)
+   complex(8) mode_pol(4,num_modes)
 
 
 !     Local variables
-!      integer*8 nnodes_0, nddl_0, nddl_t
+!      integer(8) nnodes_0, nddl_0, nddl_t
 !     32-but integers for BLAS and LAPACK
-   integer*8 nddl_0
+   integer(8) nddl_0
    integer*4 dim_32
 !      parameter (nnodes_0 = 6)
    parameter (nddl_0 = 14)
@@ -47,9 +47,9 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
    parameter (dim_32=2)
 !
    double precision mode_comp(4)
-   integer*8 nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
+   integer(8) nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
    double precision xn(dim_32,nnodes_0), el_xy(dim_32,nnodes_0)
-   complex*16 sol_el(3,nnodes_0+7)
+   complex(8) sol_el(3,nnodes_0+7)
 
    double precision phi1_list(3), grad1_mat0(dim_32,3)
    double precision grad1_mat(dim_32,3)
@@ -69,12 +69,12 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
    double complex val_exp(nddl_0)
 
-   integer*8 is_curved
-   integer*8 j, k, i1, j1, m, inod, typ_e
-   integer*8 debug, i_sol_max
-   integer*8 iel, i_mode, i_mode2, jtest, jp, ind_jp, j_eq
+   integer(8) is_curved
+   integer(8) j, k, i1, j1, m, inod, typ_e
+   integer(8) debug, i_sol_max
+   integer(8) iel, i_mode, i_mode2, jtest, jp, ind_jp, j_eq
    double precision ddot, det, r_tmp1
-   complex*16 z_tmp1, z_tmp2, z_sol_max
+   complex(8) z_tmp1, z_tmp2, z_sol_max
    debug = 0
 
 
@@ -391,12 +391,12 @@ end
 subroutine zvec_reorder_by_index(v_src_dest, iindex, num_elts)
 
 
-   integer*8 :: num_elts
-   complex*16 :: v_src_dest(num_elts)
-   integer*8 :: iindex(num_elts)
+   integer(8) :: num_elts
+   complex(8) :: v_src_dest(num_elts)
+   integer(8) :: iindex(num_elts)
 
-   complex*16 ::  v_tmp(num_elts)
-   integer*8 :: j, j1
+   complex(8) ::  v_tmp(num_elts)
+   integer(8) :: j, j1
 
    do j=1,num_elts
       j1=iindex(j)

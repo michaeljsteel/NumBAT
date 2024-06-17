@@ -11,17 +11,17 @@ module nbinterfaces
          use numbatmod
 
          integer :: is_em
-         integer*8 :: n_modes
-         integer*8 :: n_msh_el, n_msh_pts
-         integer*8 :: int_max, cmplx_max, real_max
+         integer(8) :: n_modes
+         integer(8) :: n_msh_el, n_msh_pts
+         integer(8) :: int_max, cmplx_max, real_max
 
 
-         integer*8, dimension(:), allocatable :: a_iwork
-         complex*16, dimension(:), allocatable :: b_zwork
+         integer(8), dimension(:), allocatable :: a_iwork
+         complex(8), dimension(:), allocatable :: b_zwork
          double precision, dimension(:), allocatable :: c_dwork
          double precision, dimension(:,:), allocatable :: d_dwork
-         integer*8, dimension(:), allocatable :: iindex
-         complex*16, dimension(:,:), allocatable :: overlap_L
+         integer(8), dimension(:), allocatable :: iindex
+         complex(8), dimension(:,:), allocatable :: overlap_L
 
          integer :: errco
          character(len=EMSG_LENGTH) emsg

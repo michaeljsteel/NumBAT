@@ -12,18 +12,18 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
 
    implicit none
-   integer*8 n_msh_el, n_msh_pts, nodes_per_el, n_ddl
-   integer*8 table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
-   integer*8 type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
-   integer*8 visite(n_ddl)
+   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
+   integer(8) table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
+   integer(8) visite(n_ddl)
 
    double precision mesh_xy(2,n_msh_pts), x_N_E_F(2,n_ddl)
 
-   integer*8 nddl_0
+   integer(8) nddl_0
    parameter (nddl_0 = 14)
-   integer*8 j, k, k1, n, ind, ip(2,3)
-   integer*8 iel, inod, inod1, inod2, mm
-   integer*8 nut0(6), nut_N_E_F(nddl_0)
+   integer(8) j, k, k1, n, ind, ip(2,3)
+   integer(8) iel, inod, inod1, inod2, mm
+   integer(8) nut0(6), nut_N_E_F(nddl_0)
 
    double precision xx1, xx2, xx3, yy1, yy2, yy3
    double precision dx1, dy1

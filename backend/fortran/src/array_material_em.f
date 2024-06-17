@@ -1,21 +1,21 @@
 
 
-      subroutine array_material_EM (nel, 
-     *  nb_typ_el, n_index, 
+      subroutine array_material_EM (nel,
+     *  nb_typ_el, n_index,
      *  type_el, ls_material)
 
       implicit none
-      integer*8 nnodes_0
+      integer(8) nnodes_0
       parameter (nnodes_0 = 6)
-      integer*8 nel, nb_typ_el
-      integer*8 type_el(nel)
-      complex*16 n_index(nb_typ_el)
-      complex*16 ls_material(1,nnodes_0+7,nel)
+      integer(8) nel, nb_typ_el
+      integer(8) type_el(nel)
+      complex(8) n_index(nb_typ_el)
+      complex(8) ls_material(1,nnodes_0+7,nel)
 
 c     Local variables
-      integer*8 debug, k_typ
-      integer*8 iel, inod
-      complex*16 n_index_el
+      integer(8) debug, k_typ
+      integer(8) iel, inod
+      complex(8) n_index_el
 
 c
       debug = 0

@@ -10,18 +10,18 @@ c
 
       use numbatmod
 
-      integer*8 nval, nel, npt, nnodes, plot_val
-      integer*8 table_nod(nnodes,nel), type_el(nel)
-      integer*8 visite(npt)
+      integer(8) nval, nel, npt, nnodes, plot_val
+      integer(8) table_nod(nnodes,nel), type_el(nel)
+      integer(8) visite(npt)
       double precision x(2,npt)
-      complex*16 sol(3,nnodes,nval,nel)
-      complex*16 sol_avg(3,npt)
+      complex(8) sol(3,nnodes,nval,nel)
+      complex(8) sol_avg(3,npt)
 
-      complex*16 val_cmplx(nval)
+      complex(8) val_cmplx(nval)
 
 
       double precision xel(3,nnodes_0), xel_p1(3,3)
-      complex*16 sol_el(3,nnodes_0)
+      complex(8) sol_el(3,nnodes_0)
       double precision sol_el_abs2(nnodes_0), sol_max(4)
       double precision sol_el_abs2_eE(nnodes_0)
 C      double precision sol_el_abs2_iD(nnodes_0)
@@ -31,17 +31,17 @@ C      double precision ls_abs_index(nnodes_0), abs_index
 
       double precision v_im, v_re
 
-      integer*8 i, j, i1, iel, namelen, namelen2, typ_e
-      integer*8 q_average, plot_imag, plot_real, plot_abs
-      integer*8 debug, ui
-      complex*16 z_tmp1
+      integer(8) i, j, i1, iel, namelen, namelen2, typ_e
+      integer(8) q_average, plot_imag, plot_real, plot_abs
+      integer(8) debug, ui
+      complex(8) z_tmp1
 
 
 
       character(len=FNAME_LENGTH) tchar, gmsh_file_pos, dir_name
       character tval*4, buf*3
       character*1 tE_H
-      integer*8 namelength
+      integer(8) namelength
 
       double precision d_in_nm
 c
