@@ -20,7 +20,6 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import plotting
 from numbattools import launch_worker_processes_and_wait
 from nbanalytic import TwoLayerFiberEM, EMPoln
 

@@ -30,7 +30,8 @@ import datetime
 import numpy as np
 import sys
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 import materials
 import objects
 import mode_calcs
@@ -90,7 +91,7 @@ q_AC = np.real(sim_EM_pump.Eig_values[0] - sim_EM_Stokes.Eig_values[0])
 # Calculate Acoustic Modes
 sim_AC_wguide = wguide.calc_AC_modes(num_AC_modes, q_AC=q_AC, EM_sim=sim_EM_pump)
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined, 
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC_wguide, q_AC,
@@ -114,7 +115,7 @@ test_list2 = list(zip(masked_PE, masked_MB, masked))
 # # Only run this after changing what is simulated - this
 # # generates a new set of reference answers to check against
 # # in the future
-# np.savez_compressed("ref/%s.npz" % casefile_name, 
+# np.savez_compressed("ref/%s.npz" % casefile_name,
 #         test_list1 = test_list1, test_list2 = test_list2)
 # assert False, "Reference results saved successfully, \n tests would pass trivially so we'll skip them."
 
