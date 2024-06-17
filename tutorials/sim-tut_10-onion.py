@@ -13,7 +13,6 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
 
 import starter
 
@@ -66,15 +65,15 @@ wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
-new_calcs = False
+new_calcs = True
 
 # Calculate Electromagnetic modes.
 if new_calcs:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
 
-    sim_EM_pump.save_simulation('tut_10_pump')
-    sim_EM_Stokes.save_simulation('tut_10_stokes')
+    #sim_EM_pump.save_simulation('tut_10_pump')
+    #sim_EM_Stokes.save_simulation('tut_10_stokes')
 else:
     sim_EM_pump = mode_calcs.load_simulation('tut_10_pump')
     sim_EM_Stokes = mode_calcs.load_simulation('tut_10_stokes')
@@ -115,23 +114,20 @@ else:
 v_nu = sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
-    print('{i:3d}  {np.real(nu)*1e-9:.4e}')
+    print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
-sim_AC.plot_modes(contours=False,
-                           ticks=True, ivals=[10], quiver_points=20)
+sim_AC.plot_modes(contours=False, ticks=True, ivals=[10], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # Hz
 freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 2e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           )
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 
 print(nbapp.final_report())

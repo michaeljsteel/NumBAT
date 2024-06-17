@@ -116,15 +116,20 @@ set_q_factor = 1000.
 # Step 8
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
-SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+#SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.##gain_and_qs(
+  #  sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
+  #  EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+
+gain = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:
-SBS_gain_PE_ij = SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :]
-SBS_gain_MB_ij = SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :]
-SBS_gain_tot_ij = SBS_gain_tot[EM_ival_pump, EM_ival_Stokes, :]
+
+SBS_gain_PE_ij = gain.gain_PE_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
+SBS_gain_MB_ij = gain.gain_MB_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
+SBS_gain_tot_ij = gain.gain_total_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
 
 # Print the Backward SBS gain of the AC modes.
 print("\nContributions to SBS gain [1/(WM)]")
@@ -142,8 +147,8 @@ masked_tot = np.where(np.abs(SBS_gain_tot_ij) > threshold, SBS_gain_tot_ij, 0)
 
 print("\n Displaying gain results with negligible components masked out:")
 
-print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
+print("AC mode | Photoelastic (PE) | Moving boundary(MB) | Total")
 for (m, gpe, gmb, gt) in zip(range(num_modes_AC), masked_PE, masked_MB, masked_tot):
-    print(f'{m:8d}  {gpe:18.6e}  {gmb:18.6e}  {gt:18.6e}')
+    print(f'{m:8d}  {gpe:12.4f}  {gmb:12.4f}  {gt:12.4f}')
 
 print(nbapp.final_report())

@@ -13,7 +13,8 @@ import numpy as np
 #from matplotlib.ticker import AutoMinorLocator
 
 
-sys.path.append("../backend/")
+from pathlib import Path
+sys.path.append(str(Path('../backend')))
 
 import numbat
 from plotting import Decorator

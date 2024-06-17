@@ -15,10 +15,7 @@ import numpy as np
 from pathlib import Path
 sys.path.append(str(Path('../backend')))
 
-print(sys.path)
-
 import numbat
-import plotting
 import integration
 import mode_calcs
 import materials
@@ -141,18 +138,14 @@ if recalc_fields:
     # Calculate the acoustic loss from our fields.
     # Calculate interaction integrals and SBS gain for PE and MB effects combined,
     # as well as just for PE, and just for MB.
-    SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+    gain = integration.get_gains_and_qs(
         simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_ival_pump=EM_ival_pump,
         EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
     # Save the gain calculation results
-    np.savez('tut02_wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE,
-             SBS_gain_MB=SBS_gain_MB, linewidth_Hz=linewidth_Hz)
+    #np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
 else:
     npzfile = np.load('wguide_data_AC_gain.npz', allow_pickle=True)
-    SBS_gain = npzfile['SBS_gain']
-    SBS_gain_PE = npzfile['SBS_gain_PE']
-    SBS_gain_MB = npzfile['SBS_gain_MB']
-    linewidth_Hz = npzfile['linewidth_Hz']
+    gain = npzfile['SBS_gain']
 
 # The following function shows how integrals can be implemented purely in python,
 # which may be of interest to users wanting to calculate expressions not currently
@@ -165,10 +158,11 @@ comsol_ivals = 5  # Number of modes contained in data file.
 
 # Print the PE contribution to gain SBS gain of the AC modes.
 print("\n Displaying results of first five modes with negligible components masked out")
+SBS_gain_PE = gain.gain_PE_all()
+
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
-masked_PE = np.ma.masked_inside(
-    SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :comsol_ivals], 0, threshold)
+masked_PE = np.ma.masked_inside(SBS_gain_PE[:comsol_ivals], 0, threshold)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 #masked = np.ma.masked_inside(
 #    SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
@@ -180,15 +174,11 @@ print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(simres_AC.nu_AC_all()[0]) - 2e9  # Hz
 freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 2e9  # Hz
-plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
-                           freq_max=freq_max, dB=True, semilogy=True)
+gain.plot_spectra(freq_min=freq_min, freq_max=freq_max, dB=True, semilogy=True)
 
 # Repeat this plot focusing on one frequency range
 freq_min = 11.5e9  # Hz
 freq_max = 13.5e9  # Hz
-plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min,
-                           freq_max=freq_max, suffix='_zoom')
+gain.plot_spectra(freq_min=freq_min, freq_max=freq_max, suffix='_zoom')
 
 print(nbapp.final_report())

@@ -106,7 +106,7 @@ for (m, nu) in enumerate(v_nu): print(f'{m:3d}  {np.real(nu)*1e-9:.5f}')
 
 set_q_factor = 1000.
 
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
+gainbox = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 # np.savez('wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE, SBS_gain_MB=SBS_gain_MB, alpha=alpha)
@@ -120,8 +120,6 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration
 freq_min = np.real(simres_AC.nu_AC_all()[0]) - 2e9  # GHz
 freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 2e9  # GHz
 
-plotting.plot_gain_spectra(simres_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    )
+gainbox.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 
 print(nbapp.final_report())
