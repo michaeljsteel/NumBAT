@@ -5,10 +5,10 @@ c     Sort an array in increasing order
 
       SUBROUTINE sort_n(n,arr,indx)
 
-      INTEGER*8 n,indx(n),M,NSTACK
-      INTEGER*8 arr(n)
+      integer(8) n,indx(n),M,NSTACK
+      integer(8) arr(n)
       PARAMETER (M=7,NSTACK=50)
-      INTEGER*8 i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
+      integer(8) i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
       double precision a
 
       do 11 j=1,n

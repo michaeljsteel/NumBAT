@@ -7,41 +7,41 @@ C
      *  eps_lst, debug, overlap)
 c
       use numbatmod
-      integer*8 nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
-      integer*8 nel, npt, nnodes, nb_typ_el
-      integer*8 type_el(nel), debug
-      integer*8 table_nod(nnodes,nel)
+      integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
+      integer(8) nel, npt, nnodes, nb_typ_el
+      integer(8) type_el(nel), debug
+      integer(8) table_nod(nnodes,nel)
       double precision x(2,npt)
-      complex*16 soln_EM_p(3,nnodes,nval_EM_p,nel)
-      complex*16 soln_EM_S(3,nnodes,nval_EM_S,nel)
-      complex*16 soln_AC(3,nnodes,nval_AC,nel)
-      complex*16 overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
-      complex*16 p_tensor(3,3,3,3,nb_typ_el)
+      complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
+      complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
+      complex(8) soln_AC(3,nnodes,nval_AC,nel)
+      complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
+      complex(8) p_tensor(3,3,3,3,nb_typ_el)
 
 c     Local variables
 
       double precision xel(2,nnodes_0)
-      complex*16 basis_overlap(3*nnodes_0,3*nnodes_0,3,3*nnodes_0)
-      complex*16 E1star, E2, Ustar, eps
-      integer*8 i, j, k, l, j1, typ_e
-      integer*8 iel, ind_ip, i_eq
-      integer*8 jtest, ind_jp, j_eq, k_eq
-      integer*8 ltest, ind_lp, l_eq
-      integer*8 itrial, ui, ival1s, ival2s, ival3s
-      complex*16 eps_lst(nb_typ_el)
-      complex*16 zt1
+      complex(8) basis_overlap(3*nnodes_0,3*nnodes_0,3,3*nnodes_0)
+      complex(8) E1star, E2, Ustar, eps
+      integer(8) i, j, k, l, j1, typ_e
+      integer(8) iel, ind_ip, i_eq
+      integer(8) jtest, ind_jp, j_eq, k_eq
+      integer(8) ltest, ind_lp, l_eq
+      integer(8) itrial, ui, ival1s, ival2s, ival3s
+      complex(8) eps_lst(nb_typ_el)
+      complex(8) zt1
       double precision mat_B(2,2), mat_T(2,2)
 c
 c     NQUAD: The number of quadrature points used in each element.
-      integer*8 nquad, nquad_max, iq
+      integer(8) nquad, nquad_max, iq
 C       ! Limit to P2 polynomials
       parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
-      integer*8 info_curved, n_curved
+      integer(8) info_curved, n_curved
       double precision r_tmp1
-      complex*16 coeff_1, coeff_2
+      complex(8) coeff_1, coeff_2
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
 C

@@ -32,9 +32,12 @@ ifeq ($(COMPILER_VENDOR), "gcc")
 F_COMP_EXE = $(CCACHE) f95
 C_COMP_EXE = $(CCACHE) gcc
 
-F77FLAGS=-Wall -Wno-surprising -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build
+F77FLAGS=-Wall -Wno-surprising -W -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./mods -fall-intrinsics -pedantic
+
+#-pedantic 
+
 F95FLAGS=$(F77FLAGS)
-CFLAGS=-Wall -g0 -fPIC -Ofast -funroll-loops
+CFLAGS=-Wall -W -g0 -fPIC -Ofast -funroll-loops
 COMP_LIB = -lgfortran -lm
 
 else

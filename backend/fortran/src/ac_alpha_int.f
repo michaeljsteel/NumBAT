@@ -8,41 +8,41 @@
 c
 
          use numbatmod
-         integer*8 nval, ival
-         integer*8 nel, npt, nnodes, nb_typ_el
-         integer*8 type_el(nel), debug
-         integer*8 table_nod(nnodes,nel)
+         integer(8) nval, ival
+         integer(8) nel, npt, nnodes, nb_typ_el
+         integer(8) type_el(nel), debug
+         integer(8) table_nod(nnodes,nel)
          double precision x(2,npt)
-C       complex*16 x(2,npt)
-         complex*16 soln_AC(3,nnodes,nval,nel)
-         complex*16 Omega_AC(nval)
-         complex*16 beta_AC, AC_mode_energy_elastic(nval)
-         complex*16, dimension(nval) :: overlap
-         complex*16 eta_tensor(3,3,3,3,nb_typ_el)
+C       complex(8) x(2,npt)
+         complex(8) soln_AC(3,nnodes,nval,nel)
+         complex(8) Omega_AC(nval)
+         complex(8) beta_AC, AC_mode_energy_elastic(nval)
+         complex(8), dimension(nval) :: overlap
+         complex(8) eta_tensor(3,3,3,3,nb_typ_el)
 
 c     Local variables
-         integer*8 nnodes0
+         integer(8) nnodes0
          parameter (nnodes0 = 6)
-         integer*8 nod_el_p(nnodes0)
+         integer(8) nod_el_p(nnodes0)
          double precision xel(2,nnodes0)
-         complex*16 basis_overlap(3*nnodes0,3,3,3*nnodes0)
-         complex*16 U, Ustar
-         integer*8 i, j, k, l, j1, typ_e
-         integer*8 iel, ind_ip, i_eq, k_eq
-         integer*8 ltest, ind_lp, l_eq, j_eq
-         integer*8 itrial, ui
-         complex*16 z_tmp1
+         complex(8) basis_overlap(3*nnodes0,3,3,3*nnodes0)
+         complex(8) U, Ustar
+         integer(8) i, j, k, l, j1, typ_e
+         integer(8) iel, ind_ip, i_eq, k_eq
+         integer(8) ltest, ind_lp, l_eq, j_eq
+         integer(8) itrial, ui
+         complex(8) z_tmp1
          double precision mat_B(2,2), mat_T(2,2)
 c
 c     NQUAD: The number of quadrature points used in each element.
-         integer*8 nquad, nquad_max, iq
+         integer(8) nquad, nquad_max, iq
          parameter (nquad_max = 25)
          double precision wq(nquad_max)
          double precision xq(nquad_max), yq(nquad_max)
          double precision xx(2), xx_g(2), ww, det
-         integer*8 info_curved, n_curved
+         integer(8) info_curved, n_curved
          double precision r_tmp1
-         complex*16 coeff_1, coeff_2
+         complex(8) coeff_1, coeff_2
          double precision phi2_list(6), grad2_mat0(2,6)
          double precision grad2_mat(2,6)
 C

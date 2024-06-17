@@ -12,13 +12,13 @@ c
 c***********************************************************************
 c
       implicit none
-      integer*8 neq, nonz
-      integer*8 row_ind(nonz), col_ptr(neq+1)
-      complex*16 mat(nonz)
-      complex*16 vect1(neq), vect2(neq)
+      integer(8) neq, nonz
+      integer(8) row_ind(nonz), col_ptr(neq+1)
+      complex(8) mat(nonz)
+      complex(8) vect1(neq), vect2(neq)
 c
 c     Local variables
-      integer*8 i, j, k, col_start, col_end, i_base
+      integer(8) i, j, k, col_start, col_end, i_base
 c
       do i=1,neq
         vect2(i) = 0.d0
@@ -29,7 +29,7 @@ c     so we must add 1 to the CSD row_pointer row_ind
       i_base = 1
 c
       ! Column index
-      do i=1,neq   
+      do i=1,neq
         col_start = col_ptr(i) + i_base
         col_end = col_ptr(i+1) - 1 + i_base
         do j=col_start,col_end

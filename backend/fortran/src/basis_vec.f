@@ -4,13 +4,13 @@ c
 c     P2 basis function over the unit Tetrahedron
 c
 c         Compute:
-c                 a quadradic basis function (vec_phi = P2 * Grad P1) and 
+c                 a quadradic basis function (vec_phi = P2 * Grad P1) and
 c                 and its transverse curl (curl_t_phi)
 c
 c          basis_list(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
 c          basis_list(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
 c          basis_list(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
-c          basis_list(4,j,i)     : it will be used only if k=4  
+c          basis_list(4,j,i)     : it will be used only if k=4
 c
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
@@ -18,17 +18,17 @@ c
      *     grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
 c
       implicit none
-      integer*8 i_eq, i_ddl
-      integer*8 nnodes, nddl_t, dimm
-      parameter (nnodes = 6) 
+      integer(8) i_eq, i_ddl
+      integer(8) nnodes, nddl_t, dimm
+      parameter (nnodes = 6)
       parameter (nddl_t=4)
       parameter (dimm=2)
-      integer*8 basis_list(4,3,nddl_t)
+      integer(8) basis_list(4,3,nddl_t)
       double precision p2_list(nnodes)
       double precision grad_p1_mat(dimm,3), grad_p2_mat(dimm,nnodes)
       double precision vec_phi(dimm), curl_t_phi
 c     Local variables
-      integer*8 i, k, m, n1, n2
+      integer(8) i, k, m, n1, n2
       double precision grad_p1(dimm), grad_p2(dimm), phi
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccc

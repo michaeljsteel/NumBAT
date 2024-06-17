@@ -11,52 +11,52 @@
  int_size, cmplx_size, real_size, n_ddl, errco, emsg)
 
       use numbatmod
-      integer*8 n_msh_pts, n_msh_el
-      integer*8 :: n_modes
-      integer*8 int_size, cmplx_size, real_size, n_ddl
+      integer(8) n_msh_pts, n_msh_el
+      integer(8) :: n_modes
+      integer(8) int_size, cmplx_size, real_size, n_ddl
 
       integer errco
       character(len=EMSG_LENGTH) emsg
 
 
 !     Local variables
-      integer*8 nnodes, npt, npt_p3
-      integer*8 nvect, ordre_ls
-      integer*8 nonz, nonz_max, max_row_len
-      integer*8 neq, neq_PW
-      integer*8 n_edge, n_ddl_max
-      integer*8 ltrav
+      integer(8) nnodes, npt, npt_p3
+      integer(8) nvect, ordre_ls
+      integer(8) nonz, nonz_max, max_row_len
+      integer(8) neq, neq_PW
+      integer(8) n_edge, n_ddl_max
+      integer(8) ltrav
 !
 !  Declare the pointers of the integer super-vector
-      integer*8 ip_type_nod, ip_type_el, ip_table_nod
-      integer*8 ip_table_E, ip_table_N_E_F, ip_visite
-      integer*8 ip_type_N_E_F, ip_eq
-      integer*8 ip_period_N, ip_nperiod_N
-      integer*8 ip_period_N_E_F, ip_nperiod_N_E_F
-      integer*8 ip_index_pw_inv
+      integer(8) ip_type_nod, ip_type_el, ip_table_nod
+      integer(8) ip_table_E, ip_table_N_E_F, ip_visite
+      integer(8) ip_type_N_E_F, ip_eq
+      integer(8) ip_period_N, ip_nperiod_N
+      integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
+      integer(8) ip_index_pw_inv
 !  Declare the pointers of the real super-vector
-      integer*8 jp_x, jp_x_N_E_F, jp_rhs
-!      integer*8 jp_matD, jp_matL, jp_matU
-!      integer*8 jp_matD2, jp_matL2, jp_matU2
-      integer*8 jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-      integer*8 jp_eigen_modes_tmp, jp_trav, jp_vp, jp_eigen_pol
-      integer*8 jp_overlap_L, jp_overlap_J, jp_overlap_J_dagger
-      integer*8 jp_flux
-      integer*8 jp_overlap_K, jp_X_mat
-      integer*8 jp_sol1, jp_sol2, jp_sol1b
-      integer*8 jp_sol1_H, jp_sol1b_H
-      integer*8 jp_eigen_modes, jp_eigen_modes1, jp_eigen_modes2
-      integer*8 jp_T, jp_R, jp_T12, jp_R12, jp_T21, jp_R21
-      integer*8 jp_T_Lambda, jp_R_Lambda
-      integer*8 jp_X_mat_b
+      integer(8) jp_x, jp_x_N_E_F, jp_rhs
+!      integer(8) jp_matD, jp_matL, jp_matU
+!      integer(8) jp_matD2, jp_matL2, jp_matU2
+      integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
+      integer(8) jp_eigen_modes_tmp, jp_trav, jp_vp, jp_eigen_pol
+      integer(8) jp_overlap_L, jp_overlap_J, jp_overlap_J_dagger
+      integer(8) jp_flux
+      integer(8) jp_overlap_K, jp_X_mat
+      integer(8) jp_sol1, jp_sol2, jp_sol1b
+      integer(8) jp_sol1_H, jp_sol1b_H
+      integer(8) jp_eigen_modes, jp_eigen_modes1, jp_eigen_modes2
+      integer(8) jp_T, jp_R, jp_T12, jp_R12, jp_T21, jp_R21
+      integer(8) jp_T_Lambda, jp_R_Lambda
+      integer(8) jp_X_mat_b
 !     Declare the pointers of the real super-vector
-      integer*8 kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
-      integer*8 kp_mat1_re, kp_mat1_im
+      integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
+      integer(8) kp_mat1_re, kp_mat1_im
 
 !     Declare the pointers of for sparse matrix storage
-      integer*8 ip_col_ptr, ip_row
-      integer*8 jp_mat2
-      integer*8 ip_work, ip_work_sort, ip_work_sort2
+      integer(8) ip_col_ptr, ip_row
+      integer(8) jp_mat2
+      integer(8) ip_work, ip_work_sort, ip_work_sort2
 
 
 !f2py intent(in)  n_msh_el, n_modes

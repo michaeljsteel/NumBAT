@@ -3,14 +3,14 @@ c
      *  soln_k1, soln_k2, mat_overlap)
 c
       implicit none
-      integer*8 nval, nel, nnodes
-      complex*16 soln_k1(3,nnodes+7,nval,nel)
-      complex*16 soln_k2(3,nnodes+7,nval,nel)
-      complex*16 mat_overlap(nval,nval)
+      integer(8) nval, nel, nnodes
+      complex(8) soln_k1(3,nnodes+7,nval,nel)
+      complex(8) soln_k2(3,nnodes+7,nval,nel)
+      complex(8) mat_overlap(nval,nval)
 c     Local variables
-      integer*8 i, j
-      integer*8 iel, ival
-      complex*16 z_tmp1, z_tmp2
+      integer(8) i, j
+      integer(8) iel, ival
+      complex(8) z_tmp1, z_tmp2
 c
       do iel=1,nel
           do ival=1,nval
@@ -21,7 +21,7 @@ c              z_tmp2 =  1.0d0/z_tmp1
               do i=1,nnodes+7
                 do j=1,3
                   soln_k1(j,i,ival,iel) =
-     *               soln_k1(j,i,ival,iel) 
+     *               soln_k1(j,i,ival,iel)
                   soln_k2(j,i,ival,iel) =
      *               soln_k2(j,i,ival,iel) * z_tmp2
                 enddo

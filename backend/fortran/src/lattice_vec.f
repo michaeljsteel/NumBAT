@@ -6,7 +6,7 @@ c
 c***********************************************************************
 c
       implicit none
-      integer*8 npt
+      integer(8) npt
       double precision x(2,npt)
       double precision lat_vecs(2,2)
 
@@ -20,14 +20,14 @@ c
       double precision x_r, y_r
       double precision lat_vec_1(2), lat_vec_2(2)
       double precision tol
-      integer*8 i, n1, n2, debug
+      integer(8) i, n1, n2, debug
 c
       x_min = x(1,1)
       x_max = x(1,1)
 
-      x_max_ymin = 0.0 
-      x_min_ymin = 0.0 
-      x_min_ymax = 0.0 
+      x_max_ymin = 0.0
+      x_min_ymin = 0.0
+      x_min_ymax = 0.0
 
       do i=1,npt
         x_r = x(1,i)

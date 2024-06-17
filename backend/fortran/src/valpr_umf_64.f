@@ -50,9 +50,9 @@ c     ------------------------------------------------------------------
 c
       use numbatmod
 c
-      integer*8 neq, nonz, n_conv, i_base
-      integer*8 row_ind(nonz), col_ptr(neq+1)
-      complex*16 mat2(nonz)
+      integer(8) neq, nonz, n_conv, i_base
+      integer(8) row_ind(nonz), col_ptr(neq+1)
+      complex(8) mat2(nonz)
       double precision mat1_re(nonz), mat1_im(nonz)
       double precision rhs_re(neq), rhs_im(neq)
       double precision lhs_re(neq), lhs_im(neq)
@@ -62,23 +62,23 @@ c
       double precision time1, time2
 c
       double precision control (20), info_umf (90)
-      integer*8 numeric, symbolic, sys
+      integer(8) numeric, symbolic, sys
 c
-      integer*8 itermax, nvect, i, j, ltrav
-      integer*8 :: n_modes
-      integer*8 compteur
-      complex*16 resid(neq), v(neq,nvect), workd(3*neq)
-      complex*16 vect1(neq), vect2(neq), trav(ltrav)
-      complex*16 d(n_modes+1), shift2, vp(neq,n_modes)
+      integer(8) itermax, nvect, i, j, ltrav
+      integer(8) :: n_modes
+      integer(8) compteur
+      complex(8) resid(neq), v(neq,nvect), workd(3*neq)
+      complex(8) vect1(neq), vect2(neq), trav(ltrav)
+      complex(8) d(n_modes+1), shift2, vp(neq,n_modes)
 c
       double precision tol
 c
-c      integer*8 max_nvect
+c      integer(8) max_nvect
 c      parameter(max_nvect=3000) ! previously 1500
 c
       integer alloc_stat
 C       !  (3*max_nvect),
-      complex*16, dimension(:), allocatable :: workev
+      complex(8), dimension(:), allocatable :: workev
 C       !  (max_nvect)
       double precision, dimension(:), allocatable :: rwork
 C       !  (max_nvect)
@@ -103,7 +103,7 @@ c      data which/'SM'/
       data bmat/'I'/
       data which/'LM'/
 c
-      integer*8 ui, debug
+      integer(8) ui, debug
 c      common/imp/ui, debug
 c
 c     ------------------------------------------------------------------

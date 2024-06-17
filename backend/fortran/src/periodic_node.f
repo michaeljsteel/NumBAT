@@ -12,21 +12,21 @@ c
 c***********************************************************************
 c
       implicit none
-      integer*8 npt, nnodes
-      integer*8 type_nod(npt), ip_period(npt)
-      integer*8 n_period(npt)
-      integer*8 table_nod(nnodes,nel)
+      integer(8) npt, nnodes
+      integer(8) type_nod(npt), ip_period(npt)
+      integer(8) n_period(npt)
+      integer(8) table_nod(nnodes,nel)
       double precision lat_vecs(2,2)
       double precision x(2,npt)
-      integer*8 i, j, i1, j1, i_not_periodic
+      integer(8) i, j, i1, j1, i_not_periodic
       double precision period_x, period_y
       double precision x_min, y_min
       double precision x_max, y_max
       double precision tmp1, tmp2, tol
       double precision x_r, y_r
       double precision delta_v(2),  vec(2)
-      integer*8 ix, iy, test_lattice
-      integer*8 nel, list_end(2,3), j2, k, debug
+      integer(8) ix, iy, test_lattice
+      integer(8) nel, list_end(2,3), j2, k, debug
 c
       debug = 0
       x_min = x(1,1)
@@ -130,7 +130,7 @@ c
       if (debug .eq. 1) then
         open (unit = 10, file="ip_period.txt",status='unknown')
           do i=1,npt
-            write(10,*) i, type_nod(i), ip_period(i), n_period(i), 
+            write(10,*) i, type_nod(i), ip_period(i), n_period(i),
      *      "     ", (x(j,i),j=1,2)
           enddo
         close ( unit = 10)
@@ -158,16 +158,16 @@ c
           j1 = list_end(1,j-3)
           j2 = list_end(2,j-3)
           if(ip_period(table_nod(j,i)) .ne. 0) then
-            if (ip_period(table_nod(j1,i)) .eq. 0 .or. 
+            if (ip_period(table_nod(j1,i)) .eq. 0 .or.
      *        ip_period(table_nod(j2,i)) .eq. 0) then
-              write(*,*) "periodic_node: table_nod = ", 
-     *        type_nod(table_nod(j1,i)), type_nod(table_nod(j2,i)), 
-     *        type_nod(table_nod(j,i)) 
-              write(*,*) "periodic_node: table_nod(k,i): ", 
+              write(*,*) "periodic_node: table_nod = ",
+     *        type_nod(table_nod(j1,i)), type_nod(table_nod(j2,i)),
+     *        type_nod(table_nod(j,i))
+              write(*,*) "periodic_node: table_nod(k,i): ",
      *        (table_nod(k,i),k=1,6)
-              write(*,*) "periodic_node: ip_period(table_nod(k,i)): ", 
+              write(*,*) "periodic_node: ip_period(table_nod(k,i)): ",
      *        (ip_period(table_nod(k,i)),k=1,6)
-              write(*,*) "periodic_node: type_nod(table_nod(k,i)): ", 
+              write(*,*) "periodic_node: type_nod(table_nod(k,i)): ",
      *        (type_nod(table_nod(k,i)),k=1,6)
               write(*,*) "periodic_node: Aborting..."
               stop

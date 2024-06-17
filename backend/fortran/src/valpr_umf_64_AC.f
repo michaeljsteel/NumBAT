@@ -16,9 +16,9 @@ c     ------------------------------------------------------------------
 
       use numbatmod
 c
-      integer*8 :: n_modes
-      integer*8 neq, nonz, n_conv, i_base, nvect, ltrav
-      integer*8 row_ind(nonz), col_ptr(neq+1)
+      integer(8) :: n_modes
+      integer(8) neq, nonz, n_conv, i_base, nvect, ltrav
+      integer(8) row_ind(nonz), col_ptr(neq+1)
 
       integer errno
       character(len=EMSG_LENGTH) emsg
@@ -28,18 +28,18 @@ c
       double precision rhs_re(neq), rhs_im(neq)
       double precision lhs_re(neq), lhs_im(neq)
 
-      complex*16 mat2(nonz)
-      complex*16 resid(neq), vschur(neq,nvect), workd(3*neq)
-      complex*16 vect1(neq), vect2(neq), trav(ltrav)
-      complex*16 nu_out(n_modes+1), shift2, vp(neq,n_modes)
+      complex(8) mat2(nonz)
+      complex(8) resid(neq), vschur(neq,nvect), workd(3*neq)
+      complex(8) vect1(neq), vect2(neq), trav(ltrav)
+      complex(8) nu_out(n_modes+1), shift2, vp(neq,n_modes)
 c
       double precision time1_fact, time2_fact
 c
       double precision control (20), info_umf (90)
-      integer*8 numeric, symbolic, sys
+      integer(8) numeric, symbolic, sys
 c
-      integer*8 itermax, i, j
-      integer*8 compteur
+      integer(8) itermax, i, j
+      integer(8) compteur
 
 
 
@@ -47,7 +47,7 @@ c
       double precision tol
 c
       integer alloc_stat
-      complex*16, dimension(:), allocatable :: workev
+      complex(8), dimension(:), allocatable :: workev
       double precision, dimension(:), allocatable :: rwork
       logical, dimension(:), allocatable :: selecto
 
@@ -67,7 +67,7 @@ c      data which/'SM'/
       data bmat/'I'/
       data which/'LM'/
 c
-      integer*8 ui, debug, show_mem_est
+      integer(8) ui, debug, show_mem_est
 c      common/imp/ui, debug
 c
 c     ------------------------------------------------------------------
@@ -461,7 +461,7 @@ c------------------------------------------------------------------------
       implicit none
 
       double precision info_umf (90)
-      integer*8 ui, debug, show_mem_est
+      integer(8) ui, debug, show_mem_est
 
       ui = 6
 
@@ -491,7 +491,7 @@ c------------------------------------------------------------------------
       implicit none
 
       double precision info_umf (90)
-      integer*8 ui, debug, show_mem_est
+      integer(8) ui, debug, show_mem_est
 
       ui = 6
 

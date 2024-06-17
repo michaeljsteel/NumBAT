@@ -21,10 +21,10 @@ c
 
 c      istack is a working array
       implicit none
-      INTEGER*8 n, indx(n), M, NSTACK
-      INTEGER*8 arr(n), istack(n)
+      integer(8) n, indx(n), M, NSTACK
+      integer(8) arr(n), istack(n)
       PARAMETER (M=7)
-      INTEGER*8 i,indxt,ir,itemp,j,jstack,k,l
+      integer(8) i,indxt,ir,itemp,j,jstack,k,l
       double precision a
 
 

@@ -7,9 +7,9 @@ c                         (0,0,0), (1,0,0), (0,1,0).
 c
       subroutine interp_nod_2d (nnodes, xn)
 
-      integer*8 nnodes
+      integer(8) nnodes
       double precision xn(2,nnodes)
-      integer*8 i
+      integer(8) i
 
 
       i = 1

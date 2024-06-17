@@ -13,7 +13,7 @@ c
       double precision mat(6,6,6), det_b
 
       double precision dt, factor, factor2
-      integer*8 i, j, k
+      integer(8) i, j, k
 
       dt=dabs(det_b)
 

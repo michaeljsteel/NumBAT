@@ -7,30 +7,30 @@ C
      *  pair_warning, k_0)
 c
       use numbatmod
-      integer*8 :: n_modes
-      integer*8 n_msh_el, n_msh_pts, nnodes, nb_typ_el
-      integer*8 type_el(n_msh_el)
-      integer*8 table_nod(nnodes,n_msh_el)
+      integer(8) :: n_modes
+      integer(8) n_msh_el, n_msh_pts, nnodes, nb_typ_el
+      integer(8) type_el(n_msh_el)
+      integer(8) table_nod(nnodes,n_msh_el)
       double precision x(2,n_msh_pts)
-      complex*16 soln_k1(3,nnodes+7,n_modes,n_msh_el)
-      complex*16 soln_k2(3,nnodes+7,n_modes,n_msh_el)
-      complex*16 pp(nb_typ_el)
-      complex*16 beta1(n_modes), beta2(n_modes)
-C      complex*16 mat_overlap(n_modes,n_modes)
-      complex*16, dimension(n_modes,n_modes) :: mat_overlap
+      complex(8) soln_k1(3,nnodes+7,n_modes,n_msh_el)
+      complex(8) soln_k2(3,nnodes+7,n_modes,n_msh_el)
+      complex(8) pp(nb_typ_el)
+      complex(8) beta1(n_modes), beta2(n_modes)
+C      complex(8) mat_overlap(n_modes,n_modes)
+      complex(8), dimension(n_modes,n_modes) :: mat_overlap
       character overlap_file*100
       double precision k_0
 c     Local variables
 
-      integer*8 nod_el_p(nnodes_0)
-      complex*16 sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
-      complex*16 vec_1(2*nnodes_0)
-      complex*16 mat_scal(2*nnodes_0,2*nnodes_0+10)
-      integer*8 i, j, j1, typ_e
-      integer*8 iel, ival, jval
-      integer*8 jtest, ind_jp, j_eq
-      integer*8 itrial, ind_ip, i_eq
-      integer*8 info_curved, n_curved, debug, ui
+      integer(8) nod_el_p(nnodes_0)
+      complex(8) sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
+      complex(8) vec_1(2*nnodes_0)
+      complex(8) mat_scal(2*nnodes_0,2*nnodes_0+10)
+      integer(8) i, j, j1, typ_e
+      integer(8) iel, ival, jval
+      integer(8) jtest, ind_jp, j_eq
+      integer(8) itrial, ind_ip, i_eq
+      integer(8) info_curved, n_curved, debug, ui
       double precision xel(2,nnodes_0)
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
@@ -38,21 +38,21 @@ c     Local variables
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
       double precision  r_tmp1
-      complex*16 z_tmp1, z_tmp2, z_beta_1, coeff_1
+      complex(8) z_tmp1, z_tmp2, z_beta_1, coeff_1
 c
 c     NQUAD: The number of quadrature points used in each element.
-      integer*8 nquad, nquad_max, iq
+      integer(8) nquad, nquad_max, iq
       parameter (nquad_max = 25)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
       double precision xx(2), xx_g(2), ww, det
       double precision mat_B(2,2), mat_T(2,2)
 C     Mode ordering
-      integer*8 skip, PrintAll, pair_warning
-      complex*16 betatmp1(1), betatmp2(1)
-      complex*16 soltmp1(3,nnodes+7,n_msh_el,1)
-      complex*16 soltmp2(3,nnodes+7,n_msh_el,1)
-      integer*8 compcount, elcount, nodecount, redo, j2
+      integer(8) skip, PrintAll, pair_warning
+      complex(8) betatmp1(1), betatmp2(1)
+      complex(8) soltmp1(3,nnodes+7,n_msh_el,1)
+      complex(8) soltmp2(3,nnodes+7,n_msh_el,1)
+      integer(8) compcount, elcount, nodecount, redo, j2
       double precision val_max_diag, val_max_off
 C
 C

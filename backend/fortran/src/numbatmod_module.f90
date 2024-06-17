@@ -22,34 +22,36 @@ module numbatmod
    double precision, parameter :: D_PI = 3.141592653589793d0
    double precision, parameter :: D_ONE = 1.0d0
    double precision, parameter :: D_ZERO = 0.0d0
-   complex*16, parameter :: C_IM_ONE = cmplx(0.0d0, 1.0d0, 8)
+   !complex(8), parameter :: C_IM_ONE = cmplx(0.0d0, 1.0d0, 8)
+   complex(8), parameter :: C_IM_ONE = (0.0d0, 1.0d0)
+
 
    double precision, parameter :: SI_C_SPEED = 299792458.0d0
    double precision, parameter :: SI_EPS_0 = 8.8541878188d-12
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
-   integer*8, parameter :: nnodes_0 = 6
-   integer*8, parameter :: nddl_t = 4
+   integer(8), parameter :: nnodes_0 = 6
+   integer(8), parameter :: nddl_t = 4
 
 
-   integer*8, parameter :: BCS_DIRICHLET = 0  ! (E-field: electric wall)
-   integer*8, parameter :: BCS_NEUMANN = 1    ! (E-field: magnetic wall)
-   integer*8, parameter :: BCS_PERIODIC = 2
+   integer(8), parameter :: BCS_DIRICHLET = 0  ! (E-field: electric wall)
+   integer(8), parameter :: BCS_NEUMANN = 1    ! (E-field: magnetic wall)
+   integer(8), parameter :: BCS_PERIODIC = 2
 
-   integer*8, parameter :: FEM_FORMULATION_E = 1
-   integer*8, parameter :: FEM_FORMULATION_H = 2
+   integer(8), parameter :: FEM_FORMULATION_E = 1
+   integer(8), parameter :: FEM_FORMULATION_H = 2
 
 
-   integer*8, parameter :: NBERR_BAD_PERMUTATION     = -52
-   integer*8, parameter :: NBERR_BAD_ADJACENCY       = -53
-   integer*8, parameter :: NBERR_BAD_NODE_SEPARATION = -54
+   integer(8), parameter :: NBERR_BAD_PERMUTATION     = -52
+   integer(8), parameter :: NBERR_BAD_ADJACENCY       = -53
+   integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
 
 
 
 
 contains
 
-    integer function nb_system(cmd) 
+    integer function nb_system(cmd)
         implicit none
 
         integer errco
@@ -64,6 +66,16 @@ contains
     nb_system = errco
 
     end function
+
+    logical function almost_equal(a, b) result(res)
+        implicit none
+
+        real(8) :: a, b
+        real(8), parameter :: tol=1.d-12
+
+        res = abs(a-b) < tol
+
+        end function
 
     subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
 

@@ -2,20 +2,20 @@
 c
 c***********************************************************************
 c
-      subroutine csr_max_length (nel, n_ddl, neq, nnodes, 
+      subroutine csr_max_length (nel, n_ddl, neq, nnodes,
      *  table_N_E_F, ineq, lb, nonz)
 c
       implicit none
-      integer*8 nel, neq, n_ddl, nnodes, nonz
-      integer*8 table_N_E_F (14,nel)
-      integer*8 ineq(3,n_ddl), lb(neq+1)
+      integer(8) nel, neq, n_ddl, nnodes, nonz
+      integer(8) table_N_E_F (14,nel)
+      integer(8) ineq(3,n_ddl), lb(neq+1)
 
 c     Local variables
-      integer*8 nddl_0
+      integer(8) nddl_0
       parameter (nddl_0 = 14)
 
-      integer*8 i, k, iel, ind_ip, ip
-      integer*8 k_copy1, k_copy2
+      integer(8) i, k, iel, ind_ip, ip
+      integer(8) k_copy1, k_copy2
 c
       if ( nnodes .ne. 6 ) then
         write(*,*) "csr_max_length: problem nnodes = ", nnodes

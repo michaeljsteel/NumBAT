@@ -6,16 +6,16 @@ c
      *  table_nod, ineq, lb, nonz)
 c
       implicit none
-      integer*8 nel, neq, npt, nnodes, nonz
-      integer*8 table_nod (nnodes,nel)
-      integer*8 ineq(3,npt), lb(neq+1)
+      integer(8) nel, neq, npt, nnodes, nonz
+      integer(8) table_nod (nnodes,nel)
+      integer(8) ineq(3,npt), lb(neq+1)
 
 c     Local variables
-      integer*8 nddl_0
+      integer(8) nddl_0
       parameter (nddl_0 = 6)
 
-      integer*8 i, k, iel, ind_ip, ip
-      integer*8 k_copy1, k_copy2
+      integer(8) i, k, iel, ind_ip, ip
+      integer(8) k_copy1, k_copy2
 c
       if ( nnodes .ne. 6 ) then
         write(*,*) "csr_max_length: problem nnodes = ", nnodes

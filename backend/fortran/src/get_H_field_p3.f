@@ -7,24 +7,24 @@ C
 C
       use numbatmod
 C
-      integer*8 nnodes_P2
+      integer(8) nnodes_P2
       double precision k_0, mat_T(2,2)
-      complex*16 beta1
-      complex*16 E_field_el(3,nnodes_P2)
+      complex(8) beta1
+      complex(8) E_field_el(3,nnodes_P2)
 C        !  P3 Ez-field
-      complex*16 Ez_field_el_P3(10)
-      complex*16 H_field_el(3,nnodes_P2)
+      complex(8) Ez_field_el_P3(10)
+      complex(8) H_field_el(3,nnodes_P2)
 
 c     Local variables
 
-      integer*8 nnodes_P2_0, nnodes_P3_0
+      integer(8) nnodes_P2_0, nnodes_P3_0
       parameter (nnodes_P2_0 = 6)
       parameter (nnodes_P3_0 = 10)
       double precision vec_grad_P2(2,nnodes_P2_0)
       double precision vec_grad_P3(2,nnodes_P3_0),  omega
-      integer*8 j, inod, jnod
-      complex*16  z_tmp1, z_tmp2
-      complex*16 Maxwell_coeff
+      integer(8) j, inod, jnod
+      complex(8)  z_tmp1, z_tmp2
+      complex(8) Maxwell_coeff
 C
 CCCCCCCCCCCCCCCCCCCCCCCCC
 C

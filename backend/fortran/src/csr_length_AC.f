@@ -7,29 +7,29 @@ c
      *   nonz, max_row_len, ipointer, int_max, debug)
 c
       implicit none
-      integer*8 nel, neq, n_ddl, nnodes, nonz_max, nonz
-      integer*8 ipointer, int_max
-      integer*8 table_N_E_F(nnodes,nel)
-      integer*8 ineq(3,n_ddl)
-      integer*8 col_ind(*) 
-      integer*8 row_ptr(neq+1)
-      integer*8 max_row_len
+      integer(8) nel, neq, n_ddl, nnodes, nonz_max, nonz
+      integer(8) ipointer, int_max
+      integer(8) table_N_E_F(nnodes,nel)
+      integer(8) ineq(3,n_ddl)
+      integer(8) col_ind(*)
+      integer(8) row_ptr(neq+1)
+      integer(8) max_row_len
 
 c     Local variables
-C       integer*8 nonz_max_0
+C       integer(8) nonz_max_0
 C       parameter (nonz_max_0=2**22)
-C       integer*8 col_ind_0(nonz_max_0)
+C       integer(8) col_ind_0(nonz_max_0)
       integer alloc_stat
-      integer*8, dimension(:), allocatable :: col_ind_0
+      integer(8), dimension(:), allocatable :: col_ind_0
 
-      integer*8 nddl_0
+      integer(8) nddl_0
       parameter (nddl_0 = 6)
 
-      integer*8 i, j, k, k1, i_ddl, j_ddl
-      integer*8 iel, ind_ip, ip, ind_jp, jp
-      integer*8 row_start, row_end, row_len
-      integer*8 row_start2, row_end2
-      integer*8 ui, debug
+      integer(8) i, j, k, k1, i_ddl, j_ddl
+      integer(8) iel, ind_ip, ip, ind_jp, jp
+      integer(8) row_start, row_end, row_len
+      integer(8) row_start2, row_end2
+      integer(8) ui, debug
 c
       ui = 6
 c

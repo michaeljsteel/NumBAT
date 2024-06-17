@@ -1,7 +1,7 @@
 c
 ccccccccccccccccccccccccccccccccccccccc
 c
-c     Check if an element (triangle) has a curved face 
+c     Check if an element (triangle) has a curved face
 c
 ccccccccccccccccccccccccccccccccccccccc
 c
@@ -10,14 +10,14 @@ c
 ccccccccccccccccccccccccccccccccccccccc
 c
       implicit none
-      integer*8 nnodes, info_curved
+      integer(8) nnodes, info_curved
       double precision xel(2,nnodes)
 
-      integer*8 nnd_triangle
+      integer(8) nnd_triangle
       parameter (nnd_triangle = 6)
       double precision xel_triangle(2,nnd_triangle)
 
-      integer*8 i, j, i2
+      integer(8) i, j, i2
       double precision tol, tmp
 c
 ccccccccccccccccccccccccccccccccccccccc

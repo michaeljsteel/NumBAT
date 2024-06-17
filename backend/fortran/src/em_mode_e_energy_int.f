@@ -6,30 +6,30 @@ C
      *  x, soln_EM, overlap)
 C
       use numbatmod
-      integer*8 nval, nel, npt, nnodes
-      integer*8 table_nod(nnodes,nel), nb_typ_el
-      integer*8 type_el(nel)
+      integer(8) nval, nel, npt, nnodes
+      integer(8) table_nod(nnodes,nel), nb_typ_el
+      integer(8) type_el(nel)
       double precision x(2,npt)
-      complex*16 soln_EM(3,nnodes+7,nval,nel)
-      complex*16 n_lst(nb_typ_el), eps_lst(nb_typ_el)
-      complex*16, dimension(nval) :: overlap
+      complex(8) soln_EM(3,nnodes+7,nval,nel)
+      complex(8) n_lst(nb_typ_el), eps_lst(nb_typ_el)
+      complex(8), dimension(nval) :: overlap
 
 c     Local variables
-      integer*8 nod_el_p(nnodes_0)
-      complex*16 basis_overlap(nnodes_0)
-      integer*8 i, j, j1, typ_e
-      integer*8 iel, ival
-      integer*8 itrial, i_eq
-      integer*8 info_curved, n_curved, debug, ui
+      integer(8) nod_el_p(nnodes_0)
+      complex(8) basis_overlap(nnodes_0)
+      integer(8) i, j, j1, typ_e
+      integer(8) iel, ival
+      integer(8) itrial, i_eq
+      integer(8) info_curved, n_curved, debug, ui
       double precision xel(2,nnodes_0)
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
       double precision  r_tmp1
-      complex*16 coeff_1
-      complex*16 E, Estar
+      complex(8) coeff_1
+      complex(8) E, Estar
 c
 c     NQUAD: The number of quadrature points used in each element.
-      integer*8 nquad, nquad_max, iq
+      integer(8) nquad, nquad_max, iq
       parameter (nquad_max = 25)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)

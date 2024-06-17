@@ -14,39 +14,39 @@ c
 
       use numbatmod
 
-      integer*8 num_modes, n_msh_el, n_msh_pts, neq, nnodes
+      integer(8) num_modes, n_msh_el, n_msh_pts, neq, nnodes
 c TODO: n_core seems to be never initialised. Is that code ever called?
-      integer*8 n_core(2), type_el(n_msh_el)
-      integer*8 ineq(3,n_msh_pts), iindex(*)
-      integer*8 table_nod(nnodes,n_msh_el)
-      complex*16 sol_0(neq,num_modes)
+      integer(8) n_core(2), type_el(n_msh_el)
+      integer(8) ineq(3,n_msh_pts), iindex(*)
+      integer(8) table_nod(nnodes,n_msh_el)
+      complex(8) sol_0(neq,num_modes)
       double precision x(2,n_msh_pts)
 c     sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-      complex*16 sol(3,nnodes,num_modes,n_msh_el)
-      complex*16 v_cmplx(num_modes), v_tmp(num_modes)
-      complex*16 mode_pol(4,num_modes)
+      complex(8) sol(3,nnodes,num_modes,n_msh_el)
+      complex(8) v_cmplx(num_modes), v_tmp(num_modes)
+      complex(8) mode_pol(4,num_modes)
 
 
 
 c     Local variables
 
       double precision mode_comp(4)
-      integer*8 nod_el_p(nnodes_0)
+      integer(8) nod_el_p(nnodes_0)
       double precision xel(2,nnodes_0)
-      complex*16 sol_el(3,nnodes_0)
+      complex(8) sol_el(3,nnodes_0)
 
 
-      integer*8 j, i1, j1, inod, typ_e, debug
-      integer*8 iel, ival, ival2, jp, ind_jp, j_eq
-      complex*16 z_tmp1, z_tmp2, z_sol_max
+      integer(8) j, i1, j1, inod, typ_e, debug
+      integer(8) iel, ival, ival2, jp, ind_jp, j_eq
+      complex(8) z_tmp1, z_tmp2, z_sol_max
 
       double precision x_min, x_max, y_min, y_max
       double precision x_mid, y_mid
       double precision dx, dy, x_0, y_0
       double precision lx, ly, rx, ry
 
-      integer*8 i_sol_max, i_sol_max_tmp
-      integer*8 i_component, i_component_tmp
+      integer(8) i_sol_max, i_sol_max_tmp
+      integer(8) i_component, i_component_tmp
 
 
 c

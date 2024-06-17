@@ -4,10 +4,10 @@ subroutine check_alloc(alloc_stat, reqsz, nm, ec_on_fail, errco, emsg)
    use numbatmod
 
    character(len=*), intent(in) :: nm
-   integer, intent(out) :: errco 
+   integer, intent(out) :: errco
 
-   integer*8, intent(in) :: reqsz
-   integer, intent(in)   :: ec_on_fail 
+   integer(8), intent(in) :: reqsz
+   integer, intent(in)   :: ec_on_fail
    integer, intent(in) :: alloc_stat
 
    character(len=EMSG_LENGTH), intent(out) :: emsg

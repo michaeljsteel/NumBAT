@@ -2,17 +2,17 @@
 c
 c***********************************************************************
 c
-      subroutine sort_csr (neq, nonz, max_row_len, col_ind, 
+      subroutine sort_csr (neq, nonz, max_row_len, col_ind,
      *  row_ptr, arr, indx, istack)
 c
       implicit none
-      integer*8 neq, nonz, max_row_len
-      integer*8 row_ptr(neq+1), col_ind(nonz)
-      integer*8 arr(max_row_len), indx(max_row_len)
-      integer*8 istack(max_row_len)
+      integer(8) neq, nonz, max_row_len
+      integer(8) row_ptr(neq+1), col_ind(nonz)
+      integer(8) arr(max_row_len), indx(max_row_len)
+      integer(8) istack(max_row_len)
 c
-      integer*8 row_start, row_end, row_len
-      integer*8 i, j, k
+      integer(8) row_start, row_end, row_len
+      integer(8) i, j, k
 c
       do i=1,neq
         row_start = row_ptr(i)

@@ -14,7 +14,7 @@ c
 
       double precision dt, factor, factor2
       double precision c11, c12, c21, c22
-      integer*8 i, j, k
+      integer(8) i, j, k
 
       dt=dabs(det_b)
       c11 = b_inv_t(1, 1)
