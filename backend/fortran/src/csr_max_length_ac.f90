@@ -1,70 +1,68 @@
 
-c
-c***********************************************************************
-c
-      subroutine csr_max_length_AC (nel, npt, neq, nnodes,
-     *  table_nod, ineq, lb, nonz)
-c
-      implicit none
-      integer(8) nel, neq, npt, nnodes, nonz
-      integer(8) table_nod (nnodes,nel)
-      integer(8) ineq(3,npt), lb(neq+1)
+subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
+   table_nod, ineq, lb, nonz)
 
-c     Local variables
-      integer(8) nddl_0
-      parameter (nddl_0 = 6)
+   use numbatmod
 
-      integer(8) i, k, iel, ind_ip, ip
-      integer(8) k_copy1, k_copy2
-c
-      if ( nnodes .ne. 6 ) then
-        write(*,*) "csr_max_length: problem nnodes = ", nnodes
-        write(*,*) "csr_max_length: nnodes should be equal to 6 !"
-        write(*,*) "csr_max_length: Aborting..."
-        stop
-      endif
-c
-      do i=1,neq+1
-         lb(i) = 0
-      enddo
-c
-c   Determination of the bandwidths
-c
-      do 20 iel=1,nel
-        do i=1,nddl_0
-          ip = table_nod(i,iel)
-          do k=1,3
+   implicit none
+   integer, intent(in) :: nnodes
+   integer(8), intent(in) :: nel, neq, npt
+   integer(8), intent(in) ::  table_nod (nnodes,nel)
+   integer(8), intent(in) :: ineq(3,npt)
+   integer(8), intent(out) :: lb(neq+1)
+   integer(8), intent(out) :: nonz
+
+
+   !     Local variables
+   integer(8), parameter :: nddl_0 = 6
+
+   integer(8) :: i, k, iel, ind_ip, ip
+   integer(8) :: k_copy1, k_copy2
+
+   call assert_or_die(nnodes == 6,  &
+      "csr_max_length problem: nnodes = " // int4_2_str(nnodes) // "." // &
+      new_line('a') // " n_nodes should be equal to 6 !" // new_line('a') // &
+      " Aborting...",  20)
+
+
+   !do i=1,neq+1
+   !lb(i) = 0
+   !enddo
+   lb = 0
+
+   !
+   !   Determination of the bandwidths
+   !
+
+   do iel=1,nel
+      do i=1,nddl_0
+         ip = table_nod(i,iel)
+         do k=1,3
             ind_ip = ineq(k,ip)
             if (ind_ip .ne. 0) lb(ind_ip) = lb(ind_ip)+1
-          enddo
-        enddo
-20    continue
-c
-      nonz = 0
-      do i=1,neq
-        nonz = nonz + 3*nddl_0 + 3*(nddl_0-1)*(lb(i)-1)
+         enddo
       enddo
-c
-c      print*
-c      do i=1,neq
-c        print*, "csr_max_length: i, lb(i) = ", i, lb(i)
-c      enddo
-c      print*, "csr_max_length: neq, npt nonz, = ", neq, npt, nonz
-c      print*
-c
+   enddo
 
-c     Compressed Row Storage (CRS): determine the row pointer
-c
-      k_copy1 = lb(1)
-      lb(1) = 1
-      do i=2,neq+1
-        k_copy2 = lb(i)
-        lb(i) = lb(i-1) + 3*nddl_0 + 3*(nddl_0-1)*(k_copy1-1)
-        k_copy1 = k_copy2
-      enddo
+   nonz = 0
+   do i=1,neq
+      nonz = nonz + 3*nddl_0 + 3*(nddl_0-1)*(lb(i)-1)
+   enddo
 
-      nonz = lb(neq+1) - 1
-c
-c
-      return
-      end
+
+   !     Compressed Row Storage (CRS): determine the row pointer
+
+
+   k_copy1 = lb(1)
+   lb(1) = 1
+   do i=2,neq+1
+      k_copy2 = lb(i)
+      lb(i) = lb(i-1) + 3*nddl_0 + 3*(nddl_0-1)*(k_copy1-1)
+      k_copy1 = k_copy2
+   enddo
+
+   nonz = lb(neq+1) - 1
+
+
+   return
+end

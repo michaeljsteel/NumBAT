@@ -1,5 +1,9 @@
 #include "numbat_decl.h"
 
+!module nbinterfaces
+
+ !   contains
+
 subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    int_max, cmplx_max, real_max, &
    a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L, &
@@ -7,20 +11,21 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
    use numbatmod
 
-   integer :: is_em
-   integer(8) :: int_max, cmplx_max, real_max
-   integer(8) :: n_msh_el, n_msh_pts
-   integer(8) :: n_modes
+   integer, intent(in) :: is_em
+   integer(8), intent(in) :: n_msh_el, n_msh_pts, n_modes
+   integer(8), intent(out) :: int_max, cmplx_max, real_max
 
-   integer(8), dimension(:), allocatable :: a_iwork
-   complex(8), dimension(:), allocatable :: b_zwork
-   double precision, dimension(:), allocatable :: c_dwork
-   double precision, dimension(:,:), allocatable :: d_dwork
+   integer(8), dimension(:), allocatable, intent(inout) :: a_iwork
+   complex(8), dimension(:), allocatable, intent(inout) :: b_zwork
+   double precision, dimension(:), allocatable, intent(inout) :: c_dwork
+   double precision, dimension(:,:), allocatable, intent(inout) :: d_dwork
+   integer(8), dimension(:), allocatable, intent(inout) :: iindex
+   complex(8), dimension(:,:), allocatable, intent(inout) :: overlap_L
 
-   integer(8), dimension(:), allocatable :: iindex
-   complex(8), dimension(:,:), allocatable :: overlap_L
-   integer :: errco
-   character(len=EMSG_LENGTH) :: emsg
+   integer, intent(out) :: errco
+   character(len=*), intent(out) :: emsg
+
+   !!!!!
 
    integer(8) n_ddl
    integer :: alloc_stat=0
@@ -61,19 +66,19 @@ end subroutine prepare_workspaces
 
 !   ----------------------------------------------------------------------------------------
 
-subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
+subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_nodes_per_el, &
    type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, &
    a_iwork, d_dwork, int_max, debug)
 
    use numbatmod
 
-   integer(8) :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, nodes_per_el
+   integer(8) :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, d_nodes_per_el
    integer(8) :: ip_type_N_E_F, ip_eq, jp_x_n_e_f, int_max
    integer(8) :: ip_period_N, ip_nperiod_N, ip_period_N_E_F, ip_nperiod_N_E_F
    integer(8) :: debug
    double precision mesh_xy(2,n_msh_pts)
    integer(8) type_nod(n_msh_pts)
-   integer(8) table_nod(nodes_per_el, n_msh_el)
+   integer(8) table_nod(d_nodes_per_el, n_msh_el)
 
    ! is this the right way to pass these?
    integer(8), dimension(int_max) :: a_iwork
@@ -100,7 +105,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_
 
       call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
 
-      call periodic_node(n_msh_el, n_msh_pts, nodes_per_el, type_nod, mesh_xy, a_iwork(ip_period_N), &
+      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, type_nod, mesh_xy, a_iwork(ip_period_N), &
          a_iwork(ip_nperiod_N), table_nod, lat_vecs)
 
       if (debug .eq. 1) then
@@ -121,3 +126,5 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_
    endif
 
 end subroutine set_boundary_conditions
+
+!end module nbinterfaces

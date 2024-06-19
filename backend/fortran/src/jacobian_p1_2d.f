@@ -18,8 +18,8 @@ c
       integer(8) i, j
 
 c     32-bit integers for BLAS and LAPACK
-      integer*4 INFO_32, LDB_32, LDT_32
-      integer*4 IPIV_32(2), NRHS_32, N_32
+      integer(4) INFO_32, LDB_32, LDT_32
+      integer(4) IPIV_32(2), NRHS_32, N_32
 c
 c
 c

@@ -20,39 +20,44 @@
 !  mesh_xy  - (2 , n_msh_pts)  x,y coords?
 !  ls_material  - (1, nodes_per_el+7, n_msh_el)
 
-subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    ! inputs
+module calc_em_impl
+
+   use numbatmod
+   implicit none
+
+    contains
+
+subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    ! inputs
    E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, & ! inputs
    v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)  ! output params
 
-   use numbatmod
+!use nbinterfaces
 
-   use nbinterfaces
+   integer(8), intent(in) :: n_modes
+   double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
+   complex(8), intent(in) :: shift_ksqr
 
+   integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
+   character(len=*), intent(in) :: mesh_file
+   integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_typ_el
 
-   integer(8), parameter :: nodes_per_el = 6
+   complex(8), intent(in) ::  v_refindex_n(n_typ_el)
+   !complex(8), intent(in) ::  v_refindex_n(:)
 
-   double precision lambda, dimscale_in_m, bloch_vec(2)
+   complex(8), target, intent(out) :: v_eigs_beta(n_modes)
+   complex(8), target, intent(out) :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
 
-   integer(8) :: n_modes
-   integer(8) n_typ_el
-   integer(8) n_msh_el, n_msh_pts,  bdy_cdn, itermax
-   integer(8) neq, debug
-   complex(8) shift_ksqr
+   complex(8), intent(out) :: mode_pol(4,n_modes)
+   integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
+   integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
+   double precision, intent(out) :: mesh_xy(2,n_msh_pts)
+   complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
 
-   integer(8) type_el(n_msh_el), type_nod(n_msh_pts)
-   integer(8) table_nod(nodes_per_el, n_msh_el)
-   integer(8) E_H_field
-
-   complex(8) ls_material(1,nodes_per_el+7,n_msh_el)
-   double precision mesh_xy(2,n_msh_pts)
-   complex(8) mode_pol(4,n_modes)
-
-
-   complex(8)  v_refindex_n(n_typ_el)
-   integer errco
-   character(len=EMSG_LENGTH) emsg
+   integer, intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
+   integer(8) neq
 
 
    integer(8) int_max, cmplx_max, int_used, cmplx_used
@@ -79,10 +84,6 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    complex(8) pp(n_typ_el), qq(n_typ_el)
    complex(8) eps_eff(n_typ_el)
 !
-
-
-
-
 
    integer(8) n_msh_pts_p3, ui
 
@@ -123,7 +124,7 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
    character*(10) start_time, end_time
 
    !Names and Controls
-   character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos, overlap_file
+   character(len=FNAME_LENGTH)  gmsh_file, log_file, gmsh_file_pos, overlap_file
 
    character msg*20
    integer(8) namelength
@@ -143,52 +144,91 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
 !  new breed of variables to prise out of a_iwork, b_zwork and c_dwork
 
-   complex(8), target :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
    complex(8), target :: sol2(3,nodes_per_el+7,n_modes,n_msh_el)
    complex(8), pointer :: sol(:,:,:,:)
 
 
-   complex(8), target :: v_eigs_beta(n_modes), beta2(n_modes)
+   complex(8), target :: beta2(n_modes)
    complex(8), pointer :: beta(:)
 
 
 
-   integer *8:: ilo, ihi
+   integer(8) :: ilo, ihi
 
-   integer :: is_em
-
-
-
-!f2py intent(in) lambda, n_modes
-!f2py intent(in) debug, mesh_file, n_msh_pts, n_msh_el
-!f2py intent(in) v_refindex_n, bloch_vec, dimscale_in_m, shift_ksqr
-!f2py intent(in) E_H_field, bdy_cdn, itermax
-!f2py intent(in) plot_modes, plot_real, plot_imag, plot_abs
-!f2py intent(in) cmplx_max, real_max, int_max, n_typ_el
-
-!f2py depend(v_refindex_n) n_typ_el
-
-!f2py intent(out) v_eigs_beta, type_nod, ls_material
-!f2py intent(out) sol1, mode_pol, table_nod, type_el, mesh_xy
-
-!f2py intent(out) errco
-!f2py intent(out) emsg
+   integer :: is_em, alloc_stat, alloc_remote
 
 
 
-   tol = 0.d0
+!of2py intent(in) lambda, n_modes
+!of2py intent(in) debug, mesh_file, n_msh_pts, n_msh_el
+!of2py intent(in) v_refindex_n, bloch_vec, dimscale_in_m, shift_ksqr
+!of2py intent(in) E_H_field, bdy_cdn, itermax
+!of2py intent(in) plot_modes, plot_real, plot_imag, plot_abs
+!of2py intent(in) cmplx_max, real_max, int_max, n_typ_el
 
-   errco = 0
-   emsg = ""
+!of2py depend(v_refindex_n) n_typ_el
 
-!  Declare work space arrays
+!of2py intent(out) v_eigs_beta, 
+!of2py intent(out) type_nod, ls_material
+!of2py intent(out) sol1, mode_pol, table_nod, type_el, mesh_xy
+
+!of2py intent(out) errco
+!of2py intent(out) emsg
+
+
 
    is_em = 1
 
-   !TODO: make a new dwork for x_N_E_F
+   tol = 0.d0
+
+   !emsg = ""
+
+   alloc_remote = 0
+
+
+   write(*,*) 'calc_em_impl', size(v_refindex_n), v_refindex_n
+   write(*,*) 'calc_em_impl 2:', loc(a_iwork)
+   write(*,*) 'calc_em_impl 3:', loc(b_zwork)
+
+   if (alloc_remote > 0) then 
    call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
       a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
    RETONERROR(errco)
+   else
+
+
+   call array_size(n_msh_pts, n_msh_el, n_modes, &
+      int_max, cmplx_max, real_max, n_ddl, errco, emsg)
+   RETONERROR(errco)
+
+   allocate(a_iwork(int_max), STAT=alloc_stat)
+   call check_alloc(alloc_stat, int_max, "a", 101, errco, emsg)
+   RETONERROR(errco)
+
+   allocate(b_zwork(cmplx_max), STAT=alloc_stat)
+   call check_alloc(alloc_stat, cmplx_max, "b", 101, errco, emsg)
+   RETONERROR(errco)
+
+   allocate(c_dwork(real_max), STAT=alloc_stat)
+   call check_alloc(alloc_stat, real_max, "c", 101, errco, emsg)
+   RETONERROR(errco)
+
+   allocate(iindex(n_modes), STAT=alloc_stat)
+   call check_alloc(alloc_stat, n_modes, "iindex", 101, errco, emsg)
+   RETONERROR(errco)
+
+   if (is_em > 0) then
+      allocate(d_dwork(2,n_ddl), STAT=alloc_stat)
+      call check_alloc(alloc_stat, 2*n_ddl, "d_dwork", 101, errco, emsg)
+      RETONERROR(errco)
+
+      allocate(overlap_L(n_modes,n_modes), STAT=alloc_stat)
+      call check_alloc(alloc_stat, n_modes*n_modes, "overlap_L", 101, errco, emsg)
+      RETONERROR(errco)
+
+
+   endif
+   endif
 
 
 
@@ -848,5 +888,6 @@ subroutine calc_EM_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 !
    deallocate(a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L)
 
-end subroutine calc_EM_modes
+end subroutine calc_em_modes_impl
 
+end module calc_em_impl

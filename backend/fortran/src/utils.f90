@@ -14,8 +14,8 @@ subroutine check_alloc(alloc_stat, reqsz, nm, ec_on_fail, errco, emsg)
 
    errco = 0
    if (alloc_stat /= 0) then
-      write (emsg,*) "Memory allocation for ", nm, "failed.", &
-         "Size requested = ", reqsz , " bytes."
+      write (emsg,*) "Memory allocation for array ", nm, " failed.", &
+         "  Size requested = ", reqsz , " bytes."
       errco = ec_on_fail
    endif
 

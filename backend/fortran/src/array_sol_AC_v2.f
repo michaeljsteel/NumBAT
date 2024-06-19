@@ -14,7 +14,8 @@ c
 
       use numbatmod
 
-      integer(8) num_modes, n_msh_el, n_msh_pts, neq, nnodes
+      integer nnodes
+      integer(8) num_modes, n_msh_el, n_msh_pts, neq
 c TODO: n_core seems to be never initialised. Is that code ever called?
       integer(8) n_core(2), type_el(n_msh_el)
       integer(8) ineq(3,n_msh_pts), iindex(*)

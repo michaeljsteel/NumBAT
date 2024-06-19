@@ -40,7 +40,7 @@ C      double precision ls_abs_index(nnodes_0), abs_index
 
       character(len=FNAME_LENGTH) tchar, gmsh_file_pos, dir_name
       character tval*4, buf*3
-      character*1 tE_H
+      character tE_H
       integer(8) namelength
 
       double precision d_in_nm

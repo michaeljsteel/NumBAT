@@ -16,8 +16,8 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    integer(8) i, j, j1
    integer(8) type_n(10)
 !      integer(8) list_point_F(6,4)
-   integer(8) nddl_0
-   parameter (nddl_0 = 14)
+!   integer(8), parameter :: nddl_0 =14
+
    double precision xel(2,6)
 
 

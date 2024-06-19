@@ -2,9 +2,41 @@
 
 NumBAT_MOD=nb_fortran
 
+CCACHE=ccache
+
+gcc: COMPILER_VENDOR="gcc"
+gcc: F_COMP_EXE=$(CCACHE) f95
+gcc: C_COMP_EXE=$(CCACHE) gcc
+gcc: F77FLAGS=-Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./mods -fall-intrinsics -pedantic
+gcc: F95FLAGS=$(F77FLAGS)
+gcc: CFLAGS=-Wall -W -g -O2 -fPIC -Ofast -funroll-loops
+gcc: COMP_LIB = -lgfortran -lm
+
+gcc: all
+
+vartest:
+	echo $(COMPILER_VENDOR)
+	echo $(ONEAPI)
+	echo $(F77FLAGS)
+	echo $(COMP_LIB)
+
+intel: COMPILER_VENDOR=intel
+intel: ONEAPI=/opt/intel/oneapi
+intel: ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
+intel: COMP_LIB=-L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
+intel: F_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/ifx
+intel: C_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/icx
+intel: F77FLAGS=-nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
+intel: CFLAGS=-fPIC -O2 -Wall -g
+intel: F95FLAGS=$(F77FLAGS)
+
+intel: all
+
+mytest: Makefile.win
+	echo $(COMPILER_VENDOR)
+
 all: $(NumBAT_MOD).so
 
-CCACHE=ccache
 
 ## Set your python virtualenv platform
 MYPYENV = $(HOME)/mypy3-12
@@ -24,37 +56,39 @@ MYPLAT="linux_inteloneapi"
 #MYPLAT="MacOS"
 #MYPLAT="myplatform"
 
-COMPILER_VENDOR="gcc"
+#COMPILER_VENDOR="gcc"
 #COMPILER_VENDOR="intel"
 
 
-ifeq ($(COMPILER_VENDOR), "gcc")
-F_COMP_EXE = $(CCACHE) f95
-C_COMP_EXE = $(CCACHE) gcc
+# ifeq ($(COMPILER_VENDOR), "gcc")
+# $(info  "setting vars a")
+# F_COMP_EXE = $(CCACHE) f95
+# C_COMP_EXE = $(CCACHE) gcc
 
-F77FLAGS=-Wall -Wno-surprising -W -g0 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./mods -fall-intrinsics -pedantic
+# F77FLAGS=-Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./mods -fall-intrinsics -pedantic
 
-#-pedantic 
+# #-pedantic
 
-F95FLAGS=$(F77FLAGS)
-CFLAGS=-Wall -W -g0 -fPIC -Ofast -funroll-loops
-COMP_LIB = -lgfortran -lm
+# F95FLAGS=$(F77FLAGS)
+# CFLAGS=-Wall -W -g -O2 -fPIC -Ofast -funroll-loops
+# COMP_LIB = -lgfortran -lm
 
-else
+# else
 
-#TODO: smooth selection of version folders
-ONEAPI=/opt/intel/oneapi
-ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
-COMP_LIB = -L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
+# $(info  "setting vars b")
+# #TODO: smooth selection of version folders
+# ONEAPI=/opt/intel/oneapi
+# ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
+# COMP_LIB = -L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
 
-F_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/ifx
-C_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/icx
+# F_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/ifx
+# C_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/icx
 
-F77FLAGS= -nologo -fpp -fPIC -O2 -warn all -warn noexternals -module mods
-CFLAGS=  -fPIC -O2 -Wall
-F95FLAGS=$(F77FLAGS)
+# F77FLAGS= -nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
+# CFLAGS=  -fPIC -O2 -Wall -g
+# F95FLAGS=$(F77FLAGS)
 
-endif
+# endif
 
 
 
@@ -207,7 +241,9 @@ SRCS_F90 = $(wildcard src/*.f90)
 OBJS = $(subst src/,build/,$(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o))
 
 #The build order of these matters
-SRCS_MODS = src/numbatmod_module.f90 src/nbinterfaces_module.f90
+SRCS_MODS = src/numbatmod_module.f90
+
+#src/nbinterfaces_module.f90
 
 OBJS_MODA = $(SRCS_MODS:.f90=.o)
 #OBJS_MOD= $(subst src,build,$(OBJS_MODA))
@@ -226,8 +262,9 @@ PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
 	ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f \
 	ac_alpha_int.f ac_alpha_int_v2.f  \
 	array_size.f array_material_ac.f \
-	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f \
-	py_calc_modes.f90 py_calc_modes_ac.f90
+	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f py_entry_cm.f90
+
+	#py_calc_modes.f90 py_entry_cm.f90 py_calc_modes_ac.f90
 
 PYINTERFACE_SRCS = $(addprefix src/, $(PYINTERFACE_SRCS_IN))
 
@@ -256,14 +293,16 @@ build/%.o : src/%.f $(MODULES_MODS)
 build/%.o : src/%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
 
+
 build/%.o : build/%.f
+	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINC) $< -o $@
+
+
+build/%.o : build/%.f90
 	$(F_COMP_EXE) -c $(F77FLAGS) $(MATHINC) $< -o $@
 
 build/%.o : build/%.c
 	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
-
-build/%.e : src/%.f
-	cpp -I src $< -o $@
 
 build/%.e : src/%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
@@ -271,9 +310,14 @@ build/%.e : src/%.c
 build/%.e : build/%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
-F2PY_SRCS = build/$(NumBAT_MOD)module.c build/$(NumBAT_MOD)-f2pywrappers.f build/fortranobject.f
+#F2PY_SRCS = build/$(NumBAT_MOD)module.c build/fortranobject.f \
+#			build/$(NumBAT_MOD)-f2pywrappers.f  build/$(NumBAT_MOD)-f2pywrappers2.f90
+F2PY_SRCS = build/$(NumBAT_MOD)module.c build/fortranobject.f \
+			build/$(NumBAT_MOD)-f2pywrappers.f
+
 F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
-F2PY_OBJS = $(F2PY_OBJSA:.f=.o)
+F2PY_OBJSB = $(F2PY_OBJSA:.f=.o)
+F2PY_OBJS = $(F2PY_OBJSB:.f90=.o)
 
 $(NumBAT_MOD).pyf: $(SRCS)
 	-rm $(F2PY_SRCS)
@@ -286,7 +330,7 @@ $(NumBAT_MOD).pyf: $(SRCS)
 
 $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ)
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
-	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -o $(NumBAT_MOD).so
+	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./mods -o $(NumBAT_MOD).so
 
 
 clean:

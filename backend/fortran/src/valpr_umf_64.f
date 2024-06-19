@@ -90,9 +90,9 @@ C       !  (max_nvect)
 
 c     Local variables
 c     32-bit integers for ARPACK
-      integer*4 neq_32, n_modes_32, nvect_32
-      integer*4 ido_32, info_32, ierr_32, iparam_32(11)
-      integer*4 ipntr_32(14), ltrav_32
+      integer(4) neq_32, n_modes_32, nvect_32
+      integer(4) ido_32, info_32, ierr_32, iparam_32(11)
+      integer(4) ipntr_32(14), ltrav_32
 c
       logical rvec
       character bmat*1, which*2

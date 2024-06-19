@@ -30,6 +30,9 @@ module numbatmod
    double precision, parameter :: SI_EPS_0 = 8.8541878188d-12
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
+
+   integer(8), parameter :: nodes_per_el = 6
+
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: nddl_t = 4
 
@@ -77,22 +80,98 @@ contains
 
         end function
 
-    subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
+        subroutine assert_or_die(pred, msg, ec)
+            logical :: pred
+            character(len=*) :: msg
+            integer :: ec
 
-        implicit none
+            if (pred) return
 
-        integer errco
-        character(len=EMSG_LENGTH) emsg
-        character location*(*), msg*(*)
-        integer val, limit, failco
+            write(*,*) msg
+            call exit(ec)
 
-        if (val .ge. limit) then
-            write(emsg,*) 'Failed limit check at ', location, '.  ', &
-                'Expected ', msg, ',  but found values', val, limit
-            errco = failco
-        endif
+        end subroutine
 
-        return
-    end subroutine
+        subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
 
-end module numbatmod
+            implicit none
+
+            integer errco
+            character(len=EMSG_LENGTH) emsg
+            character location*(*), msg*(*)
+            integer val, limit, failco
+
+            if (val .ge. limit) then
+                write(emsg,*) 'Failed limit check at ', location, '.  ', &
+                    'Expected ', msg, ',  but found values', val, limit
+                errco = failco
+            endif
+
+            return
+        end subroutine
+
+        function int_2_str(val, fmt) result(str)
+            integer(8), intent(in) :: val
+            character(len=*), intent(in), optional :: fmt
+
+            character(len=:), allocatable :: str
+
+            integer, parameter :: buflen = 512
+            character(len=buflen) :: buffer
+
+            character(len=buflen) :: d_fmt = '(i0)'
+
+            if (present(fmt)) then 
+                d_fmt = fmt
+            endif
+
+            write(*,*) 'format', d_fmt
+            write(buffer, d_fmt) val
+
+            str = trim(buffer)
+        end function int_2_str
+
+        ! TODO: fix with just one call
+        function int4_2_str(val, fmt) result(str)
+            integer(4), intent(in) :: val
+            character(len=*), intent(in), optional :: fmt
+
+            character(len=:), allocatable :: str
+
+            integer, parameter :: buflen = 512
+            character(len=buflen) :: buffer
+
+            character(len=buflen) :: d_fmt = '(i0)'
+
+            if (present(fmt)) then 
+                d_fmt = fmt
+            endif
+
+            write(*,*) 'format', d_fmt
+            write(buffer, d_fmt) val
+
+            str = trim(buffer)
+        end function int4_2_str
+
+        function double_2_str(val, fmt) result(str)
+            double precision, intent(in) :: val
+            character(len=*), intent(in), optional ::fmt
+
+            character(len=:), allocatable :: str
+            integer, parameter :: buflen = 512
+            character(len=buflen) :: buffer
+
+            character(len=buflen) :: d_fmt = '(e)'
+
+            if (present(fmt)) then 
+                d_fmt = fmt
+            endif
+
+            write(buffer, d_fmt) val
+
+            str = trim(buffer)
+        end function double_2_str
+
+
+
+    end module numbatmod
