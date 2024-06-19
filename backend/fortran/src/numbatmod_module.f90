@@ -8,6 +8,9 @@ module numbatmod
     use ifport
 #endif
 
+use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
+                                          stdout=>output_unit, &
+                                          stderr=>error_unit
 
    implicit none
 
@@ -121,7 +124,7 @@ contains
 
             character(len=buflen) :: d_fmt = '(i0)'
 
-            if (present(fmt)) then 
+            if (present(fmt)) then
                 d_fmt = fmt
             endif
 
@@ -143,7 +146,7 @@ contains
 
             character(len=buflen) :: d_fmt = '(i0)'
 
-            if (present(fmt)) then 
+            if (present(fmt)) then
                 d_fmt = fmt
             endif
 
@@ -163,7 +166,7 @@ contains
 
             character(len=buflen) :: d_fmt = '(e)'
 
-            if (present(fmt)) then 
+            if (present(fmt)) then
                 d_fmt = fmt
             endif
 
