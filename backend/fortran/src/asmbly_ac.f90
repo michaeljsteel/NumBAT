@@ -6,7 +6,8 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 
    use numbatmod
 
-   integer(8) nel, npt, neq, nnodes
+   integer nnodes
+   integer(8) nel, npt, neq
    integer(8) i_base, nb_typ_el, nonz
    integer(8) row_ind(nonz), col_ptr(neq+1)
    integer(8) type_el(nel)

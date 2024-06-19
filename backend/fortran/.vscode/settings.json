@@ -1,0 +1,7 @@
+{
+    "fortran.linter.includePaths": [
+        "/usr/local/include",
+        "${workspaceFolder}/backend/fortran/mods",
+        "${workspaceFolder}/backend/fortran/build"
+    ]
+}

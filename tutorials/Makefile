@@ -14,6 +14,8 @@ broken: tut10
 slow: tut04 tut05 tut06 tut07 \
 				tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 	
+goodtest: tut01 ftut02 ftut06 ftut08 
+
 
 #fast1: tut01 ftut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 
 fast1: ftut02 ftut03a ftut03b ftut04 ftut05 ftut06 ftut07 

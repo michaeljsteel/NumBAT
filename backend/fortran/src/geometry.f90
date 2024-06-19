@@ -11,15 +11,15 @@
 !      - whether number of material types read matches expected value n_typ_el
 
 !      -  Fills:  mesh_xy, type_nod, type_el, table_nod
-subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
+subroutine geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
    dim_x, dim_y, mesh_file, mesh_xy, type_nod, type_el, table_nod, &
    errco, emsg)
 
    use numbatmod
 
-   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_typ_el
+   integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el
    integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
-   integer(8) table_nod(nodes_per_el, n_msh_el)
+   integer(8) table_nod(d_nodes_per_el, n_msh_el)
    double precision dim_x, dim_y
    double precision mesh_xy(2,n_msh_pts)
 
@@ -31,8 +31,9 @@ subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
 !     local vars
    double precision xx(2)
 
-   integer(8) max_typ_el, n_typ_el2
-   parameter (max_typ_el=10)
+
+   integer(8) n_typ_el2
+   !integer, parameter :: max_typ_el=10
    integer(8) n_msh_pts2, n_msh_el2
    integer(8) i, j, k
 
@@ -64,7 +65,7 @@ subroutine geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, &
 !     Connectivity table
    n_typ_el2 = 1   ! largest index of materials in the file
    do i=1,n_msh_el
-      read(24,*) k, (table_nod(j,i),j=1,nodes_per_el), type_el(i)
+      read(24,*) k, (table_nod(j,i),j=1,d_nodes_per_el), type_el(i)
       j = type_el(i)
       if(n_typ_el2 .lt. j) n_typ_el2 = j
       if(j .lt. 0) then

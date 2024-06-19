@@ -12,7 +12,7 @@ c
 c***********************************************************************
 c
       implicit none
-      integer(8) npt, nnodes
+      integer(8) nel, npt, nnodes
       integer(8) type_nod(npt), ip_period(npt)
       integer(8) n_period(npt)
       integer(8) table_nod(nnodes,nel)
@@ -26,7 +26,7 @@ c
       double precision x_r, y_r
       double precision delta_v(2),  vec(2)
       integer(8) ix, iy, test_lattice
-      integer(8) nel, list_end(2,3), j2, k, debug
+      integer(8) list_end(2,3), j2, k, debug
 c
       debug = 0
       x_min = x(1,1)

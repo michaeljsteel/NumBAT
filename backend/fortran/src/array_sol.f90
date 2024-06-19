@@ -40,7 +40,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 !      integer(8) nnodes_0, nddl_0, nddl_t
 !     32-but integers for BLAS and LAPACK
    integer(8) nddl_0
-   integer*4 dim_32
+   integer(4) dim_32
 !      parameter (nnodes_0 = 6)
    parameter (nddl_0 = 14)
 !      parameter (nddl_t=4)
@@ -67,7 +67,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
    double precision mat_B(dim_32,dim_32)
    double precision mat_T(dim_32,dim_32)
 
-   double complex val_exp(nddl_0)
+   complex(8) val_exp(nddl_0)
 
    integer(8) is_curved
    integer(8) j, k, i1, j1, m, inod, typ_e

@@ -1,16 +1,5 @@
 #include "numbat_decl.h"
 
-
-subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
-   i_bnd_cdns, itermax, tol, debug, show_mem_est, &
-   symmetry_flag, n_typ_el, &
-   c_tensor, rho, &
-   supplied_geo_flag, &
-   mesh_file, n_msh_pts, n_msh_el, &
-   type_nod, &
-   table_nod, type_el, mesh_xy, &
-   v_eigs_nu, sol1, mode_pol, errco, emsg)
-
    ! q_ac :   acoustic wave number (q_ac)
    ! n_modes:  desired number of solved acoustic modes
    ! n_msh_pts:  number of nodes in mesh
@@ -35,34 +24,59 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    !***********************************************************************
    !
-   use numbatmod
-   !f2py integer, parameter :: EMSG_LENGTH
-   integer(8) :: n_modes
 
-   complex(8) q_ac
-   double precision dimscale_in_m
-   complex(8) shift_nu
+   module calc_ac_impl 
+
+       contains
+
+subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
+   i_bnd_cdns, itermax, tol, debug, show_mem_est, &
+   symmetry_flag, n_typ_el, c_tensor, rho, supplied_geo_flag, &
+   mesh_file, n_msh_pts, n_msh_el, &
+   type_nod, &
+   table_nod, type_el, mesh_xy, &
+   v_eigs_nu, sol1, mode_pol, errco, emsg)
+
+   use numbatmod
+
+   integer, parameter :: d_nodes_per_el = 6
+
+   integer(8), intent(in) :: n_modes
+
+   complex(8), intent(in) :: q_ac
+   double precision, intent(in) :: dimscale_in_m
+   complex(8), intent(in) :: shift_nu
+   integer(8), intent(in) :: i_bnd_cdns, itermax, debug, show_mem_est
+   double precision, intent(in) :: tol
+   integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
+   integer(8), intent(in) :: n_typ_el
+
+   complex(8), intent(in) :: c_tensor(6,6,n_typ_el)
+   complex(8), intent(in) :: rho(n_typ_el)
+
+   character(len=FNAME_LENGTH), intent(in)  :: mesh_file
+   integer(8), intent(in) :: n_msh_pts, n_msh_el
+
+   integer(8), intent(in) :: type_nod(n_msh_pts)
+
+   integer(8), intent(inout) :: type_el(n_msh_el)
+   integer(8), intent(inout) :: table_nod(d_nodes_per_el, n_msh_el)
+
+   double precision, intent(inout) ::  mesh_xy(2,n_msh_pts)
+
+   complex(8), intent(out), target :: v_eigs_nu(n_modes)
+   complex(8), intent(out), target :: sol1(3,d_nodes_per_el,n_modes,n_msh_el)
+   complex(8), intent(out) :: mode_pol(4,n_modes)
+
+   integer, intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
+
    integer(8) int_max, cmplx_max, int_used, cmplx_used
    integer(8) real_max, real_used, n_ddl
-   integer errco
-   character(len=EMSG_LENGTH) emsg
 
 
 
-   integer(8) n_msh_el, n_msh_pts, i_bnd_cdns, neq
-   integer(8) debug, show_mem_est
-
-   !     ! Number of nodes per element
-   integer(8) , parameter :: nodes_per_el =6
-   integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
-   integer(8) table_nod(nodes_per_el, n_msh_el)
-
-   double precision mesh_xy(2,n_msh_pts)
-   complex(8), target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
-   complex(8), target :: v_eigs_nu(n_modes)
-   complex(8) mode_pol(4,n_modes)
-
-   integer(8) supplied_geo_flag, symmetry_flag
+   integer(8) neq
 
 
 
@@ -94,9 +108,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    integer(8) ip_work, ip_work_sort, ip_work_sort2
    integer(8) nonz, nonz_max, max_row_len
 
-   integer(8) n_typ_el
-   complex(8) c_tensor(6,6,n_typ_el)
-   complex(8) rho(n_typ_el)
+
 
    integer(8) i, j, ip
    integer(8) ui,  namelength
@@ -121,12 +133,11 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    character*(10) start_time, end_time
 
    !  Variable used by valpr
-   integer(8)  nvect, itermax
-   double precision tol
+   integer(8)  nvect
 
    !  Names and Controls
 
-   character(len=FNAME_LENGTH)  mesh_file, gmsh_file, log_file, gmsh_file_pos
+   character(len=FNAME_LENGTH)  gmsh_file, log_file, gmsh_file_pos
 
 
    integer :: is_em
@@ -147,7 +158,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !f2py depend(c_tensor) n_typ_el
    !f2py depend(rho) n_typ_el
    !f2py depend(type_nod) n_msh_pts
-   !f2py depend(table_nod) nodes_per_el, n_msh_el
+   !f2py depend(table_nod) d_nodes_per_el, n_msh_el
    !f2py depend(type_el) n_msh_el
    !f2py depend(mesh_xy) n_msh_pts
 
@@ -164,7 +175,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    !       !ui = Unite dImpression
    ui = 6
-   !      nodes_per_el = 6 ! Number of nodes per element
+   !      d_nodes_per_el = 6 ! Number of nodes per element
 
 
    !       nvect = 2*n_modes + n_modes/2 +3
@@ -175,8 +186,6 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    errco= 0
    emsg = ""
-   debug=1
-
 
    call array_size(n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
       n_ddl, errco, emsg)
@@ -232,14 +241,17 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    ip_eq = ip_visite + n_msh_pts
    jp_x = 1
    !
+
+   write(*,*) 'dnodesperel 1', d_nodes_per_el
    if (supplied_geo_flag .eq. 0) then
-      call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y,  &
+      call geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, dim_x, dim_y,  &
          mesh_file, mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       if (errco .ne. 0) then
          return
       endif
    endif
 
+   write(*,*) 'dnodesperel 2', d_nodes_per_el
    call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
 
    !       if (debug .eq. 1) then
@@ -252,14 +264,14 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !         write(64,*)
    !         write(64,*)
    !         do i=1,n_msh_el
-   !           do j=1,nodes_per_el
+   !           do j=1,d_nodes_per_el
    !             write(64,*) i, j, table_nod(j,i)
    !           enddo
    !         enddo
    !         write(64,*)
    !         write(64,*)
    !         write(64,*)
-   !         do j=1,nodes_per_el
+   !         do j=1,d_nodes_per_el
    !           write(64,*) j, type_nod(j)
    !         enddo
    !       close(63)
@@ -281,7 +293,8 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !     Sparse matrix storage
    ip_col_ptr = ip_eq + 3*n_msh_pts
 
-   call csr_max_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
+
+   call csr_max_length_AC (n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
       table_nod, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 
    ip = ip_col_ptr + neq + 1
@@ -296,7 +309,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    ip_row = ip_col_ptr + neq + 1
 
-   call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
+   call csr_length_AC (n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
       table_nod, a_iwork(ip_eq), a_iwork(ip_row), a_iwork(ip_col_ptr), nonz_max, &
       nonz, max_row_len, ip, int_max, debug)
 
@@ -333,7 +346,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    jp_vect2 = jp_vect1 + neq
    jp_workd = jp_vect2 + neq
    jp_resid = jp_workd + 3*neq
-   jp_eigenum_modes_tmp = jp_resid+3*nodes_per_el*n_modes*n_msh_el
+   jp_eigenum_modes_tmp = jp_resid+3*d_nodes_per_el*n_modes*n_msh_el
    !       ! Eigenvectors
    jp_vschur = jp_eigenum_modes_tmp + n_modes + 1
    jp_eigen_pol = jp_vschur + neq*nvect
@@ -414,7 +427,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    call get_clocks(stime1, time1)
 
-   call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, nodes_per_el, &
+   call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
       shift_omsq, q_ac, n_typ_el, rho, c_tensor, &
       table_nod, type_el, a_iwork(ip_eq), &
       mesh_xy, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
@@ -480,7 +493,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       write(ui,*) "py_calc_modes_AC: call to array_sol"
    endif
    call array_sol_AC (n_modes, n_msh_el, n_msh_pts, neq, &
-      nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), mesh_xy, &
+      d_nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), mesh_xy, &
       v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), mode_pol, b_zwork(jp_vp), sol1)
 
    if (debug .eq. 1) then
@@ -502,7 +515,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !C    Save Original solution
    !      if (plot_modes .eq. 1) then
    !        dir_name = "AC_fields"
-   !C        call write_sol_AC (n_modes, n_msh_el, nodes_per_el, lambda,
+   !C        call write_sol_AC (n_modes, n_msh_el, d_nodes_per_el, lambda,
    !C      *       v_eigs_nu, sol1, mesh_file, dir_name)
    !C        call write_param (lambda, n_msh_pts, n_msh_el, i_bnd_cdns,
    !C    *       n_modes, nvect, itermax, tol, shift_omsq, lx, ly,
@@ -511,7 +524,7 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !        open (unit=34,file=tchar)
    !          do i=1,n_modes
    !            call gmsh_post_process_AC (i, n_modes, n_msh_el,
-   !     *         n_msh_pts, nodes_per_el, table_nod, type_el,
+   !     *         n_msh_pts, d_nodes_per_el, table_nod, type_el,
    !     *         mesh_xy, v_eigs_nu, sol1, b_zwork(jp_rhs), a_iwork(ip_visite),
    !     *         gmsh_file_pos, dir_name, dimscale_in_m, debug)
    !          enddo
@@ -540,8 +553,8 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       write(26,*) "q_ac = ", q_ac
       write(26,*) "shift_omsq= ", shift_omsq
       write(26,*)
-      write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, &
-         n_msh_el, nodes_per_el
+      write(26,*) "n_msh_pts, n_msh_el, d_nodes_per_el  = ", n_msh_pts, &
+         n_msh_el, d_nodes_per_el
       write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
       write(26,*) " lat_vecs:  = "
       write(26,"(2(f18.10))") lat_vecs
@@ -561,5 +574,6 @@ subroutine calc_AC_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    deallocate(a_iwork, b_zwork, c_dwork, iindex)
 
-end subroutine calc_AC_modes
+end subroutine calc_ac_modes_impl
 
+   end module calc_ac_impl 

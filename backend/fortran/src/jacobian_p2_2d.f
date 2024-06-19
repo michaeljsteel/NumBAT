@@ -26,8 +26,8 @@ c
       double precision phi, grad_phi
 c
 c     32-but integers for BLAS and LAPACK
-      integer*4 INFO_32, LDB_32, LDT_32
-      integer*4 IPIV_32(2), NRHS_32, N_32
+      integer(4) INFO_32, LDB_32, LDT_32
+      integer(4) IPIV_32(2), NRHS_32, N_32
 
 c
       do i=1,2

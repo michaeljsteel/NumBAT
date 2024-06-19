@@ -122,9 +122,9 @@ class FemMesh:
         self.v_el_2_mat_idx = type_el
         self.table_nod = table_nod
         self.mesh_xy = mesh_xy
-        print("AC after sim mesh properties:")
-        print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
-        print("  elt2nodes index map", self.table_nod)
+        #print("AC after sim mesh properties:")
+        #print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
+        #print("  elt2nodes index map", self.table_nod)
 
     def ac_build_from_em(self, structure, em_fem):
 
@@ -777,7 +777,7 @@ class Simulation:
         self.debug = debug
 
         # just off normal incidence to avoid degeneracies
-        self.k_perp = np.array([1e-16, 1e-16])
+        self.k_perp = np.array([1e-12, 1e-12])
 
         self.sim_type = None
 
@@ -896,7 +896,9 @@ class EMSimulation(Simulation):
 
         fm = self.fem_mesh
         opt_props = tstruc.optical_props
+        print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
 
+        print('going in with bc', bnd_cdn_i)
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
@@ -910,12 +912,14 @@ class EMSimulation(Simulation):
             fm.mesh_mail_fname,
             fm.n_msh_pts,
             fm.n_msh_el,
-            opt_props.n_mats_em,
+            #opt_props.n_mats_em,   # out to work nicely with gcc + intel f2py
             opt_props.v_refindexn,
-        )  # v_refindex should really be in an em_props
+        )  
 
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)
+
+        print('out of calc_em')
 
         # TODO: compare these outputs (node_physindex, type_el, mesh_xy, table_nod), to the ones generated in Mail file.
 
@@ -933,8 +937,8 @@ class EMSimulation(Simulation):
         # TODO: ls_material is just refractive index of each element (13 reps for some reason)
         #       clean up and give to FemMesh
 
-        print("modepol", self.mode_pol)
-        print("ls material: n", self.ls_material, self.ls_material.shape)
+        #print("modepol", self.mode_pol)
+        #print("ls material: n", self.ls_material, self.ls_material.shape)
 
         self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, table_nod, mesh_xy)
 
@@ -1126,19 +1130,18 @@ class ACSimulation(Simulation):
             AC_FEM_debug,
             show_mem_est,
             tstruc.symmetry_flag,
-            elastic_props.n_mats_ac,  # waveguide and material props
+            #elastic_props.n_mats_ac,  # => fort: n_typ_el
             elastic_props.c_IJ,
             elastic_props.rho,
             fm.ac_mesh_from_em,
             fm.mesh_mail_fname,
-            fm.n_msh_pts,
-            fm.n_msh_el,  # mesh properties in
-            fm.node_physindex,
-            fm.table_nod,
-            fm.v_el_2_mat_idx,
-            fm.mesh_xy,  # these ones also come back as outputs
+            #fm.n_msh_pts,
+            #fm.n_msh_el,  
+            fm.node_physindex,  # => fort: type_nod
+            fm.table_nod,       # => fort: table_nod
+            fm.v_el_2_mat_idx,  # => fort: type_el
+            fm.mesh_xy,         # => fort: mesh_xy
         )
-        print('done AC cal', resm[-2], resm[-1])
 
         (
             table_nod_out,
@@ -1149,7 +1152,6 @@ class ACSimulation(Simulation):
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
-        print('done AC cal 2')
         self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, mesh_xy_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
@@ -1166,9 +1168,7 @@ class ACSimulation(Simulation):
             elastic_props.p_ijkl,
             elastic_props.eta_ijkl,
         )
-        print('done AC cal 4')
 
-        print("ac ls material: n", self.ls_material, self.ls_material.shape)
         # TODO: ls_material is isotropic parts of all elastic properties (repeated 6 times) by mesh elt: [10 x 6 xn_msh_el]
         # rho, c11, c12, c44, p11, p12, p44, eta11, eta12, eta44
         # doesn't seem very useful. May as well turn off.
