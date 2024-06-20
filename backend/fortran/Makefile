@@ -334,11 +334,16 @@ $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRA
 
 
 clean:
-	-rm -f $(SS_WRAP)/*.o
+	-rm -f $(SSWRAP_DIR)/*.o
 	-rm -f build/*.o build/*.f build/*.c build/*.f90
 	-rm ./*.mod src/*.mod build/*.mod
 	-rm mods/*.mod mods/*genmod.mod mods/*genmod.f90
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
+
+# keeps the .mod's, loses the .o's and .so's
+halfclean:
+	- rm build/*.o $(SSWRAP_DIR)/*.o
+	- rm ./*.so
 
 
 check:

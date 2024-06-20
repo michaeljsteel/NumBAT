@@ -1,0 +1,8 @@
+Sync and build with gcc
+
+Use gcc to divide calc_modes_em into chunks
+   - geometry build
+   - frequency wave vector epsilon parameters and checks
+   - main loop and turn off n_k = 1 iteration
+   - orthogonalising  (twice?!)
+   - debug reporting

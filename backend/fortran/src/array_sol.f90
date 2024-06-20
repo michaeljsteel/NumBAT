@@ -13,7 +13,7 @@
 subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
    n_ddl, neq, nnodes, n_core, bloch_vec, iindex, table_nod, &
    table_N_E_F, type_el, ineq,      ip_period_N, ip_period_N_E_F, &
-   mesh_xy, x_N_E_F, v_eigs_beta, mode_pol, sol_0, sol)
+   mesh_xy, x_N_E_F, v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
 
@@ -35,6 +35,8 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
    complex(8) v_eigs_beta(num_modes)
    complex(8) mode_pol(4,num_modes)
 
+   integer, intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
 !     Local variables
 !      integer(8) nnodes_0, nddl_0, nddl_t
