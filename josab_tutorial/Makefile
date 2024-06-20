@@ -14,10 +14,10 @@ fjosab01:
 	$(PYTHON) sim-josab-01.py fast=1
 
 josab02: 
-	$(PYTHON)  sim-josab-02.py 
+	$(PYTHON) sim-josab-02.py 
 	$(PYTHON) sim-josab-02b-acdisp.py
 fjosab02: 
-	$(PYTHON)  sim-josab-02.py fast=1
+	$(PYTHON) sim-josab-02.py fast=1
 	$(PYTHON) sim-josab-02b-acdisp.py fast=1
 
 josab03: 

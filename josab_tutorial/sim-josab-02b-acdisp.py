@@ -72,26 +72,32 @@ nu_ks = 50
 plt.clf()
 plt.figure(figsize=(10,6))
 ax = plt.subplot(1,1,1)
+symmetries_working = False
 for i_ac, q_ac in enumerate(np.linspace(0.0,q_AC,nu_ks)):
+    print("Wavevector loop", i_ac+1, "/", nu_ks)
+
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_ac, EM_sim=sim_EM_pump)
     prop_AC_modes = np.array([np.real(x) for x in sim_AC.eigs_nu if abs(np.real(x)) > abs(np.imag(x))])
-    sym_list = integration.symmetries(sim_AC)   # FIXME Symmetries
 
-    for i in range(len(prop_AC_modes)):
-        Om = prop_AC_modes[i]*1e-9
-        if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:
-            sym_A, = plt.plot(np.real(q_ac/q_AC), Om, 'or')
-        if sym_list[i][0] == -1 and sym_list[i][1] == 1 and sym_list[i][2] == -1:
-            sym_B1, = plt.plot(np.real(q_ac/q_AC), Om, 'vc')
-        if sym_list[i][0] == 1 and sym_list[i][1] == -1 and sym_list[i][2] == -1:
-            sym_B2, = plt.plot(np.real(q_ac/q_AC), Om, 'sb')
-        if sym_list[i][0] == -1 and sym_list[i][1] == -1 and sym_list[i][2] == 1:
-            sym_B3, = plt.plot(np.real(q_ac/q_AC), Om, '^g')
+    if symmetries_working:
+        sym_list = integration.symmetries(sim_AC)   # FIXME Symmetries
+        for i in range(len(prop_AC_modes)):
+            Om = prop_AC_modes[i]*1e-9
+            if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:
+                sym_A, = plt.plot(np.real(q_ac/q_AC), Om, 'or')
+            if sym_list[i][0] == -1 and sym_list[i][1] == 1 and sym_list[i][2] == -1:
+                sym_B1, = plt.plot(np.real(q_ac/q_AC), Om, 'vc')
+            if sym_list[i][0] == 1 and sym_list[i][1] == -1 and sym_list[i][2] == -1:
+                sym_B2, = plt.plot(np.real(q_ac/q_AC), Om, 'sb')
+            if sym_list[i][0] == -1 and sym_list[i][1] == -1 and sym_list[i][2] == 1:
+                sym_B3, = plt.plot(np.real(q_ac/q_AC), Om, '^g')
 
-    print("Wavevector loop", i_ac+1, "/", nu_ks)
+
 ax.set_ylim(0,15)
 ax.set_xlim(0,1)
-plt.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc='lower right')
+
+if symmetries_working:
+    plt.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc='lower right')
 
 plt.xlabel(r'Axial wavevector (normalised)')
 plt.ylabel(r'Frequency (GHz)')

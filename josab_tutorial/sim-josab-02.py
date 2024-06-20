@@ -136,7 +136,7 @@ print("SBS_gain [1/(Wm)] total \n", masked)
 maxGainloc=np.argmax(abs(masked.data))
 
 print("Plotting acoustic mode corresponding to maximum")
-sim_AC.plot_modes(ivals=[maxGainloc],
+sim_AC.plot_modes(ivals=[maxGainloc,6],
                          num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
@@ -155,6 +155,7 @@ print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc]/1e6)
 
 #since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
+
 absQtot = pow(absQtot2,1/2)
 print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
 
