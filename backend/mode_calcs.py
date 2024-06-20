@@ -111,12 +111,10 @@ class FemMesh:
         self.mesh_xy = mesh_xy
         self.node_physindex = node_physindex
 
-        print("EM mesh properties:")
-        print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
-        print("  elt2nodes index map", self.table_nod, self.table_nod.shape)
-        print(
-            "  node_physindex index map", self.node_physindex, self.node_physindex.shape
-        )
+        #print("EM mesh properties:")
+        #print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
+        #print("  elt2nodes index map", self.table_nod, self.table_nod.shape)
+        #print( #    "  node_physindex index map", self.node_physindex, self.node_physindex.shape)
 
     def store_ac_mode_outputs(self, type_el, table_nod, mesh_xy):
         self.v_el_2_mat_idx = type_el
@@ -253,11 +251,11 @@ class FemMesh:
                 f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.'
             )
 
-        print("AC mesh properties:")
-        print("  type_el", self.v_el_2_mat_idx)
-        print("  typ_el_AC", el_props.typ_el_AC)
-        print("  el_convert_tbl", self.el_convert_tbl)
-        print("  elt2nodes index map", self.table_nod)
+        #print("AC mesh properties:")
+        #print("  type_el", self.v_el_2_mat_idx)
+        #print("  typ_el_AC", el_props.typ_el_AC)
+        #print("  el_convert_tbl", self.el_convert_tbl)
+        #print("  elt2nodes index map", self.table_nod)
 
 
 class SimResult:
@@ -897,14 +895,15 @@ class EMSimulation(Simulation):
         fm = self.fem_mesh
         opt_props = tstruc.optical_props
         print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
+        print(f'bloch:', self.k_perp)
+        print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
 
-        print('going in with bc', bnd_cdn_i)
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
             self.d_in_m,
             self.k_perp,
-            shift_ksqr,
+            shift_ksqr,     # passing single complex numbers with intel is fraught
             self.E_H_field,
             bnd_cdn_i,
             itermax,
@@ -919,7 +918,7 @@ class EMSimulation(Simulation):
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)
 
-        print('out of calc_em')
+        print('back from fortran.calc_em_modes... ')
 
         # TODO: compare these outputs (node_physindex, type_el, mesh_xy, table_nod), to the ones generated in Mail file.
 
@@ -1157,7 +1156,6 @@ class ACSimulation(Simulation):
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME
 
-        print('done AC cal 3')
         # Retrieve the material properties of each mesh point.
         self.ls_material = nb_fortran.array_material_ac(
             fm.n_msh_el,

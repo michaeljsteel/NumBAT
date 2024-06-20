@@ -164,7 +164,6 @@ class ElasticProps:
             self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
 
         #TODO: are these two in any way different?
-        print('building elastic lists', el_conv_table,  self.typ_el_AC)
 
     def is_elastic_material_index(self, idx):
         return idx in self.typ_el_AC

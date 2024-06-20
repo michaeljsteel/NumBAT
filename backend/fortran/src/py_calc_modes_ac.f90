@@ -242,7 +242,6 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    jp_x = 1
    !
 
-   write(*,*) 'dnodesperel 1', d_nodes_per_el
    if (supplied_geo_flag .eq. 0) then
       call geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, dim_x, dim_y,  &
          mesh_file, mesh_xy, type_nod, type_el, table_nod, errco, emsg)
@@ -251,7 +250,6 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       endif
    endif
 
-   write(*,*) 'dnodesperel 2', d_nodes_per_el
    call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
 
    !       if (debug .eq. 1) then

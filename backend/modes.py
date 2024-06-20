@@ -7,7 +7,7 @@ import matplotlib.tri
 
 import numbat
 from nbtypes import FieldType, component_t, SI_um, vacuum_impedance_Z0
-from numbattools import int2d, np_min_max
+from numbattools import int2d, int2d_trapz, np_min_max
 from plottools import save_and_close_figure
 import plotmodes
 import reporting
@@ -546,25 +546,30 @@ class Mode:
         mh = self.get_mode_helper()
 
         # Tranposed indexing to get image style ordering
+        # These are 'output' domains so in microns
         m_x = mh.xy_out['m_x'].T
         m_y = mh.xy_out['m_y'].T
 
-        mFs = self.d_fields
+        dx = m_x[1,0]-m_x[0,0]
+        dy = m_y[1,1]-m_y[1,0]
 
-        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2
+        mFs = self.d_fields  # the incoming fields, not necessarily normalised in any way
+
+        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2    # unit = [|F|^2], mag. \approx 1
         m_Fy2 = mFs['Fyr']**2 + mFs['Fyi']**2
         m_Fz2 = mFs['Fzr']**2 + mFs['Fzi']**2
-        m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2
+        m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2          # unit = [|F|^2]
 
-        s_fx = int2d(m_Fx2)
-        s_fy = int2d(m_Fy2)
-        s_fz = int2d(m_Fz2)
-
+        s_fx = int2d_trapz(m_Fx2, dx=dx, dy=dy)        # unit = [|F|^2] um^2, mag. \approx 1
+        s_fy = int2d_trapz(m_Fy2, dx=dx, dy=dy)
+        s_fz = int2d_trapz(m_Fz2, dx=dx, dy=dy)
         s_f = s_fx+s_fy+s_fz
-        f_x = s_fx/s_f
+
+        f_x = s_fx/s_f                           # dimensionless
         f_y = s_fy/s_f
-        f_t = f_x+f_y
         f_z = s_fz/s_f
+        f_t = f_x+f_y
+
         self.fracs = [f_x, f_y, f_t, f_z]
 
 
@@ -573,15 +578,28 @@ class Mode:
         m_xmod = m_x * m_Fall2  # could do this by broadcasting without meshgrid?
         m_ymod = m_yud * m_Fall2
 
-        x0 = int2d(m_xmod)/s_f
-        y0 = int2d(m_ymod)/s_f
-        m_x2mod = np.power((m_x-x0), 2) * m_Fall2
+        x0 = int2d_trapz(m_xmod, dx, dy)/s_f          # unit = um
+        y0 = int2d_trapz(m_ymod, dx, dy)/s_f
+
+        # This just makes the outdata look cleaner on plots, by avoiding a -0.000
+        if abs(x0)<1e-6: x0 = 0.0
+        if abs(y0)<1e-6: y0 = 0.0
+
+
+        m_x2mod = np.power((m_x-x0), 2) * m_Fall2          # unit = um^2 [|F|^2]
         m_y2mod = np.power((m_yud-y0), 2) * m_Fall2
-        w2x = sqrt(int2d(m_x2mod)/s_f)
-        w2y = sqrt(int2d(m_y2mod)/s_f)
+        w2x = sqrt(int2d_trapz(m_x2mod, dx, dy)/s_f)
+        w2y = sqrt(int2d_trapz(m_y2mod, dx, dy)/s_f)
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
         self.w2 = np.array([w2x, w2y, w2])
+
+        print('\nMode number: ', self.mode_num)
+        print('  x0s:   ', dx, dy, m_x[0,0], m_x[-1,-1])
+        print('  maxs   ',np.max(np.abs(m_Fx2)),np.max(np.abs(m_Fy2)),np.max(np.abs(m_Fz2))) 
+        print('  sfs    ', s_fx, s_fy, s_fz)
+        print('  fracs: ', self.fracs)
+        print('  r0s:   ', self.r0, self.w2)
 
 
 class ModeEM(Mode):
