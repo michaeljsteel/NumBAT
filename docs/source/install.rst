@@ -15,6 +15,7 @@ Information for all platforms
 ================================
 While |NUMBAT| is developed on Linux, it can also be built on MacOS X as a
 native command-line application, and under Windows using a virtual machine running Linux.
+A native Windows build is currently in development. 
 
 In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/|NUMBAT|>`_. Please always download the latest release from the github page.
 

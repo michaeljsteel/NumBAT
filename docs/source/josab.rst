@@ -27,17 +27,17 @@ Figure 15 in the paper shows the fundamental optical field of a silica 1 micron 
 The corresponding results generated with ``sim-josab-01.py`` are as follows:
 
 
-.. figure:: ../../josab_tutorial/josab_01-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_01-fields/EM_E_field_01.png
    :width: 15cm
 
    Fundamental optical mode fields.
 
-.. figure:: ../../josab_tutorial/josab_01-fields/AC_field_28.png
+.. figure:: ./images/josab_tutorial/josab_01-fields/AC_field_28.png
    :width: 15cm
 
    Elastic mode with largest SBS gain.
 
-.. figure:: ../../josab_tutorial/josab_01-gain_spectra.png
+.. figure:: ./images/josab_tutorial/josab_01-gain_spectra.png
    :width: 15cm
 
    Gain spectrum for the silica waveguide.
@@ -56,27 +56,31 @@ rectangular :math:`450x200` nm silicon waveguide.
 The corresponding results generated with ``sim-josab-02.py`` are as follows:
 
 
-.. figure:: ../../josab_tutorial/josab_02a-gain_spectra.png
-.. .. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
+.. figure:: ./images/josab_tutorial/josab_02a-gain_spectra.png
+.. .. figure:: ./images/josab_tutorial/josab_02b-disp-qnu.png
    :width: 15cm
 
 
 The fields and gain parameters are as follows:
 
-.. figure:: ../../josab_tutorial/josab_02a-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_02a-fields/EM_E_field_00.png
    :width: 15cm
 
    Fundamental optical mode fields.
 
-.. figure:: ../../josab_tutorial/josab_02a-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_field_02.png
+
+   Fundamental elastic mode fields for mode 2.
+
+.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_field_06.png
    :width: 15cm
 
-   Fundamental elastic mode fields.
+   Fundamental elastic mode fields for mode 6.
 
 We can reproduce Fig. 13 showing the elastic dispersion of this waveguide
 silicon waveguide using ``sim-josab-02b-acdisp.py``.
 
-.. figure:: ../../josab_tutorial/josab_02b-disp-qnu.png
+.. figure:: ./images/josab_tutorial/josab_02b-disp-qnu.png
    :width: 15cm
 
    Acoustic dispersion diagram with modes categorised by symmetry as in Table 1 of "Formal selection rules for Brillouin scattering in integrated waveguides and structured fibers" by C. Wolff, M. J. Steel, and C. G. Poulton ``https://doi.org/10.1364/OE.22.032489``
@@ -97,23 +101,23 @@ These results can be generated with ``sim-josab-03.py`` and ``sim-josab-04.py``.
 
 Let's see the results for the silica cylinder first:
 
-.. figure:: ../../josab_tutorial/josab_03-gain_spectra.png
+.. figure:: ./images/josab_tutorial/josab_03-gain_spectra.png
    :width: 15cm
 
    Gain spectrum for forward SBS of the silica cylinder.
 
-.. figure:: ../../josab_tutorial/josab_03-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/EM_E_field_01.png
    :width: 15cm
 
    Fundamental optical mode field.
 
 
-.. figure:: ../../josab_tutorial/josab_03-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/AC_field_06.png
    :width: 15cm
 
    Elastic mode of maximum gain.
 
-.. figure:: ../../josab_tutorial/josab_03-fields/AC_field_12.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/AC_field_12.png
    :width: 15cm
 
    Elastic mode of second highest gain.
@@ -131,17 +135,17 @@ Example 4 -- Forward Brillouin scattering in a rectangular silicon waveguide
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The corresponding results for the silicon waveguide can be generated with ``sim-josab-04.py``:
 
-.. figure:: ../../josab_tutorial/josab_04-gain_spectra.png
+.. figure:: ./images/josab_tutorial/josab_04-gain_spectra.png
    :width: 15cm
 
    Gain spectrum for forward SBS of the silicon waveguide.
 
-.. figure:: ../../josab_tutorial/josab_04-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_04-fields/EM_E_field_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ../../josab_tutorial/josab_04-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_04-fields/AC_field_06.png
    :width: 15cm
 
    Elastic mode of maximum gain.
@@ -159,23 +163,23 @@ Example 5 -- Intermodal Forward Brillouin scattering in a circular silica wavegu
 For the problem of intermodal FBS, the paper considers coupling between the two lowest optical modes. The elastic mode of highest gain is actually a degenerate pair:
 
 
-.. figure:: ../../josab_tutorial/josab_05-gain_spectra.png
+.. figure:: ./images/josab_tutorial/josab_05-gain_spectra.png
    :width: 15cm
 
    Gain spectrum for intermodal forward SBS of the silica waveguide.
 
-.. figure:: ../../josab_tutorial/josab_05-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_field_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ../../josab_tutorial/josab_05-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_field_01.png
    :width: 15cm
 
    Second order optical mode field.
 
 
-.. figure:: ../../josab_tutorial/josab_05-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/AC_field_06.png
    :width: 15cm
 
    Elastic mode field of maximum gain.
@@ -193,23 +197,23 @@ Example 6 -- Intermodal Forward Brillouin scattering in a rectangular silicon wa
 Finally, the silicon waveguide generates extraordinarily high gain when operated
 in an intermodal configuration:
 
-.. figure:: ../../josab_tutorial/josab_06-gain_spectra.png
+.. figure:: ./images/josab_tutorial/josab_06-gain_spectra.png
    :width: 15cm
 
    Gain spectrum for intermodal forward SBS of the silicon waveguide.
 
 
-.. figure:: ../../josab_tutorial/josab_06-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_field_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ../../josab_tutorial/josab_06-fields/EM_E_field_02.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_field_02.png
    :width: 15cm
 
    Second order optical mode field.
 
-.. figure:: ../../josab_tutorial/josab_06-fields/AC_field_02.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/AC_field_02.png
    :width: 15cm
 
    Elastic mode field of maximum gain.
