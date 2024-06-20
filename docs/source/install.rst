@@ -58,10 +58,42 @@ Blas libraries. We strongly recommend using an optimised library such as the
 Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
 (AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
 
+Required libraries
+--------------------------
+
 #. Before installing, ensure your system is up to date ::
 
     $ sudo apt-get update
     $ sudo apt-get upgrade
+
+#. Install the required libraries using your distribution's package manager.
+
+   On Ubuntu, perform the following::
+
+    $ sudo apt-get install gcc gfortran make gmsh 
+    $ sudo apt-get install libatlas-base-dev libblas-dev liblapack-dev 
+    $ sudo apt-get install suitesparse umfpack libsuitesparse-dev arpack-ng
+
+#. If you using the Intel OneAPI math libraries, you need both of the following:
+
+    - *Intel OneAPI Base Toolkit*:
+        This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
+
+        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
+
+
+    - *Intel OneAPI HPC Toolkit*
+        This adds the Intel Fortran compiler amongst other HPC tools.
+
+        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
+
+
+#. If you using the Intel OneAPI math libraries, you should add the library path
+   ``/opt/intel/oneapi/2024.1/lib`` to your ``LD_LIBRARY_PATH`` variable in one of your shell startup files (eg. ``~/.bashrc``). 
+
+
+Building |NUMBAT| itself
+--------------------------
 
 #. Create a python virtual environment for working with |NUMBAT|.
    You can use any name and location for your tree.
@@ -73,11 +105,14 @@ Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
 
 #. Activate the new python virtual environment ::
 
-    $ source ~/nbpy3/bin/activate
+      $ source ~/nbpy3/bin/activate
 
 #. Install necessary python libraries ::
 
-    $ pip3 install numpy matplotlib scipy psutils
+      $ pip3 install numpy matplotlib scipy psutils sphinx
+
+
+   Ensure that your ``numpy`` version  is from the 1.26.x and not the new 2.0.0 line.
 
 #. Create a working directory for your |NUMBAT| work and move into it.
 
