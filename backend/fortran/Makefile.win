@@ -8,7 +8,7 @@ MKDIR=mkdir
 F_COMP_EXE = ifx
 C_COMP_EXE = icx
 
-NumBAT_MOD=NumBAT
+NumBAT_MOD=nb_fortran
 all: $(NumBAT_MOD).dll
 
 # Location of System Python (virtual envs don't contain Python.h, so we grab it from here)
@@ -90,11 +90,11 @@ PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
 	em_mode_energy_int_v2_ez.f em_mode_energy_int_ez.f em_mode_e_energy_int.f \
 	h_mode_field_ez.f \
 	ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
-	ac_mode_elastic_energy_int.	f ac_mode_elastic_energy_int_v4.f \
+	ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f \
 	ac_alpha_int.f ac_alpha_int_v2.f  \
-	array_size.f array_material_ac.f \
+	array_size.f90 array_material_ac.f \
 	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f \
-	py_calc_modes.f90 py_calc_modes_ac.f90
+	py_entry_cm.f90
 
 
 PYINTERFACE_SRCS = $(addprefix src\,$(PYINTERFACE_SRCS_IN))
@@ -178,7 +178,7 @@ $(NumBAT_MOD).pyf: $(SRCS)
 	-$(RM) $(F2PY_SRCS)
 	-$(MKDIR) build mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"..\src\myhead.h\"
+	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"../src/myhead.h\"
 
 $(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
 	$(C_COMP_EXE) /nologo /Wall  /LD -o $(NumBAT_MOD).dll  \
