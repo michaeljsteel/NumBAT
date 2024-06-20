@@ -585,8 +585,9 @@ contains
          ! This is the main solver.
          call valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
             c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
-            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
-            c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, ls_data, numeric, control, info_umf, debug, errco, emsg)
+            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), &
+            c_dwork(kp_rhs_im),  c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, ls_data, numeric, control, info_umf, &
+            debug, errco, emsg)
          RETONERROR(errco)
 
          call get_clocks( systime2, time2)

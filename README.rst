@@ -5,8 +5,17 @@ NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and ac
 
 NumBAT was developed by Bjorn Sturmberg, Kokou Dossou, Chris Poulton and Michael Steel in a collaboration between Macquarie University and the University of Technology Sydney, as part of the Australian Research Council Discovery Project DP160101691.
 
+Example results
+-----------------
 
-Download 
+.. figure:: ./docs/source/images/tutorial/tut_06-gain_spectra.png
+   :width: 5cm
+
+.. figure:: ./docs/source/images/tutorial/tut_06-fields/AC_field_08.png
+   :width: 5cm
+
+
+Download
 ---------
 
 The current release of NumBAT can be found at https://github.com/michaeljsteel/NumBAT.
