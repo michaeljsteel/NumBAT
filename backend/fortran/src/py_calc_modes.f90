@@ -10,8 +10,8 @@
 !  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
 !  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
 !  bnd_cnd_i - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
-!  v_eigs_beta  - array of eigenvalues kz
-!  sol1   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
+!  v_eigs_beta_adj  - array of eigenvalues kz
+!  sol_adj   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
 !  mode_pol  - unknown - never used in python
 !  table_nod - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
 !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
@@ -29,7 +29,7 @@ contains
 
    ! subroutine baby_calc_em_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
    !    E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, &
-   !    n_msh_el, n_typ_el, v_refindex_n, v_eigs_beta, sol1, &
+   !    n_msh_el, n_typ_el, v_refindex_n, v_eigs_beta_adj, sol_adj, &
    !    mode_pol, table_nod, type_el, type_nod, errco, emsg  )
 
    !    integer(8), intent(in) :: n_modes
@@ -42,8 +42,8 @@ contains
 
    !    complex(8), intent(in) ::  v_refindex_n(n_typ_el)
 
-   !    complex(8), intent(out) :: v_eigs_beta(n_modes)
-   !    complex(8), intent(out) :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
+   !    complex(8), intent(out) :: v_eigs_beta_adj(n_modes)
+   !    complex(8), intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
    !    complex(8), intent(out) :: mode_pol(4,n_modes)
    !    integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
@@ -70,13 +70,13 @@ contains
 
 
    !    write(*,*)   'Writing to outputs'
-   !    sol1(1,1,1,1) = 1.0
+   !    sol_adj(1,1,1,1) = 1.0
    !    mode_pol(1,1) = 1.0
    !    table_nod(1,1) = 1
    !    type_el(1) = 1
    !    type_nod(1) = 1
-   !    v_eigs_beta(1) = 2.5
-   !    v_eigs_beta(2) = 2.5
+   !    v_eigs_beta_adj(1) = 2.5
+   !    v_eigs_beta_adj(2) = 2.5
 
    !    write(*,*)   'Done writing to outputs a'
    !    errco = 0
@@ -90,7 +90,7 @@ contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
-      v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
+      v_eigs_beta_adj, sol_adj, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
 
       implicit none
 
@@ -105,8 +105,8 @@ contains
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
       !complex(8), intent(in) ::  v_refindex_n(:)
 
-      complex(8), target, intent(out) :: v_eigs_beta(n_modes)
-      complex(8), target, intent(out) :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
+      complex(8), target, intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
       complex(8), intent(out) :: mode_pol(4,n_modes)
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
@@ -129,8 +129,6 @@ contains
       double precision, dimension(:), allocatable :: c_dwork
       double precision, dimension(:,:), allocatable :: d_dwork
       double precision, dimension(:), allocatable :: e_dwork  ! take over work from b_zwork but have same shape
-
-
 
       integer(8), dimension(:), allocatable :: iindex
       complex(8), dimension(:,:), allocatable :: overlap_L
@@ -207,12 +205,12 @@ contains
 
 !  new breed of variables to prise out of a_iwork, b_zwork and c_dwork
 
-      complex(8), target :: sol2(3,nodes_per_el+7,n_modes,n_msh_el)
-      complex(8), pointer :: sol(:,:,:,:)
+      complex(8), target :: sol_pri(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), pointer :: p_sol (:,:,:,:)
 
 
-      complex(8), target :: beta2(n_modes)
-      complex(8), pointer :: beta(:)
+      complex(8), target :: v_eigs_beta_pri(n_modes)  ! eigs for the prime sol, v_eigs_beta_adj for the adj.
+      complex(8), pointer :: p_beta(:)
 
 
 
@@ -267,17 +265,12 @@ contains
             call check_alloc(alloc_stat, cmplx_max, "e_dwork", 101, errco, emsg)
             RETONERROR(errco)
 
-
             allocate(overlap_L(n_modes,n_modes), STAT=alloc_stat)
             call check_alloc(alloc_stat, n_modes*n_modes, "overlap_L", 101, errco, emsg)
             RETONERROR(errco)
 
-
          endif
       endif
-
-
-
 
       ui_out = stdout
 
@@ -288,12 +281,7 @@ contains
 
 !CCCCCCCCCCCCCCCC END POST F2PY CCCCCCCCCCCCCCCCCCCCC
 
-
-!  ! initial time  in unit = sec.
       call get_clocks( systime1, time1)
-!
-!####################  Start FEM PRE-PROCESSING  ########################
-!
 
       dim_x = dimscale_in_m
       dim_y = dimscale_in_m
@@ -549,19 +537,18 @@ contains
 
 
 !!!!   Main Eigensolving loop for Adjoint and Prime configurations
+      ! Remove the first iteration and only reference the prime solution
 
       do n_k = 1,2
 
-
-
          if (n_k .eq. 1) then
-            sol => sol1
-            beta => v_eigs_beta
+            p_sol  => sol_adj
+            p_beta => v_eigs_beta_adj
             bloch_vec_k = bloch_vec
             msg = "adjoint solution"
          else
-            sol => sol2
-            beta => beta2
+            p_sol  => sol_pri
+            p_beta => v_eigs_beta_pri
             bloch_vec_k = -bloch_vec
             msg = "prime solution"
          endif
@@ -572,11 +559,10 @@ contains
          write(ui_out,*) "EM FEM: "
          write(ui_out,'(A,A)') "   - assembling linear system for ", msg
 
-         call get_clocks( systime1, time1)
-         write(ui_out,*) 'Main solve loop 2'; flush(ui_out)
+         call get_clocks(systime1, time1)
 
 
-         call asmbly ( bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
+         call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
             bloch_vec_k, n_typ_el, pp, qq, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), &
             a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), mesh_xy, &
          !b_zwork(jp_x_N_E_F), &
@@ -586,58 +572,40 @@ contains
 
          call get_clocks( systime2, time2)
          write(ui_out,'(A,F6.2,A)') '  cpu time  = ', (time2-time1), ' secs.'
-         write(ui_out,'(A,F6.2,A)') '  wall time = ', ( systime2- systime1), ' secs.'
+         write(ui_out,'(A,F6.2,A)') '  wall time = ', (systime2- systime1), ' secs.'
 
-         write(*,*) 'Main solve loop 2'
 
          !  factorization of the globale matrice
          !  -----------------------------------
-         !
-         if (debug .eq. 1) then
-            write(ui_out,*) "py_calc_modes.f: Adjoint(1) / Prime(2)", n_k
-            !  write(ui_out,*) "py_calc_modes.f: factorisation: call to znsy"
-         endif
-         !
-         !  if (debug .eq. 1) then
-         !  write(ui_out,*) "py_calc_modes.f: call to valpr"
-         !  endif
+
          write(ui_out,*) "  - solving linear system"
 
          call get_clocks( systime1, time1)
 
-
-
+         ! This is the main solver.
          call valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
             c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
-            b_zwork(jp_resid), b_zwork(jp_vschur), beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
+            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
             c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, ls_data, numeric, control, info_umf, debug, errco, emsg)
          RETONERROR(errco)
 
          call get_clocks( systime2, time2)
+         time_fact = ls_data(2) - ls_data(1)
+         time_arpack = ls_data(4) - ls_data(3)
+
          write(ui_out,'(A,F6.2,A)') '  cpu time  = ', (time2-time1), ' secs.'
          write(ui_out,'(A,F6.2,A)') '  wall time = ', ( systime2- systime1), ' secs.'
-         !
-         if (errco .ne. 0) then
-            return
-         endif
-
 
          if (n_conv .ne. n_modes) then
-            write(ui_out,*) "py_calc_modes.f: convergence problem in valpr_64"
-            !  write(ui_out,*) "You should probably increase resolution of mesh!"
-            write(ui_out,*) "py_calc_modes.f: n_conv != n_modes : ", n_conv, n_modes
-            !  write(ui_out,*) "n_core(1), v_refindex_n(n_core(1)) = ",
-            !  * n_core(1), v_refindex_n(n_core(1))
-            write(ui_out,*) "py_calc_modes.f: Aborting..."
+            write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
+            n_conv, n_modes ,"You should probably increase resolution of mesh!"
             errco = -19
             return
          endif
 
-         time_fact = ls_data(2) - ls_data(1)
-         time_arpack = ls_data(4) - ls_data(3)
 
          do i=1,n_modes
-            z_tmp0 = beta(i)
+            z_tmp0 = p_beta(i)
             z_tmp = 1.0d0/z_tmp0+shift_ksqr
             z_beta = sqrt(z_tmp)
             !  Mode classification - we want the forward propagating mode
@@ -650,15 +618,13 @@ contains
             endif
             !  !  Effective iindex
             !  z_beta = sqrt(z_tmp)/vacwavenum_k0
-            beta(i) = z_beta
+            p_beta(i) = z_beta
          enddo
 
          call get_clocks( systime1_postp, time1_postp)
 
-
-
-         !  order beta by magnitudes and store in iindex
-         call z_indexx (n_modes, beta, iindex)
+         !  order p_beta by magnitudes and store in iindex
+         call z_indexx (n_modes, p_beta, iindex)
 
 
 
@@ -670,7 +636,7 @@ contains
             a_iwork(ip_period_N_E_F), mesh_xy, &
          !b_zwork(jp_x_N_E_F),
             d_dwork, &
-            beta, mode_pol, b_zwork(jp_vp), sol, errco, emsg)
+            p_beta, mode_pol, b_zwork(jp_vp), p_sol , errco, emsg)
          RETONERROR(errco)
 
 
@@ -689,14 +655,14 @@ contains
             write(ui_out,*) "sqrt(shift_ksqr) = ", sqrt(shift_ksqr)
             write(ui_out,*) "n_modess = "
             do i=1,n_modes
-               write(ui_out,"(i4,2(g22.14),2(g18.10))") i, beta(i)
+               write(ui_out,"(i4,2(g22.14),2(g18.10))") i, p_beta(i)
             enddo
          endif
 !
 !  Calculate energy in each medium (typ_el)
          if (n_k .eq. 2) then
             call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, table_nod, type_el, n_typ_el, eps_eff,&
-               mesh_xy, sol, beta, mode_pol)
+               mesh_xy, p_sol , p_beta, mode_pol)
          endif
 
 
@@ -706,10 +672,11 @@ contains
 !CCCCCCCCCCCCCCCCCCCCCCC  End Prime, Adjoint Loop  CCCCCCCCCCCCCCCCCCCCCC
 
 
+
 ! Doubtful that this check is of any value: delete?
       call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_eigs_beta, beta2, &
-         sol1, sol2, overlap_L, overlap_file, debug, ui_out, &
+         type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
+         sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, &
          pair_warning, vacwavenum_k0, errco, emsg)
       RETONERROR(errco)
 
@@ -722,9 +689,9 @@ contains
       do ival=1,n_modes
          do inod=1,nodes_per_el+7
             !do iel=1,n_msh_el
-            !  sol1(3,inod,ival,iel) = C_IM_ONE * beta(ival) * sol1(3,inod,ival,iel)
+            !  sol_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * sol_adj(3,inod,ival,iel)
             !enddo
-            sol1(3,inod,ival,:) = C_IM_ONE * beta(ival) * sol1(3,inod,ival,:)
+            sol_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * sol_adj(3,inod,ival,:)
          enddo
       enddo
 
@@ -737,7 +704,7 @@ contains
       !endif
       !call get_clocks( systime1_J, time1_J)
 
-      call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol1, sol2, overlap_L)
+      call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol_adj, sol_pri, overlap_L)
 
       !call get_clocks( systime2_J, time2_J)
       !if (debug .eq. 1) then
@@ -750,7 +717,7 @@ contains
 !          overlap_file = "Orthogonal_n.txt"
 !          call get_clocks( systime1_J, time1_J)
 !          call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-!             type_el, mesh_xy, v_eigs_beta, beta2, sol1, sol2, overlap_L, overlap_file, debug, &
+!             type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, sol_adj, sol_pri, overlap_L, overlap_file, debug, &
 !             pair_warning, vacwavenum_k0)
 !          call get_clocks( systime2_J, time2_J)
 !          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
@@ -771,7 +738,7 @@ contains
       !    lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
       !    n_typ_el, neq, nonz_max, nvect, &
-      !    shift_ksqr, v_eigs_beta, eps_eff, v_refindex_n, errco, emsg)
+      !    shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -841,14 +808,13 @@ contains
       elseif(E_H_field .eq. FEM_FORMULATION_H) then
          qq = vacwavenum_k0**2
          pp = 1.0d0/eps_eff
-
       endif
 
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_eigs_beta, beta2, &
-      sol1, sol2, overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
+      type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
+      sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
       use numbatmod
       logical pair_warning
@@ -862,17 +828,17 @@ contains
       double precision, intent(out) :: mesh_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
-      complex(8), target, intent(out) :: v_eigs_beta(n_modes)
-      complex(8), target, intent(out) :: sol1(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
+      complex(8), target, intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
-      complex(8)  :: sol2(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8)  :: sol_pri(3,nodes_per_el+7,n_modes,n_msh_el)
       complex(8), dimension(:,:) :: overlap_L
 
 
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
-      complex(8)  :: beta2(n_modes)
+      complex(8)  :: v_eigs_beta_pri(n_modes)
       character(len=FNAME_LENGTH)  overlap_file
 
 
@@ -886,8 +852,8 @@ contains
       overlap_file = "Orthogonal.txt"
 
       call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_eigs_beta, beta2, &
-         sol1, sol2, overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
+         type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
+         sol_adj, sol_pri, overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
       if (pair_warning .and. n_modes .le. 20) then
          emsg = "py_calc_modes.f: Warning found 1 BM of cmplx conj pair, increase num_BMs to include the other."
@@ -899,11 +865,11 @@ contains
 
    subroutine report_results_em(debug, ui_out, &
    n_msh_pts, n_msh_el, &
-   time1, time2, time_fact, time_arpack, time1_postp, time2_postp, &
+   time1, time2, time_fact, time_arpack, time1_postp, &
    lambda, e_h_field, bloch_vec, bdy_cdn,  &
    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
    n_typ_el, neq, nonz_max, nvect, &
-   shift_ksqr, v_eigs_beta, eps_eff, v_refindex_n, errco, emsg)
+   shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -912,23 +878,17 @@ contains
       integer(8) debug, ui_out, e_h_field, bdy_cdn
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max, real_used, n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
-      double precision time1, time2, start_time, end_time, time_fact, time_arpack
-      double precision time1_postp, time2_postp
+      double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
       integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, nvect
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
-      complex(8), target, intent(out) :: v_eigs_beta(n_modes)
+      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
       complex(8) eps_eff(n_typ_el)
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
 
-
-      integer, intent(out) :: errco
-      character(len=EMSG_LENGTH), intent(out) :: emsg
-
       complex(8) z_tmp
       integer(8) i
-
 
 
       if (debug .eq. 1) then
@@ -960,11 +920,6 @@ contains
             write(26,*) "E_H_field   = ", E_H_field, " (E-Field formulation)"
          elseif ( E_H_field .eq. FEM_FORMULATION_H) then
             write(26,*) "E_H_field   = ", E_H_field, " (H-Field formulation)"
-         else
-            write(ui_out,*) "MAIN (B): action indef. avec E_H_field = ", E_H_field
-            write(ui_out,*) "Aborting..."
-            errco = -20
-            return
          endif
          write(26,*) "   bloch_vec = ", bloch_vec
          write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/D_PI,i=1,2)
@@ -988,7 +943,7 @@ contains
 !
          write(26,*)
          do i=1,n_modes
-            write(26,"(i4,2(g22.14),g18.10)") i, v_eigs_beta(i)
+            write(26,"(i4,2(g22.14),g18.10)") i, v_eigs_beta_adj(i)
          enddo
          write(26,*)
          write(26,*) "n_core = ", n_core
