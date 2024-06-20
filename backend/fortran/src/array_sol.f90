@@ -83,13 +83,6 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 !   Reorder eigenvectors by iindex
    call zvec_reorder_by_index(v_eigs_beta, iindex, num_modes)
 
-
-   !do j=1,num_modes
-   !   j1=iindex(j)
-   !   v_tmp(j) = v_eigs_beta(j1)
-   !enddo
-   !v_eigs_beta = v_tmp
-
 !     Coordinates of the P2 Lagrange interpolation nodes for the unit triangle
    call interp_nod_2d (nnodes, xn)
 
@@ -116,7 +109,6 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
          val_exp =  D_ONE
 
          if (i_cond == BCS_PERIODIC) then
-!           Periodic boundary condition
             do inod=1,nnodes
                j = table_nod(inod,iel)
                k = ip_period_N(j)
@@ -124,8 +116,8 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
                nod_el_p(inod) = j
             enddo
 
-!           val_exp: Bloch mod ephase factor between the origin point and destination point
-!           For a pair of periodic points, one is chosen as origin and the other is the destination
+!   val_exp: Bloch mod ephase factor between the origin point and destination point
+!   For a pair of periodic points, one is chosen as origin and the other is the destination
             do j=1,nddl_0
                jp = table_N_E_F(j,iel)
                j1 = ip_period_N_E_F(jp)
@@ -175,13 +167,10 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
                call jacobian_p2_2d (el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
             endif
 
-!             if(abs(det) < 1.0d-10) then
             if(abs(det) < 1.0d-20) then
-               write(*,*)
-               write(*,*) "   ???"
-               write(*,*) "array_sol: det = 0 : iel, det = ", iel, det
-               write(*,*) "array_sol: Aborting..."
-               stop
+               write(emsg,*) "array_sol: det = 0 : iel, det = ", iel, det
+               errco = -56
+               return
             endif
 
 !           grad_i  = gradient on the actual triangle
@@ -190,7 +179,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
             call DGEMM('Transpose','N', dim_32, 3,  dim_32, D_ONE, mat_T, dim_32, grad1_mat0, dim_32, D_ZERO, grad1_mat, dim_32)
             call DGEMM('Transpose','N', dim_32, 6,  dim_32, D_ONE, mat_T, dim_32, grad2_mat0, dim_32, D_ZERO, grad2_mat, dim_32)
             call DGEMM('Transpose','N', dim_32, 10, dim_32, D_ONE, mat_T, dim_32, grad3_mat0, dim_32, D_ZERO, grad3_mat, dim_32)
-!
+
 !           Contribution to the transverse component
             do jtest=1,nddl_t
                do j_eq=1,3
@@ -199,8 +188,9 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
                   if (ind_jp > 0) then
                      m  = basis_list(2, j_eq, jtest)
                      if (m == inod) then
-!                   !  inod correspond to a P2 interpolation node
-!                                           The contribution is nonzero only when m=inod.
+
+                        !  inod correspond to a P2 interpolation node
+!         The contribution is nonzero only when m=inod.
 !                 Determine the basis vector
 
                         call basis_vec (j_eq, jtest, basis_list, phi2_list, grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)

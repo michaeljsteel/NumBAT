@@ -77,7 +77,8 @@ OBJS = $(subst src/,build\,$(SRCS_F:.f=.obj) $(SRCS_F90:.f90=.obj))
 
 
 # The build order of these matters
-SRCS_MODS = src\numbatmod_module.f90 src\nbinterfaces_module.f90
+SRCS_MODS = src\numbatmod_module.f90
+#src\nbinterfaces_module.f90
 #SRCS_MODS = $(wildcard src/*_module.f90)
 #OBJS_MODA = $(SRCS_MODS:.f90=.obj)
 #MODULES_MODS = build\numbatmod_module.mod build\nbinterfaces_module.mod

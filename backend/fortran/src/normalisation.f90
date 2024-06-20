@@ -8,8 +8,7 @@ subroutine normalise_fields (n_modes, nel, nnodes, soln_k1, soln_k2, mat_overlap
    complex(8) soln_k2(3,nnodes+7,n_modes,nel)
    complex(8) mat_overlap(n_modes,n_modes)
 
-   !     Local variables
-   integer(8) i, j
+   !integer(8) i,j
    integer(8) iel, ival
    complex(8) z_tmp1, z_tmp2
 
@@ -37,7 +36,7 @@ subroutine normalise_fields (n_modes, nel, nnodes, soln_k1, soln_k2, mat_overlap
 
       enddo
    enddo
-!
+
    return
 end subroutine
 
