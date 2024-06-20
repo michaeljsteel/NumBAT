@@ -195,7 +195,7 @@ class ModePlotHelper:
             ax.scatter(mesh_xy[1,:], mesh_xy[1,:], s=2, c='red')
 
         pref = numbat.NumBATApp().outprefix()
-        fname = pref + f'-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png'
+        fname = pref + f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
         save_and_close_figure(fig, fname)
 
 
@@ -593,14 +593,6 @@ class Mode:
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
         self.w2 = np.array([w2x, w2y, w2])
-
-        print('\nMode number: ', self.mode_num)
-        print('  x0s:   ', dx, dy, m_x[0,0], m_x[-1,-1])
-        print('  maxs   ',np.max(np.abs(m_Fx2)),np.max(np.abs(m_Fy2)),np.max(np.abs(m_Fz2))) 
-        print('  sfs    ', s_fx, s_fy, s_fz)
-        print('  fracs: ', self.fracs)
-        print('  r0s:   ', self.r0, self.w2)
-
 
 class ModeEM(Mode):
     '''Class representing a single electromagnetic (EM) mode.'''
