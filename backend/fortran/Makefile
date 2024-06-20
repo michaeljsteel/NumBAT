@@ -261,7 +261,7 @@ PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
 	ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
 	ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f \
 	ac_alpha_int.f ac_alpha_int_v2.f  \
-	array_size.f array_material_ac.f \
+	array_size.f90 array_material_ac.f \
 	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f py_entry_cm.f90
 
 	#py_calc_modes.f90 py_entry_cm.f90 py_calc_modes_ac.f90
@@ -310,6 +310,14 @@ build/%.e : src/%.c
 build/%.e : build/%.c
 	$(C_COMP_EXE) -E $(CFLAGS) $(PYINC) $< -o $@
 
+# These two needed explicitly because the sources don't exist when the rules are evaluated
+build/nb_fortranmodule.o : build/nb_fortranmodule.c
+	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
+build/fortranobject.o : build/fortranobject.c
+	$(C_COMP_EXE) -c $(CFLAGS) $(PYINC) $< -o $@
+build/nb_fortran-f2pywrappers.o : build/nb_fortran-f2pywrappers.f
+	$(F_COMP_EXE) -c $(F77FLAGS) $(PYINC) $< -o $@
+
 #F2PY_SRCS = build/$(NumBAT_MOD)module.c build/fortranobject.f \
 #			build/$(NumBAT_MOD)-f2pywrappers.f  build/$(NumBAT_MOD)-f2pywrappers2.f90
 F2PY_SRCS = build/$(NumBAT_MOD)module.c build/fortranobject.f \
@@ -319,7 +327,7 @@ F2PY_OBJSA = $(F2PY_SRCS:.c=.o)
 F2PY_OBJSB = $(F2PY_OBJSA:.f=.o)
 F2PY_OBJS = $(F2PY_OBJSB:.f90=.o)
 
-$(NumBAT_MOD).pyf: $(SRCS)
+$(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 	-rm $(F2PY_SRCS)
 	-mkdir -p build
 	-mkdir -p mods
@@ -328,7 +336,7 @@ $(NumBAT_MOD).pyf: $(SRCS)
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 
 
-$(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ)
+$(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRAP_OBJ)
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
 	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./mods -o $(NumBAT_MOD).so
 
@@ -338,6 +346,7 @@ clean:
 	-rm -rf build mods __pycache__
 	-rm ./*.mod src/*.mod 
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
+	-rm src/*__genmod.f90
 
 # keeps the .mod's, loses the .o's and .so's
 halfclean:
