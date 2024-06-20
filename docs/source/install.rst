@@ -95,6 +95,8 @@ Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
 
 #. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
 
+#. If the build halts with a ``make`` error of the form ``*** No rule to make target ...``, try running ``make build`` a couple more times.
+
 #. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
 
 
@@ -136,8 +138,37 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
+Troubleshooting Linux installs
+-------------------------------
+Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
+Here are a few traps to watch out for:
+
+#. Please ensure to use relatively recent libraries for all the Python components. This includes using 
+   
+   - Python: 3.10 or later
+   - ``matplotlib``: 3.9.0 or later
+   - ``scipy``:  1.13.0 or later
+   - ``numpy``:  1.26.2 or later
+
+#. But try not to use very recently released major upgrades. 
+   
+   Notably the 2.0.0 series of ``numpy``, which was only released in mid-June 2024 includes major changes to ``numpy`` architecture and is  not yet supported.
+
+#. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
+
+#. In general, the GCC build is more tested and forgiving than the build with the Intel compilers and we recommend the GCC option.  However, we do recommend using the Intel OneAPI math libraries as described above. This is the easiest way to get very high performance LAPACK and BLAS libraries with a well-designed directory tree.
+
+#. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
+
+   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``. 
+
+     You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
+
+   - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
+
 Installing on MacOS
 ================================
+
 |NUMBAT| can also be installed on MacOS, though this is currently somewhat experimental and has only been performed on certain versions of MacOS.  Any comments on difficulties and solutions will be appreciated.
 
 The following steps have worked for us:
