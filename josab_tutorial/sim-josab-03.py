@@ -106,25 +106,32 @@ print('\n AC wavenumber (1/m) = ', np.round(q_AC, 4))
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
 # Print the frequencies of AC modes.
-AC_freqs_GHz=sim_AC.nu_AC_all()*1e-9
+v_nu=sim_AC.nu_AC_all()*1e-9
 print('\n Freq of AC modes (GHz):')
-for (i, nu) in enumerate(AC_freqs_GHz): print(f'{i:3d}  {np.real(nu):.4e}')
+for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu):.4e}')
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions, as
 # well as other important quantities
-gain = integration.get_gains_and_qs(
+gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-freq_min = .01e9
+freq_min = .1e9
 freq_max = 5e9
-gain.plot_gain_spectra(freq_min=freq_min, freq_max=freq_max, )
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
+
+
+print('Gains by acoustic mode:')
+print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
+for (m, nu) in enumerate(v_nu):
+    print(f'{m:7d}    {np.real(nu)*1e-9:9.4e} {gain_box.gain_total(m):13.3e} {gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} ')
+
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
-masked_PE = np.ma.masked_inside(gain.gain_PE_all(), 0, threshold)
-masked_MB = np.ma.masked_inside(gain.gain_MB_all(), 0, threshold)
-masked = np.ma.masked_inside(gain.gain_total_all(), 0, threshold)
+masked_PE = np.ma.masked_inside(gain_box.gain_PE_all(), 0, threshold)
+masked_MB = np.ma.masked_inside(gain_box.gain_MB_all(), 0, threshold)
+masked = np.ma.masked_inside(gain_box.gain_total_all(), 0, threshold)
 
 # Display these in terminal
 print("\n Displaying results with negligible components masked out")
@@ -147,12 +154,12 @@ print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_ival_pump] )
 print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_ival_Stokes] )
 print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM/1e12 )
 print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc] )
-print("AC loss alpha [1/s] \n", alpha[maxGainloc] )
+print("AC loss alpha [1/s] \n", gain_box.alpha[maxGainloc] )
 print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc]/(1e9*2*math.pi) )
-print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc]/1e6)
+print("AC linewidth [MHz] \n", gain_box.linewidth_Hz[maxGainloc]/1e6)
 
 #since the overlap is not returned directly we'll have to deduce it
-absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
+absQtot2 = (gain_box.alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
 absQtot = pow(absQtot2,1/2)
 print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
 
