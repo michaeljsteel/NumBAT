@@ -82,7 +82,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     # Choose a reasonable number of processes to test the system
     # without grinding the computer to a halt
-    num_cores = max(2,int(os.cpu_count()/4))
+    num_workers = max(2,int(os.cpu_count()/4))
 
     manager = multiprocessing.Manager()
     #q_work = multiprocessing.JoinableQueue()        # for assigning the work
@@ -92,7 +92,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_cores, solemrod_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, solemrod_caller, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -141,9 +141,9 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
 
         return (ik, tk, neff_k)
 
-    num_cores = max(2,int(os.cpu_count()/4))
-    num_cores=1
-    launch_worker_processes_and_wait(num_cores, emcalc_caller, q_result, q_work)
+    #num_workers = max(2,int(os.cpu_count()/4))
+    num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+    launch_worker_processes_and_wait(num_workers, emcalc_caller, q_result, q_work)
 
 
     #Collect all the data back into one matrix

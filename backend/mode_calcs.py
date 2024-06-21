@@ -456,12 +456,16 @@ class SimResult:
 
         nbapp = numbat.NumBATApp()
 
-        if not prefix:
+        #if not prefix:
+        #    prefix = nbapp.outprefix()
+        if prefix:
+            nbapp.set_outprefix(prefix)
+        else:
             prefix = nbapp.outprefix()
 
-        pf = nbapp.path_fields()
-        if prefix and not Path(pf).exists():
-            Path(pf).mkdir()  # TODO: shouldn't ned Path() wrapper
+        pf = nbapp.outpath_fields()
+        if prefix and not pf.exists():
+            pf.mkdir()  
 
         mode_helper.update_plot_params(
             {
@@ -894,10 +898,12 @@ class EMSimulation(Simulation):
 
         fm = self.fem_mesh
         opt_props = tstruc.optical_props
-        print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
-        print(f'bloch:', self.k_perp)
-        print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
 
+        #print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
+        #print(f'bloch:', self.k_perp)
+        #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
+
+        print('Starting calc_emmodes')
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
@@ -928,6 +934,7 @@ class EMSimulation(Simulation):
             mesh_xy,
             self.ls_material,
         ) = process_fortran_return(resm, "solving for electromagnetic modes")
+        print('Done calc_emmodes')
 
         # TODO: ls_material is just refractive index of each element (13 reps for some reason)
         #       clean up and give to FemMesh
@@ -1146,6 +1153,7 @@ class ACSimulation(Simulation):
             self.fem_evecs,
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
+        print('done AC cal')
 
         self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, mesh_xy_out)
 
