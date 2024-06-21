@@ -7,16 +7,19 @@
 Technical details
 *******************
 
-Specifying and using anistropic materials 
+Specifying and using anistropic materials
+
 -------------------------------------------
 
 WRITE ME
 
-Orientation of the coordinate axes in NumBAT 
+Orientation of the coordinate axes in NumBAT
+
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Cartesian coordinates in |NUMBAT| are defined so that the waveguide lies
-in the :math:`x-y` plane with propagation along :math:`z`. 
+in the :math:`x-y` plane with propagation along :math:`z`.
+
 To obtain a right-handed system, one should think of the propagation as being out
 of the screen (though it is rare that this matters) :
 
@@ -25,16 +28,20 @@ of the screen (though it is rare that this matters) :
   - :math:`z` : Increases out of the screen. Propagation direction.
 
 
-It is common to encounter different coordinate choices in the literature, in particular 
+It is common to encounter different coordinate choices in the literature, in particular
+
 the *bird's-eye view* corresponding to viewing a photonic circuit from above is frequently encountered:
 
   - :math:`x`: Increases to the right.  Usually the dominant electric field component for modes labelled as TE polarisation.
   - :math:`y`: Increases out of the screen. Propagation direction.
   - :math:`z`: Increases up the screen.  Usually the dominant electric field component for modes labelled as TM polarisation.
 
-When dealing with elastically anisotropic materials, it is important to understand the relationship between the 
-|NUMBAT| coordinate system and that of any literature source you may be consulting, as it may be necessary to 
-perform a rotation on the tensor properties of the material in question.  This is discussed below. 
+When dealing with elastically anisotropic materials, it is important to understand the relationship between the
+
+|NUMBAT| coordinate system and that of any literature source you may be consulting, as it may be necessary to
+
+perform a rotation on the tensor properties of the material in question.  This is discussed below.
+
 
 
 
@@ -50,37 +57,50 @@ Note that this choice merely reflects what has been useful to the authors
 and new classes are easily added as needed. Please get in touch.
 
 The number and location of the independent elements of each tensor &mdash;
-stiffness  tensor :math:`c_{ijkl}`, 
-photolelastic  tensor :math:`p_{ijkl}`, 
+stiffness  tensor :math:`c_{ijkl}`,
+
+photolelastic  tensor :math:`p_{ijkl}`,
+
 viscosity tensor :math:`p_{ijkl}` &mdash; depends on the particular crystal class.
 
 As all the relevant tensors are symmetric, there can be at most 6 independent elements for rank-2 tensors (rather than 9),
-and 36 independent elements in rank-4 tensors (rather than 81).  In particular, tensor subscripts 
+and 36 independent elements in rank-4 tensors (rather than 81).  In particular, tensor subscripts
+
 are all symmetric in pairs as follows:
 
-.. math:: 
-   T_{ij} = T_{ji}
-   T_{ijkl} = T_{jikl} = T_{ijlk} = T_{jikl} 
+.. math::
 
-where the subscripts range over all values of 
+   T_{ij} = T_{ji}
+   T_{ijkl} = T_{jikl} = T_{ijlk} = T_{jikl}
+
+
+where the subscripts range over all values of
+
 :math:`x,y,z`.
 
-Consequently we can use the Voigt notation 
+Consequently we can use the Voigt notation
+
 in which pairs of indices are represented by a single integer in the range 1 to 6 as follows:
 
 
-.. math:: \begin{bmatrix}  xx \\ yy \\ zz \\ xz \\ yz \\ zz \end{bmatrix}  
-   = \begin{bmatrix}  1 \\ 2 \\ 3 \\ 4 \\ 5 \\ 6 \end{bmatrix}  
+.. math:: \begin{bmatrix}  xx \\ yy \\ zz \\ xz \\ yz \\ zz \end{bmatrix}
+
+   = \begin{bmatrix}  1 \\ 2 \\ 3 \\ 4 \\ 5 \\ 6 \end{bmatrix}
+
 
 Then a rank two tensor like strain or stress can be represented as the column
 
-.. math:: \bar{S} \equiv S_I \equiv 
+.. math:: \bar{S} \equiv S_I \equiv
+
     \begin{bmatrix}  S_1 \\ S_2 \\ S_3 \\ S_4 \\ S_5 \\ S_6 \end{bmatrix}  .
 
-A fourth rank tensor like the stiffness or photoelastic tensor is represented in the form 
+A fourth rank tensor like the stiffness or photoelastic tensor is represented in the form
 
-.. math:: \bar{c} \equiv c_{IJ} \equiv 
-    \begin{bmatrix}  
+
+.. math:: \bar{c} \equiv c_{IJ} \equiv
+
+    \begin{bmatrix}
+
    c_{11} & c_{12} & c_{13} & c_{14} & c_{15} & c_{16} \\
    c_{21} & c_{22} & c_{23} & c_{24} & c_{25} & c_{26} \\
    c_{31} & c_{32} & c_{33} & c_{34} & c_{35} & c_{36} \\
@@ -99,8 +119,10 @@ This table summarises the symmetry properties for each class and the required te
     ==========  =======================================   ==========    ================================   ==========================================================   ==================================================================================
     Structure   Nature                                     Examples      :math:`\epsilon`                   Stiffness elements                                           Photoelastic elements
     ==========  =======================================   ==========    ================================   ==========================================================   ==================================================================================
-    Isotropic   Every direction equivalent                 Glass         :math:`\epsilon_1`                         :math:`c_{11}`                                        :math:`p_{11}, p_{12}, p_{14}`   
-    Cubic       3 equivalent perpendicular directions      Silicon       :math:`\epsilon_1`                         :math:`c_{11}, c_{12}, c_{44}`                        :math:`p_{11}, p_{12}, p_{44}`   
+    Isotropic   Every direction equivalent                 Glass         :math:`\epsilon_1`                         :math:`c_{11}`                                        :math:`p_{11}, p_{12}, p_{14}`
+
+    Cubic       3 equivalent perpendicular directions      Silicon       :math:`\epsilon_1`                         :math:`c_{11}, c_{12}, c_{44}`                        :math:`p_{11}, p_{12}, p_{44}`
+
     Trigonal    1 threefold rotation axis                  LiNbO3        :math:`\epsilon_1, \epsilon_3`     :math:`c_{11}, c_{12}, c_{13}, c_{14}, c_{33}, c_{44}`        :math:`p_{11}, p_{12}, p_{13}, p_{14}, p_{31}, p_{33}, p_{41}, p_{44}`
     ==========  =======================================   ==========    ================================   ==========================================================   ==================================================================================
 
@@ -108,17 +130,22 @@ This table summarises the symmetry properties for each class and the required te
 The full form of the material tensors  for each crystal class is as follows:
 
 
-**Isotropic** 
+**Isotropic**
+
 
 .. math::
-   \epsilon_{I} = 
+   \epsilon_{I} =
+
     \begin{bmatrix}
     \epsilon_1 & 0 & 0 \\
     0 & \epsilon_1 &  0 \\
-    0 & 0 & \epsilon_1 
-    \end{bmatrix} 
+    0 & 0 & \epsilon_1
+
+    \end{bmatrix}
+
    \quad
-   c_{IJ} = 
+   c_{IJ} =
+
     \begin{bmatrix}
    c_{11} & c_{12} & c_{12} & 0      & 0      & 0 \\
    c_{12} & c_{11} & c_{12} & 0      & 0      & 0 \\
@@ -128,7 +155,8 @@ The full form of the material tensors  for each crystal class is as follows:
    0      & 0      & 0      & 0      & 0      & c_{44} \\
     \end{bmatrix}
 
-   p_{IJ} = 
+   p_{IJ} =
+
     \begin{bmatrix}
    p_{11} & p_{12} & p_{12} & 0      & 0      & 0 \\
    p_{12} & p_{11} & p_{12} & 0      & 0      & 0 \\
@@ -145,22 +173,29 @@ which may in turn be expressed in terms of the Young's modulus :math:`E` and Poi
 .. math::
    \mu = \frac{E}{2(1+\nu)}, \qquad \lambda = \frac{E\nu}{(1+\nu)(1-2\nu)}
 
-**Cubic** 
+**Cubic**
 
-The matrix expressions are identical to the isotropic case except that 
+
+The matrix expressions are identical to the isotropic case except that
+
 :math:`c_{44}` and :math:`p_{44}` are now independent quantities that must be specified directly.
 
-**Trigonal** 
+**Trigonal**
+
 
 .. math::
-   \epsilon_{I} = 
+   \epsilon_{I} =
+
     \begin{bmatrix}
     \epsilon_1 & 0 & 0 \\
     0 & \epsilon_1 &  0 \\
-    0 & 0 & \epsilon_3 
-    \end{bmatrix} 
+    0 & 0 & \epsilon_3
+
+    \end{bmatrix}
+
    \quad
-   c_{IJ} = 
+   c_{IJ} =
+
     \begin{bmatrix}
    c_{11} & c_{12} & c_{13} & c_{14} & 0      & 0 \\
    c_{12} & c_{11} & c_{13} & -c_{14}& 0      & 0 \\
@@ -170,7 +205,8 @@ The matrix expressions are identical to the isotropic case except that
    0      & 0      & 0      & 0      & c_{14} & (c_{11}-c_{12})/2
     \end{bmatrix}
 
-   p_{IJ} = 
+   p_{IJ} =
+
     \begin{bmatrix}
    p_{11} & p_{12} & p_{13} & p_{14} & 0      & 0 \\
    p_{12} & p_{11} & p_{13} &-p_{14} & 0      & 0 \\

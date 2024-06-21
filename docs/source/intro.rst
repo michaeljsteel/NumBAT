@@ -16,11 +16,13 @@ Introduction to |NUMBAT|
 Introduction
 ================
 
+
 |NUMBAT|, the *Numerical Brillouin Analysis Tool*, is a software tool integrating electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
 Most notably, this includes Stimulated Brillouin Scattering (SBS) frequency shifts and optical gains.
 
 This chapter provides some background on the capabilities and techniques used in |NUMBAT|.
-If you would like to get straight to computations, 
+If you would like to get straight to computations,
+
 jump ahead to the installation and setup instructions in :ref:`chap-install-label`.
 
 Goals
@@ -42,6 +44,16 @@ available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 |NUMBAT| is open-source software and the authors welcome additions to the code.  Details for how
 to contribute are available in :ref:`sec-contribute-label`.
 
+Development team
+================
+
+|NUMBAT| was developed by Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Chris
+Poulton and Michael Steel in a collaboration between Macquarie University, the
+University of Technology Sydney, and the University of Sydney.
+
+We thank Christian Wolff, Mike Smith and Mikolaj Schmidt for contributions.
+
+
 Citing |NumBAT|
 ===============
 If you use |NumBAT| in published work, we would appreciate a citation
@@ -52,14 +64,6 @@ available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_
 and `<https://arxiv.org/abs/1811.10219>`_,
 and a link to the github page at `<https://github.com/michaeljsteel/NumBAT>`_.
 
-Development team
-================
-
-|NUMBAT| was developed by Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Chris
-Poulton and Michael Steel in a collaboration between Macquarie University, the
-University of Technology Sydney, and the University of Sydney.
-
-We thank Christian Wolff, Mike Smith and Mikolaj Schmidt for contributions.
 
 .. _sec-contribute-label:
 
@@ -70,13 +74,17 @@ at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome addit
 
 About our mascot
 ================================
-The **numbat** (*Myrmecobius fasciatus*) is a delightful insect-eating marsupial 
+The **numbat** (*Myrmecobius fasciatus*) is a delightful insect-eating marsupial
+
 from Western Australia, of which it is the official state animal.
-It has two other common names, *noombat* in the Nyungar language, 
-and *walpurti* in the Pitjantjatjara language. 
+It has two other common names, *noombat* in the Nyungar language,
+
+and *walpurti* in the Pitjantjatjara language.
+
 As a carnivorous marsiupial, they belong to the order Dasyuromorphia, closely related to quolls and
 the famed thylacines which had similar markings on their lower back.
-Once found across southern Australia, numbats are now confined to small local groups 
+Once found across southern Australia, numbats are now confined to small local groups
+
 in Western Australia and the species has Endangered status.
 
 .. figure:: ./numbat_face.jpg
@@ -85,50 +93,73 @@ in Western Australia and the species has Endangered status.
    A numbat at Perth zoo in 2010. `(Creative commons) <https://commons.wikimedia.org/wiki/File:Numbat_Face.jpg>`_.
 
 Apart from the distinctive striped back (which we like to think of as an acoustic wave made flesh),
-numbats have a number of unique properties. They are the only fully diurnal marsupial. 
+numbats have a number of unique properties. They are the only fully diurnal marsupial.
+
 They are insectivores and eat exclusively termites, perhaps 20000 each day!
 
-To find out how you can support the care and revitalisation of this beautiful animal, check out the work at 
+To find out how you can support the care and revitalisation of this beautiful animal, check out the work at
+
 `projectnumbat <numbat.org.au>`_ and the `Australian Wildlife Conservancy <https://www.australianwildlife.org/wildlife/numbat>`_.
 
 
-Support
-=============
+Acknowledgements
+===================
+
 Development of |NumBAT| has been supported in part by the
 Australian Research Council under Discovery Projects
 DP130100832, DP160101691, DP200101893 and DP220100488.
 
-Release notes
-=============
 
-Version 2.0
------------
+Suggested reading on SBS and opto-elastic interactions in nanophotonics
+===============================================================================
 
-A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface and make plotting and analysis simpler and more powerful.
-You will need to make some changes to existing files to run in |NUMBAT| 2.0.  Your best guide to new capabilities and API changes is to look through the code in the tutorial examples.
+A very extensive literature on SBS and related effects in nanophotonics has
+arisen over the period since 2010. Here we provide a few suggestions for
+entering and navigating that literature.
 
-Some key changes you will need to make are as follows:
- * On Linux, the fortran Makefile is now designed to work with a virtual environment python to avoid dependencies on your system python.
- * There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
- * It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
- * The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.
- * The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
- * The waveguide class ``Struct`` has been renamed to ``Structure``.
- * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
- * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
- * To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
- * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
- * The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
- * Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
-      * The frequency arguments ``freq_min`` and ``freq_max`` should now be passed in units of Hz, not GHz.
-      * The argument ``k_AC`` has been removed.
- * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
- * All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
+
+Books
+--------------------
+The centenary of Brillouin scattering was marked with the publication of a two-volume book
+featuring contributions from many of the leading researchers in the field.
+These books provide detailed background and the history, theory, observation and application
+of Brillouin scattering in guided wave systems.
+
+#. *Brillouin Scattering, Parts 1 and 2*, eds: B.J. Eggleton, M.J. Steel, C.G. Poulton, (Academic, 2022).
+
+Reviews
+--------------------
+There are several excellent reviews covering the theory and experiment of Brillouin photonics.
+
+
+#. A. Kobyakov, M. Sauer, and D. Chowdhury, "Stimulated Brillouin scattering in optical fibers," *Adv. Opt. Photon.* **2**, 1-59 (2010). https://doi.org/10.1364/AOP.2.000001
+
+#. B.J. Eggleton, C.G. Poulton, P.T. Rakich, M.J. Steel and G. P. Bahl, "Brillouin integrated photonics," *Nat. Photonics* **13**, 664–677 (2019). https://doi.org/10.1038/s41566-019-0498-z
+
+#. G.S. Wiederhecker, P. Dainese, T.P. Mayer Alegre, "Brillouin optomechanics in nanophotonic structures," *APL Photonics* **4**, 071101 (2019).
+   https://doi.org/10.1063/1.5088169
+
+
+Theoretical development
+-------------------------
+The following papers feature more depth on the theory of SBS in waveguides.
+Chapters 2 and 3 of the *Brillouin Scattering* book listed above are also thorough
+resources for this material.
+
+#. P.T. Rakich, C. Reinke, R. Camacho, P. Davids, and Z. Wang, "Giant Enhancement of Stimulated Brillouin Scattering in the Subwavelength Limit,"
+   *Phys. Rev. X* **2**, 011008 (2012).  https://doi.org/10.1103/PhysRevX.2.011008
+
+#. C. Wolff, M.J. Steel, B.J. Eggleton, and C.G. Poulton "Stimulated Brillouin scattering in integrated photonic waveguides: Forces, scattering mechanisms, and coupled-mode analysis," *Phys. Rev. A* **92**, 013836 (2015). https://doi.org/10.1103/PhysRevA.92.013836
+
+#. J.E. Sipe and M.J. Steel, "A Hamiltonian treatment of stimulated Brillouin scattering in nanoscale integrated waveguides," *New J. Phys.* **18**, 045004 (2016).  https://doi.org/10.1088/1367-2630/18/4/045004
+
+#. B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019). https://dx.doi.org/10.1109/JLT.2019.2920844
+
+#. C. Wolff, M.J.A. Smith, B. Stiller, and C.G. Poulton, "Brillouin scattering—theory and experiment: tutorial," *J. Opt. Soc. Am. B* **38**, 1243-1269 (2021).  https://doi.org/10.1364/JOSAB.416747
 
 
 What does |NUMBAT| actually calculate?
 =======================================
-
 |NUMBAT| performs three main types of calculations given a particular waveguide design:
  * solve the electromagnetic modal problem  using the finite element method (FEM).
  * solve the elastic modal problem  using FEM.
@@ -155,18 +186,19 @@ CHECK THE FACTOR of HALF here.
    :nowrap:
 
    \begin{align*}
-   \vec E(x,y,z,t) = & \tfrac{1}{2} 
-   \left( 
-   {\vec {\mathcal{E}}}   (\vecr) e^{- i  \omega t } + 
-   {\vec {\mathcal{E}}}^* (\vecr) e^{ i  \omega t } 
+   \vec E(x,y,z,t) = & \tfrac{1}{2}
+   \left(
+   {\vec {\mathcal{E}}}   (\vecr) e^{- i  \omega t } +
+   {\vec {\mathcal{E}}}^* (\vecr) e^{ i  \omega t }
    \right) \\
-      = & \tfrac{1}{2} \left( 
-            a(z) \vece(x,y) e^{i (kz-\omega t) } + a^*(z) \vece^*(x,y) e^{-i (kz-\omega t) } 
+      = & \tfrac{1}{2} \left(
+            a(z) \vece(x,y) e^{i (kz-\omega t) } + a^*(z) \vece^*(x,y) e^{-i (kz-\omega t) }
             \right),
    \end{align*}
 
 
-in terms of the complex field amplitude :math:`\vcalE(\vecr)`, 
+in terms of the complex field amplitude :math:`\vcalE(\vecr)`,
+
 the mode profile :math:`\vece(x,y)` and the complex slowly-varying envelope function :math:`a(z)`.
 
 By Faraday's law the complex magnetic field amplitude is given by
@@ -234,7 +266,7 @@ The photoelastic and moving boundary couplings in J/m are given by
 
    Q^{\mathrm{(PE)}} & = - \epsilon \int_A  \mathrm{d}^2 r \, \sum_{ijkl} \epsilon_r^2  \,
    e_i^{(s)*}  \, e_j^{(p)}  \, p_{ijkl}   \, \partial_k u_l^* \\
-   Q^{\mathrm{(MB))}} & = \int_{\cal C}  \mathrm{d} {\vec r} \, (\vec u^* \cdot \hat{n})
+   Q^{\mathrm{(MB)}} & = \int_{\cal C}  \mathrm{d} {\vec r} \, (\vec u^* \cdot \hat{n})
    \times \\
    & ~~~~
    \left [
@@ -291,4 +323,32 @@ Equivalent forms of equations
 TODO: show forms without the normalisation energies and with cubic style effective area.
 
 Compare to some fiber literature and the hydrodynamic reprn.
+
+Release notes
+=============
+
+Version 2.0
+-----------
+
+A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface and make plotting and analysis simpler and more powerful.
+You will need to make some changes to existing files to run in |NUMBAT| 2.0.  Your best guide to new capabilities and API changes is to look through the code in the tutorial examples.
+
+Some key changes you will need to make are as follows:
+ * On Linux, the fortran Makefile is now designed to work with a virtual environment python to avoid dependencies on your system python.
+ * There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
+ * It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
+ * The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.
+ * The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
+ * The waveguide class ``Struct`` has been renamed to ``Structure``.
+ * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
+ * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
+ * To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
+ * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
+ * The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
+ * Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
+      * The frequency arguments ``freq_min`` and ``freq_max`` should now be passed in units of Hz, not GHz.
+      * The argument ``k_AC`` has been removed.
+ * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
+ * All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
+
 

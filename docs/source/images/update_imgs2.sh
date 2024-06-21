@@ -24,12 +24,12 @@ for im in tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spect
         tut_11a-fields/AC_field_17.png tut_11a-fields/AC_field_32.png tut_11a-fields/AC_field_39.png tut_11a-fields/AC_field_44.png tut_11a-fields/AC_field_66.png tut_11a-fields/AC_field_69.png tut_11a-fields/EM_E_field_00.png \
         tut_14_0-fields/EM_E_field_00.png tut_14_0-fields/EM_E_field_01.png tut_14_0-fields/EM_E_field_02.png tut_14_0-fields/EM_E_field_03.png tut_14_10-fields/EM_E_field_00.png tut_14_10-fields/EM_E_field_01.png tut_14_10-fields/EM_E_field_02.png tut_14_10-fields/EM_E_field_03.png tut_14_5-fields/EM_E_field_00.png tut_14_5-fields/EM_E_field_01.png tut_14_5-fields/EM_E_field_02.png tut_14_5-fields/EM_E_field_03.png
     do
-        cp -pR ../../../../tutorials/$im tutorial
+        cp -R ../../../../tutorials/$im .
     done
 
     for im in tut_04-out/tut_04-gain_spectra-waterfall.png tut_05-out/tut_05-convergence-freq_AC.png tut_05-out/tut_05-convergence-freq_EM.png tut_05-out/tut_05-convergence-gain_MB.png tut_05-out/tut_05-convergence-gain_PE.png tut_05-out/tut_05-convergence-gain.png 
     do 
-        cp -pR ../../../../tutorials/$im tutorial
+        cp -pR ../../../../tutorials/$im .
     done
 
 cd ..

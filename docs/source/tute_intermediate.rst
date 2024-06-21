@@ -208,6 +208,9 @@ partner state at a nearby frequency.
 
 Tutorial 14 -- Multilayered 'Onion'
 ----------------------------------------
+
+** This tutorial is under development. Expect it to fail.**
+
 This tutorial, contained in ``sim-tut_14-multilayer-fibre.py`` shows how one can create
 a circular waveguide with many concentric layers of different thickness.
 In this case, the layers are chosen to create a concentric Bragg grating of alternating
@@ -217,9 +220,6 @@ azimuthally symmetric :math:`\mathrm{TE}_0` mode rather than the usual
 :math:`\mathrm{HE}_{11}` quasi-linearly polarised mode that is found in standard
 two-layer fibres.
 
-
-
-.. .. literalinclude:: ./images/tutorial/sim-tut_10-onion.py
 
 .. figure:: ./images/tutorial/tut_14_0-fields/EM_E_field_00.png
    :width: 10cm

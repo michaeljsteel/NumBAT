@@ -169,7 +169,7 @@ def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
         return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
 
 
-    num_cores = os.cpu_count()
+    num_workers = os.cpu_count()
     manager = multiprocessing.Manager()
     q_work = multiprocessing.JoinableQueue()      # for assigning the work
     q_result = manager.Queue()                    # for collecting the work
@@ -177,7 +177,7 @@ def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_cores, solemrod_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, solemrod_caller, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -193,8 +193,8 @@ def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
 def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rcore, ncore, nclad):
 
-    Vvec= kvec*rcore*np.sqrt(ncore**2-nclad**2)
-    print(kvec, Vvec)
+    Vvec= kvec*rcore*np.sqrt(np.real(ncore**2-nclad**2))
+    print('\n\nKvec and Vnumber:', kvec, Vvec, '\n\n')
     neff_num = np.zeros([len(kvec), nmodes], dtype=float)
 
     # Expected effective index of fundamental guided mode.
@@ -212,9 +212,6 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
     for ik, tk in enumerate(kvec):
         doplot =  (ik % field_out_skip == 0) # Time for some field plots!
         wg = copy.deepcopy(wguide)  # wguide and sim are not thread-safe when we plot mode profiles
-    #    if doplot:
-    #        q_work_plot.put((ik, tk, doplot, wg))
-    #    else:
         q_work.put((ik, tk, doplot, wg))
 
 
@@ -223,20 +220,23 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
 
         t_lambda_nm = twopi/tk
 
-        sim_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)
-        neff_k= np.sort(np.real(sim_EM.neff_all()))[-nmodes:]
+        print('Starting mode solve', ik)
+        simres_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)
+        print('Done mode solve', ik)
+        neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
 
         if doplot: # Only worker 1 will ever do this
-            #print('{0} is plotting elastic modes at ik = {1:d} of [0..{2:d}].'.format(
-            #    threading.current_thread().name, ik, len(kvec)-1))
-            sim_EM.plot_modes(ivals=range(nmodes),
-                                      prefix=prefix+'_%d'%ik, ticks=True)
+            print('Doing plot of modes', ik)
+            simres_EM.plot_modes(ivals=range(nmodes), prefix=f'{prefix}_{ik}', ticks=True)
+            print('Done plot of modes', ik)
 
         return (ik, tk, neff_k)
 
-    num_cores = os.cpu_count()
-    num_cores = 2
-    launch_worker_processes_and_wait(num_cores, emcalc_caller, q_result, q_work)
+    #num_workers = os.cpu_count()
+    #num_workers = 2
+    num_workers = 0   # just do direct in the main process and single thread
+
+    launch_worker_processes_and_wait(num_workers, emcalc_caller, q_result, q_work)
 
 
     #Collect all the data back into one matrix
@@ -250,7 +250,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
     #        'Numerical dispersion of multilayer fibre',
     #        r'$V$ number ', r'$\bar{n}$', (Vvec[0], Vvec[-1]), (nclad, ncore))
 
-    print(Vvec, neff_num)
+    print('V and ns', Vvec, neff_num)
 
     return (Vvec, neff_num)
 
@@ -332,7 +332,7 @@ def solve_em_dispersion(prefix, wguide, ncore, nclad, rcore):
     nmodes = 20
     nbasis = 40
 
-    ksteps_num=15
+    ksteps_num=31
 
     lam_hi=5000    # wavelength range in nm
     lam_lo=500    # wavelength range in nm
@@ -340,7 +340,6 @@ def solve_em_dispersion(prefix, wguide, ncore, nclad, rcore):
     khi=twopi/lam_lo
     kvec=np.linspace(klo, khi, ksteps_num)
 
-    print('Doing numerical problem')
     (Vvec_num, neff_num) = solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rcore, ncore, nclad)
 
     make_em_plots(prefix, Vvec_num, neff_num, ncore, nclad)
@@ -350,6 +349,8 @@ def do_main():
     start = time.time()
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
+    prefix = 'tt'
+    refine_fac = 2
 
     nbapp=numbat.NumBATApp(prefix)
 
@@ -369,11 +370,11 @@ def do_main():
 #    mat_a.set_refractive_index(nclad)
 #    mat_b.set_refractive_index(ncore)
 
-    mat_a = materials.make_material("SiO2_smf28")
-    mat_b = materials.make_material("Si_2021_Poulton")
+    mat_a = materials.make_material("Si_2021_Poulton")
+    mat_b = materials.make_material("SiO2_smf28")
     mat_vac= materials.make_material("Vacuum")
-    nclad = mat_a.refindex_n
-    ncore = mat_b.refindex_n
+    ncore = np.real(mat_a.refindex_n)
+    nclad = np.real(mat_b.refindex_n)
 
 
     rcore = 3250  # radius 3.25 micron

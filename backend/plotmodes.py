@@ -30,7 +30,7 @@ from nbtypes import component_t, FieldType, SI_THz, SI_GHz, SI_um, twopi
 
 def modeplot_filename(plps, ival, label=''):
     nbapp = numbat.NumBATApp()
-    fullpref = str(nbapp.path_fields())
+    fullpref = str(nbapp.outpath_fields())
 
     comp = plps['EM_AC'].name
     suf = plps['suffix']

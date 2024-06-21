@@ -14,6 +14,7 @@ import numbat
 import integration
 import mode_calcs
 import materials
+from nbtypes import SI_GHz
 
 import starter
 
@@ -58,7 +59,7 @@ simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
 
 # Number of wavevector steps.
-nu_ks = 20
+nu_ks = 50
 
 fig, ax = plt.subplots()
 symmetries_working = False
@@ -70,15 +71,20 @@ for i_ac, q_ac in enumerate(np.linspace(0.0, q_AC, nu_ks)):
     if symmetries_working:
         sym_list = integration.symmetries(sim_AC)
         for i in range(len(prop_AC_modes)):
-            Om = prop_AC_modes[i]*1e-9
+            Om = prop_AC_modes[i]/SI_GHz
             if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:
-                sym_A, = ax.plot(np.real(q_ac/q_AC), Om, 'or')
+                sym_A, = ax.plot(np.real(q_ac/q_AC), Om, 'or', markersize=2)
             if sym_list[i][0] == -1 and sym_list[i][1] == 1 and sym_list[i][2] == -1:
-                sym_B1, = ax.plot(np.real(q_ac/q_AC), Om, 'vc')
+                sym_B1, = ax.plot(np.real(q_ac/q_AC), Om, 'vc', markersize=2)
             if sym_list[i][0] == 1 and sym_list[i][1] == -1 and sym_list[i][2] == -1:
-                sym_B2, = ax.plot(np.real(q_ac/q_AC), Om, 'sb')
+                sym_B2, = ax.plot(np.real(q_ac/q_AC), Om, 'sb', markersize=2)
             if sym_list[i][0] == -1 and sym_list[i][1] == -1 and sym_list[i][2] == 1:
-                sym_B3, = ax.plot(np.real(q_ac/q_AC), Om, '^g')
+                sym_B3, = ax.plot(np.real(q_ac/q_AC), Om, '^g', markersize=2)
+
+    else:
+        for i in range(len(prop_AC_modes)):
+            Om = prop_AC_modes[i]/SI_GHz
+            ax.plot(np.real(q_ac/q_AC), Om, 'o', markersize=2)
 
     print("Wavevector loop", i_ac+1, "/", nu_ks)
 

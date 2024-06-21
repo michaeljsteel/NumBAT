@@ -84,10 +84,10 @@ class _NumBATApp:
         return self._outdir
 
     def outpath(self):
-        return str(Path(self._outdir, self._outprefix))
+        return Path(self._outdir, self._outprefix)
 
-    def path_fields(self):
-        return str(Path(self._outdir, self._outprefix+'-fields'))
+    def outpath_fields(self):
+        return Path(self._outdir, self._outprefix+'-fields')
 
 
     def path_gmsh(self):

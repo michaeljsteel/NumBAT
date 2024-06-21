@@ -105,7 +105,7 @@ class CalcThread(threading.Thread):
                 ):  # I should exhaust q_work_noshare first
                     task = (
                         self.q_work_noshare.get()
-                    )  # not empty and sole caller so must succeed
+                    )  # not empty and sole task_func so must succeed
                     self.doing_plot_work = True
                 else:
                     task = self.q_work.get_nowait()
@@ -163,11 +163,26 @@ class CalcThread(threading.Thread):
         return
 
 
-def launch_worker_threads_and_wait(
-    num_threads, caller, q_result, q_work, q_work_noshare=None, verbose=False
-):
+def run_in_current_thread(task_func, q_result, q_work, verbose=False):
+    '''Simply executes task_func(tsk) on the tasks in q_work in a single 
+    non-threaded loop, placing the results in q_result.'''
 
-    # TODO: avoid separate thread if num_threads = 1
+    total_tasks = q_work.qsize()
+    for i_task in range(total_tasks):
+        print('\n\n----------------------------------------')
+        print(f'Starting task {i_task+1} of {total_tasks}.\n\n')
+        task = q_work.get(block=True, timeout=5)
+        res = task_func(task)  # Here is the main piece of work
+        q_result.put(res)
+
+
+def launch_worker_threads_and_wait(num_workers, task_func, q_result, 
+                                   q_work, q_work_noshare=None, verbose=False):
+
+    if num_workers < 1:  # avoid separate thread if num_workers <= 0
+        run_in_current_thread(task_func, q_result, q_work, verbose)
+        return
+
     report_progress = True
     # verbose=False
 
@@ -176,18 +191,18 @@ def launch_worker_threads_and_wait(
         total_tasks += q_work_noshare.qsize()
     # Launch threads and keep copies
 
-    num_threads = min(num_threads, total_tasks)
+    num_workers = min(num_workers, total_tasks)
     if report_progress:
-        print(f"Assigning {total_tasks} tasks across {num_threads} threads.")
+        print(f"Assigning {total_tasks} tasks across {num_workers} threads.")
 
     threads = []
-    for i in range(num_threads):
+    for i in range(num_workers):
         print("Looking at starting thread", i)
 
         # If there _is_ a non-Null q_work_noshare, only thread 1 should see it
         qwns = q_work_noshare if (i == 0) else None
 
-        th = CalcThread(q_work, q_result, caller, qwns, verbose)
+        th = CalcThread(q_work, q_result, task_func, qwns, verbose)
         print("Starting thread:", th.name)
         th.start()
         print("Done starting thread:", th.name)
@@ -311,11 +326,13 @@ class CalcProcess(multiprocessing.Process):
         print(f"{self.name} is running off the end")
 
 
-def launch_worker_processes_and_wait(
-    num_processes, caller, q_result, q_work, verbose=False
-):
+def launch_worker_processes_and_wait(num_workers, task_func, 
+                                     q_result, q_work, verbose=False):
 
-    # TODO: avoid separate thread if num_processes = 1
+    if num_workers < 1:  # avoid separate thread if num_workers <= 0
+        run_in_current_thread(task_func, q_result, q_work, verbose)
+        return
+
     report_progress = True
     # verbose=True
 
@@ -325,17 +342,17 @@ def launch_worker_processes_and_wait(
 
     if do_multiproc:
         total_tasks = q_work.qsize()
-        num_processes = min(num_processes, total_tasks)
+        num_workers = min(num_workers, total_tasks)
 
         if report_progress:
-            print(f"Assigning {total_tasks} tasks across {num_processes} processes.")
+            print(f"Assigning {total_tasks} tasks across {num_workers} processes.")
     else:
         print("Performing calculation in single processor mode.")
-        num_processes = 1
+        num_workers = 1
 
     processes = []
-    for _ in range(num_processes):
-        pr = CalcProcess(q_work, q_result, caller, verbose)
+    for _ in range(num_workers):
+        pr = CalcProcess(q_work, q_result, task_func, verbose)
         print("Starting process:", pr.name)
         if do_multiproc:
             pr.start()

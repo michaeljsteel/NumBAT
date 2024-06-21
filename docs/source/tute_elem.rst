@@ -172,9 +172,8 @@ of plots without having to repeat the whole calculation effort.
 to the relevant files in the ``<NumBAT>/tutorials`` directory.
 
 
-
 .. figure:: ./images/tutorial/tut_03a-dispersion_symmetrised.png
-   :width: 10cm
+   :width: 14cm
 
    Acoustic dispersion diagram with modes categorised by symmetry as in Table 1 of Wolff et al.
    *Opt. Express.* **22**, 32489 (2014).

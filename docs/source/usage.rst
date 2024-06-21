@@ -134,36 +134,36 @@ The intention of this arrangement is to create a library of materials that can w
 They also allow users to check the sensitivity of their results on particular parameters for a given material.
 
 At present, the library contains the following materials:
-  - Vacuum (or air)
-      - ``Vacuum``
-  - The chalcogenide glass Arsenic tri-sulfide
-      - ``As2S3_2016_Smith``
-      - ``As2S3_2017_Morrison``
-      - ``As2S3_2021_Poulton``
-  - Fused silica
-      - ``SiO2_2013_Laude``
-      - ``SiO2_2015_Van_Laer``
-      - ``SiO2_2016_Smith``
-      - ``SiO2_2021_Smith``
-      - ``SiO2_smf28.json``
-      - ``SiO2GeO2_smf28.json``
-  - Silicon
-      - ``Si_2012_Rakich``
-      - ``Si_2013_Laude``
-      - ``Si_2015_Van_Laer``
-      - ``Si_2016_Smith``
-      - ``Si_2021_Poulton``
-      - ``Si_test_anisotropic``
-  - Silicon nitride
-      - ``Si3N4_2014_Wolff``
-      - ``Si3N4_2021_Steel``
-  - Gallium arsenide
-      - ``GaAs_2016_Smith``
-  - Germanium
-      - ``Ge_cubic_2014_Wolff``
-  - Lithium niobate
-      - ``LiNbO3_2021_Steel``
-      - ``LiNbO3aniso_2021_Steel``
+  * Vacuum (or air)
+      * ``Vacuum``
+  * The chalcogenide glass Arsenic tri*sulfide
+      * ``As2S3_2016_Smith``
+      * ``As2S3_2017_Morrison``
+      * ``As2S3_2021_Poulton``
+  * Fused silica
+      * ``SiO2_2013_Laude``
+      * ``SiO2_2015_Van_Laer``
+      * ``SiO2_2016_Smith``
+      * ``SiO2_2021_Smith``
+      * ``SiO2_smf28.json``
+      * ``SiO2GeO2_smf28.json``
+  * Silicon
+      * ``Si_2012_Rakich``
+      * ``Si_2013_Laude``
+      * ``Si_2015_Van_Laer``
+      * ``Si_2016_Smith``
+      * ``Si_2021_Poulton``
+      * ``Si_test_anisotropic``
+  * Silicon nitride
+      * ``Si3N4_2014_Wolff``
+      * ``Si3N4_2021_Steel``
+  * Gallium arsenide
+      * ``GaAs_2016_Smith``
+  * Germanium
+      * ``Ge_cubic_2014_Wolff``
+  * Lithium niobate
+      * ``LiNbO3_2021_Steel``
+      * ``LiNbO3aniso_2021_Steel``
 
 Materials can easily be added to this library by copying any of these files as a template and
 modifying the properties to suit. The ``Si_test_anisotropic`` file contains all the variables

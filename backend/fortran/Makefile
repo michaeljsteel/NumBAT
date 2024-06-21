@@ -22,8 +22,8 @@ vartest:
 
 intel: COMPILER_VENDOR=intel
 intel: ONEAPI=/opt/intel/oneapi
-intel: ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
-intel: COMP_LIB=-L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
+intel: ONEAPICOMP=/opt/intel/oneapi/compiler/2024.2/bin
+intel: COMP_LIB=-L $(ONEAPI)/2024.2/lib -lifcoremt -lifport -limf
 intel: F_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/ifx
 intel: C_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/icx
 intel: F77FLAGS=-nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
@@ -79,7 +79,7 @@ MYPLAT="linux_inteloneapi"
 # #TODO: smooth selection of version folders
 # ONEAPI=/opt/intel/oneapi
 # ONEAPICOMP=/opt/intel/oneapi/compiler/latest/bin
-# COMP_LIB = -L $(ONEAPI)/2024.1/lib -lifcoremt -lifport -limf
+# COMP_LIB = -L $(ONEAPI)/2024.2/lib -lifcoremt -lifport -limf
 
 # F_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/ifx
 # C_COMP_EXE = $(CCACHE) $(ONEAPICOMP)/icx
