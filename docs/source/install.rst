@@ -235,9 +235,9 @@ The following steps have worked for us:
    folder by dragging the Gmsh icon into Applications.
 
 
-#. Install a current gcc (we used gcc)::
+#. Install a current gcc (we used gcc13)::
 
-   $ sudo port install gcc13
+   $ sudo port install gcc-devel
 
 #. Install the Lapack and Blas linear algebra libraries::
 

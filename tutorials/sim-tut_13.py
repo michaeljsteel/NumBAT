@@ -20,7 +20,6 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import plotting
 from numbattools import launch_worker_threads_and_wait
 from nbanalytic import ElasticRod, chareq_elastic_rod
 
@@ -205,7 +204,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, simres_EM, cmat):
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            plotting.plot_modes(simres_AC, ivals=range(nmodes), prefix=prefix+'_%d'%iq)
+            simres_AC.plot_modes(ivals=range(nmodes), prefix=prefix+'_%d'%iq)
 
         return (iq, tq, v_nu_num)
 

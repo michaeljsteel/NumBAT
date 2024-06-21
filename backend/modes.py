@@ -187,12 +187,15 @@ class ModePlotHelper:
         return shiftx, shifty
 
     def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy):
-        fig, axs=plt.subplots(1,2)
+        fig, axs=plt.subplots(1,1)
         axs[0].triplot(triang1p, linewidth=.5)
-        axs[1].triplot(triang6p, linewidth=.5)
-        for ax in axs:
-            ax.set_aspect(1.0)
-            ax.scatter(mesh_xy[1,:], mesh_xy[1,:], s=2, c='red')
+        #axs[1].triplot(triang6p, linewidth=.5)
+        #for ax in axs:
+        axs[0].set_aspect(1.0)
+        axs[0].scatter(mesh_xy[0,:], mesh_xy[1,:], s=2, c='red')
+
+        axs[0].set_xlabel(r'$x$ [μm]')
+        axs[0].set_ylabel(r'$y$ [μm]')
 
         pref = numbat.NumBATApp().outprefix()
         fname = pref + f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
@@ -271,7 +274,14 @@ class ModePlotHelper:
         tri_triang1p = matplotlib.tri.Triangulation(mesh_xy[0,:], mesh_xy[1,:], v_triang1p)
 
 
-        self._save_triangulation_plots(tri_triang1p, tri_triang6p, mesh_xy)
+        # The v_triangs are lists of index nodes
+        # the tri_triangs are actual points
+        pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p*1e6, v_y6p*1e6, v_triang6p)
+        pl_tri_triang1p = matplotlib.tri.Triangulation(mesh_xy[0,:]*1e6, mesh_xy[1,:]*1e6, v_triang1p)
+
+        draw_triangulation = False
+        if draw_triangulation:
+            self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p, mesh_xy*1e6)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         # create rectangular arrays corresponding to the v_x, v_y grids

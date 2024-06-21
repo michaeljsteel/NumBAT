@@ -1,5 +1,5 @@
 """ Example showing how the 'onion' geometry template can be used
-    to calculate the dispersion profile of standard SMF-28 optical fibre.
+    to calculate the electromagnetic dispersion curves of a cylindrical rod.
 """
 
 import os
@@ -133,7 +133,7 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
         simres_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
         neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
 
-        if doplot: # Only worker 1 will ever do this
+        if False and doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 multiprocessing.current_process().name, ik, len(kvec)-1))
             simres_EM.plot_modes(ivals=range(nmodes),
@@ -235,7 +235,7 @@ def solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad):
     nmodes = 20
     nbasis = 40
 
-    ksteps_num=50
+    ksteps_num=10
     ksteps_analytic=200
 
     lam_hi=3000    # wavelength range in nm
@@ -267,10 +267,9 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(12, sys.argv)
 
-
     # Geometric Parameters - all in nm.
 
-    smf28 = False  # which system to study: SMF-28 or chalc rod in silica
+    smf28 = 'smf28' in sys.argv  # which system to study: SMF-28 or chalc rod in silica
 
     mat_SiO2_GeO2= materials.make_material("SiO2GeO2_smf28")
     mat_SiO2= materials.make_material("SiO2_smf28")
@@ -301,20 +300,19 @@ def do_main():
     rclad = dclad/2.0
     ncore = np.real(mat_core.refindex_n)
     nclad = np.real(mat_clad.refindex_n)
-    acore = rcore*2           #annular thickness of each layer (first is diam)
+    acore = rcore*2           #diameter of the core (first is diam)
     aclad = rclad - rcore     #annular thickness of each layer
 
+    # Solving with either a 1-layer or 2-layer approach
     onion=1
     if onion == 1:
         inc_shape = 'circ_onion1'
-        unitcell_x = rcore*10  # system size in nm
-        unitcell_y = unitcell_x
         mat_bkg = mat_clad  # because the background is now the second layer, ie the cladding
     elif onion == 2:
         inc_shape = 'circ_onion2'
-        unitcell_x = rcore*10  # system size in nm
-        unitcell_y = unitcell_x
 
+    unitcell_x = rcore*10  # system size in nm
+    unitcell_y = unitcell_x
 
     wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, acore,   # remove these factors of 2
                                inc_b_x=aclad,
