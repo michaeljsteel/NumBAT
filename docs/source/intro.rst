@@ -16,7 +16,12 @@ Introduction to |NUMBAT|
 Introduction
 ================
 
-|NUMBAT|, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
+|NUMBAT|, the *Numerical Brillouin Analysis Tool*, is a software tool integrating electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
+Most notably, this includes Stimulated Brillouin Scattering (SBS) frequency shifts and optical gains.
+
+This chapter provides some background on the capabilities and techniques used in |NUMBAT|.
+If you would like to get straight to computations, 
+jump ahead to the installation and setup instructions in :ref:`chap-install-label`.
 
 Goals
 ================
@@ -30,7 +35,7 @@ arbitrary acoustic anisotropy.
 set of standard properties and geometries which will allow all groups to test and validate each other's
 work.
 
-A full description of the |NUMBAT| physics and numerical algorithms  is available in the article B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019),
+A full description of |NUMBAT|'s physical and numerical algorithms is available in the article B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019),
 available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 
@@ -62,6 +67,29 @@ Contributing to NumBAT
 ================================
 NumBAT is open source software licensed under the GPL with all source and documentation available
 at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
+
+About our mascot
+================================
+The **numbat** (*Myrmecobius fasciatus*) is a delightful insect-eating marsupial 
+from Western Australia, of which it is the official state animal.
+It has two other common names, *noombat* in the Nyungar language, 
+and *walpurti* in the Pitjantjatjara language. 
+As a carnivorous marsiupial, they belong to the order Dasyuromorphia, closely related to quolls and
+the famed thylacines which had similar markings on their lower back.
+Once found across southern Australia, numbats are now confined to small local groups 
+in Western Australia and the species has Endangered status.
+
+.. figure:: ./numbat_face.jpg
+   :scale: 40 %
+
+   A numbat at Perth zoo in 2010. `(Creative commons) <https://commons.wikimedia.org/wiki/File:Numbat_Face.jpg>`_.
+
+Apart from the distinctive striped back (which we like to think of as an acoustic wave made flesh),
+numbats have a number of unique properties. They are the only fully diurnal marsupial. 
+They are insectivores and eat exclusively termites, perhaps 20000 each day!
+
+To find out how you can support the care and revitalisation of this beautiful animal, check out the work at 
+`projectnumbat <numbat.org.au>`_ and the `Australian Wildlife Conservancy <https://www.australianwildlife.org/wildlife/numbat>`_.
 
 
 Support
@@ -127,12 +155,19 @@ CHECK THE FACTOR of HALF here.
    :nowrap:
 
    \begin{align*}
-   \vec E(x,y,z,t) = & \frac{1}{2} \left ( {\vec \cal E}(\vec r) e^{- i  \omega t } + {\vec \cal E}^* (\vec r) e^{- i  \omega t } \right) \\
-                   = & \frac{1}{2} \left ( a(z) \vec e(x,y) e^{i (kz-\omega t) } + a^*(z) \vec e(x,y) e^{-i (kz-\omega t) } \right),
+   \vec E(x,y,z,t) = & \tfrac{1}{2} 
+   \left( 
+   {\vec {\mathcal{E}}}   (\vecr) e^{- i  \omega t } + 
+   {\vec {\mathcal{E}}}^* (\vecr) e^{ i  \omega t } 
+   \right) \\
+      = & \tfrac{1}{2} \left( 
+            a(z) \vece(x,y) e^{i (kz-\omega t) } + a^*(z) \vece^*(x,y) e^{-i (kz-\omega t) } 
+            \right),
    \end{align*}
 
 
-in terms of the complex field amplitude :math:`\mathcal{E}(\vec r)`, the mode profile :math:`\vec e(x,y)` and the complex slowly-varying envelope function :math:`a(z)`.
+in terms of the complex field amplitude :math:`\vcalE(\vecr)`, 
+the mode profile :math:`\vece(x,y)` and the complex slowly-varying envelope function :math:`a(z)`.
 
 By Faraday's law the complex magnetic field amplitude is given by
 

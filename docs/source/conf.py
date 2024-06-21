@@ -307,39 +307,55 @@ latex_maketitle = r'''
 '''
 
 latex_elements = {
-     # The paper size ('letterpaper' or 'a4paper').
-     #
-     'papersize': 'a4paper',
+        # The paper size ('letterpaper' or 'a4paper').
+        #
+        'papersize': 'a4paper',
 
-     # The font size ('10pt', '11pt' or '12pt').
-     #
-     # 'pointsize': '10pt',
+        # The font size ('10pt', '11pt' or '12pt').
+        #
+        # 'pointsize': '10pt',
 
-     # Additional stuff for the LaTeX preamble.
-     #
-     # 'preamble': '',
+        # Additional stuff for the LaTeX preamble.
+        #
 
-     # Latex figure (float) alignment
-     #
-     #'figure_align': 'htbp',
-     'figure_align': 'H',
+        # Latex figure (float) alignment
+        #
+        #'figure_align': 'htbp',
+        'figure_align': 'H',
 
-#     'maketitle': latex_maketitle,
+        #     'maketitle': latex_maketitle,
 
-}
+        'preamble': r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
+        }
+
+try:
+    pngmath_latex_preamble
+except NameError:
+    pngmath_latex_preamble = ''
+
+
+with open('latex_macros.sty') as f:
+    for macro in f:
+        latex_elements['preamble'] += '\n' + macro
+        pngmath_latex_preamble += '\n' + macro
+
+
+
+print('latex', latex_elements['preamble'])
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'NumBAT.tex', u'NumBAT Documentation',
-u'Bjorn Sturmberg, Blair Morrison, Mike Smith, \\\\ Christopher Poulton and Michael Steel' , 'manual'),
-]
+        #(master_doc, 'NumBAT.tex', u'NumBAT Documentation',
+        (master_doc, 'NumBAT.tex', u'NumBAT - The Numerical Brillouin Analysis Tool',
+         u'Bjorn Sturmberg, Blair Morrison, Mike Smith, \\\\ Christopher Poulton and Michael Steel' , 'manual'),
+        ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 #
-# latex_logo = None
+latex_logo = "NumBAT_logo.png"
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
@@ -374,9 +390,9 @@ u'Bjorn Sturmberg, Blair Morrison, Mike Smith, \\\\ Christopher Poulton and Mich
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'numbat', u'NumBAT Documentation',
-     [author], 1)
-]
+        (master_doc, 'numbat', u'NumBAT Documentation',
+         [author], 1)
+        ]
 
 # If true, show URL addresses after external links.
 #
@@ -389,10 +405,10 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'NumBAT', u'NumBAT Documentation',
-     author, 'NumBAT', 'One line description of project.',
-     'Miscellaneous'),
-]
+        (master_doc, 'NumBAT', u'NumBAT Documentation',
+         author, 'NumBAT', 'One line description of project.',
+         'Miscellaneous'),
+        ]
 
 # Documents to append as an appendix to all manuals.
 #

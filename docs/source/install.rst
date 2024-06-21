@@ -211,7 +211,7 @@ The following steps have worked for us:
 
 #. Open a terminal window on your desktop.
 
-#. Ensure you have the Xcode Command Line Tools installed. This is the basic package for command line development on MacOS. Enter the following command and then follow the prompts.
+#. Ensure you have the Xcode Command Line Tools installed. This is the basic package for command line development on MacOS. Enter the following command and then follow the prompts::
 
    $ xcode-select --install
 

@@ -63,21 +63,21 @@ def modes_n_gain(wwguide):
         wguide.inc_a_x/known_geo
 
     # Calculate Electromagnetic modes.
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-                   sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
+                   simres_EM_Stokes.kz_EM(EM_ival_Stokes))
 
     # Calculate Acoustic modes.
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+    simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
 
     # Calculate interaction integrals and SBS gain.
-    gain = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+    gain_box = integration.get_gains_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
     print('Process %d, thread %s: completed mode calculation for width a_x = %.3f' % (
         os.getpid(), thread_nm, wguide.inc_a_x))
-    return [width, sim_EM_pump, sim_AC, gain]
+    return [width, simres_EM_pump, simres_AC, gain_box]
 
 
 n_widths = 6
@@ -128,23 +128,23 @@ interp_grid = np.linspace(int_min, int_max, interp_grid_points)
 
 for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
-    width, sim_EM_pump, sim_AC, gain = width_obj
+    width, simres_EM_pump, simres_AC, gain_box = width_obj
 
-    sim_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
+    simres_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
 
-    sim_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
+    simres_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
     # np.round(np.real((q_AC/2.)*((lambda_nm*1e-9)/(2.*np.pi))), 4)
-    n_eff_sim = sim_EM_pump.neff(0)
+    n_eff_sim = simres_EM_pump.neff(0)
     n_effs.append(n_eff_sim)
 
     # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
-    freq_min = np.real(sim_AC.nu_AC_all()[0]) - 5e9  # Hz
-    freq_max = np.real(sim_AC.nu_AC_all()[-1]) + 5e9  # Hz
+    freq_min = np.real(simres_AC.nu_AC_all()[0]) - 5e9  # Hz
+    freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 5e9  # Hz
     decorator = plotting.Decorator()
     decorator.set_title(f'Gain for width $w={width:.2f}.2f$ nm')
-    gain.plot_spectra(freq_min=freq_min, freq_max=freq_max,
+    gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max,
                       suffix=f'_wscan_{i_w}' ,  # include scan step in file name
                       decorator=decorator)
 
@@ -155,12 +155,13 @@ for i_w, width_obj in enumerate(v_width_data):
                                np.linspace(0, tune_range, tune_steps)[1:])  # Hz
 
     # Linewidth of Lorentzian is half the FWHM style linewidth.
-    linewidth = gain.linewidth_Hz_all()/2
+    linewidth = gain_box.linewidth_Hz_all()/2
     num_modes = len(linewidth)
+    gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
     for m in range(num_modes):
-        gain_list = np.real(SBS_gain[EM_ival_Stokes, EM_ival_pump, m]
-                            * linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
-        freq_list = np.real(sim_AC.nu_AC(m) + detuning_range)
+        gain_list = np.real(gain_box.gain_total(m) * linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
+                #gain_box.SBS_gain[EM_ival_Stokes, EM_ival_pump, m]
+        freq_list = np.real(simres_AC.nu_AC(m) + detuning_range)
         interp_spectrum = np.interp(interp_grid, freq_list, gain_list)
         interp_values += interp_spectrum
     freqs_gains.append(list(zip(interp_grid*1e-9, abs(interp_values))))
