@@ -77,7 +77,8 @@ for i_lc, lc_ref in enumerate(lc_list):
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-    conv_list.append([sim_EM_pump, sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB])
+    conv_list.append([sim_EM_pump, sim_AC, gain_box.gain_total_all(), 
+                      gain_box.gain_PE_all(), gain_box.gain_MB_all()])
     end = time.time()
     time_list.append(end - start)
 
@@ -97,12 +98,10 @@ for i_conv, conv_obj in enumerate(conv_list):
     rel_mode_kz_EM[i_conv] = conv_obj[0].kz_EM(0)
     for i_m, rel_mode in enumerate(rel_modes):
         rel_mode_freq_AC[i_conv, i_m] = conv_obj[1].nu_AC(rel_mode)
-        rel_mode_gain[i_conv, i_m] = conv_obj[2][EM_ival_Stokes,
-                                                 EM_ival_pump, rel_mode]
-        rel_mode_gain_PE[i_conv, i_m] = conv_obj[3][EM_ival_Stokes,
-                                                    EM_ival_pump, rel_mode]
-        rel_mode_gain_MB[i_conv, i_m] = conv_obj[4][EM_ival_Stokes,
-                                                    EM_ival_pump, rel_mode]
+        rel_mode_gain[i_conv, i_m] = conv_obj[2][rel_mode]
+        rel_mode_gain_PE[i_conv, i_m] = conv_obj[3][rel_mode]
+        rel_mode_gain_MB[i_conv, i_m] = conv_obj[4][rel_mode]
+                                                   
 
 
 xlabel = "Mesh Refinement Factor"

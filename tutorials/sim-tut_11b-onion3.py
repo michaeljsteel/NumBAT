@@ -43,7 +43,6 @@ nbapp = numbat.NumBATApp(prefix)
 # Use of a more refined mesh to produce field plots.
 wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x,
                            inc_b_x=inc_b_x, inc_c_x=inc_c_x,
-                           unitcell_y=unitcell_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("As2S3_2021_Poulton"),
                            material_b=materials.make_material("SiO2_2021_Poulton"),
@@ -59,50 +58,50 @@ new_calcs = True
 
 # Calculate Electromagnetic modes.
 if new_calcs:
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
-    # sim_EM_pump.save_simulation('tut_11b_pump')
-    # sim_EM_Stokes.save_simulation('tut_11b_stokes')
+    # simres_EM_pump.save_simulation('tut_11b_pump')
+    # simres_EM_Stokes.save_simulation('tut_11b_stokes')
 else:
-    sim_EM_pump = mode_calcs.load_simulation('tut_11b_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation('tut_11b_stokes')
+    simres_EM_pump = mode_calcs.load_simulation('tut_11b_pump')
+    simres_EM_Stokes = mode_calcs.load_simulation('tut_11b_stokes')
 
 # Display the wavevectors of EM modes.
-v_kz = sim_EM_pump.kz_EM_all()
+v_kz = simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz):
     print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff(0))
+n_eff_sim = np.real(simres_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
 # # Plot the E fields of the EM modes fields
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (ival = 0) mode.
 
-for em_ac in ('EM_E', 'EM_H'):
-    sim_EM_pump.plot_modes(ivals=range(10))
+for ft in ('EM_E', 'EM_H'):
+    simres_EM_pump.plot_modes(ivals=range(10), field_type = ft)
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-               sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
+               simres_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 # Calculate Acoustic modes.
 if new_calcs:
-  sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
-#  sim_AC.save_simulation('tut_11b_acoustic')
+  simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
+#  simres_AC.save_simulation('tut_11b_acoustic')
 else:
-  sim_AC = mode_calcs.load_simulation('tut_11b_acoustic')
+  simres_AC = mode_calcs.load_simulation('tut_11b_acoustic')
 
 # Print the frequencies of AC modes.
-v_nu = sim_AC.nu_AC_all()
+v_nu = simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
   print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
-sim_AC.plot_modes(xlim_min=-.2, xlim_max=-.2, ylim_min=-.2, ylim_max=-.2,
+simres_AC.plot_modes(xlim_min=-.2, xlim_max=-.2, ylim_min=-.2, ylim_max=-.2,
                            ivals=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
