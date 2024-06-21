@@ -57,7 +57,6 @@ The corresponding results generated with ``sim-josab-02.py`` are as follows:
 
 
 .. figure:: ./images/josab_tutorial/josab_02a-gain_spectra.png
-.. .. figure:: ./images/josab_tutorial/josab_02b-disp-qnu.png
    :width: 15cm
 
 
