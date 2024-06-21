@@ -53,7 +53,7 @@ AC_ival = 'All'
 # Use specified parameters to create a waveguide object.
 # to save the geometry and mesh as png files in backend/fortran/msh/
 
-nbapp = numbat.NumBATApp()
+nbapp = numbat.NumBATApp('tut_01')
 
 
 wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,

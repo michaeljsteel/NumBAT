@@ -13,7 +13,6 @@ import numbat
 import materials
 import mode_calcs
 
-import plotting
 
 import starter
 

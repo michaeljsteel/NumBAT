@@ -355,16 +355,27 @@ def do_main():
 
     # Geometric Parameters - all in nm.
 
+
+
+    # TODOL This doesn't work because material tensors aren't reconstructed after initial setup
+    # set_refractive_index() needs to trigger a rebuild
+#    mat_a = materials.make_material("SiO2_smf28")
+#    mat_b = copy.deepcopy(mat_a)
+#    mat_vac= materials.make_material("Vacuum")
+#
+#    deltan = 0.05
+#    ncore = 1.50 + deltan
+#    nclad = 1.50 - deltan
+#    mat_a.set_refractive_index(nclad)
+#    mat_b.set_refractive_index(ncore)
+
     mat_a = materials.make_material("SiO2_smf28")
-    mat_b = copy.deepcopy(mat_a)
+    mat_b = materials.make_material("Si_2021_Poulton")
     mat_vac= materials.make_material("Vacuum")
+    nclad = mat_a.refindex_n
+    ncore = mat_b.refindex_n
 
-    deltan = 0.05
-    ncore = 1.50 + deltan
-    nclad = 1.50 - deltan
 
-    mat_a.epsilon=nclad**2
-    mat_b.epsilon=ncore**2
     rcore = 3250  # radius 3.25 micron
     rn = 1000  # annular layer thickness
     acore = 2*rcore  # central layer diameter

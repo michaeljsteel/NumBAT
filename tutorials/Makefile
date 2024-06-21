@@ -7,7 +7,7 @@ all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
 				ftut08 ftut09 ftut11a  ftut12 ftut13 ftut14
 allfastb: ftut05 ftut06 ftut07 \
-				ftut08 ftut09 ftut11a  ftut12 ftut13 ftut14
+				ftut08 ftut09 ftut11a  ftut11b ftut12 ftut13 ftut14
 
 broken: tut10
 
@@ -94,8 +94,10 @@ ftut11b:
 
 tut12: 
 	$(PYTHON) sim-tut_12.py
+	$(PYTHON) sim-tut_12.py smf28
 ftut12: 
 	$(PYTHON) sim-tut_12.py fast=1
+	$(PYTHON) sim-tut_12.py fast=1 smf28
 
 tut13: 
 	$(PYTHON) sim-tut_13.py
