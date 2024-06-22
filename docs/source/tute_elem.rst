@@ -220,15 +220,10 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 Tutorial 4 -- Parameter Scan of Widths
 ----------------------------------------
 This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a
-parameter scan of a waveguide property, in this case over the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
-
-The results are displayed in a 3D plot. This may not be the most effective
-approach for this small data set but gives a sense of what is possible graphically.
-For a more effective plot, you might like to try the same calculation with around 30 values for the
-width rather than just 6.
+parameter scan of a waveguide property, in this case the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
 
 
-.. figure:: ./images/tutorial/tut_04-gain_spectra-waterfall.png
+.. figure:: ./images/tutorial/tut_04-out/tut_04-gain_spectra-scan.png
    :width: 10cm
 
    Gain spectra as function of waveguide width.
@@ -256,22 +251,22 @@ and then increase the resolution once again towards the end of the project to va
 results before reporting them.
 
 
-.. figure:: ./images/tutorial/tut_05-convergence-freq_EM.png
+.. figure:: ./images/tutorial/tut_05-out/tut_05-convergence-freq_EM.png
    :width: 10cm
 
    Convergence of relative (blue) and absolute (red) optical wavenumbers :math:`k_{z,i}`.
-   The left axis displays the relative error :math:`(k_{z,i}-k_{z,0})/k_{z,0}`.
+   The left axis displays the relative error :math:`|k_{z,i}-k_{z,0}|/k_{z,0}`.
    The right axis shows the absolute values of :math:`k_{z,i}`.
 
 
-.. figure:: ./images/tutorial/tut_05-convergence-freq_AC.png
+.. figure:: ./images/tutorial/tut_05-out/tut_05-convergence-freq_AC.png
    :width: 10cm
 
    Convergence of relative (solid, left) and absolute (chain, right)
    elastic mode frequencies :math:`\nu_{i}`.
 
 
-.. figure:: ./images/tutorial/tut_05-convergence-gain_PE.png
+.. figure:: ./images/tutorial/tut_05-out/tut_05-convergence-gain_PE.png
    :width: 10cm
 
    Convergence of photoelastic gain :math:`G^\text{PE}`. The absolute gain on the right hand side
@@ -279,13 +274,13 @@ results before reporting them.
    with negative gain.
 
 
-.. figure:: ./images/tutorial/tut_05-convergence-gain_MB.png
+.. figure:: ./images/tutorial/tut_05-out/tut_05-convergence-gain_MB.png
    :width: 10cm
 
    Absolute and relative convergence of moving boundary gain :math:`G^\text{MB}`.
 
 
-.. figure:: ./images/tutorial/tut_05-convergence-gain.png
+.. figure:: ./images/tutorial/tut_05-out/tut_05-convergence-gain.png
    :width: 10cm
 
    Absolute and relative convergence of total gain :math:`G`.
@@ -307,18 +302,30 @@ mode associated with the resonance.  This is very helpful in identifying which
 acoustic mode profiles to examine more closely.  In this case, modes 5, 8 and
 23 give the most significant Brillouin gain.  The number of modes labelled in the gain spectrum can
 be controlled using the parameter ``mark_mode_thresh`` in the function
-``plotting.plot_gain_spectra`` to avoid many labels from modes giving
+``plot_spectra()`` to avoid many labels from modes giving
 negligible gain.
-Other parameters allow selecting only one type of gain (PE or MB), changing the frequency range, and plotting on log or dB scales.
+Other parameters allow selecting only one type of gain (PE or MB),
+changing the frequency range (``freq_min``, ``freq_max``),
+and plotting with log (``logy=True``) or dB (``dB=True``) scales.
+Note that plots with log scales do not include any noise floor so the peaks
+look much cleaner than could be observed in the laboratory.
 
 It is important to remember that the total gain is not the simple sum of the photoelastic
-(PE) and moving boundary (MB) gains. Rather it is the coupling terms :math:`Q_\text{PE}` and :math:`Q_\text{MB}` which are added before squaring to give the total gain.  Indeed the two effects may have opposite sign giving net gains smaller than either contribution.
+(PE) and moving boundary (MB) gains. Rather it is the coupling terms :math:`Q_\text{PE}`
+and :math:`Q_\text{MB}` which are added before squaring to give the total gain.
+Indeed the two effects may have opposite sign so that the net gain can be
+smaller than either contribution.
 
 .. figure:: ./images/tutorial/tut_06-gain_spectra.png
    :width: 10cm
 
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving
    boundary effect (PB), and the net gain (Total).
+
+.. figure:: ./images/tutorial/tut_06-gain_spectra-logy.png
+   :width: 10cm
+
+   The same data displayed on a log plot using ``logy=True``.
 
 .. figure:: ./images/tutorial/tut_06-fields/EM_E_field_00.png
    :width: 10cm
@@ -360,6 +367,12 @@ the :math:`m=1` mode gives zero gain due to its anti-symmetry relative to the pu
 
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving
    boundary effect (PB), and the net gain (Total).
+
+.. figure:: ./images/tutorial/tut_07-gain_spectra-logy.png
+   :width: 10cm
+
+   Gain data shown on a log scale.
+
 
 .. figure:: ./images/tutorial/tut_07-fields/EM_E_field_00.png
    :width: 10cm

@@ -18,7 +18,6 @@
 
 
 import copy
-from pathlib import Path
 
 import integration
 import numbat
@@ -33,7 +32,7 @@ from nbtypes import (
     SI_to_gmpercc,
     SimType,
     SymRep,
-    speed_c,
+    SI_speed_c,
     twopi,
 )
 from numbattools import process_fortran_return
@@ -393,7 +392,9 @@ class SimResult:
         xlim_max=0,
         ylim_min=0,
         ylim_max=0,
+        aspect = 1.0,
         field_type="EM_E",
+        hide_vector_field=False,
         num_ticks=None,
         colorbar=True,
         contours=False,
@@ -465,25 +466,27 @@ class SimResult:
 
         pf = nbapp.outpath_fields()
         if prefix and not pf.exists():
-            pf.mkdir()  
+            pf.mkdir()
 
         mode_helper.update_plot_params(
             {
-                xlim_min: xlim_min,
-                xlim_max: xlim_max,
-                ylim_min: ylim_min,
-                ylim_max: ylim_max,
-                field_type: field_type,
-                quiver_points: quiver_points,
-                num_ticks: num_ticks,
-                colorbar: colorbar,
-                contours: contours,
-                contour_lst: contour_lst,
-                prefix: prefix,
-                suffix: suffix,
-                ticks: ticks,
-                decorator: decorator,
-                suppress_imimre: suppress_imimre,
+                'xlim_min': xlim_min,
+                'xlim_max': xlim_max,
+                'ylim_min': ylim_min,
+                'ylim_max': ylim_max,
+                'aspect': aspect,
+                'field_type': field_type,
+                'hide_vector_field': hide_vector_field,
+                'quiver_points': quiver_points,
+                'num_ticks': num_ticks,
+                'colorbar': colorbar,
+                'contours': contours,
+                'contour_lst': contour_lst,
+                'prefix': prefix,
+                'suffix': suffix,
+                'ticks': ticks,
+                'decorator': decorator,
+                'suppress_imimre': suppress_imimre,
             }
         )
 
@@ -509,7 +512,7 @@ class EMSimResult(SimResult):
 
         self.lambda_m = sim.lambda_m
         self.omega_EM = (
-            twopi * speed_c / self.lambda_m
+            twopi * SI_speed_c / self.lambda_m
         )  # Angular freq in units of rad/s
         self.k_0 = twopi / self.lambda_m
 
@@ -582,7 +585,7 @@ class EMSimResult(SimResult):
 
         if abs(self.EM_mode_energy[m]) > 0.0:
             vg = np.real(self.EM_mode_power[m] / self.EM_mode_energy[m])
-            ng = speed_c / vg
+            ng = SI_speed_c / vg
         else:
             ng = 0
 
@@ -602,7 +605,7 @@ class EMSimResult(SimResult):
             )
             return np.zeros(len(self.eigs_kz), dtype=float)
         vg = np.real(self.EM_mode_power / self.EM_mode_energy)
-        ng = speed_c / vg
+        ng = SI_speed_c / vg
         return ng
 
     def kz_EM(self, m):
@@ -919,7 +922,7 @@ class EMSimulation(Simulation):
             fm.n_msh_el,
             #opt_props.n_mats_em,   # out to work nicely with gcc + intel f2py
             opt_props.v_refindexn,
-        )  
+        )
 
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)
@@ -1138,7 +1141,7 @@ class ACSimulation(Simulation):
             fm.ac_mesh_from_em,
             fm.mesh_mail_fname,
             #fm.n_msh_pts,
-            #fm.n_msh_el,  
+            #fm.n_msh_el,
             fm.node_physindex,  # => fort: type_nod
             fm.table_nod,       # => fort: table_nod
             fm.v_el_2_mat_idx,  # => fort: type_el

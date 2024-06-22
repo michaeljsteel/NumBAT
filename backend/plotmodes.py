@@ -166,7 +166,7 @@ class Decorator(object):
         mp_base_fs = 18
         sp_base_fs = 24
 
-        self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .4,
+        self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .6,
                              'title_fs': mp_base_fs-2, 'subtitle_fs': mp_base_fs-5,
                              'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
                              'data_label_fs': mp_base_fs-8,
@@ -289,7 +289,7 @@ def get_quiver_skip_range(npts, skip):
     return np.array(range(j0, npts, skip))
 
 
-def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
+def add_contour_plot(fig, ax, d_xy, c_field, cc_cont, plps, decorator):
 
     cmap_signed = 'seismic'   # This should be a plot_param
     cmap_unsigned = 'OrRd'
@@ -358,11 +358,18 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
                 cbarticks = np.linspace(act_zlo, act_zhi, nt)
 
     if do_cbar:
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size=decorator.get_property('cbar_size'),
-                                    pad=decorator.get_property('cbar_pad'))
-        cbar = plt.colorbar(im_co, cax=cax)
-        if not cbarticks is None:
+        #divider = make_axes_locatable(ax)
+
+        #cax = divider.append_axes("right", size=decorator.get_property('cbar_size'),
+         #                           pad=decorator.get_property('cbar_pad'))
+        #cbar = plt.colorbar(im_co, cax=cax)
+        #print('pad',decorator.get_property('cbar_pad'))
+        #cbpad = 0.05
+        cax = ax.inset_axes([1.04, .2, 0.05, 0.6])
+        cbar=fig.colorbar(im_co, cax=cax)
+
+
+        if cbarticks is not None:
             cbar.set_ticks(cbarticks)
             cbarlabels = [f'{t:.2f}' for t in cbarticks]
             cbar.set_ticklabels(cbarlabels)
@@ -377,7 +384,7 @@ def add_contour_plot(ax, d_xy, c_field, cc_cont, plps, decorator):
 
     return im_co, cbar
 
-def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
+def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     quiver_points = plps.get('quiver_points', 20)
 
@@ -440,7 +447,8 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
     if not do_cont:
-        ax.set_aspect('equal')
+        # ax.set_aspect('equal')  # UNDO
+
         # this step is needed because quiver doesn't seem
         # to use its input x and y vectors to set range limits
         # clean this up so as to avoid seemingly circular calls following
@@ -449,21 +457,21 @@ def add_quiver_plot(ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
 
-def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None):
+def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None):
 
     #v_x, v_y, m_X, m_Y = list(d_xy.values())
 
-    do_cont = not cc_scalar is None
-    do_quiv = not cc_vector is None
+    do_cont = cc_scalar is not None
+    do_quiv = cc_vector is not None
 
     decorator = plps['decorator']
 
     cbar = None
     if do_cont:
-        im_co, cbar = add_contour_plot(ax, d_xy, v_fields[cc_scalar._f_code], cc_scalar, plps, decorator)
+        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[cc_scalar._f_code], cc_scalar, plps, decorator)
 
     if do_quiv:
-        add_quiver_plot(ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
+        add_quiver_plot(fig, ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
 
     # Adjustments to the visible plot domain
 
@@ -499,12 +507,14 @@ def plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=
     if do_quiv: labs.append(cc_vector.get_label())
     comp_label = ', '.join(labs)
 
-    lw = decorator.get_property('linewidth')
+    #lw = decorator.get_property('linewidth')# TODO: Unused
     ec = decorator.get_property('edgecolor')
 
+    aspect = plps.get('aspect', 1.0)
     tidy = TidyAxes(nax=6,
                     props={'axes_color':ec, 'cb_edgecolor':ec,
-                        'ax_label_xpad':3, 'ax_label_ypad':1 })
+                        'ax_label_xpad':3, 'ax_label_ypad':1,
+                        'aspect':aspect })
 
     tidy.apply_to_axes(ax)
     if cbar:
@@ -637,15 +647,15 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     ws = decorator.get_property('subplots_wspace')
     hs = decorator.get_property('subplots_hspace')
 
-
     decorator.set_frame_drawer(sim_result._structure.wg_geom)
-
 
     hide_minors = plps['suppress_imimre']
     rows = 2 if hide_minors else 3
 
-    fig, axs = plt.subplots(rows, 3, figsize=figsz, )
-    fig.subplots_adjust(hspace=hs, wspace=ws)
+    fig, axs = plt.subplots(rows, 3, figsize=figsz
+                            #, layout='constrained'
+                            )
+    fig.subplots_adjust(hspace=hs, wspace=ws*1.5)
 
     axs = axs.flat
     axi = 0
@@ -657,11 +667,14 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     cc_scal = field_type_to_intensity_code(ft)
     cc_transvec = field_type_to_vector_code(ft)
 
-    ax = axs[axi]; axi += 1
-    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)  # the whole field
+    ax = axs[axi]; axi += 1  # the whole field
+    if plps['hide_vector_field']:
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal)
+    else:
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
 
-    ax = axs[axi]; axi += 1
-    plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_vector=cc_transvec)  # the intensity
+    ax = axs[axi]; axi += 1  # the intensity
+    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_vector=cc_transvec)
 
     for flab in v_plots.keys():
         cc = component_t.make_comp(ft, flab)
@@ -670,7 +683,7 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
             continue
 
         ax = axs[axi]; axi += 1
-        plot_contour_and_quiver(ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
 
 
     fig_fname = modeplot_filename(plps, ival)
@@ -693,7 +706,8 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
     cc_transvec = field_type_to_vector_code(ft)
 
 
-    plot_contour_and_quiver(ax, d_xy, v_fields, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
+    plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
+                            cc_scalar=cc_scal, cc_vector=cc_transvec)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename(plps, ival, cc._user_code)

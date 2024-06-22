@@ -158,7 +158,7 @@
         "riby",
         "savetxt",
         "scipy",
-        "semilogy",
+        "logy",
         "significant",
         "simo",
         "Sonoma",
@@ -200,5 +200,8 @@
     ],
     "python.defaultInterpreterPath": "/home/msteel/mypy3-12",
     "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.extraPaths": [ 
+        "${workspaceFolder}/backend", 
+        "${workspaceFolder}/backend/fortran"]
 }
 

@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.tri
 
 import numbat
-from nbtypes import FieldType, component_t, SI_um, vacuum_impedance_Z0
-from numbattools import int2d, int2d_trapz, np_min_max
+from nbtypes import FieldType, component_t, SI_um, SI_vacuum_impedance_Z0
+from numbattools import int2d_trapz, np_min_max
 from plottools import save_and_close_figure
 import plotmodes
 import reporting
@@ -20,21 +20,21 @@ def check_triangulation(vx, vy, triangs):
     print('\n\nChecking triangulation goodness')
     npts = len(vx)
     dsepmin = 1e6
-    dsi=0
-    dsj=0
+    dsi = 0
+    dsj = 0
     for i in range(npts):
         for j in range(i+1, npts):
-            dsep = sqrt( (vx[i]-vx[j])**2 +(vy[i]-vy[j])**2)
+            dsep = sqrt((vx[i]-vx[j])**2 + (vy[i]-vy[j])**2)
             if dsep < dsepmin:
                 dsepmin = dsep
-                dsi=i
-                dsj=j
-
+                dsi = i
+                dsj = j
 
     print('  Closest space of triangle points was', dsepmin)
     if dsepmin < 1e-11:
-        msg=f'Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
-        msg+='\nIt seems the mesh grid reordering has failed.'
+        msg = f'Point collision at {dsi}, {
+            dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
+        msg += '\nIt seems the mesh grid reordering has failed.'
         reporting.report_and_exit(msg)
 
     # is list of triangles unique
@@ -51,7 +51,6 @@ def check_triangulation(vx, vy, triangs):
         print("  No doubled triangles found")
     else:
         print("  Found doubled triangles")
-
 
 
 class ModePlotHelper:
@@ -90,9 +89,11 @@ class ModePlotHelper:
 
     def _init_plot_params(self):
         self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
+                            'aspect': 1.0,
                             'ticks': True, 'num_ticks': None,
                             'colorbar': True, 'contours': False, 'contour_lst': None,
                             'EM_AC': FieldType.EM_E,
+                            'hide_vector_field': False,
                             'prefix': 'tmp', 'suffix': '',
                             'decorator': plotmodes.Decorator(),
                             'suppress_imimre': True,
@@ -101,8 +102,6 @@ class ModePlotHelper:
 
     def update_plot_params(self, d_params):
         self.plot_params.update(d_params)
-
-
 
     def interpolate_mode_i(self, ival, field_type):
         # construct the meshed field from fortran solution
@@ -128,10 +127,8 @@ class ModePlotHelper:
 
                 i += 1
 
-
-
         v_F6p = np.sqrt(np.abs(v_Fx6p)**2 +
-                             np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
+                        np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
 
         # Always need these ones.
         m_ReFx = self.interper_f(v_Fx6p.real)
@@ -144,7 +141,6 @@ class ModePlotHelper:
         m_ImFy = self.interper_f(v_Fy6p.imag)
         m_ReFz = self.interper_f(v_Fz6p.real)
 
-
         d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx, 'Fyr': m_ReFy, 'Fyi': m_ImFy,
                     'Fzr': m_ReFz, 'Fzi': m_ImFz, 'Fabs': m_AbsF}
 
@@ -156,8 +152,8 @@ class ModePlotHelper:
 
         fm = self.sim_result.fem_mesh
 
-        x_min, x_max = np_min_max(fm.mesh_xy[0,:])
-        y_min, y_max = np_min_max(fm.mesh_xy[1,:])
+        x_min, x_max = np_min_max(fm.mesh_xy[0, :])
+        y_min, y_max = np_min_max(fm.mesh_xy[1, :])
 
         area = abs((x_max-x_min)*(y_max-y_min))
         n_pts_x = int(n_pts*abs(x_max-x_min)/np.sqrt(area))
@@ -165,7 +161,7 @@ class ModePlotHelper:
 
         # Now use the coords user would like to think in
         shiftx, shifty = self.sim_result.get_xyshift()
-        #self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
+        # self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
 
         # These are the actual x and y domains of the final plots
         v_x = np.linspace(x_min, x_max, n_pts_x)
@@ -178,29 +174,31 @@ class ModePlotHelper:
         v_y_out = (v_y + shifty) / SI_um
         m_X_out, m_Y_out = np.meshgrid(v_x_out, v_y_out)
 
-        self.xy_out = {'v_x': v_x_out, 'v_y': v_y_out, 'm_x': m_X_out, 'm_y': m_Y_out}
+        self.xy_out = {'v_x': v_x_out, 'v_y': v_y_out,
+                       'm_x': m_X_out, 'm_y': m_Y_out}
 
-        print('Structure has raw domain (x,y) = ' \
-            + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0]/SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),' \
-            + "\n             mapped to (x',y') = " \
-            + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
+        print('Structure has raw domain (x,y) = '
+              + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0] /
+                                                                 SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),'
+              + "\n             mapped to (x',y') = "
+              + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
         return shiftx, shifty
 
     def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy):
-        fig, axs=plt.subplots(1,1)
+        fig, axs = plt.subplots(1, 1)
         axs[0].triplot(triang1p, linewidth=.5)
-        #axs[1].triplot(triang6p, linewidth=.5)
-        #for ax in axs:
+        # axs[1].triplot(triang6p, linewidth=.5)
+        # for ax in axs:
         axs[0].set_aspect(1.0)
-        axs[0].scatter(mesh_xy[0,:], mesh_xy[1,:], s=2, c='red')
+        axs[0].scatter(mesh_xy[0, :], mesh_xy[1, :], s=2, c='red')
 
         axs[0].set_xlabel(r'$x$ [μm]')
         axs[0].set_ylabel(r'$y$ [μm]')
 
         pref = numbat.NumBATApp().outprefix()
-        fname = pref + f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
+        fname = pref + \
+            f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
         save_and_close_figure(fig, fname)
-
 
     def setup_plot_grid(self, n_pts=501):
         '''Define interpolation plotting grids for a nominal n_pts**2 points distributed evenly amongst x and y.'''
@@ -218,7 +216,7 @@ class ModePlotHelper:
 
         mesh_xy = fm.mesh_xy  # is in fortran order so indexing below looks backward
 
-        tabnod_py = fm.table_nod.T -1  #  shift fortran to python indexing
+        tabnod_py = fm.table_nod.T - 1  # shift fortran to python indexing
 
         # dense triangulation with multiple points
         v_x6p = np.zeros(6*fm.n_msh_el)
@@ -230,7 +228,6 @@ class ModePlotHelper:
         # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
         # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
 
-
         # create sub-triangles from combos of the element nodes
         for idx in range(0, 6*fm.n_msh_el, 6):
             triangles = [[idx+0, idx+3, idx+5],
@@ -238,8 +235,6 @@ class ModePlotHelper:
                          [idx+2, idx+5, idx+4],
                          [idx+3, idx+4, idx+5]]
             v_triang6p.extend(triangles)
-
-
 
         # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
         # i is the index for the coordinates FIND A BETTER NAME
@@ -251,12 +246,10 @@ class ModePlotHelper:
                 v_y6p[i] = mesh_xy[1, i_ex]
                 i += 1
 
-
-
         # Interpolate onto triangular grid - honest to FEM elements
         # dense triangulation with unique points
         v_triang1p = []
-        #table_nod = self.table_nod
+        # table_nod = self.table_nod
         for i_el in np.arange(fm.n_msh_el):
             triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
                          [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
@@ -267,21 +260,24 @@ class ModePlotHelper:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation(mesh_xy[0,:], mesh_xy[1,:], self.v_triang1p)
+            check_triangulation(mesh_xy[0, :], mesh_xy[1, :], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        tri_triang1p = matplotlib.tri.Triangulation(mesh_xy[0,:], mesh_xy[1,:], v_triang1p)
-
+        tri_triang1p = matplotlib.tri.Triangulation(
+            mesh_xy[0, :], mesh_xy[1, :], v_triang1p)
 
         # The v_triangs are lists of index nodes
         # the tri_triangs are actual points
-        pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p*1e6, v_y6p*1e6, v_triang6p)
-        pl_tri_triang1p = matplotlib.tri.Triangulation(mesh_xy[0,:]*1e6, mesh_xy[1,:]*1e6, v_triang1p)
+        pl_tri_triang6p = matplotlib.tri.Triangulation(
+            v_x6p*1e6, v_y6p*1e6, v_triang6p)
+        pl_tri_triang1p = matplotlib.tri.Triangulation(
+            mesh_xy[0, :]*1e6, mesh_xy[1, :]*1e6, v_triang1p)
 
         draw_triangulation = False
         if draw_triangulation:
-            self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p, mesh_xy*1e6)
+            self._save_triangulation_plots(
+                pl_tri_triang1p, pl_tri_triang6p, mesh_xy*1e6)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         # create rectangular arrays corresponding to the v_x, v_y grids
@@ -298,7 +294,6 @@ class ModePlotHelper:
                 nx, ny)
 
 
-
 class Mode:
     '''This is a base class for both EM and AC modes.'''
 
@@ -313,7 +308,8 @@ class Mode:
         self.r0_offset = (0.0, 0.0)
         self.extra_data = {}
         self.analysed = False
-        self.interpolated = { FieldType.EM_E: False,  FieldType.EM_H: False, FieldType.AC: False }
+        self.interpolated = {FieldType.EM_E: False,
+                             FieldType.EM_H: False, FieldType.AC: False}
         self.d_fields = {}
         self.clear_mode_plot_data()
 
@@ -331,22 +327,16 @@ class Mode:
         else:
             self.field_type = field_type
 
-
         if not self.interpolated[field_type]:
             self.interpolate_mode(mh)
             self.interpolated[field_type] = True
 
-
-
     def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None,
                   n_pts=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
 
-
         self.prepare_mode(n_pts, field_type)
 
-
         mh = self.get_mode_helper()
-
 
         # FIX ME
         if decorator is not None:
@@ -370,7 +360,8 @@ class Mode:
         mh.plot_strain_mode_i(self.mode_num)
 
     def clear_mode_plot_data(self):
-        for k in self.d_fields.keys(): self.d_fields[k] = None
+        for k in self.d_fields.keys():
+            self.d_fields[k] = None
 
     def interpolate_mode(self, mode_helper):
         mh = mode_helper
@@ -378,8 +369,7 @@ class Mode:
 
         if self.field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
             for m_F in self.d_fields.values():   # Do this when they are first made
-                m_F *= vacuum_impedance_Z0
-
+                m_F *= SI_vacuum_impedance_Z0
 
     def _plot_me(self, mode_helper, comps, field_type, ax=None):
 
@@ -399,14 +389,15 @@ class Mode:
         # can't do multiplots on a provided axis (would need a provided figure)
         if ax is None:
             plotmodes.plot_all_components(mh.xy_out, self.d_fields,
-                                         mh.plot_params, self.sim_result, self.mode_num)
+                                          mh.plot_params, self.sim_result, self.mode_num)
 
         if len(comps):
             decorator.set_for_single()
             # options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut']
             for comp in comps:
                 cc = component_t(comp)
-                plotmodes.plot_one_component(mh.xy_out, self.d_fields, mh.plot_params, self.mode_num, cc, ax)
+                plotmodes.plot_one_component(
+                    mh.xy_out, self.d_fields, mh.plot_params, self.mode_num, cc, ax)
 
     def add_mode_data(self, d):
         '''Adds a dictionary of user-defined information about a mode.
@@ -560,17 +551,19 @@ class Mode:
         m_x = mh.xy_out['m_x'].T
         m_y = mh.xy_out['m_y'].T
 
-        dx = m_x[1,0]-m_x[0,0]
-        dy = m_y[1,1]-m_y[1,0]
+        dx = m_x[1, 0]-m_x[0, 0]
+        dy = m_y[1, 1]-m_y[1, 0]
 
         mFs = self.d_fields  # the incoming fields, not necessarily normalised in any way
 
-        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2    # unit = [|F|^2], mag. \approx 1
+        # unit = [|F|^2], mag. \approx 1
+        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2
         m_Fy2 = mFs['Fyr']**2 + mFs['Fyi']**2
         m_Fz2 = mFs['Fzr']**2 + mFs['Fzi']**2
         m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2          # unit = [|F|^2]
 
-        s_fx = int2d_trapz(m_Fx2, dx=dx, dy=dy)        # unit = [|F|^2] um^2, mag. \approx 1
+        # unit = [|F|^2] um^2, mag. \approx 1
+        s_fx = int2d_trapz(m_Fx2, dx=dx, dy=dy)
         s_fy = int2d_trapz(m_Fy2, dx=dx, dy=dy)
         s_fz = int2d_trapz(m_Fz2, dx=dx, dy=dy)
         s_f = s_fx+s_fy+s_fz
@@ -582,8 +575,8 @@ class Mode:
 
         self.fracs = [f_x, f_y, f_t, f_z]
 
-
-        m_yud = np.flipud(m_y)  # Flipping upside down y to get sensible values for r0 position.
+        # Flipping upside down y to get sensible values for r0 position.
+        m_yud = np.flipud(m_y)
 
         m_xmod = m_x * m_Fall2  # could do this by broadcasting without meshgrid?
         m_ymod = m_yud * m_Fall2
@@ -592,17 +585,20 @@ class Mode:
         y0 = int2d_trapz(m_ymod, dx, dy)/s_f
 
         # This just makes the outdata look cleaner on plots, by avoiding a -0.000
-        if abs(x0)<1e-6: x0 = 0.0
-        if abs(y0)<1e-6: y0 = 0.0
+        if abs(x0) < 1e-6:
+            x0 = 0.0
+        if abs(y0) < 1e-6:
+            y0 = 0.0
 
-
-        m_x2mod = np.power((m_x-x0), 2) * m_Fall2          # unit = um^2 [|F|^2]
+        # unit = um^2 [|F|^2]
+        m_x2mod = np.power((m_x-x0), 2) * m_Fall2
         m_y2mod = np.power((m_yud-y0), 2) * m_Fall2
         w2x = sqrt(int2d_trapz(m_x2mod, dx, dy)/s_f)
         w2y = sqrt(int2d_trapz(m_y2mod, dx, dy)/s_f)
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
         self.w2 = np.array([w2x, w2y, w2])
+
 
 class ModeEM(Mode):
     '''Class representing a single electromagnetic (EM) mode.'''
@@ -613,6 +609,7 @@ class ModeEM(Mode):
     def __str__(self):
         s = f'EM mode # {self.mode_num}'
         return s
+
 
 class ModeAC(Mode):
     '''Class representing a single acoustic (AC) mode.'''

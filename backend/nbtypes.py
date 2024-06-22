@@ -27,12 +27,12 @@ from numpy import array
 # These are all SI 2019 values
 
 twopi = math.pi * 2.0
-Plancks_h = 6.626_070_15e-34            # Planck's constant in Js (exact)
-speed_c = 299792458                     # Speed of light in vacuum in m/s (exact)
-charge_F = 1.602_176_634e-19            # Charge of an electron in C (exact)
-permittivity_Fps0 = 8.854_187_8188e-12
-permeability_mu0 = 1.256_637_061_27e-6
-vacuum_impedance_Z0 = math.sqrt(permeability_mu0/permittivity_Fps0)
+SI_Planck_h = 6.626_070_15e-34            # Planck's constant in Js (exact)
+SI_speed_c = 299792458                     # Speed of light in vacuum in m/s (exact)
+SI_charge_e = 1.602_176_634e-19            # Charge of an electron in C (exact)
+SI_permittivity_eps0 = 8.854_187_8188e-12
+SI_permeability_mu0 = 1.256_637_061_27e-6
+SI_vacuum_impedance_Z0 = math.sqrt(SI_permeability_mu0/SI_permittivity_eps0)
 
 ###############################################################################
 
@@ -42,7 +42,8 @@ SI_MHz = 1.0e6
 
 SI_nm = 1.0e-9
 SI_um = 1.0e-6
-SI_to_gmpercc = 0.001
+SI_to_gmpercc = 0.001   # 1kg/m^3 = 0.001 gm/cm^3
+
 ###########################################
 
 

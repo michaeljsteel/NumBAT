@@ -174,7 +174,7 @@ print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(simres_AC.nu_AC_all()[0]) - 2e9  # Hz
 freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 2e9  # Hz
-gain.plot_spectra(freq_min=freq_min, freq_max=freq_max, dB=True, semilogy=True)
+gain.plot_spectra(freq_min=freq_min, freq_max=freq_max, dB=True, logy=True)
 
 # Repeat this plot focusing on one frequency range
 freq_min = 11.5e9  # Hz

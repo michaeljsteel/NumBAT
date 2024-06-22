@@ -96,7 +96,6 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
-simres_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
 simres_AC.plot_modes()
 
 set_q_factor = 1000.
@@ -104,21 +103,16 @@ set_q_factor = 1000.
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-gainbox = integration.get_gains_and_qs(
+gain_box = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
-
-# np.savez('wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE, SBS_gain_MB=SBS_gain_MB, alpha=alpha)
-# npzfile = np.load('wguide_data_AC_gain.npz')
-# SBS_gain = npzfile['SBS_gain']
-# SBS_gain_PE = npzfile['SBS_gain_PE']
-# SBS_gain_MB = npzfile['SBS_gain_MB']
-# alpha = npzfile['alpha']
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
 freq_max = 12e9  # Hz
 
-gainbox.plot_spectra(freq_min=freq_min, freq_max=freq_max)
+# Generate gain spectra on linear and log vertical scales.
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True)
 
 print(nbapp.final_report())

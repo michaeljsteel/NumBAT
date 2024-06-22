@@ -52,7 +52,7 @@ mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
                  EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=0., freq_max=50e9, num_interp_pts=3000,
-                 dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
+                 dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                  pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                  show_gains='All'):
     reporting.report_and_exit('The function plotting.gain_spectra() is deprecated.\n'
@@ -62,7 +62,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
 def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                       EM_ival_pump, EM_ival_Stokes, AC_ival='All',
                       freq_min=0., freq_max=50e9, num_interp_pts=3000,
-                      dB=False, dB_peak_amp=10, mode_comps=False, semilogy=False,
+                      dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                       pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                       show_gains='All', mark_modes_thresh=0.02):
     r""" Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
@@ -98,7 +98,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
             mode_comps  (bool): Plot decomposition of spectra into individual modes.
 
-            semilogy  (bool): PLot y-axis on log scale.
+            logy  (bool): PLot y-axis on log scale.
 
             pdf_png  (str): Save figures as 'png' or 'pdf'.
 
@@ -340,7 +340,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                 nu_grid, 10*np.log10(np.exp(abs(v_gain_global_tot)*dB_const)))
             np.savetxt(f'{pathpref}-gain_spectra-dB{suffix}.csv', save_array, delimiter=',')
 
-    if semilogy:
+    if logy:
         fig, ax = plt.subplots()
         ax.semilogy(nu_grid_GHz, abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
         ax.semilogy(nu_grid_GHz, abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")

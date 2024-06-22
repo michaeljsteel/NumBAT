@@ -20,6 +20,7 @@ sys.path.append(str(Path('../backend')))
 
 
 import numbat
+from nbtypes import SI_GHz
 import materials
 import mode_calcs
 import integration
@@ -130,9 +131,8 @@ for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
     width, simres_EM_pump, simres_AC, gain_box = width_obj
 
-    simres_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
-
-    simres_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
+    #simres_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
+    #simres_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
 
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
     # np.round(np.real((q_AC/2.)*((lambda_nm*1e-9)/(2.*np.pi))), 4)
@@ -146,7 +146,7 @@ for i_w, width_obj in enumerate(v_width_data):
     decorator.set_title(f'Gain for width $w={width:.2f}.2f$ nm')
     gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max,
                       suffix=f'_wscan_{i_w}' ,  # include scan step in file name
-                      decorator=decorator)
+                      decorator=decorator, logy=True)
 
     # Repeat calc to collect data for waterfall plot.
     tune_steps = 50000
@@ -164,25 +164,36 @@ for i_w, width_obj in enumerate(v_width_data):
         freq_list = np.real(simres_AC.nu_AC(m) + detuning_range)
         interp_spectrum = np.interp(interp_grid, freq_list, gain_list)
         interp_values += interp_spectrum
-    freqs_gains.append(list(zip(interp_grid*1e-9, abs(interp_values))))
+    freqs_gains.append(list(zip(interp_grid/SI_GHz, abs(interp_values))))
 
 print('Widths', waveguide_widths)
 print('n_effs', n_effs)
 
-# Plot a 'waterfall' plot.
-ax = plt.figure().add_subplot(projection='3d')
-poly = PolyCollection(freqs_gains)
-poly.set_alpha(0.7)
-ax.add_collection3d(poly, zs=waveguide_widths, zdir='y')
+fig, ax = plt.subplots()
 ax.set_xlabel('Frequency (GHz)', fontsize=14)
-ax.set_xlim3d(int_min*1e-9, int_max*1e-9)
-ax.set_ylabel('Width (nm)', fontsize=14)
-ax.set_ylim3d(waveguide_widths[0], waveguide_widths[-1])
-ax.set_zlabel('|Gain| (1/Wm)', fontsize=14)
-ax.set_zlim3d(0, 1500)
-plt.tick_params(axis='both', which='major', labelsize=12, pad=-2)
-plt.savefig(nbapp.outpath()+'-gain_spectra-waterfall.png')
-plt.close()
+ax.set_ylabel('|Gain| (1/Wm)', fontsize=14)
+ax.set_yscale('log')
+fgs = np.array(freqs_gains)
+print(fgs)
+for ifg,fg in enumerate(fgs):
+    ax.plot(fg[:,0], fg[:,1], lw=1, label=r'$d=$'+f'{waveguide_widths[ifg]:.1f} nm')
+ax.legend()
+plt.savefig(str(nbapp.outpath())+'-gain_spectra-scan.png')
+
+## Plot a 'waterfall' plot.
+#ax = plt.figure().add_subplot(projection='3d')
+#poly = PolyCollection(freqs_gains)
+#poly.set_alpha(0.7)
+#ax.add_collection3d(poly, zs=waveguide_widths, zdir='y')
+#ax.set_xlabel('Frequency (GHz)', fontsize=14)
+#ax.set_xlim3d(int_min*1e-9, int_max*1e-9)
+#ax.set_ylabel('Width (nm)', fontsize=14)
+#ax.set_ylim3d(waveguide_widths[0], waveguide_widths[-1])
+#ax.set_zlabel('|Gain| (1/Wm)', fontsize=14)
+#ax.set_zlim3d(0, 1500)
+#plt.tick_params(axis='both', which='major', labelsize=12, pad=-2)
+#plt.savefig(nbapp.outpath()+'-gain_spectra-waterfall.png')
+#plt.close()
 
 
 print(nbapp.final_report())

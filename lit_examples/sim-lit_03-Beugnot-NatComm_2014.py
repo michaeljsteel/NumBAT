@@ -149,16 +149,16 @@ def modes_n_gain(diam):
 
 
     set_q_factor = 600.
-    gainbox = integration.get_gains_and_qs(
+    gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)#, fixed_Q=set_q_factor)
 
-    gainbox.set_allowed_EM_pumps(EM_ival_pump)
-    gainbox.set_allowed_EM_Stokes(EM_ival_Stokes)
-    gainbox.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
+    gain_box.set_allowed_EM_pumps(EM_ival_pump)
+    gain_box.set_allowed_EM_Stokes(EM_ival_Stokes)
+    gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
 
-    (nu_gain_tot, nu_gain_PE, nu_gain_MB) = gainbox.plot_spectra(
-            freq_min, freq_max, num_interp_pts=num_interp_pts, semilogy=True,
+    (nu_gain_tot, nu_gain_PE, nu_gain_MB) = gain_box.plot_spectra(
+            freq_min, freq_max, num_interp_pts=num_interp_pts, logy=True,
             prefix = prefix, suffix=f'_w{int(inc_a_x):04d}')
 
     if abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
@@ -168,8 +168,8 @@ def modes_n_gain(diam):
                                   prefix=prefix+f'-diam-{round(diam):04d}')
         sim_AC.plot_modes(ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
         for m in range(num_modes_AC):
-            print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gainbox.gain_total(m):.3e}, ',
-                 f'{gainbox.gain_PE(m):.4e}, {gainbox.gain_MB(m):.4e}')
+            print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gain_box.gain_total(m):.3e}, ',
+                 f'{gain_box.gain_PE(m):.4e}, {gain_box.gain_MB(m):.4e}')
 
 
     return (nu_gain_tot, nu_gain_PE, nu_gain_MB)
