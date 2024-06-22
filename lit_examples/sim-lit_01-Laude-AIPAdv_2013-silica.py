@@ -118,7 +118,7 @@ freq_min = 4.e9  # Hz
 freq_max = 13.e9  # Hz
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    semilogy=True,  mode_comps=True, dB=True)
+    logy=True,  mode_comps=True, dB=True)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.3e9  # Hz

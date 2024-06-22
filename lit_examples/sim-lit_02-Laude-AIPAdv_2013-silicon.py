@@ -93,6 +93,6 @@ freq_min = 20e9
 freq_max = 45e9
 plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    semilogy=True, )
+    logy=True, )
 
 print(nbapp.final_report())

@@ -55,7 +55,7 @@ Hence we have used a more standard set of values for silica.
 .. figure:: images/lit_examples/lit_01-gain_spectra-logy.png
    :width: 10cm
 
-   |NUMBAT| gain spectrum on semilogy axis.
+   |NUMBAT| gain spectrum on logy axis.
 
 
 The optical fundamental fields are in close agreement with values for the effective index of :math:`n_\text{eff}=1.2710` (|NUMBAT|) and 1.2748 (paper).
@@ -141,7 +141,7 @@ In this case the effective index for the optical fundamental mode are :math:`n_\
 .. figure:: images/lit_examples/lit_02-gain_spectra-logy.png
    :width: 12cm
 
-   |NUMBAT| gain spectrum on semilogy axis.
+   |NUMBAT| gain spectrum on logy axis.
 
 
 .. figure:: images/litimgs/laude/laude_aip_advances_bsbs_2_modeG.png

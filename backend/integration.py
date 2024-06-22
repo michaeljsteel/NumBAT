@@ -32,9 +32,10 @@ from numbattools import np_min_max
 import plotting
 from fortran import nb_fortran
 import reporting
+from nbtypes import SI_permittivity_eps0
 
 
-class Gain(object):
+class GainProps(object):
     @staticmethod
     def _set_allowed_ms(mlist, m_allow, maxm):
         if m_allow == "All":
@@ -45,7 +46,7 @@ class Gain(object):
             mlist[:] = m_allow
         if max(mlist) >= maxm:
             reporting.report_and_exit(
-                "Requested mode range too large in Gain object: " + m_allow
+                "Requested mode range too large in GainProps object: " + str(m_allow)
             )
 
     def __init__(self):
@@ -62,9 +63,7 @@ class Gain(object):
         self._gain_MB = None
 
         self.def_m_pump = 0  # must be one of allowed_pumps_m TODO: needs to be checked
-        self.def_m_Stokes = (
-            0  # must be one of allowed_Stokes_m TODO: needs to be checked
-        )
+        self.def_m_Stokes = 0 # must be one of allowed_Stokes_m TODO: needs to be checked
 
         self.linewidth_Hz = None
         self.alpha = None
@@ -188,7 +187,7 @@ class Gain(object):
         dB=False,
         dB_peak_amp=10,
         mode_comps=False,
-        semilogy=False,
+        logy=False,
         pdf_png="png",
         save_txt=False,
         prefix="",
@@ -217,7 +216,7 @@ class Gain(object):
             dB,
             dB_peak_amp,
             mode_comps,
-            semilogy,
+            logy,
             pdf_png,
             save_txt,
             prefix,
@@ -239,20 +238,16 @@ def get_gains_and_qs(
     fixed_Q=None,
     typ_select_out=None,
 ):
+
+    # TODO: get rid of this old backend
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
-        sim_EM_pump,
-        sim_EM_Stokes,
-        sim_AC,
-        q_AC,
-        EM_ival_pump,
-        EM_ival_Stokes,
-        AC_ival,
-        fixed_Q,
-        typ_select_out,
+        sim_EM_pump, sim_EM_Stokes, sim_AC,
+        q_AC, EM_ival_pump, EM_ival_Stokes, AC_ival,
+        fixed_Q, typ_select_out,
         new_call_format=True
     )
 
-    gain = Gain()
+    gain = GainProps()
     gain._set_sim_AC(sim_AC)
     gain._set_gain_tot(SBS_gain)
     gain._set_gain_PE(SBS_gain_PE)
@@ -264,6 +259,7 @@ def get_gains_and_qs(
     gain.set_allowed_EM_pumps(EM_ival_pump)
     gain.set_allowed_EM_Stokes(EM_ival_Stokes)
     gain.set_allowed_AC(AC_ival)
+    gain.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
 
     gain.check_acoustic_expansion_size()
 
@@ -1139,16 +1135,16 @@ def grid_integral(
     for i in range(3):
         integrand_AC = np.conj(u_mat[i]) * u_mat[i] * sim_AC_structure.rho
         # do a 1-D integral over every row
-        I = np.zeros(n_pts_x)
+        I_en = np.zeros(n_pts_x)
         for r in range(n_pts_x):
-            I[r] = np.trapz(np.real(integrand_AC[r, :]), dx=dy)
+            I_en[r] = np.trapz(np.real(integrand_AC[r, :]), dx=dy)
         # then an integral over the result
-        F_AC_energy += np.trapz(I, dx=dx)
+        F_AC_energy += np.trapz(I_en, dx=dx)
         # Adding imag comp
-        I = np.zeros(n_pts_x)
+        I_en = np.zeros(n_pts_x)
         for r in range(n_pts_x):
-            I[r] = np.trapz(np.imag(integrand_AC[r, :]), dx=dy)
-        F_AC_energy += 1j * np.trapz(I, dx=dx)
+            I_en[r] = np.trapz(np.imag(integrand_AC[r, :]), dx=dy)
+        F_AC_energy += 1j * np.trapz(I_en, dx=dx)
     energy_py = 2 * F_AC_energy * sim_AC_Omega_AC[AC_ival] ** 2
 
     # AC loss (alpha) integral
@@ -1162,14 +1158,14 @@ def grid_integral(
                         * del_u_mat_star[k, l]
                         * sim_AC_structure.elastic_props.eta_ijkl[i, j, k, l]
                     )
-                    I = np.zeros(n_pts_x)
+                    I_en = np.zeros(n_pts_x)
                     for r in range(n_pts_x):
-                        I[r] = np.trapz(np.real(integrand[r, :]), dx=dy)
-                    F_alpha += np.trapz(I, dx=dx)
-                    I = np.zeros(n_pts_x)
+                        I_en[r] = np.trapz(np.real(integrand[r, :]), dx=dy)
+                    F_alpha += np.trapz(I_en, dx=dx)
+                    I_en = np.zeros(n_pts_x)
                     for r in range(n_pts_x):
-                        I[r] = np.trapz(np.imag(integrand[r, :]), dx=dy)
-                    F_alpha += 1j * np.trapz(I, dx=dx)
+                        I_en[r] = np.trapz(np.imag(integrand[r, :]), dx=dy)
+                    F_alpha += 1j * np.trapz(I_en, dx=dx)
     alpha_py = np.real(F_alpha * sim_AC_Omega_AC[AC_ival] ** 2 / energy_py)
 
     # PE gain integral
@@ -1187,15 +1183,15 @@ def grid_integral(
                         * sim_AC_structure.elastic_props.p_ijkl[i, j, k, l]
                         * del_u_mat_star[k, l]
                     )
-                    I = np.zeros(n_pts_x)
+                    I_en = np.zeros(n_pts_x)
                     for r in range(n_pts_x):
-                        I[r] = np.trapz(np.real(integrand_PE[r, :]), dx=dy)
-                    F_PE += np.trapz(I, dx=dx)
-                    I = np.zeros(n_pts_x)
+                        I_en[r] = np.trapz(np.real(integrand_PE[r, :]), dx=dy)
+                    F_PE += np.trapz(I_en, dx=dx)
+                    I_en = np.zeros(n_pts_x)
                     for r in range(n_pts_x):
-                        I[r] = np.trapz(np.imag(integrand_PE[r, :]), dx=dy)
-                    F_PE += 1j * np.trapz(I, dx=dx)
-    Q_PE_py = F_PE * SI_EPS_0
+                        I_en[r] = np.trapz(np.imag(integrand_PE[r, :]), dx=dy)
+                    F_PE += 1j * np.trapz(I_en, dx=dx)
+    Q_PE_py = F_PE * SI_permittivity_eps0
 
     return energy_py, alpha_py, Q_PE_py
 
