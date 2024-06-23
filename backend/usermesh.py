@@ -2,6 +2,8 @@ import uuid
 import os
 from pathlib import Path
 
+import reporting
+
 def is_real_number(x):
     # return isinstance(x, float) or isinstance(x, int)
     # return isinstance(x, numbers.Number)
@@ -23,8 +25,60 @@ class UserGeometryBase():
         self._descrip = 'Unimplemented user template'
         self._gmsh_template_filename = ''  # internal meshes use this. User meshes should not
 
-    def get_param(self, k):
-        return self._d_params.get(k, None)
+        self._req_params =[]
+        self._allowed_params =[]
+        self._num_named_materials = 0
+
+    def set_properties(self, nm, n_materials, is_curvi, desc):
+        self.set_name(nm)
+        self.set_num_type_materials(n_materials)
+        self.set_is_curvilinear(is_curvi)
+        self.set_description(desc)
+
+    def set_required_parameters(self, l_nms, num_mats):
+        self._req_params.extend(['domain_x','domain_y', 'lc_bkg'])
+        self._req_params.extend(l_nms)
+        self._num_named_materials = num_mats
+
+
+    def set_allowed_parameters(self, l_nms, num_allowed_mats):
+        self._allowed_params.extend(l_nms)
+        for im in range(num_allowed_mats): # need mat_a, mat_b, mat_c, etc
+            self._allowed_params.append('material_'+'abcdefghijklmnopqrtstuvwxyz'[im])
+
+    def set_parameter_help(self, d_help):
+        self.d_param_help = {
+            'domain_x': "length of simulation domain along x",
+            'domain_y': "length of simulation domain along y"}
+        self.d_param_help.update(d_help)
+
+    def help_on_parameters(self):
+        print(f'Waveguide parameters for shape {self._geom_name}:')
+        for k,v in self.d_param_help.items():
+            print(f'{k:>20} : {v}')
+
+    def check_parameters(self, user_params):
+        if not self._req_params: # not yet defined for this template
+            return
+
+        reqkws = self._req_params
+        reqkws.append('material_bkg')
+
+        for im in range(self._num_named_materials-1): # need mat_a, mat_b, mat_c, etc, -1 because one is mat_bkg
+            reqkws.append('material_'+'abcdefghijklmnopqrtstuvwxyz'[im])
+
+        for key in reqkws:
+            if key not in user_params:
+                reporting.report_and_exit(
+                    f"Waveguide '{self._geom_name}' requires a value for parameter {key} in make_structure().")
+
+        # report unexpected keys
+        goodkeys = reqkws + self._allowed_params
+        for key in user_params.keys():
+            if key not in goodkeys:
+                reporting.report(
+                    f"Waveguide '{self._geom_name}' will ignore the parameter '{key}' in make_structure().")
+
 
     def set_num_type_materials(self, n):
         self._num_type_materials = n
@@ -38,11 +92,8 @@ class UserGeometryBase():
     def set_description(self, desc):
         self._descrip = desc
 
-    def set_properties(self, nm, n_materials, is_curvi, desc):
-        self.set_name(nm)
-        self.set_num_type_materials(n_materials)
-        self.set_is_curvilinear(is_curvi)
-        self.set_description(desc)
+    def get_param(self, k):
+        return self._d_params.get(k, None)
 
     def geom_name(self):
         return self._geom_name

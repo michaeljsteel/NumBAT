@@ -32,21 +32,6 @@ subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
     integer, intent(out) :: errco
     character(len=EMSG_LENGTH), intent(out) :: emsg
 
-    ! write(*,*) 'calc_em_modes 1'
-    ! write(*,*) 'v_ref_index', v_refindex_n
-    ! write(*,*) 'calc_em_modes 2'
-
-    ! write(*,*) 'calling baby calc_em_modes'
-
-    ! call baby_calc_em_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-    ! E_H_field, bdy_cdn, itermax, debug, mesh_file, &
-    ! n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
-    ! v_eigs_beta, sol1, &
-    ! mode_pol, table_nod, type_el, type_nod, &
-    ! errco, emsg )
-
-    ! write(*,*) 'done calling baby calc_em_modes', errco, emsg
-    ! write(*,*) 'calling full calc_em_modes_impl'
     call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
         E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
         v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)

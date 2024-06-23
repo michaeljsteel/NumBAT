@@ -118,9 +118,9 @@ def modes_n_gain(diam):
     inc_a_x = diam
     inc_a_y = diam
     # Use all specified parameters to create a waveguide object.
-    unitcell_x = 3*diam
-    unitcell_y = unitcell_x
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+    domain_x = 3*diam
+    domain_y = domain_x
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
                             #lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
                             lc_bkg=.1/refine_fac, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)

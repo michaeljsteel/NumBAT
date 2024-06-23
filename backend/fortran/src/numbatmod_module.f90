@@ -83,7 +83,7 @@ contains
 
         end function
 
-        subroutine assert_or_die(pred, msg, ec)
+        subroutine assert_or_die(pred, msg, ec)  ! TODO: this is cheat rather than go back to python for reporting
             logical :: pred
             character(len=*) :: msg
             integer :: ec
@@ -128,7 +128,6 @@ contains
                 d_fmt = fmt
             endif
 
-            write(*,*) 'format', d_fmt
             write(buffer, d_fmt) val
 
             str = trim(buffer)
@@ -150,7 +149,6 @@ contains
                 d_fmt = fmt
             endif
 
-            write(*,*) 'format', d_fmt
             write(buffer, d_fmt) val
 
             str = trim(buffer)

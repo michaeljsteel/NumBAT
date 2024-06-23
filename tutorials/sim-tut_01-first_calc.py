@@ -27,8 +27,8 @@ print('\n\nCommencing NumBAT tutorial 1')
 # Geometric Parameters - all in nm.
 lambda_nm = 1550  # Wavelength of EM wave in vacuum.
 # Unit cell must be large to ensure fields are zero at boundary.
-unitcell_x = 2.5*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 2.5*lambda_nm
+domain_y = domain_x
 # Waveguide widths.
 inc_a_x = 300
 inc_a_y = 280
@@ -56,7 +56,7 @@ AC_ival = 'All'
 nbapp = numbat.NumBATApp('tut_01')
 
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1,  # in vacuum background

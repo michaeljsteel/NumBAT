@@ -24,7 +24,6 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
       new_line('a') // " n_nodes should be equal to 6 !" // new_line('a') // &
       " Aborting...",  20)
 
-
    !do i=1,neq+1
    !lb(i) = 0
    !enddo

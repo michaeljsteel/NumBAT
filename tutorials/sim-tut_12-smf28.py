@@ -941,22 +941,22 @@ def do_main():
     onion = 1
     if onion == 1:
         inc_shape = 'circ_onion1'
-        unitcell_x = rcore*10  # system size in nm
-        unitcell_y = unitcell_x
+        domain_x = rcore*10  # system size in nm
+        domain_y = domain_x
         mat_bkg = mat_clad  # because the background is now the second layer, ie the cladding
     elif onion == 2:
         inc_shape = 'onion2'
-        unitcell_x = rcore*10  # system size in nm
-        unitcell_y = unitcell_x
+        domain_x = rcore*10  # system size in nm
+        domain_y = domain_x
     else:
         # inc_shape = 'circ_onion'
         inc_shape = 'onion'
-        unitcell_x = rcore*35  # system size in nm
-        unitcell_y = unitcell_x
+        domain_x = rcore*35  # system size in nm
+        domain_y = domain_x
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, acore, # remove these factors of 2
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, acore, # remove these factors of 2
                                inc_b_x=aclad,
-                               unitcell_y=unitcell_y,
+                               domain_y=domain_y,
                                material_bkg=mat_bkg,
                                material_a=mat_core,
                                material_b=mat_clad,
@@ -970,16 +970,16 @@ def do_main():
     rcore = 1000
     acore = 2*rcore
     inc_shape = 'circ_onion1'
-    unitcell_x = rcore*2.5  # system size in nm
-    unitcell_y = unitcell_x
+    domain_x = rcore*2.5  # system size in nm
+    domain_y = domain_x
     mat_PMMA = materials.make_material('PMMA')  #
 
     mat_core = mat_As2S3
     mat_bkg = mat_vac
 
     refine_fac = 2.
-    wguide = nbapp.make_structure(unitcell_x, acore, inc_shape=inc_shape,
-                               unitcell_y=unitcell_y, inc_b_x=rcore*.1,
+    wguide = nbapp.make_structure(domain_x, acore, inc_shape=inc_shape,
+                               domain_y=domain_y, inc_b_x=rcore*.1,
                                material_bkg=mat_bkg,
                                material_a=mat_core,
                                lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4*refine_fac)

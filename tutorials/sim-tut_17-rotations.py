@@ -14,8 +14,8 @@ import materials
 np.set_printoptions( precision=4)
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 5*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 5*lambda_nm
+domain_y = domain_x
 inc_a_x = 550
 inc_a_y = inc_a_x
 inc_shape = 'circular'

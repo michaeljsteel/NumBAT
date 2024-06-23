@@ -31,8 +31,8 @@ import starter
 # Specify Geometric Parameters - all in [nm].
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
 # Unit cell dimensions must be sufficiently large to ensure fields are zero at outermost boundary.
-unitcell_x = 4.01*wl_nm #be careful to ensure not whole integer multiples
-unitcell_y = unitcell_x
+domain_x = 4.01*wl_nm #be careful to ensure not whole integer multiples
+domain_y = domain_x
 inc_a_x = 1000 # Waveguide widths.
 inc_a_y = inc_a_x
 inc_shape = 'circular' # Shape of the waveguide.
@@ -54,7 +54,7 @@ prefix, refine_fac = starter.read_args(3, sys.argv)
 nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2021_Poulton"),
                         lc_bkg=0.1, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge

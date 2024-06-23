@@ -178,8 +178,7 @@ class ModePlotHelper:
                        'm_x': m_X_out, 'm_y': m_Y_out}
 
         print('Structure has raw domain (x,y) = '
-              + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0] /
-                                                                 SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),'
+              + f' [{v_x[0]/SI_um:.5f}, {v_x[-1]/SI_um:.5f}] x [{v_y[0] /SI_um:.5f}, {v_y[-1]/SI_um:.5f}] (μm),'
               + "\n             mapped to (x',y') = "
               + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
         return shiftx, shifty

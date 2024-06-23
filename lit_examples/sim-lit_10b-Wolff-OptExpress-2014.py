@@ -28,8 +28,8 @@ import starter
 # Geometric Parameters - all in nm.
 wl_nm = 4000  # Wavelength of EM wave in vacuum.
 # Unit cell must be large to ensure fields are zero at boundary.
-unitcell_x = 1.5 * wl_nm
-unitcell_y = 0.75 * unitcell_x
+domain_x = 1.5 * wl_nm
+domain_y = 0.75 * domain_x
 # Waveguide widths.
 inc_a_x = 1200
 inc_a_y = 550
@@ -61,8 +61,8 @@ reuse_fields = False  # calculate from scratch
 # Note use of rough mesh for demonstration purposes.
 wguide = nbapp.make_structure(
     inc_shape,
-    unitcell_x,
-    unitcell_y,
+    domain_x,
+    domain_y,
     inc_a_x,
     inc_a_y,
     # slab_a_x=slab_a_x, slab_a_y=slab_a_y,

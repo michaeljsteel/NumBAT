@@ -24,8 +24,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-unitcell_x = 3*wl_nm
-unitcell_y = unitcell_x
+domain_x = 3*wl_nm
+domain_y = domain_x
 inc_a_x = 1160  # Diameter
 inc_a_y = inc_a_x
 inc_shape = 'circular'
@@ -52,7 +52,7 @@ prefix, refine_fac = starter.read_args(6, sys.argv, sub='b')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               material_bkg=materials.make_material("Vacuum"),
                               material_a=materials.make_material(
                                   "SiO2_2013_Laude"),

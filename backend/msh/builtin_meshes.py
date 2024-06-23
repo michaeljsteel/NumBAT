@@ -2,6 +2,7 @@
 
 
 import matplotlib.patches as mplpatches
+import numpy as np
 
 from usermesh import UserGeometryBase
 
@@ -12,31 +13,31 @@ def _process_one_and_two_incls(params):
     nelts = 0
     gmshfile = ''
 
-    if params['slab_b_x'] is not None:
+    if 'slab_b_x' in params:
         raise ValueError(
                 f"NumBAT doesn't understand your geometry: with shape {params['inc_shape']}, I did not expect values for slab_b.")
 
-    if params['slab_a_x'] is not None:
+    if 'slab_a_x' in params:
         raise ValueError(
             f"NumBAT doesn't understand your geometry: with shape {params['inc_shape']}, I did not expect values for slab_a.")
 
-    if params['inc_a_x'] is not None:
-        if params['coat_y'] is None and params['inc_b_x'] is None:  # One inclusion, no coating
+    if 'inc_a_x' in params:
+        if 'coat_y' not in params and 'inc_b_x' not in params:  # One inclusion, no coating
             gmshfile = 'oneincl'  # used to be just '1'
             nelts = 2          # bkg, core (mat_a)
 
 
-        elif params['coat_y'] is None and params['inc_b_x'] is not None:  # Two inclusions, no coating
+        elif 'coat_y' not in params and 'inc_b_x' in params:  # Two inclusions, no coating
             gmshfile = 'twoincl'  # used to be just '2'
             nelts = 3         # bkg, core 1 (mat_a), core 2 (mat_b)
 
 
         # Two inclusions, with coating # TODO:implement
-        elif params['coat_y'] is not None and params['inc_b_x'] is not None:
+        elif 'coat_y' in params and 'inc_b_x' in params:
             raise NotImplementedError(
                 'Have not implemented 2 coated inclusions.')
 
-        elif params['coat_y'] is not None and params['inc_b_x'] is None:  # One inclusion, with coating # TODO:implement
+        elif 'coat_y' in params and 'inc_b_x' not in params:  # One inclusion, with coating # TODO:implement
             raise NotImplementedError(
                 'Have not implemented 1 coated inclusions.')
 
@@ -49,8 +50,8 @@ def _process_one_and_two_incls(params):
 
 def _process_one_and_two_incls_subs(msh_template, umb):
         # TODO: these are crazy small defaults
-    subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', umb.get_param('unitcell_x'))]
-    subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', umb.get_param('unitcell_y')))
+    subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', umb.get_param('domain_x'))]
+    subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', umb.get_param('domain_y')))
     subs.append(('a1 = 20;', 'a1 = %f;', umb.get_param('inc_a_x')))
     subs.append(('a1y = 10;', 'a1y = %f;', umb.get_param('inc_a_y')))
 
@@ -187,19 +188,27 @@ class TwoIncl(UserGeometryBase):
 class Triangular(UserGeometryBase):
 
     def init_geometry(self):
-        #gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a triangular waveguide.'''
         self.set_properties('triangular', 2, False, desc)
-        #self._gmsh_template_filename = gmshfile # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
-
+        self.set_required_parameters(['base_width', 'peak_xoff', 'peak_height'],  num_mats=1)
+        self.set_allowed_parameters(['lc_refine_1','lc_refine_2'], num_allowed_mats=2)
+        self.set_parameter_help(
+            {
+                'base_width' : "length of base of triangle along x-axis",
+                'peak_xoff' :  "horizontal offset of peak along x-axis from left vertex",
+                'peak_height': "perpendicular height of triangle",
+                'mat_a': "material of triangular core",
+                'mat_bkg': "background material",
+}
+            )
 
     def apply_parameters(self):
-        subs = [('dx_in_nm = 1000.0;',    'dx_in_nm = %f;',       self.get_param('unitcell_x')),
-                ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('unitcell_y')),
-                ('base_width = 600.0;',   'base_width = %f;',     self.get_param('inc_a_x')),
-                ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('inc_b_x')),
-                ('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('inc_b_y')),
-                ('lc = 0.1;',             'lc = %f;',             self.get_param('lc')),
+        subs = [('dx_in_nm = 1000.0;',    'dx_in_nm = %f;',       self.get_param('domain_x')),
+                ('dy_in_nm = 1000.0;',    'dy_in_nm = %f;',       self.get_param('domain_y')),
+                ('base_width = 600.0;',   'base_width = %f;',     self.get_param('base_width')),
+                ('peak_xoff = 200.0;',    'peak_xoff = %f;',      self.get_param('peak_xoff')),
+                ('peak_height = 400.0;',  'peak_height = %f;',    self.get_param('peak_height')),
+                ('lc = 0.1;',             'lc = %f;',             self.get_param('lc_bkg')),
                 ('lc_refine_1 = lc/1.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')),
                 ('lc_refine_2 = lc/3.0;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2'))
                 ]
@@ -208,20 +217,20 @@ class Triangular(UserGeometryBase):
 
 
     def draw_mpl_frame(self, ax):
+        wid = self.get_param('base_width') * nmtoum
+        xoff = self.get_param('peak_xoff') * nmtoum
+        hgt = self.get_param('peak_height') * nmtoum
+        vertices = np.array([[-wid/2, -hgt/2], [-wid/2+xoff, hgt/2], [wid/2,-hgt/2]])
 
-        # TODO: make mpl frame work for this geometry
-        wid = self.get_param('inc_a_x') * nmtoum
-        hgt = self.get_param('inc_a_y') * nmtoum
-
-        #ax.add_patch(mplpatches.Rectangle((-wid/2, -hgt/2), wid, hgt,
-        #              facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+        ax.add_patch(mplpatches.Polygon(vertices,
+            facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
 
 
 
 def make_onion_subs(umb):
-    subs = [('dx_in_nm = 2000;', 'dx_in_nm = %f;', umb.get_param('unitcell_x'))]
-    subs.append(('dy_in_nm = 2000;', 'dy_in_nm = %f;', umb.get_param('unitcell_y')))
+    subs = [('dx_in_nm = 2000;', 'dx_in_nm = %f;', umb.get_param('domain_x'))]
+    subs.append(('dy_in_nm = 2000;', 'dy_in_nm = %f;', umb.get_param('domain_y')))
     subs.append(('a1 = 100;', 'a1 = %f;', umb.get_param('inc_a_x')))
     subs.append(('a2 = 100;', 'a2 = %f;', umb.get_param('inc_b_x')))
     subs.append(('a3 = 100;', 'a3 = %f;', umb.get_param('inc_c_x')))
@@ -268,12 +277,19 @@ class Onion(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a many-layer circular waveguide in a square domain.'''
         self.set_properties('onion', 16, True, desc)
+        self.set_required_parameters(['inc_a_x'],  num_mats=2)
+        self.set_allowed_parameters(['lc_refine_1','lc_refine_2',
+                                     'inc_b_x', 'inc_c_x', 'inc_d_x', 'inc_e_x',
+                                    'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x', 'inc_j_x',
+                                    'inc_k_x', 'inc_l_x', 'inc_m_x', 'inc_n_x', 'inc_o_x'],
+                                    num_allowed_mats=16)
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
 
     def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
+
 
 
 
@@ -368,13 +384,13 @@ class Pedestal(UserGeometryBase):
 
     def apply_parameters(self):
         # msh_name = self.get_param('_make_mesh_name(self._mesh_name,
-        #                                (self.get_param('unitcell_x, self.get_param('unitcell_y,
+        #                                (self.get_param('domain_x, self.get_param('domain_y,
         #                                 self.get_param('inc_a_x, self.get_param('inc_a_y,
         #                                 self.get_param('pillar_x, self.get_param('pillar_y,
         #                                 self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('a1top = 15;', 'a1top = %f;', self.get_param('inc_b_x')))
@@ -411,7 +427,7 @@ class TrapezoidalRib(UserGeometryBase):
           # material_b   - substrate
 
         Grid parameters are:
-          # lc          - grid points arounds boundary as fraction of unitcell_x
+          # lc          - grid points arounds boundary as fraction of domain_x
           # lc_refine1  - refined density along upper rib
           # lc_refine2  - refined density along buried rib
 
@@ -422,11 +438,11 @@ class TrapezoidalRib(UserGeometryBase):
 
     def apply_parameters(self):
         # msh_name = self.get_param('_make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('unitcell_x, self.get_param('inc_a_x,
+        #                                 (self.get_param('domain_x, self.get_param('inc_a_x,
         #                                  self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [    ('dx_in_nm = 100.0;', 'dx_in_nm = %f;',  self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50.0;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [    ('dx_in_nm = 100.0;', 'dx_in_nm = %f;',  self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50.0;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('top_rib_width = 600.0;',     'top_rib_width = %f;',    self.get_param('inc_a_x')))
         subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
 
@@ -445,26 +461,30 @@ class TrapezoidalRib(UserGeometryBase):
 class Rib(UserGeometryBase):
 
     def init_geometry(self):
-        print('\n\nmats', self._d_materials)
         if self._d_materials['c'].is_vacuum():  # TODO: perhaps a better test is whether bkg = mat_c
             nt = 3
         else:
             nt = 4
 
+        nt=3 # including bkg
         desc = '''A NumBAT geometry template for a rib waveguide.  '''
 
         self.set_properties('rib', nt, False, desc)
 
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_refine_1','lc_refine_2'],  num_allowed_mats=nt)
+
+
     def apply_parameters(self):
         # msh_name = self.get_param('_make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y, self.get_param('inc_a_x, self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
+        #                                 (self.get_param('domain_x, self.get_param('domain_y, self.get_param('inc_a_x, self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
+        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('rib_w')))
+        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('rib_h')))
+        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_w')))
+        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_h')))
         subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
@@ -485,12 +505,12 @@ class RibCoated(UserGeometryBase):
     def apply_parameters(self):
 
         # msh_name = self._make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y,
+        #                                 (self.get_param('domain_x, self.get_param('domain_y,
         #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
         #                                  self.get_param('coat_x, self.get_param('coat_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
@@ -517,14 +537,14 @@ class RibDoubleCoated(UserGeometryBase):
     def apply_parameters(self):
 
         # msh_name = self._make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y,
+        #                                 (self.get_param('domain_x, self.get_param('domain_y,
         #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
         #                                  self.get_param('coat_x, self.get_param('coat_y,
         #                                  self.get_param('coat2_y, self.get_param('slab_a_x,
         #                                  self.get_param('slab_a_y, self.get_param('slab_b_y')))
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
@@ -558,25 +578,17 @@ class Slot(UserGeometryBase):
 
     def apply_parameters(self):
 
-        # msh_name = self.get_param('_make_mesh_name(self.msh_template,
-        #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y,
-        #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
-        #                                  self.get_param('inc_b_x, self.get_param('slab_a_x, self.get_param('slab_a_y')))
-
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('a2 = 20;', 'a2 = %f;', self.get_param('inc_b_x')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
         subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
-        subs.append(
-            ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.get_param('lc_refine_3')))
+        subs.append(('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
+        subs.append(('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
+        subs.append(('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.get_param('lc_refine_3')))
 
         return subs
 
@@ -590,12 +602,12 @@ class SlotCoated(UserGeometryBase):
 
     def apply_parameters(self):
         # msh_name = self.get_param('_make_mesh_name(self.msh_template,
-        #                                 (self.get_param('unitcell_x, self.get_param('unitcell_y, self.get_param('inc_a_x,
+        #                                 (self.get_param('domain_x, self.get_param('domain_y, self.get_param('inc_a_x,
         #                                  self.get_param('inc_a_y, self.get_param('inc_b_x, self.get_param('slab_a_x,
         #                                  self.get_param('slab_a_y, self.get_param('coat_y')))
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('unitcell_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('unitcell_y')))
+        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
         subs.append(('a2 = 20;', 'a2 = %f;', self.get_param('inc_b_x')))

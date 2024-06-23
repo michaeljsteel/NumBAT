@@ -34,8 +34,8 @@ wl_nm = 1550 # Wavelength of EM wave in vacuum.
 inc_a_x = 450 # Waveguide widths.
 inc_a_y = 200
 # Unit cell dimensions must be sufficiently large to ensure fields are zero at outermost boundary.
-unitcell_x = 3.01*wl_nm
-unitcell_y = unitcell_x #be careful to ensure not whole integer multiples
+domain_x = 3.01*wl_nm
+domain_y = domain_x #be careful to ensure not whole integer multiples
 inc_shape = 'rectangular' # Shape of the waveguide.
 
 # Specify number of electromagnetic modes and acoustic modes involved in the
@@ -57,7 +57,7 @@ prefix, refine_fac = starter.read_args(2, sys.argv, sub='a')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use all specified parameters to create a waveguide object
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=0.05, # mesh coarseness in background, larger lc_bkg = coarser along horizontal outer edge

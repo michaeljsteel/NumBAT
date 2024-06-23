@@ -18,8 +18,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2.0*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 2.0*lambda_nm
+domain_y = domain_x
 #inc_a_x = 314.7
 #inc_a_y = 0.9*inc_a_x
 inc_a_x = 300
@@ -39,7 +39,7 @@ prefix, refine_fac = starter.read_args(9, sys.argv)
 nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_test_anisotropic"),
                         lc_bkg=1, lc_refine_1=200.0*refine_fac, lc_refine_2=1.0*refine_fac)

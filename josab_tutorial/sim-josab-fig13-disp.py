@@ -22,8 +22,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2000
-unitcell_y = 1000
+domain_x = 2000
+domain_y = 1000
 inc_a_x = 450
 inc_a_y = 200
 inc_shape = "rectangular"
@@ -42,8 +42,8 @@ nbapp = numbat.NumBATApp(prefix)
 mat_core = materials.make_material("Si_2021_Poulton")
 wguide = nbapp.make_structure(
     inc_shape,
-    unitcell_x,
-    unitcell_y,
+    domain_x,
+    domain_y,
     inc_a_x,
     inc_a_y,
     material_bkg=materials.make_material("Vacuum"),

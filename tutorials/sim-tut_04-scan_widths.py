@@ -11,9 +11,7 @@ import threading
 import numpy as np
 
 import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.collections import PolyCollection
-#from matplotlib.colors import colorConverter
 
 from pathlib import Path
 sys.path.append(str(Path('../backend')))
@@ -58,10 +56,9 @@ def modes_n_gain(wwguide):
     width, wguide = wwguide
     thread_nm = threading.current_thread().name
     print('Process %d, thread %s: commencing mode calculation for width a_x = %f' % (
-        os.getpid(), thread_nm, wguide.inc_a_x))
+        os.getpid(), thread_nm, width))
     # Expected effective index of fundamental guided mode.
-    n_eff = (wguide.get_material('a').refindex_n-0.1) * \
-        wguide.inc_a_x/known_geo
+    n_eff = (wguide.get_material('a').refindex_n-0.1) * width/known_geo
 
     # Calculate Electromagnetic modes.
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
@@ -77,7 +74,7 @@ def modes_n_gain(wwguide):
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
     print('Process %d, thread %s: completed mode calculation for width a_x = %.3f' % (
-        os.getpid(), thread_nm, wguide.inc_a_x))
+        os.getpid(), thread_nm, width))
     return [width, simres_EM_pump, simres_AC, gain_box]
 
 
@@ -87,12 +84,12 @@ l_wguides = []
 # Scale meshing to new structures.
 for width in waveguide_widths:
     msh_ratio = width/known_geo
-    unitcell_x = 1.5*lambda_nm*msh_ratio
-    unitcell_y = unitcell_x
+    domain_x = 1.5*lambda_nm*msh_ratio
+    domain_y = domain_x
     inc_a_x = width
     inc_a_y = 0.9*inc_a_x
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),

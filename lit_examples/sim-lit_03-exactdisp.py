@@ -616,8 +616,8 @@ def do_main():
     rcore = 1000
     #acore = 2*rcore
     #inc_shape = 'circ_onion1'
-    unitcell_x = rcore*2.5  # system size in nm
-    #unitcell_y = unitcell_x
+    domain_x = rcore*2.5  # system size in nm
+    #domain_y = domain_x
     #mat_PMMA = materials.make_material('PMMA')  #
 
     mat_core = mat_SiO2

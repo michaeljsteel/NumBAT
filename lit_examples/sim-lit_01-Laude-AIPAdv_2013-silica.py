@@ -12,22 +12,22 @@
 
 import sys
 import numpy as np
-
 from pathlib import Path
+
 sys.path.append(str(Path('../backend')))
+
 import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
 
 import starter
 
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-unitcell_x = 7*wl_nm
-unitcell_y = unitcell_x
+domain_x = 7*wl_nm
+domain_y = domain_x
 inc_a_x = 1500
 inc_a_y = 1000
 inc_shape = 'rectangular'
@@ -44,7 +44,7 @@ prefix, refine_fac = starter.read_args(1, sys.argv)
 
 nbapp=numbat.NumBATApp(prefix)
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
                         lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -90,24 +90,21 @@ else:
     sim_AC = mode_calcs.load_simulation(prefix+'_ac')
 
 
-# Calculate interaction integrals and SBS gain for PE and MB effects combined,
-# as well as just for PE, and just for MB.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-# Print the frequencies and gains of AC modes.
-nus = sim_AC.nu_AC_all()
-gains = SBS_gain[EM_ival_pump, EM_ival_Stokes, :]
+print('Gains by acoustic mode:')
+print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
+v_nu = sim_AC.nu_AC_all()
+for (m, nu) in enumerate(v_nu):
+    print(f'{m:7d}    {np.real(nu)*1e-9:9.4e} {gain_box.gain_total(m):13.3e} ',
+          f'{gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} ')
 
-print('Acoustic modes')
-print('m      Freq (GHz)      Total gain (1/(Wm))')
-for m in range(len(nus)):
-    print(f'{m:3d} {np.real(nus[m])*1e-9:11.6f}       {gains[m]:8.4f}')
+
 
 # find indices selection of nplot highest gain modes to plot
-nplot=min(20, len(nus))
-high_g_indices = np.abs(gains).argsort()[-nplot:]
+nplot=min(20, len(v_nu))
+high_g_indices = np.abs(gain_box.gain_total_all()).argsort()[-nplot:]
 high_g_indices.sort()
 
 if recalc:
@@ -116,15 +113,12 @@ if recalc:
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9  # Hz
 freq_max = 13.e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-    logy=True,  mode_comps=True, dB=True)
+
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True,  mode_comps=True, dB=True)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5.3e9  # Hz
 freq_max = 6.6e9  # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-     suffix='_zoom')
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, suffix='_zoom')
 
 print(nbapp.final_report())

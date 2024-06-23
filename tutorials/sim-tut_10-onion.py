@@ -19,8 +19,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 3.5*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 3.5*lambda_nm
+domain_y = domain_x
 inc_shape = 'onion'
 
 num_modes_EM_pump = 20
@@ -39,7 +39,7 @@ d_lo = 400
 mat_hi = materials.make_material("Si_2016_Smith")
 mat_lo = materials.make_material("SiO2_2016_Smith")
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=d_lo,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x=d_lo,
                            inc_b_x=d_hi,
                            inc_c_x=d_lo, inc_d_x=d_hi, inc_e_x=d_lo, inc_f_x=d_hi,
                            inc_g_x=d_lo, inc_h_x=d_hi, inc_i_x=d_lo, inc_j_x=d_hi,
@@ -57,8 +57,8 @@ wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=d_lo,
 # Move origin to nominal centre of waveguide, y adjustment needs refinement based on mesh template.
 # Note different shifts are allowed for EM and acoustic, because acoustic domain excludes vacuum regions
 # Shifts are in nm
-wguide.set_xyshift_em(-unitcell_x*.5, unitcell_y*.5)
-wguide.set_xyshift_ac(-unitcell_x*.5, unitcell_y*.5)
+wguide.set_xyshift_em(-domain_x*.5, domain_y*.5)
+wguide.set_xyshift_ac(-domain_x*.5, domain_y*.5)
 
 # wguide.plot_mesh()
 

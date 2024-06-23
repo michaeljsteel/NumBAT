@@ -39,7 +39,7 @@ c     Vertices
 
 c     Mid-points
       do i=1,3
-         i2 = Mod(i+1,3)
+         i2 = modulo(i+1,3_8)
          if(i2 .eq. 0) i2 = 3
         do j=1,2
           xel_triangle(j,i+3) = (xel(j,i)+xel(j,i2))/2.0d0

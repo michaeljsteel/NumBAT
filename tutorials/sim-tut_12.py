@@ -311,10 +311,10 @@ def do_main():
     elif onion == 2:
         inc_shape = 'circ_onion2'
 
-    unitcell_x = rcore*10  # system size in nm
-    unitcell_y = unitcell_x
+    domain_x = rcore*10  # system size in nm
+    domain_y = domain_x
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, acore,   # remove these factors of 2
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, acore,   # remove these factors of 2
                                inc_b_x=aclad,
                             material_bkg=mat_bkg,
                             material_a=mat_core,

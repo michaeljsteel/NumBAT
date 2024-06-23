@@ -17,7 +17,7 @@
    !
    ! Program:
    ! FEM solver of Acoustic waveguide problems.
-   ! This subroutine is compiled by f2py & called in mode_calcs.py
+   ! This subroutine is compiled by fo2py & called in mode_calcs.py
    !
    ! Authors:
    ! Bjorn Sturmberg & Kokou B. Dossou
@@ -25,7 +25,7 @@
    !***********************************************************************
    !
 
-   module calc_ac_impl 
+   module calc_ac_impl
 
        contains
 
@@ -71,14 +71,13 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    integer, intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
+
+
+
+
    integer(8) int_max, cmplx_max, int_used, cmplx_used
    integer(8) real_max, real_used, n_ddl
-
-
-
    integer(8) neq
-
-
 
    integer :: alloc_stat
 
@@ -143,30 +142,30 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    integer :: is_em
 
 
-   !f2py intent(in) q_ac, n_modes
-   !f2py intent(in) debug, mesh_file, n_msh_pts, n_msh_el
-   !f2py intent(in) dimscale_in_m, shift
-   !f2py intent(in) i_bnd_cdns, itermax, tol
-   !f2py intent(in) plot_modes, c_tensor, rho
-   !f2py intent(in) cmplx_max, real_max, int_max
-   !f2py intent(in) n_typ_el, supplied_geo_flag
-   !f2py intent(in) type_nod, table_nod, type_el, mesh_xy, symmetry_flag
+   !fo2py intent(in) q_ac, n_modes
+   !fo2py intent(in) debug, mesh_file, n_msh_pts, n_msh_el
+   !fo2py intent(in) dimscale_in_m, shift
+   !fo2py intent(in) i_bnd_cdns, itermax, tol
+   !fo2py intent(in) plot_modes, c_tensor, rho
+   !fo2py intent(in) cmplx_max, real_max, int_max
+   !fo2py intent(in) n_typ_el, supplied_geo_flag
+   !fo2py intent(in) type_nod, table_nod, type_el, mesh_xy, symmetry_flag
 
    !  Note: the dependent variables must be listed AFTER the
    !  independent variables that they depend on in the function call!
 
-   !f2py depend(c_tensor) n_typ_el
-   !f2py depend(rho) n_typ_el
-   !f2py depend(type_nod) n_msh_pts
-   !f2py depend(table_nod) d_nodes_per_el, n_msh_el
-   !f2py depend(type_el) n_msh_el
-   !f2py depend(mesh_xy) n_msh_pts
+   !fo2py depend(c_tensor) n_typ_el
+   !fo2py depend(rho) n_typ_el
+   !fo2py depend(type_nod) n_msh_pts
+   !fo2py depend(table_nod) d_nodes_per_el, n_msh_el
+   !fo2py depend(type_el) n_msh_el
+   !fo2py depend(mesh_xy) n_msh_pts
 
-   !f2py intent(out) v_eigs_nu
-   !f2py intent(out) sol1, mode_pol, table_nod, type_el, mesh_xy
+   !fo2py intent(out) v_eigs_nu
+   !fo2py intent(out) sol1, mode_pol, table_nod, type_el, mesh_xy
 
-   !f2py intent(out) errco
-   !f2py intent(out) emsg
+   !fo2py intent(out) errco
+   !fo2py intent(out) emsg
 
    !
    !CCCCCCCCCCCCCCCCCCC  Start Program - get parameters  CCCCCCCCCCCCCCCCCC
@@ -290,7 +289,6 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    !     Sparse matrix storage
    ip_col_ptr = ip_eq + 3*n_msh_pts
-
 
    call csr_max_length_AC (n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
       table_nod, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
@@ -574,4 +572,4 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
 end subroutine calc_ac_modes_impl
 
-   end module calc_ac_impl 
+   end module calc_ac_impl

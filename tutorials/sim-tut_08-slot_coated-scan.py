@@ -25,8 +25,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 4*lambda_nm
-unitcell_y = 0.3*unitcell_x
+domain_x = 4*lambda_nm
+domain_y = 0.3*domain_x
 inc_shape = 'slot_coated'
 inc_a_x = 150
 inc_a_y = 190
@@ -34,6 +34,7 @@ inc_b_x = 250
 # Current mesh template assume inc_b_y = inc_a_y
 slab_a_x = 1000
 slab_a_y = 100
+coat_y = 50
 
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
@@ -44,13 +45,16 @@ AC_ival = 'All'
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
-nbapp = numbat.NumBATApp(prefix)
+nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 # Function to return ac freqs for given coating thickness
-def ac_mode_freqs(coat_y):
+#def ac_mode_freqs(coat_y):
+def ac_mode_freqs(wid_x):
+
     print(f'Commencing mode calculation for coat_y = {coat_y}')
 
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
+                                  inc_a_x=wid_x, inc_a_y=inc_a_y,
                             slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
                             coat_y=coat_y,
                             material_bkg=materials.make_material("Vacuum"),            # background
@@ -58,7 +62,8 @@ def ac_mode_freqs(coat_y):
                             material_b=materials.make_material("SiO2_2013_Laude"),     # slab
                             material_c=materials.make_material("Si_2016_Smith"),       # walls of slot
                             material_d=materials.make_material("SiO2_2013_Laude"),     # coating
-                            lc_bkg=1, lc_refine_1=100.0*refine_fac, lc_refine_2=50.0*refine_fac)
+                            lc_bkg=.05/refine_fac, lc_refine_1=10.0*refine_fac,
+                            lc_refine_2=10.0*refine_fac)
 
     # Expected effective index of fundamental guided mode.
     n_eff = wguide.get_material('a').refindex_n-0.1
@@ -101,9 +106,9 @@ def ac_mode_freqs(coat_y):
     return mode_freqs
 
 
-n_coats = 11
+n_coats = 21
 coat_min = 20
-coat_max = 200
+coat_max = 100
 coat_y_list = np.linspace(coat_min, coat_max, n_coats)
 
 num_cores = os.cpu_count()  # should be appropriate for individual machine/vm, and memory!
