@@ -20,8 +20,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2.*lambda_nm
-unitcell_y = .5*unitcell_x
+domain_x = 2.*lambda_nm
+domain_y = .5*domain_x
 inc_a_x = 800
 inc_a_y = 500
 inc_b_x = 800
@@ -41,12 +41,12 @@ prefix_str, refine_fac = starter.read_args(14, sys.argv)
 nbapp=numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(unitcell_x, inc_a_x, inc_shape=inc_shape,
+wguide = nbapp.make_structure(domain_x, inc_a_x, inc_shape=inc_shape,
                            inc_a_y=inc_a_y,
                            inc_b_x=inc_b_x,
                            inc_b_y=inc_b_y,
                            two_inc_sep=sep,
-                           unitcell_y=unitcell_y,
+                           domain_y=domain_y,
                            material_bkg=materials.make_material(
                                "SiO2_2021_Poulton"),
                            material_a=materials.make_material(

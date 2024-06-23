@@ -24,8 +24,8 @@ import materials
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 2*lambda_nm
+domain_y = domain_x
 inc_a_x = 300
 inc_a_y = 280
 inc_shape = 'rectangular'
@@ -50,7 +50,7 @@ print('\nCommencing NumBAT tutorial 2\n')
 nbapp = numbat.NumBATApp(prefix)
 
 # Use of a more refined mesh to produce field plots.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
@@ -86,23 +86,22 @@ for (i, kz) in enumerate(v_kz):
 
 # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args,
 # which specify the fraction of the axis to remove from the plot.
-# For instance xlim_min=0.4 will remove 40% of the x axis from the left outer edge
-# to the center. xlim_max=0.4 will remove 40% from the right outer edge towards the center.
+# For instance xlim_min=0.2 will remove 20% of the x axis from the left outer edge
+# to the center. xlim_max=0.2 will remove 20% from the right outer edge towards the center.
 # This leaves just the inner 20% of the unit cell displayed in the plot.
 # The ylim variables perform the equivalent actions on the y axis.
 
-# Let's plot fields for only the fundamental (ival = 0) mode.
+# Let's plot fields for only the first few modes (ival=range(4)=0--3)
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-simres_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          field_type='EM_E', ticks=True)
+simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
+                          ylim_max=0.2, ivals=range(4))
 
 # Plot the H field of the pump mode
-simres_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ylim_min=0.4,
-                          ylim_max=0.4, ivals=[EM_ival_pump], contours=True,
-                          field_type='EM_H', ticks=True)
+simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
+                          ylim_max=0.2, ivals=range(4), 
+                          field_type='EM_H')
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
@@ -131,8 +130,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-simres_AC.plot_modes(contours=True,
-                          ticks=True, quiver_points=20, ivals=range(10))
+simres_AC.plot_modes(contours=True, quiver_points=20, ivals=range(10))
 
 if recalc_fields:
     # Calculate the acoustic loss from our fields.

@@ -6,7 +6,7 @@ all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
 
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
 				ftut08 ftut09 ftut11a  ftut12 ftut13 ftut14
-allfastb: ftut05 ftut06 ftut07 \
+allfastb: ftut04 ftut05 ftut06 ftut07 \
 				ftut08 ftut09 ftut11a  ftut11b ftut12 ftut13 ftut14
 
 broken: tut10
@@ -129,4 +129,5 @@ ftut19:
 clean:
 	-rm *.png *.npz
 	-rm -rf tut*fields ftut*fields __pycache__
+	-rm -rf tut*out tut*.txt ftut*.txt
 

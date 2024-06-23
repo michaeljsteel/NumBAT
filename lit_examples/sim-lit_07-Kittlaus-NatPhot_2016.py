@@ -29,16 +29,20 @@ import starter
 # Geometric Parameters - all in nm.
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
 # Unit cell must be large to ensure fields are zero at boundary.
-unitcell_x = 3*wl_nm
-unitcell_y = 0.4*unitcell_x
+domain_x = 3*wl_nm
+domain_y = 0.4*domain_x
 # Waveguide widths.
-inc_a_x = 1000
-inc_a_y = 80
+#inc_a_x = 1000
+#inc_a_y = 80
+rib_w = 1000
+rib_h = 80
 # Shape of the waveguide.
 inc_shape = 'rib'
 
-slab_a_x = 3000
-slab_a_y = 130
+#slab_a_x = 3000
+#slab_a_y = 130
+slab_w = 3000
+slab_h = 130
 
 # Number of electromagnetic modes to solve for.
 num_modes_EM_pump = 20
@@ -56,6 +60,9 @@ AC_ival = 'All'
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
 
+mat_vac = materials.make_material("Vacuum")
+mat_rib = Si_110
+mat_slab = Si_110
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
@@ -63,12 +70,9 @@ nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
-                        slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                        material_bkg=materials.make_material("Vacuum"),
-                        material_a=Si_110,
-                        material_b=Si_110, symmetry_flag=False,
-                        lc_bkg=.1, lc_refine_1=10.0, lc_refine_2=10.0)
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, rib_w=rib_w, rib_h=rib_h, slab_w=slab_w, slab_h=slab_h, 
+                              material_bkg=mat_vac, material_a=mat_rib, material_b=mat_slab, symmetry_flag=False, 
+                              lc_bkg=.05, lc_refine_1=5.0, lc_refine_2=5.0)
 
 wguide.plot_mesh(prefix)
 

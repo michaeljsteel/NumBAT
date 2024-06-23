@@ -25,9 +25,9 @@ clad_a = 125e3
 clad_a = 30e3
 clad_a = 8000
 
-unitcell_x = clad_a*2.0
-#unitcell_x = 5*lambda_nm
-unitcell_y = unitcell_x
+domain_x = clad_a*2.0
+#domain_x = 5*lambda_nm
+domain_y = domain_x
 
 
 num_modes_EM_pump = 40
@@ -58,12 +58,12 @@ else:
     inc_a_x = clad_a
 
 if onion:
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=core_a,
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x=core_a,
                               inc_b_x = clad_a-core_a,
                               material_bkg=mat_vac, material_a=mat_core, material_b=mat_clad,
                               lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 else:
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x=inc_a_x,
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x=inc_a_x,
                               material_bkg=mat_vac, material_a=mat_core,
                               lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 
@@ -87,8 +87,8 @@ else:
     sim_EM_pump = mode_calcs.load_simulation('tut_18_pump')
     sim_EM_Stokes = mode_calcs.load_simulation('tut_18_stokes')
 
-#sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-#sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+#sim_EM_pump.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
+#sim_EM_Stokes.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
 #trim=0.4
@@ -124,7 +124,7 @@ if recalc_fields:
 else:
     sim_AC = mode_calcs.load_simulation('tut_18_acoustic')
 
-#sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+#sim_AC.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 sim_AC.plot_modes()
 
 # Print the frequencies of AC modes.

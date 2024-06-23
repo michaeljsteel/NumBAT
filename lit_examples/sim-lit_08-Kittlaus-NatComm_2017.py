@@ -97,8 +97,8 @@ slab_a_x = 2850
 slab_a_y = 135
 
 # Unit cell must be large to ensure fields are zero at boundary.
-unitcell_x = 5000
-unitcell_y = 0.7*unitcell_x
+domain_x = 5000
+domain_y = 0.7*domain_x
 
 # areas included purely
 slab_b_y = 500
@@ -163,7 +163,7 @@ nbapp = numbat.NumBATApp(prefix)
 
 vac = materials.make_material("Vacuum")
 # Use specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y,
                               coat_x=coat_x, coat_y=coat_y, coat2_x=coat2_x, coat2_y=coat2_y,
                               material_bkg=vac,

@@ -49,8 +49,8 @@ emdecorate = EMDecorator()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-unitcell_x = 5*wl_nm
-unitcell_y = 0.5*unitcell_x
+domain_x = 5*wl_nm
+domain_y = 0.5*domain_x
 inc_a_x = 485
 inc_a_y = 230
 inc_shape = 'rectangular'
@@ -70,7 +70,7 @@ Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 # Si_110 = copy.deepcopy(materials.materials_dict["Si_2015_Van_Laer"])
 Si_110.rotate_axis('z-axis', np.pi/4)
 # Use all specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               material_bkg=materials.make_material("Vacuum"),
                               material_a=Si_110, symmetry_flag=False,
                               lc_bkg=.1, lc_refine_1=20.0*refine_fac, lc_refine_2=20.0*refine_fac)

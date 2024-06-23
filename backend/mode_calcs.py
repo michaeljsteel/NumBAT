@@ -490,6 +490,8 @@ class SimResult:
             }
         )
 
+        print('setting contours', contours)
+
         modetype = "acoustic" if field_type == FieldType.AC else "em"
 
         ival_range = ivals if ivals is not None else range(self.n_modes)
@@ -774,7 +776,7 @@ class Simulation:
         self.n_modes = num_modes
 
         self.d_in_m = (
-            self.structure.unitcell_x * SI_nm
+            self.structure.domain_x * SI_nm
         )  # Scales Gmsh structure to correct size
 
         # seems unused
@@ -882,8 +884,8 @@ class EMSimulation(Simulation):
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
 
         self.E_H_field = 1  # Selected formulation (1=E-Field, 2=H-Field)
-        # bnd_cdn_i = 2       # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
-        bnd_cdn_i = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)  TODO: this has been set to periodic for some time?!
+        # bnd_cdn_i = 2       # Boundary conditions (0=Dirichlet,1=Neumann,2=domain_x)
+        bnd_cdn_i = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=domain_x)  TODO: this has been set to periodic for some time?!
 
         itermax = 30  # Maximum number of iterations for convergence
         EM_FEM_debug = self.debug  # Fortran routines will display & save add. info
@@ -906,7 +908,7 @@ class EMSimulation(Simulation):
         #print(f'bloch:', self.k_perp)
         #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
 
-        print('Starting calc_emmodes')
+        print('Starting calc_emmodes', self.lambda_m, self.d_in_m)
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
@@ -1104,7 +1106,7 @@ class ACSimulation(Simulation):
             print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
 
         # Parameters that control how FEM routine runs
-        # Boundary conditions (0=Dirichlet,1=Neumann,2=unitcell_x)
+        # Boundary conditions (0=Dirichlet,1=Neumann,2=domain_x)
         bnd_cdn_i = 0
         if bcs == "Open":
             print("Attempting open elastic boundary conditions.")

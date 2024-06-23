@@ -20,7 +20,8 @@ c
       parameter (nddl_t=4)
       integer(8) nod_el(nnodes), basis_list(4,3,nddl_t)
 c     Local variables
-      integer(8) i, j, j1, j2, j3, list_end(2,3)
+      integer i, j
+      integer(8) list_end(2,3), j1, j2, j3
       integer(8) ls_n(3), ls_n_sorted(3)
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -47,7 +48,7 @@ C           ! number on data to be stored
 C           ! the mid-edge number
           basis_list(2,j,i) = j+3
 C           ! give the node opposite to the mid-edge node (j+3)
-          j2 = mod(j+2,3)
+          j2 = modulo(j+2,3)
           if( j2 .eq. 0 ) j2 = 3
           basis_list(3,j,i) = j2
 C           !  actually, it will not be used

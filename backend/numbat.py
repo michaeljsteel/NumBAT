@@ -112,6 +112,8 @@ class _NumBATApp:
     def make_structure(self, *args, **kwargs):
         return objects.Structure(*args, direct_call=False, **kwargs)
 
+    def wg_structure_help(self, inc_shape):
+        objects.print_waveguide_help(inc_shape)
 
     def _setup_paths(self):
         # numbat paths

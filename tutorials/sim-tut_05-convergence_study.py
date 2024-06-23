@@ -23,8 +23,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2.5*lambda_nm
-unitcell_y = unitcell_x
+domain_x = 2.5*lambda_nm
+domain_y = domain_x
 inc_a_x = 300
 inc_a_y = 280
 inc_shape = 'rectangular'
@@ -54,7 +54,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     print("\n Running simulation", i_lc+1, "/", nu_lcs)
     lc_refine_2 = lc_ref/2
     lc_bkg = lc_bkg_list[i_lc]
-    wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),
@@ -77,7 +77,7 @@ for i_lc, lc_ref in enumerate(lc_list):
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-    conv_list.append([sim_EM_pump, sim_AC, gain_box.gain_total_all(), 
+    conv_list.append([sim_EM_pump, sim_AC, gain_box.gain_total_all(),
                       gain_box.gain_PE_all(), gain_box.gain_MB_all()])
     end = time.time()
     time_list.append(end - start)
@@ -101,7 +101,7 @@ for i_conv, conv_obj in enumerate(conv_list):
         rel_mode_gain[i_conv, i_m] = conv_obj[2][rel_mode]
         rel_mode_gain_PE[i_conv, i_m] = conv_obj[3][rel_mode]
         rel_mode_gain_MB[i_conv, i_m] = conv_obj[4][rel_mode]
-                                                   
+
 
 
 xlabel = "Mesh Refinement Factor"

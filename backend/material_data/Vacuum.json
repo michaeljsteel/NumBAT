@@ -2,10 +2,10 @@
   "format": "NumBATMaterial-fmt-2.0",
   "material_name": "Vacuum",  // Name of this file, will be used as identifier
   "chemical": "Vacuum",  // Chemical composition
-  "author": "N/A",  // Author of data
-  "date": "N/A",  // Year of data publication/creation
-  "institution": "N/A",  // Source institution
-  "doi": "N/A",  // doi or, failing that, the http address
+  "author": "J. C. Maxwell",  // Author of data
+  "date": "1865",  // Year of data publication/creation
+  "institution": "King's College London",  // Source institution
+  "doi": "10.1017/CBO9780511710377B",  // doi or, failing that, the http address
   "Re_n": 1.0,  // Real part of refractive index []
   "Im_n": 0.0,  // Imaginary part of refractive index []
   "s":    null,  // Density [kg/m3]

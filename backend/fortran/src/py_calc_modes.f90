@@ -291,7 +291,6 @@ contains
          mesh_xy, type_nod, type_el, table_nod,  errco, emsg)
       RETONERROR(errco)
 
-
       ! Storage locations in sequence
       !  - table_edge_face = a_iwork(ip_table_N_E_F),   shape: 14 x n_msh_el
       !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max ? = n_msh_pts + n_msh_el

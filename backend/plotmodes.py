@@ -21,7 +21,6 @@ from collections.abc import Iterable
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import numbat
 from plottools import save_and_close_figure
@@ -516,6 +515,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
                         'ax_label_xpad':3, 'ax_label_ypad':1,
                         'aspect':aspect })
 
+
     tidy.apply_to_axes(ax)
     if cbar:
         tidy.apply_to_cbars(cbar)
@@ -530,6 +530,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
     decorator.add_frame(ax)
 
     decorator.extra_axes_commands(ax)
+
 
 
 

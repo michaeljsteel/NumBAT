@@ -13,8 +13,8 @@ import starter
 # Geometric Parameters - all in nm.
 #lambda_nm = 1550
 lambda_nm = 1000
-unitcell_x = lambda_nm
-unitcell_y = unitcell_x
+domain_x = lambda_nm
+domain_y = domain_x
 inc_a_x = 600      # base length (always horizontal)
 inc_a_y = inc_a_x  # not used
 inc_b_x = 500      # displacement of peak from left end of base
@@ -41,7 +41,7 @@ lc_corner = 6
 lc_norm = 1
 lc_corner = 1
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               inc_b_x = inc_b_x, inc_b_y = inc_b_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),

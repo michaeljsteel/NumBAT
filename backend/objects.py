@@ -88,7 +88,7 @@ def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
 
     return wg_index
 
-class ElectromagneticProps:
+class OpticalProps:
     '''EM properties in unit-indexed forms suitable for fortran'''
 
     def __init__(self, v_mats_em, n_mats_em, loss):
@@ -112,8 +112,8 @@ class ElectromagneticProps:
         # Array[0:n_mats_em] - refractive index of each active material
 
         self.v_refindexn =np.array([m.refindex_n for m in matvals])
-        if not loss:
-            self.v_refindexn = self.v_refindexn.real
+        if not loss:  # turn of the loss but keep the values complex for fortran passing
+            self.v_refindexn = self.v_refindexn.real * complex(1.0, 0.0)
 
 
 
@@ -274,18 +274,18 @@ class ElasticProps:
 
 
 class Structure:
-    ''' Represents the geometry and  material properties (elastic and electromagnetic) of a waveguide structure.
+    ''' Represents the geometry and  material properties (elastic and Optical) of a waveguide structure.
 
         Args:
-            unitcell_x  (float):
+            domain_x  (float):
                 The horizontal period of the unit cell in nanometers.
 
             inc_a_x  (float):
                 The horizontal diameter of the primary inclusion in nm.
 
         Keyword Args:
-            unitcell_y  (float):
-                The vertical period of the unit cell in nanometers. If None, unitcell_y = unitcell_x.
+            domain_y  (float):
+                The vertical period of the unit cell in nanometers. If None, domain_y = domain_x.
 
             inc_a_y  (float):
                 The vertical diameter of the primary inclusion in nm.
@@ -407,159 +407,109 @@ class Structure:
             cls._waveguide_templates.extend(user_wg_templates)
 
 
-
-    def __init__(self, inc_shape=None, unitcell_x=None, unitcell_y=None,
-                 inc_a_x=None, inc_a_y=None, inc_b_x=None, inc_b_y=None,
-                 inc_c_x=None, inc_d_x=None, inc_e_x=None, inc_f_x=None,
-                 inc_g_x=None, inc_h_x=None, inc_i_x=None, inc_j_x=None,
-                 inc_k_x=None, inc_l_x=None, inc_m_x=None, inc_n_x=None,
-                 inc_o_x=None,
-                 slab_a_x=None, slab_a_y=None, slab_b_x=None, slab_b_y=None,
-                 coat_x=None, coat_y=None, coat2_x=None, coat2_y=None,
-                 two_inc_sep=None, incs_y_offset=None, pillar_x=None, pillar_y=None,
-                 material_bkg=None,
-                 material_a=None, material_b=None, material_c=None, material_d=None,
-                 material_e=None, material_f=None, material_g=None, material_h=None,
-                 material_i=None, material_j=None, material_k=None, material_l=None,
-                 material_m=None, material_n=None, material_o=None, material_p=None,
-                 material_q=None, material_r=None,
-                 loss=True, symmetry_flag=True,
-                 make_mesh_now=True, force_mesh=True,
-                 mesh_file='NEED_FILE.mail', check_mesh=False, plt_mesh=False,
-                 lc_bkg=0.09, lc_refine_1=1.0, lc_refine_2=1.0, lc_refine_3=1.0, lc_refine_4=1.0, lc_refine_5=1.0,
-                 plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0, plot_field_conc=False,
-                 direct_call=True):
-
-        if plt_mesh:
-            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
-
-        if check_mesh:
-            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
+    def __init__(self, *largs, **kwargs):
+    # def __init__(self, inc_shape=None, domain_x=None, domain_y=None,
+    #              inc_a_x=None, inc_a_y=None, inc_b_x=None, inc_b_y=None,
+    #              inc_c_x=None, inc_d_x=None, inc_e_x=None, inc_f_x=None,
+    #              inc_g_x=None, inc_h_x=None, inc_i_x=None, inc_j_x=None,
+    #              inc_k_x=None, inc_l_x=None, inc_m_x=None, inc_n_x=None,
+    #              inc_o_x=None,
+    #              slab_a_x=None, slab_a_y=None, slab_b_x=None, slab_b_y=None,
+    #              coat_x=None, coat_y=None, coat2_x=None, coat2_y=None,
+    #              two_inc_sep=None, incs_y_offset=None, pillar_x=None, pillar_y=None,
+    #              material_bkg=None,
+    #              material_a=None, material_b=None, material_c=None, material_d=None,
+    #              material_e=None, material_f=None, material_g=None, material_h=None,
+    #              material_i=None, material_j=None, material_k=None, material_l=None,
+    #              material_m=None, material_n=None, material_o=None, material_p=None,
+    #              material_q=None, material_r=None,
+    #              loss=True, symmetry_flag=True,
+    #              make_mesh_now=True, force_mesh=True,
+    #              mesh_file='NEED_FILE.mail', check_mesh=False, plt_mesh=False,
+    #              lc_bkg=0.09, lc_refine_1=1.0, lc_refine_2=1.0, lc_refine_3=1.0, lc_refine_4=1.0, lc_refine_5=1.0,
+    #              plotting_fields=False, plot_real=1, plot_imag=0, plot_abs=0, plot_field_conc=False,
+    #              direct_call=True):
 
         numbat.assert_numbat_object_created()
-        if direct_call:
+
+        if 'plt_mesh' in kwargs:
+            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
+
+        if 'check_mesh' in kwargs:
+            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
+
+        if kwargs.get('direct_call', 0):
             reporting.register_warning(
                 'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
+
+        if 'inc_shape' not in kwargs and len(largs) == 0:
+            reporting.report_and_exit('Must provide an inc_shape argument to make_structure()')
+
+        self.all_params = copy.deepcopy(kwargs)
+
+        del self.all_params['direct_call']
+
+        if 'inc_shape' in self.all_params: del self.all_params['inc_shape']
+        self.inc_shape = largs[0] if len(largs)>0 else kwargs['inc_shape']
+
+
+        # Support old calling convention
+        if 'domain_x' not in kwargs:
+            self.all_params['domain_x'] = largs[1] if len(largs)>1 else float(kwargs['unitcell_x'])
+        if 'domain_y' not in kwargs:
+            self.all_params['domain_y'] = largs[2] if len(largs)>2 else float(kwargs['unitcell_y'])
+
+        self.domain_x = self.all_params['domain_x']
+        self.domain_y = self.all_params['domain_y']
+
+        #TODO: everything breaks is 'loss' is false, because v_refindex become real which breaks passing to fortran
+        self.loss = float(kwargs.get('loss', True))       # TODO: Boolean. Needs better name
+
+
+        if len(largs)>3: self.all_params['inc_a_x'] = largs[3]
+        if len(largs)>4: self.all_params['inc_a_y'] = largs[4]
+
+        mat_vac = materials.make_material('Vacuum')
+        self.d_materials = {'bkg': kwargs['material_bkg']}  # this one must come first
+
+        # fill up materials with vacuums
+        for letter in range(ord('a'), ord('r')):
+            self.d_materials[chr(letter)] = mat_vac
+
+        # overwrite vacuums for those materials provided by user
+        for k,v in kwargs.items():
+            if k.startswith('material_') and k !='material_bkg':
+                tag = k[9:]
+                self.d_materials[tag] = v
+
+        n_mats_em = self.build_waveguide_geometry(self.inc_shape, self.all_params, self.d_materials)
 
         #self.n_mats_em = 0     # total number of materials _declared_ to be used in the structure. May not always be accurage
 
         # material identities seem to depend on stable ordering of the material dictionary when converted to a list
 
-        self.optical_props = None
-        self.elastic_props = None
+
+
+        # Build the whole mesh (A major step)
+        self._build_mesh()
+
 
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
         self.shift_ac_x = 0  # user requested offsets to coord-system
         self.shift_ac_y = 0
 
-
-        # Structures material properties - need to check geometry definition
-        # to ensure connecting material type with correct surface of geometry
-        mat_vac = materials.make_material('Vacuum')
-
-        self.d_materials = {}
-        mat_pairs = {'bkg': material_bkg,
-                     'a': material_a, 'b': material_b, 'c': material_c, 'd': material_d, 'e': material_e,
-                     'f': material_f, 'g': material_g, 'h': material_h, 'i': material_i, 'j': material_j,
-                     'k': material_k, 'l': material_l, 'm': material_m, 'n': material_n, 'o': material_o,
-                     'p': material_p, 'q': material_q, 'r': material_r}
-
-        # Fill up dictionary with all mats 'bkg' to 'r' with vacuum if needed.
-        # TODO: Why do this. Better to leave undefined and fail if needed materials are missing.
-
-        for (tag, mat) in mat_pairs.items():
-            self.d_materials[tag] = mat if (mat is not None) else copy.deepcopy(mat_vac)
-
-        # Structures geometric shapes
-        self.inc_shape = inc_shape
-        unitcell_x = float(unitcell_x)
-        self.inc_a_x = inc_a_x
-        self.unitcell_x = unitcell_x
-
-        if unitcell_y is None:
-            unitcell_y = float(unitcell_x)
-        else:
-            unitcell_y = float(unitcell_y)
-
-        if inc_a_y is None:
-            inc_a_y = float(inc_a_x)
-        else:
-            inc_a_y = float(inc_a_y)
-
-        if inc_b_x is not None:
-            if inc_b_y is None:
-                inc_b_y = float(inc_b_x)
-            else:
-                inc_b_y = float(inc_b_y)
-
-        self.all_params = {'lc': lc_bkg}
-        for p in ['unitcell_x', 'inc_a_x', 'unitcell_y', 'inc_a_y', 'inc_shape', 'slab_a_x',
-                  'slab_a_y', 'slab_b_x', 'slab_b_y', 'coat_x', 'coat_y', 'coat2_x', 'coat2_y',
-                  'inc_b_x', 'inc_b_y', 'two_inc_sep', 'incs_y_offset', 'pillar_x', 'pillar_y',
-                  'inc_c_x', 'inc_d_x', 'inc_e_x', 'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x',
-                  'inc_j_x', 'inc_k_x', 'inc_l_x', 'inc_m_x', 'inc_n_x', 'inc_o_x',
-                  'lc_refine_1', 'lc_refine_2', 'lc_refine_3', 'lc_refine_4', 'lc_refine_5']:
-            self.all_params[p] = eval(p)
-
-        self.loss = loss       # TODO: Boolean. Needs better name
-        self.force_mesh = force_mesh
-
-        n_mats_em = 0
-        if make_mesh_now:
-            n_mats_em = self.build_waveguide_geometry(self.d_materials)
-        else:  # TODO: this seems to be broken. But also not really worth supporting? Mesh construction is not hard
-            print(f"Using mesh from existing file '{mesh_file}'.")
-            self.mesh_mail_fname = mesh_file
-            with open(self.mesh_mail_fname) as f:
-                self.mail_data = f.readlines()
-
-        # TODO: much of this plotting stuffis no longer needed
-        if plotting_fields:  # TODO: This is for internal fortran plotting. Should have a less appealing name
-            reporting.register_warning('''Calling plotting_fields in objects.Structure.
-                                       This is deprecated. Please report to the github page.''')
-            self.plotting_fields = 1
-            if not os.path.exists('Bloch_fields'):
-                os.mkdir('Bloch_fields')
-            if not os.path.exists('Bloch_fields/PDF'):
-                os.mkdir('Bloch_fields/PDF')
-            if not os.path.exists('AC_fields'):
-                os.mkdir('AC_fields')
-        else:
-            self.plotting_fields = 0
-
-        self.plot_real = plot_real
-        self.plot_imag = plot_imag
-        self.plot_abs = plot_abs
-        self.plot_field_conc = plot_field_conc
-
-        self.symmetry_flag = symmetry_flag
-
-        # print('symflag', symmetry_flag)
-        # el_conv_table = {}
-        # i = 1; j = 1
-        # for matter in v_acoustic_mats:
-        #     if matter != None:
-        #         el_conv_table[i] = j
-        #         j += 1
-        #     i += 1
-        # self.typ_el_AC = el_conv_table
-        # print el_conv_table
-
-        self.optical_props = ElectromagneticProps(list(self.d_materials.values()), n_mats_em, self.loss)
-
-        self._build_elastic_tensors(symmetry_flag)
+        self.symmetry_flag = int(kwargs.get('symmetry_flag', 0))
 
 
-    def _build_elastic_tensors(self, symmetry_flag):
-        '''Put all elastic tensor properties into single 3 x 3 x num_material arrays, zero-indexed'''
+        self.optical_props = OpticalProps(list(self.d_materials.values()), n_mats_em, self.loss)
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
         # Any material not given v_acoustic_mats assumed to be vacuum.
-
         v_acoustic_mats = [m for m in self.d_materials.values() if m.has_elastic_properties()]
 
-        self.elastic_props = ElasticProps(v_acoustic_mats, symmetry_flag)
+        self.elastic_props = ElasticProps(v_acoustic_mats, self.symmetry_flag)
+
 
     def get_material(self, k):
         return self.d_materials[k]
@@ -574,6 +524,7 @@ class Structure:
         self.shift_ac_y = y * SI_nm
 
     def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME
+        return True
         msh_name='missing_mesh_name'
         return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
 
@@ -584,14 +535,15 @@ class Structure:
         '''Returns Object representing mesh in  .mail file'''
         return self.mail_data
 
-    def build_waveguide_geometry(self, d_materials):
+
+
+    def build_waveguide_geometry(self, inc_shape, params,
+                                 d_materials):
         ''' Take the parameters specified in python and make a Gmsh FEM mesh.
             Creates a .geo and .msh file from the .geo template,
             then uses Fortran conv_gmsh routine
             to convert .msh into .mail, which is used in NumBAT FEM routine.
         '''
-
-        print('Building waveguide')
 
         # full path to backend directory that this code file is in
         this_directory = os.path.dirname(os.path.realpath(__file__))
@@ -606,13 +558,13 @@ class Structure:
 
         self.wg_geom = None
 
-        found = False
+        #found = False
         for wg in Structure._waveguide_templates:
-            if self.inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
-                found = True
+            if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
+                #found = True
 
                 # Instantiate the class that defines this waveguide model
-                wg_geom = wg['wg_template_cls'](self.all_params, d_materials)
+                wg_geom = wg['wg_template_cls'](params, d_materials)
 
                 wg_geom.init_geometry()
 
@@ -620,8 +572,8 @@ class Structure:
 
                 break
 
-        if not found:
-            raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
+        else:  # didn't find required wg
+            raise NotImplementedError(f"\n Selected inc_shape = '{inc_shape}' "
                                       'is not currently implemented. \nPlease make a mesh with gmsh and '
                                       'consider contributing this to NumBAT via github.')
 
@@ -634,11 +586,14 @@ class Structure:
             else:
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
 
+        wg_geom.check_parameters(params)
         self.wg_geom = wg_geom
 
-        self._build_mesh()
 
         return n_mats_em
+
+
+
 
     def using_linear_elements(self):
         return self.inc_shape in self.linear_element_shapes
@@ -884,3 +839,12 @@ class Structure:
 def initialise_waveguide_templates(numbatapp):
     Structure.initialise_waveguide_templates(numbatapp)
 
+def print_waveguide_help(inc_shape):
+    for wg in Structure._waveguide_templates:
+        if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
+            #found = True
+
+            # Instantiate the class that defines this waveguide model
+            wg_geom = wg['wg_template_cls'](None, None)
+            wg_geom.init_geometry()
+            wg_geom.help_on_parameters()

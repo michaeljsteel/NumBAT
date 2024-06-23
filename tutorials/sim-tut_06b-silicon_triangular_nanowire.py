@@ -23,8 +23,8 @@ import starter
 # Geometric Parameters - all in nm.
 #lambda_nm = 1550
 lambda_nm = 1000
-unitcell_x = lambda_nm
-unitcell_y = unitcell_x
+domain_x = lambda_nm
+domain_y = domain_x
 inc_a_x = 600      # base length (always horizontal)
 inc_a_y = inc_a_x  # not used
 inc_b_x = 500      # displacement of peak from left end of base
@@ -51,7 +51,7 @@ lc_corner = 6
 lc_norm = 1
 lc_corner = 1
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               inc_b_x = inc_b_x, inc_b_y = inc_b_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
@@ -74,8 +74,8 @@ else:
     sim_EM_pump = mode_calcs.load_simulation('tut_06_pump')
     sim_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
 
-sim_EM_pump.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
-sim_EM_Stokes.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+sim_EM_pump.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
+sim_EM_Stokes.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
 sim_EM_pump.plot_modes(ivals=[0])
@@ -101,7 +101,7 @@ if recalc_fields:
 else:
     sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
 
-sim_AC.set_r0_offset(0, -0.5e-9*unitcell_y)  # ensure plots identify centre as (0,0)
+sim_AC.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 sim_AC.plot_modes()
 
 # Print the frequencies of AC modes.

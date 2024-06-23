@@ -24,8 +24,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-unitcell_x = 2500
-unitcell_y = unitcell_x
+domain_x = 2500
+domain_y = domain_x
 inc_a_x = 700
 inc_b_x = 350
 inc_shape = 'onion2'
@@ -45,7 +45,7 @@ mat_bkg=materials.make_material("Vacuum")
 mat_a=materials.make_material("As2S3_2021_Poulton")
 mat_b=materials.make_material("SiO2_2021_Poulton")
 
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x,
                            inc_b_x=inc_b_x,  # first annulus width
                            material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
                            lc_bkg=.1, lc_refine_1=2.0*refine_fac, lc_refine_2=2*refine_fac)

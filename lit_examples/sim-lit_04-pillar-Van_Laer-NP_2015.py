@@ -23,8 +23,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-unitcell_x = 4*wl_nm
-unitcell_y = 0.5*unitcell_x
+domain_x = 4*wl_nm
+domain_y = 0.5*domain_x
 inc_a_x = 450
 inc_a_y = 230
 inc_shape = 'pedestal'
@@ -49,7 +49,7 @@ Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer"))
 Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
 
 # Use all specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, unitcell_x, unitcell_y, inc_a_x, inc_a_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                         pillar_x=pillar_x, pillar_y=pillar_y,
                         material_bkg=materials.make_material("Vacuum"),            # background

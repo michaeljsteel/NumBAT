@@ -29,8 +29,8 @@ import starter
 # Specify Geometric Parameters - all in [nm].
 wl_nm = 1550  # Wavelength of EM wave in vacuum.
 # Unit cell dimensions must be sufficiently large to ensure fields are zero at outermost boundary.
-unitcell_x = 4.01 * wl_nm  # be careful to ensure not whole integer multiples
-unitcell_y = unitcell_x
+domain_x = 4.01 * wl_nm  # be careful to ensure not whole integer multiples
+domain_y = domain_x
 inc_a_x = 1000  # Waveguide width.
 inc_a_y = inc_a_x
 inc_shape = "circular"  # Shape of the waveguide.
@@ -55,8 +55,8 @@ nbapp = numbat.NumBATApp(prefix)
 # Use all specified parameters to create a waveguide object
 wguide = nbapp.make_structure(
     inc_shape,
-    unitcell_x,
-    unitcell_y,
+    domain_x,
+    domain_y,
     inc_a_x,
     inc_a_y,
     material_bkg=materials.make_material("Vacuum"),
