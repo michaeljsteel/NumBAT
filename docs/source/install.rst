@@ -178,14 +178,15 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
-Troubleshooting Linux installs
--------------------------------
+.. _sec-troubleshooting-label:
+
+
+Troubleshooting Linux and MacOS installs
+-------------------------------------------
 Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
 Here are a few traps to watch out for:
 
 #. Please ensure to use relatively recent libraries for all the Python components. This includes using
-
-
 
    - Python: 3.10 or later
    - ``matplotlib``: 3.9.0 or later
@@ -193,8 +194,6 @@ Here are a few traps to watch out for:
    - ``numpy``:  1.26.2 or later
 
 #. But try not to use very recently released major upgrades.
-
-
 
    Notably the 2.0.0 series of ``numpy``, which was only released in mid-June 2024 includes major changes to ``numpy`` architecture and is  not yet supported.
 
@@ -210,6 +209,20 @@ Here are a few traps to watch out for:
      You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
 
    - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
+
+#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, useful information can be obtained from the GNU debugger ``gdb`` as follows:
+
+    #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
+
+    #. Ensure that ``gdb`` is installed.
+
+    #. Rerun the script that causes the crash. You should now have a core dump in the directory determined in step 1.
+
+    #. Execute ``gdb`` as follows::
+
+        $ gdb <path_to_numbat_python_env>  <path_to_core file>
+
+    #. In gdb, enter ``bt`` for *backtrace* and try to identify the point in the code at which the crash has occurred.
 
 Installing on MacOS
 ================================
@@ -601,5 +614,25 @@ This can be done by running ``make`` in each of those directories. Be aware that
 
 
 
+Seeking help with building |NUMBAT|
+=====================================
 
+If you are having trouble building |NUMBAT| or are experiencing crashes, we will do our best to assist you.
 
+Before writing for help (see contact details in :ref:_chap-intro-label), please do the following:
+
+    #. Download the latest version of |NUMBAT| from github and ensure the problem remains.
+
+    #. If on Linux or MacOS, run the script ``./backend/nb_runconfig_test.sh`` from the main |NUMBAT| directory.
+
+       This will create the file ``./nb_buildconfig.txt`` in the main directory with useful details about your build configuration and environment.
+
+       **If on Windows**, do the same using the file ``.\backend\nb_runconfig_test.bat`` instead.
+
+    #. In your email, indicate the date on which you last downloaded |NUMBAT| from github.
+
+    #. Attach the ``nb_buildconfig.txt`` file.
+
+    #. If the problem is a crash while running a |NUMBAT| script, please attach the python script file and a description of how to observe the problem.
+
+    #. If on Linux or MacOS, follow the instructions under :ref:`sec-troubleshooting-label` to generate a debugging trace with GDB and send a screen shot of the trace.

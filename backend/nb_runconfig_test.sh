@@ -4,7 +4,7 @@
 # to help identify the cause of any crashes or other difficulties
 #
 
-OUT="./nb_config.txt"
+OUT="./nb_build_config.txt"
 
 if [ ! -e "backend" ]; then
     echo
