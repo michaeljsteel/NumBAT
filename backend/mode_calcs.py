@@ -490,8 +490,6 @@ class SimResult:
             }
         )
 
-        print('setting contours', contours)
-
         modetype = "acoustic" if field_type == FieldType.AC else "em"
 
         ival_range = ivals if ivals is not None else range(self.n_modes)
@@ -908,7 +906,7 @@ class EMSimulation(Simulation):
         #print(f'bloch:', self.k_perp)
         #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
 
-        print('Starting calc_emmodes', self.lambda_m, self.d_in_m)
+        print('Starting calc_emmodes')
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,

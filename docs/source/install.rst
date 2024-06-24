@@ -619,7 +619,7 @@ Seeking help with building |NUMBAT|
 
 If you are having trouble building |NUMBAT| or are experiencing crashes, we will do our best to assist you.
 
-Before writing for help (see contact details in :ref:_chap-intro-label), please do the following:
+Before writing for help (see contact details in :ref:`chap-intro-label`), please do the following:
 
     #. Download the latest version of |NUMBAT| from github and ensure the problem remains.
 

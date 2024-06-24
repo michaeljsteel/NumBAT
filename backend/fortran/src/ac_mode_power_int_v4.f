@@ -50,7 +50,7 @@ C
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "AC_mode_power_int_v4: problem nnodes = ",

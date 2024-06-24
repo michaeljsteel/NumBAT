@@ -15,7 +15,7 @@ subroutine normalise_fields (n_modes, nel, nnodes, soln_k1, soln_k2, mat_overlap
    double precision, parameter :: min_abs = 1.0d-8
 
    do ival=1,n_modes
-      do iel=1,nel
+      !do iel=1,nel
          z_tmp1 = sqrt(mat_overlap(ival,ival))
 
          ! Don't bother rescaling fields which are super tiny and therefore probably broken anyway
@@ -34,7 +34,7 @@ subroutine normalise_fields (n_modes, nel, nnodes, soln_k1, soln_k2, mat_overlap
 
          endif
 
-      enddo
+      !enddo
    enddo
 
    return

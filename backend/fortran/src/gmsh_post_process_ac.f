@@ -47,7 +47,7 @@ C      double precision ls_abs_index(nnodes_0), abs_index
 c
 
 c
-      ui = 6
+      ui = stdout
 
       if (plot_val == 1) then
         do i=1,npt

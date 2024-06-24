@@ -58,7 +58,7 @@ C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
       z_tmp1=0.d0
-      ui = 6
+      ui = stdout
 
 C
       if ( nnodes .ne. 6 ) then

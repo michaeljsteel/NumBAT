@@ -54,7 +54,7 @@ C
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 
 C
       if ( nnodes_P2 .ne. 6 ) then

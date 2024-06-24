@@ -12,7 +12,7 @@ import nbtypes
 import reporting
 
 twopi = 2*math.pi
-cvac = nbtypes.speed_c
+#cvac = nbtypes.SI_speed_c
 
 
 class EMPoln(Enum):

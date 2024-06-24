@@ -16,7 +16,7 @@
    !***********************************************************************
    !
    ! Program:
-   ! FEM solver of Acoustic waveguide problems.
+   ! FEM solver of Acoustic wavegui_outde problems.
    ! This subroutine is compiled by fo2py & called in mode_calcs.py
    !
    ! Authors:
@@ -38,6 +38,7 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    v_eigs_nu, sol1, mode_pol, errco, emsg)
 
    use numbatmod
+   use class_stopwatch
 
    integer, parameter :: d_nodes_per_el = 6
 
@@ -110,7 +111,7 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
 
    integer(8) i, j, ip
-   integer(8) ui,  namelength
+   integer(8) ui_out,  namelength
 
 
    double precision lat_vecs(2,2)
@@ -126,10 +127,8 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    integer(8), dimension(:), allocatable :: iindex
    !     variable used by UMFPACK
 
-   double precision time1, time2
-   double precision stime1, stime2
-   character*(8) start_date, end_date
-   character*(10) start_time, end_time
+   !character*(8) start_date, end_date
+   !character*(10) start_time, end_time
 
    !  Variable used by valpr
    integer(8)  nvect
@@ -139,41 +138,19 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    character(len=FNAME_LENGTH)  gmsh_file, log_file, gmsh_file_pos
 
 
+   type(Stopwatch) :: clock_main, clock_spare
+
    integer :: is_em
 
 
-   !fo2py intent(in) q_ac, n_modes
-   !fo2py intent(in) debug, mesh_file, n_msh_pts, n_msh_el
-   !fo2py intent(in) dimscale_in_m, shift
-   !fo2py intent(in) i_bnd_cdns, itermax, tol
-   !fo2py intent(in) plot_modes, c_tensor, rho
-   !fo2py intent(in) cmplx_max, real_max, int_max
-   !fo2py intent(in) n_typ_el, supplied_geo_flag
-   !fo2py intent(in) type_nod, table_nod, type_el, mesh_xy, symmetry_flag
-
-   !  Note: the dependent variables must be listed AFTER the
-   !  independent variables that they depend on in the function call!
-
-   !fo2py depend(c_tensor) n_typ_el
-   !fo2py depend(rho) n_typ_el
-   !fo2py depend(type_nod) n_msh_pts
-   !fo2py depend(table_nod) d_nodes_per_el, n_msh_el
-   !fo2py depend(type_el) n_msh_el
-   !fo2py depend(mesh_xy) n_msh_pts
-
-   !fo2py intent(out) v_eigs_nu
-   !fo2py intent(out) sol1, mode_pol, table_nod, type_el, mesh_xy
-
-   !fo2py intent(out) errco
-   !fo2py intent(out) emsg
 
    !
    !CCCCCCCCCCCCCCCCCCC  Start Program - get parameters  CCCCCCCCCCCCCCCCCC
    !
    !     Set parameter for the super-vectors of integer and real numbers
    !
-   !       !ui = Unite dImpression
-   ui = 6
+   !       !ui_out = Unite dImpression
+   ui_out = stdout
    !      d_nodes_per_el = 6 ! Number of nodes per element
 
 
@@ -224,8 +201,8 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    endif
 
    !       ! initial time  in unit = sec.
-   call cpu_time(time1)
-   call date_and_time ( start_date, start_time )
+   !call cpu_time(time1)
+   !call date_and_time ( start_date, start_time )
    !
    !      tol = 0.0 ! ARPACK accuracy (0.0 for machine precision)
 
@@ -240,6 +217,9 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    ip_eq = ip_visite + n_msh_pts
    jp_x = 1
    !
+
+
+   call clock_main%reset()
 
    if (supplied_geo_flag .eq. 0) then
       call geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, dim_x, dim_y,  &
@@ -277,7 +257,7 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
 
    if (debug .eq. 1) then
-      write(ui,*) "py_calc_modes_AC: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
+      write(ui_out,*) "py_calc_modes_AC: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
    endif
 
    !     Determine number of boundary conditions (neq) and 2D index array
@@ -319,9 +299,9 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       a_iwork(ip_work_sort2))
 
    if (debug .eq. 1) then
-      write(ui,*) "py_calc_modes_AC: nonz_max = ", nonz_max
-      write(ui,*) "py_calc_modes_AC: nonz = ", nonz
-      write(ui,*) "py_calc_modes_AC: cmplx_max/nonz = ", &
+      write(ui_out,*) "py_calc_modes_AC: nonz_max = ", nonz_max
+      write(ui_out,*) "py_calc_modes_AC: nonz = ", nonz
+      write(ui_out,*) "py_calc_modes_AC: cmplx_max/nonz = ", &
          dble(cmplx_max)/dble(nonz)
    endif
 
@@ -372,11 +352,11 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    real_used = kp_mat1_im + nonz
 
    if (real_max .lt. real_used) then
-      write(ui,*)
-      write(ui,*) "The size of the real supervector is too small"
-      write(ui,*) "2*nonz  = ", 2*nonz
-      write(ui,*) "real super-vec: real_max  = ", real_max
-      write(ui,*) "real super-vec: real_used = ", real_used
+      write(ui_out,*)
+      write(ui_out,*) "The size of the real supervector is too small"
+      write(ui_out,*) "2*nonz  = ", 2*nonz
+      write(ui_out,*) "real super-vec: real_max  = ", real_max
+      write(ui_out,*) "real super-vec: real_used = ", real_used
 
       write(emsg,*)"The size of the real supervector is too small", &
          "2*nonz  = ", 2*nonz, &
@@ -408,20 +388,20 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    !#####################  End FEM PRE-PROCESSING  #########################
    !
-   write(ui,*)
-   write(ui,*) "-----------------------------------------------"
-   !       write(ui,*) " AC FEM, k_AC : ", real(q_ac), " 1/m"
-   !       write(ui,*) "-----------------------------------------------"
-   !       write(ui,*)
+   write(ui_out,*)
+   write(ui_out,*) "-----------------------------------------------"
+   !       write(ui_out,*) " AC FEM, k_AC : ", real(q_ac), " 1/m"
+   !       write(ui_out,*) "-----------------------------------------------"
+   !       write(ui_out,*)
 
    !       if (debug .eq. 1) then
-   !         write(ui,*) "py_calc_modes_AC: call to asmbly"
+   !         write(ui_out,*) "py_calc_modes_AC: call to asmbly"
    !       endif
-   write(ui,*) "AC FEM: "
-   write(ui,*) "      - assembling linear system"
+   write(ui_out,*) "AC FEM: "
+   write(ui_out,*) "      - assembling linear system"
    !     Assemble the coefficient matrix K and M of the finite element equations
 
-   call get_clocks(stime1, time1)
+   call clock_spare%reset()
 
    call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
       shift_omsq, q_ac, n_typ_el, rho, c_tensor, &
@@ -430,19 +410,14 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work), &
       symmetry_flag, debug)
 
-   call get_clocks(stime2, time2)
-   write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), &
-      ' secs.'
-   write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1), &
-      ' secs.'
-
-   !       if (debug .eq. 1) then
-   !         write(ui,*) "py_calc_modes_AC: call to valpr"
-   !       endif
-   write(ui,*) "      - solving linear system"
-   call get_clocks(stime1, time1)
+      call clock_spare%stop()
+      write(ui_out,*) clock_spare%to_string()
 
 
+   write(ui_out,*) "      - solving linear system"
+
+
+   call clock_spare%reset()
    call valpr_64_AC (i_base, nvect, n_modes, neq, itermax, ltrav, &
       tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), &
       c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
@@ -456,11 +431,8 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       return
    endif
 
-   call get_clocks(stime2, time2)
-   write(ui,'(A,F6.2,A)') '           cpu time  = ', (time2-time1), &
-      ' secs.'
-   write(ui,'(A,F6.2,A)') '           wall time = ', (stime2-stime1), &
-      ' secs.'
+   call clock_spare%stop()
+   write(ui_out,*) clock_spare%to_string()
 
 
    if (n_conv .ne. n_modes) then
@@ -486,25 +458,25 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !       The eigenum_modesues and eigenvectors will be renumbered
    !                 using the permutation vector iindex
    if (debug .eq. 1) then
-      write(ui,*) "py_calc_modes_AC: call to array_sol"
+      write(ui_out,*) "py_calc_modes_AC: call to array_sol"
    endif
    call array_sol_AC (n_modes, n_msh_el, n_msh_pts, neq, &
       d_nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), mesh_xy, &
       v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), mode_pol, b_zwork(jp_vp), sol1)
 
    if (debug .eq. 1) then
-      write(ui,*) "py_calc_modes_AC: array_sol returns call"
+      write(ui_out,*) "py_calc_modes_AC: array_sol returns call"
    endif
    !
    if(debug .eq. 1) then
-      write(ui,*) 'iindex = ', (iindex(i), i=1,n_modes)
+      write(ui_out,*) 'iindex = ', (iindex(i), i=1,n_modes)
    endif
    if(debug .eq. 1) then
-      write(ui,*)
-      !         write(ui,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
-      !         write(ui,*) "sqrt(shift_omsq)/(2*D_PI) = ", sqrt(omsq) / (2.0d0 * D_PI)
+      write(ui_out,*)
+      !         write(ui_out,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
+      !         write(ui_out,*) "sqrt(shift_omsq)/(2*D_PI) = ", sqrt(omsq) / (2.0d0 * D_PI)
       do i=1,n_modes
-         write(ui,"(i4,2(g22.14),2(g18.10))") i, v_eigs_nu(i)
+         write(ui_out,"(i4,2(g22.14),2(g18.10))") i, v_eigs_nu(i)
       enddo
    endif
 
@@ -530,43 +502,43 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !
    !#########################  End Calculations  ###########################
    !
-   call date_and_time ( end_date, end_time )
-   call cpu_time(time2)
-   !
-   if (debug .eq. 1) then
-      write(ui,*)
-      write(ui,*) 'Total CPU time (sec.)  = ', (time2-time1)
-      !
-      open (unit=26,file=log_file)
-      write(26,*)
-      write(26,*) "Date and time formats = ccyymmdd ; hhmmss.sss"
-      write(26,*) "Start date and time   = ", start_date, &
-         " ; ", start_time
-      write(26,*) "End date and time     = ", end_date, &
-         " ; ", end_time
-      write(26,*) "Total CPU time (sec.) = ",  (time2-time1)
-      write(26,*)
-      write(26,*) "q_ac = ", q_ac
-      write(26,*) "shift_omsq= ", shift_omsq
-      write(26,*)
-      write(26,*) "n_msh_pts, n_msh_el, d_nodes_per_el  = ", n_msh_pts, &
-         n_msh_el, d_nodes_per_el
-      write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
-      write(26,*) " lat_vecs:  = "
-      write(26,"(2(f18.10))") lat_vecs
-      write(26,*) "mesh_file = ", mesh_file
-      write(26,*) "gmsh_file = ", gmsh_file
-      write(26,*) "log_file  = ", log_file
-      close(26)
-      !
-      write(ui,*) "   .      .      ."
-      write(ui,*) "   .      .      ."
-      write(ui,*) "   .      . (d=",dimscale_in_m,")"
-      write(ui,*) "  and   we're   done!"
-   endif
+   ! call date_and_time ( end_date, end_time )
+   ! call cpu_time(time2)
+   ! !
+   ! if (debug .eq. 1) then
+   !    write(ui_out,*)
+   !    write(ui_out,*) 'Total CPU time (sec.)  = ', (time2-time1)
+   !    !
+   !    open (unit=26,file=log_file)
+   !    write(26,*)
+   !    write(26,*) "Date and time formats = ccyymmdd ; hhmmss.sss"
+   !    write(26,*) "Start date and time   = ", start_date, &
+   !       " ; ", start_time
+   !    write(26,*) "End date and time     = ", end_date, &
+   !       " ; ", end_time
+   !    write(26,*) "Total CPU time (sec.) = ",  (time2-time1)
+   !    write(26,*)
+   !    write(26,*) "q_ac = ", q_ac
+   !    write(26,*) "shift_omsq= ", shift_omsq
+   !    write(26,*)
+   !    write(26,*) "n_msh_pts, n_msh_el, d_nodes_per_el  = ", n_msh_pts, &
+   !       n_msh_el, d_nodes_per_el
+   !    write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
+   !    write(26,*) " lat_vecs:  = "
+   !    write(26,"(2(f18.10))") lat_vecs
+   !    write(26,*) "mesh_file = ", mesh_file
+   !    write(26,*) "gmsh_file = ", gmsh_file
+   !    write(26,*) "log_file  = ", log_file
+   !    close(26)
+   !    !
+   !    write(ui_out,*) "   .      .      ."
+   !    write(ui_out,*) "   .      .      ."
+   !    write(ui_out,*) "   .      . (d=",dimscale_in_m,")"
+   !    write(ui_out,*) "  and   we're   done!"
+   ! endif
 
-   write(ui,*) "-----------------------------------------------"
-   write(ui,*)
+   write(ui_out,*) "-----------------------------------------------"
+   write(ui_out,*)
    !
    deallocate(a_iwork, b_zwork, c_dwork, iindex)
 

@@ -61,7 +61,7 @@ C
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 
       debug = 0
 C

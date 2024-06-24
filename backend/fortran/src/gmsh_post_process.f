@@ -45,7 +45,7 @@ C      double precision ls_abs_index(nnodes_0), abs_index
 c
 
 c
-      ui = 6
+      ui = stdout
       debug = 0
 c
       if ( nnodes .ne. 6 ) then

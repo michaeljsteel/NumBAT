@@ -6,7 +6,8 @@ C
      *  nb_typ_el, rho, Omega_AC, soln_AC,
      *  overlap)
 c
-      implicit none
+      use numbatmod
+
       integer(8) nval, ival
       integer(8) nel, npt, nnodes, nb_typ_el
       integer(8) type_el(nel)
@@ -47,7 +48,7 @@ C
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 C
       if ( nnodes .ne. 6 ) then
         write(ui,*) "AC_mode_elastic_energy_int_v4: problem nnodes = ",

@@ -23,6 +23,9 @@
 module calc_em_impl
 
    use numbatmod
+   use class_stopwatch
+
+
 
 
 contains
@@ -175,12 +178,11 @@ contains
 
 
 !  Timing variables
-      double precision time1, time2,  systime1,  systime2, systime1_postp,  systime2_postp
+      !double precision time1, time2,  systime1,  systime2, systime1_postp,  systime2_postp
+      !double precision ortime1, ortime2,  orsystime1,  orsystime2
 
-      double precision time_fact
-      double precision time1_postp, time2_postp
-      double precision time_arpack
-
+      double precision time_fact, time_arpack
+      !double precision time1_postp, time2_postp
 
 
       !Names and Controls
@@ -218,6 +220,8 @@ contains
 
       integer :: is_em, alloc_stat, alloc_remote
       double precision tol
+
+      type(Stopwatch) :: clock_main, clock_normalise, clock_spare
 
 
       is_em = 1
@@ -281,7 +285,8 @@ contains
 
 !CCCCCCCCCCCCCCCC END POST F2PY CCCCCCCCCCCCCCCCCCCCC
 
-      call get_clocks( systime1, time1)
+      call clock_main%reset()
+
 
       dim_x = dimscale_in_m
       dim_y = dimscale_in_m
@@ -558,7 +563,7 @@ contains
          write(ui_out,*) "EM FEM: "
          write(ui_out,'(A,A)') "   - assembling linear system for ", msg
 
-         call get_clocks(systime1, time1)
+         call clock_spare%reset()
 
 
          call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
@@ -569,17 +574,15 @@ contains
             nonz, a_iwork(ip_row), &
             a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
 
-         call get_clocks( systime2, time2)
-         write(ui_out,'(A,F6.2,A)') '  cpu time  = ', (time2-time1), ' secs.'
-         write(ui_out,'(A,F6.2,A)') '  wall time = ', (systime2- systime1), ' secs.'
-
+         call clock_spare%stop()
+         write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
          !  factorization of the globale matrice
          !  -----------------------------------
 
          write(ui_out,*) "  - solving linear system"
 
-         call get_clocks( systime1, time1)
+         call clock_spare%reset()
 
          ! This is the main solver.
          call valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
@@ -589,12 +592,14 @@ contains
             debug, errco, emsg)
          RETONERROR(errco)
 
-         call get_clocks( systime2, time2)
+         call clock_spare%stop()
          time_fact = ls_data(2) - ls_data(1)
          time_arpack = ls_data(4) - ls_data(3)
 
-         write(ui_out,'(A,F6.2,A)') '  cpu time  = ', (time2-time1), ' secs.'
-         write(ui_out,'(A,F6.2,A)') '  wall time = ', ( systime2- systime1), ' secs.'
+         !write(ui_out,'(A18,F6.2,A18,F6.2,A)') &
+         !   '  cpu time = ', clock_spare%cpu_time(), ' secs,  wall time = ', clock_spare%sys_time(), ' secs.'
+
+            write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
          if (n_conv .ne. n_modes) then
             write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
@@ -602,7 +607,6 @@ contains
             errco = -19
             return
          endif
-
 
          do i=1,n_modes
             z_tmp0 = p_beta(i)
@@ -621,12 +625,14 @@ contains
             p_beta(i) = z_beta
          enddo
 
-         call get_clocks( systime1_postp, time1_postp)
+
+         call clock_spare%reset()
 
          !  order p_beta by magnitudes and store in iindex
          call z_indexx (n_modes, p_beta, iindex)
 
 
+         write(ui_out,*) "  - assembling eigen solutions"
 
          !  The eigenvectors will be stored in the array sol
          !  The eigenvalues and eigenvectors are renumbered
@@ -658,7 +664,8 @@ contains
                write(ui_out,"(i4,2(g22.14),2(g18.10))") i, p_beta(i)
             enddo
          endif
-!
+
+         write(ui_out,*) "  - finding mode energies "
 !  Calculate energy in each medium (typ_el)
          if (n_k .eq. 2) then
             call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, table_nod, type_el, n_typ_el, eps_eff,&
@@ -673,6 +680,7 @@ contains
 
 
 
+      write(ui_out,*) "  - checking orthgonality "
 ! Doubtful that this check is of any value: delete?
       call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
          type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
@@ -695,18 +703,25 @@ contains
          enddo
       enddo
 
+      write(ui_out,*) "  - building material arrays from mesh"
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
 
 !  Normalisation
-      !if(debug .eq. 1) then
-      !   write(ui_out,*) "py_calc_modes.f: Field  Normalisation"
-      !endif
-      !call get_clocks( systime1_J, time1_J)
 
+
+      write(ui_out,*) "  - normalising fields"
+
+      call clock_normalise%reset()
       call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol_adj, sol_pri, overlap_L)
+      call clock_normalise%stop()
 
-      !call get_clocks( systime2_J, time2_J)
+      !write(ui_out,'(A18,F6.2,A18,F6.2,A)') &
+      !'  cpu time = ', clock_normalise%cpu_time(), ' secs,  wall time = ', clock_normalise%sys_time(), ' secs.'
+      write(ui_out,'(A,A)') '      ', clock_normalise%to_string()
+
+
+      write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
       !   write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
       !endif
@@ -725,12 +740,14 @@ contains
 !
 !#########################  End Calculations  ###########################
 !
-      call get_clocks( systime2_postp, time2_postp)
 
-      call get_clocks( systime2, time2)
+      call clock_spare%stop()
+
+      call clock_main%stop()
 
       deallocate(a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L)
 
+      write(ui_out,*) "-----------------------------------------------"
 
       ! call report_results_em(debug, ui_out, &
       !    n_msh_pts, n_msh_el, &

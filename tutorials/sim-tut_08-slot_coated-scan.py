@@ -36,7 +36,7 @@ slab_a_x = 1000
 slab_a_y = 100
 coat_y = 50
 
-num_modes_EM_pump = 20
+num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
 EM_ival_pump = 0
@@ -51,7 +51,9 @@ nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 #def ac_mode_freqs(coat_y):
 def ac_mode_freqs(wid_x):
 
-    print(f'Commencing mode calculation for coat_y = {coat_y}')
+    print(f'Commencing mode calculation for wid_x = {wid_x}')
+
+    nbapp.set_outprefix(f'wid_{wid_x}')
 
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
                                   inc_a_x=wid_x, inc_a_y=inc_a_y,
@@ -79,12 +81,13 @@ def ac_mode_freqs(wid_x):
     # Calculate Acoustic modes.
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-    if coat_y == 20.0: # Shouldn't really test equality on floats like this
-        sim_AC.plot_modes(suffix='_%i' %int(coat_y))
+#    if coat_y == 20.0: # Shouldn't really test equality on floats like this
+    sim_EM_pump.plot_modes()
+    sim_AC.plot_modes()
 
     set_q_factor = 1000.
 
-    gain_box= integration.get_gains_and_qs(
+    gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
@@ -92,15 +95,14 @@ def ac_mode_freqs(wid_x):
     freq_min = 4e9
     freq_max = 14e9
 
-    gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max,
-         suffix='_%i' %int(coat_y))
+    gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, suffix='_%i' %int(wid_x))
 
     # Convert to GHz
     mode_freqs = sim_AC.nu_AC_all()*1.e-9
     # Clear memory
     wguide = sim_EM_pump = sim_EM_Stokes = sim_AC = None
 
-    print(f'Completed mode calculation for coating coat_y = {coat_y}')
+    print(f'Completed mode calculation for coating wid_x = {wid_x}')
 
     # Return the frequencies and simulated k_ac value in a list
     return mode_freqs
@@ -113,6 +115,7 @@ coat_y_list = np.linspace(coat_min, coat_max, n_coats)
 
 num_cores = os.cpu_count()  # should be appropriate for individual machine/vm, and memory!
 
+num_cores = 1
 use_multiproc = num_cores >1 and not nbapp.is_macos()
 
 if use_multiproc:
@@ -127,7 +130,6 @@ for i_w, sim_freqs in enumerate(pooled_mode_freqs):
     # Set the value to the values in the frequency array
     freq_arr[i_w] = np.real(sim_freqs)
 
-# Also plot a figure for reference
 
 fig, ax = plt.subplots()
 for idx in range(min(15,num_modes_AC)):

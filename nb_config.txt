@@ -1,0 +1,55 @@
+
+NumBAT config test file
+------------------------
+
+Date:                Sun 23 Jun 2024 15:14:44 AEST
+Env:                 Linux hildegard 6.8.0-35-generic #35-Ubuntu SMP PREEMPT_DYNAMIC Mon May 20 15:51:52 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+lib search path:     LD_LIBRARY_PATH='/opt/intel/oneapi/2024.2/lib:/usr/local/lib'
+python path:         /home/msteel/mypy3-12/bin/python
+python3 path:        /home/msteel/mypy3-12/bin/python
+python3 ver.:        3.12.3 (main, Apr 10 2024, 05:33:47) [GCC 13.2.0]
+numpy ver.:          1.26.4
+scipy ver.:          1.13.1
+matplotlib ver.:     3.9.0
+core dumps enabled:  2000000000
+core dump location:  /home/scratch/coredumps/core-%e
+
+nb_fortran.so linking
+	linux-vdso.so.1 (0x00007fffbe0f8000)
+	libarpack.so.2 => /usr/local/lib/libarpack.so.2 (0x00007d3e0e9b8000)
+	libumfpack.so.6 => /usr/local/lib/libumfpack.so.6 (0x00007d3e0e8dc000)
+	libmkl_rt.so.2 => /opt/intel/oneapi/2024.2/lib/libmkl_rt.so.2 (0x00007d3e0dc00000)
+	libgfortran.so.5 => /lib/x86_64-linux-gnu/libgfortran.so.5 (0x00007d3e0d800000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007d3e0e7f3000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007d3e0d400000)
+	libopenblas.so.0 => /lib/x86_64-linux-gnu/libopenblas.so.0 (0x00007d3e0b000000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007d3e0e7c6000)
+	libmkl_gf_lp64.so.2 => /opt/intel/oneapi/2024.2/lib/libmkl_gf_lp64.so.2 (0x00007d3e0a200000)
+	libmkl_gnu_thread.so.2 => /opt/intel/oneapi/2024.2/lib/libmkl_gnu_thread.so.2 (0x00007d3e08800000)
+	libmkl_core.so.2 => /opt/intel/oneapi/2024.2/lib/libmkl_core.so.2 (0x00007d3e04800000)
+	libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007d3e0e76f000)
+	libcholmod.so.4 => /usr/local/lib/libcholmod.so.4 (0x00007d3e0d696000)
+	libamd.so.3 => /usr/local/lib/libamd.so.3 (0x00007d3e11842000)
+	libsuitesparseconfig.so.7 => /usr/local/lib/libsuitesparseconfig.so.7 (0x00007d3e1183c000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007d3e11835000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007d3e11872000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007d3e0e76a000)
+	libcolamd.so.3 => /usr/local/lib/libcolamd.so.3 (0x00007d3e0e761000)
+	libcamd.so.3 => /usr/local/lib/libcamd.so.3 (0x00007d3e0e753000)
+	libccolamd.so.3 => /usr/local/lib/libccolamd.so.3 (0x00007d3e0e746000)
+
+NumBAT build settings: 
+
+COMPILER_VENDOR: gcc
+F_COMP_EXE: ccache f95
+C_COMP_EXE: ccache gcc
+F77FLAGS: -Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp -J ./mods -fall-intrinsics -pedantic
+F95FLAGS: -Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp -J ./mods -fall-intrinsics -pedantic
+CFLAGS: -Wall -W -g -O2 -fPIC -Ofast -funroll-loops
+ONEAPI:
+ONEAPICOMP:
+ARPACK_INC: -I /usr/local/include
+ARPACK_LIB: -L /usr/local/lib -larpack
+MATHINC: -I /usr/local/include -I /opt/intel/oneapi/mkl/latest/include
+MATHLIB: -L /usr/local/lib -larpack -L/usr/local/lib -lumfpack -lcholmod -lamd -L /opt/intel/oneapi/mkl/latest/lib/intel64 -lmkl_rt
+ONEAPICOMP:

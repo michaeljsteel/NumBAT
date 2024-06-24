@@ -142,7 +142,9 @@ end
 
 
 !##################################################################################
-subroutine make_msh_file(fname_geo, fname_msh, sysret)
+!TODO: why is this not done direct from python where system calling is easier?
+
+subroutine make_msh_file(fname_geo, fname_msh, sysret)  
 
    use numbatmod
 
