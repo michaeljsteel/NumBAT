@@ -20,10 +20,42 @@ import integration
 
 import starter
 
+def start_plot():
+    ax1 = plt.subplots()
+    ax2 = ax1.twinx()
+
+    return fig, ax1, ax2
+
+def finish_plot(fig, ax1, ax2, ylabl, ylabr, suffix):
+    xlabel = 'Mesh refinement factor'
+
+    ax2.yaxis.tick_left()
+    ax2.yaxis.set_label_position("left")
+    ax1.yaxis.tick_right()
+    ax1.spines['right'].set_color('red')
+    ax1.yaxis.label.set_color('red')
+    ax1.yaxis.set_label_position("right")
+    ax1.tick_params(axis='y', colors='red')
+
+    ax1.set_xscale('log')  
+    ax2.set_xscale('log')  
+
+    handles, labels = ax2.get_legend_handles_labels()
+
+    ax2.legend(handles, labels)
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(ylabl)
+    ax2.set_ylabel(ylabr)
+    ax2.set_yscale('log')  # , nonposx='clip')
+
+    fig.savefig(str(nbapp.outpath())+'-convergence-'+suffix+'.png', bbox_inches='tight')
+
+
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 2.5*lambda_nm
+#domain_x = 2.5*lambda_nm
+domain_x = 1000
 domain_y = domain_x
 inc_a_x = 300
 inc_a_y = 280
@@ -42,9 +74,10 @@ nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 
 # Warning: The fine grids in this list will take considerable time to run!
-lc_list = [4, 10, 20, 50, 100, 200, 300, 400]
+#lc_list = [4, 10, 20, 50, 100, 200, 300, 400]
+lc_list = [1, 2, 4, 8, 16, 32, 64]
 nu_lcs = len(lc_list)
-lc_bkg_list = 1*np.ones(nu_lcs)
+lc_bkg_list = .25*np.ones(nu_lcs)
 x_axis = lc_list
 conv_list = []
 time_list = []
@@ -52,13 +85,12 @@ time_list = []
 for i_lc, lc_ref in enumerate(lc_list):
     start = time.time()
     print("\n Running simulation", i_lc+1, "/", nu_lcs)
-    lc_refine_2 = lc_ref/2
     lc_bkg = lc_bkg_list[i_lc]
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
-                               material_a=materials.make_material(
-                                   "Si_2016_Smith"),
-                               lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac, lc_refine_2=lc_refine_2*refine_fac, force_mesh=True)
+                               material_a=materials.make_material("Si_2016_Smith"),
+                               lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac, 
+                                              lc_refine_2=(lc_ref/2)*refine_fac)
 
     # Expected effective index of fundamental guided mode.
     n_eff = wguide.get_material('a').refindex_n-0.1
@@ -103,124 +135,57 @@ for i_conv, conv_obj in enumerate(conv_list):
         rel_mode_gain_MB[i_conv, i_m] = conv_obj[4][rel_mode]
 
 
-
-xlabel = "Mesh Refinement Factor"
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax2.yaxis.tick_left()
-ax2.yaxis.set_label_position("left")
 EM_plot_Mk = rel_mode_kz_EM*1e-6
 error0 = np.abs((np.array(EM_plot_Mk[0:-1])-EM_plot_Mk[-1])/EM_plot_Mk[-1])
-ax2.plot(x_axis[0:-1], error0, 'b-v', label='Mode #%i' % EM_ival_pump)
 ax1.plot(x_axis, np.real(EM_plot_Mk), 'r-.o', label=r'EM k$_z$')
-ax1.yaxis.tick_right()
-ax1.spines['right'].set_color('red')
-ax1.yaxis.label.set_color('red')
-ax1.yaxis.set_label_position("right")
-ax1.tick_params(axis='y', colors='red')
-handles, labels = ax2.get_legend_handles_labels()
-ax2.legend(handles, labels)
-ax1.set_xlabel(xlabel)
-ax1.set_ylabel(r"EM k$_z$ ($\times 10^6$ 1/m)")
-ax2.set_ylabel(r"Relative Error EM k$_z$")
-ax2.set_yscale('log')  # , nonposx='clip')
-fig.savefig(nbapp.outpath()+'-convergence-freq_EM.png', bbox_inches='tight')
+ax2.plot(x_axis[0:-1], error0, 'b-v', label='Mode #%i' % EM_ival_pump)
+finish_plot(fig, ax1, ax2, r"EM k$_z$ ($\times 10^6$ 1/m)", r"Relative Error EM k$_z$", 'freq_EM')
+
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax2.yaxis.tick_left()
-ax2.yaxis.set_label_position("left")
 for i_m, rel_mode in enumerate(rel_modes):
     rel_mode_freq_AC_plot_GHz = rel_mode_freq_AC[:, i_m]*1e-9
     error0 = np.abs((np.array(
         rel_mode_freq_AC_plot_GHz[0:-1])-rel_mode_freq_AC_plot_GHz[-1])/rel_mode_freq_AC_plot_GHz[-1])
+    ax1.plot(x_axis, np.real(rel_mode_freq_AC_plot_GHz), '-.o', label=r'AC Freq mode #%i' % rel_mode)
     ax2.plot(x_axis[0:-1], error0, '-v', label='Mode #%i' % rel_mode)
-    ax1.plot(x_axis, np.real(rel_mode_freq_AC_plot_GHz),
-             '-.o', label=r'AC Freq mode #%i' % rel_mode)
-ax1.yaxis.tick_right()
-ax1.spines['right'].set_color('red')
-ax1.yaxis.label.set_color('red')
-ax1.yaxis.set_label_position("right")
-ax1.tick_params(axis='y', colors='red')
-handles, labels = ax2.get_legend_handles_labels()
-ax2.legend(handles, labels)
-ax1.set_xlabel(xlabel)
-ax1.set_ylabel(r"AC Freq (GHz)")
-ax2.set_ylabel(r"Relative Error AC Freq")
-ax2.set_yscale('log')  # , nonposx='clip')
-fig.savefig(nbapp.outpath()+'-convergence-freq_AC.png', bbox_inches='tight')
+finish_plot(fig, ax1, ax2, r"AC Freq (GHz)", r"Relative Error AC Freq", 'freq_AC')
+
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax2.yaxis.tick_left()
-ax2.yaxis.set_label_position("left")
 for i_m, rel_mode in enumerate(rel_modes):
     rel_mode_gain_plot = rel_mode_gain[:, i_m]
     error0 = np.abs(
         (np.array(rel_mode_gain_plot[0:-1])-rel_mode_gain_plot[-1])/rel_mode_gain_plot[-1])
+    ax1.plot(x_axis, -np.real(rel_mode_gain_plot), '-.o', label=r'Gain mode #%i' % rel_mode)
     ax2.plot(x_axis[0:-1], error0, '-v', label=r'Mode #%i' % rel_mode)
-    ax1.plot(x_axis, -np.real(rel_mode_gain_plot),
-             '-.o', label=r'Gain mode #%i' % rel_mode)
-ax1.yaxis.tick_right()
-ax1.spines['right'].set_color('red')
-ax1.yaxis.label.set_color('red')
-ax1.yaxis.set_label_position("right")
-ax1.tick_params(axis='y', colors='red')
-handles, labels = ax2.get_legend_handles_labels()
-ax2.legend(handles, labels)
-ax1.set_xlabel(xlabel)
-ax1.set_ylabel(r'-Gain $\mathrm{mW}^{-1}$')
-ax2.set_ylabel(r"Relative Error Gain")
-ax2.set_yscale('log')  # , nonposx='clip')
-fig.savefig(nbapp.outpath()+'-convergence-gain.png', bbox_inches='tight')
+finish_plot(fig, ax1, ax2, r'-(Gain)  $\mathrm{mW}^{-1}$', r"Relative Error Gain", 'gain')
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax2.yaxis.tick_left()
-ax2.yaxis.set_label_position("left")
 for i_m, rel_mode in enumerate(rel_modes):
     rel_mode_gain_PE_plot = rel_mode_gain_PE[:, i_m]
     error0 = np.abs((np.array(
         rel_mode_gain_PE_plot[0:-1])-rel_mode_gain_PE_plot[-1])/rel_mode_gain_PE_plot[-1])
+    ax1.plot(x_axis, -np.real(rel_mode_gain_PE_plot), '-.o', label=r'Gain mode #%i' % rel_mode)
     ax2.plot(x_axis[0:-1], error0, '-v', label=r'Mode #%i' % rel_mode)
-    ax1.plot(x_axis, -np.real(rel_mode_gain_PE_plot),
-             '-.o', label=r'Gain mode #%i' % rel_mode)
-ax1.yaxis.tick_right()
-ax1.spines['right'].set_color('red')
-ax1.yaxis.label.set_color('red')
-ax1.yaxis.set_label_position("right")
-ax1.tick_params(axis='y', colors='red')
-handles, labels = ax2.get_legend_handles_labels()
-ax2.legend(handles, labels)
-ax1.set_xlabel(xlabel)
-ax1.set_ylabel(r'-(PE Gain)  $\mathrm{mW}^{-1}$')
-ax2.set_ylabel(r"Relative Error Gain (PE)")
-ax2.set_yscale('log')  # , nonposx='clip')
-fig.savefig(nbapp.outpath()+'-convergence-gain_PE.png', bbox_inches='tight')
+finish_plot(fig, ax1, ax2, r'-(PE Gain)  $\mathrm{mW}^{-1}$', r"Relative Error Gain (PE)", 'gain_PE')
+
+
 
 fig, ax1 = plt.subplots()
 ax2 = ax1.twinx()
-ax2.yaxis.tick_left()
-ax2.yaxis.set_label_position("left")
 for i_m, rel_mode in enumerate(rel_modes):
     rel_mode_gain_MB_plot = rel_mode_gain_MB[:, i_m]
     error0 = np.abs((np.array(
         rel_mode_gain_MB_plot[0:-1])-rel_mode_gain_MB_plot[-1])/rel_mode_gain_MB_plot[-1])
+    ax1.plot(x_axis, -np.real(rel_mode_gain_MB_plot), '-.o', label=r'Gain mode #%i' % rel_mode)
     ax2.plot(x_axis[0:-1], error0, '-v', label=r'Mode #%i' % rel_mode)
-    ax1.plot(x_axis, -np.real(rel_mode_gain_MB_plot),
-             '-.o', label=r'Gain mode #%i' % rel_mode)
-ax1.yaxis.tick_right()
-ax1.spines['right'].set_color('red')
-ax1.yaxis.label.set_color('red')
-ax1.yaxis.set_label_position("right")
-ax1.tick_params(axis='y', colors='red')
-handles, labels = ax2.get_legend_handles_labels()
-ax2.legend(handles, labels)
-ax1.set_xlabel(xlabel)
-ax1.set_ylabel(r'-(MB Gain)  $\mathrm{mW}^{-1}$')
-ax2.set_ylabel(r"Relative Error Gain (MB)")
-ax2.set_yscale('log')  # , nonposx='clip')
-fig.savefig(nbapp.outpath()+'-convergence-gain_MB.png', bbox_inches='tight')
+finish_plot(fig, ax1, ax2, r'-(MB Gain)  $\mathrm{mW}^{-1}$', r"Relative Error Gain (MB)", 'gain_MB')
 
 print("Calculation times (secs.): ", ', '.join(
     map(lambda x: f'{x:.2f}', time_list)))

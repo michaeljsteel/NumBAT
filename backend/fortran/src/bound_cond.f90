@@ -1,15 +1,15 @@
 
-c
-c   type_N_E_F = 0  => interiour ddl (ddl = Degree Of Freedom)
-c   type_N_E_F != 0 => boundary ddl
-c
-c   bdy_cdn = 0 => Dirichlet boundary condition (E-field: electric wall condition)
-c   bdy_cdn = 1 => Neumann boundary condition (E-field: magnetic wall condition)
-c   bdy_cdn = 2 => Periodic boundary condition
-c
-c
+!
+!   type_N_E_F = 0  => interiour ddl (ddl = Degree Of Freedom)
+!   type_N_E_F != 0 => boundary ddl
+!
+!   bdy_cdn = 0 => Dirichlet boundary condition (E-field: electric wall condition)
+!   bdy_cdn = 1 => Neumann boundary condition (E-field: magnetic wall condition)
+!   bdy_cdn = 2 => Periodic boundary condition
+!
+!
 
-c     This subroutine set the boundary condition parameters
+!     This subroutine set the boundary condition parameters
 
 
 ! The provided Fortran subroutine bound_cond sets boundary condition parameters for a finite element mesh, depending on the specified boundary condition type. Here's a detailed step-by-step explanation of the code:
@@ -54,90 +54,88 @@ c     This subroutine set the boundary condition parameters
 
 
 
-      subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
+subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
 
-      use numbatmod
+   use numbatmod
 
-      integer(8) bdy_cdn, n_ddl, neq
-      integer(8) ineq(3,n_ddl), type_N_E_F(2,n_ddl)
+   integer(8) bdy_cdn, n_ddl, neq
+   integer(8) ineq(3,n_ddl), type_N_E_F(2,n_ddl)
 
-      integer(8) i, i_boundary, i_dim
-c
-      if(bdy_cdn .eq. BCS_DIRICHLET) then
-c       Dirichlet boundary condition: all points have a degree of freedom
-c       write(*,*) "bound_cond: Dirichlet boundary condition"
-        neq = 0
-        do i=1,n_ddl
-          i_boundary = type_N_E_F(1,i)
-          i_dim = type_N_E_F(2,i)
-C           ! each element is associated to 3 interior Degrees Of Freedom (DOF)
-          if (i_dim .eq. 2) then
+   integer(8) i, i_boundary, i_dim
+
+   if(bdy_cdn .eq. BCS_DIRICHLET) then  ! all points have a degree of freedom
+
+      neq = 0
+      do i=1,n_ddl
+         i_boundary = type_N_E_F(1,i)
+         i_dim = type_N_E_F(2,i)
+
+         if (i_dim .eq. 2) then ! each element is associated to 3 interior Degrees Of Freedom (DOF)
             ineq(1,i) = neq + 1
             ineq(2,i) = neq + 2
             ineq(3,i) = neq + 3
             neq = neq + 3
-C           ! each edge is associated to 3 Degrees Of Freedom (DOF)
-          elseif (i_dim .eq. 1) then
+
+         elseif (i_dim .eq. 1) then  ! each edge is associated to 3 Degrees Of Freedom (DOF)
             if (i_boundary .eq. 0) then
-              ineq(1,i) = neq + 1
-              ineq(2,i) = neq + 2
-              ineq(3,i) = neq + 3
-              neq = neq + 3
+               ineq(1,i) = neq + 1
+               ineq(2,i) = neq + 2
+               ineq(3,i) = neq + 3
+               neq = neq + 3
             else
-              ineq(1,i) = 0
-              ineq(2,i) = 0
-              ineq(3,i) = 0
+               ineq(1,i) = 0
+               ineq(2,i) = 0
+               ineq(3,i) = 0
             endif
-C           ! each nodee is associated to 1 Degree Of Freedom (DOF)
-          elseif (i_dim .eq. 0) then
+
+         elseif (i_dim .eq. 0) then   ! each nodee is associated to 1 Degree Of Freedom (DOF)
             if (i_boundary .eq. 0) then
-              ineq(1,i) = neq + 1
-              ineq(2,i) = 0
-              ineq(3,i) = 0
-              neq = neq + 1
+               ineq(1,i) = neq + 1
+               ineq(2,i) = 0
+               ineq(3,i) = 0
+               neq = neq + 1
             else
-              ineq(1,i) = 0
-              ineq(2,i) = 0
-              ineq(3,i) = 0
+               ineq(1,i) = 0
+               ineq(2,i) = 0
+               ineq(3,i) = 0
             endif
-          else
+         else
             write(*,*) "bound_cond: i_dim has invalid value : ", i_dim
             write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
             write(*,*) "bound_cond: i = ", i
             write(*,*) "bound_cond: Aborting..."
             stop
-          endif
-        enddo
-      elseif(bdy_cdn .eq. BCS_NEUMANN) then
-c       Neumann boundary condition: all points have a degree of freedom
-c       write(*,*) "bound_cond: Neumann boundary condition"
-        neq = 0
-        do i=1,n_ddl
-          i_dim = type_N_E_F(2,i)
-c         Each element or edge is associated to 3 Degrees Of Freedom (DOF)
-          if (i_dim .eq. 2 .or. i_dim .eq. 1) then
+         endif
+      enddo
+
+      elseif(bdy_cdn .eq. BCS_NEUMANN) then !all points have a degree of freedom
+
+      neq = 0
+      do i=1,n_ddl
+         i_dim = type_N_E_F(2,i)
+         if (i_dim .eq. 2 .or. i_dim .eq. 1) then ! Each element or edge is associated to 3 Degrees Of Freedom (DOF)
             ineq(1,i) = neq + 1
             ineq(2,i) = neq + 2
             ineq(3,i) = neq + 3
             neq = neq + 3
-          elseif (i_dim .eq. 0) then
+         elseif (i_dim .eq. 0) then
             ineq(1,i) = neq + 1
             ineq(2,i) = 0
             ineq(3,i) = 0
             neq = neq + 1
-          else
+         else
             write(*,*) "bound_cond: i_dim has invalid value : ", i_dim
             write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
             write(*,*) "bound_cond: i = ", i
             write(*,*) "bound_cond: Aborting..."
             stop
-          endif
-        enddo
-      else
-        write(*,*) "bound_cond: bdy_cdn has invalid value : ", bdy_cdn
-        write(*,*) "bound_cond: Aborting..."
-        stop
-      endif
-c
-      return
-      end
+         endif
+      enddo
+   else
+      write(*,*) "bound_cond: bdy_cdn has invalid value : ", bdy_cdn
+      write(*,*) "bound_cond: Aborting..."
+      stop
+   endif
+
+   return
+end

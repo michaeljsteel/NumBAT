@@ -6,7 +6,7 @@ C
      *  nnodes_P2, table_nod,
      *  x, betas, soln_k1, soln_H1)
 c
-      implicit none
+      use numbatmod
       integer(8) nval, nel, npt, nnodes_P2
       integer(8) table_nod(nnodes_P2,nel)
       double precision x(2,npt)
@@ -50,7 +50,7 @@ C
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 
 C
       if ( nnodes_P2 .ne. 6 ) then

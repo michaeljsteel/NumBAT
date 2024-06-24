@@ -41,18 +41,14 @@ prefix, refine_fac = starter.read_args(7, sys.argv)
 
 nbapp = numbat.NumBATApp(prefix)
 
-mat_vac=materials.make_material("Vacuum"),  # background
-mat_slot=materials.make_material("As2S3_2017_Morrison"),  # slot
-mat_slab=materials.make_material("SiO2_2013_Laude"),  # slab
-mat_walls=materials.make_material("Si_2016_Smith"),  # walls of slot
+mat_vac=materials.make_material("Vacuum")  # background
+mat_slot=materials.make_material("As2S3_2017_Morrison")  # slot
+mat_slab=materials.make_material("SiO2_2013_Laude")  # slab
+mat_walls=materials.make_material("Si_2016_Smith")  # walls of slot
 
 
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
-    inc_a_x,
-    inc_a_y,
-    slab_a_x=slab_a_x,
-    slab_a_y=slab_a_y,
-    inc_b_x=inc_b_x,
+    inc_a_x, inc_a_y, slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
     material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_walls,
     lc_bkg=0.05, lc_refine_1=7.0 * refine_fac, lc_refine_2=7.0 * refine_fac,
 )

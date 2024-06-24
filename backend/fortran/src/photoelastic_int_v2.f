@@ -66,7 +66,7 @@ Cf2py intent(out) overlap
 C
 CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 C
-      ui = 6
+      ui = stdout
 
 
 C

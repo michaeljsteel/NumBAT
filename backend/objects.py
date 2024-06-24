@@ -446,6 +446,7 @@ class Structure:
             reporting.report_and_exit('Must provide an inc_shape argument to make_structure()')
 
         self.all_params = copy.deepcopy(kwargs)
+        self.all_params['lc'] = self.all_params['lc_bkg']   # aim to move to pure lc_bkg and delete this
 
         del self.all_params['direct_call']
 
@@ -674,6 +675,7 @@ class Structure:
 
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
+
         subprocess.Popen(cmd, cwd=self.msh_location_out)
 
         os.wait()

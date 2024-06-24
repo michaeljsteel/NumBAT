@@ -51,13 +51,13 @@ class MailData:
 
     def plot_mesh(self):
         fig, axs = plt.subplots(2,2, dpi=300)
+        fig.subplots_adjust(hspace=0.3, wspace=.1)
+
 
         axs = axs.flat
         cf=axs[0].scatter(self.v_x, self.v_y, s=4, c=self.v_node_physindex, cmap='Dark2')
 
-        axs[0].set_title('Mail mesh point types', fontsize=8)
-
-
+        axs[0].set_title('Gmsh surface and curve types', fontsize=8)
 
         cbar = fig.colorbar(cf, shrink=.5, pad=.025, location='right')
         cbar.set_label(label='Phys curve/surface number')
@@ -70,6 +70,8 @@ class MailData:
         axs[1].scatter(self.v_x[elts[:,3]], self.v_y[elts[:,3]], s=4, c='blue')
         axs[1].scatter(self.v_x[elts[:,4]], self.v_y[elts[:,4]], s=4, c='blue')
         axs[1].scatter(self.v_x[elts[:,5]], self.v_y[elts[:,5]], s=4, c='blue')
+
+        axs[1].set_title('Vertex and edge nodes', fontsize=8)
 
         # axs[2].scatter(self.v_x[elts[:,1]], self.v_y[elts[:,1]], s=4, c='red')
         # axs[2].scatter(self.v_x[elts[:,2]], self.v_y[elts[:,2]], s=4, c='green')
@@ -95,6 +97,7 @@ class MailData:
         axs[2].legend(loc='upper right', fontsize=8)
         axs[2].set_xlim(min(self.v_x), max(self.v_x))
         axs[2].set_ylim(min(self.v_y), max(self.v_y))
+        axs[2].set_title('NumBAT FEM sub-elements', fontsize=8)
 
         for ax in axs:
             ax.set_xlabel(r'$x$ [μm]')
@@ -109,8 +112,8 @@ class MailData:
         tidyaxes.apply_to_axes(axs)
         tidyaxes.apply_to_cbars(cbar)
 
-        pref = numbat.NumBATApp().outprefix()
-        save_and_close_figure(fig, pref + '-mailmesh.png')
+        pref = numbat.NumBATApp().outpath()
+        save_and_close_figure(fig, str(pref) + '-mailmesh.png')
 
 
     def _parse_lines(self, lines):

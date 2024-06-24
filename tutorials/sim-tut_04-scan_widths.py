@@ -140,7 +140,7 @@ for i_w, width_obj in enumerate(v_width_data):
     freq_min = np.real(simres_AC.nu_AC_all()[0]) - 5e9  # Hz
     freq_max = np.real(simres_AC.nu_AC_all()[-1]) + 5e9  # Hz
     decorator = plotting.Decorator()
-    decorator.set_title(f'Gain for width $w={width:.2f}.2f$ nm')
+    decorator.set_title(f'Gain for width $w={width:.2f}$ nm')
     gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max,
                       suffix=f'_wscan_{i_w}' ,  # include scan step in file name
                       decorator=decorator, logy=True)

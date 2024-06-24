@@ -67,7 +67,7 @@ subroutine asmbly  (i_cond, i_base, nel, npt, n_ddl, neq, nnodes, &
 !
 !cccccccccccccccccccccccccccccccccccccc
 !
-   ui = 6
+   ui = stdout
    debug = 0
 !
 !     The CSC indexing, i.e., col_ptr, is 1-based

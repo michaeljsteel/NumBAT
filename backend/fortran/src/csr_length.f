@@ -6,7 +6,8 @@ c
      *  table_N_E_F, ineq, col_ind, row_ptr, nonz_max,
      *   nonz, max_row_len, ipointer, int_max, debug)
 c
-      implicit none
+      use numbatmod
+
       integer(8) nel, neq, n_ddl, nnodes, nonz_max, nonz
       integer(8) ipointer, int_max
       integer(8) table_N_E_F(14,nel)
@@ -31,7 +32,7 @@ C       integer(8) col_ind_0(nonz_max_0)
       integer(8) row_start2, row_end2
       integer(8) ui, debug
 c
-      ui = 6
+      ui = stdout
 c
 c initialize pointer arrays.
 c

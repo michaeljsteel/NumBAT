@@ -12,7 +12,7 @@ c
      *     n_core, table_nod, type_el, nb_typ_el, eps_eff,
      *     x, sol, beta1, mode_pol)
 
-      implicit none
+
       integer(8) nval, nel, npt, nnodes
       integer(8) nb_typ_el, n_core(2), type_el(nel)
       integer(8) table_nod(nnodes,nel)

@@ -35,7 +35,23 @@ intel: all
 mytest: Makefile.win
 	echo $(COMPILER_VENDOR)
 
+CONFIGOUT="nb_build_config.txt"
+
 all: $(NumBAT_MOD).so
+	echo COMPILER_VENDOR: $(COMPILER_VENDOR) > $(CONFIGOUT)
+	echo F_COMP_EXE:      $(F_COMP_EXE) >> $(CONFIGOUT)
+	echo C_COMP_EXE:      $(C_COMP_EXE) >> $(CONFIGOUT)
+	echo F77FLAGS:        $(F77FLAGS) >> $(CONFIGOUT)
+	echo F95FLAGS:        $(F95FLAGS) >> $(CONFIGOUT)
+	echo CFLAGS:          $(CFLAGS) >> $(CONFIGOUT)
+	echo ONEAPI:          $(ONEAPI) >> $(CONFIGOUT)
+	echo ONEAPICOMP:      $(ONEAPICOMP) >> $(CONFIGOUT)
+	echo ARPACK_INC:      $(ARPACK_INC) >> $(CONFIGOUT)
+	echo ARPACK_LIB:      $(ARPACK_LIB) >> $(CONFIGOUT)
+	echo MATHINC:      $(MATHINC) >> $(CONFIGOUT)
+	echo MATHLIB:      $(MATHLIB) >> $(CONFIGOUT)
+	echo ONEAPICOMP:      $(ONEAPICOMP) >> $(CONFIGOUT)
+
 
 
 ## Set your python virtualenv platform
@@ -241,7 +257,7 @@ SRCS_F90 = $(wildcard src/*.f90)
 OBJS = $(subst src/,build/,$(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o))
 
 #The build order of these matters
-SRCS_MODS = src/numbatmod_module.f90
+SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90
 
 #src/nbinterfaces_module.f90
 

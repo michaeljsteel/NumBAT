@@ -174,10 +174,9 @@ class GainProps(object):
                 if imaxg > num_AC * 0.75:
                     maxg = np.abs(t_gains[imaxg])
                     reporting.register_warning(
-                        f"""
-                                               For pump and Stokes indices {mP} and {mS}, the maximum total SBS gain of {maxg} was found for acoustic mode {imaxg} which is in the upper """
-                        + r"25\% of the number of acoustic modes in the calculation.  You should probably check the consistency of the calculation with a larger number of acoustic modes."
-                    )
+                            f"""For pump and Stokes indices {mP} and {mS}, the maximum total SBS gain of {maxg:.3e} was found for acoustic mode {imaxg} which is in the upper """
+                        + r"25% of the number of acoustic modes in the calculation." +
+                        "\nYou should probably check the consistency of the calculation with a larger number of acoustic modes.")
 
     def plot_spectra(
         self,

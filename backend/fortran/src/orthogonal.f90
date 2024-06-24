@@ -63,7 +63,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
 !
 !   Start Program CCCCCCCCCCCCCCCCCCCCCCCC
 !
-   ui = 6
+   ui = stdout
    debug = 0
    pair_warning = .false.
 !

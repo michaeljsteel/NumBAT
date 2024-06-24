@@ -57,11 +57,9 @@ def _process_one_and_two_incls_subs(msh_template, umb):
 
 
 
-    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc')))
-    subs.append(
-        ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', umb.get_param('lc_refine_1')))
-    subs.append(
-        ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', umb.get_param('lc_refine_2')))
+    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc_bkg')))
+    subs.append(('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', umb.get_param('lc_refine_1')))
+    subs.append(('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', umb.get_param('lc_refine_2')))
 
     if msh_template in ['twoincl', '2', '2_on_s', '2_on_2s']:
         subs.append(('a2 = 10;', 'a2 = %f;', umb.get_param('inc_b_x')))

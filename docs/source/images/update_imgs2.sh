@@ -14,7 +14,8 @@ for im in tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spect
     tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
         tut_06-gain_spectra.png tut_06-gain_spectra-logy.png \
         tut_07-gain_spectra.png tut_07-gain_spectra-logy.png \
-        tut_08-acdisp_coating.png tut_09-gain_spectra.png \
+        tut_08-acdisp_coating.png \
+        tut_09-gain_spectra.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \
         tut_12-sil-emdisp_ng.png tut_12-sil-emdisp_Vb.png tut_12-sil-emdisp_Vneff.png tut_12-smf28-emdisp_ng.png tut_12-smf28-emdisp_Vb.png tut_12-smf28-emdisp_Vneff.png \
         tut_13-acdisp_qneff.png tut_13-acdisp_qnu.png \
@@ -22,19 +23,24 @@ for im in tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spect
         tut_02-fields/AC_field_03.png tut_02-fields/AC_field_04.png tut_02-fields/EM_E_field_00.png tut_02-fields/EM_H_field_00.png \
         tut_06-fields/AC_field_05.png tut_06-fields/AC_field_08.png tut_06-fields/EM_E_field_00.png \
         tut_07-fields/AC_field_00.png tut_07-fields/AC_field_01.png tut_07-fields/AC_field_02.png tut_07-fields/AC_field_05.png tut_07-fields/EM_E_field_00.png \
-        tut_08-fields/AC_field_00_20.png tut_08-fields/AC_field_01_20.png tut_08-fields/AC_field_02_20.png \
         tut_11a-fields/AC_field_17.png tut_11a-fields/AC_field_32.png tut_11a-fields/AC_field_39.png tut_11a-fields/AC_field_44.png tut_11a-fields/AC_field_66.png tut_11a-fields/AC_field_69.png tut_11a-fields/EM_E_field_00.png \
         tut_14_0-fields/EM_E_field_00.png tut_14_0-fields/EM_E_field_01.png tut_14_0-fields/EM_E_field_02.png tut_14_0-fields/EM_E_field_03.png tut_14_10-fields/EM_E_field_00.png tut_14_10-fields/EM_E_field_01.png tut_14_10-fields/EM_E_field_02.png tut_14_10-fields/EM_E_field_03.png tut_14_5-fields/EM_E_field_00.png tut_14_5-fields/EM_E_field_01.png tut_14_5-fields/EM_E_field_02.png tut_14_5-fields/EM_E_field_03.png
     do
         cp -R ../../../../tutorials/$im $im
     done
 
-    mkdir -p tut_04-out tut_05-out 
+    mkdir -p tut_04-out tut_05-out tut_08-out
+
+    #    tut_08-fields/AC_field_00_20.png tut_08-fields/AC_field_01_20.png tut_08-fields/AC_field_02_20.png \
 
     for im in tut_04-out/tut_04-gain_spectra-scan.png tut_05-out/tut_05-convergence-freq_AC.png tut_05-out/tut_05-convergence-freq_EM.png tut_05-out/tut_05-convergence-gain_MB.png tut_05-out/tut_05-convergence-gain_PE.png tut_05-out/tut_05-convergence-gain.png 
     do 
         cp -pR ../../../../tutorials/$im $im
     done
+
+    cp -pR ../../../../tutorials/tut_08-out/wid_40.0-fields/AC_field_00.png tut_08-out
+    cp -pR ../../../../tutorials/tut_08-out/wid_40.0-fields/AC_field_01.png tut_08-out
+    cp -pR ../../../../tutorials/tut_08-out/wid_40.0-fields/AC_field_02.png tut_08-out
 
 cd ..
 
