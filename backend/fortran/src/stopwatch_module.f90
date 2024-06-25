@@ -51,7 +51,7 @@ module class_Stopwatch
             integer, parameter :: buflen = 512
             character(len=buflen) :: buffer
 
-            write(buffer, '(A10, f0.2, A, f0.2, A)') 'cpu time = ', this%cpu_time(), &
+            write(buffer, '(A, f0.2, A, f0.2, A)') 'cpu time = ', this%cpu_time(), &
                     ' secs, wall time = ', this%sys_time(), ' secs'
             tstr = trim(buffer)
 

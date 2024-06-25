@@ -420,18 +420,18 @@ The lowest mode, for instance, is noticeably unaffected.
    Acoustic frequencies as function of covering layer thickness.
 
 
-.. figure:: ./images/tutorial/tut_08/AC_field_00.png
+.. figure:: ./images/tutorial/tut_08-out/AC_field_00.png
    :width: 10cm
 
    Modal profiles of lowest acoustic mode.
 
 
-.. figure:: ./images/tutorial/tut_08/AC_field_01.png
+.. figure:: ./images/tutorial/tut_08-out/AC_field_01.png
    :width: 10cm
 
    Modal profiles of second acoustic mode.
 
-.. figure:: ./images/tutorial/tut_08/AC_field_02.png
+.. figure:: ./images/tutorial/tut_08-out/AC_field_02.png
    :width: 10cm
 
    Modal profiles of third acoustic mode.

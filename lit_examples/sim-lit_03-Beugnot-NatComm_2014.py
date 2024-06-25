@@ -148,14 +148,14 @@ def modes_n_gain(diam):
 
 
 
-    set_q_factor = 600.
+#    set_q_factor = 600.
     gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)#, fixed_Q=set_q_factor)
 
-    gain_box.set_allowed_EM_pumps(EM_ival_pump)
-    gain_box.set_allowed_EM_Stokes(EM_ival_Stokes)
-    gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
+    #gain_box.set_allowed_EM_pumps(EM_ival_pump)
+    #gain_box.set_allowed_EM_Stokes(EM_ival_Stokes)
+    #gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
 
     (nu_gain_tot, nu_gain_PE, nu_gain_MB) = gain_box.plot_spectra(
             freq_min, freq_max, num_interp_pts=num_interp_pts, logy=True,
