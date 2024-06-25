@@ -26,14 +26,14 @@ c     Local variables
       integer(8) iel, ival
       integer(8) jtest, ind_jp, j_eq
       integer(8) itrial, ind_ip, i_eq
-      integer(8) info_curved, n_curved, debug, ui
+      integer(8)  n_curved, debug, ui
+      logical is_curved
       double precision xel(2,nnodes_0)
       double precision phi2_list(6), grad2_mat0(2,6)
       double precision grad2_mat(2,6)
       double precision phi3_list(10), grad3_mat0(2,10)
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
-      double precision  r_tmp1
       complex(8) z_tmp1, z_tmp2, coeff_1
 c
 c     NQUAD: The number of quadrature points used in each element.
@@ -97,8 +97,8 @@ c      n_curved = 0
           xel(1,j) = x(1,j1)
           xel(2,j) = x(2,j1)
         enddo
-        call curved_elem_tri (nnodes, xel, info_curved, r_tmp1)
-        if (info_curved .eq. 1) then
+        is_curved = log_is_curved_elem_tri (nnodes, xel)
+        if (is_curved) then
           n_curved = n_curved + 1
         endif
 cccccccccc
@@ -120,7 +120,7 @@ c          grad2_mat0 = gradient on the reference triangle (P2 element)
 c          grad3_mat0 = gradient on the reference triangle (P3 element)
            call phi3_2d_mat(xx, phi3_list, grad3_mat0)
 c
-          if (info_curved .eq. 0) then
+          if (.not. is_curved ) then
 c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)

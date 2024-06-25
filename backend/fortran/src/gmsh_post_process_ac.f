@@ -5,14 +5,14 @@ c
 
       subroutine gmsh_post_process_AC (plot_val, nval,
      *     nel, npt, nnodes, table_nod, type_el,
-     *  x, val_cmplx, sol, sol_avg, visite,
+     *  x, val_cmplx, sol, sol_avg, visited,
      *  gmsh_file_pos, dir_name, d_in_nm, debug)
 
       use numbatmod
 
       integer(8) nval, nel, npt, nnodes, plot_val
       integer(8) table_nod(nnodes,nel), type_el(nel)
-      integer(8) visite(npt)
+      integer(8) visited(npt)
       double precision x(2,npt)
       complex(8) sol(3,nnodes,nval,nel)
       complex(8) sol_avg(3,npt)
@@ -79,7 +79,7 @@ c
 c
       if (q_average .eq. 1) then
         do i=1,npt
-          visite(i) = 0
+          visited(i) = 0
           do j=1,3
             sol_avg(j,i) = 0.0d0
           enddo
@@ -87,7 +87,7 @@ c
         do iel=1,nel
           do i=1,nnodes
             i1 = table_nod(i,iel)
-            visite(i1) = visite(i1) + 1
+            visited(i1) = visited(i1) + 1
             do j=1,3
               sol_avg(j,i1) = sol_avg(j,i1) +
      *          sol(j,i,plot_val,iel)
@@ -95,14 +95,14 @@ c
           enddo
         enddo
         do i=1,npt
-          if (visite(i) .eq. 0) then
-            write(ui,*) "gmsh_post_process: visite(i) = 0"
-            write(ui,*) " i, visite(i) = ", i, visite(i)
+          if (visited(i) .eq. 0) then
+            write(ui,*) "gmsh_post_process: visited(i) = 0"
+            write(ui,*) " i, visited(i) = ", i, visited(i)
             write(ui,*) "gmsh_post_process: Aborting..."
             stop
           endif
           do j=1,3
-            sol_avg(j,i) = sol_avg(j,i)/dble(visite(i))
+            sol_avg(j,i) = sol_avg(j,i)/dble(visited(i))
           enddo
         enddo
       endif

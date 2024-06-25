@@ -5,26 +5,31 @@
 !  Currently always says no!
 
 
-subroutine curved_elem_tri (nnodes, xel, info_curved, tmp)
+
+
+subroutine is_curved_elem_tri_impl (nnodes, xel, info_curved, tmp)
 !
    implicit none
    integer(8) nnodes, info_curved
    double precision xel(2,nnodes)
+   double precision tmp
+
 
    integer(8) nnd_triangle
    parameter (nnd_triangle = 6)
    double precision xel_triangle(2,nnd_triangle)
 
    integer(8) i, j, i2
-   double precision tol, tmp
+   double precision tol
 
+   info_curved = 0
 
    if (nnodes .ne. nnd_triangle) then
       write(*,*)
       write(*,*) "   ???"
-      write(*,*) "curved_elem_tri: nnodes != nnd_triangle : ",&
+      write(*,*) "is_curved_elem_tri: nnodes != nnd_triangle : ",&
       &nnodes, nnd_triangle
-      write(*,*) "curved_elem_tri: Aborting..."
+      write(*,*) "is_curved_elem_tri: Aborting..."
       stop
    endif
 
@@ -58,7 +63,6 @@ subroutine curved_elem_tri (nnodes, xel, info_curved, tmp)
       info_curved = 1
    endif
 
-   info_curved = 0
 
    return
 end

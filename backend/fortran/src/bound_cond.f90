@@ -61,13 +61,13 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
    integer(8) bdy_cdn, n_ddl, neq
    integer(8) ineq(3,n_ddl), type_N_E_F(2,n_ddl)
 
-   integer(8) i, i_boundary, i_dim
+   integer(8) i, is_boundary, i_dim
 
    if(bdy_cdn .eq. BCS_DIRICHLET) then  ! all points have a degree of freedom
 
       neq = 0
       do i=1,n_ddl
-         i_boundary = type_N_E_F(1,i)
+         is_boundary = type_N_E_F(1,i)
          i_dim = type_N_E_F(2,i)
 
          if (i_dim .eq. 2) then ! each element is associated to 3 interior Degrees Of Freedom (DOF)
@@ -77,7 +77,7 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
             neq = neq + 3
 
          elseif (i_dim .eq. 1) then  ! each edge is associated to 3 Degrees Of Freedom (DOF)
-            if (i_boundary .eq. 0) then
+            if (is_boundary .eq. 0) then
                ineq(1,i) = neq + 1
                ineq(2,i) = neq + 2
                ineq(3,i) = neq + 3
@@ -89,7 +89,7 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
             endif
 
          elseif (i_dim .eq. 0) then   ! each nodee is associated to 1 Degree Of Freedom (DOF)
-            if (i_boundary .eq. 0) then
+            if (is_boundary .eq. 0) then
                ineq(1,i) = neq + 1
                ineq(2,i) = 0
                ineq(3,i) = 0
@@ -131,10 +131,6 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
             stop
          endif
       enddo
-   else
-      write(*,*) "bound_cond: bdy_cdn has invalid value : ", bdy_cdn
-      write(*,*) "bound_cond: Aborting..."
-      stop
    endif
 
    return

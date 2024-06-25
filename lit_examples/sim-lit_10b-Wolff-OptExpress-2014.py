@@ -15,7 +15,7 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
+from nbtypes import SI_GHz
 from nbtypes import PointGroup
 import starter
 

@@ -1,12 +1,12 @@
 
 subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
    n_edge, type_nod, table_nod, &
-   table_edge, table_edge_face, visite)
+   table_edge, table_edge_face, visited)
 
    implicit none
    integer(8) n_msh_el, n_msh_pts, nodes_per_el
    integer(8) n_edge
-   integer(8) type_nod(n_msh_pts), visite(n_msh_pts)
+   integer(8) type_nod(n_msh_pts), visited(n_msh_pts)
    integer(8) table_nod(nodes_per_el,n_msh_el)
    integer(8) table_edge_face(14,n_msh_el)
    integer(8) table_edge(4,n_msh_pts)
@@ -28,13 +28,13 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
    n_face = n_msh_el
    debug = 0
 
-   do i=1,n_msh_pts
-      visite(i) = 0
-   enddo
+
+   visited= 0
 
    n_edge = 0
    do i=1,n_msh_el
-      do j=4,nodes_per_el
+
+      do j=4,nodes_per_el   ! checks some condition on this eleemnt. what is it?
          if (type_nod(table_nod(j,i)) .ne. 0) then
             j1 = list_end(1,j-3)
             j2 = list_end(2,j-3)
@@ -55,10 +55,10 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
       ! scan the element edge
       do j=4,nodes_per_el
          j1 = table_nod(j,i)
-         k = visite(j1)
+         k = visited(j1)
          if (k .eq. 0) then
             n_edge = n_edge + 1
-            visite(j1) = n_edge
+            visited(j1) = n_edge
             j2 = list_end(1,j-3)
             table_edge(1,n_edge) = table_nod(j2,i)
             j2 = list_end(2,j-3)

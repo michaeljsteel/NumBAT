@@ -41,7 +41,7 @@ c     NQUAD: The number of quadrature points used in each element.
       parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
-cc      integer(8) info_curved, n_curved
+cc      integer(8) is_curved, n_curved
       complex(8) coeff
 
       double precision p2_p2_p2(6,6,6)

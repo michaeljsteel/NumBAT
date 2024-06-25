@@ -84,9 +84,10 @@ subroutine list_node_P3 (nel, npt, nnodes, n_edge,&
 
    n_face = nel
 
-   do j=1,npt
-      visited(j) = 0
-   enddo
+   visited = 0
+   !do j=1,npt  ! OBSELETE
+    !  visited(j) = 0
+   !enddo
 
    ! The first 4 entries of table_N_E_F(*,i) correspond to face and edges
    mm = 4

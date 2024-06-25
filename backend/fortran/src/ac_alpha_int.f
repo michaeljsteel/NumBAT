@@ -40,7 +40,8 @@ c     NQUAD: The number of quadrature points used in each element.
          double precision wq(nquad_max)
          double precision xq(nquad_max), yq(nquad_max)
          double precision xx(2), xx_g(2), ww, det
-         integer(8) info_curved, n_curved
+         integer(8)  n_curved
+         logical info_curved
          double precision r_tmp1
          complex(8) coeff_1, coeff_2
          double precision phi2_list(6), grad2_mat0(2,6)
@@ -95,8 +96,8 @@ cccccccccccc
            xel(1,j) = x(1,j1)
            xel(2,j) = x(2,j1)
         enddo
-        call curved_elem_tri (nnodes, xel, info_curved, r_tmp1)
-        if (info_curved .eq. 1) then
+        info_curved = log_is_curved_elem_tri (nnodes, xel)
+        if (info_curved) then
            n_curved = n_curved + 1
         endif
 cccccccccc
@@ -122,7 +123,7 @@ C         phi2_list = values of Lagrange polynomials (1-6) at each local node.
 C         grad2_mat0 = gradient on the reference triangle (P2 element)
            call phi2_2d_mat(xx, phi2_list, grad2_mat0)
 c
-           if (info_curved .eq. 0) then
+           if (.not. info_curved) then
 c           Rectilinear element
               call jacobian_p1_2d(xx, xel, nnodes,
      *                 xx_g, det, mat_B, mat_T)

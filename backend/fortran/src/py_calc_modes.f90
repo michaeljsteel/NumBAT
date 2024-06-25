@@ -55,7 +55,7 @@ contains
    !    character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
-   !    write(*,*)  'In baby_calc_em_impl 1'
+   !    write(ui_out,*)  'In baby_calc_em_impl 1'
    !    write(*,'(A ,i0, e10.3, e10.3)')  '  &
    !       baby_calc_em_impl a', n_modes, lambda, dimscale_in_m
    !    write(*,'(A ,e10.3, e10.3,e10.3, e10.3)')  '  baby_calc_em_impl b', &
@@ -69,10 +69,10 @@ contains
 
    !    write(*,'(A, A)')  '  baby_calc_em_impl d - mesh', mesh_file
    !    write(*,'(A, i7,  i7,  i7)')  '  baby_calc_em_impl pts', n_msh_pts, n_msh_el, n_typ_el
-   !    write(*,*)  '  baby_calc_em_impl v_refindex', v_refindex_n
+   !    write(ui_out,*)  '  baby_calc_em_impl v_refindex', v_refindex_n
 
 
-   !    write(*,*)   'Writing to outputs'
+   !    write(ui_out,*)   'Writing to outputs'
    !    sol_adj(1,1,1,1) = 1.0
    !    mode_pol(1,1) = 1.0
    !    table_nod(1,1) = 1
@@ -81,14 +81,14 @@ contains
    !    v_eigs_beta_adj(1) = 2.5
    !    v_eigs_beta_adj(2) = 2.5
 
-   !    write(*,*)   'Done writing to outputs a'
+   !    write(ui_out,*)   'Done writing to outputs a'
    !    errco = 0
-   !    write(*,*)   'Done writing to outputs b'
+   !    write(ui_out,*)   'Done writing to outputs b'
    !    emsg = "h3llo"
-   !    write(*,*)   'Done writing to outputs c'
+   !    write(ui_out,*)   'Done writing to outputs c'
 
 
-   !    write(*,*)  'baby_calc_em_impl done'
+   !    write(ui_out,*)  'baby_calc_em_impl done'
    ! end subroutine
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
@@ -221,11 +221,12 @@ contains
       integer :: is_em, alloc_stat, alloc_remote
       double precision tol
 
-      type(Stopwatch) :: clock_main, clock_normalise, clock_spare
+      type(Stopwatch) :: clock_main, clock_spare
 
 
       is_em = 1
       alloc_remote = 0
+      ui_out = stdout
 
 
       ! TODO: unallocated arrays can not be passed as function arguments
@@ -235,11 +236,12 @@ contains
          !call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
          !   a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
          !RETONERROR(errco)
-         write(*,*) 'alloc remote in calc_em_impl is broken'
+         write(ui_out,*) 'alloc remote in calc_em_impl is broken'
          call exit(1)
       else
 
-
+         write(stdout,*) 'as 1'
+         flush(stdout)
          call array_size(n_msh_pts, n_msh_el, n_modes, &
             int_max, cmplx_max, real_max, n_ddl, errco, emsg)
          RETONERROR(errco)
@@ -276,7 +278,7 @@ contains
          endif
       endif
 
-      ui_out = stdout
+
 
 !  nsym = 1 ! nsym = 0 => symmetric or hermitian matrices
 !
@@ -566,13 +568,15 @@ contains
          call clock_spare%reset()
 
 
-         call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, shift_ksqr, &
-            bloch_vec_k, n_typ_el, pp, qq, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), &
-            a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), mesh_xy, &
+         call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+         shift_ksqr, bloch_vec_k, n_typ_el, pp, qq, &
+         table_nod, a_iwork(ip_table_N_E_F), type_el, &
+         a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         mesh_xy, &
          !b_zwork(jp_x_N_E_F), &
             d_dwork, &
-            nonz, a_iwork(ip_row), &
-            a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
+            nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+            c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
 
          call clock_spare%stop()
          write(ui_out,'(A,A)') '      ', clock_spare%to_string()
@@ -592,6 +596,7 @@ contains
             debug, errco, emsg)
          RETONERROR(errco)
 
+
          call clock_spare%stop()
          time_fact = ls_data(2) - ls_data(1)
          time_arpack = ls_data(4) - ls_data(3)
@@ -599,7 +604,7 @@ contains
          !write(ui_out,'(A18,F6.2,A18,F6.2,A)') &
          !   '  cpu time = ', clock_spare%cpu_time(), ' secs,  wall time = ', clock_spare%sys_time(), ' secs.'
 
-            write(ui_out,'(A,A)') '      ', clock_spare%to_string()
+         write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
          if (n_conv .ne. n_modes) then
             write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
@@ -634,46 +639,50 @@ contains
 
          write(ui_out,*) "  - assembling eigen solutions"
 
+
+
          !  The eigenvectors will be stored in the array sol
          !  The eigenvalues and eigenvectors are renumbered
          !  using the permutation vector iindex
-         call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, n_core, &
-            bloch_vec_k, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, a_iwork(ip_eq), a_iwork(ip_period_N), &
-            a_iwork(ip_period_N_E_F), mesh_xy, &
+         call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+         n_core, bloch_vec_k, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, &
+         a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         mesh_xy, &
          !b_zwork(jp_x_N_E_F),
-            d_dwork, &
-            p_beta, mode_pol, b_zwork(jp_vp), p_sol , errco, emsg)
+         d_dwork, &  ! this should be an e_ework
+         p_beta, mode_pol, b_zwork(jp_vp), p_sol , errco, emsg)
          RETONERROR(errco)
 
 
          write(ui_out,*) "  - finding mode energies "
-!  Calculate energy in each medium (typ_el)
+         !  Calculate energy in each medium (typ_el)
          if (n_k .eq. 2) then
             call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, table_nod, type_el, n_typ_el, eps_eff,&
-               mesh_xy, p_sol , p_beta, mode_pol)
+            mesh_xy, p_sol , p_beta, mode_pol)
          endif
 
 
       enddo  ! n_k
 
 
-!CCCCCCCCCCCCCCCCCCCCCCC  End Prime, Adjoint Loop  CCCCCCCCCCCCCCCCCCCCCC
+      return ! BROKEN
+      !CCCCCCCCCCCCCCCCCCCCCCC  End Prime, Adjoint Loop  CCCCCCCCCCCCCCCCCCCCCC
 
 
 
-! Doubtful that this check is of any value: delete?
+      ! Doubtful that this check is of any value: delete?
       call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
-         sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, &
-         pair_warning, vacwavenum_k0, errco, emsg)
+      type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
+      sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, &
+      pair_warning, vacwavenum_k0, errco, emsg)
       RETONERROR(errco)
 
 
-! Should this happen _before_ check_ortho?
+      ! Should this happen _before_ check_ortho?
 
-!  The z-component must be multiplied by -ii*beta in order to
-!  get the physical, un-normalised z-component
-!  (see Eq. (25) of the JOSAA 2012 paper)
+      !  The z-component must be multiplied by -ii*beta in order to
+      !  get the physical, un-normalised z-component
+      !  (see Eq. (25) of the JOSAA 2012 paper)
       do ival=1,n_modes
          do inod=1,nodes_per_el+7
             !do iel=1,n_msh_el
@@ -686,7 +695,7 @@ contains
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
 
-!  Normalisation
+      !  Normalisation
 
 
       call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol_adj, sol_pri, overlap_L)
@@ -695,21 +704,21 @@ contains
       !if (debug .eq. 1) then
       !   write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
       !endif
-!
-! !  Orthonormal integral
-!       if (debug .eq. 1) then
-!          write(ui_out,*) "py_calc_modes.f: Product of normalised field"
-!          overlap_file = "Orthogonal_n.txt"
-!          call get_clocks( systime1_J, time1_J)
-!          call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-!             type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, sol_adj, sol_pri, overlap_L, overlap_file, debug, &
-!             pair_warning, vacwavenum_k0)
-!          call get_clocks( systime2_J, time2_J)
-!          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
-!       endif
-!
-!#########################  End Calculations  ###########################
-!
+      !
+      ! !  Orthonormal integral
+      !       if (debug .eq. 1) then
+      !          write(ui_out,*) "py_calc_modes.f: Product of normalised field"
+      !          overlap_file = "Orthogonal_n.txt"
+      !          call get_clocks( systime1_J, time1_J)
+      !          call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
+      !             type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, sol_adj, sol_pri, overlap_L, overlap_file, debug, &
+      !             pair_warning, vacwavenum_k0)
+      !          call get_clocks( systime2_J, time2_J)
+      !          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
+      !       endif
+      !
+      !#########################  End Calculations  ###########################
+      !
 
       call clock_spare%stop()
 

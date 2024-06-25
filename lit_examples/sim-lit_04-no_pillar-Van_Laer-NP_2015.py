@@ -120,7 +120,7 @@ if doac:
         npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
         sim_AC = npzfile['sim_AC'].tolist()
 
-    sim_AC.plot_modes(sim_AC, ivals=range(20), )
+    sim_AC.plot_modes(ivals=range(20))
 
 set_q_factor = 306
 
