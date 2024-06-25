@@ -1,22 +1,22 @@
 
 #include "numbat_decl.h"
 
-!
+
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !  Estimates the work space sizes that will be needed
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
+
       subroutine array_size (n_msh_pts, n_msh_el, n_modes, &
  int_size, cmplx_size, real_size, n_ddl, errco, emsg)
 
       use numbatmod
-      integer(8) n_msh_pts, n_msh_el
-      integer(8) :: n_modes
-      integer(8) int_size, cmplx_size, real_size, n_ddl
+      integer(8), intent(in) :: n_msh_pts, n_msh_el, n_modes
 
-      integer errco
-      character(len=EMSG_LENGTH) emsg
+      integer(8), intent(out) :: int_size, cmplx_size, real_size, n_ddl
+
+      integer, intent(out) :: errco
+      character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
 !     Local variables
@@ -59,22 +59,17 @@
       integer(8) ip_work, ip_work_sort, ip_work_sort2
 
 
-!f2py intent(in)  n_msh_el, n_modes
-
-!f2py intent(out)  int_size, cmplx_size, real_size
-
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
-      nnodes = 6
+      nnodes = 6   ! TODO replace with standard parameter
       ordre_ls = 0
-!
+
 !     For most of the FEM meshes I have used, I have observed that:
 !     npt is approximately equal to n_msh_el * 2.1
-!
-      npt = n_msh_el * 3
-      n_edge = (npt + n_msh_el) / 2
-      npt_p3 = npt + n_edge + n_msh_el
+
+      ! what are npt, n_edge, npt_p3  maening?
+
+      npt = n_msh_el * 3                 ! = 3 n_msh_el
+      n_edge = (npt + n_msh_el) / 2      ! = 2 n_msh_el
+      npt_p3 = npt + n_edge + n_msh_el   ! = 6 n_msh_el
       nvect = 2*n_modes + n_modes/2 +3
 
 !     Euler's polyhedron formula (no holes):
@@ -84,72 +79,90 @@
 !     Since V - E = 2 - n_msh_el and V + E = npt, we have E = n_edge = (npt+n_msh_el-2)/2
 !
 
-      n_ddl = n_edge + n_msh_el + npt_p3
-      neq = 3 * (n_edge + n_msh_el) + npt_p3
-      neq_PW = (2*ordre_ls+1)**2
+      n_ddl = n_edge + n_msh_el + npt_p3         ! = 9 n_msh_el
+      n_ddl_max = npt + n_msh_el                 ! = 4 n_msh_el
+      neq = 3 * (n_edge + n_msh_el) + npt_p3     ! = 9 n_msh_el
+      neq_PW = (2*ordre_ls+1)**2                 ! = 1
+
 !     For most of the FEM meshes I have used, I have observed that:
 !     nonz = 34.25 * neq
-      nonz = 40 * neq
-      nonz_max = nonz
+      nonz = 40 * neq                            != 360 n_msh_el
+      nonz_max = nonz                            !TODO: remove nonz and just use nonz_max in this file
 
 !     I have observed that: max_row_len < 200
       max_row_len = 200
-!ccccc
+
+      ! Is this the same set of values as in py_calc_modes?
+      ! Note here, the increment in each line is the size of the _previous_ object
+      ! A neater approach would be
+      ! off =1
+      ! ip_type_nod    = off;   off = off + npt
+      ! ip_type_el     = off;   off = off + n_msh_el
+      ! ip_table_nod   = off;   off = off + nnodes * n_msh_el
+      ! ip_table_N_E_F = off;   off = off + 14 * n_msh_el
+      ! ...
+
+      !TODO: collect these into a procedure
+      ! taking npt, n_msh_el, n_ddl etc.
+      ! One for real, complex, int.
+
+
       ip_type_nod = 1
-      ip_type_el = ip_type_nod + npt
-!       ! pointer to FEM connectivity table
-      ip_table_nod = ip_type_el + n_msh_el
-      ip_table_N_E_F = ip_table_nod + nnodes*n_msh_el
+      ip_type_el  = ip_type_nod + npt
 
-      n_ddl_max = npt + n_msh_el
-      ip_visited=  ip_table_N_E_F  + 14*n_msh_el
-      ip_table_E = ip_visited+ n_ddl_max
+      ! pointer to FEM connectivity table
+      ip_table_nod   = ip_type_el       + n_msh_el
+      ip_table_N_E_F = ip_table_nod     + nnodes*n_msh_el
 
-      ip_type_N_E_F = ip_table_E + 4*n_edge
+      ip_visited     =  ip_table_N_E_F  + 14*n_msh_el
+      ip_table_E     = ip_visited       + n_ddl_max
+
+      ip_type_N_E_F  =  ip_table_E       + 4*n_edge
 
 
-        ip_period_N = ip_type_N_E_F + 2*n_ddl
-        ip_nperiod_N = ip_period_N + npt
-        ip_period_N_E_F = ip_nperiod_N + npt
-        ip_nperiod_N_E_F = ip_period_N_E_F + n_ddl
-        ip_eq = ip_nperiod_N_E_F + n_ddl
+      ip_period_N      = ip_type_N_E_F    + 2*n_ddl
+      ip_nperiod_N     = ip_period_N      + npt
+      ip_period_N_E_F  = ip_nperiod_N     + npt
+      ip_nperiod_N_E_F = ip_period_N_E_F  + n_ddl
+      ip_eq            = ip_nperiod_N_E_F + n_ddl
 
-      ip_index_pw_inv = ip_eq + 3*n_ddl
-      ip_col_ptr = ip_index_pw_inv + neq_PW
-      ip_row = ip_col_ptr + neq + 1
+      ip_index_pw_inv  = ip_eq            + 3*n_ddl
+      ip_col_ptr       = ip_index_pw_inv  + neq_PW
+      ip_row           = ip_col_ptr       + neq + 1
 
-      ip_work = ip_row + nonz
-      ip_work_sort = ip_work + 3*n_ddl
-      ip_work_sort2 = ip_work_sort + max_row_len
+      ip_work          = ip_row           + nonz
+      ip_work_sort     = ip_work          + 3*n_ddl
+      ip_work_sort2    = ip_work_sort     + max_row_len
 
-      int_size = ip_work_sort2 + max_row_len
+      int_size         = ip_work_sort2    + max_row_len
 
-!ccccc
-      jp_x = 1
+
+      jp_x       = 1
       jp_x_N_E_F = jp_x + 2*npt
 
-      jp_rhs = jp_x_N_E_F + 3*n_ddl
+      jp_rhs     = jp_x_N_E_F + 3*n_ddl
 !     jp_rhs will also be used (in gmsh_post_process) to store a solution
-      jp_mat2 = jp_rhs + max(neq, 3*npt)
+      jp_mat2    = jp_rhs + max(neq, 3*npt)
 
-      jp_vect1 = jp_mat2 + nonz
-      jp_vect2 = jp_vect1 + neq
-      jp_workd = jp_vect2 + neq
-      jp_resid = jp_workd + 3*neq
+      jp_vect1   = jp_mat2 + nonz
+      jp_vect2   = jp_vect1 + neq
+      jp_workd   = jp_vect2 + neq
+      jp_resid   = jp_workd + 3*neq
 
-      jp_sol1 = jp_resid + neq
-      jp_sol1b = jp_sol1 + 3*(nnodes+7)*n_modes*n_msh_el
-      jp_sol2 = jp_sol1b + 3*(nnodes+7)*n_modes*n_msh_el
-      jp_sol1_H = jp_sol2 + 3*(nnodes+7)*n_modes*n_msh_el
+      jp_sol1    = jp_resid + neq
+      jp_sol1b   = jp_sol1 + 3*(nnodes+7)*n_modes*n_msh_el
+      jp_sol2    = jp_sol1b + 3*(nnodes+7)*n_modes*n_msh_el
+      jp_sol1_H  = jp_sol2 + 3*(nnodes+7)*n_modes*n_msh_el
       jp_sol1b_H = jp_sol1_H + 3*nnodes*n_modes*n_msh_el
       jp_eigen_modes1 = jp_sol1b_H + 3*nnodes*n_modes*n_msh_el
       jp_eigen_modes2 = jp_eigen_modes1 + n_modes + 1
-!       ! Eigenvectors
-      jp_vschur = jp_eigen_modes2 + n_modes + 1
+
+      ! Eigenvectors
+      jp_vschur      = jp_eigen_modes2 + n_modes + 1
       jp_eigen_modes = jp_vschur + neq*nvect
-      jp_eigen_pol = jp_eigen_modes + n_modes + 1
+      jp_eigen_pol   = jp_eigen_modes + n_modes + 1
       jp_eigen_modes_tmp = jp_eigen_pol + n_modes*4
-      jp_trav = jp_eigen_modes_tmp + n_modes + 1
+      jp_trav        = jp_eigen_modes_tmp + n_modes + 1
 
       ltrav = 3*nvect*(nvect+2)
       jp_vp = jp_trav + ltrav
@@ -177,13 +190,13 @@
 
 !ccccc
 
-      kp_rhs_re = 1
-      kp_rhs_im = kp_rhs_re + neq
-      kp_lhs_re = kp_rhs_im + neq
-      kp_lhs_im = kp_lhs_re + neq
+      kp_rhs_re  = 1
+      kp_rhs_im  = kp_rhs_re + neq
+      kp_lhs_re  = kp_rhs_im + neq
+      kp_lhs_im  = kp_lhs_re + neq
       kp_mat1_re = kp_lhs_im + neq
       kp_mat1_im = kp_mat1_re + nonz
-      real_size = kp_mat1_im + nonz
+      real_size  = kp_mat1_im + nonz
 
 ! cccccc
 ! c     SOME 32 bit integers for UMFPACK AND ARPACK

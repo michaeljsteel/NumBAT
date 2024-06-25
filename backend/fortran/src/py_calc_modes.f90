@@ -295,12 +295,12 @@ contains
 
       ! Fill:  mesh_xy, type_nod, type_el, table_nod
       call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
-         mesh_xy, type_nod, type_el, table_nod,  errco, emsg)
+         mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
       ! Storage locations in sequence
       !  - table_edge_face = a_iwork(ip_table_N_E_F),   shape: 14 x n_msh_el
-      !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max ? = n_msh_pts + n_msh_el
+      !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max = npt + n_msh_el = 4 n_msh_el
       !  - table_edges     = a_iwork(ip_table_E)        shape: 4 x n_msh_pts
       !
       !   visited is used as workspace. has no meaning between functions
@@ -313,7 +313,9 @@ contains
       !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
       !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
       !
-      !
+      ! neq and nonz are some kind of dimension for the left and right eigenoperators
+
+      ! TODO: move next three calls into a single  construct_table_N_E_F procedure
 
       ! Fills:  table_edge_face[1,:]
       ip_table_N_E_F = 1
@@ -333,10 +335,12 @@ contains
       ip_table_E = ip_visited + n_ddl_max
 
       ! Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
+      ! Todo! move n_edge later in list as an out variable
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
          a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
-      ! Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts]
+      ! Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
+         ! Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
@@ -354,9 +358,8 @@ contains
          write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
          &= ", (n_msh_pts - n_edge) - n_edge + n_face
       endif
-!C
-!C-----------
-!C
+
+
 !C  overwriting pointers ip_row_ptr, ..., ip_adjncy
 !
       ip_type_N_E_F = ip_table_E + 4*n_edge   ! not sure why 4* n_edge, not 4*n_msh_pts?
@@ -589,6 +592,9 @@ contains
          call clock_spare%reset()
 
          ! This is the main solver.
+         ! On completion:
+         !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
+         !    eigvectors are in are b_zwork[jp_vp..?]
          call valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
             c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
             b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), &
@@ -613,6 +619,7 @@ contains
             return
          endif
 
+         !TODO: make a function.  Rename p_beta to indicate it is Beta^2
          do i=1,n_modes
             z_tmp0 = p_beta(i)
             z_tmp = 1.0d0/z_tmp0+shift_ksqr

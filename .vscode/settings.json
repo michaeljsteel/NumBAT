@@ -200,8 +200,10 @@
     ],
     "python.defaultInterpreterPath": "/home/msteel/mypy3-12",
     "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.extraPaths": [ 
-        "${workspaceFolder}/backend", 
-        "${workspaceFolder}/backend/fortran"]
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend",
+        "${workspaceFolder}/backend/fortran"
+    ],
+    "fortran.linter.compiler": "ifx"
 }
 

@@ -36,7 +36,6 @@ c     Local variables
       double precision phi3_list(10), grad3_mat0(2,10)
       double precision grad3_mat(2,10)
       double precision vec_phi_j(2), vec_phi_i(2)
-      double precision  r_tmp1
 
       complex(8) z_tmp1, z_tmp2, coeff_1
 c

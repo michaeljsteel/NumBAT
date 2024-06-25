@@ -137,6 +137,7 @@ c added so as to handle more type of domains/meshes
           enddo
 40        continue
         enddo
+
         i = neq
         row_start = row_ptr(i)
         row_end = row_ptr(i+1) - 1
@@ -157,6 +158,7 @@ c
         row_len = row_end - row_start + 1
         if (row_len .gt. max_row_len) max_row_len = row_len
       enddo
+
       if (debug .eq. 1) then
       write(ui,*) "csr_length: max_row_len = ", max_row_len
       endif
@@ -169,10 +171,12 @@ c
          write(ui,*) "csr_length: Aborting..."
          stop
       else
+
 c       Copy the local array col_ind_0 into col_ind
         do i=1,nonz
           col_ind(i) = col_ind_0(i)
         enddo
+
       endif
 c
       return
