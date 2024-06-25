@@ -62,7 +62,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     fib_em = TwoLayerFiberEM(ncore, nclad, rco)
 
     # The worker function passed to CalcThread to do one task
-    def solemrod_caller(args):
+    def solemrod_callee(args):
         (ik, k) = args # Matches queues passed to CalcThread
 
         mhy_lo = 1
@@ -92,7 +92,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_workers, solemrod_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, solemrod_callee, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -126,7 +126,7 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
 
 
     # function to perform one worker FEM task
-    def emcalc_caller(args):
+    def emcalc_callee(args):
         (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
 
         t_lambda_nm = twopi/tk
@@ -143,7 +143,7 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
 
     #num_workers = max(2,int(os.cpu_count()/4))
     num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
-    launch_worker_processes_and_wait(num_workers, emcalc_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, emcalc_callee, q_result, q_work)
 
 
     #Collect all the data back into one matrix

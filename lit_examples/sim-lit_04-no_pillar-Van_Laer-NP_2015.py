@@ -15,7 +15,6 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 
 from plotting import Decorator
-import plotting
 import integration
 import mode_calcs
 import materials
@@ -127,39 +126,20 @@ set_q_factor = 306
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
-    EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-# Print the frequencies and gains of AC modes.
-nus = sim_AC.nu_AC_all()
-gains = SBS_gain[EM_ival_pump, EM_ival_Stokes, :]
+print('Gains by acoustic mode:')
+print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
+v_nu = sim_AC.nu_AC_all()
+for (m, nu) in enumerate(v_nu):
+    print(f'{m:7d}    {np.real(nu)*1e-9:9.4e} {gain_box.gain_total(m):13.3e} ',
+          f'{gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} ')
 
-print('Acoustic modes')
-print('m      Freq (GHz)      Total gain (1/(Wm))')
-for m in range(len(nus)):
-    print(f'{m:3d}    {np.real(nus[m]) * 1e-09:12.6f}   {gains[m]:8.4f}')
-
-
-# Mask negligible gain values to improve clarity of print out.
-threshold = 1e-3
-masked_PE = np.ma.masked_inside(
-    SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
-masked_MB = np.ma.masked_inside(
-    SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
-masked = np.ma.masked_inside(
-    SBS_gain[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
-
-print("\n Displaying results with negligible components masked out")
-print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
-print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
-print("SBS_gain [1/(Wm)] total \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # 9.1e9 # Hz
 freq_max = 50e9  # 9.3e9 # Hz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                           EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=freq_min, freq_max=freq_max,
-                           )
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True,  mode_comps=True, dB=True)
 
 print(nbapp.final_report())

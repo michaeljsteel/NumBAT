@@ -15,7 +15,7 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
+from nbtypes import SI_GHz
 
 import starter
 
@@ -70,8 +70,8 @@ nbapp = numbat.NumBATApp(prefix)
 
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, rib_w=rib_w, rib_h=rib_h, slab_w=slab_w, slab_h=slab_h, 
-                              material_bkg=mat_vac, material_a=mat_rib, material_b=mat_slab, symmetry_flag=False, 
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, rib_w=rib_w, rib_h=rib_h, slab_w=slab_w, slab_h=slab_h,
+                              material_bkg=mat_vac, material_a=mat_rib, material_b=mat_slab, symmetry_flag=False,
                               lc_bkg=.05, lc_refine_1=5.0, lc_refine_2=5.0)
 
 wguide.plot_mesh(prefix)
@@ -115,32 +115,23 @@ set_q_factor = 680.
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival,fixed_Q=set_q_factor)
 
-# Mask negligible gain values to improve clarity of print out.
-threshold = 1e-3
-masked_PE = np.ma.masked_inside(SBS_gain_PE[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
-masked_MB = np.ma.masked_inside(SBS_gain_MB[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
-masked = np.ma.masked_inside(SBS_gain[EM_ival_pump,EM_ival_Stokes,:], 0, threshold)
+print('Gains by acoustic mode:')
+print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
+v_nu = sim_AC.nu_AC_all()
+for (m, nu) in enumerate(v_nu):
+    print(f'{m:7d}    {np.real(nu)*1e-9:9.4e} {gain_box.gain_total(m):13.3e} ',
+          f'{gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} ')
 
-print("\n Displaying results with negligible components masked out")
-print("SBS_gain [1/(Wm)] PE contribution \n", masked_PE)
-print("SBS_gain [1/(Wm)] MB contribution \n", masked_MB)
-print("SBS_gain [1/(Wm)] total \n", masked)
-
-freq_min = 2.0e9  # GHz
-freq_max = 20.e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
-     suffix='')
+freq_min = 2.0* SI_GHz
+freq_max = 20.* SI_GHz
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True)
 
 
-freq_min = 4.5e9  # GHz
-freq_max = 5.5e9  # GHz
-plotting.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_ival_pump, EM_ival_Stokes, AC_ival='All', freq_min=freq_min, freq_max=freq_max,
-     suffix='zoom')
+freq_min = 4.5* SI_GHz
+freq_max = 5.5* SI_GHz
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True, suffix='zoom')
 
 print(nbapp.final_report())

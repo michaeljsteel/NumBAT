@@ -159,7 +159,7 @@ def solve_chareq_em_fib2_disprel(f_disprel, family, k, nmodes, mlo, mhi, rco, nc
 def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     # The worker function passed to CalcThread to do one task
-    def solemrod_caller(args):
+    def solemrod_callee(args):
         (ik, k) = args # Matches queues passed to CalcThread
         mhy_lo = 1
         mhy_hi = 5
@@ -177,7 +177,7 @@ def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_workers, solemrod_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, solemrod_callee, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -215,7 +215,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
         q_work.put((ik, tk, doplot, wg))
 
 
-    def emcalc_caller(args):
+    def emcalc_callee(args):
         (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
 
         t_lambda_nm = twopi/tk
@@ -236,7 +236,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
     #num_workers = 2
     num_workers = 0   # just do direct in the main process and single thread
 
-    launch_worker_processes_and_wait(num_workers, emcalc_caller, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, emcalc_callee, q_result, q_work)
 
 
     #Collect all the data back into one matrix
@@ -349,7 +349,6 @@ def do_main():
     start = time.time()
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
-    prefix = 'tt'
     refine_fac = 2
 
     nbapp=numbat.NumBATApp(prefix)
@@ -383,8 +382,10 @@ def do_main():
 
     inc_shape = 'circ_onion'
     domain_x = rcore*7  # system size in nm
+    domain_y = domain_x
 
-    wguide = nbapp.make_structure(inc_shape, domain_x,  inc_a_x = acore, # remove these factors of 2
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
+                                  inc_a_x = acore, # remove these factors of 2
                                inc_b_x=rn, inc_c_x=rn, inc_d_x=rn, inc_e_x=rn,
                                inc_f_x=rn, inc_g_x=rn, inc_h_x=rn, inc_i_x=rn,
                                inc_j_x=rn, inc_k_x=rn, inc_l_x=rn, inc_m_x=rn,

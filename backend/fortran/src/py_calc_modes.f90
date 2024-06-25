@@ -646,25 +646,6 @@ contains
          RETONERROR(errco)
 
 
-
-
-         if(debug .eq. 1) then
-            write(ui_out,*) 'iindex = ', (iindex(i), i=1,n_modes)
-         endif
-
-
-
-         if(debug .eq. 1) then
-            write(ui_out,*)
-            write(ui_out,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
-            write(ui_out,*) (bloch_vec_k(i)/(2.0d0*D_PI),i=1,2)
-            write(ui_out,*) "sqrt(shift_ksqr) = ", sqrt(shift_ksqr)
-            write(ui_out,*) "n_modess = "
-            do i=1,n_modes
-               write(ui_out,"(i4,2(g22.14),2(g18.10))") i, p_beta(i)
-            enddo
-         endif
-
          write(ui_out,*) "  - finding mode energies "
 !  Calculate energy in each medium (typ_el)
          if (n_k .eq. 2) then
@@ -680,7 +661,6 @@ contains
 
 
 
-      write(ui_out,*) "  - checking orthgonality "
 ! Doubtful that this check is of any value: delete?
       call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
          type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
@@ -703,23 +683,13 @@ contains
          enddo
       enddo
 
-      write(ui_out,*) "  - building material arrays from mesh"
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
 
 !  Normalisation
 
 
-      write(ui_out,*) "  - normalising fields"
-
-      call clock_normalise%reset()
       call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol_adj, sol_pri, overlap_L)
-      call clock_normalise%stop()
-
-      !write(ui_out,'(A18,F6.2,A18,F6.2,A)') &
-      !'  cpu time = ', clock_normalise%cpu_time(), ' secs,  wall time = ', clock_normalise%sys_time(), ' secs.'
-      write(ui_out,'(A,A)') '      ', clock_normalise%to_string()
-
 
       write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
