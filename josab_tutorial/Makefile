@@ -7,6 +7,7 @@ all2: josab04 josab05 josab06
 
 .PHONY: allfast
 allfast: fjosab01 fjosab02 fjosab03 fjosab04 fjosab05 fjosab06
+allfastb: fjosab04 fjosab05 fjosab06
 
 josab01: 
 	$(PYTHON) sim-josab-01.py

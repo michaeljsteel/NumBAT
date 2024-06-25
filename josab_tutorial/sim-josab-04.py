@@ -169,7 +169,7 @@ print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM / 1e12)
 print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc])
 print("AC loss alpha [1/s] \n", gain_box.alpha[maxGainloc])
 print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc] / (1e9 * 2 * math.pi))
-print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc] / 1e6)
+print("AC linewidth [MHz] \n", gain_box.linewidth_Hz[maxGainloc] / 1e6)
 
 # since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (

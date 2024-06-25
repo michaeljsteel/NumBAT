@@ -47,7 +47,6 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3.0*refine_fac)
 
 #wguide.plot_mesh(prefix)
-wguide.check_mesh()
 
 # Expected effective index of fundamental guided mode.
 n_eff = 1.4

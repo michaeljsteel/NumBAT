@@ -144,7 +144,7 @@ UMFPACK_LIB = -L /usr/lib/x86_64-linux-gnu -lumfpack -lcholmod -lamd -lsuitespar
 
 PYROOT = $(MYPYENV)
 PYBIN = $(PYROOT)/bin
-PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
+#PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
 PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 F2PY = $(PYBIN)/f2py
 
@@ -175,7 +175,7 @@ UMFPACK_LIB = -L/usr/local/lib -lumfpack -lcholmod -lamd
 
 PYROOT = $(MYPYENV)
 PYBIN = $(PYROOT)/bin
-PYBASEINC= $(PYROOT)/include/python$(PYVERMAJMIN)
+#PYBASEINC= -I $(PYROOT)/include/python$(PYVERMAJMIN)
 PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 
 F2PY = $(PYBIN)/f2py
@@ -188,7 +188,7 @@ MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 GENLIB = -lrt
 
 NUMPYDIR = $(PYPACKAGES)/numpy
-PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
+PYINC = $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
 
 else ifeq ($(PLAT), "MacOS")
