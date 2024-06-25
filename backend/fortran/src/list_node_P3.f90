@@ -90,6 +90,8 @@ subroutine list_node_P3 (nel, npt, nnodes, n_edge,&
    !enddo
 
    ! The first 4 entries of table_N_E_F(*,i) correspond to face and edges
+   !  These have already been filed in list_face and list_edge
+
    mm = 4
    mm2 = n_edge + n_face
    nn = 0
@@ -200,7 +202,7 @@ subroutine list_node_P3 (nel, npt, nnodes, n_edge,&
 
       !       Numbering the interior nodes of the triangle
 !         ! there is only one interior node for a P3 triangle
-      do j=1,1
+      do j=1,1   !todo: why is this only one iteration?
          nn = nn+1
          table_N_E_F(j+9+mm,iel) = nn + mm2
       enddo

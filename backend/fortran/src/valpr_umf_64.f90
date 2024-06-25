@@ -112,10 +112,7 @@ subroutine valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav,&
 !     ------------------------------------------------------------------
 !
    ui = stdout
-!
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
+
    errco = 0
    emsg = ""
 
@@ -162,21 +159,20 @@ subroutine valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav,&
       write(ui,*) "valpr_64: factorisation (UMFPACK)"
    endif
 
+   !TODO: replace with stopwatch
    call cpu_time(time1_fact)
    ls_data(1) = time1_fact
-!
-!       set default parameters
-   call umf4zdef (control)
 
-!
-!     umfpack * report status (print level = control(1)) :
-!     print level = 0 or less : No output, even when an error occurs.
-!     print level = 1 (default value) : then error messages are printed,
-!                      and nothing is printed if the status is UMFPACK OK.
-!     print level = 2 or more : then the status is always printed.
-!
-!       print control parameters.  set control (1) to 1 to print
-!       error messages only
+
+   !     umfpack * report status (print level = control(1)) :
+   !     print level = 0 or less : No output, even when an error occurs.
+   !     print level = 1 (default value) : then error messages are printed,
+   !                      and nothing is printed if the status is UMFPACK OK.
+   !     print level = 2 or more : then the status is always printed.
+   !
+   !       print control parameters.  set control (1) to 1 to print
+   !       error messages only
+   call umf4zdef (control)
    control (1) = 1
    call umf4zpcon (control)
 

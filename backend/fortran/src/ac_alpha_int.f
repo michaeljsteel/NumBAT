@@ -42,7 +42,6 @@ c     NQUAD: The number of quadrature points used in each element.
          double precision xx(2), xx_g(2), ww, det
          integer(8)  n_curved
          logical info_curved
-         double precision r_tmp1
          complex(8) coeff_1, coeff_2
          double precision phi2_list(6), grad2_mat0(2,6)
          double precision grad2_mat(2,6)
