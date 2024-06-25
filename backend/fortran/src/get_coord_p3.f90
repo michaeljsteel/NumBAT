@@ -8,14 +8,14 @@
 
 subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    table_nod, type_nod, table_N_E_F, &
-   type_N_E_F, mesh_xy, x_N_E_F, visite)
+   type_N_E_F, mesh_xy, x_N_E_F, visited)
 
 
    implicit none
    integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
    integer(8) table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
    integer(8) type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
-   integer(8) visite(n_ddl)
+   integer(8) visited(n_ddl)
 
    double precision mesh_xy(2,n_msh_pts), x_N_E_F(2,n_ddl)
 
@@ -48,7 +48,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    ip(2,3) = 2
 
    do j=1,n_ddl
-      visite(j) = 0
+      visited(j) = 0
    enddo
 
 
@@ -68,8 +68,8 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       ! scan the vertices ############
       do inod=1,3
          k = nut0(inod)
-         if(visite(k) .eq. 0) then
-            visite(k) = iel
+         if(visited(k) .eq. 0) then
+            visited(k) = iel
             inod1 = nut0(inod)
             inod2 = nut_N_E_F(inod)
             x_N_E_F(1,inod2) = mesh_xy(1,inod1)
@@ -92,8 +92,8 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             stop
          endif
 
-         if(visite(k) .eq. 0) then
-            visite(k) = iel
+         if(visited(k) .eq. 0) then
+            visited(k) = iel
 !           Endpoints of the edge
             k1 = nut0(inod-3)
             xx1 = mesh_xy(1,k1)

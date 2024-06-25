@@ -225,9 +225,7 @@ sim_AC = wguide.calc_AC_modes(
 # npzfile = np.load('wguide_data_AC.npz', allow_pickle=True)
 # sim_AC = npzfile['sim_AC'].tolist()
 
-# Print the frequencies of AC modes.
-print('Freq of AC modes (GHz) \n', np.round(
-    np.real(sim_AC.Eig_values)*1e-9, 4))
+
 
 selected_AC_modes = [7, 13, 23]
 print("AC modes selected for field plotting", selected_AC_modes)

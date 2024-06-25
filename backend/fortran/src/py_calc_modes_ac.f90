@@ -91,7 +91,7 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    !  Declare the pointers of the integer super-vector
    integer(8) ip_eq
-   integer(8) ip_visite
+   integer(8) ip_visited
 
    !  Declare the pointers of the real super-vector
    integer(8) jp_x, jp_mat2
@@ -213,8 +213,8 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !####################  Start FEM PRE-PROCESSING  #######################
 
    !       ! pointer to FEM connectivity table
-   ip_visite = 1
-   ip_eq = ip_visite + n_msh_pts
+   ip_visited= 1
+   ip_eq = ip_visited+ n_msh_pts
    jp_x = 1
    !
 
@@ -262,7 +262,7 @@ subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    !     Determine number of boundary conditions (neq) and 2D index array
    !     a_iwork(ip_eq)
-   call bound_cond_AC (i_bnd_cdns, n_msh_pts, neq, type_nod, a_iwork(ip_eq), debug)
+   call bound_cond_AC (i_bnd_cdns, n_msh_pts, neq, type_nod, a_iwork(ip_eq))
    !
    !
    !CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC

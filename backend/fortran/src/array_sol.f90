@@ -10,14 +10,14 @@
 
 !    Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
 
-subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
-   n_ddl, neq, nnodes, n_core, bloch_vec, iindex, table_nod, &
-   table_N_E_F, type_el, ineq,      ip_period_N, ip_period_N_E_F, &
+subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
+   n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
+   ineq, ip_period_N, ip_period_N_E_F, &
    mesh_xy, x_N_E_F, v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
 
-   integer(8) i_cond, num_modes, n_msh_el, n_msh_pts, n_ddl
+   integer(8) bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl
    integer(8) neq, nnodes
    integer(8) n_core(2)
    integer(8) type_el(n_msh_el)
@@ -71,7 +71,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
    complex(8) val_exp(nddl_0)
 
-   integer(8) is_curved
+   logical is_curved
    integer(8) j, k, i1, j1, m, inod, typ_e
    integer(8) debug, i_sol_max
    integer(8) iel, i_mode, i_mode2, jtest, jp, ind_jp, j_eq
@@ -108,7 +108,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
          val_exp =  D_ONE
 
-         if (i_cond == BCS_PERIODIC) then
+         if (bdy_cdn == BCS_PERIODIC) then
             do inod=1,nnodes
                j = table_nod(inod,iel)
                k = ip_period_N(j)
@@ -134,7 +134,10 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
          call basis_ls (nod_el_p, basis_list)  ! get P2 basis function
 
-         call curved_elem_tri (nnodes, el_xy, is_curved, r_tmp1)  ! determine if current element has curved face. Can this ever happen?
+         !call is_curved_elem_tri (nnodes, el_xy, is_curved, r_tmp1)  ! determine if current element has curved face.
+         !Can this ever happen?
+
+         is_curved = log_is_curved_elem_tri (nnodes, el_xy)
 !         P2 Lagrange Interpolation nodes for the unit triangle
 !         xn   = coordinate on the reference triangle
 !          do inod=1,nnodes+7
@@ -153,7 +156,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
             call phi2_2d_mat (xx, phi2_list, grad2_mat0)
             call phi3_2d_mat (xx, phi3_list, grad3_mat0)
 
-            if (is_curved == 0) then
+            if (.not. is_curved ) then
 !             Rectilinear element
                call jacobian_p1_2d (xx, el_xy, nnodes, xx_g, det, mat_B, mat_T)
 
@@ -275,7 +278,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
             !do j=1,3
             !!   z_tmp2 = sol_el(j,inod)
-             !  sol(j,inod,i_mode,iel) = z_tmp2
+            !  sol(j,inod,i_mode,iel) = z_tmp2
             !enddo
             sol(1:3,inod,i_mode,iel) =  sol_el(1:3,inod)
 
@@ -335,7 +338,7 @@ subroutine array_sol (i_cond, num_modes, n_msh_el, n_msh_pts, &
 
             !do j=1,3
             !!   z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
-             !  sol(j,inod,i_mode,iel) = z_tmp1
+            !  sol(j,inod,i_mode,iel) = z_tmp1
             !enddo
 
             sol(1:3,inod,i_mode,iel) = sol(1:3,inod,i_mode,iel)/z_sol_max

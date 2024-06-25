@@ -23,7 +23,7 @@ c
 
 c     Local variables
       integer debug
-      integer(8) nb_visite(npt)
+      integer(8) nb_visited(npt)
       integer(8) ls_edge_endpoint(2,npt)
       integer(8) edge_direction(npt)
       integer(8) iel, inod, typ_e
@@ -61,7 +61,7 @@ C
 ccccccccccccccccccccccccccccccccccccc
 c
 c     typ_select_in: Only the elements iel with type_el(iel)=typ_select_in will be analysed
-c     When nb_visite(j) is not zero: nb_visite(j) indicates the number of element the edge j belongs
+c     When nb_visited(j) is not zero: nb_visited(j) indicates the number of element the edge j belongs
 c
 ccccccccccccccccccccccccccccccccccccc
 c
@@ -69,7 +69,7 @@ c
 
 c     Initialisation
       do inod=1,npt
-        nb_visite(inod) = 0
+        nb_visited(inod) = 0
         ls_edge_endpoint(1,inod) = 0
         ls_edge_endpoint(2,inod) = 0
         edge_direction(inod) = 0
@@ -109,17 +109,17 @@ C           ! Scan the edges
           do inod=4,6
             j = table_nod(inod,iel)
 C             ! Will indicate the number of
-            nb_visite(j) = nb_visite(j) + 1
+            nb_visited(j) = nb_visited(j) + 1
           enddo
         endif
       enddo
       nb_edges = 0
       nb_interface_edges = 0
       do inod=1,npt
-        if (nb_visite(inod) >= 1) then
+        if (nb_visited(inod) >= 1) then
           nb_edges = nb_edges + 1
         endif
-        if (nb_visite(inod) == 1) then
+        if (nb_visited(inod) == 1) then
           nb_interface_edges = nb_interface_edges + 1
         endif
       enddo
@@ -136,7 +136,7 @@ c     Outward pointing normal vector to the interface edges
 C           ! Scan the edges
           do inod=4,6
             j = table_nod(inod,iel)
-            if (nb_visite(j) == 1) then
+            if (nb_visited(j) == 1) then
               inod_1 = edge_endpoints(1,inod-3)
               inod_2 = edge_endpoints(2,inod-3)
               ls_edge_endpoint(1,j) = table_nod(inod_1,iel)

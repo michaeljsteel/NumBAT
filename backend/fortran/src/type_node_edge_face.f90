@@ -1,7 +1,7 @@
 
 subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    type_nod, table_nod, table_N_E_F, &
-   visite, type_N_E_F, mesh_xy, x_E_F)
+   visited, type_N_E_F, mesh_xy, x_E_F)
 !
 !***********************************************************************
 !
@@ -9,8 +9,9 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
    integer(8) type_nod(n_msh_pts)
    integer(8) table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
-   integer(8) visite(n_ddl), type_N_E_F(2,n_ddl)
+   integer(8) visited(n_ddl), type_N_E_F(2,n_ddl)
    double precision mesh_xy(2,n_msh_pts), x_E_F(2,n_ddl)
+   double precision, parameter :: one_third = 1.d0/3.d0
 
 
    integer(8) i, j, j1
@@ -18,7 +19,7 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 !      integer(8) list_point_F(6,4)
 !   integer(8), parameter :: nddl_0 =14
 
-   double precision xel(2,6)
+   double precision el_xy(2,6)
 
 
    if ( nodes_per_el .ne. 6 ) then
@@ -30,22 +31,26 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
 
    !     Initialisation
-   do j=1,n_ddl
-      type_N_E_F(1,j) = 0
-      type_N_E_F(2,j) = 0
-   enddo
+   type_N_E_F = 0
+   visited= 0
 
-   do i=1,n_ddl
-      visite(i) = 0
-   enddo
+   ! do j=1,n_ddl   !OBSELETE
+   !    type_N_E_F(1,j) = 0
+   !    type_N_E_F(2,j) = 0
+   ! enddo
+
+   ! do i=1,n_ddl   !OBSELETE
+   !    visited(i) = 0
+   ! enddo
 !
+
    do i=1,n_msh_el
 
       do j=1,nodes_per_el
          j1 = table_nod(j,i)
          type_n(j) = type_nod(j1)
-         xel(1,j) = mesh_xy(1,j1)
-         xel(2,j) = mesh_xy(2,j1)
+         el_xy(1,j) = mesh_xy(1,j1)
+         el_xy(2,j) = mesh_xy(2,j1)
       enddo
 
       ! an element is a face
@@ -53,8 +58,10 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       j1 = table_N_E_F(j,i)
 
       ! centre of the elements
-      x_E_F(1,j1) = (xel(1,1) + xel(1,2) + xel(1,3))/3.0d0
-      x_E_F(2,j1) = (xel(2,1) + xel(2,2) + xel(2,3))/3.0d0
+      !x_E_F(1,j1) = (el_xy(1,1) + el_xy(1,2) + el_xy(1,3))/3.0d0
+      !x_E_F(2,j1) = (el_xy(2,1) + el_xy(2,2) + el_xy(2,3))/3.0d0
+
+      x_E_F(:,j1) = (el_xy(:,1) + el_xy(:,2) + el_xy(:,3)) * one_third
 
       ! Topologically, a face is an interior domain
       type_N_E_F(1,j1) = 0
@@ -65,11 +72,13 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       ! scan the 3 element edges
       do j=1,3
          j1 = table_N_E_F(j+1,i)
-         x_E_F(1,j1) = xel(1,j+3)
-         x_E_F(2,j1) = xel(2,j+3)
+         !x_E_F(1,j1) = el_xy(1,j+3)
+         !x_E_F(2,j1) = el_xy(2,j+3)
 
-         if (visite(j1) .eq. 0) then
-            visite(j1) = 1
+         x_E_F(:,j1) = el_xy(:,j+3)
+
+         if (visited(j1) .eq. 0) then
+            visited(j1) = 1
             type_N_E_F(1,j1) = type_n(j+3)
 
             ! Edge => dimension one

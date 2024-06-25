@@ -29,7 +29,7 @@
 !
 !  Declare the pointers of the integer super-vector
       integer(8) ip_type_nod, ip_type_el, ip_table_nod
-      integer(8) ip_table_E, ip_table_N_E_F, ip_visite
+      integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
       integer(8) ip_period_N, ip_nperiod_N
       integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
@@ -102,8 +102,8 @@
       ip_table_N_E_F = ip_table_nod + nnodes*n_msh_el
 
       n_ddl_max = npt + n_msh_el
-      ip_visite =  ip_table_N_E_F  + 14*n_msh_el
-      ip_table_E = ip_visite + n_ddl_max
+      ip_visited=  ip_table_N_E_F  + 14*n_msh_el
+      ip_table_E = ip_visited+ n_ddl_max
 
       ip_type_N_E_F = ip_table_E + 4*n_edge
 

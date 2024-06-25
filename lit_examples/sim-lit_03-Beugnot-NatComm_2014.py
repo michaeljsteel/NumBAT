@@ -83,8 +83,7 @@ if 'widerange' in sys.argv[1:]:
     diam_0  =  1050
     diam_min = 600
     diam_max = 3500
-    #diam_steps = 300
-    diam_steps = 301
+    #diam_steps = 301
     diam_steps = 51
     widerange = True
 
@@ -95,7 +94,6 @@ else:
     diam_max = 1300
     diam_steps = 101
     postfix = ''
-
 
 
 # find a d_diam that will give v_diams hitting diam_0 exactly, with about 20 diam_steps total across (diam_max-diam_min)
@@ -123,7 +121,7 @@ def modes_n_gain(diam):
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
                             #lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
-                            lc_bkg=.1/refine_fac, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                            lc_bkg=.2/refine_fac, lc_refine_1=refine_fac, lc_refine_2=refine_fac)
     #wguide.plot_mesh(prefix+'_%3d'%int(inc_a_x))
     #wguide.check_mesh()
 

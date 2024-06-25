@@ -9,7 +9,7 @@ subroutine normalise_fields (n_modes, nel, nnodes, soln_k1, soln_k2, mat_overlap
    complex(8) mat_overlap(n_modes,n_modes)
 
    !integer(8) i,j
-   integer(8) iel, ival
+   integer(8) ival
    complex(8) z_tmp1, z_tmp2
 
    double precision, parameter :: min_abs = 1.0d-8

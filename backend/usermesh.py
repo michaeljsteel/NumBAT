@@ -5,14 +5,12 @@ from pathlib import Path
 import reporting
 
 def is_real_number(x):
-    # return isinstance(x, float) or isinstance(x, int)
-    # return isinstance(x, numbers.Number)
-    return isinstance(x, (int, float))
-    #try:
-    #    xx = float(x)
-    #    return True
-    #except Exception:
-    #    return False
+    #return isinstance(x, (int, float))  # need numpy.int32, int36, float64, etc
+    try:
+        xx = float(x)
+        return True
+    except Exception:
+        return False
 
 class UserGeometryBase():
 
