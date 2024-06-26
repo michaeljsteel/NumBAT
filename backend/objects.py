@@ -41,11 +41,11 @@ import reporting
 from nbtypes import SI_nm
 
 import materials
-from fortran import nb_fortran
-import plotting
-import plottools
 from mode_calcs import EMSimulation, ACSimulation
 import nbgmsh
+import plotting
+import plottools
+from fortran import nb_fortran
 
 def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
     '''Loads and instantiates waveguide templates specified in .json file {p_wgtemplate_index} in directory {p_wgtemplate_dir}.

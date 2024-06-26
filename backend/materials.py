@@ -34,10 +34,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
+from nbtypes import CrystalGroup, unit_x, unit_y, unit_z
 import reporting
 import voigt
 from bulkprops import solve_christoffel
-from nbtypes import CrystalGroup, unit_x, unit_y, unit_z
 
 
 class BadMaterialFileError(Exception):

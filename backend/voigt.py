@@ -2,8 +2,8 @@
 import math
 import numpy as np
 
-import reporting
 from nbtypes import unit_x, unit_y, unit_z
+import reporting
 import numbattools
 
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation

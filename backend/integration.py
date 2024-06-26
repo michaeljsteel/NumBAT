@@ -28,11 +28,11 @@ import matplotlib
 # import matplotlib.gridspec as gridspec
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max
+import reporting
 import plotting
 from fortran import nb_fortran
-import reporting
-from nbtypes import SI_permittivity_eps0
 
 
 class GainProps(object):

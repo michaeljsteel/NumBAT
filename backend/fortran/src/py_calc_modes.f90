@@ -155,7 +155,7 @@ contains
       integer(8) n_msh_pts_p3, ui_out
 
 !  Variable used by valpr
-      integer(8) nvect, ltrav
+      integer(8) dim_krylov, ltrav
       integer(8) n_conv, i_base
       double precision ls_data(10)
 
@@ -164,7 +164,7 @@ contains
       integer(8) n_edge, n_face, n_ddl, n_ddl_max, n_k
 
 !  variable used by UMFPACK
-      double precision control (20), info_umf (90)
+      !double precision control (20), info_umf (90)
       integer(8) numeric
 
 
@@ -240,8 +240,6 @@ contains
          call exit(1)
       else
 
-         write(stdout,*) 'as 1'
-         flush(stdout)
          call array_size(n_msh_pts, n_msh_el, n_modes, &
             int_max, cmplx_max, real_max, n_ddl, errco, emsg)
          RETONERROR(errco)
@@ -283,7 +281,7 @@ contains
 !  nsym = 1 ! nsym = 0 => symmetric or hermitian matrices
 !
 
-      nvect = 2*n_modes + n_modes/2 +3
+      dim_krylov = 2*n_modes + n_modes/2 +3
 
 !CCCCCCCCCCCCCCCC END POST F2PY CCCCCCCCCCCCCCCCCCCCC
 
@@ -469,9 +467,9 @@ contains
 
 !  ! Eigenvectors
       jp_vschur = jp_resid + neq
-      jp_trav = jp_vschur + neq*nvect
+      jp_trav = jp_vschur + neq*dim_krylov
 
-      ltrav = 3*nvect*(nvect+2)
+      ltrav = 3*dim_krylov*(dim_krylov+2)
       jp_vp = jp_trav + ltrav
 
       cmplx_used = jp_vp + neq*n_modes
@@ -571,6 +569,7 @@ contains
          call clock_spare%reset()
 
 
+         ! Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
          call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec_k, n_typ_el, pp, qq, &
          table_nod, a_iwork(ip_table_N_E_F), type_el, &
@@ -595,21 +594,19 @@ contains
          ! On completion:
          !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
          !    eigvectors are in are b_zwork[jp_vp..?]
-         call valpr_64 (i_base, nvect, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-            c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
-            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_trav), b_zwork(jp_vp), c_dwork(kp_rhs_re), &
-            c_dwork(kp_rhs_im),  c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, ls_data, numeric, control, info_umf, &
-            debug, errco, emsg)
+
+         ! TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
+         call valpr_64 (i_base, dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+            c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
+            b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
+            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, &
+            b_zwork(jp_trav), b_zwork(jp_vp), &
+            c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), &
+            n_conv, time_fact, time_arpack, debug, errco, emsg)
          RETONERROR(errco)
 
 
          call clock_spare%stop()
-         time_fact = ls_data(2) - ls_data(1)
-         time_arpack = ls_data(4) - ls_data(3)
-
-         !write(ui_out,'(A18,F6.2,A18,F6.2,A)') &
-         !   '  cpu time = ', clock_spare%cpu_time(), ' secs,  wall time = ', clock_spare%sys_time(), ' secs.'
-
          write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
          if (n_conv .ne. n_modes) then
@@ -619,21 +616,23 @@ contains
             return
          endif
 
-         !TODO: make a function.  Rename p_beta to indicate it is Beta^2
+         !TODO: make a function. Turn beta^2 raw eig into actual beta
          do i=1,n_modes
-            z_tmp0 = p_beta(i)
-            z_tmp = 1.0d0/z_tmp0+shift_ksqr
-            z_beta = sqrt(z_tmp)
+            ! z_tmp0 = p_beta(i)
+            ! z_tmp = 1.0d0/z_tmp0+shift_ksqr
+            ! z_beta = sqrt(z_tmp)
+
+            z_beta = sqrt(1.0d0/p_beta(i)+shift_ksqr )
+
             !  Mode classification - we want the forward propagating mode
             if (abs(imag(z_beta)/z_beta) .lt. 1.0d-8) then
                !  re(z_beta) > 0 for forward propagating mode
                if (dble(z_beta) .lt. 0) z_beta = -z_beta
             else
-               !  im(z_beta) > 0 for forward decaying evanescent mode
+               !  im(z_beta) > 0 for forward decaying evanescent mode  !rarely relevant for us
                if (imag(z_beta) .lt. 0) z_beta = -z_beta
             endif
-            !  !  Effective iindex
-            !  z_beta = sqrt(z_tmp)/vacwavenum_k0
+
             p_beta(i) = z_beta
          enddo
 
@@ -664,8 +663,9 @@ contains
          write(ui_out,*) "  - finding mode energies "
          !  Calculate energy in each medium (typ_el)
          if (n_k .eq. 2) then
-            call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, table_nod, type_el, n_typ_el, eps_eff,&
-            mesh_xy, p_sol , p_beta, mode_pol)
+            call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
+            table_nod, type_el, n_typ_el, eps_eff,&
+            mesh_xy, p_sol, p_beta, mode_pol)
          endif
 
 
@@ -740,7 +740,7 @@ contains
       !    time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
       !    lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !    n_typ_el, neq, nonz_max, nvect, &
+      !    n_typ_el, neq, nonz_max, dim_krylov, &
       !    shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
 
 
@@ -871,7 +871,7 @@ contains
    time1, time2, time_fact, time_arpack, time1_postp, &
    lambda, e_h_field, bloch_vec, bdy_cdn,  &
    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-   n_typ_el, neq, nonz_max, nvect, &
+   n_typ_el, neq, nonz_max, dim_krylov, &
    shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
 
 
@@ -882,7 +882,7 @@ contains
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max, real_used, n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
-      integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, nvect
+      integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
       complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
@@ -935,7 +935,7 @@ contains
          write(26,*) "Real super-vector : "
          write(26,*) "real_used, real_max, real_max/real_used = ", real_used, real_max, dble(real_max)/dble(real_used)
          write(26,*)
-         write(26,*) "n_modes, nvect, n_conv = ", n_modes, nvect, n_conv
+         write(26,*) "n_modes, dim_krylov, n_conv = ", n_modes, dim_krylov, n_conv
          write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
             n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
          write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)

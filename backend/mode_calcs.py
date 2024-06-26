@@ -18,12 +18,13 @@
 
 
 import copy
-
-import integration
-import numbat
 import numpy as np
-from fortran import nb_fortran
+
+
+import numbat
 from modes import ModeAC, ModeEM, ModePlotHelper
+from numbattools import process_fortran_return
+
 from nbtypes import (
     FieldType,
     PointGroup,
@@ -35,12 +36,42 @@ from nbtypes import (
     SI_speed_c,
     twopi,
 )
-from numbattools import process_fortran_return
 from plotmodes import Decorator
+import integration
+from fortran import nb_fortran
 
 # TODO move this to NBApp interface
 # def load_simulation(prefix):
 #    return Simulation.load_simulation(prefix)
+
+
+def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iterable    - Required  : iterable object (Iterable)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    total = len(iterable)
+    # Progress Bar Printing Function
+    def printProgressBar (iteration):
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Initial Call
+    printProgressBar(0)
+    # Update Progress Bar
+    for i, item in enumerate(iterable):
+        yield item
+        printProgressBar(i + 1)
+    # Print New Line on Complete
+    print()
 
 
 class FemMesh:
@@ -492,15 +523,25 @@ class SimResult:
 
         modetype = "acoustic" if field_type == FieldType.AC else "em"
 
-        ival_range = ivals if ivals is not None else range(self.n_modes)
 
-        if len(ival_range) > 1:
-            print(f"Plotting {modetype} modes m={ival_range[0]} to {ival_range[-1]}.")
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+        ntoplot = len(ival_range)
+
+        if ntoplot > 1:
+            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+            for m in progressBar(ival_range, prefix="  Progress:", length=20):
+                self.get_mode(m).plot_mode(comps, field_type)
+
         else:
             print(f"Plotting {modetype} mode m={ival_range[0]}.")
+            self.get_mode(ival_range[0]).plot_mode(comps, field_type)
 
-        for m in ival_range:
-            self.get_mode(m).plot_mode(comps, field_type)
+        # for m in ival_range:
+        #     self.get_mode(m).plot_mode(comps, field_type)
+        #     if m%10==0: print ('.', end='')  # primitive progress bar
+
+            #if m%10==0: print ('.', end='')  # primitive progress bar
+
 
 
 class EMSimResult(SimResult):
