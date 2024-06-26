@@ -94,21 +94,21 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
       i_base2 = 0
    endif
 !
-   if ( nnodes .ne. 6 ) then
-      write(ui_stdout,*) "asmbly: problem nnodes = ", nnodes
-      write(ui_stdout,*) "asmbly: nnodes should be equal to 14 !"
-      write(ui_stdout,*) "asmbly: Aborting..."
-      stop
-   endif
+   ! if ( nnodes .ne. 6 ) then
+   !    write(ui_stdout,*) "asmbly: problem nnodes = ", nnodes
+   !    write(ui_stdout,*) "asmbly: nnodes should be equal to 14 !"
+   !    write(ui_stdout,*) "asmbly: Aborting..."
+   !    stop
+   ! endif
 !
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
 !
-   if (debug .eq. 1) then
-      write(ui_stdout,*) "asmbly: bloch_vec = ", bloch_vec
-      write(ui_stdout,*) "asmbly: nquad, nquad_max = ", &
-         nquad, nquad_max
-      write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
-   endif
+   ! if (debug .eq. 1) then
+   !    write(ui_stdout,*) "asmbly: bloch_vec = ", bloch_vec
+   !    write(ui_stdout,*) "asmbly: nquad, nquad_max = ", &
+   !       nquad, nquad_max
+   !    write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
+   ! endif
 !
 !cccccccccccccccccccccccccccccccccccccc
 
@@ -171,7 +171,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
             endif
          enddo
       endif
-!
+
       do iq=1,nquad
          xx(1) = xq(iq)
          xx(2) = yq(iq)
@@ -359,6 +359,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
       write(ui_stdout,*) "  Re qq = ", dble(qq)
       write(ui_stdout,*) "imag qq = ", imag(qq)
    endif
-!
+
+
    return
 end

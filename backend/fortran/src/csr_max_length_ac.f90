@@ -14,7 +14,7 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
 
 
    !     Local variables
-   integer(8), parameter :: nddl_0 = 6
+   integer(8), parameter :: nddl_0 = 6 ! Different to em case. Different FEM?
 
    integer(8) :: i, k, iel, ind_ip, ip
    integer(8) :: k_copy1, k_copy2

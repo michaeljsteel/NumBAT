@@ -29,9 +29,9 @@ import matplotlib.pyplot as plt
 #from collections.abc import Iterable
 
 import numbat
+from nbtypes import SI_GHz
 import reporting
 
-from nbtypes import SI_GHz
 from plottools import save_and_close_figure
 from plotmodes import Decorator
 

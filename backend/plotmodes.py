@@ -23,8 +23,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
 import numbat
-from plottools import save_and_close_figure
 from nbtypes import component_t, FieldType, SI_THz, SI_GHz, SI_um, twopi
+from plottools import save_and_close_figure
 
 
 def modeplot_filename(plps, ival, label=''):

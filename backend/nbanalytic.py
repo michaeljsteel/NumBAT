@@ -8,7 +8,6 @@ import scipy.optimize as sciopt
 import scipy.signal
 import scipy.special as sp
 
-import nbtypes
 import reporting
 
 twopi = 2*math.pi
