@@ -17,32 +17,23 @@ Introduction
 ================
 
 
-|NUMBAT|, the *Numerical Brillouin Analysis Tool*, is a software tool integrating electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
-Most notably, this includes Stimulated Brillouin Scattering (SBS) frequency shifts and optical gains.
+|NUMBAT|, the *Numerical Brillouin Analysis Tool*, is a software tool integrating electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides. Most notably, this includes Stimulated Brillouin Scattering (SBS) frequency shifts and optical gains.
 
 This chapter provides some background on the capabilities and techniques used in |NUMBAT|.
-If you would like to get straight to computations,
-
-jump ahead to the installation and setup instructions in :ref:`chap-install-label`.
+If you would like to get straight to computations, jump ahead to the installation and setup instructions in :ref:`chap-install-label`.
 
 Goals
 ================
 |NUMBAT| is designed primarily to calculate the optical gain response from
-stimulated Brillouin scattering (SBS) in integrated waveguides. It uses finite element algorithms
-to solve the electromagnetic and acoustic modes of a wide range of 2D waveguide structures. It
-can account for photoelastic/electrostriction and moving boundary/radiation pressure effects, as well as
-arbitrary acoustic anisotropy.
+stimulated Brillouin scattering (SBS) in integrated waveguides. It uses finite element algorithms to solve the electromagnetic and acoustic modes of a wide range of 2D waveguide structures. It can account for photoelastic/electrostriction and moving boundary/radiation pressure effects, as well as arbitrary acoustic anisotropy.
 
-|NUMBAT| also supports user-defined material properties and we hope its creation will drive a community-driven
-set of standard properties and geometries which will allow all groups to test and validate each other's
-work.
+|NUMBAT| also supports user-defined material properties and we hope its creation will drive a community-driven set of standard properties and geometries which will allow all groups to test and validate each other's work.
 
 A full description of |NUMBAT|'s physical and numerical algorithms is available in the article B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019),
 available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 
-|NUMBAT| is open-source software and the authors welcome additions to the code.  Details for how
-to contribute are available in :ref:`sec-contribute-label`.
+|NUMBAT| is open-source software and the authors welcome additions to the code.  Details for how to contribute are available in :ref:`sec-contribute-label`.
 
 Development team
 ================
@@ -69,10 +60,24 @@ and a link to the github page at `<https://github.com/michaeljsteel/NumBAT>`_.
 
 Contributing to NumBAT
 ================================
-NumBAT is open source software licensed under the GPL with all source and documentation available
-at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
+NumBAT is open source software licensed under the GPL with all source and documentation available at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
 
 
+Seeking assistance
+================================
+We will do our best to support users of |NUMBAT| within the time available.
+All requests should be sent to ``michael.steel@mq.edu.au``.
+
+   * For assistance with installing and building |NUMBAT|, please see the instructions
+     in :ref:`sec-helpinstall-label` and collect all the required information before writing.
+
+   * For assistance with calculations once |NUMBAT| is working, please send an email
+      containing the following information:
+
+      * Your platform (Linux, Windows, MacOS) and specific operating system
+      * How recently you have updated your |NUMBAT| code
+      * A python script that demonstrates the issue you are trying to solve
+        Please make the script as short in both code length and execution time as possible while still exhibiting the issue of concern.
 
 
 

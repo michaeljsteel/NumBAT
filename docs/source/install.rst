@@ -617,6 +617,8 @@ This can be done by running ``make`` in each of those directories. Be aware that
 
 
 
+.. _sec-helpinstall-label:
+
 Seeking help with building |NUMBAT|
 =====================================
 
