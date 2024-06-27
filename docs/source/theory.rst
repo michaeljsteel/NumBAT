@@ -189,14 +189,14 @@ The finite element method in |NUMBAT|
 =========================================
 
 |NUMBAT| solves both the electromagnetic and elastic modal properties using finite element method (FEM) algorithms.
-For details see refs. :cite:p:`Sturmberg:2019` and :cite:p:`hladkyhennion:1997`.
+For details see refs. :cite:p:`Sturmberg:2019`, :cite:p:`Dossou:2005` and :cite:p:`hladkyhennion:1997`.
 
 Here we give a brief outline of the essentials.
 
 
 Electromagnetic problem
 -----------------------------
-We closely follow the exposition in :cite:p:`dossou:2005`.
+We closely follow the exposition in :cite:p:`Dossou:2005`.
 
 Expressed in the modal form :math:`\vecE(\vecr)= [\vecE_t, E_z]e^{i \beta z}`, the wave equation becomes the pair of equations:
 
