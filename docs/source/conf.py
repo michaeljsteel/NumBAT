@@ -333,8 +333,13 @@ latex_elements = {
 
         #     'maketitle': latex_maketitle,
 
-        'preamble': r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
+#        'preamble': r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
         }
+latex_elements['preamble'] = r'\usepackage{amsmath} ' 
+latex_elements['preamble'] += r'\usepackage{amssymb} ' 
+#latex_elements['preamble'] += r'\usepackage{boldsymbol} ' 
+
+#latex_elements['preamble'] = r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
 
 try:
     pngmath_latex_preamble

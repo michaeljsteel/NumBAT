@@ -18,6 +18,8 @@ Release date: |today|
 
    intro
 
+   theory
+
    install
 
    usage
