@@ -18,6 +18,7 @@
 #
 
 import sys
+import re
 
 
 #MOCK_MODULES = ['scipy', 'scipy.interpolate', 'numpy',
@@ -59,14 +60,16 @@ sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.napoleon',
+    'sphinx.ext.napoleon',   # handle numpy and google docstrings
     'sphinx.ext.autodoc',
+    'sphinx.ext.mathjax',
+    'nbsphinx',             # parser for jupyter notebooks
+    'sphinxcontrib.bibtex'
+
 #    'sphinx.ext.coverage',
-#    'sphinx.ext.mathjax',
 #    'sphinx.ext.viewcode',
 #    'sphinx.ext.githubpages',
 #
-     'nbsphinx',
 ]
 
 nbsphinx_execute = 'never'
@@ -115,7 +118,7 @@ language = 'en'
 #
 # Else, today_fmt is used as the format for a strftime call.
 #
-# today_fmt = '%B %d, %Y'
+today_fmt = '%d %B %Y'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -160,12 +163,17 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = 'default' #'alabaster'
+html_theme = 'pyramid' 
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+        'logo_only': True,
+        'sticky_navigation': False,
+        'display_version': True,
+        }
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -173,7 +181,7 @@ html_theme = 'default' #'alabaster'
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
 #
-#html_title = u'NumBAT - The Numerical Brillouin Analysis Tool'
+html_title = u'NumBAT - The Numerical Brillouin Analysis Tool'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #
@@ -334,14 +342,6 @@ except NameError:
     pngmath_latex_preamble = ''
 
 
-with open('latex_macros.sty') as f:
-    for macro in f:
-        latex_elements['preamble'] += '\n' + macro
-        pngmath_latex_preamble += '\n' + macro
-
-
-
-print('latex', latex_elements['preamble'])
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
@@ -513,3 +513,37 @@ epub_exclude_files = ['search.html']
 
 
 # latex_engine = "xelatex"
+
+
+# Our NumBAT latex macros
+
+with open('latex_macros.sty') as f:
+    for macro in f:
+        latex_elements['preamble'] += '\n' + macro
+        pngmath_latex_preamble += '\n' + macro
+
+
+# Latex macros in mathjax:
+#    See  https://stackoverflow.com/questions/9728292/creating-latex-math-macros-within-sphinx
+mathjax3_config = { 'tex': {'macros': {}}}
+
+with open('latex_macros.sty', 'r') as f:
+    for line in f:
+        macros = re.findall(r'\\(DeclareRobustCommand|newcommand|renewcommand){\\(.*?)}(\[(\d)\])?{(.+)}', line)
+        for macro in macros:
+            if len(macro[2]) == 0:
+                mathjax3_config['tex']['macros'][macro[1]] = "{"+macro[4]+"}"
+            else:
+                mathjax3_config['tex']['macros'][macro[1]] = ["{"+macro[4]+"}", int(macro[3])]
+
+
+bibtex_bibfiles = ['numbat_refs.bib']
+bibtex_default_style = 'unsrt'
+bibtex_reference_style = 'label'
+
+
+import sphinx.builders.latex.transforms
+class DummyTransform(sphinx.builders.latex.transforms.BibliographyTransform):
+    def run(self, **kwargs):
+        pass
+sphinx.builders.latex.transforms.BibliographyTransform = DummyTransform

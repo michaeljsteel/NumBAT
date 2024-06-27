@@ -6,14 +6,15 @@
 .. include:: numbatdefs.txt
 
 
-|NUMBAT| Documentation!
-====================================
+|NUMBAT| - The Numerical Brillouin Analysis Tool - User Guide
+=============================================================
 
+Release date: |today|
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   :numbered: 
+   :numbered:
 
    intro
 
@@ -35,6 +36,7 @@
 
    fem
 
+   refs
 
 ********************
 Indices and tables

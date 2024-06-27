@@ -45,7 +45,11 @@ from fortran import nb_fortran
 #    return Simulation.load_simulation(prefix)
 
 
-def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+#fill = '█',   # TODO: this messes with pdflatex in docs. Fix 
+def progressBar(iterable, prefix = '', suffix = '', 
+                decimals = 1, length = 100, 
+                fill = 'x', 
+                printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -64,14 +68,13 @@ def progressBar(iterable, prefix = '', suffix = '', decimals = 1, length = 100, 
         filledLength = int(length * iteration // total)
         bar = fill * filledLength + '-' * (length - filledLength)
         print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
-    # Initial Call
-    printProgressBar(0)
-    # Update Progress Bar
-    for i, item in enumerate(iterable):
+
+    printProgressBar(0)  # Initial Call
+    for i, item in enumerate(iterable):   # Update Progress Bar
         yield item
         printProgressBar(i + 1)
-    # Print New Line on Complete
-    print()
+
+    print() # Print New Line on Complete
 
 
 class FemMesh:
