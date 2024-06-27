@@ -25,6 +25,16 @@
 #define NBERROR_118 118
 #define NBERROR_119 119
 #define NBERROR_120 120
+#define NBERROR_121 121
+#define NBERROR_122 122
+#define NBERROR_123 123
+#define NBERROR_124 124
+#define NBERROR_125 125
+#define NBERROR_126 126
+#define NBERROR_127 127
+#define NBERROR_128 128
+#define NBERROR_129 129
+#define NBERROR_130 130
 
 
 #endif 

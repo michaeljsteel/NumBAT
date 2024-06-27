@@ -125,7 +125,7 @@ featuring contributions from many of the leading researchers in the field.
 These books provide detailed background and the history, theory, observation and application
 of Brillouin scattering in guided wave systems.
 
-#. *Brillouin Scattering, Parts 1 and 2*, eds: B.J. Eggleton, M.J. Steel, C.G. Poulton, (Academic, 2022).
+#. *Brillouin Scattering, Parts 1 and 2*, eds: B.J. Eggleton, M.J. Steel, C.G. Poulton, (Academic, 2022). https://doi.org/10.1016/S0080-8784(22)00024-2
 
 Reviews
 --------------------
@@ -167,8 +167,7 @@ What does |NUMBAT| actually calculate?
 
 
 Here we specify the precise mathematical problems been solved.
-For further details, see  the |NUMBAT| paper in the Journal of Lightwave Technology at
-at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
+For further details, see the |NUMBAT| paper :cite:p:`Sturmberg:2019` in the Journal of Lightwave Technology  at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 Electromagnetic modal problem
 ----------------------------------
@@ -180,26 +179,23 @@ The electromagnetic wave problem is defined by the vector wave equation
 
 where the *real-valued* electric field has the following form for modal propagation along :math:`z`:
 
-CHECK THE FACTOR of HALF here.
 
 .. math::
    :nowrap:
 
    \begin{align*}
-   \vec E(x,y,z,t) = & \tfrac{1}{2}
+   \vec E(x,y,z,t) = &
    \left(
    {\vec {\mathcal{E}}}   (\vecr) e^{- i  \omega t } +
    {\vec {\mathcal{E}}}^* (\vecr) e^{ i  \omega t }
    \right) \\
-      = & \tfrac{1}{2} \left(
+      = &  \left(
             a(z) \vece(x,y) e^{i (kz-\omega t) } + a^*(z) \vece^*(x,y) e^{-i (kz-\omega t) }
             \right),
    \end{align*}
 
 
-in terms of the complex field amplitude :math:`\vcalE(\vecr)`,
-
-the mode profile :math:`\vece(x,y)` and the complex slowly-varying envelope function :math:`a(z)`.
+in terms of the complex field amplitude :math:`\vcalE(\vecr)`, the mode profile :math:`\vece(x,y)` and the complex slowly-varying envelope function :math:`a(z)`. Note that some authors include a factor of :math:`\frac{1}{2}` in these definitions which leads to slightly different expressions for energy and power flow below.
 
 By Faraday's law the complex magnetic field amplitude is given by
 
@@ -216,7 +212,7 @@ The elastic modal problem is defined by the wave equation
 
 .. math::
 
-   \nabla \cdot \bar{T} + \omega^2 \rho(x,y) \vec U = 0,
+   \nabla \cdot \bar{T} + \Omega^2 \rho(x,y) \vec U = 0,
 
 where :math:`\vec u` is the elastic displacement and :math:`\bar{T}=\mathbf{c}(x,y) \bar{S}` is the stress tensor,
 defined in terms of the stiffness :math:`\mathbf{c}` and the strain tensor
@@ -229,7 +225,7 @@ The displacement has the modal propagation form
    \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y)^* e^{-i (qz-\Omega t) } ,
 
 
-For details on how these problems are framed as finite element problems, we refer to `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
+For details on how these problems are framed as finite element problems, we refer to Ref. :cite:p:`Sturmberg:2019`.
 
 Modal properties
 -----------------------
@@ -249,12 +245,12 @@ For fields with slowly-varying optical and elastic amplitudes :math:`a_m(z)` and
 carried powers are
 
 .. math::
-   P^{(o)}(z)  & = \sum_m |a_n(z)|^2 {\cal P}_n^{(o)} \\
-   P^{(a)}(z)  & = \sum_m |b_n(z)|^2 {\cal P}_n^{(a)}.
+   P^{(o)}(z)  & = \sum_n |a_n(z)|^2 {\cal P}_n^{(o)} \\
+   P^{(a)}(z)  & = \sum_n |b_n(z)|^2 {\cal P}_n^{(a)}.
 
-Note that in this convention, the amplitude functions :math:`a_m(z)` and :math:`b_m(z)`
-are dimensionless and the units of the fields live in the modal functions
-:math:`\vec e_n, \vec h_n, \vec U_n`.
+Note that in this convention, the amplitude functions :math:`a_n(z)` and :math:`b_n(z)`
+are dimensionless and the dimensionality of the fields lives in the modal functions
+:math:`\vec e_n, \vec h_n, \vec U_n`, which are taken to have their conventional SI units.
 
 
 SBS gain calculation  modal problem
@@ -276,8 +272,9 @@ The photoelastic and moving boundary couplings in J/m are given by
           \cdot (\hat{n} \cdot \vec d^{(p)})
    \right]
 
+Note that in general these functions are complex, rather than purely real or imaginary. The equations of motion in the next section show how this is consistent with energy conservation requirements.
 
-Then the peak SBS gain :math:`\Gamma` is given by
+Then, at least for backward SBS, the peak SBS gain of the Stokes wave :math:`\Gamma` is given by
 
 .. math::
    \Gamma = \frac{2\omega \Omega}{\alpha_t} \frac{|Q_\mathrm{tot}|^2}{P^{(s)}P^{(p)}{\cal E}^{(a)}},
@@ -289,12 +286,16 @@ It is related to the spatial attenuation coefficient by
 :math:`\alpha_s = \alpha_t /v_{\mathrm{p}}^{(\mathrm{a})}` with :math:`v_{\mathrm{p}}^{(\mathrm{a})}` being the elastic phase velocity.
 
 In a backward SBS problem, where there is genuine gain in Stokes optical field propagating in the negative
-:math:`z` direction, its power evolves as
+:math:`z` direction, its optical power evolves as
 
 .. math::
 
    P^{\mathrm{(s)}}(z) = P_\mathrm{in}^{\mathrm{(s)}} e^{-\Gamma z}.
 
+In forward Brillouin scattering, the same equations for the couplings :math:`Q_i` apply, but it is generally
+more helpful to think in terms of the spectral processing of the Stokes field rather than a
+simple gain. For this reason, we prefer the general term "forward Brillouin scattering" to
+"forward SBS", which you may also encounter.  See refs. :cite:p:`Wolff:2017` :cite:p:`Wolff:2022` for detailed discussion of this issue.
 
 SBS equations of motion
 -----------------------------------------
@@ -311,9 +312,53 @@ With the above conventions, the dynamical equations for the slowly-varying ampli
 
 
 Here we've chosen the group velocities to be positive and included the propagation direction explicitly.
+Note that the coupling :math:`Q_\text{tot}` enters both in native and complex conjugate form. This ensures the total energy behaves appropriately.
+
+Finite element formulation
+-------------------------------
+|NUMBAT| solves both the electromagnetic and elastic modal properties using finite element method (FEM) algorithms.
+For details see refs. :cite:p:`Sturmberg:2019` and :cite:p:`hladkyhennion:1997`.
+
+Here we give a brief outline of the essentials.
 
 
-Connect these to output quantities from code
+Electromagnetic problem
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Elastic problem
+^^^^^^^^^^^^^^^
+To formulate a FEM algorithm, the elastic eigenvalue problem is expressed in the so-called *weak form*.
+Over the elastic domain :math:`A`, we seek eigenpairs :math:`(\vecu_n(\vecr), \Omega_n)` such that for all test functions :math:`\vecv(\vecr)`, we have
+
+..  math::
+
+    \int_A \vecv^*(\vecr) \cdot \left( \nabla \cdot \bar{T} + \Omega^2 \rho \vecu(\vecr)\right) \, \dA = 0.
+
+The functions :math:`\vecu(\vecr)` and :math:`\vecv(\vecr)` are expanded in a finite set of :math:`N` basis functions :math:`\vecg_m`:
+
+ ..  math::
+
+     \vecu = \sum_{m=1}^N u_m \vecg_m(\vecr),
+
+for some set of coefficients :math:`\vecu_h = (u_1,u_2,\dots u_N)`. In |NUMBAT|, the :math:`\vecg_m` are chosen as piecewise quadratic polynomials on a triangular grid.
+
+As shown in :cite:p:`Sturmberg:2019`, this problem statement ultimately leads to the linear generalised eigenproblem
+
+  .. math::
+
+     \mathrm{K} \vecu_h = \Omega^2 \mathrm{M} \vecu_h ,
+
+where the *stiffness* and *mass* matrices are defined as
+
+.. math::
+
+   K_{lm} = & \int_A (\nabla_s \vecg_l)^* : (\bar{c} : \nabla_s \vecg_m) \, \dA
+
+   M_{lm} = & \int_A \rho  \vecg_l^* \cdot  \vecg_m \, \dA
+
+This problem is then solved using standard linear algebra numerical libraries including ARPACK-NG, UMFPACK on top of the LAPACK and BLAS libraries .
+
+Connecting these to output quantities from code
 -------------------------------------------------
 
 
@@ -350,5 +395,4 @@ Some key changes you will need to make are as follows:
       * The argument ``k_AC`` has been removed.
  * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
  * All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
-
 

@@ -703,7 +703,6 @@ class Material(object):
         [kapx  0   0   0  kapz  kapy  ]
         [0   kapy  0   kapz 0   kapx  ]
         [0   0   kapz  kapy kapx  0]] where kap=(cos phi, 0, sin phi).
-
         """
 
         fig, axs = setup_bulk_dispersion_2D_plot()
