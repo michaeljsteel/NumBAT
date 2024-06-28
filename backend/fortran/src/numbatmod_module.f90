@@ -58,160 +58,185 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
 
 
+   ! UMFPACK Solve codes
+! Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the
+! linear algebraic transpose (complex conjugate if A is complex), or the (')
+! operator in MATLAB.  "at" refers to the array transpose, or the (.')
+! operator in MATLAB.
+
+
+   integer(8), parameter ::  UMFPACK_A      = 0     ! Ax=b
+   integer(8), parameter ::  UMFPACK_At     = 1     ! A'x=b
+   integer(8), parameter ::  UMFPACK_Aat    = 2     ! A.'x=b
+
+   integer(8), parameter ::  UMFPACK_Pt_L    =3     ! P'Lx=b
+   integer(8), parameter ::  UMFPACK_L       =4     ! Lx=b
+   integer(8), parameter ::  UMFPACK_Lt_P    =5     ! L'Px=b
+   integer(8), parameter ::  UMFPACK_Lat_P   =6     ! L.'Px=b
+   integer(8), parameter ::  UMFPACK_Lt      =7     ! L'x=b
+   integer(8), parameter ::  UMFPACK_Lat     =8     ! L.'x=b
+
+   integer(8), parameter ::  UMFPACK_U_Qt    =9     ! UQ'x=b
+   integer(8), parameter ::  UMFPACK_U       =10    ! Ux=b
+   integer(8), parameter ::  UMFPACK_Q_Ut    =11    ! QU'x=b
+   integer(8), parameter ::  UMFPACK_Q_Uat   =12    ! QU.'x=b
+   integer(8), parameter ::  UMFPACK_Ut      =13    ! U'x=b
+   integer(8), parameter ::  UMFPACK_Uat     =14    ! U.'x=b
+
 
 
 contains
 
-    integer function nb_system(cmd)
-        implicit none
+   integer function nb_system(cmd)
+      implicit none
 
-        integer errco
-        character(len=*), intent(in) :: cmd
+      integer errco
+      character(len=*), intent(in) :: cmd
 
 #ifdef __INTEL_COMPILER
-        errco = system(cmd)
+      errco = system(cmd)
 #else
-        call system(cmd, errco)
+      call system(cmd, errco)
 #endif
 
-        nb_system = errco
+      nb_system = errco
 
-    end function
+   end function
 
-    logical function almost_equal(a, b) result(res)
-        implicit none
+   logical function almost_equal(a, b) result(res)
+      implicit none
 
-        real(8) :: a, b
-        real(8), parameter :: tol=1.d-12
+      real(8) :: a, b
+      real(8), parameter :: tol=1.d-12
 
-        res = abs(a-b) < tol
+      res = abs(a-b) < tol
 
-    end function
+   end function
 
-    subroutine assert_or_die(pred, msg, ec)  ! TODO: this is cheat rather than go back to python for reporting
-        logical :: pred
-        character(len=*) :: msg
-        integer :: ec
+   subroutine assert_or_die(pred, msg, ec)  ! TODO: this is cheat rather than go back to python for reporting
+      logical :: pred
+      character(len=*) :: msg
+      integer :: ec
 
-        if (pred) return
+      if (pred) return
 
-        write(*,*) msg
-        call exit(ec)
+      write(*,*) msg
+      call exit(ec)
 
-    end subroutine
+   end subroutine
 
-    subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
+   subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
 
-        implicit none
+      implicit none
 
-        integer errco
-        character(len=EMSG_LENGTH) emsg
-        character location*(*), msg*(*)
-        integer val, limit, failco
+      integer errco
+      character(len=EMSG_LENGTH) emsg
+      character location*(*), msg*(*)
+      integer val, limit, failco
 
-        if (val .ge. limit) then
-            write(emsg,*) 'Failed limit check at ', location, '.  ', &
-                'Expected ', msg, ',  but found values', val, limit
-            errco = failco
-        endif
+      if (val .ge. limit) then
+         write(emsg,*) 'Failed limit check at ', location, '.  ', &
+            'Expected ', msg, ',  but found values', val, limit
+         errco = failco
+      endif
 
-        return
-    end subroutine
+      return
+   end subroutine
 
-    function int_2_str(val, fmt) result(str)
-        integer(8), intent(in) :: val
-        character(len=*), intent(in), optional :: fmt
+   function int_2_str(val, fmt) result(str)
+      integer(8), intent(in) :: val
+      character(len=*), intent(in), optional :: fmt
 
-        character(len=:), allocatable :: str
+      character(len=:), allocatable :: str
 
-        integer, parameter :: buflen = 512
-        character(len=buflen) :: buffer
+      integer, parameter :: buflen = 512
+      character(len=buflen) :: buffer
 
-        character(len=buflen) :: d_fmt = '(i0)'
+      character(len=buflen) :: d_fmt = '(i0)'
 
-        if (present(fmt)) then
-            d_fmt = fmt
-        endif
+      if (present(fmt)) then
+         d_fmt = fmt
+      endif
 
-        write(buffer, d_fmt) val
+      write(buffer, d_fmt) val
 
-        str = trim(buffer)
-    end function int_2_str
+      str = trim(buffer)
+   end function int_2_str
 
-    ! TODO: fix with just one call
-    function int4_2_str(val, fmt) result(str)
-        integer(4), intent(in) :: val
-        character(len=*), intent(in), optional :: fmt
+   ! TODO: fix with just one call
+   function int4_2_str(val, fmt) result(str)
+      integer(4), intent(in) :: val
+      character(len=*), intent(in), optional :: fmt
 
-        character(len=:), allocatable :: str
+      character(len=:), allocatable :: str
 
-        integer, parameter :: buflen = 512
-        character(len=buflen) :: buffer
+      integer, parameter :: buflen = 512
+      character(len=buflen) :: buffer
 
-        character(len=buflen) :: d_fmt = '(i0)'
+      character(len=buflen) :: d_fmt = '(i0)'
 
-        if (present(fmt)) then
-            d_fmt = fmt
-        endif
+      if (present(fmt)) then
+         d_fmt = fmt
+      endif
 
-        write(buffer, d_fmt) val
+      write(buffer, d_fmt) val
 
-        str = trim(buffer)
-    end function int4_2_str
+      str = trim(buffer)
+   end function int4_2_str
 
-    function double_2_str(val, fmt) result(str)
-        double precision, intent(in) :: val
-        character(len=*), intent(in), optional ::fmt
+   function double_2_str(val, fmt) result(str)
+      double precision, intent(in) :: val
+      character(len=*), intent(in), optional ::fmt
 
-        character(len=:), allocatable :: str
-        integer, parameter :: buflen = 512
-        character(len=buflen) :: buffer
+      character(len=:), allocatable :: str
+      integer, parameter :: buflen = 512
+      character(len=buflen) :: buffer
 
-        character(len=buflen) :: d_fmt = '(e)'
+      character(len=buflen) :: d_fmt = '(e)'
 
-        if (present(fmt)) then
-            d_fmt = fmt
-        endif
+      if (present(fmt)) then
+         d_fmt = fmt
+      endif
 
-        write(buffer, d_fmt) val
+      write(buffer, d_fmt) val
 
-        str = trim(buffer)
-    end function double_2_str
-
-
-    subroutine get_clocks(systime, cputime)
-        !     Returns system (wall time) in seconds, and cpu time in seconds
-        !     nanosec may be microsec on some systems
-
-        integer(8) isystime
-        double precision systime, cputime
-        double precision nanosec
-
-        parameter (nanosec=1.d-9)
-
-        call system_clock(isystime)
-        call cpu_time(cputime)
-
-        systime = nanosec*isystime
-
-    end subroutine get_clocks
+      str = trim(buffer)
+   end function double_2_str
 
 
+   subroutine get_clocks(systime, cputime)
+      !     Returns system (wall time) in seconds, and cpu time in seconds
+      !     nanosec may be microsec on some systems
 
-    !TODO: move somewhere leass general
-    logical function log_is_curved_elem_tri (nnodes, xel) result(is_curved)
+      integer(8) isystime
+      double precision systime, cputime
+      double precision nanosec
 
-        implicit none
-        integer(8) nnodes, info_curved
-        double precision xel(2,nnodes)
+      parameter (nanosec=1.d-9)
 
-        double precision loctmp
+      call system_clock(isystime)
+      call cpu_time(cputime)
 
-        call is_curved_elem_tri_impl (nnodes, xel, info_curved, loctmp)
+      systime = nanosec*isystime
 
-        is_curved = info_curved
+   end subroutine get_clocks
 
 
-    end function
+
+   !TODO: move somewhere leass general
+   logical function log_is_curved_elem_tri (nnodes, xel) result(is_curved)
+
+      implicit none
+      integer(8) nnodes, info_curved
+      double precision xel(2,nnodes)
+
+      double precision loctmp
+
+      call is_curved_elem_tri_impl (nnodes, xel, info_curved, loctmp)
+
+      is_curved = (info_curved .ne. 0)   ! painful, eventually get rid of the int form of is_curved_elem_tri
+
+
+   end function
 
 end module numbatmod

@@ -44,3 +44,4 @@ docs/build/*
 *.so
 
 tutorials/.sim-tut_17-rotations.py.swp
+tutorials/core
