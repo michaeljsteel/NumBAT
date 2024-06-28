@@ -45,7 +45,7 @@ C  variables for quadrature interpolation
 
       complex(8) z_tmp, coeff_1
 C
-CCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CCCCCCCCCCC Start Program  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = 6
       debug = 1
@@ -65,7 +65,7 @@ c
 c
       call quad_triangle(nquad,nquad_max,wq,xq,yq)
 C
-CCCCCCCCCCCCCCCCC	loop over all elements	CCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!C	loop over all elements	 !!!!!!!!!!!!!!!!!!!!!!!!
 C
       do iel=1,nel
         typ_e = type_el(iel)
@@ -90,13 +90,13 @@ c
               vec_phi(trans) = 0.0d0
             enddo
             do inode=1,nnodes
-C               ! transverse field components
+C               !  transverse field components
               do trans=1,3
                 vec_phi(trans) = vec_phi(trans) +
      *            sol(trans,inode,ival,iel) * phi2_list(inode)
               enddo
             enddo
-C             ! E_z = i * \hat{E}_z * (i*beta) (because of the change of variable)
+C             !  E_z = i * \hat{E}_z * (i*beta) (because of the change of variable)
             vec_phi(3) = vec_phi(3) * beta1(ival)
             do trans=1,3
               z_tmp = coeff_1 * abs(vec_phi(trans))**2

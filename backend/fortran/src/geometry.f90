@@ -1,16 +1,16 @@
 #include "numbat_decl.h"
 
-!     Construct the FEM mesh
-!
-!   type_nod = 0  => interior point
-!   type_nod != 0 => boundary point
-!
-!   Reads .mail file to find
-!      - x,y coords of mesh points  (mesh_xy)
-!      - mesh points associated with each element (table_nod)
-!      - whether number of material types read matches expected value n_typ_el
+!  Construct the FEM mesh
 
-!      -  Fills:  mesh_xy, type_nod, type_el, table_nod
+!  type_nod = 0  => interior point
+!  type_nod != 0 => boundary point
+
+!  Reads .mail file to find
+!  - x,y coords of mesh points  (mesh_xy)
+!  - mesh points associated with each element (table_nod)
+!  - whether number of material types read matches expected value n_typ_el
+
+!  -  Fills:  mesh_xy, type_nod, type_el, table_nod
 subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
    dim_x, dim_y, mesh_file, mesh_xy, type_nod, type_el, table_nod, &
    errco, emsg)
@@ -28,7 +28,7 @@ subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_
    character(len=EMSG_LENGTH) :: emsg
 
 
-!     local vars
+!  local vars
    double precision xx(2)
 
 
@@ -38,10 +38,10 @@ subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_
    integer(8) i, j, k
 
 
-   ! check the mesh file is consistent with what we expect
+   !  check the mesh file is consistent with what we expect
    open (unit=24,file=mesh_file, status='old')
    read(24,*) n_msh_pts2, n_msh_el2
-!
+
    if(n_msh_pts .ne. n_msh_pts2) then
       write(emsg,*) "construct_fem_nodal_tables: n_msh_pts != n_msh_pts2 : ", n_msh_pts, n_msh_pts2
       errco=-101
@@ -55,15 +55,15 @@ subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_
    endif
 
 
-!     Read coordinates of the FEM mesh points
+!  Read coordinates of the FEM mesh points
    do i=1,n_msh_pts
       read(24,*) k, (xx(j),j=1,2), type_nod(i)
       mesh_xy(1,i) = xx(1)*dim_x
       mesh_xy(2,i) = xx(2)*dim_y
    enddo
 
-!     Connectivity table
-   n_typ_el2 = 1   ! largest index of materials in the file
+!  Connectivity table
+   n_typ_el2 = 1   !  largest index of materials in the file
    do i=1,n_msh_el
       read(24,*) k, (table_nod(j,i),j=1,d_nodes_per_el), type_el(i)
       j = type_el(i)

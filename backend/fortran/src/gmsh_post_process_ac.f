@@ -56,13 +56,13 @@ c
         enddo
       endif
 
-C       ! q_average : at a discontinuity, use average value if q_average = 1
+C       !  q_average : at a discontinuity, use average value if q_average = 1
       q_average = 0
-C       ! plot_real : plot real part if plot_real = 1
+C       !  plot_real : plot real part if plot_real = 1
       plot_real = 1
-C       ! plot_imag : plot real part if plot_imag = 1
+C       !  plot_imag : plot real part if plot_imag = 1
       plot_imag = 1
-C       ! plot_abs  : plot absolute values of each component if plot_abs = 1
+C       !  plot_abs  : plot absolute values of each component if plot_abs = 1
       plot_abs  = 1
 
 c

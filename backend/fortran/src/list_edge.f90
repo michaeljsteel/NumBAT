@@ -13,7 +13,7 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
    integer(8) i, j, k, j1, j2, n_face, debug
    integer(8) list_end(2,3)
 
-!     Endpoints of the 6 edges (mid-point) of the reference tetrahedron
+!  Endpoints of the 6 edges (mid-point) of the reference tetrahedron
 
    i = 1
    list_end(1,i) = 1
@@ -34,7 +34,7 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
    n_edge = 0
    do i=1,n_msh_el
 
-      do j=4,nodes_per_el   ! checks some condition on this eleemnt. what is it?
+      do j=4,nodes_per_el   !  checks some condition on this eleemnt. what is it?
          if (type_nod(table_nod(j,i)) .ne. 0) then
             j1 = list_end(1,j-3)
             j2 = list_end(2,j-3)
@@ -52,7 +52,7 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
          endif
       enddo
 
-      ! scan the element edge
+      !  scan the element edge
       do j=4,nodes_per_el
          j1 = table_nod(j,i)
          k = visited(j1)
@@ -64,7 +64,7 @@ subroutine list_edge (n_msh_el, n_msh_pts, nodes_per_el, &
             j2 = list_end(2,j-3)
             table_edge(2,n_edge) = table_nod(j2,i)
             table_edge(3,n_edge) = j1
-!           Table of connectivity for the face (with respect to the triangle element)
+!  Table of connectivity for the face (with respect to the triangle element)
             table_edge_face(j-2,i) = n_edge + n_face
             table_edge(4,n_edge) = n_edge + n_face
          else

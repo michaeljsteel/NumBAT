@@ -26,7 +26,7 @@ c     Local variables
       complex(8)  z_tmp1, z_tmp2
       complex(8) Maxwell_coeff
 C
-CCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!
 C
 
 C
@@ -77,7 +77,7 @@ C       Maxwell_coeff = 1.0d0 / (C_IM_ONE* k_0)
 
 
 C
-CCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!
 C
       return
       end

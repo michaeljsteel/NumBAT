@@ -136,7 +136,7 @@ c
         close ( unit = 10)
       endif
 c
-cccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c     some check ...
 c
@@ -177,7 +177,7 @@ c
       enddo
 
 c
-cccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       return
       end

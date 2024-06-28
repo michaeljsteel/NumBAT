@@ -1,10 +1,10 @@
 c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c      x=[x0,y0] = coordinatate in the reference tetrahedron
 c      x_g = Corresponding coordinatate in the actual tetrahedron
 c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       subroutine jacobian_p1_2d (x, xel, nnodes,
      *  x_g, det_jacobian, mat_B_0, mat_T)
@@ -41,7 +41,7 @@ c
         enddo
       enddo
 c
-ccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!
 c        mat_T = mat_B
 c
       N_32 = 2

@@ -55,7 +55,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       z_tmp1=0.d0
       ui = stdout
@@ -134,7 +134,7 @@ c                     See Eq. (45) of C. Wolff et al. PRB (2015)
                       elseif(j_eq == 1 .and. k_eq == 3) then
                         z_tmp1 = p2_p2x(ltest,itrial)
                         z_tmp1 = z_tmp1 * (C_IM_ONE* beta_AC)
-cccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!
                       elseif(j_eq == 2 .and. k_eq == 1) then
                         z_tmp1 = p2x_p2y(ltest,itrial)
                       elseif(j_eq == 2 .and. k_eq == 2) then
@@ -142,7 +142,7 @@ cccccccccccccccccccccc
                       elseif(j_eq == 2 .and. k_eq == 3) then
                         z_tmp1 = p2_p2y(ltest,itrial)
                         z_tmp1 = z_tmp1 * (C_IM_ONE* beta_AC)
-cccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!
                       elseif(j_eq == 3 .and. k_eq == 1) then
                         z_tmp1 = p2_p2x(itrial,ltest)
                         z_tmp1 = z_tmp1 * (-C_IM_ONE* beta_AC)
@@ -219,6 +219,6 @@ C       enddo
 C       close (unit=26)
 
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine AC_alpha_int_v2

@@ -1,12 +1,12 @@
 
-!     P2 basis function over the unit Tetrahedron
-!
-!         Quadratic basis function = P2 * Grad P1
-!
-!          basis_list(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
-!          basis_list(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
-!          basis_list(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
-!          basis_list(4,j,i)     : it will be used only if k=4
+!  P2 basis function over the unit Tetrahedron
+
+!  Quadratic basis function = P2 * Grad P1
+
+!  basis_list(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
+!  basis_list(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
+!  basis_list(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
+!  basis_list(4,j,i)     : it will be used only if k=4
 
 
       subroutine basis_ls (nod_el, basis_list)
@@ -17,14 +17,14 @@
          parameter (nddl_t=4)
          integer(8) nod_el(nnodes), basis_list(4,3,nddl_t)
 
-         !     Local variables
+         !  Local variables
          integer i, j
          integer(8) list_end(2,3), j1, j2, j3
          integer(8) ls_n(3), ls_n_sorted(3)
 
 
 
-!     Endpoints of the 6 edges (mid-point) of the reference tetrahedron
+!  Endpoints of the 6 edges (mid-point) of the reference tetrahedron
 
          i = 1
          list_end(1,i) = 1
@@ -38,19 +38,19 @@
          list_end(1,i) = 1
          list_end(2,i) = 3
 
-         ! scan the element face
+         !  scan the element face
          do i=1,1
 
-            ! The mid-edge nodes of the face
-            ! scan the mid-edge nodes of the face
+            !  The mid-edge nodes of the face
+            !  scan the mid-edge nodes of the face
 
             do j=1,3
-               ! number on data to be stored
+               !  number on data to be stored
                basis_list(1,j,i) = 3
-               ! the mid-edge number
+               !  the mid-edge number
                basis_list(2,j,i) = j+3
 
-               ! give the node opposite to the mid-edge node (j+3)
+               !  give the node opposite to the mid-edge node (j+3)
                j2 = modulo(j+2,3)
                if( j2 .eq. 0 ) j2 = 3
                basis_list(3,j,i) = j2
@@ -59,10 +59,10 @@
             enddo
          enddo
 
-         ! scan the 3 element edges
+         !  scan the 3 element edges
          do i=2,4
-!       2 end-point basis vectors are attached to the edge i
-            ! scan the end nodes of the edge
+!  2 end-point basis vectors are attached to the edge i
+            !  scan the end nodes of the edge
 
             do j=1,2
                j1 = list_end(j,i-1)
@@ -92,7 +92,7 @@
             j = 3
             basis_list(1,j,i) = 4
 
-            ! add 2 to get the correct edge number
+            !  add 2 to get the correct edge number
             basis_list(2,j,i) = i+2
             basis_list(3,j,i) = j1
             basis_list(4,j,i) = j2

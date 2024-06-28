@@ -2,10 +2,10 @@
 #include "numbat_decl.h"
 
 
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !  Estimates the work space sizes that will be needed
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       subroutine array_size (n_msh_pts, n_msh_el, n_modes, &
  int_size, cmplx_size, real_size, n_ddl, errco, emsg)
@@ -19,14 +19,14 @@
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
-!     Local variables
+!  Local variables
       integer(8) nnodes, npt, npt_p3
       integer(8) nvect, ordre_ls
       integer(8) nonz, nonz_max, max_row_len
       integer(8) neq, neq_PW
       integer(8) n_edge, n_ddl_max
       integer(8) ltrav
-!
+
 !  Declare the pointers of the integer super-vector
       integer(8) ip_type_nod, ip_type_el, ip_table_nod
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
@@ -36,8 +36,8 @@
       integer(8) ip_index_pw_inv
 !  Declare the pointers of the real super-vector
       integer(8) jp_x, jp_x_N_E_F, jp_rhs
-!      integer(8) jp_matD, jp_matL, jp_matU
-!      integer(8) jp_matD2, jp_matL2, jp_matU2
+!  integer(8) jp_matD, jp_matL, jp_matU
+!  integer(8) jp_matD2, jp_matL2, jp_matU2
       integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
       integer(8) jp_eigen_modes_tmp, jp_trav, jp_vp, jp_eigen_pol
       integer(8) jp_overlap_L, jp_overlap_J, jp_overlap_J_dagger
@@ -49,68 +49,68 @@
       integer(8) jp_T, jp_R, jp_T12, jp_R12, jp_T21, jp_R21
       integer(8) jp_T_Lambda, jp_R_Lambda
       integer(8) jp_X_mat_b
-!     Declare the pointers of the real super-vector
+!  Declare the pointers of the real super-vector
       integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
       integer(8) kp_mat1_re, kp_mat1_im
 
-!     Declare the pointers of for sparse matrix storage
+!  Declare the pointers of for sparse matrix storage
       integer(8) ip_col_ptr, ip_row
       integer(8) jp_mat2
       integer(8) ip_work, ip_work_sort, ip_work_sort2
 
 
-      nnodes = 6   ! TODO replace with standard parameter
+      nnodes = 6   !  TODO replace with standard parameter
       ordre_ls = 0
 
-!     For most of the FEM meshes I have used, I have observed that:
-!     npt is approximately equal to n_msh_el * 2.1
+!  For most of the FEM meshes I have used, I have observed that:
+!  npt is approximately equal to n_msh_el * 2.1
 
-      ! what are npt, n_edge, npt_p3  maening?
+      !  what are npt, n_edge, npt_p3  maening?
 
-      npt = n_msh_el * 3                 ! = 3 n_msh_el
-      n_edge = (npt + n_msh_el) / 2      ! = 2 n_msh_el
-      npt_p3 = npt + n_edge + n_msh_el   ! = 6 n_msh_el
+      npt = n_msh_el * 3                 !  = 3 n_msh_el
+      n_edge = (npt + n_msh_el) / 2      !  = 2 n_msh_el
+      npt_p3 = npt + n_edge + n_msh_el   !  = 6 n_msh_el
       nvect = 2*n_modes + n_modes/2 +3
 
-!     Euler's polyhedron formula (no holes):
-!     V - E + F = 2
-!     V, E, and F are respectively the numbers of vertices (corners), edges and faces (triangles)
-!
-!     Since V - E = 2 - n_msh_el and V + E = npt, we have E = n_edge = (npt+n_msh_el-2)/2
-!
+!  Euler's polyhedron formula (no holes):
+!  V - E + F = 2
+!  V, E, and F are respectively the numbers of vertices (corners), edges and faces (triangles)
 
-      n_ddl = n_edge + n_msh_el + npt_p3         ! = 9 n_msh_el
-      n_ddl_max = npt + n_msh_el                 ! = 4 n_msh_el
-      neq = 3 * (n_edge + n_msh_el) + npt_p3     ! = 9 n_msh_el
-      neq_PW = (2*ordre_ls+1)**2                 ! = 1
+!  Since V - E = 2 - n_msh_el and V + E = npt, we have E = n_edge = (npt+n_msh_el-2)/2
 
-!     For most of the FEM meshes I have used, I have observed that:
-!     nonz = 34.25 * neq
+
+      n_ddl = n_edge + n_msh_el + npt_p3         !  = 9 n_msh_el
+      n_ddl_max = npt + n_msh_el                 !  = 4 n_msh_el
+      neq = 3 * (n_edge + n_msh_el) + npt_p3     !  = 9 n_msh_el
+      neq_PW = (2*ordre_ls+1)**2                 !  = 1
+
+!  For most of the FEM meshes I have used, I have observed that:
+!  nonz = 34.25 * neq
       nonz = 40 * neq                            != 360 n_msh_el
       nonz_max = nonz                            !TODO: remove nonz and just use nonz_max in this file
 
-!     I have observed that: max_row_len < 200
+!  I have observed that: max_row_len < 200
       max_row_len = 200
 
-      ! Is this the same set of values as in py_calc_modes?
-      ! Note here, the increment in each line is the size of the _previous_ object
-      ! A neater approach would be
-      ! off =1
-      ! ip_type_nod    = off;   off = off + npt
-      ! ip_type_el     = off;   off = off + n_msh_el
-      ! ip_table_nod   = off;   off = off + nnodes * n_msh_el
-      ! ip_table_N_E_F = off;   off = off + 14 * n_msh_el
-      ! ...
+      !  Is this the same set of values as in py_calc_modes?
+      !  Note here, the increment in each line is the size of the _previous_ object
+      !  A neater approach would be
+      !  off =1
+      !  ip_type_nod    = off;   off = off + npt
+      !  ip_type_el     = off;   off = off + n_msh_el
+      !  ip_table_nod   = off;   off = off + nnodes * n_msh_el
+      !  ip_table_N_E_F = off;   off = off + 14 * n_msh_el
+      !  ...
 
       !TODO: collect these into a procedure
-      ! taking npt, n_msh_el, n_ddl etc.
-      ! One for real, complex, int.
+      !  taking npt, n_msh_el, n_ddl etc.
+      !  One for real, complex, int.
 
 
       ip_type_nod = 1
       ip_type_el  = ip_type_nod + npt
 
-      ! pointer to FEM connectivity table
+      !  pointer to FEM connectivity table
       ip_table_nod   = ip_type_el       + n_msh_el
       ip_table_N_E_F = ip_table_nod     + nnodes*n_msh_el
 
@@ -141,7 +141,7 @@
       jp_x_N_E_F = jp_x + 2*npt
 
       jp_rhs     = jp_x_N_E_F + 3*n_ddl
-!     jp_rhs will also be used (in gmsh_post_process) to store a solution
+!  jp_rhs will also be used (in gmsh_post_process) to store a solution
       jp_mat2    = jp_rhs + max(neq, 3*npt)
 
       jp_vect1   = jp_mat2 + nonz
@@ -157,7 +157,7 @@
       jp_eigen_modes1 = jp_sol1b_H + 3*nnodes*n_modes*n_msh_el
       jp_eigen_modes2 = jp_eigen_modes1 + n_modes + 1
 
-      ! Eigenvectors
+      !  Eigenvectors
       jp_vschur      = jp_eigen_modes2 + n_modes + 1
       jp_eigen_modes = jp_vschur + neq*nvect
       jp_eigen_pol   = jp_eigen_modes + n_modes + 1
@@ -198,46 +198,46 @@
       kp_mat1_im = kp_mat1_re + nonz
       real_size  = kp_mat1_im + nonz
 
-! cccccc
-! c     SOME 32 bit integers for UMFPACK AND ARPACK
-!       ip_col_ptr_32 = 1
-!       ip_row_32 = ip_col_ptr_32 + neq + 1
-!       int_size_32 = ip_row_32 + nonz
+!  cccccc
+!  c     SOME 32 bit integers for UMFPACK AND ARPACK
+!  ip_col_ptr_32 = 1
+!  ip_row_32 = ip_col_ptr_32 + neq + 1
+!  int_size_32 = ip_row_32 + nonz
 
-! cccccc
-!       write(*,*) "array_size:"
-!       write(*,*) "int_size = ", int_size
-!       write(*,*) "cmplx_size = ", cmplx_size
-!       write(*,*) "real_size = ", real_size
-!       write(*,*) "int_size_32 = ", int_size_32
+!  cccccc
+!  write(*,*) "array_size:"
+!  write(*,*) "int_size = ", int_size
+!  write(*,*) "cmplx_size = ", cmplx_size
+!  write(*,*) "real_size = ", real_size
+!  write(*,*) "int_size_32 = ", int_size_32
 
-!       open (unit=26, file="Output/array_size.txt", status='unknown')
-!         write(26,*) "int_size = ", int_size
-!         write(26,*) "cmplx_size = ", cmplx_size
-!         write(26,*) "real_size = ", real_size
-!         write(26,*) "int_size_32 = ", int_size_32
-!         write(26,*)
-!         write(26,*) "n_msh_el = ", n_msh_el
-!         write(26,*) "n_modes = ", n_modes
-!         write(26,*) "nvect = ", nvect
-!         write(26,*) "ordre_ls = ", ordre_ls
-!         write(26,*)
-!         write(26,*) "npt = ", npt
-!         write(26,*) "n_edge = ", n_edge
-!         write(26,*) "npt_p3 = ", npt_p3
-!         write(26,*) "n_ddl = ", n_ddl
-!         write(26,*) "neq = ", neq
-!         write(26,*) "neq_PW = ", neq_PW
-!         write(26,*) "nonz_max = ", nonz_max
-!         write(26,*) "nonz = ", nonz
-!         write(26,*) "max_row_len = ", max_row_len
-!       close(26)
-!
-!
+!  open (unit=26, file="Output/array_size.txt", status='unknown')
+!  write(26,*) "int_size = ", int_size
+!  write(26,*) "cmplx_size = ", cmplx_size
+!  write(26,*) "real_size = ", real_size
+!  write(26,*) "int_size_32 = ", int_size_32
+!  write(26,*)
+!  write(26,*) "n_msh_el = ", n_msh_el
+!  write(26,*) "n_modes = ", n_modes
+!  write(26,*) "nvect = ", nvect
+!  write(26,*) "ordre_ls = ", ordre_ls
+!  write(26,*)
+!  write(26,*) "npt = ", npt
+!  write(26,*) "n_edge = ", n_edge
+!  write(26,*) "npt_p3 = ", npt_p3
+!  write(26,*) "n_ddl = ", n_ddl
+!  write(26,*) "neq = ", neq
+!  write(26,*) "neq_PW = ", neq_PW
+!  write(26,*) "nonz_max = ", nonz_max
+!  write(26,*) "nonz = ", nonz
+!  write(26,*) "max_row_len = ", max_row_len
+!  close(26)
 
 
 
-!     Dimension checking, can this actually happen?
+
+
+!  Dimension checking, can this actually happen?
 
       if ((3*n_msh_pts+n_msh_el+nnodes*n_msh_el) .gt. int_size) then
          write(emsg,*) "py_calc_modes(_AC): ", &

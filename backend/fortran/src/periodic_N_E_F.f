@@ -125,7 +125,7 @@ c
       close ( unit = 10)
       endif
 c
-cccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       return
       end

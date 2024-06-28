@@ -1,7 +1,7 @@
 
-!
-!***********************************************************************
-!
+
+!!!!!!!!!!!!!!!!
+
 subroutine csr_max_length (nel, n_ddl, neq, nnodes, table_N_E_F, ineq, lb, nonz)
 
    use numbatmod

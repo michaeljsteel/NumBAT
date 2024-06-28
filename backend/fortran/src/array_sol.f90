@@ -1,14 +1,14 @@
 
-!   On exit:
-!     sol_0(*,i) : contains the imaginary and real parts of the solution for points such that ineq(i) /= 0
-!     sol(i) : contains solution for all points
+!  On exit:
+!  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that ineq(i) /= 0
+!  sol(i) : contains solution for all points
 
-!     This is 2D 3-vector component FEM:
-!        The dimension of the geometric domain is : dim_32 = 2
-!        The dimension of the vector field is : dim2 = 3
-!
+!  This is 2D 3-vector component FEM:
+!  The dimension of the geometric domain is : dim_32 = 2
+!  The dimension of the vector field is : dim2 = 3
 
-!    Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
+
+!  Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
 
 subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
@@ -21,7 +21,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    integer(8) neq, nnodes
    integer(8) n_core(2)
    integer(8) type_el(n_msh_el)
-   integer(8) ineq(3,n_ddl)   ! bc info
+   integer(8) ineq(3,n_ddl)   !  bc info
    integer(8) iindex(*)
    integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
    integer(8) table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
@@ -29,8 +29,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    double precision x_N_E_F(2,n_ddl)
    complex(8) sol_0(neq,num_modes)
 
-!     sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-!     sol(3, nnodes+1..nnodes+7,num_modes, n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+!  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
+!  sol(3, nnodes+1..nnodes+7,num_modes, n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
    complex(8) sol(3,nnodes+7,num_modes,n_msh_el)
    complex(8) v_eigs_beta(num_modes)
    complex(8) mode_pol(4,num_modes)
@@ -38,16 +38,16 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    integer, intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
-!     Local variables
-!      integer(8) nnodes_0, nddl_0, nddl_t
-!     32-but integers for BLAS and LAPACK
+!  Local variables
+!  integer(8) nnodes_0, nddl_0, nddl_t
+!  32-but integers for BLAS and LAPACK
    integer(8) nddl_0
    integer(4) dim_32
-!      parameter (nnodes_0 = 6)
+!  parameter (nnodes_0 = 6)
    parameter (nddl_0 = 14)
-!      parameter (nddl_t=4)
+!  parameter (nddl_t=4)
    parameter (dim_32=2)
-!
+
    double precision mode_comp(4)
    integer(8) nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
    double precision xn(dim_32,nnodes_0), el_xy(dim_32,nnodes_0)
@@ -80,18 +80,18 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    debug = 0
 
 
-!   Reorder eigenvectors by iindex
+!  Reorder eigenvectors by iindex
    call zvec_reorder_by_index(v_eigs_beta, iindex, num_modes)
 
-!     Coordinates of the P2 Lagrange interpolation nodes for the unit triangle
+!  Coordinates of the P2 Lagrange interpolation nodes for the unit triangle
    call interp_nod_2d (nnodes, xn)
 
    do i_mode=1,num_modes
-      i_mode2 = iindex(i_mode)   ! index of the next largest eigenvalue
+      i_mode2 = iindex(i_mode)   !  index of the next largest eigenvalue
 
       mode_pol(:,i_mode) =  D_ZERO
 
-      z_sol_max =  D_ZERO   ! value and loc of max field modulus
+      z_sol_max =  D_ZERO   !  value and loc of max field modulus
       i_sol_max = 0
 
       do iel=1,n_msh_el
@@ -116,48 +116,48 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                nod_el_p(inod) = j
             enddo
 
-!   val_exp: Bloch mod ephase factor between the origin point and destination point
-!   For a pair of periodic points, one is chosen as origin and the other is the destination
+!  val_exp: Bloch mod ephase factor between the origin point and destination point
+!  For a pair of periodic points, one is chosen as origin and the other is the destination
             do j=1,nddl_0
                jp = table_N_E_F(j,iel)
                j1 = ip_period_N_E_F(jp)
                if (j1 /= 0) then
                   !do k=1,dim_32
-                  !   delta_xx(k) = x_N_E_F(k,jp) - x_N_E_F(k,j1)
+                  !  delta_xx(k) = x_N_E_F(k,jp) - x_N_E_F(k,j1)
                   !enddo
                   delta_xx(:) = x_N_E_F(:,jp) - x_N_E_F(:,j1)
                   r_tmp1 = ddot(dim_32, bloch_vec, 1, delta_xx, 1)
                   val_exp(j) = exp(C_IM_ONE * r_tmp1)
                endif
             enddo
-         endif  ! BCS_PERIODIC
+         endif  !  BCS_PERIODIC
 
-         call basis_ls (nod_el_p, basis_list)  ! get P2 basis function
+         call basis_ls (nod_el_p, basis_list)  !  get P2 basis function
 
-         !call is_curved_elem_tri (nnodes, el_xy, is_curved, r_tmp1)  ! determine if current element has curved face.
+         !call is_curved_elem_tri (nnodes, el_xy, is_curved, r_tmp1)  !  determine if current element has curved face.
          !Can this ever happen?
 
          is_curved = log_is_curved_elem_tri (nnodes, el_xy)
-!         P2 Lagrange Interpolation nodes for the unit triangle
-!         xn   = coordinate on the reference triangle
-!          do inod=1,nnodes+7
-!            do j=1,3
-!              sol_el(j,inod) = 0.00
-!            enddo
-!          enddo
+!  P2 Lagrange Interpolation nodes for the unit triangle
+!  xn   = coordinate on the reference triangle
+!  do inod=1,nnodes+7
+!  do j=1,3
+!  sol_el(j,inod) = 0.00
+!  enddo
+!  enddo
 
          do inod=1,nnodes
 
             xx =xn(:, inod)
             sol_el(:, inod) = D_ZERO
 
-            ! Elements and gradients for the P1, P2, P3 basis functions
+            !  Elements and gradients for the P1, P2, P3 basis functions
             call phi1_2d_mat (xx, phi1_list, grad1_mat0)
             call phi2_2d_mat (xx, phi2_list, grad2_mat0)
             call phi3_2d_mat (xx, phi3_list, grad3_mat0)
 
             if (.not. is_curved ) then
-!             Rectilinear element
+!  Rectilinear element
                call jacobian_p1_2d (xx, el_xy, nnodes, xx_g, det, mat_B, mat_T)
 
                if (det <= 0 .and. debug == 1) then
@@ -166,7 +166,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                endif
 
             else
-!             Isoparametric element, 2024-06-14 fix
+!  Isoparametric element, 2024-06-14 fix
                call jacobian_p2_2d (el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
             endif
 
@@ -176,14 +176,14 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                return
             endif
 
-!           grad_i  = gradient on the actual triangle
-!           grad_i  = Transpose(mat_T)*grad_i0
-!           Calculation of the matrix-matrix product:
+!  grad_i  = gradient on the actual triangle
+!  grad_i  = Transpose(mat_T)*grad_i0
+!  Calculation of the matrix-matrix product:
             call DGEMM('Transpose','N', dim_32, 3,  dim_32, D_ONE, mat_T, dim_32, grad1_mat0, dim_32, D_ZERO, grad1_mat, dim_32)
             call DGEMM('Transpose','N', dim_32, 6,  dim_32, D_ONE, mat_T, dim_32, grad2_mat0, dim_32, D_ZERO, grad2_mat, dim_32)
             call DGEMM('Transpose','N', dim_32, 10, dim_32, D_ONE, mat_T, dim_32, grad3_mat0, dim_32, D_ZERO, grad3_mat, dim_32)
 
-!           Contribution to the transverse component
+!  Contribution to the transverse component
             do jtest=1,nddl_t
                do j_eq=1,3
                   jp = table_N_E_F(jtest,iel)
@@ -193,8 +193,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                      if (m == inod) then
 
                         !  inod correspond to a P2 interpolation node
-!         The contribution is nonzero only when m=inod.
-!                 Determine the basis vector
+!  The contribution is nonzero only when m=inod.
+!  Determine the basis vector
 
                         call basis_vec (j_eq, jtest, basis_list, phi2_list, grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
                         z_tmp1 = sol_0(ind_jp, i_mode2)* val_exp(jtest)
@@ -220,10 +220,10 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                enddo
             enddo
 
-!           Contribution to the longitudinal component
-!             !  The initial P3 value of Ez isinterpolated over P2 nodes
+!  Contribution to the longitudinal component
+!  The initial P3 value of Ez isinterpolated over P2 nodes
             do jtest=nddl_t+1,nddl_0
-!               ! 3
+!  3
                do j_eq=1,1
                   jp = table_N_E_F(jtest,iel)
                   ind_jp = ineq(j_eq,jp)
@@ -243,24 +243,24 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             do j=1,3
                z_tmp2 = sol_el(j,inod)
                sol(j,inod,i_mode,iel) = z_tmp2
-               if (abs(z_sol_max) < abs(z_tmp2)) then  ! found a new max (by component not total?)
+               if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max (by component not total?)
                   z_sol_max = z_tmp2
                   i_sol_max = table_nod(inod,iel)
                endif
             enddo
 
-!           Contribution of the element iel to the mode component
+!  Contribution of the element iel to the mode component
             !do j=1,3
-            !!   mode_comp(j) = mode_comp(j) + abs(sol_el(j,inod))**2
+            !!  mode_comp(j) = mode_comp(j) + abs(sol_el(j,inod))**2
             !enddo
             mode_comp(1:3) = mode_comp(1:3) + abs(sol_el(1:3,inod))**2
 
          enddo
 !ccccccccc
-!         Saving the P3 values of Ez at: the 6 edge nodes and the interior node
+!  Saving the P3 values of Ez at: the 6 edge nodes and the interior node
          do inod=nnodes+1,nnodes+7
             !do j=1,3
-            !   sol_el(j,inod) = 0.00
+            !  sol_el(j,inod) = 0.00
             !enddo
             sol_el(1:3,inod) = D_ZERO
 
@@ -277,22 +277,22 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             endif
 
             !do j=1,3
-            !!   z_tmp2 = sol_el(j,inod)
+            !!  z_tmp2 = sol_el(j,inod)
             !  sol(j,inod,i_mode,iel) = z_tmp2
             !enddo
             sol(1:3,inod,i_mode,iel) =  sol_el(1:3,inod)
 
          enddo
 
-!         Avarage values
+!  Avarage values
          !do j=1,3
-         !   mode_comp(j) = abs(det)*mode_comp(j)/dble(nnodes)
+         !  mode_comp(j) = abs(det)*mode_comp(j)/dble(nnodes)
          !enddo
          mode_comp(1:3) = mode_comp(1:3) * abs(det)/dble(nnodes)
 
-!         Add the contribution of the element iel to the mode component
+!  Add the contribution of the element iel to the mode component
          !do j=1,3
-         !   mode_pol(j,i_mode) = mode_pol(j,i_mode) + mode_comp(j)
+         !  mode_pol(j,i_mode) = mode_pol(j,i_mode) + mode_comp(j)
          !enddo
          mode_pol(1:3, i_mode) = mode_pol(1:3, i_mode) + mode_comp(1:3)
 
@@ -304,7 +304,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
       enddo
 
-!       Total energy and normalization
+!  Total energy and normalization
       z_tmp2 = mode_pol(1,i_mode) + mode_pol(2,i_mode) + mode_pol(3,i_mode)
       if (abs(z_tmp2) < 1.0d-10) then
          write(*,*) "array_sol: the total energy ",        "is too small : ", z_tmp2
@@ -313,15 +313,15 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
          stop
       endif
 
-      ! do j=1,3
-      !    mode_pol(j,i_mode) = mode_pol(j,i_mode) / z_tmp2
-      ! enddo
+      !  do j=1,3
+      !  mode_pol(j,i_mode) = mode_pol(j,i_mode) / z_tmp2
+      !  enddo
 
-      ! j=4
-      ! mode_pol(j,i_mode) = mode_pol(j,i_mode) / z_tmp2
+      !  j=4
+      !  mode_pol(j,i_mode) = mode_pol(j,i_mode) / z_tmp2
       mode_pol(:,i_mode) = mode_pol(:,i_mode) / z_tmp2
 
-!       Check if the eigenvector is nonzero
+!  Check if the eigenvector is nonzero
       if (abs(z_sol_max) < 1.0d-10) then
          z_sol_max = z_tmp2
          write(*,*) "array_sol: z_sol_max is too small"
@@ -331,13 +331,13 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
          stop
       endif
 
-!       Normalization so that the maximum field component is 1
+!  Normalization so that the maximum field component is 1
       do iel=1,n_msh_el
          do inod=1,nnodes
             i1 = table_nod(inod,iel)
 
             !do j=1,3
-            !!   z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
+            !!  z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
             !  sol(j,inod,i_mode,iel) = z_tmp1
             !enddo
 
@@ -359,8 +359,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 !ccccccccc
          do inod=nnodes+1,nnodes+7
             !do j=1,3
-            !   z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
-            !   sol(j,inod,i_mode,iel) = z_tmp1
+            !  z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
+            !  sol(j,inod,i_mode,iel) = z_tmp1
             !enddo
             sol(1:3,inod,i_mode,iel) = sol(1:3,inod,i_mode,iel)/z_sol_max
          enddo
@@ -369,13 +369,13 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
       enddo
 
       !do j=1,neq
-      !   z_tmp1 = sol_0(j,i_mode2)/z_sol_max
-      !   sol_0(j,i_mode2) = z_tmp1
+      !  z_tmp1 = sol_0(j,i_mode2)/z_sol_max
+      !  sol_0(j,i_mode2) = z_tmp1
       !enddo
 
       sol_0(1:neq,i_mode2) = sol_0(1:neq,i_mode2)/z_sol_max
    enddo
-!
+
    return
 end
 

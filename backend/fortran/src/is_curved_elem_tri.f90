@@ -1,14 +1,14 @@
 
-!
-!     Check if an element (triangle) has a curved face
-!
+
+!  Check if an element (triangle) has a curved face
+
 !  Currently always says no!
 
 
 
 
 subroutine is_curved_elem_tri_impl (nnodes, xel, info_curved, tmp)
-!
+
    implicit none
    integer(8) nnodes, info_curved
    double precision xel(2,nnodes)
@@ -33,14 +33,14 @@ subroutine is_curved_elem_tri_impl (nnodes, xel, info_curved, tmp)
       stop
    endif
 
-!     Vertices
+!  Vertices
    do i=1,3
       do j=1,2
          xel_triangle(j,i) = xel(j,i)
       enddo
    enddo
 
-!     Mid-points
+!  Mid-points
    do i=1,3
       i2 = modulo(i+1,3_8)
       if(i2 .eq. 0) i2 = 3

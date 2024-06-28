@@ -1,5 +1,5 @@
-! TODO: this seems to normalise by the wrong factor: 1/|z|^2 instead of 1/|z|
-! Is this ever actually used?
+!  TODO: this seems to normalise by the wrong factor: 1/|z|^2 instead of 1/|z|
+!  Is this ever actually used?
 
 subroutine normalise_fields (n_modes, nel, nnodes, m_evecs,  mat_overlap)
    implicit none
@@ -16,17 +16,17 @@ subroutine normalise_fields (n_modes, nel, nnodes, m_evecs,  mat_overlap)
       !do iel=1,nel
          z_tmp1 = sqrt(mat_overlap(ival,ival))
 
-         ! Don't bother rescaling fields which are super tiny and therefore probably broken anyway
+         !  Don't bother rescaling fields which are super tiny and therefore probably broken anyway
          if (abs(z_tmp1) .gt. min_abs) then
-!              z_tmp2 =  1.0d0/z_tmp1
+!  z_tmp2 =  1.0d0/z_tmp1
             z_tmp2 =  1.0d0/z_tmp1**2
-      !      do i=1,nnodes+7
-      !         do j=1,3
-      !            m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel)
-      !            m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel) * z_tmp2
-       !        enddo
-        !    enddo
-         !   m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel)
+      !  do i=1,nnodes+7
+      !  do j=1,3
+      !  m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel)
+      !  m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel) * z_tmp2
+       !  enddo
+        !  enddo
+         !  m_evecs(j,i,ival,iel) = m_evecs(j,i,ival,iel)
             m_evecs(:,:,ival,:) = m_evecs(:,:,ival,:) * z_tmp2
 
 

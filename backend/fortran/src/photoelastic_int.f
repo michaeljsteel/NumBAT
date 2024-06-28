@@ -34,7 +34,7 @@ c     Local variables
 c
 c     NQUAD: The number of quadrature points used in each element.
       integer(8) nquad, nquad_max, iq
-C       ! Limit to P2 polynomials
+C       !  Limit to P2 polynomials
       parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
@@ -64,7 +64,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 
@@ -133,7 +133,7 @@ c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
      *               xx_g, det, mat_B, mat_T)
           else
-c           Isoparametric element ! fixed 2024/6/12
+c           Isoparametric element !  fixed 2024/6/12
             call jacobian_p2_2d(xel, nnodes, phi2_list,
      *               grad2_mat0, xx_g, det, mat_B, mat_T)
           endif
@@ -405,6 +405,6 @@ C Apply scaling that sits outside of integration.
         write(*,*) overlap
       endif
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine photoelastic_int

@@ -52,7 +52,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 C
@@ -85,7 +85,7 @@ cccccccccccc
         enddo
       enddo
       det_b = mat_B(1,1) * mat_B(2,2) - mat_B(1,2) * mat_B(2,1)
-C       ! TEMPORARY CHANGE
+C       !  TEMPORARY CHANGE
       if (abs(det_b) .le. 1.0d-22) then
 cc      if (abs(det_b) .le. 1.0d-8) then
         write(*,*) '?? AC_alpha_int_v2: Determinant = 0 :', det_b
@@ -174,6 +174,6 @@ C      *              overlap(i)
 C       enddo
 C       close (unit=26)
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine AC_mode_power_int_v2

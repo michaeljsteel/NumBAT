@@ -2,7 +2,7 @@
 
 !module nbinterfaces
 
- !   contains
+ !  contains
 
 subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
    int_max, cmplx_max, real_max, &
@@ -64,7 +64,7 @@ subroutine prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, &
 
 end subroutine prepare_workspaces
 
-!   ----------------------------------------------------------------------------------------
+!  ----------------------------------------------------------------------------------------
 
 subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_nodes_per_el, &
    type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, &
@@ -80,7 +80,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
    integer(8) type_nod(n_msh_pts)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
 
-   ! is this the right way to pass these?
+   !  is this the right way to pass these?
    integer(8), dimension(int_max) :: a_iwork
    double precision, dimension(2,n_ddl) :: d_dwork
 
@@ -95,7 +95,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
          write(*,*) "###### periodic_node"
       endif
 
-      ! reproduced in py_calc_modes.f
+      !  reproduced in py_calc_modes.f
       jp_x_N_E_F = 1
       ip_period_N = ip_type_N_E_F + 2*n_ddl
       ip_nperiod_N = ip_period_N + n_msh_pts

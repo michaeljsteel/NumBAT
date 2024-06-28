@@ -40,12 +40,12 @@ subroutine csr_length (nel, n_ddl, neq, nnodes, &
 
 
 
-   ! do i=1,nonz_max
-   !    col_ind_0(i) = 0
-   ! enddo
+   !  do i=1,nonz_max
+   !  col_ind_0(i) = 0
+   !  enddo
    col_ind_0 = 0
 
-!   Determination of the column indices
+!  Determination of the column indices
 
    nonz = 0
    do iel=1,nel
@@ -61,7 +61,7 @@ subroutine csr_length (nel, n_ddl, neq, nnodes, &
                   do j_ddl=1,3
                      ind_jp = ineq(j_ddl,jp)
                      if (ind_jp .ne. 0) then
-!                 Search if the entry (ind_ip,ind_jp) is already stored
+!  Search if the entry (ind_ip,ind_jp) is already stored
                         do k=row_start,row_end
                            if(col_ind_0(k) .eq. 0) goto 20
                            if(col_ind_0(k) .eq. ind_jp) goto 30
@@ -72,7 +72,7 @@ subroutine csr_length (nel, n_ddl, neq, nnodes, &
                         stop
 
 20                      continue
-!                   No entry exists for (ind_ip,ind_jp); create new one
+!  No entry exists for (ind_ip,ind_jp); create new one
                         nonz = nonz + 1
 
                         if (nonz .gt. nonz_max) then
@@ -92,10 +92,10 @@ subroutine csr_length (nel, n_ddl, neq, nnodes, &
          enddo
       enddo
    enddo
-!
 
-! squeeze away the zero entries
-! added so as to handle more type of domains/meshes
+
+!  squeeze away the zero entries
+!  added so as to handle more type of domains/meshes
 
    if (nonz .lt. nonz_max) then
       do i=1,neq-1
@@ -152,10 +152,10 @@ subroutine csr_length (nel, n_ddl, neq, nnodes, &
    else
 
 
-!       Copy the local array col_ind_0 into col_ind
-      ! do i=1,nonz
-      !    col_ind(i) = col_ind_0(i)
-      ! enddo
+!  Copy the local array col_ind_0 into col_ind
+      !  do i=1,nonz
+      !  col_ind(i) = col_ind_0(i)
+      !  enddo
       col_ind(1:nonz) = col_ind_0(1:nonz)
    endif
 
