@@ -1,4 +1,4 @@
-module class_Stopwatch
+module class_stopwatch
     use numbatmod
 
     implicit none
@@ -6,7 +6,7 @@ module class_Stopwatch
 
 
 
-    type, public :: Stopwatch
+    type, public :: stopwatch
 
     double precision :: cpu_t0, cpu_t1, sys_t0, sys_t1
     contains
@@ -17,35 +17,35 @@ module class_Stopwatch
     procedure :: sys_time => stopwatch_sys_time
     procedure :: to_string => stopwatch_to_string
 
-    end type Stopwatch
+    end type stopwatch
 
     contains
 
     subroutine stopwatch_reset(this)
-        class(Stopwatch), intent(in) :: this
+        class(stopwatch), intent(in) :: this
         call get_clocks(this%sys_t0, this%cpu_t0)
         end subroutine stopwatch_reset
 
         subroutine stopwatch_stop(this)
-            class(Stopwatch), intent(in) :: this
+            class(stopwatch), intent(in) :: this
             call get_clocks(this%sys_t1, this%cpu_t1)
             end subroutine stopwatch_stop
 
             function stopwatch_cpu_time(this) result(dt_cpu)
-                class(Stopwatch), intent(in) :: this
+                class(stopwatch), intent(in) :: this
                 double precision :: dt_cpu
                 dt_cpu = this%cpu_t1 - this%cpu_t0
             end function stopwatch_cpu_time
 
             function stopwatch_sys_time(this) result(dt_sys)
-                class(Stopwatch), intent(in) :: this
+                class(stopwatch), intent(in) :: this
                 double precision :: dt_sys
                 dt_sys = this%sys_t1 - this%sys_t0
             end function stopwatch_sys_time
 
 
             function stopwatch_to_string(this) result(tstr)
-                class(Stopwatch), intent(in) :: this
+                class(stopwatch), intent(in) :: this
 
             character(len=:), allocatable :: tstr
             integer, parameter :: buflen = 512
@@ -59,7 +59,7 @@ module class_Stopwatch
 
 
             subroutine stopwatch_report(this, ui)
-                class(Stopwatch), intent(in) :: this
+                class(stopwatch), intent(in) :: this
                 integer(8), intent(in) :: ui
 
                 call this%stop()
@@ -67,4 +67,4 @@ module class_Stopwatch
 
                 end subroutine stopwatch_report
 
-    end module class_Stopwatch
+    end module class_stopwatch

@@ -11,7 +11,7 @@
 !      - whether number of material types read matches expected value n_typ_el
 
 !      -  Fills:  mesh_xy, type_nod, type_el, table_nod
-subroutine geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
+subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
    dim_x, dim_y, mesh_file, mesh_xy, type_nod, type_el, table_nod, &
    errco, emsg)
 
@@ -43,13 +43,13 @@ subroutine geometry (n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
    read(24,*) n_msh_pts2, n_msh_el2
 !
    if(n_msh_pts .ne. n_msh_pts2) then
-      write(emsg,*) "geometry: n_msh_pts != n_msh_pts2 : ", n_msh_pts, n_msh_pts2
+      write(emsg,*) "construct_fem_nodal_tables: n_msh_pts != n_msh_pts2 : ", n_msh_pts, n_msh_pts2
       errco=-101
       return
    endif
 
    if(n_msh_el .ne. n_msh_el2) then
-      write(emsg,*) "geometry: n_msh_el != n_msh_el2 : ", n_msh_el, n_msh_el2
+      write(emsg,*) "construct_fem_nodal_tables: n_msh_el != n_msh_el2 : ", n_msh_el, n_msh_el2
       errco=-102
       return
    endif

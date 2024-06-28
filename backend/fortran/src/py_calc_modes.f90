@@ -1,5 +1,39 @@
 #include "numbat_decl.h"
 
+! Solves the electromagnetic FEM problem defined in
+!   Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
+!
+!  The weak formulation of Maxwell wave equation is in Eqs 14, 15.
+!  \langle 1/\mu (\nabla_t \times E_t), (\nabla_t \times F_t) \rangle
+!        - \omega^2 \langle (\epsilon E_t, F_t)
+!             = \beta^2 \langle 1/\mu (\nabla_t hE_z -E_t, F_t), \rangle
+!
+!  \langle 1/\mu E_t, \nabla_t F_z \rangle
+!        - \langle 1/\mu\nabla_t hE_z, \nabla_t F_z \rangle
+!           + \omega^2 \langle\eps hE_z, F_z\rangle =0
+!
+! where \hE_z = -1/\beta E_z
+!
+! The fields are expanded in in-plane vector and longitudinal scalar elements
+!        \vecphi_h and \psi_h:
+! E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
+! F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
+!
+! Then  inner product (L_1 E, L_2 F) is evaluted:
+! (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
+!       = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+!                     +  ((L_2 F)_z)^* . ((L_1 E)_z)
+!
+!       = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+!                     +  ((L_2 F)_z)^* . ((L_1 E)_z)
+!
+! This translates to the geneig problem (eq 40)
+!
+!  [ K_tt   0 ] [ E_t,h]  = \beta^2  [M_tt   (K_zt)^T] [E_t,h]
+!  [ 0      0 ] [ hE_z,h]            [K_zt    K_zz   ] [hE_z,h]
+!
+
+
 
 !  lambda - free space wavelength in m
 !  n_modes - desired number of eigenvectors
@@ -25,71 +59,7 @@ module calc_em_impl
    use numbatmod
    use class_stopwatch
 
-
-
-
 contains
-
-   ! subroutine baby_calc_em_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-   !    E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, &
-   !    n_msh_el, n_typ_el, v_refindex_n, v_eigs_beta_adj, sol_adj, &
-   !    mode_pol, table_nod, type_el, type_nod, errco, emsg  )
-
-   !    integer(8), intent(in) :: n_modes
-   !    double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
-   !    complex(8), intent(in) :: shift_ksqr
-   !    integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
-   !    character(len=*), intent(in) :: mesh_file
-
-   !    integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_typ_el
-
-   !    complex(8), intent(in) ::  v_refindex_n(n_typ_el)
-
-   !    complex(8), intent(out) :: v_eigs_beta_adj(n_modes)
-   !    complex(8), intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
-
-   !    complex(8), intent(out) :: mode_pol(4,n_modes)
-   !    integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
-   !    integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
-   !    integer, intent(out) :: errco
-   !    character(len=EMSG_LENGTH), intent(out) :: emsg
-
-
-   !    write(ui_out,*)  'In baby_calc_em_impl 1'
-   !    write(*,'(A ,i0, e10.3, e10.3)')  '  &
-   !       baby_calc_em_impl a', n_modes, lambda, dimscale_in_m
-   !    write(*,'(A ,e10.3, e10.3,e10.3, e10.3)')  '  baby_calc_em_impl b', &
-   !       bloch_vec(1),bloch_vec(2),dreal(shift_ksqr),aimag(shift_ksqr)
-
-   !    write(*,'(A, i10)')  '  baby_calc_em_impl  EH', E_H_field
-   !    write(*,'(A, i10)')  '  baby_calc_em_impl  locEH', loc(E_H_field)
-   !    write(*,'(A, i10)')  '  baby_calc_em_impl  bc', bdy_cdn
-   !    write(*,'(A, i10)')  '  baby_calc_em_impl  it', itermax
-   !    write(*,'(A, i10)')  '  baby_calc_em_impl  de', debug
-
-   !    write(*,'(A, A)')  '  baby_calc_em_impl d - mesh', mesh_file
-   !    write(*,'(A, i7,  i7,  i7)')  '  baby_calc_em_impl pts', n_msh_pts, n_msh_el, n_typ_el
-   !    write(ui_out,*)  '  baby_calc_em_impl v_refindex', v_refindex_n
-
-
-   !    write(ui_out,*)   'Writing to outputs'
-   !    sol_adj(1,1,1,1) = 1.0
-   !    mode_pol(1,1) = 1.0
-   !    table_nod(1,1) = 1
-   !    type_el(1) = 1
-   !    type_nod(1) = 1
-   !    v_eigs_beta_adj(1) = 2.5
-   !    v_eigs_beta_adj(2) = 2.5
-
-   !    write(ui_out,*)   'Done writing to outputs a'
-   !    errco = 0
-   !    write(ui_out,*)   'Done writing to outputs b'
-   !    emsg = "h3llo"
-   !    write(ui_out,*)   'Done writing to outputs c'
-
-
-   !    write(ui_out,*)  'baby_calc_em_impl done'
-   ! end subroutine
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
@@ -106,7 +76,6 @@ contains
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_typ_el
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
-      !complex(8), intent(in) ::  v_refindex_n(:)
 
       complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
       complex(8), target, intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
@@ -135,7 +104,7 @@ contains
 
       integer(8), dimension(:), allocatable :: iindex
       complex(8), dimension(:,:), allocatable :: overlap_L
-!
+
 !  Declare the pointers of the integer super-vector
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
@@ -147,25 +116,24 @@ contains
 
 
       integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-      integer(8) jp_trav, jp_vp
+      integer(8) jp_trav, jp_evecs
       complex(8) pp(n_typ_el), qq(n_typ_el)
       complex(8) eps_eff(n_typ_el)
-!
 
       integer(8) n_msh_pts_p3, ui_out
 
 !  Variable used by valpr
       integer(8) dim_krylov, ltrav
       integer(8) n_conv, i_base
-      double precision ls_data(10)
+      !double precision ls_data(10)
 
       integer(8) n_core(2)  ! index of highest epsilon material, seems funky
-      complex(8) z_beta, z_tmp, z_tmp0
+      complex(8) z_beta
       integer(8) n_edge, n_face, n_ddl, n_ddl_max, n_k
 
 !  variable used by UMFPACK
       !double precision control (20), info_umf (90)
-      integer(8) numeric
+      !integer(8) numeric
 
 
 
@@ -177,15 +145,7 @@ contains
       double precision  bloch_vec_k(2)
 
 
-!  Timing variables
-      !double precision time1, time2,  systime1,  systime2, systime1_postp,  systime2_postp
-      !double precision ortime1, ortime2,  orsystime1,  orsystime2
-
       double precision time_fact, time_arpack
-      !double precision time1_postp, time2_postp
-
-
-      !Names and Controls
 
       character(len=FNAME_LENGTH)  overlap_file
 
@@ -283,8 +243,6 @@ contains
 
       dim_krylov = 2*n_modes + n_modes/2 +3
 
-!CCCCCCCCCCCCCCCC END POST F2PY CCCCCCCCCCCCCCCCCCCCC
-
       call clock_main%reset()
 
 
@@ -292,7 +250,7 @@ contains
       dim_y = dimscale_in_m
 
       ! Fill:  mesh_xy, type_nod, type_el, table_nod
-      call geometry (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
+      call construct_fem_node_tables (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
          mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
@@ -470,9 +428,9 @@ contains
       jp_trav = jp_vschur + neq*dim_krylov
 
       ltrav = 3*dim_krylov*(dim_krylov+2)
-      jp_vp = jp_trav + ltrav
+      jp_evecs = jp_trav + ltrav
 
-      cmplx_used = jp_vp + neq*n_modes
+      cmplx_used = jp_evecs + neq*n_modes
 !
       if (cmplx_max .lt. cmplx_used)  then
          write(emsg,*)'The size of the complex supervector is too small', 'complex super-vec: int_max  = ', &
@@ -593,14 +551,17 @@ contains
          ! This is the main solver.
          ! On completion:
          !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
-         !    eigvectors are in are b_zwork[jp_vp..?]
+         !    eigvectors are in are b_zwork[jp_evecs..?]
 
          ! TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
-         call valpr_64 (i_base, dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+
+         call valpr_64 (i_base, &
+         !b_zwork(jp_vect1), &  ! unused
+         !b_zwork(jp_vect2), &  ! unused
+         !b_zwork(jp_trav), &  ! unused
+          dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
             c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
-            b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), &
-            b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, &
-            b_zwork(jp_trav), b_zwork(jp_vp), &
+            b_zwork(jp_workd), b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_evecs), &
             c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), &
             n_conv, time_fact, time_arpack, debug, errco, emsg)
          RETONERROR(errco)
@@ -656,7 +617,7 @@ contains
          mesh_xy, &
          !b_zwork(jp_x_N_E_F),
          d_dwork, &  ! this should be an e_ework
-         p_beta, mode_pol, b_zwork(jp_vp), p_sol , errco, emsg)
+         p_beta, mode_pol, b_zwork(jp_evecs), p_sol , errco, emsg)
          RETONERROR(errco)
 
 
@@ -893,6 +854,15 @@ contains
       complex(8) z_tmp
       integer(8) i
 
+      ! TODO: hook these up if needed
+      cmplx_max = 0
+      int_max = 0
+      int_used =0
+      nonz = 0
+      nonz_max = 0
+      cmplx_used = 0
+      real_max = 0
+      real_used = 0
 
       if (debug .eq. 1) then
          write(ui_out,*)
@@ -928,18 +898,18 @@ contains
          write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/D_PI,i=1,2)
          z_tmp = sqrt(shift_ksqr)/(2.0d0*D_PI)
          write(26,*) "shift_ksqr = ", shift_ksqr, z_tmp
-         write(26,*) "integer super-vector :"
-         write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
-         write(26,*) "cmplx super-vector : "
-         write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)
-         write(26,*) "Real super-vector : "
-         write(26,*) "real_used, real_max, real_max/real_used = ", real_used, real_max, dble(real_max)/dble(real_used)
+        ! write(26,*) "integer super-vector :"
+        ! write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
+         !write(26,*) "cmplx super-vector : "
+         !write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)
+         !write(26,*) "Real super-vector : "
+         !write(26,*) "real_used, real_max, real_max/real_used = ", real_used, real_max, dble(real_max)/dble(real_used)
          write(26,*)
          write(26,*) "n_modes, dim_krylov, n_conv = ", n_modes, dim_krylov, n_conv
-         write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
-            n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
-         write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
-         write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
+         !write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
+          !  n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
+         !write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
+         !write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
 !
 !  write(26,*) "len_skyl, n_msh_pts*n_modes, len_skyl/(n_msh_pts*n_modes) = ",
 !  *   len_skyl, n_msh_pts*n_modes, dble(len_skyl)/dble(n_msh_pts*n_modes)
