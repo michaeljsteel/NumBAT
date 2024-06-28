@@ -128,29 +128,12 @@ contains
       !double precision ls_data(10)
 
       integer(8) n_core(2)  ! index of highest epsilon material, seems funky
-      complex(8) z_beta
-      integer(8) n_edge, n_face, n_ddl, n_ddl_max, n_k
-
-!  variable used by UMFPACK
-      !double precision control (20), info_umf (90)
-      !integer(8) numeric
-
-
-
-      integer(8) i
-      integer(8) ival, inod
+      integer(8) n_edge, n_face, n_ddl, n_ddl_max
 
 
       double precision vacwavenum_k0, dim_x, dim_y
-      double precision  bloch_vec_k(2)
-
 
       double precision time_fact, time_arpack
-
-      character(len=FNAME_LENGTH)  overlap_file
-
-      character msg*20
-      logical pair_warning
 
 !  Declare the pointers of the real super-vector
       integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
@@ -162,21 +145,12 @@ contains
       integer(8) ip_work, ip_work_sort, ip_work_sort2
       integer(8) nonz, nonz_max, max_row_len
 
-      integer(8) ip
 
-
-!  new breed of variables to prise out of a_iwork, b_zwork and c_dwork
-
-      complex(8), target :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
       complex(8), pointer :: p_sol (:,:,:,:)
-
-
-      complex(8), target :: v_evals_beta_pri(n_modes)  ! eigs for the prime sol, v_evals_beta_adj for the adj.
       complex(8), pointer :: p_beta(:)
 
 
-
-      integer(8) :: ilo, ihi
+      integer(8) :: ilo, ihi, i_md
 
       integer :: is_em, alloc_stat, alloc_remote
       double precision tol
@@ -296,7 +270,7 @@ contains
          a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
       ! Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
-         ! Todo: move n_msh_pts_p3 later
+      ! Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
@@ -376,18 +350,19 @@ contains
          a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 !
 !  ip = ip_col_ptr + neq + 1 + nonz_max
-      ip = ip_col_ptr + neq + 1
-      if (ip .gt. int_max) then
-         write(emsg,*) "py_calc_modes.f: ip > int_max : ", ip, int_max, "py_calc_modes.f: nonz_max = ", &
+         !ip = ip_col_ptr + neq + 1
+         ip_row = ip_col_ptr + neq + 1
+
+      if (ip_row .gt. int_max) then
+         write(emsg,*) "py_calc_modes.f: ip_row > int_max : ", ip_row, int_max, "py_calc_modes.f: nonz_max = ", &
             nonz_max, "py_calc_modes.f: increase the size of int_max"
          errco = -11
          return
       endif
 !
-      ip_row = ip_col_ptr + neq + 1
 
       call csr_length (n_msh_el, n_ddl, neq, nodes_per_el, a_iwork(ip_table_N_E_F), a_iwork(ip_eq), a_iwork(ip_row), &
-         a_iwork(ip_col_ptr), nonz_max, nonz, max_row_len, ip, int_max, debug)
+         a_iwork(ip_col_ptr), nonz_max, nonz, max_row_len, ip_row, int_max, debug)
 
       ip_work = ip_row + nonz
       ip_work_sort = ip_work + 3*n_ddl
@@ -483,12 +458,8 @@ contains
 !  The CSC indexing, i.e., ip_col_ptr, is 1-based
 !  (but valpr.f will change the CSC indexing to 0-based indexing)
       i_base = 0
-!
-!
-!#####################  End FEM PRE-PROCESSING  #########################
-!
-!
-!
+
+
       write(ui_out,*)
       write(ui_out,*) "-----------------------------------------------"
 
@@ -497,180 +468,138 @@ contains
 
 
       call  check_materials_and_fem_formulation(E_H_field,n_typ_el, &
-      vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
+         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
       RETONERROR(errco)
 
 
-!!!!   Main Eigensolving loop for Adjoint and Prime configurations
-      ! Remove the first iteration and only reference the prime solution
+!  Main eigensolver
+      write(ui_out,*) "EM FEM: "
 
-      do n_k = 1,2
+      p_sol  => m_evecs_adj
+      p_beta => v_evals_beta_adj
 
-         if (n_k .eq. 1) then
-            p_sol  => m_evecs_adj
-            p_beta => v_evals_beta_adj
-            bloch_vec_k = bloch_vec
-            msg = "adjoint solution"
-         else
-            p_sol  => m_evecs_pri
-            p_beta => v_evals_beta_pri
-            bloch_vec_k = -bloch_vec
-            msg = "prime solution"
-         endif
 
 !  Assemble the coefficient matrix A and the right-hand side F of the
 !  finite element equations
 
-         write(ui_out,*) "EM FEM: "
-         write(ui_out,'(A,A)') "   - assembling linear system for ", msg
+      write(ui_out,'(A,A)') "   - assembling linear system "
 
-         call clock_spare%reset()
+      call clock_spare%reset()
 
 
-         ! Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
-         call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         shift_ksqr, bloch_vec_k, n_typ_el, pp, qq, &
+      ! Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
+      call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+         shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
          table_nod, a_iwork(ip_table_N_E_F), type_el, &
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
-         !b_zwork(jp_x_N_E_F), &
-            d_dwork, &
-            nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-            c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
+      !b_zwork(jp_x_N_E_F), &
+         d_dwork, &
+         nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
 
-         call clock_spare%stop()
-         write(ui_out,'(A,A)') '      ', clock_spare%to_string()
+      call clock_spare%stop()
+      write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
-         write(ui_out,*) "  - solving linear system"
+      write(ui_out,*) "  - solving linear system"
 
-         call clock_spare%reset()
+      call clock_spare%reset()
 
-         ! This is the main solver.
-         ! On completion:
-         !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
-         !    eigvectors are in are b_zwork[jp_evecs..?]
+      ! This is the main solver.
+      ! On completion:
+      !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
+      !    eigvectors are in are b_zwork[jp_evecs..?]
 
-         ! TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
+      ! TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
 
-         call valpr_64 (i_base, &
-         !b_zwork(jp_vect1), &  ! unused
-         !b_zwork(jp_vect2), &  ! unused
-         !b_zwork(jp_trav), &  ! unused
-          dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-            c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
-            b_zwork(jp_workd), b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_evecs), &
-            c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), &
-            n_conv, time_fact, time_arpack, debug, errco, emsg)
-         RETONERROR(errco)
+      call valpr_64 (i_base, &
+      !b_zwork(jp_vect1), &  ! unused
+      !b_zwork(jp_vect2), &  ! unused
+      !b_zwork(jp_trav), &  ! unused
+         dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
+         b_zwork(jp_workd), b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_evecs), &
+         c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), &
+         n_conv, time_fact, time_arpack, debug, errco, emsg)
+      RETONERROR(errco)
 
 
-         call clock_spare%stop()
-         write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
-         if (n_conv .ne. n_modes) then
-            write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
+      if (n_conv .ne. n_modes) then
+         write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
             n_conv, n_modes ,"You should probably increase resolution of mesh!"
-            errco = -19
-            return
-         endif
+         errco = -19
+         return
+      endif
 
-         !TODO: make a function. Turn beta^2 raw eig into actual beta
-         do i=1,n_modes
-            ! z_tmp0 = p_beta(i)
-            ! z_tmp = 1.0d0/z_tmp0+shift_ksqr
-            ! z_beta = sqrt(z_tmp)
-
-            z_beta = sqrt(1.0d0/p_beta(i)+shift_ksqr )
-
-            !  Mode classification - we want the forward propagating mode
-            if (abs(imag(z_beta)/z_beta) .lt. 1.0d-8) then
-               !  re(z_beta) > 0 for forward propagating mode
-               if (dble(z_beta) .lt. 0) z_beta = -z_beta
-            else
-               !  im(z_beta) > 0 for forward decaying evanescent mode  !rarely relevant for us
-               if (imag(z_beta) .lt. 0) z_beta = -z_beta
-            endif
-
-            p_beta(i) = z_beta
-         enddo
+      call clock_spare%stop()
+      write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
 
-         call clock_spare%reset()
-
-         !  order p_beta by magnitudes and store in iindex
-         call z_indexx (n_modes, p_beta, iindex)
+      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, p_beta, iindex)
 
 
-         write(ui_out,*) "  - assembling eigen solutions"
+      call clock_spare%reset()
+
+      write(ui_out,*) "  - assembling eigen solutions"
 
 
 
-         !  The eigenvectors will be stored in the array sol
-         !  The eigenvalues and eigenvectors are renumbered
-         !  using the permutation vector iindex
-         call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec_k, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, &
+      !  The eigenvectors will be stored in the array sol
+      !  The eigenvalues and eigenvectors are renumbered
+      !  using the permutation vector iindex
+      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+         n_core, bloch_vec, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, &
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
-         !b_zwork(jp_x_N_E_F),
+      !b_zwork(jp_x_N_E_F),
          d_dwork, &  ! this should be an e_ework
          p_beta, mode_pol, b_zwork(jp_evecs), p_sol , errco, emsg)
-         RETONERROR(errco)
-
-
-         write(ui_out,*) "  - finding mode energies "
-         !  Calculate energy in each medium (typ_el)
-         if (n_k .eq. 2) then
-            call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
-            table_nod, type_el, n_typ_el, eps_eff,&
-            mesh_xy, p_sol, p_beta, mode_pol)
-         endif
-
-
-      enddo  ! n_k
-
-
-      !CCCCCCCCCCCCCCCCCCCCCCC  End Prime, Adjoint Loop  CCCCCCCCCCCCCCCCCCCCCC
-
-
-
-      ! Doubtful that this check is of any value: delete?
-      call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
-      m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, ui_out, &
-      pair_warning, vacwavenum_k0, errco, emsg)
       RETONERROR(errco)
+
+
+      write(ui_out,*) "  - finding mode energies "
+      !  Calculate energy in each medium (typ_el)
+      call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
+         table_nod, type_el, n_typ_el, eps_eff,&
+         mesh_xy, p_sol, p_beta, mode_pol)
+
+
+
+
+      ! ! Doubtful that this check is of any value: delete?
+      ! call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
+      !    type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &!v_evals_beta_pri, m_evecs_pri,
+      !    overlap_L, overlap_file, debug, ui_out, &
+      !    pair_warning, vacwavenum_k0, errco, emsg)
+      ! RETONERROR(errco)
 
 
       ! Should this happen _before_ check_ortho?
 
+
       !  The z-component must be multiplied by -ii*beta in order to
       !  get the physical, un-normalised z-component
       !  (see Eq. (25) of the JOSAA 2012 paper)
-
       ! TODO: is this really supposed to be x i beta , or just x beta  ?
-      do ival=1,n_modes
+      do i_md=1,n_modes
          !!do iel=1,n_msh_el
-         !!  m_evecs_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,iel)
+         !!  m_evecs_adj(3,inod,i_md,iel) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,iel)
          !!enddo
 
          !do inod=1,nodes_per_el+7
-         !   m_evecs_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,:)
+         !   m_evecs_adj(3,inod,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,:)
          !enddo
 
-         m_evecs_adj(3,:,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,:,ival,:)
+         m_evecs_adj(3,:,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,:,i_md,:)
 
       enddo
 
-      return ! BROKEN
 
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
-
-      !  Normalisation
-
-
-      call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, m_evecs_pri, overlap_L)
+      ! Normalisation. Can't use this if we don't do check_ortho.  Not needed
+      ! call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, overlap_L)
 
       write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
@@ -689,11 +618,9 @@ contains
       !          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
       !       endif
       !
-      !#########################  End Calculations  ###########################
-      !
+
 
       call clock_spare%stop()
-
       call clock_main%stop()
 
       deallocate(a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L)
@@ -781,8 +708,9 @@ contains
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
-      m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
+      type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &
+   !v_evals_beta_pri, m_evecs_pri, &
+      overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
       use numbatmod
       logical pair_warning
@@ -799,16 +727,16 @@ contains
       complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
       complex(8), target, intent(out) :: m_evecs_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
-      complex(8)  :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
       complex(8), dimension(:,:) :: overlap_L
 
 
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
-      complex(8)  :: v_evals_beta_pri(n_modes)
       character(len=FNAME_LENGTH)  overlap_file
 
+      !complex(8)  :: v_evals_beta_pri(n_modes)
+      !complex(8)  :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
 
       !  Orthogonal integral
       pair_warning = .false.
@@ -820,8 +748,9 @@ contains
       overlap_file = "Orthogonal.txt"
 
       call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
-         m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
+         type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &
+      !v_evals_beta_pri, m_evecs_pri,
+         overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
       if (pair_warning .and. n_modes .le. 20) then
          emsg = "py_calc_modes.f: Warning found 1 BM of cmplx conj pair, increase num_BMs to include the other."
@@ -832,12 +761,12 @@ contains
    end subroutine
 
    subroutine report_results_em(debug, ui_out, &
-   n_msh_pts, n_msh_el, &
-   time1, time2, time_fact, time_arpack, time1_postp, &
-   lambda, e_h_field, bloch_vec, bdy_cdn,  &
-   int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-   n_typ_el, neq, nonz_max, dim_krylov, &
-   shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
+      n_msh_pts, n_msh_el, &
+      time1, time2, time_fact, time_arpack, time1_postp, &
+      lambda, e_h_field, bloch_vec, bdy_cdn,  &
+      int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
+      n_typ_el, neq, nonz_max, dim_krylov, &
+      shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -902,16 +831,17 @@ contains
          write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/D_PI,i=1,2)
          z_tmp = sqrt(shift_ksqr)/(2.0d0*D_PI)
          write(26,*) "shift_ksqr = ", shift_ksqr, z_tmp
-        ! write(26,*) "integer super-vector :"
-        ! write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
+         ! write(26,*) "integer super-vector :"
+         ! write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
          !write(26,*) "cmplx super-vector : "
          !write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)
+
          !write(26,*) "Real super-vector : "
          !write(26,*) "real_used, real_max, real_max/real_used = ", real_used, real_max, dble(real_max)/dble(real_used)
          write(26,*)
          write(26,*) "n_modes, dim_krylov, n_conv = ", n_modes, dim_krylov, n_conv
          !write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
-          !  n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
+         !  n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
          !write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
          !write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
 !
@@ -940,6 +870,49 @@ contains
       write(ui_out,*)
 
    end subroutine
+
+
+
+
+   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, p_beta, iindex)
+
+      integer(8), intent(in) :: n_modes
+      complex(8), intent(in) :: shift_ksqr
+      complex(8), pointer :: p_beta(:)
+      integer(8), dimension(:), allocatable :: iindex
+
+      integer(8) i
+
+      complex(8) z_beta
+
+      !TODO: make a function. Turn beta^2 raw eig into actual beta
+      do i=1,n_modes
+         ! z_tmp0 = p_beta(i)
+         ! z_tmp = 1.0d0/z_tmp0+shift_ksqr
+         ! z_beta = sqrt(z_tmp)
+
+         z_beta = sqrt(1.0d0/p_beta(i)+shift_ksqr )
+
+         !  Mode classification - we want the forward propagating mode
+         if (abs(imag(z_beta)/z_beta) .lt. 1.0d-8) then
+            !  re(z_beta) > 0 for forward propagating mode
+            if (dble(z_beta) .lt. 0) z_beta = -z_beta
+         else
+            !  im(z_beta) > 0 for forward decaying evanescent mode  !rarely relevant for us
+            if (imag(z_beta) .lt. 0) z_beta = -z_beta
+         endif
+
+         p_beta(i) = z_beta
+      enddo
+
+
+
+      !  order p_beta by magnitudes and store in iindex
+      call z_indexx (n_modes, p_beta, iindex)
+   end subroutine
+
+
+
 
 
 end module calc_em_impl

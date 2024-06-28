@@ -13,8 +13,8 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
    integer(8), intent(out) :: nonz
 
 
-   !     Local variables
-   integer(8), parameter :: nddl_0 = 6 ! Different to em case. Different FEM?
+   !  Local variables
+   integer(8), parameter :: nddl_0 = 6 !  Different to em case. Different FEM?
 
    integer(8) :: i, k, iel, ind_ip, ip
    integer(8) :: k_copy1, k_copy2
@@ -29,9 +29,9 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
    !enddo
    lb = 0
 
-   !
-   !   Determination of the bandwidths
-   !
+
+   !  Determination of the bandwidths
+
 
    do iel=1,nel
       do i=1,nddl_0
@@ -49,7 +49,7 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
    enddo
 
 
-   !     Compressed Row Storage (CRS): determine the row pointer
+   !  Compressed Row Storage (CRS): determine the row pointer
 
 
    k_copy1 = lb(1)
