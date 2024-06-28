@@ -1,5 +1,4 @@
 c
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c      x=[x0,y0] = coordinatate in the reference tetrahedron
 c      x_g = Corresponding coordinatate in the actual tetrahedron
@@ -10,7 +9,6 @@ c     Tetrahedron by Gaussian quadrature.
 c
 c    X_g = B X + (x_0, y_0)^t
 c
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c
       subroutine jacobian_p2_2d (xel, nnodes, p2_list,

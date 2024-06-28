@@ -1,11 +1,11 @@
 
-subroutine csr_length (nel, n_ddl, neq, nnodes, &
+subroutine csr_length (nel, n_ddl, neq,  &
    table_N_E_F, ineq, col_ind, row_ptr, nonz_max, &
    nonz, max_row_len, ipointer, int_max, debug)
 
    use numbatmod
 
-   integer(8) nel, neq, n_ddl, nnodes, nonz_max, nonz
+   integer(8) nel, neq, n_ddl,  nonz_max, nonz
    integer(8) ipointer, int_max
    integer(8) table_N_E_F(14,nel)
    integer(8) ineq(3,n_ddl)

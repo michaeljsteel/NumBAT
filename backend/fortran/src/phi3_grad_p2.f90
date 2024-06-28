@@ -34,14 +34,19 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
 !  Coordinates (x,y)= xel_0(1..2,inode) of the P2 Lagrange interpolaion nodes
    xel_0(1,1) = 0
    xel_0(2,1) = 0
+
    xel_0(1,2) = 1
    xel_0(2,2) = 0
+
    xel_0(1,3) = 0
    xel_0(2,3) = 1
+
    xel_0(1,4) = 0.5d0
    xel_0(2,4) = 0
+
    xel_0(1,5) = 0.5d0
    xel_0(2,5) = 0.5d0
+
    xel_0(1,6) = 0
    xel_0(2,6) = 0.5d0
 
@@ -55,18 +60,20 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    y = xel_0(2,inode)
 
    i = 1
-!  x-derivative over the reference triangle
-   phi0_xi = (-11 - 27*x**2 + x*(36 - 54*y)&
-!  y-derivative over the reference triangle
-   &+ 36*y - 27*y**2)/2.0d0
-   phi0_yi = (-11 - 27*x**2 + x*(36 - 54*y)&
-   &+ 36*y - 27*y**2)/2.0d0
-!  x-derivative over the current triangle
+   !  x-derivative over the reference triangle
+   phi0_xi = (-11 - 27*x**2 + x*(36 - 54*y) + 36*y - 27*y**2)/2.0d0
+
+   !  y-derivative over the reference triangle
+   phi0_yi = (-11 - 27*x**2 + x*(36 - 54*y) + 36*y - 27*y**2)/2.0d0
+
+   !  x-derivative over the current triangle
    phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
-!  y-derivative over the current triangle
+
+   !  y-derivative over the current triangle
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 2
    phi0_xi = 1 - 9*x + (27*x**2)/2.0d0
    phi0_yi = 0
@@ -74,6 +81,7 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 3
    phi0_xi = 0
    phi0_yi = 1 - 9*y + (27*y**2)/2.0d0
@@ -81,14 +89,15 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 4
-   phi0_xi = (9*(2 + 9*x**2 - 5*y + 3*y**2&
-   &+ 2*x*(-5 + 6*y)))/2.0d0
+   phi0_xi = (9*(2 + 9*x**2 - 5*y + 3*y**2 + 2*x*(-5 + 6*y)))/2.0d0
    phi0_yi = (9*x*(-5 + 6*x + 6*y))/2.0d0
    phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 5
    phi0_xi = (-9*(1 + 9*x**2 - y + x*(-8 + 6*y)))/2.0d0
    phi0_yi = (-9*x*(-1 + 3*x))/2.0d0
@@ -96,6 +105,7 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 6
    phi0_xi = (9*(-1 + 6*x)*y)/2.0d0
    phi0_yi = (9*x*(-1 + 3*x))/2.0d0
@@ -103,6 +113,7 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 7
    phi0_xi = (9*y*(-1 + 3*y))/2.0d0
    phi0_yi = (9*x*(-1 + 6*y))/2.0d0
@@ -110,6 +121,7 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 8
    phi0_xi = (-9*y*(-1 + 3*y))/2.0d0
    phi0_yi = (-9*(1 - 8*y + 9*y**2 + x*(-1 + 6*y)))/2.0d0
@@ -117,14 +129,15 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 9
    phi0_xi = (9*y*(-5 + 6*x + 6*y))/2.0d0
-   phi0_yi = (9*(2 + 3*x**2 - 10*y + 9*y**2&
-   &+ x*(-5 + 12*y)))/2.0d0
+   phi0_yi = (9*(2 + 3*x**2 - 10*y + 9*y**2 + x*(-5 + 12*y)))/2.0d0
    phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
    phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
+
    i = 10
    phi0_xi = -27*y*(-1 + 2*x + y)
    phi0_yi = -27*x*(-1 + x + 2*y)
@@ -133,7 +146,6 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
    return
 end

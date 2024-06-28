@@ -30,14 +30,19 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
 !  Coordinates (x,y)= xel_0(1..2,inode) of the P2 Lagrange interpolaion nodes
    xel_0(1,1) = 0
    xel_0(2,1) = 0
+
    xel_0(1,2) = 1
    xel_0(2,2) = 0
+
    xel_0(1,3) = 0
    xel_0(2,3) = 1
+
    xel_0(1,4) = 0.5d0
    xel_0(2,4) = 0
+
    xel_0(1,5) = 0.5d0
    xel_0(2,5) = 0.5d0
+
    xel_0(1,6) = 0
    xel_0(2,6) = 0.5d0
 

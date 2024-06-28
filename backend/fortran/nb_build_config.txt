@@ -1,13 +1,13 @@
-COMPILER_VENDOR: gcc
-F_COMP_EXE: ccache f95
-C_COMP_EXE: ccache gcc
-F77FLAGS: -Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp -J ./mods -fall-intrinsics -pedantic
-F95FLAGS: -Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp -J ./mods -fall-intrinsics -pedantic
-CFLAGS: -Wall -W -g -O2 -fPIC -Ofast -funroll-loops
-ONEAPI:
-ONEAPICOMP:
+COMPILER_VENDOR: intel
+F_COMP_EXE: ccache /opt/intel/oneapi/compiler/2024.2/bin/ifx
+C_COMP_EXE: ccache /opt/intel/oneapi/compiler/2024.2/bin/icx
+F77FLAGS: -nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
+F95FLAGS: -nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
+CFLAGS: -fPIC -O2 -Wall -g
+ONEAPI: /opt/intel/oneapi
+ONEAPICOMP: /opt/intel/oneapi/compiler/2024.2/bin
 ARPACK_INC: -I /usr/local/include
 ARPACK_LIB: -L /usr/local/lib -larpack
 MATHINC: -I /usr/local/include -I /opt/intel/oneapi/mkl/latest/include
 MATHLIB: -L /usr/local/lib -larpack -L/usr/local/lib -lumfpack -lcholmod -lamd -L /opt/intel/oneapi/mkl/latest/lib/intel64 -lmkl_rt
-ONEAPICOMP:
+ONEAPICOMP: /opt/intel/oneapi/compiler/2024.2/bin
