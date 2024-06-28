@@ -41,6 +41,9 @@ module numbatmod
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: nddl_t = 4
 
+   integer(8), parameter :: nddl_0_em = 14
+   integer(8), parameter :: nddl_0_ac = 6
+
 
    integer(8), parameter :: BCS_DIRICHLET = 0  ! (E-field: electric wall)
    integer(8), parameter :: BCS_NEUMANN = 1    ! (E-field: magnetic wall)

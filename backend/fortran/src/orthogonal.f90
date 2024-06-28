@@ -5,8 +5,8 @@
 !
 subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
      nnodes, nb_typ_el, pp, table_nod, &
-     type_el, x, beta1, beta2, &
-     soln_k1, soln_k2, mat_overlap, overlap_file, PrintAll, &
+     type_el, x, beta1, soln_k1, &
+      mat_overlap, overlap_file, PrintAll, &
      pair_warning, k_0)
 !
    use numbatmod
@@ -19,7 +19,9 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    complex(8) soln_k1(3,nnodes+7,n_modes,n_msh_el)
    complex(8) soln_k2(3,nnodes+7,n_modes,n_msh_el)
    complex(8) pp(nb_typ_el)
-   complex(8) beta1(n_modes), beta2(n_modes)
+   complex(8) beta1(n_modes)
+   complex(8) beta2(n_modes)
+
 !      complex(8) mat_overlap(n_modes,n_modes)
    complex(8), dimension(n_modes,n_modes) :: mat_overlap
    character overlap_file*100
@@ -27,7 +29,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
 !     Local variables
 
    integer(8) nod_el_p(nnodes_0)
-   complex(8) sol_el_1(2*nnodes_0+10), sol_el_2(2*nnodes_0)
+   complex(8) sol_el_1(2*nnodes_0+10) , sol_el_2(2*nnodes_0)
    complex(8) vec_1(2*nnodes_0)
    complex(8) mat_scal(2*nnodes_0,2*nnodes_0+10)
    integer(8) i, j, j1, typ_e
@@ -67,15 +69,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    ui = stdout
    debug = 0
    pair_warning = .false.
-!
-!
-   if ( nnodes .ne. 6 ) then
-      write(ui,*) "orthogonal: problem nnodes = ", nnodes
-      write(ui,*) "orthogonal: nnodes should be equal to 14 !"
-      write(ui,*) "orthogonal: Aborting..."
-      stop
-   endif
-!
+
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
    if (debug .eq. 1) then
       write(ui,*) "orthogonal: nquad, nquad_max = ", nquad, nquad_max
@@ -85,13 +79,15 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
 !      !second rearranged overlap
 122 continue
 !
-   do jval=1,n_modes
-      do ival=1,n_modes
-         mat_overlap(ival,jval) = 0.0d0
-      enddo
-   enddo
-!
+   !do jval=1,n_modes
+   !   do ival=1,n_modes
+   !      mat_overlap(ival,jval) = 0.0d0
+   !   enddo
+   !enddo
+   mat_overlap  = C_ZERO
+
    n_curved = 0
+
    do iel=1,n_msh_el
       typ_e = type_el(iel)
       do j=1,nnodes
@@ -105,11 +101,12 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
          n_curved = n_curved + 1
       endif
 
-      do i=1,2*nnodes
-         do j=1,2*nnodes+10
-            mat_scal(i,j) = 0.0d0
-         enddo
-      enddo
+      ! do i=1,2*nnodes
+      !    do j=1,2*nnodes+10
+      !       mat_scal(i,j) = 0.0d0
+      !    enddo
+      ! enddo
+      mat_scal = C_ZERO
 
       do iq=1,nquad
          xx(1) = xq(iq)
@@ -194,14 +191,14 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
       enddo
 
       do ival=1,n_modes
-         do i=1,nnodes
-            do j=1,2
-!             The 2 transverse components of the mode ival
-               ind_ip = j + 2*(i-1)
-               z_tmp1 = soln_k2(j,i,ival,iel)
-               sol_el_2(ind_ip) = z_tmp1
-            enddo
-         enddo
+!          do i=1,nnodes
+!             do j=1,2
+! !             The 2 transverse components of the mode ival
+!                ind_ip = j + 2*(i-1)
+!                z_tmp1 = soln_k2(j,i,ival,iel)
+!                sol_el_2(ind_ip) = z_tmp1
+!             enddo
+!          enddo
 
          do jval=1,n_modes
             z_beta_1 = beta1(jval)

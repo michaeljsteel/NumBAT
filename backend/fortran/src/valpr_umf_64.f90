@@ -226,7 +226,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
 
 
    complex(8) shift2
-   integer(8) i, j
+   integer(8) i
 
 
    double precision umf_control(UMFPACK_CONTROL)
