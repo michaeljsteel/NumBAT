@@ -1,10 +1,10 @@
-!***********************************************************************
-!
-!     Input : initial P2 FEM mesh
-!     Output: Set the coordinates and node type of the P3 node
-!
-!      Fills x_N_E_F and type_N_E_F arrays
-!***********************************************************************
+!!!!!!!!!!!!!!!!
+
+!  Input : initial P2 FEM mesh
+!  Output: Set the coordinates and node type of the P3 node
+
+!  Fills x_N_E_F and type_N_E_F arrays
+!!!!!!!!!!!!!!!!
 
 subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    table_nod, type_nod, table_N_E_F, &
@@ -37,8 +37,8 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       stop
    endif
 
-!     ip(1,i) = i+1 MOD 3 ; Number of the next vertex to vertex i
-!     ip(2,i) = i+2 MOD 3 ; Number of the second next vertex to vertex i
+!  ip(1,i) = i+1 MOD 3 ; Number of the next vertex to vertex i
+!  ip(2,i) = i+2 MOD 3 ; Number of the second next vertex to vertex i
    ip(1,1) = 2
    ip(1,2) = 3
    ip(1,3) = 1
@@ -52,7 +52,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    enddo
 
 
-   ! The first 4 entries of table_N_E_F(*,i) correspond to face and edges and have been done
+   !  The first 4 entries of table_N_E_F(*,i) correspond to face and edges and have been done
    mm = 4
    do iel=1,n_msh_el
 
@@ -60,12 +60,12 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
          nut0(inod) = table_nod(inod,iel)
       enddo
 
-      ! the 10 node of a P3 element
+      !  the 10 node of a P3 element
       do inod=1,10
          nut_N_E_F(inod) = table_N_E_F(inod+mm,iel)
       enddo
 
-      ! scan the vertices ############
+      !  scan the vertices ############
       do inod=1,3
          k = nut0(inod)
          if(visited(k) .eq. 0) then
@@ -76,12 +76,12 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             x_N_E_F(2,inod2) = mesh_xy(2,inod1)
             type_N_E_F(1,inod2) = type_nod(inod1)
 
-            ! Vertex => dimension zero
+            !  Vertex => dimension zero
             type_N_E_F(2,inod2) = 0
          endif
       enddo
 
-      ! scan the nodes located on the edges ############
+      !  scan the nodes located on the edges ############
       do inod=4,nodes_per_el
 
          k=nut0(inod)
@@ -94,7 +94,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
          if(visited(k) .eq. 0) then
             visited(k) = iel
-!           Endpoints of the edge
+!  Endpoints of the edge
             k1 = nut0(inod-3)
             xx1 = mesh_xy(1,k1)
             yy1 = mesh_xy(2,k1)
@@ -104,23 +104,23 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             dx1 = (xx2-xx1)/3.0d0
             dy1 = (yy2-yy1)/3.0d0
 
-            ! type of the mid-edge node of the initial P2 mesh
+            !  type of the mid-edge node of the initial P2 mesh
             ind = type_nod(nut0(inod))
 
-            ! 2 nodes per edge (for P3 element)
+            !  2 nodes per edge (for P3 element)
             do inod2=1,2
                k1 = nut_N_E_F(inod2+2*(inod-4)+3)
                x_N_E_F(1,k1) = xx1 + inod2*dx1
                x_N_E_F(2,k1) = yy1 + inod2*dy1
                type_N_E_F(1,k1) = ind
 
-               ! Node => dimension zero
+               !  Node => dimension zero
                type_N_E_F(2,k1) = 0
             enddo
          endif
       enddo
 
-      ! Coordinate of the vertices
+      !  Coordinate of the vertices
       k1 = nut0(1)
       xx1 = mesh_xy(1,k1)
       yy1 = mesh_xy(2,k1)
@@ -131,27 +131,27 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       xx3 = mesh_xy(1,k1)
       yy3 = mesh_xy(2,k1)
 
-      ! The tenth node is at the center of the triangle
-      ! dimension(P3) = 10
+      !  The tenth node is at the center of the triangle
+      !  dimension(P3) = 10
       n = 10
 
-      ! this node is an interior node of the triangle ############
+      !  this node is an interior node of the triangle ############
       k1 = nut_N_E_F(n)
       tmp1 = 1.0d0/3.0d0
       tmp2 = 1.0d0/3.0d0
       tmp3 = 1.0d0/3.0d0
-      tmp_x = xx1*tmp1+xx2*tmp2+xx3*tmp3  ! TODO: clean me
+      tmp_x = xx1*tmp1+xx2*tmp2+xx3*tmp3  !  TODO: clean me
       tmp_y = yy1*tmp1+yy2*tmp2+yy3*tmp3
       x_N_E_F(1,k1) = tmp_x
       x_N_E_F(2,k1) = tmp_y
 
-      ! interior node
+      !  interior node
       type_N_E_F(1,k1) = 0
 
-      ! Node => dimension zero
+      !  Node => dimension zero
       type_N_E_F(2,k1) = 0
 
    enddo
-!
+
    return
 end

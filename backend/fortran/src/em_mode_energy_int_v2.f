@@ -50,7 +50,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 
@@ -149,7 +149,7 @@ c           Cross-product Z.(E^* X H) of E^*=vec_i and H=vec_j
       overlap(ival) = overlap1
       enddo
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C
       end subroutine EM_mode_energy_int_v2

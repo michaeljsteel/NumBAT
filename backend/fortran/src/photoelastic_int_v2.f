@@ -37,7 +37,7 @@ c     Local variables
 c
 c     NQUAD: The number of quadrature points used in each element.
       integer(8) nquad, nquad_max
-      ! Limit to P2 polynomials
+      !  Limit to P2 polynomials
       parameter (nquad_max = 16)
       double precision wq(nquad_max)
       double precision xq(nquad_max), yq(nquad_max)
@@ -64,7 +64,7 @@ Cf2py depend(eps_lst) nb_typ_el
 C
 Cf2py intent(out) overlap
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 
@@ -393,7 +393,7 @@ cccccccccccc
         write(*,*) overlap
       endif
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C       open (unit=26,file="Output/overlap_v2.txt")
 C         write(26,*) "overlap, SI_EPS_0 = "
@@ -422,6 +422,6 @@ C             enddo
 C           enddo
 C         close(4)
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine photoelastic_int_v2

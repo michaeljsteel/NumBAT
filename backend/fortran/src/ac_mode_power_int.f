@@ -59,7 +59,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 C
@@ -204,6 +204,6 @@ C Multiply through prefactor
         overlap(i) = -2.0 * C_IM_ONE* Omega_AC(i) * overlap(i)
       enddo
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine AC_mode_power_int

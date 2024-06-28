@@ -1,5 +1,5 @@
 c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c      x=[x0,y0] = coordinatate in the reference tetrahedron
 c      x_g = Corresponding coordinatate in the actual tetrahedron
@@ -10,7 +10,7 @@ c     Tetrahedron by Gaussian quadrature.
 c
 c    X_g = B X + (x_0, y_0)^t
 c
-cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c
       subroutine jacobian_p2_2d (xel, nnodes, p2_list,
@@ -54,16 +54,16 @@ c
         enddo
       enddo
 c
-ccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!
 c        mat_T = mat_B
 c
-C       ! The order of the matrix mat_B
+C       !  The order of the matrix mat_B
       N_32 = 2
-C       ! The number of right hand sides
+C       !  The number of right hand sides
       NRHS_32 = N_32
-C       ! The leading dimension of the array mat_B
+C       !  The leading dimension of the array mat_B
       LDB_32 = N_32
-C       ! The leading dimension of the array mat_T
+C       !  The leading dimension of the array mat_T
       LDT_32 = N_32
 c
 c     Initialisation for DGESV: mat_T = identity

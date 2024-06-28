@@ -55,7 +55,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 C
@@ -172,6 +172,6 @@ C          write(26,*) abs(overlap(i))
 C        enddo
 C        close (unit=26)
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine AC_mode_elastic_energy_int

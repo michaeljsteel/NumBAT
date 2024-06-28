@@ -3,7 +3,7 @@
 
 module numbatmod
 
-   ! Use intel compiler to check passing conventions
+   !  Use intel compiler to check passing conventions
 #ifdef __INTEL_COMPILER
    use ifport
 #endif
@@ -45,8 +45,8 @@ module numbatmod
    integer(8), parameter :: nddl_0_ac = 6
 
 
-   integer(8), parameter :: BCS_DIRICHLET = 0  ! (E-field: electric wall)
-   integer(8), parameter :: BCS_NEUMANN = 1    ! (E-field: magnetic wall)
+   integer(8), parameter :: BCS_DIRICHLET = 0  !  (E-field: electric wall)
+   integer(8), parameter :: BCS_NEUMANN = 1    !  (E-field: magnetic wall)
    integer(8), parameter :: BCS_PERIODIC = 2
 
    integer(8), parameter :: FEM_FORMULATION_E = 1
@@ -61,30 +61,30 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
 
 
-   ! UMFPACK Solve codes
-! Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the
-! linear algebraic transpose (complex conjugate if A is complex), or the (')
-! operator in MATLAB.  "at" refers to the array transpose, or the (.')
-! operator in MATLAB.
+   !  UMFPACK Solve codes
+!  Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the
+!  linear algebraic transpose (complex conjugate if A is complex), or the (')
+!  operator in MATLAB.  "at" refers to the array transpose, or the (.')
+!  operator in MATLAB.
 
 
-   integer(8), parameter ::  UMFPACK_A      = 0     ! Ax=b
-   integer(8), parameter ::  UMFPACK_At     = 1     ! A'x=b
-   integer(8), parameter ::  UMFPACK_Aat    = 2     ! A.'x=b
+   integer(8), parameter ::  UMFPACK_A      = 0     !  Ax=b
+   integer(8), parameter ::  UMFPACK_At     = 1     !  A'x=b
+   integer(8), parameter ::  UMFPACK_Aat    = 2     !  A.'x=b
 
-   integer(8), parameter ::  UMFPACK_Pt_L    =3     ! P'Lx=b
-   integer(8), parameter ::  UMFPACK_L       =4     ! Lx=b
-   integer(8), parameter ::  UMFPACK_Lt_P    =5     ! L'Px=b
-   integer(8), parameter ::  UMFPACK_Lat_P   =6     ! L.'Px=b
-   integer(8), parameter ::  UMFPACK_Lt      =7     ! L'x=b
-   integer(8), parameter ::  UMFPACK_Lat     =8     ! L.'x=b
+   integer(8), parameter ::  UMFPACK_Pt_L    =3     !  P'Lx=b
+   integer(8), parameter ::  UMFPACK_L       =4     !  Lx=b
+   integer(8), parameter ::  UMFPACK_Lt_P    =5     !  L'Px=b
+   integer(8), parameter ::  UMFPACK_Lat_P   =6     !  L.'Px=b
+   integer(8), parameter ::  UMFPACK_Lt      =7     !  L'x=b
+   integer(8), parameter ::  UMFPACK_Lat     =8     !  L.'x=b
 
-   integer(8), parameter ::  UMFPACK_U_Qt    =9     ! UQ'x=b
-   integer(8), parameter ::  UMFPACK_U       =10    ! Ux=b
-   integer(8), parameter ::  UMFPACK_Q_Ut    =11    ! QU'x=b
-   integer(8), parameter ::  UMFPACK_Q_Uat   =12    ! QU.'x=b
-   integer(8), parameter ::  UMFPACK_Ut      =13    ! U'x=b
-   integer(8), parameter ::  UMFPACK_Uat     =14    ! U.'x=b
+   integer(8), parameter ::  UMFPACK_U_Qt    =9     !  UQ'x=b
+   integer(8), parameter ::  UMFPACK_U       =10    !  Ux=b
+   integer(8), parameter ::  UMFPACK_Q_Ut    =11    !  QU'x=b
+   integer(8), parameter ::  UMFPACK_Q_Uat   =12    !  QU.'x=b
+   integer(8), parameter ::  UMFPACK_Ut      =13    !  U'x=b
+   integer(8), parameter ::  UMFPACK_Uat     =14    !  U.'x=b
 
 
 
@@ -116,7 +116,7 @@ contains
 
    end function
 
-   subroutine assert_or_die(pred, msg, ec)  ! TODO: this is cheat rather than go back to python for reporting
+   subroutine assert_or_die(pred, msg, ec)  !  TODO: this is cheat rather than go back to python for reporting
       logical :: pred
       character(len=*) :: msg
       integer :: ec
@@ -166,7 +166,7 @@ contains
       str = trim(buffer)
    end function int_2_str
 
-   ! TODO: fix with just one call
+   !  TODO: fix with just one call
    function int4_2_str(val, fmt) result(str)
       integer(4), intent(in) :: val
       character(len=*), intent(in), optional :: fmt
@@ -208,8 +208,8 @@ contains
 
 
    subroutine get_clocks(systime, cputime)
-      !     Returns system (wall time) in seconds, and cpu time in seconds
-      !     nanosec may be microsec on some systems
+      !  Returns system (wall time) in seconds, and cpu time in seconds
+      !  nanosec may be microsec on some systems
 
       integer(8) isystime
       double precision systime, cputime
@@ -237,7 +237,7 @@ contains
 
       call is_curved_elem_tri_impl (nnodes, xel, info_curved, loctmp)
 
-      is_curved = (info_curved .ne. 0)   ! painful, eventually get rid of the int form of is_curved_elem_tri
+      is_curved = (info_curved .ne. 0)   !  painful, eventually get rid of the int form of is_curved_elem_tri
 
 
    end function

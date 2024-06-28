@@ -1,6 +1,6 @@
-! Calculate the overlap integral of an AC mode with itself using
-! numerical quadrature.
-!
+!  Calculate the overlap integral of an AC mode with itself using
+!  numerical quadrature.
+
       subroutine AC_alpha_int (nval,
      *  nel, npt, nnodes, table_nod, type_el, x,
      *  nb_typ_el, eta_tensor, beta_AC, Omega_AC, soln_AC,
@@ -62,7 +62,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
          ui = stdout
 
@@ -127,7 +127,7 @@ c           Rectilinear element
               call jacobian_p1_2d(xx, xel, nnodes,
      *                 xx_g, det, mat_B, mat_T)
            else
-c           Isoparametric element! 2024-06-13 fixed version
+c           Isoparametric element!  2024-06-13 fixed version
               call jacobian_p2_2d(xel, nnodes, phi2_list,
      *                 grad2_mat0, xx_g, det, mat_B, mat_T)
            endif
@@ -265,6 +265,6 @@ C       enddo
 C       close (unit=26)
 
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
       end subroutine AC_alpha_int

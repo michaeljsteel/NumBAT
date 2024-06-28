@@ -1,56 +1,56 @@
 #include "numbat_decl.h"
 
 
-! UMFPACK docs:
-! https://github.com/DrTimothyAldenDavis/SuiteSparse/blob/dev/UMFPACK/Doc/UMFPACK_UserGuide.pdf
-! https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf
-!
-! Calls in here are for the double complex precision, long int format, because compiled with ZLONG
-! And definitions in sswrap/umf4_f77_wrapper
-! This corresponds to integer(8) arrays
-! Yet calling is done with int4 scalar control parameters. TODO: necessary?
+!  UMFPACK docs:
+!  https://github.com/DrTimothyAldenDavis/SuiteSparse/blob/dev/UMFPACK/Doc/UMFPACK_UserGuide.pdf
+!  https://fossies.org/linux/SuiteSparse/UMFPACK/Doc/UMFPACK_UserGuide.pdf
 
-! Arpack docs:
-! http://li.mit.edu/Archive/Activities/Archive/CourseWork/Ju_Li/MITCourses/18.335/Doc/ARPACK/Lehoucq97.pdf
-!
+!  Calls in here are for the double complex precision, long int format, because compiled with ZLONG
+!  And definitions in sswrap/umf4_f77_wrapper
+!  This corresponds to integer(8) arrays
+!  Yet calling is done with int4 scalar control parameters. TODO: necessary?
+
+!  Arpack docs:
+!  http://li.mit.edu/Archive/Activities/Archive/CourseWork/Ju_Li/MITCourses/18.335/Doc/ARPACK/Lehoucq97.pdf
 
 
-!      ---------------------------------------------------
-!     | Arpack Error message, check the documentation in ZNAUPD. |
+
+!  ---------------------------------------------------
+!  | Arpack Error message, check the documentation in ZNAUPD. |
 
 !  INFO    Integer.  (INPUT/OUTPUT)
-!          If INFO .EQ. 0, a randomly initial residual vector is used.
-!          If INFO .NE. 0, RESID contains the initial residual vector,
-!                          possibly from a previous run.
-!          Error flag on output.
-!          =  0: Normal exit.
-!          =  1: Maximum number of iterations taken.
-!                All possible eigen_modesues of OP has been found. IPARAM(5)
-!                returns the number of wanted converged Ritz values.
-!          =  2: No longer an informational error. Deprecated starting
-!                with release 2 of ARPACK.
-!          =  3: No shifts could be applied during a cycle of the
-!                Implicitly restarted Arnoldi iteration. One possibility
-!                is to increase the size of NCV relative to NEV.
-!                See remark 4 below.
-!          = -1: N must be positive.
-!          = -2: NEV must be positive.
-!          = -3: NCV-NEV >= 2 and less than or equal to N.
-!          = -4: The maximum number of Arnoldi update iteration
-!                must be greater than zero.
-!          = -5: arp_which must be one of 'LM', 'SM', 'LR', 'SR', 'LI', 'SI'
-!          = -6: arp_bmat must be one of 'I' or 'G'.
-!          = -7: Length of private work array is not sufficient.
-!          = -8: Error return from LAPACK eigen_modesue calculation;
-!          = -9: Starting vector is zero.
-!          = -10: IPARAM(7) must be 1,2,3,4.
-!          = -11: IPARAM(7) = 1 and arp_bmat = 'G' are incompatable.
-!          = -12: IPARAM(1) must be equal to 0 or 1.
-!          = -9999: Could not build an Arnoldi factorization.
-!                   IPARAM(5) returns the size of the current Arnoldi
-!                   factorization.
+!  If INFO .EQ. 0, a randomly initial residual vector is used.
+!  If INFO .NE. 0, RESID contains the initial residual vector,
+!  possibly from a previous run.
+!  Error flag on output.
+!  =  0: Normal exit.
+!  =  1: Maximum number of iterations taken.
+!  All possible eigen_modesues of OP has been found. IPARAM(5)
+!  returns the number of wanted converged Ritz values.
+!  =  2: No longer an informational error. Deprecated starting
+!  with release 2 of ARPACK.
+!  =  3: No shifts could be applied during a cycle of the
+!  Implicitly restarted Arnoldi iteration. One possibility
+!  is to increase the size of NCV relative to NEV.
+!  See remark 4 below.
+!  = -1: N must be positive.
+!  = -2: NEV must be positive.
+!  = -3: NCV-NEV >= 2 and less than or equal to N.
+!  = -4: The maximum number of Arnoldi update iteration
+!  must be greater than zero.
+!  = -5: arp_which must be one of 'LM', 'SM', 'LR', 'SR', 'LI', 'SI'
+!  = -6: arp_bmat must be one of 'I' or 'G'.
+!  = -7: Length of private work array is not sufficient.
+!  = -8: Error return from LAPACK eigen_modesue calculation;
+!  = -9: Starting vector is zero.
+!  = -10: IPARAM(7) must be 1,2,3,4.
+!  = -11: IPARAM(7) = 1 and arp_bmat = 'G' are incompatable.
+!  = -12: IPARAM(1) must be equal to 0 or 1.
+!  = -9999: Could not build an Arnoldi factorization.
+!  IPARAM(5) returns the size of the current Arnoldi
+!  factorization.
 
-!      ---------------------------------------------------
+!  ---------------------------------------------------
 
 
 
@@ -117,13 +117,13 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
 
    neq_32 = int(neq, 4)
 
-   call zcopy(neq_32, x, 1, vect1, 1)                ! LAPACK routine
-   call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat2)   ! Local routine: vec2 = mat2.vect1
+   call zcopy(neq_32, x, 1, vect1, 1)                !  LAPACK routine
+   call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat2)   !  Local routine: vec2 = mat2.vect1
 
    rhs_re = realpart(vect2)
    rhs_im = imagpart(vect2)
 
-!       solve Ax=b, without iterative refinement (UMFPACK_A)
+!  solve Ax=b, without iterative refinement (UMFPACK_A)
    !sys = 0
    call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, &
       umf_numeric, umf_control, umf_info)
@@ -144,49 +144,49 @@ end subroutine
 
 
 
-!     ------------------------------------------------------------------
-!
-!                    sous-routine VALPR_64.
-!                                 ------
-!     gere l'utilisation de ARPACK
-!
-!     ------------------------------------------------------------------
-!
+!  ------------------------------------------------------------------
 
-!     Input Parameters:
-!     -----------------
-!
-!     dim_krylov (I)              : dimension of the Krylov space
-!     n_modes (I)            : number of desired eigenvalues
-!     neq (I)                : number of equations
-!     workd (DP)             : working matrix for dnaupd,
-!                              size 3 * neq
-!     resid (DP)             : working vector for dnaupd,
-!                              size neq
-!     v (DP)                 : matrix of Schur vectors,
-!                              size neq * dim_krylov
-!     asup, ainf, adiag (DP) : storage of the tangent matrix
-!     msup, minf, mdiag (DP) : storage of the mass matrix
-!     kld (I)                : vector of column start locations
-!     vect1, vect2, vect3 (DP) : working vectors,
-!                              size neq
-!     long (I)               : length of super-vectors for
-!                              the matrices
-!     ddot (DP)              : function called to compute
-!                              the dot product
-!     workl (DP)              : working space for dnaupd,
-!                              size lworkl >= 3 * dim_krylov^2 + 6 * dim_krylov
-!     action                 : 0: restart with a random vector
-!                              1: read an initial vector
-!
-!
-!     Output Parameters:
-!     ------------------
-!
-!     reel (DP)              : real parts, size dim_krylov
-!     imag (DP)              : imaginary parts, size dim_krylov
-!
-!     ------------------------------------------------------------------
+!  sous-routine VALPR_64.
+!  ------
+!  gere l'utilisation de ARPACK
+
+!  ------------------------------------------------------------------
+
+
+!  Input Parameters:
+!  -----------------
+
+!  dim_krylov (I)              : dimension of the Krylov space
+!  n_modes (I)            : number of desired eigenvalues
+!  neq (I)                : number of equations
+!  workd (DP)             : working matrix for dnaupd,
+!  size 3 * neq
+!  resid (DP)             : working vector for dnaupd,
+!  size neq
+!  v (DP)                 : matrix of Schur vectors,
+!  size neq * dim_krylov
+!  asup, ainf, adiag (DP) : storage of the tangent matrix
+!  msup, minf, mdiag (DP) : storage of the mass matrix
+!  kld (I)                : vector of column start locations
+!  vect1, vect2, vect3 (DP) : working vectors,
+!  size neq
+!  long (I)               : length of super-vectors for
+!  the matrices
+!  ddot (DP)              : function called to compute
+!  the dot product
+!  workl (DP)              : working space for dnaupd,
+!  size lworkl >= 3 * dim_krylov^2 + 6 * dim_krylov
+!  action                 : 0: restart with a random vector
+!  1: read an initial vector
+
+
+!  Output Parameters:
+!  ------------------
+
+!  reel (DP)              : real parts, size dim_krylov
+!  imag (DP)              : imaginary parts, size dim_krylov
+
+!  ------------------------------------------------------------------
 !  v = sovled eigvecs
 !  d = solved eigvals
 
@@ -197,8 +197,8 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    rhs_re, rhs_im, lhs_re, lhs_im, &
    n_conv, time_fact, time_arpack, debug, errco, emsg)
 
-   ! mat1 is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
-   ! mat2 is the identity and hopefully never used ?
+   !  mat1 is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
+   !  mat2 is the identity and hopefully never used ?
 
    use numbatmod
    use class_stopwatch
@@ -245,7 +245,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
 
    type(stopwatch) :: clock_main
 
-   ! 32-bit integers for ARPACK
+   !  32-bit integers for ARPACK
    integer(4) neq_32, n_modes_32, dim_krylov_32
    integer(4) arp_ido, arp_info, arp_iparam(11)
    integer(4) ipntr_32(14), lworkl_32
@@ -270,59 +270,59 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
 
    endif
 
-   ! TODO: check this works on intel
+   !  TODO: check this works on intel
    call valpr_allocs(dim_krylov, workev, rwork, select, errco, emsg)
 
 
-   ! alloc_stat = 0
-   ! allocate(workev(3*dim_krylov), rwork(dim_krylov), STAT=alloc_stat)
-   ! if (alloc_stat /= 0) then
-   !    write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
-   !       " for the arrays workev, rwork. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
-   !    errco = NBERROR_101
-   !    return
-   ! endif
+   !  alloc_stat = 0
+   !  allocate(workev(3*dim_krylov), rwork(dim_krylov), STAT=alloc_stat)
+   !  if (alloc_stat /= 0) then
+   !  write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
+   !  " for the arrays workev, rwork. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
+   !  errco = NBERROR_101
+   !  return
+   !  endif
 
-   ! allocate(select(dim_krylov), STAT=alloc_stat)
-   ! if (alloc_stat /= 0) then
-   !    write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
-   !       " for the array select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
-   !    errco = NBERROR_102
-   !    return
-   ! endif
+   !  allocate(select(dim_krylov), STAT=alloc_stat)
+   !  if (alloc_stat /= 0) then
+   !  write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
+   !  " for the array select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
+   !  errco = NBERROR_102
+   !  return
+   !  endif
 
 
    shift2 = C_ONE
 
-   ! TODO: why is this not zeroed to n_modes+1?
+   !  TODO: why is this not zeroed to n_modes+1?
    do i=1,n_modes
       v_evals(i) = 0.0d0
    enddo
 
-!       ----------------------------------------------------------------
-!       factor the matrix and save to a file
-!       ----------------------------------------------------------------
+!  ----------------------------------------------------------------
+!  factor the matrix and save to a file
+!  ----------------------------------------------------------------
 
 
    call clock_main%reset()
 
 
-   !     umfpack * report status (print level = umf_control(1)) :
-   !     print level = 0 or less : No output, even when an error occurs.
-   !     print level = 1 (default value) : then error messages are printed,
-   !                      and nothing is printed if the status is UMFPACK OK.
-   !     print level = 2 or more : then the status is always printed.
+   !  umfpack * report status (print level = umf_control(1)) :
+   !  print level = 0 or less : No output, even when an error occurs.
+   !  print level = 1 (default value) : then error messages are printed,
+   !  and nothing is printed if the status is UMFPACK OK.
+   !  print level = 2 or more : then the status is always printed.
    !
-   !       print umf_control parameters.  set umf_control (1) to 1 to print
-   !       error messages only
-   call umf4zdef (umf_control)    ! load default UMFPACK umf_control parameters
-   umf_control (1) = 1            ! print only on errors (2 for everything)
-   call umf4zpcon (umf_control)   ! print umf_control parameters (null op if umf_control(1)=1)
+   !  print umf_control parameters.  set umf_control (1) to 1 to print
+   !  error messages only
+   call umf4zdef (umf_control)    !  load default UMFPACK umf_control parameters
+   umf_control (1) = 1            !  print only on errors (2 for everything)
+   call umf4zpcon (umf_control)   !  print umf_control parameters (null op if umf_control(1)=1)
 
 
-   ! Pre-order and symbolic analysis
-   ! factors neq x neq matrix  in CSR format with col and row arrays col_ptr, row_ind
-   ! complex entries are in mat1_re and mat1_im
+   !  Pre-order and symbolic analysis
+   !  factors neq x neq matrix  in CSR format with col and row arrays col_ptr, row_ind
+   !  complex entries are in mat1_re and mat1_im
    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
       symbolic, umf_control, umf_info)
 
@@ -333,8 +333,8 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
       return
    endif
 
-   ! print statistics computed so far
-   ! call umf4zpinf (umf_control, umf_info) could also be done.
+   !  print statistics computed so far
+   !  call umf4zpinf (umf_control, umf_info) could also be done.
    if (debug .eq. 1) then
       write(ui,80) umf_info (1), umf_info (16),&
       &(umf_info (21) * umf_info (4)) / 2**20,&
@@ -385,18 +385,18 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
 
 
 
-   call umf4zfsym (symbolic)   ! free the symbolic analysis
+   call umf4zfsym (symbolic)   !  free the symbolic analysis
 
    call clock_main%stop()
    time_fact = clock_main%cpu_time()
 
 
 
-! The arp_ido parameter is used for reverse communication.
-! Initially, it should be set to 0.
+!  The arp_ido parameter is used for reverse communication.
+!  Initially, it should be set to 0.
 
-! Setting arp_info to 0 instructs ARPACK to construct an initial vector with random components.
-! Setting arp_iparam(1) to 1 indicates that ARPACK should calculate translations
+!  Setting arp_info to 0 instructs ARPACK to construct an initial vector with random components.
+!  Setting arp_iparam(1) to 1 indicates that ARPACK should calculate translations
 !  based on the projected matrix and according to the "arp_which criterion.
 
 
@@ -407,21 +407,21 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    lworkl_32 = int(lworkl, 4)
 
    arp_ido = 0
-   arp_iparam(1) = 1                 ! exact shift strategy
-   arp_iparam(3) = int(itermax, 4)   ! max iterations
-!      arp_iparam(7) = 3
-   arp_iparam(7) = 1                 ! comp mode: matrix-vec products only, no shift?
-   arp_info = 0                      ! Random initial candidate vector
+   arp_iparam(1) = 1                 !  exact shift strategy
+   arp_iparam(3) = int(itermax, 4)   !  max iterations
+!  arp_iparam(7) = 3
+   arp_iparam(7) = 1                 !  comp mode: matrix-vec products only, no shift?
+   arp_info = 0                      !  Random initial candidate vector
 
 
 
 !----------------------------------------------------
-!    Main loop in inverse communication mode
+!  Main loop in inverse communication mode
 !----------------------------------------------------
 
    call clock_main%reset()
-   arp_bmat = 'I'    ! plain (not generalised) eigenvalue problem
-   arp_which = 'LM'  ! seek largest magnitude eigs
+   arp_bmat = 'I'    !  plain (not generalised) eigenvalue problem
+   arp_which = 'LM'  !  seek largest magnitude eigs
 
    arp_active = .true.
 
@@ -430,12 +430,12 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
          resid, dim_krylov_32, v_schur, neq_32, arp_iparam,&
          ipntr_32, workd, workl, lworkl_32, rwork, arp_info)
 
-      if (arp_ido .eq. -1 .or. arp_ido .eq. 1) then   ! Request for y = OP*x = inv[A-SIGMA*M]*M*x
+      if (arp_ido .eq. -1 .or. arp_ido .eq. 1) then   !  Request for y = OP*x = inv[A-SIGMA*M]*M*x
 
          !------------------------------------------------------
-         ! Apply  y <--- OP*x = inv[A-SIGMA*M]*M*x
-         ! with x at x = workd(ipntr_32(1))
-         ! and place the result at  y = workd(ipntr_32(2))           |
+         !  Apply  y <--- OP*x = inv[A-SIGMA*M]*M*x
+         !  with x at x = workd(ipntr_32(1))
+         !  and place the result at  y = workd(ipntr_32(2))           |
          !------------------------------------------------------
 
          call apply_arpack_OPx(neq, workd(ipntr_32(1)), workd(ipntr_32(2)), &
@@ -443,14 +443,14 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
             lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
 
-      else if (arp_ido .eq. 2) then  ! Request for y = M*x    !TODO:  IO don't think this ever happens for bmat=I, ie M=I
+      else if (arp_ido .eq. 2) then  !  Request for y = M*x    !TODO:  IO don't think this ever happens for bmat=I, ie M=I
 
          write(ui,*) 'VALPR_64: ATTENTION arp_ido = ', arp_ido
          write(ui,*) 'check the results...'
 
          !----------------------------------------------
-         ! On execute  y <--- M*x
-         ! x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2))
+         !  On execute  y <--- M*x
+         !  x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2))
          !----------------------------------------------
 
          call zcopy(neq_32, workd(ipntr_32(1)), 1, vect1, 1)
@@ -459,7 +459,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
          rhs_re = realpart(vect2)
          rhs_im = imagpart(vect2)
 
-         ! solve Ax=b, without iterative refinement
+         !  solve Ax=b, without iterative refinement
          call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
          if (umf_info (1) .lt. 0) then
             write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
@@ -471,13 +471,13 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
 
          call zcopy(neq_32, vect2, 1, workd(ipntr_32(2)), 1)
 
-      else ! we are done, for better or worse
+      else !  we are done, for better or worse
          arp_active = .false.
       end if
    end do
 
    !--------------------------------------------------
-   ! Either we have convergence, or there is an error. |
+   !  Either we have convergence, or there is an error. |
    !---------------------------------------------------
 
    n_conv = arp_iparam(5)
@@ -501,9 +501,9 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
       endif
       write(ui,*) "VALPR_64: For details on znaupd errors see",&
       &" https://www.caam.rice.edu/software/ARPACK/UG/node138.html"
-!        write(ui,*) "VALPR_64: arp_iparam(5) = ", arp_iparam(5), n_modes_32
-!        write(ui,*) "VALPR_64: number of converged values = ",
-!     *                arp_iparam(5)
+!  write(ui,*) "VALPR_64: arp_iparam(5) = ", arp_iparam(5), n_modes_32
+!  write(ui,*) "VALPR_64: number of converged values = ",
+!  *                arp_iparam(5)
       write(ui,*)
    endif
 
@@ -516,9 +516,9 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
       return
    else
 
-      ! Get the final eigenvectors
+      !  Get the final eigenvectors
       !'A' means get the actual eigenvectors, not just schur/arnolid vectors
-      rvec = .true. ! get the full set of vectors
+      rvec = .true. !  get the full set of vectors
 
       !TODO:  v_schur appears twice in here, feels weird.
       call zneupd (rvec, 'A', select,  v_evals, v_schur, neq_32, shift2, &
@@ -526,12 +526,12 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
          resid, dim_krylov_32, v_schur, neq_32, arp_iparam, ipntr_32, &
          workd, workl, lworkl_32, rwork, arp_info)
 
-      ! Eigenvalues and eigenvectors:
-      ! The real part of an eigenvalue is listed in the first column of the D table.
-      ! The imaginary part of an eigenvalue is listed in the second column of the D table.
-      ! The eigenvectors are stored in the first n_modes_32 columns of the V table
-      ! when the rvec option is set to true.
-      ! Otherwise, the V table contains an orthogonal basis of the eigenspace.
+      !  Eigenvalues and eigenvectors:
+      !  The real part of an eigenvalue is listed in the first column of the D table.
+      !  The imaginary part of an eigenvalue is listed in the second column of the D table.
+      !  The eigenvectors are stored in the first n_modes_32 columns of the V table
+      !  when the rvec option is set to true.
+      !  Otherwise, the V table contains an orthogonal basis of the eigenspace.
 
       if (arp_info .eq. 0) then
          v_evecs = v_schur
@@ -542,7 +542,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    endif
 
 
-   call umf4zfnum (umf_numeric)   ! free the umf_numeric factorization
+   call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
 
    deallocate(workev, rwork, STAT=alloc_stat)
    deallocate(select)

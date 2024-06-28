@@ -43,15 +43,15 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
    else
       i_base2 = 0
    endif
-!
+
    if (nnodes .ne. 6 ) then
       write(*,*) "asmbly_AC: problem nnodes = ", nnodes
       write(*,*) "asmbly_AC: nnodes should be equal to 6 !"
       write(*,*) "asmbly_AC: Aborting..."
       stop
    endif
-!
-!cccccccccccccccccccccccccccccccccccccc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
 
 
    mat1_re  = D_ZERO
@@ -60,7 +60,7 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 
    !
 !#####################  Loop over Elements  ##########################
-!
+
    do iel=1,nel
 
 
@@ -73,15 +73,15 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
 
       rho_el = rho(typ_e)
 
-      ! do j=1,6
-      !    do i=1,6
-      !       c_tensor_el(i,j) = c_tensor(i,j,typ_e)
-      !    enddo
-      ! enddo
+      !  do j=1,6
+      !  do i=1,6
+      !  c_tensor_el(i,j) = c_tensor(i,j,typ_e)
+      !  enddo
+      !  enddo
 
       c_tensor_el = c_tensor(:,:,typ_e)
 
-!       If c_tensor has regular symmetries use more efficient formulation
+!  If c_tensor has regular symmetries use more efficient formulation
 
       if (symmetry_flag .eq. 1) then
          call mat_el_v2 (xel,beta,c_tensor_el,rho_el,mat_K,mat_M)
@@ -102,7 +102,7 @@ subroutine asmbly_AC (i_base, nel, npt, neq, nnodes, shift, beta, nb_typ_el, rho
                col_start = col_ptr(ind_jp) + i_base2
                col_end = col_ptr(ind_jp+1) - 1 + i_base2
 
-!             unpack row into i_work
+!  unpack row into i_work
                do i=col_start,col_end
                   i_work(row_ind(i) + i_base2) = i
                enddo

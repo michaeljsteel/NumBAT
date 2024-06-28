@@ -1,15 +1,15 @@
 
-!
-!   type_nod = 0  => interior node
-!   type_nod != 0 => boundary node
-!
-!   i_cond = 0 => Dirichlet boundary condition (E-field: electric wall condition)
-!   i_cond = 1 => Neumann boundary condition (E-field: magnetic wall condition)
-!   i_cond = 2 => Periodic boundary condition
-!
-!
 
-!     This subroutine set the boundary condition parameters
+!  type_nod = 0  => interior node
+!  type_nod != 0 => boundary node
+
+!  i_cond = 0 => Dirichlet boundary condition (E-field: electric wall condition)
+!  i_cond = 1 => Neumann boundary condition (E-field: magnetic wall condition)
+!  i_cond = 2 => Periodic boundary condition
+
+
+
+!  This subroutine set the boundary condition parameters
 
 subroutine bound_cond_AC (i_cond, npt, neq, type_nod, ineq)
 
@@ -20,13 +20,13 @@ subroutine bound_cond_AC (i_cond, npt, neq, type_nod, ineq)
    integer(8) i
    logical is_interior
 
-   if(i_cond .eq. BCS_DIRICHLET) then   ! all interior points have a degree of freedom
+   if(i_cond .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
 
        neq = 0
       do i=1,npt
          is_interior = type_nod(i) == 0
 
-         if (is_interior ) then ! each element is associated to 3 interior DOF
+         if (is_interior ) then !  each element is associated to 3 interior DOF
             ineq(1,i) = neq + 1
             ineq(2,i) = neq + 2
             ineq(3,i) = neq + 3
@@ -37,7 +37,7 @@ subroutine bound_cond_AC (i_cond, npt, neq, type_nod, ineq)
             ineq(3,i) = 0
          endif
       enddo
-   elseif(i_cond .eq. BCS_NEUMANN) then ! all points have a degree of freedom
+   elseif(i_cond .eq. BCS_NEUMANN) then !  all points have a degree of freedom
       neq = 0
       do i=1,npt
          ineq(1,i) = neq + 1
@@ -46,6 +46,6 @@ subroutine bound_cond_AC (i_cond, npt, neq, type_nod, ineq)
          neq = neq + 3
       enddo
    endif
-!
+
    return
 end

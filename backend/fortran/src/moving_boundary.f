@@ -1,5 +1,5 @@
 c
-cccccccccccccccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival1,
      *    ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
@@ -58,12 +58,12 @@ Cf2py depend(eps_lst) nb_typ_el
 C
 Cf2py intent(out) overlap
 C
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c     typ_select_in: Only the elements iel with type_el(iel)=typ_select_in will be analysed
 c     When nb_visited(j) is not zero: nb_visited(j) indicates the number of element the edge j belongs
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 
 
@@ -75,7 +75,7 @@ c     Initialisation
         edge_direction(inod) = 0
       enddo
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       edge_endpoints(1,1) = 1
       edge_endpoints(2,1) = 2
@@ -90,7 +90,7 @@ C     i = 1 is inod = 4 etc
       opposite_node(2) = 1
       opposite_node(3) = 2
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       do i=1,nval_EM_S
         do j=1,nval_EM_p
           do k=1,nval_AC
@@ -105,10 +105,10 @@ C
       do iel=1,nel
         typ_e = type_el(iel)
         if(typ_e == typ_select_in) then
-C           ! Scan the edges
+C           !  Scan the edges
           do inod=4,6
             j = table_nod(inod,iel)
-C             ! Will indicate the number of
+C             !  Will indicate the number of
             nb_visited(j) = nb_visited(j) + 1
           enddo
         endif
@@ -133,7 +133,7 @@ c     Outward pointing normal vector to the interface edges
       do iel=1,nel
         typ_e = type_el(iel)
         if(typ_e == typ_select_in) then
-C           ! Scan the edges
+C           !  Scan the edges
           do inod=4,6
             j = table_nod(inod,iel)
             if (nb_visited(j) == 1) then
@@ -179,7 +179,7 @@ c             if r_tmp < 0: then edge_perp is oriented in the outward direction
         endif
       enddo
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 c     Numerical integration
       do iel=1,nel
@@ -191,7 +191,7 @@ c     Numerical integration
           else
             eps_b = eps_lst(typ_select_out)
           endif
-C           ! Scan the edges
+C           !  Scan the edges
           do inod=4,6
             j = table_nod(inod,iel)
             xy_3(1) = x(1,j)
@@ -205,17 +205,17 @@ C               write(*,*) "an edge"
               xy_2(1) = x(1,inod_2)
               xy_2(2) = x(2,inod_2)
 c             List of the nodes coordinates
-C               ! x-coord. of node 1
+C               !  x-coord. of node 1
               ls_xy(1,1) = xy_1(1)
-C               ! y-coord. of node 1
+C               !  y-coord. of node 1
               ls_xy(2,1) = xy_1(2)
-C               ! x-coord. of node 2
+C               !  x-coord. of node 2
               ls_xy(1,2) = xy_2(1)
-C               ! y-coord. of node 2
+C               !  y-coord. of node 2
               ls_xy(2,2) = xy_2(2)
-C               ! x-coord. of mid-edge node
+C               !  x-coord. of mid-edge node
               ls_xy(1,3) = xy_3(1)
-C               ! y-coord. of mid-edge node
+C               !  y-coord. of mid-edge node
               ls_xy(2,3) = xy_3(2)
 c
               edge_vec(1) = ls_xy(1,2) - ls_xy(1,1)
@@ -578,7 +578,7 @@ C Loop over elements - end
 cccccccccccc
       enddo
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 C       open (unit=26,file="Output/edge_data.txt")
 C       write(26,*)
@@ -598,14 +598,14 @@ C         endif
 C       enddo
 C       close(26)
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
 C       debug = 1
 C       if (debug .eq. 1) then
 C         version_number = 2.2
-C ! An integer equal to 0 in the ASCII file format
+C !  An integer equal to 0 in the ASCII file format
 C         file_type = 0
-C ! An integer equal to the size of the floating point numbers used in the file
+C !  An integer equal to the size of the floating point numbers used in the file
 C         data_size = 8
 C         open (unit=27,file="../Output/edge_data.msh")
 C         write(27,'(a11)') "$MeshFormat"
@@ -627,7 +627,7 @@ C         enddo
 C         write(27,'(a9)') "$EndNodes"
 C         write(27,'(a9)') "$Elements"
 C         write(27,'(I0.1)') nb_interface_edges
-C ! 1-node point
+C !  1-node point
 C         element_type = 15
 C         number_of_tags = 2
 C         j = 0
@@ -651,11 +651,11 @@ C         write(27,*) " ""View of tangential vector"" "
 C         write(27,*) number_of_real_tags
 C         write(27,*) 0.0
 C         write(27,*) number_of_integer_tags
-C ! the time step (0; time steps always start at 0)
+C !  the time step (0; time steps always start at 0)
 C         write(27,*) 0
-C ! 3-component (vector) field
+C !  3-component (vector) field
 C         write(27,*) 3
-C ! Number of associated nodal values
+C !  Number of associated nodal values
 C         write(27,*) nb_interface_edges
 C c        node-number value
 C         zz = 0.0d0
@@ -680,7 +680,7 @@ C           endif
 C         enddo
 C         write(27,'(a12)') "$EndNodeData"
 C c
-C ccccccccccccccccccccccccccccccccccccc
+C  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C c
 C         write(27,'(a9)') "$NodeData"
 C         write(27,*) number_of_string_tags
@@ -688,11 +688,11 @@ C         write(27,*) " ""View of the normal vector"" "
 C         write(27,*) number_of_real_tags
 C         write(27,*) 0.0
 C         write(27,*) number_of_integer_tags
-C ! the time step (0; time steps always start at 0)
+C !  the time step (0; time steps always start at 0)
 C         write(27,*) 0
-C ! 3-component (vector) field
+C !  3-component (vector) field
 C         write(27,*) 3
-C ! Number of associated nodal values
+C !  Number of associated nodal values
 C         write(27,*) nb_interface_edges
 C c        node-number value
 C         zz = 0.0d0
@@ -724,6 +724,6 @@ C         write(27,'(a12)') "$EndNodeData"
 C         close(27)
 C       endif
 c
-ccccccccccccccccccccccccccccccccccccc
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 c
       end subroutine moving_boundary

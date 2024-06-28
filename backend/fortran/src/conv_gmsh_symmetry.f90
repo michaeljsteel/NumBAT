@@ -1,6 +1,6 @@
 subroutine symmetry(n_pts, ne, max_n_gelts_triangs, idfn, nu, typ_el, x, y, i_sym)
 
-   !!    symmetry: symmetrize an FEM mesh!c*******************************************************
+   !!  symmetry: symmetrize an FEM mesh!c*******************************************************
 
    use numbatmod
    integer i_sym, max_n_gelts_triangs
@@ -83,7 +83,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
 
    integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
-   double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!    Local variables
+   double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!  Local variables
    integer i, i1, i2, i_a, i_b, j, j1, j2
    integer ne_1, n_pts_1, n_pts_2
    integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
@@ -101,7 +101,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
       if(y_0(i) .gt. y_max) y_max = y_0(i)
    enddo
 
-   !    Selecting points in upper half of the domain
+   !  Selecting points in upper half of the domain
    tol = 1.0d-7
    y_mid = (y_min+y_max)/2.0d0
    i1 = 0
@@ -111,7 +111,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
          i1 = i1 + 1
          tab_n_pts(i,1) = i1
          if(Abs(y_0(i)-y_mid) .le. tol) then
-            !          No duplication for a point on the symmetry line
+            !  No duplication for a point on the symmetry line
             i2 = i2 + 1
             tab_n_pts(i,2) = 1
          else
@@ -124,7 +124,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
    enddo
    n_pts_1 = i1
    n_pts_2 = i2
-   n_pts = 2*i1 - i2!!    Selecting triangles in upper half of the domain
+   n_pts = 2*i1 - i2!!  Selecting triangles in upper half of the domain
    i1 = 0
    do i=1,ne_0
       i2 = 0
@@ -142,7 +142,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
    enddo
    ne_1 = i1
    ne = 2*i1
-   !!    Generating the symmetrized FEM mesh
+   !!  Generating the symmetrized FEM mesh
    i_b = n_pts_1
    do i=n_pts_0,1,-1
       tab_n_pts(i,3) = 0
@@ -153,7 +153,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
       y_b = 2.0d0*y_mid - y_a
 
       i_a = tab_n_pts(i,1)
-      !       i_b = n_pts - i_a + 1
+      !  i_b = n_pts - i_a + 1
       i1 = tab_n_pts(i,2)
 
       if(i_a .gt. 0) then
@@ -169,7 +169,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
             if(idfn(i_b) .eq. 1) idfn(i_b) = 2
          endif
       endif
-   enddo!ccccccccccccccccccccccc
+   enddo!!!!!!!!!!!!!!!!!!!!!!!!!!c
    i_b = ne_1
    do i=ne_0,1,-1
       i_a = tab_ne(i)
@@ -188,7 +188,7 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
                t_nodes_b(j) = j1
             elseif(j2 .eq. 2) then
                t_nodes_b(j) = tab_n_pts(t_nodes_0(j),3)
-               !             t_nodes_b(j) = n_pts - j1 + 1
+               !  t_nodes_b(j) = n_pts - j1 + 1
             else
                open (unit=ui,file=file_ui)
                write(*,*) 'SYMMETRY: tab_n_pts(i,2) = ', j2
@@ -201,13 +201,13 @@ subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, 
          enddo
          typ_el(i_a) = typ_el_0(i)
 
-         !         i_b = ne - i_a + 1
+         !  i_b = ne - i_a + 1
          if(i_a .gt. ne/2) stop
          do j=1,3
             nu(j,i_b) = t_nodes_b(3-j+1)
             nu(j+3,i_b) = t_nodes_b(6-j+1)
-         enddo!!      Symmetry reverses the orientation
-         !      so we must reverse the numbering to get the positive orientation
+         enddo!!  Symmetry reverses the orientation
+         !  so we must reverse the numbering to get the positive orientation
 
          nu(1,i_b) = t_nodes_b(1)
          nu(2,i_b) = t_nodes_b(3)
@@ -236,7 +236,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
 
    integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
-   double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!    Local variables
+   double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!  Local variables
    integer i, i1, i2, i_a, i_b, j, j1, j2
    integer ne_1, n_pts_1, n_pts_2
    integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
@@ -254,7 +254,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
       if(x_0(i) .gt. x_max) x_max = x_0(i)
    enddo
 
-   !    Selecting points in upper half of the domain
+   !  Selecting points in upper half of the domain
    tol = 1.0d-7
    x_mid = (x_min+x_max)/2.0d0
    i1 = 0
@@ -264,7 +264,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
          i1 = i1 + 1
          tab_n_pts(i,1) = i1
          if(Abs(x_0(i)-x_mid) .le. tol) then
-            !          No duplication for a point on the symmetry line
+            !  No duplication for a point on the symmetry line
             i2 = i2 + 1
             tab_n_pts(i,2) = 1
          else
@@ -277,7 +277,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
    enddo
    n_pts_1 = i1
    n_pts_2 = i2
-   n_pts = 2*i1 - i2!!    Selecting triangles in left half of the domain
+   n_pts = 2*i1 - i2!!  Selecting triangles in left half of the domain
    i1 = 0
    do i=1,ne_0
       i2 = 0
@@ -295,7 +295,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
    enddo
    ne_1 = i1
    ne = 2*i1
-   !!    Generating the symmetrized FEM mesh
+   !!  Generating the symmetrized FEM mesh
    i_b = n_pts_1
    do i=n_pts_0,1,-1
       tab_n_pts(i,3) = 0
@@ -321,7 +321,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
             if(idfn(i_b) .eq. 3) idfn(i_b) = 4
          endif
       endif
-   enddo!ccccccccccccccccccccccc!         i_b = ne_1
+   enddo!!!!!!!!!!!!!!!!!!!!!!!!!!c!  i_b = ne_1
    do i=ne_0,1,-1
       i_a = tab_ne(i)
       if(i_a .gt. 0) then
@@ -339,7 +339,7 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
                t_nodes_b(j) = j1
             elseif(j2 .eq. 2) then
                t_nodes_b(j) = tab_n_pts(t_nodes_0(j),3)
-               !             t_nodes_b(j) = n_pts - j1 + 1
+               !  t_nodes_b(j) = n_pts - j1 + 1
             else
                open (unit=ui,file=file_ui)
                write(*,*) 'SYMMETRY_X: tab_n_pts(i,2) = ', j2
@@ -352,13 +352,13 @@ subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, t
          enddo
          typ_el(i_a) = typ_el_0(i)
 
-         !         i_b = ne - i_a + 1
+         !  i_b = ne - i_a + 1
          if(i_a .gt. ne/2) stop
          do j=1,3
             nu(j,i_b) = t_nodes_b(3-j+1)
             nu(j+3,i_b) = t_nodes_b(6-j+1)
-         enddo!!      Symmetry reverses the orientation
-         !      so we must reverse the numbering to get the positive orientation
+         enddo!!  Symmetry reverses the orientation
+         !  so we must reverse the numbering to get the positive orientation
 
          nu(1,i_b) = t_nodes_b(1)
          nu(2,i_b) = t_nodes_b(3)

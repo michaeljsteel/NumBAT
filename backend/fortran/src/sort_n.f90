@@ -1,7 +1,7 @@
 
-!    This a modification of the program indexx.f
+!  This a modification of the program indexx.f
 
-!     Sort an array in increasing order
+!  Sort an array in increasing order
 
 SUBROUTINE sort_n(n,arr,indx)
 

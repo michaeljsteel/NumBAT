@@ -51,7 +51,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
       debug = 0
@@ -163,7 +163,7 @@ C Multiply through prefactor
         overlap(i) = 2.0 * overlap(i) * SI_EPS_0
       enddo
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C
       end subroutine EM_mode_E_energy_int

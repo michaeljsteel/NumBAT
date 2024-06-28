@@ -1,37 +1,37 @@
 #include "numbat_decl.h"
 
-! Solves the electromagnetic FEM problem defined in
-!   Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
-!
+!  Solves the electromagnetic FEM problem defined in
+!  Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
+
 !  The weak formulation of Maxwell wave equation is in Eqs 14, 15.
 !  \langle 1/\mu (\nabla_t \times E_t), (\nabla_t \times F_t) \rangle
-!        - \omega^2 \langle (\epsilon E_t, F_t)
-!             = \beta^2 \langle 1/\mu (\nabla_t hE_z -E_t, F_t), \rangle
-!
+!  - \omega^2 \langle (\epsilon E_t, F_t)
+!  = \beta^2 \langle 1/\mu (\nabla_t hE_z -E_t, F_t), \rangle
+
 !  \langle 1/\mu E_t, \nabla_t F_z \rangle
-!        - \langle 1/\mu\nabla_t hE_z, \nabla_t F_z \rangle
-!           + \omega^2 \langle\eps hE_z, F_z\rangle =0
-!
-! where \hE_z = -1/\beta E_z
-!
-! The fields are expanded in in-plane vector and longitudinal scalar elements
-!        \vecphi_h and \psi_h:
-! E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
-! F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
-!
-! Then  inner product (L_1 E, L_2 F) is evaluted:
-! (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
-!       = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
-!                     +  ((L_2 F)_z)^* . ((L_1 E)_z)
-!
-!       = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
-!                     +  ((L_2 F)_z)^* . ((L_1 E)_z)
-!
-! This translates to the geneig problem (eq 40)
-!
+!  - \langle 1/\mu\nabla_t hE_z, \nabla_t F_z \rangle
+!  + \omega^2 \langle\eps hE_z, F_z\rangle =0
+
+!  where \hE_z = -1/\beta E_z
+
+!  The fields are expanded in in-plane vector and longitudinal scalar elements
+!  \vecphi_h and \psi_h:
+!  E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
+!  F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
+
+!  Then  inner product (L_1 E, L_2 F) is evaluted:
+!  (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
+!  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+!  +  ((L_2 F)_z)^* . ((L_1 E)_z)
+
+!  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+!  +  ((L_2 F)_z)^* . ((L_1 E)_z)
+
+!  This translates to the geneig problem (eq 40)
+
 !  [ K_tt   0 ] [ E_t,h]  = \beta^2  [M_tt   (K_zt)^T] [E_t,h]
 !  [ 0      0 ] [ hE_z,h]            [K_zt    K_zz   ] [hE_z,h]
-!
+
 
 
 
@@ -100,7 +100,7 @@ contains
       complex(8), dimension(:), allocatable :: b_zwork
       double precision, dimension(:), allocatable :: c_dwork
       double precision, dimension(:,:), allocatable :: d_dwork
-      double precision, dimension(:), allocatable :: e_dwork  ! take over work from b_zwork but have same shape
+      double precision, dimension(:), allocatable :: e_dwork  !  take over work from b_zwork but have same shape
 
       integer(8), dimension(:), allocatable :: iindex
       complex(8), dimension(:,:), allocatable :: overlap_L
@@ -127,7 +127,7 @@ contains
       integer(8) n_conv, i_base
       !double precision ls_data(10)
 
-      integer(8) n_core(2)  ! index of highest epsilon material, seems funky
+      integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       integer(8) n_edge, n_face, n_ddl, n_ddl_max
 
 
@@ -163,12 +163,12 @@ contains
       ui_out = stdout
 
 
-      ! TODO: unallocated arrays can not be passed as function arguments
-      ! Can be done by quasi-globals variables in a module
+      !  TODO: unallocated arrays can not be passed as function arguments
+      !  Can be done by quasi-globals variables in a module
 
       if (alloc_remote > 0) then
          !call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
-         !   a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
+         !  a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
          !RETONERROR(errco)
          write(ui_out,*) 'alloc remote in calc_em_impl is broken'
          call exit(1)
@@ -212,8 +212,8 @@ contains
 
 
 
-!  nsym = 1 ! nsym = 0 => symmetric or hermitian matrices
-!
+!  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
+
 
       dim_krylov = 2*n_modes + n_modes/2 +3
 
@@ -223,40 +223,40 @@ contains
       dim_x = dimscale_in_m
       dim_y = dimscale_in_m
 
-      ! Fill:  mesh_xy, type_nod, type_el, table_nod
+      !  Fill:  mesh_xy, type_nod, type_el, table_nod
       call construct_fem_node_tables (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
          mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
-      ! Storage locations in sequence
+      !  Storage locations in sequence
       !  - table_edge_face = a_iwork(ip_table_N_E_F),   shape: 14 x n_msh_el
       !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max = npt + n_msh_el = 4 n_msh_el
       !  - table_edges     = a_iwork(ip_table_E)        shape: 4 x n_msh_pts
       !
-      !   visited is used as workspace. has no meaning between functions
+      !  visited is used as workspace. has no meaning between functions
       !
-      !   V = number of vertices
-      !   E = number of edges
-      !   F = number of faces
-      !   C = number of cells (3D, tetrahedron)
+      !  V = number of vertices
+      !  E = number of edges
+      !  F = number of faces
+      !  C = number of cells (3D, tetrahedron)
       !
       !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
       !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
       !
-      ! neq and nonz are some kind of dimension for the left and right eigenoperators
+      !  neq and nonz are some kind of dimension for the left and right eigenoperators
 
-      ! TODO: move next three calls into a single  construct_table_N_E_F procedure
+      !  TODO: move next three calls into a single  construct_table_N_E_F procedure
 
-      ! Fills:  table_edge_face[1,:]
+      !  Fills:  table_edge_face[1,:]
       ip_table_N_E_F = 1
       call list_face (n_msh_el, a_iwork(ip_table_N_E_F))
 
       !  n_ddl_max = max(N_Vertices) + max(N_Edge) + max(N_Face)
       !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
       !  note: each element has 1 face, 3 edges and 10 P3 nodes
-      !        so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
+      !  so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
 
-      ! each element is a face
+      !  each element is a face
       n_face = n_msh_el
 
       n_ddl_max = n_msh_pts + n_face
@@ -264,17 +264,17 @@ contains
       ip_visited =  ip_table_N_E_F  + 14*n_msh_el
       ip_table_E = ip_visited + n_ddl_max
 
-      ! Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
-      ! Todo! move n_edge later in list as an out variable
+      !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
+      !  Todo!  move n_edge later in list as an out variable
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
          a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
-      ! Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
-      ! Todo: move n_msh_pts_p3 later
+      !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
+      !  Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
 
-      ! TODO: what is signif of this quanitty?
+      !  TODO: what is signif of this quanitty?
       n_ddl = n_edge + n_face + n_msh_pts_p3
 
 
@@ -291,20 +291,20 @@ contains
 
 
 !C  overwriting pointers ip_row_ptr, ..., ip_adjncy
-!
-      ip_type_N_E_F = ip_table_E + 4*n_edge   ! not sure why 4* n_edge, not 4*n_msh_pts?
-!
 
-      ! TODO:
+      ip_type_N_E_F = ip_table_E + 4*n_edge   !  not sure why 4* n_edge, not 4*n_msh_pts?
+
+
+      !  TODO:
       !  ip is an index into an a_iwork, make this clearer!
       !  jp is an index into an b_zwork
       !  kp is an index into an c_dwork
 
-      ! Offsets into the b_zwork workspace
+      !  Offsets into the b_zwork workspace
       jp_x_N_E_F = 1
 
 
-      ! Offsets into the a_iwork workspace
+      !  Offsets into the a_iwork workspace
       ip_period_N = ip_type_N_E_F + 2*n_ddl
       ip_nperiod_N = ip_period_N + n_msh_pts
       ip_period_N_E_F = ip_nperiod_N + n_msh_pts
@@ -312,8 +312,8 @@ contains
       ip_eq = ip_nperiod_N_E_F + n_ddl
 
 
-      ! Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-      ! Should be using c_dwork for x_E_F ?
+      !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+      !  Should be using c_dwork for x_E_F ?
       call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_visited), a_iwork(ip_type_N_E_F), mesh_xy, &
       !b_zwork(jp_x_N_E_F) &
@@ -321,7 +321,7 @@ contains
          )
 
 
-      ! Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+      !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, &
       !b_zwork(jp_x_N_E_F), &
@@ -331,7 +331,7 @@ contains
 
 
 
-      ! TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
+      !  TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
          type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, &
       !b_zwork, &
@@ -339,16 +339,16 @@ contains
          int_max, debug)
 
 
-! Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
+!  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
 
-!
+
 !  Sparse matrix storage
-!
+
       ip_col_ptr = ip_eq + 3*n_ddl
 
       call csr_max_length (n_msh_el, n_ddl, neq, nodes_per_el, a_iwork(ip_table_N_E_F), &
          a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
-!
+
 !  ip = ip_col_ptr + neq + 1 + nonz_max
          !ip = ip_col_ptr + neq + 1
          ip_row = ip_col_ptr + neq + 1
@@ -359,7 +359,7 @@ contains
          errco = -11
          return
       endif
-!
+
 
       call csr_length (n_msh_el, n_ddl, neq, nodes_per_el, a_iwork(ip_table_N_E_F), a_iwork(ip_eq), a_iwork(ip_row), &
          a_iwork(ip_col_ptr), nonz_max, nonz, max_row_len, ip_row, int_max, debug)
@@ -390,7 +390,7 @@ contains
 
 
 
-!ccccccccccccccccccccccccccccccccccccccccccccccccc
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       jp_mat2 = jp_x_N_E_F + 3*n_ddl
 
       jp_vect1 = jp_mat2 + nonz
@@ -398,7 +398,7 @@ contains
       jp_workd = jp_vect2 + neq
       jp_resid = jp_workd + 3*neq
 
-!  ! Eigenvectors
+!  Eigenvectors
       jp_vschur = jp_resid + neq
       jp_trav = jp_vschur + neq*dim_krylov
 
@@ -406,14 +406,14 @@ contains
       jp_evecs = jp_trav + ltrav
 
       cmplx_used = jp_evecs + neq*n_modes
-!
+
       if (cmplx_max .lt. cmplx_used)  then
          write(emsg,*)'The size of the complex supervector is too small', 'complex super-vec: int_max  = ', &
             cmplx_max, 'complex super-vec: int_used = ', cmplx_used
          errco = -13
          return
       endif
-!
+
       kp_rhs_re = 1
       kp_rhs_im = kp_rhs_re + neq
       kp_lhs_re = kp_rhs_im + neq
@@ -428,21 +428,21 @@ contains
          errco = -14
          return
       endif
-!
-!
+
+
 !###############################################
-!
+
 !  ----------------------------------------------------------------
 !  convert from 1-based to 0-based
 !  ----------------------------------------------------------------
+
+!  do j = 1, neq+1
+!  a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
+!  end do
+!  do  j = 1, nonz
+!  a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
+!  end do
 !
-! do j = 1, neq+1
-! a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
-! end do
-! do  j = 1, nonz
-! a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
-! end do
-! !
 
       ilo = ip_col_ptr-1 + 1
       ihi = ip_col_ptr-1 + neq + 1
@@ -487,7 +487,7 @@ contains
       call clock_spare%reset()
 
 
-      ! Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
+      !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
          table_nod, a_iwork(ip_table_N_E_F), type_el, &
@@ -505,17 +505,17 @@ contains
 
       call clock_spare%reset()
 
-      ! This is the main solver.
-      ! On completion:
-      !    unshifted unsorted eigenvalues are in p_beta[1..n_modes]
-      !    eigvectors are in are b_zwork[jp_evecs..?]
+      !  This is the main solver.
+      !  On completion:
+      !  unshifted unsorted eigenvalues are in p_beta[1..n_modes]
+      !  eigvectors are in are b_zwork[jp_evecs..?]
 
-      ! TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
+      !  TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
 
       call valpr_64 (i_base, &
-      !b_zwork(jp_vect1), &  ! unused
-      !b_zwork(jp_vect2), &  ! unused
-      !b_zwork(jp_trav), &  ! unused
+      !b_zwork(jp_vect1), &  !  unused
+      !b_zwork(jp_vect2), &  !  unused
+      !b_zwork(jp_trav), &  !  unused
          dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
          c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
          b_zwork(jp_workd), b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_evecs), &
@@ -553,7 +553,7 @@ contains
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
       !b_zwork(jp_x_N_E_F),
-         d_dwork, &  ! this should be an e_ework
+         d_dwork, &  !  this should be an e_ework
          p_beta, mode_pol, b_zwork(jp_evecs), p_sol , errco, emsg)
       RETONERROR(errco)
 
@@ -567,28 +567,28 @@ contains
 
 
 
-      ! ! Doubtful that this check is of any value: delete?
-      ! call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      !    type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &!v_evals_beta_pri, m_evecs_pri,
-      !    overlap_L, overlap_file, debug, ui_out, &
-      !    pair_warning, vacwavenum_k0, errco, emsg)
-      ! RETONERROR(errco)
+      !  Doubtful that this check is of any value: delete?
+      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
+      !  type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &!v_evals_beta_pri, m_evecs_pri,
+      !  overlap_L, overlap_file, debug, ui_out, &
+      !  pair_warning, vacwavenum_k0, errco, emsg)
+      !  RETONERROR(errco)
 
 
-      ! Should this happen _before_ check_ortho?
+      !  Should this happen _before_ check_ortho?
 
 
       !  The z-component must be multiplied by -ii*beta in order to
       !  get the physical, un-normalised z-component
       !  (see Eq. (25) of the JOSAA 2012 paper)
-      ! TODO: is this really supposed to be x i beta , or just x beta  ?
+      !  TODO: is this really supposed to be x i beta , or just x beta  ?
       do i_md=1,n_modes
          !!do iel=1,n_msh_el
          !!  m_evecs_adj(3,inod,i_md,iel) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,iel)
          !!enddo
 
          !do inod=1,nodes_per_el+7
-         !   m_evecs_adj(3,inod,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,:)
+         !  m_evecs_adj(3,inod,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,:)
          !enddo
 
          m_evecs_adj(3,:,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,:,i_md,:)
@@ -598,25 +598,25 @@ contains
 
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
-      ! Normalisation. Can't use this if we don't do check_ortho.  Not needed
-      ! call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, overlap_L)
+      !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
+      !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, overlap_L)
 
       write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
-      !   write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
+      !  write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
       !endif
       !
-      ! !  Orthonormal integral
-      !       if (debug .eq. 1) then
-      !          write(ui_out,*) "py_calc_modes.f: Product of normalised field"
-      !          overlap_file = "Orthogonal_n.txt"
-      !          call get_clocks( systime1_J, time1_J)
-      !          call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-      !             type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, &
-      !             pair_warning, vacwavenum_k0)
-      !          call get_clocks( systime2_J, time2_J)
-      !          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
-      !       endif
+      !  Orthonormal integral
+      !  if (debug .eq. 1) then
+      !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
+      !  overlap_file = "Orthogonal_n.txt"
+      !  call get_clocks( systime1_J, time1_J)
+      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
+      !  type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, &
+      !  pair_warning, vacwavenum_k0)
+      !  call get_clocks( systime2_J, time2_J)
+      !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
+      !  endif
       !
 
 
@@ -627,13 +627,13 @@ contains
 
       write(ui_out,*) "-----------------------------------------------"
 
-      ! call report_results_em(debug, ui_out, &
-      !    n_msh_pts, n_msh_el, &
-      !    time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
-      !    lambda, e_h_field, bloch_vec, bdy_cdn,  &
-      !    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !    n_typ_el, neq, nonz_max, dim_krylov, &
-      !    shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
+      !  call report_results_em(debug, ui_out, &
+      !  n_msh_pts, n_msh_el, &
+      !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
+      !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
+      !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
+      !  n_typ_el, neq, nonz_max, dim_krylov, &
+      !  shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -658,7 +658,7 @@ contains
 
       eps_eff = v_refindex_n**2
 
-      ! what actually even is this?
+      !  what actually even is this?
       if(dble(eps_eff(1)) .gt. dble(eps_eff(2))) then
          n_core(1) = 1
       else
@@ -684,7 +684,7 @@ contains
          return
       endif
 
-!
+
       if(debug .eq. 1) then
          write(ui_out,*) "py_calc_modes.f: n_core = ", n_core
          if(E_H_field .eq. FEM_FORMULATION_E) then
@@ -695,8 +695,8 @@ contains
       endif
 
 
-      ! set up some kind of mass vectors for the FEM
-      ! weird place but ok.
+      !  set up some kind of mass vectors for the FEM
+      !  weird place but ok.
       if(E_H_field .eq. FEM_FORMULATION_E) then
          qq = eps_eff*vacwavenum_k0**2
          pp = 1.0d0
@@ -787,7 +787,7 @@ contains
       complex(8) z_tmp
       integer(8) i
 
-      ! TODO: hook these up if needed
+      !  TODO: hook these up if needed
       cmplx_max = 0
       int_max = 0
       int_used =0
@@ -831,8 +831,8 @@ contains
          write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/D_PI,i=1,2)
          z_tmp = sqrt(shift_ksqr)/(2.0d0*D_PI)
          write(26,*) "shift_ksqr = ", shift_ksqr, z_tmp
-         ! write(26,*) "integer super-vector :"
-         ! write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
+         !  write(26,*) "integer super-vector :"
+         !  write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
          !write(26,*) "cmplx super-vector : "
          !write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)
 
@@ -844,10 +844,10 @@ contains
          !  n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
          !write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
          !write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
-!
+
 !  write(26,*) "len_skyl, n_msh_pts*n_modes, len_skyl/(n_msh_pts*n_modes) = ",
 !  *   len_skyl, n_msh_pts*n_modes, dble(len_skyl)/dble(n_msh_pts*n_modes)
-!
+
          write(26,*)
          do i=1,n_modes
             write(26,"(i4,2(g22.14),g18.10)") i, v_evals_beta_adj(i)
@@ -887,9 +887,9 @@ contains
 
       !TODO: make a function. Turn beta^2 raw eig into actual beta
       do i=1,n_modes
-         ! z_tmp0 = p_beta(i)
-         ! z_tmp = 1.0d0/z_tmp0+shift_ksqr
-         ! z_beta = sqrt(z_tmp)
+         !  z_tmp0 = p_beta(i)
+         !  z_tmp = 1.0d0/z_tmp0+shift_ksqr
+         !  z_beta = sqrt(z_tmp)
 
          z_beta = sqrt(1.0d0/p_beta(i)+shift_ksqr )
 

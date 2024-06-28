@@ -1,18 +1,18 @@
-!
-!
-!
-!     P2 basis function over the unit Tetrahedron
-!
-!         Compute:
-!                 a quadradic basis function (vec_phi = P2 * Grad P1) and
-!                 and its transverse curl (curl_t_phi)
-!
-!          basis_list(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
-!          basis_list(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
-!          basis_list(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
-!          basis_list(4,j,i)     : it will be used only if k=4
-!
-!
+
+
+
+!  P2 basis function over the unit Tetrahedron
+
+!  Compute:
+!  a quadradic basis function (vec_phi = P2 * Grad P1) and
+!  and its transverse curl (curl_t_phi)
+
+!  basis_list(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
+!  basis_list(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
+!  basis_list(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
+!  basis_list(4,j,i)     : it will be used only if k=4
+
+
 
 subroutine basis_vec (i_eq, i_ddl, basis_list, p2_list,&
 grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
@@ -32,12 +32,12 @@ grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
    double precision grad_p1_mat(dimm,3), grad_p2_mat(dimm,nnodes)
    double precision vec_phi(dimm), curl_t_phi
 
-   !     Local variables
+   !  Local variables
    integer(8) i, k, m, n1, n2
    double precision grad_p1(dimm), grad_p2(dimm), phi
-!
-!cccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
    k  = basis_list(1, i_eq, i_ddl)
    m  = basis_list(2, i_eq, i_ddl)
    n1 = basis_list(3, i_eq, i_ddl)
@@ -76,7 +76,7 @@ grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
       stop
    endif
 
-   !     Curl_t E = Det( grad_p2,  grad_p1)
+   !  Curl_t E = Det( grad_p2,  grad_p1)
    curl_t_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
 
    return

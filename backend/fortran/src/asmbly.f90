@@ -1,6 +1,6 @@
 
-! Construct the left hand and right hand matrices  mat1_re/im and mat_2
-! for the main linear equations
+!  Construct the left hand and right hand matrices  mat1_re/im and mat_2
+!  for the main linear equations
 
 subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, pp, qq, &
@@ -9,7 +9,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    mesh_xy, xy_N_E_F, nonz, row_ind, col_ptr, &
    mat1_re, mat1_im, mat2, i_work)
 
-   !     NQUAD: The number of quadrature points used in each element.
+   !  NQUAD: The number of quadrature points used in each element.
 
    use numbatmod
 
@@ -86,42 +86,42 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    debug = 0
 
 
-!     The CSC indexing, i.e., col_ptr, is 1-based
-!      But valpr.f may have changed the CSC indexing to 0-based indexing)
+!  The CSC indexing, i.e., col_ptr, is 1-based
+!  But valpr.f may have changed the CSC indexing to 0-based indexing)
    if (i_base .eq. 0) then
       i_base2 = 1
    else
       i_base2 = 0
    endif
-!
-   ! if ( nnodes .ne. 6 ) then
-   !    write(ui_stdout,*) "asmbly: problem nnodes = ", nnodes
-   !    write(ui_stdout,*) "asmbly: nnodes should be equal to 14 !"
-   !    write(ui_stdout,*) "asmbly: Aborting..."
-   !    stop
-   ! endif
-!
+
+   !  if ( nnodes .ne. 6 ) then
+   !  write(ui_stdout,*) "asmbly: problem nnodes = ", nnodes
+   !  write(ui_stdout,*) "asmbly: nnodes should be equal to 14 !"
+   !  write(ui_stdout,*) "asmbly: Aborting..."
+   !  stop
+   !  endif
+
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
-!
-   ! if (debug .eq. 1) then
-   !    write(ui_stdout,*) "asmbly: bloch_vec = ", bloch_vec
-   !    write(ui_stdout,*) "asmbly: nquad, nquad_max = ", &
-   !       nquad, nquad_max
-   !    write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
-   ! endif
-!
-!cccccccccccccccccccccccccccccccccccccc
+
+   !  if (debug .eq. 1) then
+   !  write(ui_stdout,*) "asmbly: bloch_vec = ", bloch_vec
+   !  write(ui_stdout,*) "asmbly: nquad, nquad_max = ", &
+   !  nquad, nquad_max
+   !  write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
+   !  endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
 
   !  do i=1,nonz
-  !     mat1_re(i) = 0.d0
-  !     mat1_im(i) = 0.d0
-  !     mat2(i) = 0.d0
+  !  mat1_re(i) = 0.d0
+  !  mat1_im(i) = 0.d0
+  !  mat2(i) = 0.d0
   !  enddo
    mat1_re  = D_ZERO
    mat1_im  = D_ZERO
    mat2  = D_ZERO
 
-!
+
    n_curved = 0
 
    do iel=1,n_msh_el
@@ -152,13 +152,13 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
       call basis_ls(nod_el_p, basis_list)
 
       !do j=1,nddl_0
-      !   val_exp(j) = 1.0d0
+      !  val_exp(j) = 1.0d0
       !enddo
       val_exp = C_ONE
 
       if (bdy_cdn .eq. BCS_PERIODIC) then
-!         val_exp: Bloch mod ephase factor between the origin point and destination point
-!         For a pair of periodic points, one is chosen as origin and the other is the destination
+!  val_exp: Bloch mod ephase factor between the origin point and destination point
+!  For a pair of periodic points, one is chosen as origin and the other is the destination
          do j=1,nddl_0
             ip = table_N_E_F(j,iel)
             j1 = ip_period_E_F(ip)
@@ -176,18 +176,18 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
          xx(1) = xq(iq)
          xx(2) = yq(iq)
          ww = wq(iq)
-!         xx   = coordinate on the reference triangle
-!         xx_g = coordinate on the actual triangle
-!
-!         We will also need the gradients of the P1 element
+!  xx   = coordinate on the reference triangle
+!  xx_g = coordinate on the actual triangle
+
+!  We will also need the gradients of the P1 element
          call phi1_2d_mat(xx, phi1_list, grad1_mat0)
-!          grad2_mat0 = gradient on the reference triangle (P2 element)
+!  grad2_mat0 = gradient on the reference triangle (P2 element)
          call phi2_2d_mat(xx, phi2_list, grad2_mat0)
-!          grad3_mat0 = gradient on the reference triangle (P3 element)
+!  grad3_mat0 = gradient on the reference triangle (P3 element)
          call phi3_2d_mat(xx, phi3_list, grad3_mat0)
-!
+
          if (.not. is_curved ) then
-!           Rectilinear element
+!  Rectilinear element
             call jacobian_p1_2d(xx, el_xy, nnodes, &
                xx_g, det, mat_B, mat_T)
             if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
@@ -198,7 +198,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                write(ui_stdout,*) "y : ", (el_xy(2,j),j=1,3)
                write(ui_stdout,*)
             endif
-         else ! Isoparametric element, 2024-06 fix
+         else !  Isoparametric element, 2024-06 fix
             call jacobian_p2_2d(el_xy, nnodes, phi2_list, &
                grad2_mat0, xx_g, det, mat_B, mat_T)
          endif
@@ -210,11 +210,11 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
             write(ui_stdout,*) "asmbly: Aborting..."
             stop
          endif
-!
-!          grad_i  = gradient on the actual triangle
-!          grad_i  = Transpose(mat_T)*grad_i0
-!          Calculation of the matrix-matrix product:
-!
+
+!  grad_i  = gradient on the actual triangle
+!  grad_i  = Transpose(mat_T)*grad_i0
+!  Calculation of the matrix-matrix product:
+
          call DGEMM('Transpose','N', 2, 3, 2, D_ONE, mat_T, 2, grad1_mat0, 2, D_ZERO, grad1_mat, 2)
 
          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2, grad2_mat0, 2, D_ZERO, grad2_mat, 2)
@@ -224,19 +224,19 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
          do jtest=1,nddl_0
             jp = table_N_E_F(jtest,iel)
             do j_eq=1,3
-!              jp = table_N_E_F(jtest,iel)
+!  jp = table_N_E_F(jtest,iel)
                ind_jp = ineq(j_eq,jp)
                if (ind_jp .gt. 0) then
                   col_start = col_ptr(ind_jp) + i_base2
                   col_end = col_ptr(ind_jp+1) - 1 + i_base2
-!               unpack row into i_work
+!  unpack row into i_work
                   do i=col_start,col_end
                      i_work(row_ind(i) + i_base2) = i
                   enddo
 
 
-                  if (jtest .le. nddl_t) then ! edge or face element
-!                 Determine the basis vector
+                  if (jtest .le. nddl_t) then !  edge or face element
+!  Determine the basis vector
                      call basis_vec (j_eq, jtest, basis_list, phi2_list,&
                         grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
                      grad_j(1) = 0.0d0
@@ -263,7 +263,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                                  z_phase_fact, val_exp(jtest), val_exp(itrial)
                            endif
 
-                           if (itrial .le. nddl_t) then  ! edge or face element
+                           if (itrial .le. nddl_t) then  !  edge or face element
                               call basis_vec (i_eq, itrial, basis_list, &
                                  phi2_list, grad1_mat, grad2_mat, vec_phi_i, &
                                  curl_phi_i)
@@ -279,12 +279,12 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                               phi_z_i = phi3_list(itrial-nddl_t)
                            endif
 
-!ccccccccccccccccccccc
-!                     Reference; see Eq. (40) of the FEM paper:
-!                     K. Dossou and M. Fontaine
-!                     "A high order isoparametric finite element method for the computation of wavegui_stdoutde modes"
-!                     Computer Methods in Applied Mechanics and Engineering, vol. 194, no. 6-8, pp. 837-858, 2005.
-!ccccccccccccccccccccc
+!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  Reference; see Eq. (40) of the FEM paper:
+!  K. Dossou and M. Fontaine
+!  "A high order isoparametric finite element method for the computation of wavegui_stdoutde modes"
+!  Computer Methods in Applied Mechanics and Engineering, vol. 194, no. 6-8, pp. 837-858, 2005.
+!!!!!!!!!!!!!!!!!!!!!!!!!!
                            if (itrial .le. nddl_t .and. &
                               jtest .le. nddl_t) then
                               r_tmp1 = curl_phi_j * curl_phi_i
@@ -343,14 +343,14 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
          enddo
       enddo
    enddo
-!
+
    if (debug .eq. 1) then
       write(ui_stdout,*) "asmbly: shift_ksqr = ", shift_ksqr
       write(ui_stdout,*) "asmbly: number of curved elements = ", n_curved
       write(ui_stdout,*) "asmbly: n_msh_el, (n_msh_el-n_curved) = ", n_msh_el, &
          (n_msh_el-n_curved)
    endif
-!
+
    if (debug .eq. 1) then
       write(ui_stdout,*)
       write(ui_stdout,*) "  Re pp = ", dble(pp)

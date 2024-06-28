@@ -1,7 +1,7 @@
 
-subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    ! inputs
+subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    !  inputs
         E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, &
-        v_refindex_n, & ! inputs
+        v_refindex_n, & !  inputs
         v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, &
         mesh_xy, ls_material, errco, emsg)
 

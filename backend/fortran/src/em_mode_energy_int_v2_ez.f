@@ -50,7 +50,7 @@ C
 Cf2py intent(out) overlap
 C
 C
-CCCCCCCCCCCCCCCCCCCCC Start Program CCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
 C
       ui = stdout
 C
@@ -80,7 +80,7 @@ c       maps the current triangle to the reference triangle.
           enddo
         enddo
         det_b = mat_B(1,1) * mat_B(2,2) - mat_B(1,2) * mat_B(2,1)
-C         ! TEMPORARY CHANGE
+C         !  TEMPORARY CHANGE
         if (abs(det_b) .le. 1.0d-22) then
 cc        if (abs(det_b) .le. 1.0d-8) then
           write(*,*) '?? EM_mode_energy_int_v2_Ez: Deter. = 0 :', det_b
@@ -149,7 +149,7 @@ c           Cross-product Z.(E^* X H) of E^*=vec_i and H=vec_j
       overlap(ival) = overlap1
       enddo
 C
-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 C
 C
       end subroutine EM_mode_energy_int_v2_Ez
