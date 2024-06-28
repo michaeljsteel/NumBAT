@@ -44,8 +44,8 @@
 !  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
 !  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
 !  bnd_cnd_i - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
-!  v_eigs_beta_adj  - array of eigenvalues kz
-!  sol_adj   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
+!  v_evals_beta_adj  - array of eigenvalues kz
+!  m_evecs_adj   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
 !  mode_pol  - unknown - never used in python
 !  table_nod - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
 !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
@@ -63,7 +63,7 @@ contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
-      v_eigs_beta_adj, sol_adj, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
+      v_evals_beta_adj, m_evecs_adj, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
 
       implicit none
 
@@ -77,8 +77,8 @@ contains
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
 
-      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
-      complex(8), target, intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
+      complex(8), target, intent(out) :: m_evecs_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
       complex(8), intent(out) :: mode_pol(4,n_modes)
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
@@ -167,11 +167,11 @@ contains
 
 !  new breed of variables to prise out of a_iwork, b_zwork and c_dwork
 
-      complex(8), target :: sol_pri(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
       complex(8), pointer :: p_sol (:,:,:,:)
 
 
-      complex(8), target :: v_eigs_beta_pri(n_modes)  ! eigs for the prime sol, v_eigs_beta_adj for the adj.
+      complex(8), target :: v_evals_beta_pri(n_modes)  ! eigs for the prime sol, v_evals_beta_adj for the adj.
       complex(8), pointer :: p_beta(:)
 
 
@@ -507,13 +507,13 @@ contains
       do n_k = 1,2
 
          if (n_k .eq. 1) then
-            p_sol  => sol_adj
-            p_beta => v_eigs_beta_adj
+            p_sol  => m_evecs_adj
+            p_beta => v_evals_beta_adj
             bloch_vec_k = bloch_vec
             msg = "adjoint solution"
          else
-            p_sol  => sol_pri
-            p_beta => v_eigs_beta_pri
+            p_sol  => m_evecs_pri
+            p_beta => v_evals_beta_pri
             bloch_vec_k = -bloch_vec
             msg = "prime solution"
          endif
@@ -540,9 +540,6 @@ contains
 
          call clock_spare%stop()
          write(ui_out,'(A,A)') '      ', clock_spare%to_string()
-
-         !  factorization of the globale matrice
-         !  -----------------------------------
 
          write(ui_out,*) "  - solving linear system"
 
@@ -640,8 +637,8 @@ contains
 
       ! Doubtful that this check is of any value: delete?
       call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
-      sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, &
+      type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
+      m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, ui_out, &
       pair_warning, vacwavenum_k0, errco, emsg)
       RETONERROR(errco)
 
@@ -654,9 +651,9 @@ contains
       do ival=1,n_modes
          do inod=1,nodes_per_el+7
             !do iel=1,n_msh_el
-            !  sol_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * sol_adj(3,inod,ival,iel)
+            !  m_evecs_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,iel)
             !enddo
-            sol_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * sol_adj(3,inod,ival,:)
+            m_evecs_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,:)
          enddo
       enddo
 
@@ -666,7 +663,7 @@ contains
       !  Normalisation
 
 
-      call normalise_fields(n_modes, n_msh_el, nodes_per_el, sol_adj, sol_pri, overlap_L)
+      call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, m_evecs_pri, overlap_L)
 
       write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
@@ -679,7 +676,7 @@ contains
       !          overlap_file = "Orthogonal_n.txt"
       !          call get_clocks( systime1_J, time1_J)
       !          call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-      !             type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, sol_adj, sol_pri, overlap_L, overlap_file, debug, &
+      !             type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, &
       !             pair_warning, vacwavenum_k0)
       !          call get_clocks( systime2_J, time2_J)
       !          write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
@@ -702,7 +699,7 @@ contains
       !    lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
       !    n_typ_el, neq, nonz_max, dim_krylov, &
-      !    shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
+      !    shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -777,8 +774,8 @@ contains
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
-      sol_adj, sol_pri, overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
+      type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
+      m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
       use numbatmod
       logical pair_warning
@@ -792,17 +789,17 @@ contains
       double precision, intent(out) :: mesh_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
-      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
-      complex(8), target, intent(out) :: sol_adj(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
+      complex(8), target, intent(out) :: m_evecs_adj(3,nodes_per_el+7,n_modes,n_msh_el)
 
-      complex(8)  :: sol_pri(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8)  :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
       complex(8), dimension(:,:) :: overlap_L
 
 
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
-      complex(8)  :: v_eigs_beta_pri(n_modes)
+      complex(8)  :: v_evals_beta_pri(n_modes)
       character(len=FNAME_LENGTH)  overlap_file
 
 
@@ -816,8 +813,8 @@ contains
       overlap_file = "Orthogonal.txt"
 
       call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_eigs_beta_adj, v_eigs_beta_pri, &
-         sol_adj, sol_pri, overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
+         type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, &
+         m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
       if (pair_warning .and. n_modes .le. 20) then
          emsg = "py_calc_modes.f: Warning found 1 BM of cmplx conj pair, increase num_BMs to include the other."
@@ -833,7 +830,7 @@ contains
    lambda, e_h_field, bloch_vec, bdy_cdn,  &
    int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
    n_typ_el, neq, nonz_max, dim_krylov, &
-   shift_ksqr, v_eigs_beta_adj, eps_eff, v_refindex_n)
+   shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
 
 
 
@@ -846,7 +843,7 @@ contains
       integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
-      complex(8), target, intent(out) :: v_eigs_beta_adj(n_modes)
+      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
       complex(8) eps_eff(n_typ_el)
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
@@ -916,7 +913,7 @@ contains
 !
          write(26,*)
          do i=1,n_modes
-            write(26,"(i4,2(g22.14),g18.10)") i, v_eigs_beta_adj(i)
+            write(26,"(i4,2(g22.14),g18.10)") i, v_evals_beta_adj(i)
          enddo
          write(26,*)
          write(26,*) "n_core = ", n_core
