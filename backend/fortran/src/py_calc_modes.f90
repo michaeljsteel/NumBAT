@@ -630,7 +630,6 @@ contains
       enddo  ! n_k
 
 
-      return ! BROKEN
       !CCCCCCCCCCCCCCCCCCCCCCC  End Prime, Adjoint Loop  CCCCCCCCCCCCCCCCCCCCCC
 
 
@@ -648,14 +647,22 @@ contains
       !  The z-component must be multiplied by -ii*beta in order to
       !  get the physical, un-normalised z-component
       !  (see Eq. (25) of the JOSAA 2012 paper)
+
+      ! TODO: is this really supposed to be x i beta , or just x beta  ?
       do ival=1,n_modes
-         do inod=1,nodes_per_el+7
-            !do iel=1,n_msh_el
-            !  m_evecs_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,iel)
-            !enddo
-            m_evecs_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,:)
-         enddo
+         !!do iel=1,n_msh_el
+         !!  m_evecs_adj(3,inod,ival,iel) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,iel)
+         !!enddo
+
+         !do inod=1,nodes_per_el+7
+         !   m_evecs_adj(3,inod,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,inod,ival,:)
+         !enddo
+
+         m_evecs_adj(3,:,ival,:) = C_IM_ONE * p_beta(ival) * m_evecs_adj(3,:,ival,:)
+
       enddo
+
+      return ! BROKEN
 
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
