@@ -5,6 +5,8 @@
 
 !  P3 basis function over the unit Triangle
 
+!  phi1_i = L^1(x) L^1(y)
+
 
 subroutine phi1_2d_mat (x, phi, mat_grad)
 

@@ -346,7 +346,7 @@ contains
 
       ip_col_ptr = ip_eq + 3*n_ddl
 
-      call csr_max_length (n_msh_el, n_ddl, neq, nodes_per_el, a_iwork(ip_table_N_E_F), &
+      call csr_max_length (n_msh_el, n_ddl, neq, a_iwork(ip_table_N_E_F), &
          a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 
 !  ip = ip_col_ptr + neq + 1 + nonz_max
@@ -361,7 +361,7 @@ contains
       endif
 
 
-      call csr_length (n_msh_el, n_ddl, neq, nodes_per_el, a_iwork(ip_table_N_E_F), a_iwork(ip_eq), a_iwork(ip_row), &
+      call csr_length (n_msh_el, n_ddl, neq,  a_iwork(ip_table_N_E_F), a_iwork(ip_eq), a_iwork(ip_row), &
          a_iwork(ip_col_ptr), nonz_max, nonz, max_row_len, ip_row, int_max, debug)
 
       ip_work = ip_row + nonz
@@ -553,7 +553,8 @@ contains
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
       !b_zwork(jp_x_N_E_F),
-         d_dwork, &  !  this should be an e_ework
+         !d_dwork, &  !  this should be an e_ework
+         e_dwork, &  !  this should be an e_ework
          p_beta, mode_pol, b_zwork(jp_evecs), p_sol , errco, emsg)
       RETONERROR(errco)
 

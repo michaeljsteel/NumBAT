@@ -120,8 +120,11 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
    call zcopy(neq_32, x, 1, vect1, 1)                !  LAPACK routine
    call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat2)   !  Local routine: vec2 = mat2.vect1
 
-   rhs_re = realpart(vect2)
-   rhs_im = imagpart(vect2)
+   !rhs_re = realpart(vect2)
+   !rhs_im = imagpart(vect2)
+   rhs_re = dble(vect2)
+   rhs_im = dimag(vect2)
+
 
 !  solve Ax=b, without iterative refinement (UMFPACK_A)
    !sys = 0
@@ -456,8 +459,8 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
          call zcopy(neq_32, workd(ipntr_32(1)), 1, vect1, 1)
          call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat2)
 
-         rhs_re = realpart(vect2)
-         rhs_im = imagpart(vect2)
+         rhs_re = dble(vect2)
+         rhs_im = dimag(vect2)
 
          !  solve Ax=b, without iterative refinement
          call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)

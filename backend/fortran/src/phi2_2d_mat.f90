@@ -1,8 +1,12 @@
 
 
 !  phi2_2d_mat evaluates a linear basis function (P3) and its derivative.
-
 !  P3 basis function over the unit Triangle
+!
+!  Mike:
+!    Actually is quadratic lin poly over the unit triangle
+!    See lag_interpolation.nb
+!
 
 
 subroutine phi2_2d_mat (x, phi, mat_grad)
