@@ -43,7 +43,7 @@ subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
    integer i, j
    integer namelength2
    double precision stime1, ctime1
-   integer sysret
+   !integer sysret
    integer  iphyscurve, nd
 
    call get_clocks(stime1, ctime1)
@@ -66,11 +66,11 @@ subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
    !fname_log  = geoname(1:namelength2)//".log"
 
    !  Stage 1 conversion:  .geo to .msh
-   call make_msh_file(fname_geo, fname_msh, sysret)
-   if (sysret .gt. 0) then
-      errco = sysret
-      return
-   endif
+!    call make_msh_file(fname_geo, fname_msh, sysret)
+!    if (sysret .gt. 0) then
+!       errco = sysret
+!       return
+!    endif
 
    !Second stage conversion:  .msh to .mail
    call parse_msh_file(fname_msh, gmsh_version, &
@@ -141,39 +141,40 @@ subroutine conv_gmsh_impl(geoname, assertions_on, errco, emsg)
 end
 
 
-!##################################################################################
-!TODO: why is this not done direct from python where system calling is easier?
+! !##################################################################################
+! !TODO: why is this not done direct from python where system calling is easier?
 
-subroutine make_msh_file(fname_geo, fname_msh, sysret)
+! subroutine make_msh_file(fname_geo, fname_msh, sysret)
 
-   use numbatmod
+!    use numbatmod
 
-   character(len=*), intent(in) :: fname_geo, fname_msh
+!    character(len=*), intent(in) :: fname_geo, fname_msh
 
-   character(len=EMSG_LENGTH) :: com_line
-   character(len=256) :: gmsh_app
-   integer sysret
-
-
-#ifdef __APPLE__
-   gmsh_app="/Applications/Gmsh.app/Contents/MacOS/gmsh"
-#else
-   !gmsh_app = "gmsh"
-    gmsh_app = "c:\\users\\mq98002769\\numbat\\usr_local\\packages\\gmsh\\gmsh"
-#endif !!  __APPLE__
-
-   com_line = trim(gmsh_app) // " " // "-0 -2  -order 2 -v 0 -o " // &
-       trim(fname_msh) // " " // trim(fname_geo)
+!    character(len=EMSG_LENGTH) :: com_line
+!    character(len=256) :: gmsh_app
+!    integer sysret
 
 
-   sysret = nb_system(com_line)
+! #ifdef __APPLE__
+!    gmsh_app="/Applications/Gmsh.app/Contents/MacOS/gmsh"
+! #else
+!    !gmsh_app = "gmsh"
+!     gmsh_app = "c:\\users\\mq98002769\\numbat\\usr_local\\packages\\gmsh\\gmsh"
+! #endif !!  __APPLE__
+
+!    com_line = trim(gmsh_app) // " " // "-0 -2  -order 2 -v 0 -o " // &
+!        trim(fname_msh) // " " // trim(fname_geo)
 
 
-   end
+!    sysret = nb_system(com_line)
+
+
+!    end
 
    !##################################################################################
 
-   subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
+    ! TODO: could move to to a python call
+    subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
            v_ielts, vx, vy, v_gmsh_elt_type, errco, emsg)
 
        use numbatmod

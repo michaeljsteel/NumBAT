@@ -24,6 +24,9 @@ import os
 import subprocess
 import copy
 import traceback
+import time
+import sys
+
 
 import tempfile
 from pathlib import Path
@@ -618,14 +621,20 @@ class Structure:
             # create string in .geo format from the template file with all parameters adjusted for our design
             geo = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
 
+
             fname = Path(self.msh_location_out, msh_fname)
 
             with open(str(fname) + '.geo', 'w') as fout:
                 fout.write(geo)
 
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-            assertions_on = False
 
+            gmsh_exe =  numbat.NumBATApp().path_gmsh()
+            cmd = (gmsh_exe + f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo').split()
+            subprocess.Popen(cmd, cwd=self.msh_location_out)
+            os.wait()
+
+            assertions_on = False
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:
 

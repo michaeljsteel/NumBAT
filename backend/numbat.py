@@ -43,6 +43,7 @@ class _NumBATApp:
         self._paths={}
         self._start_time=time.time()
         self._codedir = Path(__file__).parents[0]
+        self._nbrootdir = Path(__file__).parents[3]  # this seems a bit flaky depending on installations
 
         self._plot_extension = '.png'
         #self._plot_extension = '.pdf'
@@ -132,8 +133,7 @@ class _NumBATApp:
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         if self.is_windows():
-            path = Path(self._codedir, '../../../usr_local/packages/gmsh/gmsh.exe')
-            print(path)
+            path = Path(self._nbrootdir, '../usr_local/packages/gmsh/gmsh.exe')
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         elif self.is_macos():

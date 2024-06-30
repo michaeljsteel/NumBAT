@@ -17,6 +17,7 @@ out
 *.lib
 *.exp
 *.pyf
+*.pyd
 *.dll
 
 backend/msh/*.msh
