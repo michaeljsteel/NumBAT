@@ -178,7 +178,16 @@ PYBIN = $(PYROOT)/bin
 #PYBASEINC= -I $(PYROOT)/include/python$(PYVERMAJMIN)
 PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 
+NUMPY_DIR := $(shell python -c "import numpy; print(numpy.get_include())")
+F2PY_DIR := $(shell python -c "import numpy.f2py; print(numpy.f2py.get_include())")
+NUMPY_INC = -I $(NUMPY_DIR)
+F2PY_INC = -I $(F2PY_DIR)
 F2PY = $(PYBIN)/f2py
+
+vals:
+	echo $(NUMPY_DIR)
+	echo $(F2PY_DIR)
+
 
 MKL_INC = -I $(MKLROOT)/include
 MKL_LIB  = -L $(MKLROOT)/lib/intel64 -lmkl_rt
@@ -187,8 +196,8 @@ MATHINC = $(ARPACK_INC) $(MKL_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
 GENLIB = -lrt
 
-NUMPYDIR = $(PYPACKAGES)/numpy
-PYINC = $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
+#NUMPYDIR = $(PYPACKAGES)/numpy
+PYINC = $(PYBASEINC) $(NUMPY_INC) $(F2PY_INC) -I $(SYSTEMPYINC)
 
 
 else ifeq ($(PLAT), "MacOS")
@@ -230,6 +239,12 @@ PYFRAMEWORK = /Library/Frameworks/Python.framework/Versions/Current
 PYCINC = -I $(PYFRAMEWORK)/Headers
 
 NUMPYDIR = $(PYPACKAGES)/numpy
+
+NUMPY_DIR := $(shell python -c "import numpy; print(numpy.get_include())")
+F2PY_DIR := $(shell python -c "import numpy.f2py; print(numpy.f2py.get_include())")
+NUMPY_INC = -I $(NUMPY_DIR)
+F2PY_INC = -I $(F2PY_DIR)
+
 PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/ $(PYCINC)/ -I /opt/local/include/gcc13/c++
 
 PYLIB = -L $(PYROOT)/lib -l$(PYNAME)
@@ -348,8 +363,8 @@ $(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 	-mkdir -p build
 	-mkdir -p mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) -m $(NumBAT_MOD) $(NumBAT_MOD).pyf --build-dir build --lower -include\"../src/myhead.h\"
-	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
+	$(F2PY) -m $(NumBAT_MOD) $(PYINTERFACE_SRCS) --build-dir build --lower -include\"../src/myhead.h\"
+	cp $(F2PY_DIR)/fortranobject.c build
 
 
 $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRAP_OBJ)
