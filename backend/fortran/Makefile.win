@@ -3,23 +3,23 @@
 
 RM=del /q
 MKDIR=mkdir
-
+SHLIB=pyd
 # Intel compilers
 F_COMP_EXE = ifx
 C_COMP_EXE = icx
 
 NumBAT_MOD=nb_fortran
-all: $(NumBAT_MOD).dll
+all: $(NumBAT_MOD).$(SHLIB)
 
 # Location of System Python (virtual envs don't contain Python.h, so we grab it from here)
+# Set your python virtualenv platform
+
 SYSTEMPY = C:\Users\mq98002769\AppData\Local\anaconda3
 SYSTEMPYINC= $(SYSTEMPY)\include
-SYSTEMPYLIB= $(SYSTEMPY)\libs\python311.lib
-
-# Set your python virtualenv platform
-PY_VENV = c:\users\mq98002769\mypy3-11
+SYSTEMPYLIB= $(SYSTEMPY)\libs\python312.lib
+PY_VENV = c:\users\mq98002769\mypy3-12
 PYVERMAJ=3
-PYVERMAJMIN=3.11
+PYVERMAJMIN=3.12
 
 
 
@@ -39,17 +39,28 @@ F2PY = $(PYBIN)\f2py
 #PYPACKAGES = C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy\f2py\src
 PYBASEINC=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\python-3.11.8-he1021f5_0\include
 
-#NUMPYDIR = $(PYPACKAGES)\numpy
-NUMPY_SYS=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
-NUMPY_SYSINC = /I $(NUMPY_SYS)\core\include
+#NUM$(SHLIB)IR = $(PYPACKAGES)\numpy
+#NUMPY_SYS=C:\Users\mq98002769\AppData\Local\anaconda3\pkgs\numpy-base-1.24.3-py311hd01c5d8_1\Lib\site-packages\numpy
+#NUMPY_SYSINC = /I $(NUMPY_SYS)\core\include
 
-#PYINC = /I $(PYBASEINC) /I $(NUMPYDIR)\core\include /I $(NUMPYDIR)\f2py\src\ /I $(SYSTEMPYINC)
-#PYINC = /I $(SYSTEMPYINC) /I $(NUMPYDIR)\core\include
+#PYINC = /I $(PYBASEINC) /I $(NUM$(SHLIB)IR)\core\include /I $(NUM$(SHLIB)IR)\f2py\src\ /I $(SYSTEMPYINC)
+#PYINC = /I $(SYSTEMPYINC) /I $(NUM$(SHLIB)IR)\core\include
 NUMPY_VENV = $(PY_VENV)\Lib\site-packages\numpy
 NUMPY_VINC = /I $(NUMPY_VENV)\core\include
 
 #$(NUMPY_SYSINCB) # don't need?
 PYINC = /I $(SYSTEMPYINC) $(NUMPY_VINC)
+
+PYINC = -I C:\Users\mq98002769\mypy3-12\Include
+
+NUMPY_DIR := $(shell python -c "import numpy; print(numpy.get_include())")
+F2PY_DIR := $(shell python -c "import numpy.f2py; print(numpy.f2py.get_include())")
+NUMPY_INC = -I $(NUMPY_DIR)
+F2PY_INC = -I $(F2PY_DIR)
+
+npvals:
+	echo $(NUMPY_DIR)
+	echo $(F2PY_DIR)
 
 ONEAPI="C:\Program Files (x86)\Intel\oneAPI"
 MKLROOT=$(ONEAPI)\mkl\latest
@@ -63,25 +74,15 @@ MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
 ARPACK_INC =
 ARPACK_LIB = $(NB_USRLOCAL)\lib\arpack.lib
 
-#MATH_INC = $(ARPACK_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB)
-
-
-
 
 SRCS_F = $(wildcard src/*.f)
 SRCS_F90 = $(wildcard src/*.f90)
-#OBJSA = $(SRCS_F:.f=.obj) $(SRCS_F90:.f90=.obj)
-#OBJS = $(subst src/,build\,$(OBJSA))
 OBJS = $(subst src/,build\,$(SRCS_F:.f=.obj) $(SRCS_F90:.f90=.obj))
 
 
 # The build order of these matters
 SRCS_MODS = src\numbatmod_module.f90 src\stopwatch_module.f90
-#src\nbinterfaces_module.f90
-#SRCS_MODS = $(wildcard src/*_module.f90)
-#OBJS_MODA = $(SRCS_MODS:.f90=.obj)
-#MODULES_MODS = build\numbatmod_module.mod build\nbinterfaces_module.mod
 MODULES_MODS = $(subst src\,build\,$(SRCS_MODS:.f90=.mod))
 
 
@@ -153,7 +154,7 @@ build\\%.obj : build\%.f
 build\\%.obj : build\%.c
 	$(C_COMP_EXE) -c $< -o $@ \
 	$(CFLAGS) /D UPPERCASE_FORTRAN /D NO_APPEND_FORTRAN \
-	$(PYINC)
+	$(NUMPY_INC) $(F2PY_INC) $(PYINC)
 
 build\\%.e : src\%.f
 	cpp /I src $< -o $@
@@ -167,35 +168,51 @@ build\\%.e : build\\%.c
 FORTMOD=build\fortranobject.c
 
 build\fortranobject.c:
-	copy $(NUMPY_VENV)\f2py\src\fortranobject.c build
-	copy $(NUMPY_VENV)\f2py\src\fortranobject.h build
+	copy $(F2PY_DIR)\fortranobject.c build
+	copy $(F2PY_DIR)\fortranobject.h build
+
 
 
 F2PY_SRCS = build\$(NumBAT_MOD)module.c build\$(NumBAT_MOD)-f2pywrappers.f build\fortranobject.f
 F2PY_OBJSA = $(F2PY_SRCS:.c=.obj)
 F2PY_OBJS = $(F2PY_OBJSA:.f=.obj)
 
+# first call to f2py makes the .pyf file
+# second one uses it to make build\nbfortran_module.c
 $(NumBAT_MOD).pyf: $(SRCS)
 	-$(RM) $(F2PY_SRCS)
 	-$(MKDIR) build mods
-	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"../src/myhead.h\"
 
-$(NumBAT_MOD).dll: $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
-	$(C_COMP_EXE) /nologo /Wall  /LD -o $(NumBAT_MOD).dll  \
+	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
+	$(F2PY) -m $(NumBAT_MOD)   $(PYINTERFACE_SRCS) --build-dir build --lower -include\"../src/myhead.h\"
+#$(F2PY) -m $(NumBAT_MOD)    $(NumBAT_MOD).pyf --build-dir build --lower -include\"../src/myhead.h\"
+	copy $(F2PY_DIR)\fortranobject.c build
+
+#	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) \
+#		--build-dir build --lower -include\"../src/myhead.h\" \
+#		--overwrite-signature
+#	copy build\$(NumBAT_MOD).pyf .
+
+icl_link_$(NumBAT_MOD).$(SHLIB): $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
+	$(C_COMP_EXE) /nologo /Wall  /LD -o $(NumBAT_MOD).$(SHLIB)  \
 	$(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
 	/link /nodefaultlib:msvcrt.lib $(MATHLIB) \
 	 $(GENLIB) \
 	 $(SYSTEMPYLIB)
 
-
+$(NumBAT_MOD).$(SHLIB): $(NumBAT_MOD).pyf $(MODULES_MODS) $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) $(FORTMOD)
+	link /nologo /dll /out:$(NumBAT_MOD).$(SHLIB)  \
+	$(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
+	/nodefaultlib:msvcrt.lib $(MATHLIB) \
+	 $(GENLIB) \
+	 $(SYSTEMPYLIB)
 
 clean:
 	- $(RM)  $(SS_WRAP)\*.obj
 	- $(RM) mods
 	- $(RM) .\*.lib .\*.exp
-	- $(RM)  build\*.obj build\*.f build\*.c
-	- $(RM) .\*.mod src\*.mod build\*.mod
+	- $(RM)  build\*.obj build\*.f build\*.c build\*.h build\*.pyf
+	- $(RM) .\*.mod src\*.mod build\*.mod src\*__genmod.f90
 	- $(RM)  $(NumBAT_MOD).pyf $(NumBAT_MOD).dll $(NumBAT_MOD).*.dll
 
 

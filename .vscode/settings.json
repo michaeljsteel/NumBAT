@@ -202,8 +202,15 @@
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend",
-        "${workspaceFolder}/backend/fortran"
+        "${workspaceFolder}/backend/fortran",
+        "${workspaceFolder}/backend/fortran/include",
     ],
-    "fortran.linter.compiler": "ifx"
+
+    "fortran.linter.compiler": "ifx",
+    "files.associations": {
+        "*.win": "makefile",
+        "fortranobject.h": "c",
+        "numbat_decl.h": "fortran"
+    }
 }
 
