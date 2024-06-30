@@ -133,7 +133,7 @@ class _NumBATApp:
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         if self.is_windows():
-            path = Path(self._nbrootdir, '../usr_local/packages/gmsh/gmsh.exe')
+            path = Path(self._nbrootdir, '../../usr_local/packages/gmsh/gmsh.exe')
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         elif self.is_macos():
