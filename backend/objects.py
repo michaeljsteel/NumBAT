@@ -630,9 +630,11 @@ class Structure:
             # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
 
             gmsh_exe =  numbat.NumBATApp().path_gmsh()
-            cmd = (gmsh_exe + f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo').split()
-            subprocess.Popen(cmd, cwd=self.msh_location_out)
-            os.wait()
+            args =f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo'
+            cmd  = [gmsh_exe]
+            cmd.extend(args.split())
+
+            subprocess.run(cmd, cwd=self.msh_location_out)
 
             assertions_on = False
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
