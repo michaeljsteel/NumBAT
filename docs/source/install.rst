@@ -355,7 +355,7 @@ with installing the additional required packages may be quite painful.
 Installing the Native Windows version
 -------------------------------------------
 
-**This build is experimental and very likely to fail for you.**
+**This build is experimental and likely to fail for you.  To ensure the libraries link correctly, it is vital to follow every step exactly.**
 
 There is now an experimental version of |NUMBAT| built entirely using the native Windows toolchain including
 Visual Studio and the Intel Fortran compiler. There are a surprising number of steps and tools required, but it should go relatively smoothly.
@@ -366,6 +366,8 @@ Visual Studio and the Intel Fortran compiler. There are a surprising number of s
     The standard Python solution for Windows is the Anaconda distribution.
 
     If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
+
+#. Setup virtual env as in Linux FILL ME IN
 
 #. **Windows build tools**
 
@@ -425,6 +427,10 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
     $ cd ..\nb_releases
     $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
+#. Download the `Windows build of Gmsh <gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
+
+
+
 #. Your ``<NumBAT_BASE>`` tree should now look like this:
 
 .. figure:: ./images/win_install_tree.png
@@ -439,7 +445,7 @@ This library performs sparse matrix algebra, used in the eigensolving routines o
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -B build .
+    $ cmake -D WITH_MKL=ON -B build .
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis\build\SuiteSparseProject.sln`` with Visual Studio 2022.
 
@@ -447,9 +453,8 @@ This library performs sparse matrix algebra, used in the eigensolving routines o
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
-    $ copy packages\suitesparse-metis\build\lib\*.dll lib
-    $ copy packages\suitesparse-metis\build\lib\*.lib lib
-    $ copy packages\suitesparse-metis\build\lib\*.lib lib
+    $ copy packages\suitesparse-metis\build\lib\Release\*.dll lib
+    $ copy packages\suitesparse-metis\build\lib\Release\*.lib lib
     $ copy packages\suitesparse-metis\SuiteSparse\AMD\Include\*.h include
     $ copy packages\suitesparse-metis\SuiteSparse\UMFPACK\Include\*.h include
     $ copy packages\suitesparse-metis\SuiteSparse\SuiteSparse_config\*.h include
@@ -505,7 +510,11 @@ At long last, we are ready to build |NUMBAT| itself.
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
-#. Open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username.
+#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username.
+
+# Copy the .dlls built earlier to this directory::
+
+    $ copy ..\..\..\..\usr_local\lib\*.dll .
 
 #. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 

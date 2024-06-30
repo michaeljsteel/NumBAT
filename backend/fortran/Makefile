@@ -348,7 +348,7 @@ $(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 	-mkdir -p build
 	-mkdir -p mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
-	$(F2PY) $(PYINTERFACE_SRCS) -m $(NumBAT_MOD) --build-dir build --lower -include\"../src/myhead.h\"
+	$(F2PY) -m $(NumBAT_MOD) $(NumBAT_MOD).pyf --build-dir build --lower -include\"../src/myhead.h\"
 	cp $(NUMPYDIR)/f2py/src/fortranobject.c build
 
 
@@ -360,7 +360,7 @@ $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRA
 clean:
 	-rm -f $(SSWRAP_DIR)/*.o
 	-rm -rf build mods __pycache__
-	-rm ./*.mod src/*.mod 
+	-rm ./*.mod src/*.mod
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 	-rm src/*__genmod.f90
 

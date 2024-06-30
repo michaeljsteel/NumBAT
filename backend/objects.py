@@ -629,7 +629,7 @@ class Structure:
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
             if err_no != 0:
 
-                s = f'Terminating after Fortran error in processing .geo file "{fname}%s.geo".'
+                s = f'Terminating after Fortran error in processing .geo file "{fname}.geo".'
                 if len(err_msg):
                     s += f'\nMessage was:\n {err_msg}'
                 s += f'''

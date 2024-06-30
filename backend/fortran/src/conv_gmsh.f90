@@ -158,7 +158,8 @@ subroutine make_msh_file(fname_geo, fname_msh, sysret)
 #ifdef __APPLE__
    gmsh_app="/Applications/Gmsh.app/Contents/MacOS/gmsh"
 #else
-   gmsh_app = "gmsh"
+   !gmsh_app = "gmsh"
+    gmsh_app = "c:\\users\\mq98002769\\numbat\\usr_local\\packages\\gmsh\\gmsh"
 #endif !!  __APPLE__
 
    com_line = trim(gmsh_app) // " " // "-0 -2  -order 2 -v 0 -o " // &

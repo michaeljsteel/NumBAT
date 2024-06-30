@@ -1,5 +1,5 @@
 c
- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 c
       subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival1,
      *    ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
