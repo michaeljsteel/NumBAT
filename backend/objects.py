@@ -687,9 +687,7 @@ class Structure:
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
-        subprocess.Popen(cmd, cwd=self.msh_location_out)
-
-        os.wait()
+        subprocess.run(cmd, cwd=self.msh_location_out)
 
         with open(Path(self.msh_location_in, 'msh2png.scr'), 'r') as fin:
             conv_tmp = fin.read()
@@ -702,9 +700,7 @@ class Structure:
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
-        subprocess.Popen(cmd, cwd=self.msh_location_out)
-
-        os.wait()
+        subprocess.run(cmd, cwd=self.msh_location_out)
 
         plottools.join_figs([tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',],

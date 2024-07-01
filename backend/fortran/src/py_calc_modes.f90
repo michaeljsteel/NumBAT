@@ -516,10 +516,12 @@ contains
       !b_zwork(jp_vect1), &  !  unused
       !b_zwork(jp_vect2), &  !  unused
       !b_zwork(jp_trav), &  !  unused
-         dim_krylov, n_modes, neq, itermax, ltrav, tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+         !b_zwork(jp_workd), b_zwork(jp_resid), ltrav,  &
+         dim_krylov, n_modes, neq, itermax,  &
+         tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
          c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
-         b_zwork(jp_workd), b_zwork(jp_resid), b_zwork(jp_vschur), p_beta, b_zwork(jp_evecs), &
-         c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), &
+         c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
+         p_beta, b_zwork(jp_vschur), b_zwork(jp_evecs), &
          n_conv, time_fact, time_arpack, debug, errco, emsg)
       RETONERROR(errco)
 

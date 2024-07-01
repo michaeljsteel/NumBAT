@@ -1,5 +1,12 @@
 # Makefile for NumBAT. May require some adjustment to reflect your installation.
 
+
+# Define the newline character
+define n
+
+
+endef
+
 NumBAT_MOD=nb_fortran
 
 CCACHE=ccache
@@ -156,8 +163,7 @@ NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYBASEINC) -I $(NUMPYDIR)/core/include/ -I $(NUMPYDIR)/f2py/src/ -I $(SYSTEMPYINC)
 
 
-else ifeq ($(PLAT), "linux_inteloneapi")  ##### LINUX INTELONEAPI with gfortran
-# Uses BLAS and LAPACK from free Intel OneApi MKL library
+else ifeq ($(PLAT), "linux_inteloneapi")  # Uses BLAS and LAPACK from free Intel OneApi MKL library
 
 ifneq ($(UNAME_S), Linux)
 $(error 'We do not seem to be building on Linux. Check the value of MYPLAT in backend/fortran/Makefile')
@@ -178,11 +184,22 @@ PYBIN = $(PYROOT)/bin
 #PYBASEINC= -I $(PYROOT)/include/python$(PYVERMAJMIN)
 PYPACKAGES = $(PYROOT)/lib/python$(PYVERMAJMIN)/site-packages
 
+ACTPY_DIR := $(shell which python)
 NUMPY_DIR := $(shell python -c "import numpy; print(numpy.get_include())")
 F2PY_DIR := $(shell python -c "import numpy.f2py; print(numpy.f2py.get_include())")
 NUMPY_INC = -I $(NUMPY_DIR)
 F2PY_INC = -I $(F2PY_DIR)
 F2PY = $(PYBIN)/f2py
+
+ifndef ACTPY_DIR
+$(error 'Failed to find python.$nHave you activated the correct python virtual environment before building?')
+else
+$(info "We are using python located at $(ACTPY_DIR).")
+endif
+
+ifndef NUMPY_DIR
+$(error 'Failed to identify NUMPY_DIR.$nHave you activated the correct python virtual environment before building?$n')
+endif
 
 vals:
 	echo $(NUMPY_DIR)

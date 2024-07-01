@@ -502,6 +502,15 @@ class SimResult:
         if prefix and not pf.exists():
             pf.mkdir()
 
+        modetype = "acoustic" if field_type == FieldType.AC else "em"
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+        ntoplot = len(ival_range)
+
+        if ntoplot > 1:
+            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+        else:
+            print(f"Plotting {modetype} mode m={ival_range[0]}.")
+
         mode_helper.update_plot_params(
             {
                 'xlim_min': xlim_min,
@@ -524,19 +533,12 @@ class SimResult:
             }
         )
 
-        modetype = "acoustic" if field_type == FieldType.AC else "em"
-
-
-        ival_range = ivals if ivals is not None else range(self.n_modes)
-        ntoplot = len(ival_range)
 
         if ntoplot > 1:
-            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
             for m in progressBar(ival_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps, field_type)
 
         else:
-            print(f"Plotting {modetype} mode m={ival_range[0]}.")
             self.get_mode(ival_range[0]).plot_mode(comps, field_type)
 
         # for m in ival_range:
