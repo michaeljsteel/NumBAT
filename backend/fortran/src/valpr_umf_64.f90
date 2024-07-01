@@ -59,7 +59,7 @@ module valpr_help
 
 contains
 
-   subroutine valpr_allocs(dim_krylov, workev, rwork, select, errco, emsg)
+   subroutine valpr_allocs(dim_krylov, workev, rwork, arp_select, errco, emsg)
 
       use numbatmod
       integer(8) dim_krylov
@@ -67,7 +67,7 @@ contains
 
       complex(8), dimension(:), allocatable, intent(inout) :: workev
       double precision, dimension(:), allocatable, intent(inout) :: rwork
-      logical, dimension(:), allocatable, intent(inout) :: select
+      logical, dimension(:), allocatable, intent(inout) :: arp_select
 
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
@@ -81,10 +81,10 @@ contains
          return
       endif
 
-      allocate(select(dim_krylov), STAT=alloc_stat)
+      allocate(arp_select(dim_krylov), STAT=alloc_stat)
       if (alloc_stat /= 0) then
          write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
-            " for the array select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
+            " for the array arp_select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
          errco = NBERROR_102
          return
       endif
@@ -193,11 +193,13 @@ end subroutine
 !  v = sovled eigvecs
 !  d = solved eigvals
 
-subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
-   dim_krylov, n_modes, neq, itermax, lworkl, &
-   tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2, &
-   workd, resid, v_schur,  v_evals, v_evecs,&
-   rhs_re, rhs_im, lhs_re, lhs_im, &
+subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, & 
+    !ext_workd, ext_resid, ext_lworkl, &
+   dim_krylov, n_modes, neq, itermax, &
+   tol, nonz, row_ind, col_ptr, &
+   mat1_re, mat1_im, mat2, & 
+   lhs_re, lhs_im, rhs_re, rhs_im, &
+   v_evals, v_schur,  v_evecs, &
    n_conv, time_fact, time_arpack, debug, errco, emsg)
 
    !  mat1 is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
@@ -220,30 +222,35 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    character(len=EMSG_LENGTH) emsg
 
 
-   integer(8) itermax, dim_krylov,lworkl
-   complex(8) resid(neq),  workd(3*neq)
+   integer(8), intent(in) :: itermax, dim_krylov
+   integer(8) ext_lworkl
+   complex(8) ext_resid(neq),  ext_workd(3*neq)
 
-   complex(8), intent(out) :: v_schur(neq,dim_krylov),  v_evals(n_modes+1)
-   complex(8), intent(out) :: v_evecs(neq,n_modes)
-
-
-
-   complex(8) shift2
-   integer(8) i
-
+   complex(8), intent(out) :: v_evals(n_modes+1)
+   complex(8), intent(out) :: v_schur(neq, dim_krylov)
+   complex(8), intent(out) :: v_evecs(neq, n_modes)
 
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
-   complex(8) :: vect1(neq), vect2(neq), workl(lworkl)
+
+   ! workspaces 
+   complex(8) resid(neq)
+   complex(8) :: vect1(neq), vect2(neq)
+   integer(8) :: lworkl 
+   complex(8) :: workd(3 * neq)                              ! length specified in znaupd.f source file
+   complex(8) :: workl(3 * dim_krylov**2 + 5 * dim_krylov)   ! length specified in znaupd.f source file
 
    integer(8) umf_numeric, symbolic
 
    double precision tol
 
+   complex(8) shift2
+   integer(8) i
+
    integer alloc_stat
    double precision, dimension(:), allocatable :: rwork
    complex(8), dimension(:), allocatable :: workev
-   logical, dimension(:), allocatable :: select
+   logical, dimension(:), allocatable :: arp_select
 
 
    type(stopwatch) :: clock_main
@@ -251,7 +258,8 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    !  32-bit integers for ARPACK
    integer(4) neq_32, n_modes_32, dim_krylov_32
    integer(4) arp_ido, arp_info, arp_iparam(11)
-   integer(4) ipntr_32(14), lworkl_32
+   integer, parameter :: ARP_IPNTR_DIM = 14
+   integer(4) ipntr_32(ARP_IPNTR_DIM), lworkl_32
 
    integer(8) ui, debug
 
@@ -264,6 +272,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    ui = stdout
    errco = 0
    emsg = ""
+   lworkl = 3 * dim_krylov**2 + 5 * dim_krylov   ! length specified in znaupd.f source file
 
    if (i_base .ne. 0) then
       write(emsg,*) "valpr_64: i_base != 0 : ", i_base, &
@@ -274,7 +283,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    endif
 
    !  TODO: check this works on intel
-   call valpr_allocs(dim_krylov, workev, rwork, select, errco, emsg)
+   call valpr_allocs(dim_krylov, workev, rwork, arp_select, errco, emsg)
 
 
    !  alloc_stat = 0
@@ -286,10 +295,10 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    !  return
    !  endif
 
-   !  allocate(select(dim_krylov), STAT=alloc_stat)
+   !  allocate(arp_select(dim_krylov), STAT=alloc_stat)
    !  if (alloc_stat /= 0) then
    !  write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull", &
-   !  " for the array select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
+   !  " for the array arp_select. alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
    !  errco = NBERROR_102
    !  return
    !  endif
@@ -524,7 +533,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
       rvec = .true. !  get the full set of vectors
 
       !TODO:  v_schur appears twice in here, feels weird.
-      call zneupd (rvec, 'A', select,  v_evals, v_schur, neq_32, shift2, &
+      call zneupd (rvec, 'A', arp_select,  v_evals, v_schur, neq_32, shift2, &
          workev, arp_bmat, neq_32, arp_which, n_modes_32, tol, &
          resid, dim_krylov_32, v_schur, neq_32, arp_iparam, ipntr_32, &
          workd, workl, lworkl_32, rwork, arp_info)
@@ -548,7 +557,7 @@ subroutine valpr_64 (i_base, & !del_vect1, del_vect2, del_workl, &
    call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
 
    deallocate(workev, rwork, STAT=alloc_stat)
-   deallocate(select)
+   deallocate(arp_select)
 
    call clock_main%stop()
    time_arpack = clock_main%cpu_time()

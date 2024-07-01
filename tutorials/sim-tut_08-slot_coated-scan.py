@@ -73,20 +73,16 @@ def ac_mode_freqs(wid_x):
     # Calculate Electromagnetic modes.
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
     sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-
-    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
-
-    shift_Hz = 4e9
+    sim_EM_pump.plot_modes(ivals=range(5))
 
     # Calculate Acoustic modes.
+    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    shift_Hz = 4e9
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
-
-#    if coat_y == 20.0: # Shouldn't really test equality on floats like this
-    sim_EM_pump.plot_modes()
     sim_AC.plot_modes()
 
+    # Calculate gain 
     set_q_factor = 1000.
-
     gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)

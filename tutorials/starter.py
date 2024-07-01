@@ -13,6 +13,8 @@ def read_args(enum, argv, sub='', refine=5):
         s_fmode = ''
         refine_fac=refine
 
-    print('\n\nCommencing NumBAT tutorial %d%s%s'%(enum,sub, s_fmode))
+    print('\n\n\n\n\n')
+    print('-------------------------------------------------')
+    print('\nCommencing NumBAT tutorial %d%s%s'%(enum,sub, s_fmode))
     return prefix, refine_fac
 
