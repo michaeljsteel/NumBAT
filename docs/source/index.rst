@@ -26,8 +26,6 @@ Release date: |today|
 
    tutorial
 
-
-
    josab
 
    lit_ex
@@ -36,15 +34,10 @@ Release date: |today|
 
    pythonapi
 
-   fem
-
    refs
 
-********************
-Indices and tables
-********************
+   indices
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
+
+..   fem

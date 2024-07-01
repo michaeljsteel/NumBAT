@@ -950,7 +950,6 @@ class EMSimulation(Simulation):
         #print(f'bloch:', self.k_perp)
         #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
 
-        print('Starting calc_emmodes')
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
@@ -981,7 +980,6 @@ class EMSimulation(Simulation):
             mesh_xy,
             self.ls_material,
         ) = process_fortran_return(resm, "solving for electromagnetic modes")
-        print('Done calc_emmodes')
 
         # TODO: ls_material is just refractive index of each element (13 reps for some reason)
         #       clean up and give to FemMesh

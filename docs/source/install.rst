@@ -13,10 +13,8 @@ Please email |NUMBAT_EMAIL| to let us know of any difficulties you encounter, or
 
 Information for all platforms
 ================================
-While |NUMBAT| is developed on Linux, it can also be built on MacOS X as a
-native command-line application, and under Windows using a virtual machine running Linux.
-A native Windows build is currently in development.
-
+While |NUMBAT| is developed on Linux, it can also be built natively on both MacOS and Windows.
+The Linux builds can also be run under virtual machines on MacOS and Windows if desired.
 
 In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/|NUMBAT|>`_. Please always download the latest release from the github page.
 
@@ -338,27 +336,14 @@ The following steps have worked for us:
 Installing on Windows
 ================================
 
-Installing the Linux version via a Virtual Machine
-------------------------------------------------------
-
-The easiest way to run |NUMBAT| on  Windows is usually by installing Ubuntu as
-a virtual machine using either `Microsoft Hyper-V
-<https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box
-<https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_.
-
-Then |NUMBAT| can be installed using exactly the same procedure as described
-above for standard Linux installations.  It is also possible to build |NUMBAT|
-using the `Windows Subsystem for Linux
-<https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
-with installing the additional required packages may be quite painful.
 
 Installing the Native Windows version
 -------------------------------------------
 
-**This build is experimental and likely to fail for you.  To ensure the libraries link correctly, it is vital to follow every step exactly.**
+**This build is quite new and likely to have some hiccups. To ensure the libraries link correctly, it is vital to follow every step exactly. Please provide any feedback on your success or otherwise.**
 
-There is now an experimental version of |NUMBAT| built entirely using the native Windows toolchain including
-Visual Studio and the Intel Fortran compiler. There are a surprising number of steps and tools required, but it should go relatively smoothly.
+The Windows version of |NUMBAT| is built entirely using the native Windows toolchain including
+Visual Studio and the Intel Fortran compiler. There are a relatively large number of steps and tools required, but it should go relatively smoothly.
 
 
 #. **Python environment**
@@ -527,6 +512,21 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
 
+
+
+Installing the Linux version via a Virtual Machine
+------------------------------------------------------
+
+Another way to run |NUMBAT| on  Windows or MacOS is by installing Ubuntu as
+a virtual machine using either `Microsoft Hyper-V
+<https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box
+<https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_, or a similar tool on MacOS.
+
+Then |NUMBAT| can be installed using exactly the same procedure as described
+above for standard Linux installations.  It is also possible to build |NUMBAT|
+using the `Windows Subsystem for Linux
+<https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
+with installing the additional required packages may be quite painful.
 
 
 Installing via Docker
