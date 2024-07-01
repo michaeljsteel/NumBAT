@@ -369,3 +369,4 @@ resources for this material.
 #. B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019). https://dx.doi.org/10.1109/JLT.2019.2920844
 
 #. C. Wolff, M.J.A. Smith, B. Stiller, and C.G. Poulton, "Brillouin scattering—theory and experiment: tutorial," *J. Opt. Soc. Am. B* **38**, 1243-1269 (2021).  https://doi.org/10.1364/JOSAB.416747
+

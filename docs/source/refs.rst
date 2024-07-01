@@ -8,6 +8,7 @@ References
 ********************
 
 ..  raw:: latex
+
     \begingroup
     \def\section#1#2{}
     \def\chapter#1#2{}
@@ -16,4 +17,5 @@ References
 ..  bibliography::
 
 ..  raw:: latex
+
     \end{thebibliography}
