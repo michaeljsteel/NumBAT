@@ -51,9 +51,13 @@ class UserGeometryBase():
         self.d_param_help.update(d_help)
 
     def help_on_parameters(self):
-        print(f'Waveguide parameters for shape {self._geom_name}:')
+        print(self.get_parameter_help_string())
+
+    def get_parameter_help_string(self):
+        msg = f'Waveguide parameters for shape {self._geom_name}:\n'
         for k,v in self.d_param_help.items():
-            print(f'{k:>20} : {v}')
+            msg += f'{k:>20} : {v}\n'
+        return msg
 
     def check_parameters(self, user_params):
         if not self._req_params: # not yet defined for this template
@@ -67,8 +71,15 @@ class UserGeometryBase():
 
         for key in reqkws:
             if key not in user_params:
-                reporting.report_and_exit(
-                    f"Waveguide '{self._geom_name}' requires a value for parameter {key} in make_structure().")
+                msg =f"Waveguide type '{self._geom_name}' requires a value for the parameter '{key}' in the call to make_structure()."
+
+                msg+= '\n\nNote that some waveguide types have changed their required parameters to adopt more intuitive names.'
+
+                msg+=f'\n\nFor this waveguide type, the following guidelines apply:\n\n'
+
+                msg+=self.get_parameter_help_string()
+
+                reporting.report_and_exit(msg)
 
         # report unexpected keys
         goodkeys = reqkws + self._allowed_params
