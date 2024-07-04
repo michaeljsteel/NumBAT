@@ -93,19 +93,16 @@ acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 # Output the normalisation k value for reference
 print(f"The acoustic wavevector 2*kp = {q_AC:f}")
 
-multiproc = False
+multiproc = nbapp.is_linux()  # multiproc not yet working for windows and macos
 
 # make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
 qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
 
-if multiproc:  # TODO: seems to stall right now.
+if multiproc:  
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
-    num_cores = 2
+    num_cores = 4
     with  Pool(num_cores) as pool:
         pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
-# Note pool.map() doesn't pass errors back from fortran routines very well.
-# It's good practise to run the extrema of your simulation range through map()
-# before launching full multicore simulation.
 else:
     pooled_mode_freqs = []
     for ik, nk, nu_k in qsets:
