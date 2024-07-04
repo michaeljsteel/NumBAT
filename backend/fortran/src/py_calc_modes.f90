@@ -150,15 +150,11 @@ contains
 
       integer(8) :: ilo, ihi, i_md
 
-      integer :: is_em, alloc_stat, alloc_remote
       double precision arp_tol
       integer(8) :: adim
 
       type(Stopwatch) :: clock_main, clock_spare
 
-
-      is_em = 1
-      alloc_remote = 0
       ui_out = stdout
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch

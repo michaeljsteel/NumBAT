@@ -20,10 +20,13 @@ out
 *.pyd
 *.dll
 
+
 backend/msh/*.msh
 backend/msh/*.geo
 backend/msh/*.mail
 backend/msh/build/*
+
+backend/fortran/nb_build_config.txt
 backend/fortran/build/*
 
 josab_tutorial/*.png
