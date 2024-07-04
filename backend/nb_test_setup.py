@@ -94,7 +94,7 @@ def check_helper_apps(nbapp):
     pass_gmsh = check_gmsh(nbapp, False)
     pass_asy = check_asymptote(nbapp)
 
-    return pass_gmsh and pass_asy and pass_nb_fortran
+    return pass_gmsh and pass_asy
 
 
 
@@ -114,14 +114,14 @@ def do_main(argv):
     if not pass_nbfort:
         sys.exit(1)
 
-    import numbat
+    import numbat  # We now know this will work
     nbapp = numbat.NumBATApp()
 
 
 
     pass_apps = check_helper_apps(nbapp)
 
-    if pass_apps and pass_nbfor:
+    if pass_apps:
         print('\n\nAll tests passed. You are ready to NumBAT!')
     else:
         print('\n\nPlease attend to the failed tests before starting to work with NumBAT.')

@@ -10,6 +10,7 @@ import objects
 
 
 _evar_gmsh_path = 'NUMBAT_PATH_GMSH'
+_evar_numbat_root = 'NUMBAT_ROOT_DIR'
 
 def _confirm_file_exists(nm, path, evar=''):
     if not os.path.exists(path):
@@ -43,7 +44,11 @@ class _NumBATApp:
         self._paths={}
         self._start_time=time.time()
         self._codedir = Path(__file__).parents[0]
-        self._nbrootdir = Path(__file__).parents[3]  # this seems a bit flaky depending on installations
+
+        # location of top level numbat tree containing other libraries etc. Mainly for windows
+        # this seems a bit flaky depending on installations
+        self._nbrootdir =  os.environ.get(_evar_numbat_root,
+                                          Path(__file__).resolve().parents[3])
 
         self._plot_extension = '.png'
         #self._plot_extension = '.pdf'
@@ -133,7 +138,7 @@ class _NumBATApp:
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         if self.is_windows():
-            path = Path(self._nbrootdir, '../../usr_local/packages/gmsh/gmsh.exe')
+            path = Path(self._nbrootdir, 'usr_local/packages/gmsh/gmsh.exe')
             self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
 
         elif self.is_macos():
