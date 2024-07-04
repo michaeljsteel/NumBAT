@@ -4,9 +4,9 @@
 !
 
 subroutine gmsh_post_process_AC (plot_val, nval,&
-&nel, npt, nnodes, table_nod, type_el,&
-&x, val_cmplx, sol, sol_avg, visited,&
-&gmsh_file_pos, dir_name, d_in_nm, debug)
+nel, npt, nnodes, table_nod, type_el,&
+x, val_cmplx, sol, sol_avg, visited,&
+gmsh_file_pos, dir_name, d_in_nm, debug)
 
    use numbatmod
 

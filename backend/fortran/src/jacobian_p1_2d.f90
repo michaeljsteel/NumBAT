@@ -7,7 +7,7 @@
 
 !
 subroutine jacobian_p1_2d (x, xel, nnodes,&
-&x_g, det_jacobian, mat_B_0, mat_T)
+x_g, det_jacobian, mat_B_0, mat_T)
 !
    use numbatmod
 

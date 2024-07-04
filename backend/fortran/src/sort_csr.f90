@@ -3,7 +3,7 @@
 !***********************************************************************
 !
 subroutine sort_csr (neq, nonz, max_row_len, col_ind,&
-&row_ptr, arr, indx, istack)
+row_ptr, arr, indx, istack)
 !
    implicit none
    integer(8) neq, nonz, max_row_len

@@ -1,4 +1,4 @@
-for fb in z_indexx_AC.f z_indexx.f
+for fb in moving_boundary.f quad_triangle.f
 do
     fn=`basename $fb .f`
 
