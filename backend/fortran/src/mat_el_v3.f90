@@ -5,7 +5,7 @@
  !!!!!!!!!!!!!!!!
 
 subroutine mat_el_v3 (xel, beta, c_tensor_el, rho_el,&
-&mat_K, mat_M)
+mat_K, mat_M)
 
    !!!!!!!!!!!!!!!!
 

@@ -4,10 +4,10 @@
 !
 
 subroutine gmsh_post_process (plot_val, E_H_field, nval,&
-&nel, npt, nnodes, table_nod, type_el, nb_typ_el,&
-&n_eff, x, val_cmplx, sol, visited,&
-&gmsh_file_pos, dir_name,&
-&q_average, plot_real, plot_imag, plot_abs)
+nel, npt, nnodes, table_nod, type_el, nb_typ_el,&
+n_eff, x, val_cmplx, sol, visited,&
+gmsh_file_pos, dir_name,&
+q_average, plot_real, plot_imag, plot_abs)
 
    use numbatmod
 

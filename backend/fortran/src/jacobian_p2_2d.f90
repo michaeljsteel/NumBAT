@@ -12,7 +12,7 @@
 !
 !
 subroutine jacobian_p2_2d (xel, nnodes, p2_list,&
-&grad_p2_mat, x_g, det_jacobian, mat_B_0, mat_T)
+grad_p2_mat, x_g, det_jacobian, mat_B_0, mat_T)
 !
    use numbatmod
    integer(8) nnodes

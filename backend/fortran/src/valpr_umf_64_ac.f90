@@ -7,10 +7,10 @@
 !  ------------------------------------------------------------------
 
 subroutine valpr_64_AC (i_base, nvect, n_modes, neq, itermax,&
-&ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,&
-&vect1, vect2, workd, resid, vschur, nu_out, trav, vp,&
-&rhs_re, rhs_im, lhs_re, lhs_im, n_conv,&
-&debug, show_mem_est, errno, emsg)
+ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,&
+vect1, vect2, workd, resid, vschur, nu_out, trav, vp,&
+rhs_re, rhs_im, lhs_re, lhs_im, n_conv,&
+debug, show_mem_est, errno, emsg)
 
 !  ------------------------------------------------------------------
 
