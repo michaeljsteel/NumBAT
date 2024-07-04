@@ -62,10 +62,10 @@ module numbatmod
 
 
    !  UMFPACK Solve codes
-!  Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the
-!  linear algebraic transpose (complex conjugate if A is complex), or the (')
-!  operator in MATLAB.  "at" refers to the array transpose, or the (.')
-!  operator in MATLAB.
+   !  Solve the system ( )x=b, where ( ) is defined below.  "t" refers to the
+   !  linear algebraic transpose (complex conjugate if A is complex), or the (')
+   !  operator in MATLAB.  "at" refers to the array transpose, or the (.')
+   !  operator in MATLAB.
 
 
    integer(8), parameter ::  UMFPACK_A      = 0     !  Ax=b
@@ -89,6 +89,53 @@ module numbatmod
 
 
 contains
+
+   subroutine log_me(fname, msg, newfile)
+      character(len=*) :: fname, msg
+      logical, optional :: newfile
+      logical app
+
+      integer(4) ui
+
+      ui=8
+      app = .false.
+      if (present(newfile)) then
+         app = .not. newfile
+      endif
+
+      if (app) then
+         open(ui, FILE=fname, ACTION='WRITE', ACCESS='APPEND')
+      else
+         open(ui, FILE=fname, ACTION='WRITE')
+      endif
+
+      write(ui, *) msg
+
+      close(ui)
+
+   end subroutine
+
+   subroutine flush_me(ui, msg)
+      ! Declare the interface for POSIX fsync function
+      interface
+         function fsync (fd) bind(c,name="fsync")
+            use iso_c_binding, only: c_int
+            integer(c_int), value :: fd
+            integer(c_int) :: fsync
+         end function fsync
+      end interface
+
+      integer(8) :: ui
+      integer(4) :: ret
+      character(len=*) :: msg
+
+      write(ui, '(A,A)') '>>>> ', msg
+      flush(ui)
+#ifndef __INTEL_COMPILER
+            ret = fsync(fnum(ui))   ! actually sync to fs on GCC
+#endif
+
+   end subroutine
 
    integer function nb_system(cmd)
       implicit none

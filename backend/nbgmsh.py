@@ -37,6 +37,9 @@ class MailData:
         self.v_centy = None
 
         self._parse_lines(lines)
+        self.summarise_mesh()
+
+
 
     def summarise_mesh(self):
         s = (f'    Initial Gmsh mesh has: {self.n_msh_pts} nodes, {self.n_msh_elts} elements. \n' \
@@ -49,7 +52,7 @@ class MailData:
         print(s)
 
 
-    def plot_mesh(self):
+    def plot_mesh(self, path):
         fig, axs = plt.subplots(2,2, dpi=300)
         fig.subplots_adjust(hspace=0.3, wspace=.1)
 
@@ -112,8 +115,7 @@ class MailData:
         tidyaxes.apply_to_axes(axs)
         tidyaxes.apply_to_cbars(cbar)
 
-        pref = numbat.NumBATApp().outpath()
-        save_and_close_figure(fig, str(pref) + '-mailmesh.png')
+        save_and_close_figure(fig, str(path) + '-mailmesh.png')
 
 
     def _parse_lines(self, lines):
@@ -156,8 +158,3 @@ class MailData:
             self.v_centx[i] = (vx[eltnds[0]] + vx[eltnds[1]] + vx[eltnds[2]])/3.0
             self.v_centy[i] = (vy[eltnds[0]] + vy[eltnds[1]] + vy[eltnds[2]])/3.0
 
-        #TODO: make an option somewhere
-        plotmailmesh=True
-        if plotmailmesh:
-            self.summarise_mesh()
-            self.plot_mesh()

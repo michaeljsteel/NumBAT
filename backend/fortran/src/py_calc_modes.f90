@@ -1,69 +1,70 @@
 #include "numbat_decl.h"
 
-!  Solves the electromagnetic FEM problem defined in
-!  Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
+ !  Solves the electromagnetic FEM problem defined in
+ !  Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
 
-!  The weak formulation of Maxwell wave equation is in Eqs 14, 15.
-!  \langle 1/\mu (\nabla_t \times E_t), (\nabla_t \times F_t) \rangle
-!  - \omega^2 \langle (\epsilon E_t, F_t)
-!  = \beta^2 \langle 1/\mu (\nabla_t hE_z -E_t, F_t), \rangle
+ !  The weak formulation of Maxwell wave equation is in Eqs 14, 15.
+ !  \langle 1/\mu (\nabla_t \times E_t), (\nabla_t \times F_t) \rangle
+ !  - \omega^2 \langle (\epsilon E_t, F_t)
+ !  = \beta^2 \langle 1/\mu (\nabla_t hE_z -E_t, F_t), \rangle
 
-!  \langle 1/\mu E_t, \nabla_t F_z \rangle
-!  - \langle 1/\mu\nabla_t hE_z, \nabla_t F_z \rangle
-!  + \omega^2 \langle\eps hE_z, F_z\rangle =0
+ !  \langle 1/\mu E_t, \nabla_t F_z \rangle
+ !  - \langle 1/\mu\nabla_t hE_z, \nabla_t F_z \rangle
+ !  + \omega^2 \langle\eps hE_z, F_z\rangle =0
 
-!  where \hE_z = -1/\beta E_z
+ !  where \hE_z = -1/\beta E_z
 
-!  The fields are expanded in in-plane vector and longitudinal scalar elements
-!  \vecphi_h and \psi_h:
-!  E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
-!  F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
+ !  The fields are expanded in in-plane vector and longitudinal scalar elements
+ !  \vecphi_h and \psi_h:
+ !  E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
+ !  F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
 
-!  Then  inner product (L_1 E, L_2 F) is evaluted:
-!  (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
-!  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
-!  +  ((L_2 F)_z)^* . ((L_1 E)_z)
+ !  Then  inner product (L_1 E, L_2 F) is evaluted:
+ !  (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
+ !  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+ !  +  ((L_2 F)_z)^* . ((L_1 E)_z)
 
-!  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
-!  +  ((L_2 F)_z)^* . ((L_1 E)_z)
+ !  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
+ !  +  ((L_2 F)_z)^* . ((L_1 E)_z)
 
-!  This translates to the geneig problem (eq 40)
+ !  This translates to the geneig problem (eq 40)
 
-!  [ K_tt   0 ] [ E_t,h]  = \beta^2  [M_tt   (K_zt)^T] [E_t,h]
-!  [ 0      0 ] [ hE_z,h]            [K_zt    K_zz   ] [hE_z,h]
-
-
+ !  [ K_tt   0 ] [ E_t,h]  = \beta^2  [M_tt   (K_zt)^T] [E_t,h]
+ !  [ 0      0 ] [ hE_z,h]            [K_zt    K_zz   ] [hE_z,h]
 
 
-!  lambda - free space wavelength in m
-!  n_modes - desired number of eigenvectors
-!  n_msh_pts - number of FEM mesh points
-!  n_msh_el  - number of FEM (triang) elements
-!  n_typ_el  - number of types of elements (and therefore elements)
-!  v_refindex_n - array of effective index of materials
-!  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
-!  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
-!  bnd_cnd_i - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
-!  v_evals_beta_adj  - array of eigenvalues kz
-!  m_evecs_adj   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
-!  mode_pol  - unknown - never used in python
-!  table_nod - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
-!  Points where type_el[mp] is not the same for all 6 nodes must be interface points
-!  type_el   - n_msh_el array: material index for each element
-!  type_nod  - is boundary node?
-!  mesh_xy  - (2 , n_msh_pts)  x,y coords?
-!  ls_material  - (1, nodes_per_el+7, n_msh_el)
+
+
+ !  lambda - free space wavelength in m
+ !  n_modes - desired number of eigenvectors
+ !  n_msh_pts - number of FEM mesh points
+ !  n_msh_el  - number of FEM (triang) elements
+ !  n_typ_el  - number of types of elements (and therefore elements)
+ !  v_refindex_n - array of effective index of materials
+ !  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
+ !  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
+ !  bnd_cnd_i - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
+ !  v_evals_beta  - array of eigenvalues kz
+ !  m_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
+ !  mode_pol  - unknown - never used in python
+ !  table_nod - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
+ !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
+ !  type_el   - n_msh_el array: material index for each element
+ !  type_nod  - is boundary node?
+ !  mesh_xy  - (2 , n_msh_pts)  x,y coords?
+ !  ls_material  - (1, nodes_per_el+7, n_msh_el)
 
 module calc_em_impl
 
    use numbatmod
    use class_stopwatch
+   use alloc
 
 contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
-      v_evals_beta_adj, m_evecs_adj, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
+      v_evals_beta, m_evecs, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
 
       implicit none
 
@@ -77,8 +78,8 @@ contains
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
 
-      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
-      complex(8), target, intent(out) :: m_evecs_adj(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_evals_beta(n_modes)
+      complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
 
       complex(8), intent(out) :: mode_pol(4,n_modes)
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
@@ -105,13 +106,15 @@ contains
       integer(8), dimension(:), allocatable :: iindex
       complex(8), dimension(:,:), allocatable :: overlap_L
 
-!  Declare the pointers of the integer super-vector
+      complex(8), dimension(:,:), allocatable :: arp_evecs
+
+      !  Declare the pointers of the integer super-vector
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
       integer(8) ip_period_N, ip_nperiod_N
       integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
 
-!  Declare the pointers of the real super-vector
+      !  Declare the pointers of the real super-vector
       integer(8) jp_x_N_E_F
 
 
@@ -122,7 +125,7 @@ contains
 
       integer(8) n_msh_pts_p3, ui_out
 
-!  Variable used by valpr
+      !  Variable used by valpr
       integer(8) dim_krylov, ltrav
       integer(8) n_conv, i_base
       !double precision ls_data(10)
@@ -135,25 +138,21 @@ contains
 
       double precision time_fact, time_arpack
 
-!  Declare the pointers of the real super-vector
+      !  Declare the pointers of the real super-vector
       integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
       integer(8) kp_mat1_re, kp_mat1_im
 
-!  Declare the pointers of for sparse matrix storage
+      !  Declare the pointers of for sparse matrix storage
       integer(8) ip_col_ptr, ip_row
       integer(8) jp_mat2
       integer(8) ip_work, ip_work_sort, ip_work_sort2
       integer(8) nonz, nonz_max, max_row_len
 
-
-      complex(8), pointer :: p_sol (:,:,:,:)
-      complex(8), pointer :: p_beta(:)
-
-
       integer(8) :: ilo, ihi, i_md
 
       integer :: is_em, alloc_stat, alloc_remote
-      double precision tol
+      double precision arp_tol
+      integer(8) :: adim
 
       type(Stopwatch) :: clock_main, clock_spare
 
@@ -162,57 +161,28 @@ contains
       alloc_remote = 0
       ui_out = stdout
 
+      arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
-      !  TODO: unallocated arrays can not be passed as function arguments
-      !  Can be done by quasi-globals variables in a module
+      n_conv = 0.d0
+      time_fact = 0.d0
+      time_arpack = 0.d0
 
-      if (alloc_remote > 0) then
-         !call prepare_workspaces(is_em, n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
-         !  a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L,  errco, emsg)
-         !RETONERROR(errco)
-         write(ui_out,*) 'alloc remote in calc_em_impl is broken'
-         call exit(1)
-      else
+      call array_size(n_msh_pts, n_msh_el, n_modes, &
+         int_max, cmplx_max, real_max, n_ddl, errco, emsg)
+      RETONERROR(errco)
 
-         call array_size(n_msh_pts, n_msh_el, n_modes, &
-            int_max, cmplx_max, real_max, n_ddl, errco, emsg)
-         RETONERROR(errco)
+      call integer_alloc_1d(a_iwork, int_max, 'a_iwork', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
+      call double_alloc_1d(c_dwork, real_max, 'c_dwork', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(iindex, n_modes, 'iindex', errco, emsg); RETONERROR(errco)
 
-         allocate(a_iwork(int_max), STAT=alloc_stat)
-         call check_alloc(alloc_stat, int_max, "a_iwork", 101, errco, emsg)
-         RETONERROR(errco)
-
-         allocate(b_zwork(cmplx_max), STAT=alloc_stat)
-         call check_alloc(alloc_stat, cmplx_max, "b_zwork", 101, errco, emsg)
-         RETONERROR(errco)
-
-         allocate(c_dwork(real_max), STAT=alloc_stat)
-         call check_alloc(alloc_stat, real_max, "c_dwork", 101, errco, emsg)
-         RETONERROR(errco)
-
-         allocate(iindex(n_modes), STAT=alloc_stat)
-         call check_alloc(alloc_stat, n_modes, "iindex", 101, errco, emsg)
-         RETONERROR(errco)
-
-         if (is_em > 0) then
-            allocate(d_dwork(2,n_ddl), STAT=alloc_stat)
-            call check_alloc(alloc_stat, 2*n_ddl, "d_dwork", 101, errco, emsg)
-            RETONERROR(errco)
-
-            allocate(e_dwork(cmplx_max), STAT=alloc_stat)
-            call check_alloc(alloc_stat, cmplx_max, "e_dwork", 101, errco, emsg)
-            RETONERROR(errco)
-
-            allocate(overlap_L(n_modes,n_modes), STAT=alloc_stat)
-            call check_alloc(alloc_stat, n_modes*n_modes, "overlap_L", 101, errco, emsg)
-            RETONERROR(errco)
-
-         endif
-      endif
+      adim = 2  ! Replace with constant 2_8
+      call double_alloc_2d(d_dwork, adim, n_ddl, 'd_dwork', errco, emsg); RETONERROR(errco)
+      call double_alloc_1d(e_dwork, cmplx_max, 'e_dwork', errco, emsg); RETONERROR(errco)
+      call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
 
-
-!  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
+      !  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
 
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -224,7 +194,7 @@ contains
       dim_y = dimscale_in_m
 
       !  Fill:  mesh_xy, type_nod, type_el, table_nod
-      call construct_fem_node_tables (n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, dim_x, dim_y, mesh_file, &
+      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el,   &
          mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
@@ -290,7 +260,7 @@ contains
       endif
 
 
-!C  overwriting pointers ip_row_ptr, ..., ip_adjncy
+      !C  overwriting pointers ip_row_ptr, ..., ip_adjncy
 
       ip_type_N_E_F = ip_table_E + 4*n_edge   !  not sure why 4* n_edge, not 4*n_msh_pts?
 
@@ -339,19 +309,19 @@ contains
          int_max, debug)
 
 
-!  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
+      !  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
 
 
-!  Sparse matrix storage
+      !  Sparse matrix storage
 
       ip_col_ptr = ip_eq + 3*n_ddl
 
       call csr_max_length (n_msh_el, n_ddl, neq, a_iwork(ip_table_N_E_F), &
          a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 
-!  ip = ip_col_ptr + neq + 1 + nonz_max
-         !ip = ip_col_ptr + neq + 1
-         ip_row = ip_col_ptr + neq + 1
+      !  ip = ip_col_ptr + neq + 1 + nonz_max
+      !ip = ip_col_ptr + neq + 1
+      ip_row = ip_col_ptr + neq + 1
 
       if (ip_row .gt. int_max) then
          write(emsg,*) "py_calc_modes.f: ip_row > int_max : ", ip_row, int_max, "py_calc_modes.f: nonz_max = ", &
@@ -368,7 +338,7 @@ contains
       ip_work_sort = ip_work + 3*n_ddl
       ip_work_sort2 = ip_work_sort + max_row_len
 
-!  sorting csr ...
+      !  sorting csr ...
       call sort_csr (neq, nonz, max_row_len, a_iwork(ip_row), a_iwork(ip_col_ptr), a_iwork(ip_work_sort), a_iwork(ip_work), &
          a_iwork(ip_work_sort2))
 
@@ -390,7 +360,7 @@ contains
 
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       jp_mat2 = jp_x_N_E_F + 3*n_ddl
 
       jp_vect1 = jp_mat2 + nonz
@@ -398,7 +368,7 @@ contains
       jp_workd = jp_vect2 + neq
       jp_resid = jp_workd + 3*neq
 
-!  Eigenvectors
+      !  Eigenvectors
       jp_vschur = jp_resid + neq
       jp_trav = jp_vschur + neq*dim_krylov
 
@@ -430,19 +400,19 @@ contains
       endif
 
 
-!###############################################
+      !###############################################
 
-!  ----------------------------------------------------------------
-!  convert from 1-based to 0-based
-!  ----------------------------------------------------------------
+      !  ----------------------------------------------------------------
+      !  convert from 1-based to 0-based
+      !  ----------------------------------------------------------------
 
-!  do j = 1, neq+1
-!  a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
-!  end do
-!  do  j = 1, nonz
-!  a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
-!  end do
-!
+      !  do j = 1, neq+1
+      !  a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
+      !  end do
+      !  do  j = 1, nonz
+      !  a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
+      !  end do
+      !
 
       ilo = ip_col_ptr-1 + 1
       ihi = ip_col_ptr-1 + neq + 1
@@ -455,8 +425,8 @@ contains
 
 
 
-!  The CSC indexing, i.e., ip_col_ptr, is 1-based
-!  (but valpr.f will change the CSC indexing to 0-based indexing)
+      !  The CSC indexing, i.e., ip_col_ptr, is 1-based
+      !  (but valpr.f will change the CSC indexing to 0-based indexing)
       i_base = 0
 
 
@@ -472,15 +442,11 @@ contains
       RETONERROR(errco)
 
 
-!  Main eigensolver
+      !  Main eigensolver
       write(ui_out,*) "EM FEM: "
 
-      p_sol  => m_evecs_adj
-      p_beta => v_evals_beta_adj
-
-
-!  Assemble the coefficient matrix A and the right-hand side F of the
-!  finite element equations
+      !  Assemble the coefficient matrix A and the right-hand side F of the
+      !  finite element equations
 
       write(ui_out,'(A,A)') "   - assembling linear system "
 
@@ -507,22 +473,29 @@ contains
 
       !  This is the main solver.
       !  On completion:
-      !  unshifted unsorted eigenvalues are in p_beta[1..n_modes]
+      !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
       !  eigvectors are in are b_zwork[jp_evecs..?]
 
       !  TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
 
-      call valpr_64 (i_base, &
+
+      call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
+
       !b_zwork(jp_vect1), &  !  unused
       !b_zwork(jp_vect2), &  !  unused
       !b_zwork(jp_trav), &  !  unused
-         !b_zwork(jp_workd), b_zwork(jp_resid), ltrav,  &
-         dim_krylov, n_modes, neq, itermax,  &
-         tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+      !b_zwork(jp_workd), b_zwork(jp_resid), ltrav,  &
+      !b_zwork(jp_vschur)
+      !b_zwork(jp_evecs)
+
+      call valpr_64( &
+         i_base, dim_krylov, n_modes, neq, itermax,  &
+         arp_tol, nonz, &
+         n_conv, time_fact, time_arpack, debug, errco, emsg, &
+         a_iwork(ip_row), a_iwork(ip_col_ptr), &
          c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
          c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
-         p_beta, b_zwork(jp_vschur), b_zwork(jp_evecs), &
-         n_conv, time_fact, time_arpack, debug, errco, emsg)
+         v_evals_beta, arp_evecs)
       RETONERROR(errco)
 
 
@@ -538,7 +511,7 @@ contains
       write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
 
-      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, p_beta, iindex)
+      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
 
 
       call clock_spare%reset()
@@ -553,11 +526,8 @@ contains
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          n_core, bloch_vec, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, &
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
-         mesh_xy, &
-      !b_zwork(jp_x_N_E_F),
-         !d_dwork, &  !  this should be an e_ework
-         e_dwork, &  !  this should be an e_ework
-         p_beta, mode_pol, b_zwork(jp_evecs), p_sol , errco, emsg)
+         mesh_xy, e_dwork, v_evals_beta, mode_pol, arp_evecs, &
+         m_evecs, errco, emsg)
       RETONERROR(errco)
 
 
@@ -565,14 +535,12 @@ contains
       !  Calculate energy in each medium (typ_el)
       call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
          table_nod, type_el, n_typ_el, eps_eff,&
-         mesh_xy, p_sol, p_beta, mode_pol)
-
-
+         mesh_xy, m_evecs, v_evals_beta, mode_pol)
 
 
       !  Doubtful that this check is of any value: delete?
       !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      !  type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &!v_evals_beta_pri, m_evecs_pri,
+      !  type_el, mesh_xy, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
       !  overlap_L, overlap_file, debug, ui_out, &
       !  pair_warning, vacwavenum_k0, errco, emsg)
       !  RETONERROR(errco)
@@ -587,14 +555,14 @@ contains
       !  TODO: is this really supposed to be x i beta , or just x beta  ?
       do i_md=1,n_modes
          !!do iel=1,n_msh_el
-         !!  m_evecs_adj(3,inod,i_md,iel) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,iel)
+         !!  m_evecs(3,inod,i_md,iel) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,inod,i_md,iel)
          !!enddo
 
          !do inod=1,nodes_per_el+7
-         !  m_evecs_adj(3,inod,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,inod,i_md,:)
+         !  m_evecs(3,inod,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,inod,i_md,:)
          !enddo
 
-         m_evecs_adj(3,:,i_md,:) = C_IM_ONE * p_beta(i_md) * m_evecs_adj(3,:,i_md,:)
+         m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
 
       enddo
 
@@ -602,7 +570,7 @@ contains
       call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
 
       !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
-      !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs_adj, overlap_L)
+      !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
 
       write(ui_out,*) "  - finished"
       !if (debug .eq. 1) then
@@ -615,7 +583,7 @@ contains
       !  overlap_file = "Orthogonal_n.txt"
       !  call get_clocks( systime1_J, time1_J)
       !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-      !  type_el, mesh_xy, v_evals_beta_adj, v_evals_beta_pri, m_evecs_adj, m_evecs_pri, overlap_L, overlap_file, debug, &
+      !  type_el, mesh_xy, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
       !  pair_warning, vacwavenum_k0)
       !  call get_clocks( systime2_J, time2_J)
       !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
@@ -626,7 +594,7 @@ contains
       call clock_spare%stop()
       call clock_main%stop()
 
-      deallocate(a_iwork, b_zwork, c_dwork, d_dwork, iindex, overlap_L)
+      deallocate(a_iwork, b_zwork, c_dwork, iindex, d_dwork, e_dwork, overlap_L, arp_evecs)
 
       write(ui_out,*) "-----------------------------------------------"
 
@@ -636,7 +604,7 @@ contains
       !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
       !  n_typ_el, neq, nonz_max, dim_krylov, &
-      !  shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
+      !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
 
@@ -669,7 +637,7 @@ contains
       endif
       n_core(2) = n_core(1)
 
-!  Check that the structure is not entirely homogeneous (TODO: does this actually matter?)
+      !  Check that the structure is not entirely homogeneous (TODO: does this actually matter?)
       is_homogeneous = .true.
       do i=1,n_typ_el-1
 
@@ -711,7 +679,7 @@ contains
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
-      type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &
+      type_el, mesh_xy, v_evals_beta, m_evecs, &
    !v_evals_beta_pri, m_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
@@ -727,8 +695,8 @@ contains
       double precision, intent(out) :: mesh_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
-      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
-      complex(8), target, intent(out) :: m_evecs_adj(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: v_evals_beta(n_modes)
+      complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
 
       complex(8), dimension(:,:) :: overlap_L
 
@@ -751,7 +719,7 @@ contains
       overlap_file = "Orthogonal.txt"
 
       call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
-         type_el, mesh_xy, v_evals_beta_adj, m_evecs_adj, &
+         type_el, mesh_xy, v_evals_beta, m_evecs, &
       !v_evals_beta_pri, m_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
@@ -769,7 +737,7 @@ contains
       lambda, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
       n_typ_el, neq, nonz_max, dim_krylov, &
-      shift_ksqr, v_evals_beta_adj, eps_eff, v_refindex_n)
+      shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
 
@@ -782,7 +750,7 @@ contains
       integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
-      complex(8), target, intent(out) :: v_evals_beta_adj(n_modes)
+      complex(8), target, intent(out) :: v_evals_beta(n_modes)
       complex(8) eps_eff(n_typ_el)
 
       complex(8), intent(in) ::  v_refindex_n(n_typ_el)
@@ -813,14 +781,14 @@ contains
             100*(time_fact)/(time2-time1),"%"
          write(26,*) "ARPACK : CPU time and % Total time = ", time_arpack, &
             100*(time_arpack)/(time2-time1),"%"
-!  write(26,*) "Assembly : CPU time and % Total time = ",
-!  *   (time2_asmbl-time1_asmbl),
-!  *   100*(time2_asmbl-time1_asmbl)/(time2-time1),"%"
+         !  write(26,*) "Assembly : CPU time and % Total time = ",
+         !  *   (time2_asmbl-time1_asmbl),
+         !  *   100*(time2_asmbl-time1_asmbl)/(time2-time1),"%"
          write(26,*) "Post-processsing : CPU time and % Total time = ", (time2-time1_postp), &
             100*(time2-time1_postp)/(time2-time1),"%"
-!  write(26,*) "Pre-Assembly : CPU time and % Total time = ",
-!  *   (time1_asmbl-time1),
-!  *   100*(time1_asmbl-time1)/(time2-time1),"%"
+         !  write(26,*) "Pre-Assembly : CPU time and % Total time = ",
+         !  *   (time1_asmbl-time1),
+         !  *   100*(time1_asmbl-time1)/(time2-time1),"%"
          write(26,*)
          write(26,*) "lambda  = ", lambda
          write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, n_msh_el, nodes_per_el
@@ -848,12 +816,12 @@ contains
          !write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
          !write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
 
-!  write(26,*) "len_skyl, n_msh_pts*n_modes, len_skyl/(n_msh_pts*n_modes) = ",
-!  *   len_skyl, n_msh_pts*n_modes, dble(len_skyl)/dble(n_msh_pts*n_modes)
+         !  write(26,*) "len_skyl, n_msh_pts*n_modes, len_skyl/(n_msh_pts*n_modes) = ",
+         !  *   len_skyl, n_msh_pts*n_modes, dble(len_skyl)/dble(n_msh_pts*n_modes)
 
          write(26,*)
          do i=1,n_modes
-            write(26,"(i4,2(g22.14),g18.10)") i, v_evals_beta_adj(i)
+            write(26,"(i4,2(g22.14),g18.10)") i, v_evals_beta(i)
          enddo
          write(26,*)
          write(26,*) "n_core = ", n_core
@@ -877,11 +845,11 @@ contains
 
 
 
-   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, p_beta, iindex)
+   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
 
       integer(8), intent(in) :: n_modes
       complex(8), intent(in) :: shift_ksqr
-      complex(8), pointer :: p_beta(:)
+      complex(8) :: v_evals_beta(:)
       integer(8), dimension(:), allocatable :: iindex
 
       integer(8) i
@@ -890,11 +858,11 @@ contains
 
       !TODO: make a function. Turn beta^2 raw eig into actual beta
       do i=1,n_modes
-         !  z_tmp0 = p_beta(i)
+         !  z_tmp0 = v_evals_beta(i)
          !  z_tmp = 1.0d0/z_tmp0+shift_ksqr
          !  z_beta = sqrt(z_tmp)
 
-         z_beta = sqrt(1.0d0/p_beta(i)+shift_ksqr )
+         z_beta = sqrt(1.0d0/v_evals_beta(i)+shift_ksqr )
 
          !  Mode classification - we want the forward propagating mode
          if (abs(imag(z_beta)/z_beta) .lt. 1.0d-8) then
@@ -905,13 +873,13 @@ contains
             if (imag(z_beta) .lt. 0) z_beta = -z_beta
          endif
 
-         p_beta(i) = z_beta
+         v_evals_beta(i) = z_beta
       enddo
 
 
 
-      !  order p_beta by magnitudes and store in iindex
-      call z_indexx (n_modes, p_beta, iindex)
+      !  order v_evals_beta by magnitudes and store in iindex
+      call z_indexx (n_modes, v_evals_beta, iindex)
    end subroutine
 
 

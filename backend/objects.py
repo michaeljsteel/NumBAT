@@ -660,6 +660,9 @@ class Structure:
 
         self.mail_data = nbgmsh.MailData(mail_lines)  #keep track of the Mail format
 
+    def plot_mail_mesh(self, outpref):
+        path = numbat.NumBATApp().outpath()
+        self.mail_data.plot_mesh(path)
 
     def plot_mesh(self, outpref):
         '''Visualise mesh with gmsh and save to a file.'''
