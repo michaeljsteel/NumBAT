@@ -1,13 +1,13 @@
-!  Write an ASCII file that can be read into GMSH.
-!  P1-element is used to represent the  3D vector field.
-!  P2-element is used to represent each component of the 3D vector field.
-!
+ !  Write an ASCII file that can be read into GMSH.
+ !  P1-element is used to represent the  3D vector field.
+ !  P2-element is used to represent each component of the 3D vector field.
+ !
 
 subroutine gmsh_post_process (plot_val, E_H_field, nval,&
-nel, npt, nnodes, table_nod, type_el, nb_typ_el,&
-n_eff, x, val_cmplx, sol, visited,&
-gmsh_file_pos, dir_name,&
-q_average, plot_real, plot_imag, plot_abs)
+   nel, npt, nnodes, table_nod, type_el, nb_typ_el,&
+   n_eff, x, val_cmplx, sol, visited,&
+   gmsh_file_pos, dir_name,&
+   q_average, plot_real, plot_imag, plot_abs)
 
    use numbatmod
 
@@ -27,10 +27,10 @@ q_average, plot_real, plot_imag, plot_abs)
    complex(8) sol_el(3,nnodes_0), sol_max(4)
    double precision sol_el_abs2(nnodes_0)
    double precision sol_el_abs2_eE(nnodes_0)
-!      double precision sol_el_abs2_iD(nnodes_0)
+   !      double precision sol_el_abs2_iD(nnodes_0)
    double precision ls_index(nnodes_0), r_index, zz
-!      double precision ls_im_index(nnodes_0), im_index
-!      double precision ls_abs_index(nnodes_0), abs_index
+   !      double precision ls_im_index(nnodes_0), im_index
+   !      double precision ls_abs_index(nnodes_0), abs_index
    double precision v_im, v_re
 
    integer(8) i, j, i1, iel, namelen, namelen2, typ_e
@@ -42,19 +42,19 @@ q_average, plot_real, plot_imag, plot_abs)
    character tval*4, buf*3
    character tE_H
    integer(8) namelength
-!
+   !
 
-!
+   !
    ui = stdout
    debug = 0
-!
+   !
    if ( nnodes .ne. 6 ) then
       write(ui,*) "gmsh_post_process: problem nnodes = ", nnodes
       write(ui,*) "gmsh_post_process: nnodes should be equal to 6 !"
       write(ui,*) "gmsh_post_process: Aborting..."
       stop
    endif
-!
+   !
    alloc_stat = 0
    allocate(sol_avg(3,npt), STAT=alloc_stat)
    if (alloc_stat /= 0) then
@@ -63,10 +63,10 @@ q_average, plot_real, plot_imag, plot_abs)
       write(*,*) "Aborting..."
       stop
    endif
-!
+   !
 
    if (plot_val .eq. 0) return
-!
+   !
    if (E_H_field .eq. 1) then
       tE_H = "E"
    elseif(E_H_field .eq. 2) then
@@ -77,7 +77,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(ui,*) "Aborting..."
       stop
    endif
-!
+   !
    if (q_average .eq. 1) then
       do i=1,npt
          visited(i) = 0
@@ -107,10 +107,10 @@ q_average, plot_real, plot_imag, plot_abs)
          enddo
       enddo
    endif
-!
+   !
    v_re = dble(val_cmplx(plot_val))
    v_im = -dble(C_IM_ONE*val_cmplx(plot_val))
-!
+   !
    if (plot_val .lt. 1000) then
       write(buf,'(i3.3)') plot_val
    else
@@ -120,24 +120,24 @@ q_average, plot_real, plot_imag, plot_abs)
 
    namelen = len_trim(gmsh_file_pos)
    namelength = len_trim(dir_name)
-!
-!###############################################
-!
+   !
+   !###############################################
+   !
    if (plot_real .eq. 1) then
 
-!    All_plots.geo (unit=34)
-!      if (plot_val .eq. 1) then
-!      tchar = """../../"//dir_name(1:namelength)// "/"
-!     *  //"interface_c4.geo"";"
-!      namelen2 = len_trim(tchar)
-!        write(34,*) "Merge ", tchar(1:namelen2)
-!      else
-!        write(34,*)
-!        write(34,*) "Delete View[0];"
-!      endif
-!
-!
-! Convert from gmsh format to pdf
+      !    All_plots.geo (unit=34)
+      !      if (plot_val .eq. 1) then
+      !      tchar = """../../"//dir_name(1:namelength)// "/"
+      !     *  //"interface_c4.geo"";"
+      !      namelen2 = len_trim(tchar)
+      !        write(34,*) "Merge ", tchar(1:namelen2)
+      !      else
+      !        write(34,*)
+      !        write(34,*) "Delete View[0];"
+      !      endif
+      !
+      !
+      ! Convert from gmsh format to pdf
       write(34,*) "Delete View[0];"
       tchar = '../../'//dir_name(1:namelength)// '/'&
       &//gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
@@ -146,7 +146,7 @@ q_average, plot_real, plot_imag, plot_abs)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pdf'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-!
+      !
       write(34,*) "Delete View[0];"
       tchar = '../../'//dir_name(1:namelength)// '/'&
       &//gmsh_file_pos(1:namelen) // '_' // tval // 'v_re.pos'
@@ -155,7 +155,7 @@ q_average, plot_real, plot_imag, plot_abs)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'v_re.pdf'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-!
+      !
       write(34,*) "Delete View[0];"
       tchar = '../../'//dir_name(1:namelength)// '/'&
       &//gmsh_file_pos(1:namelen) // '_' // tval // 'x_re.pos'
@@ -164,7 +164,7 @@ q_average, plot_real, plot_imag, plot_abs)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'x_re.pdf'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-!
+      !
       write(34,*) "Delete View[0];"
       tchar = '../../'//dir_name(1:namelength)// '/'&
       &//gmsh_file_pos(1:namelen) // '_' // tval // 'y_re.pos'
@@ -173,7 +173,7 @@ q_average, plot_real, plot_imag, plot_abs)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'y_re.pdf'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-!
+      !
       write(34,*) "Delete View[0];"
       tchar = '../../'//dir_name(1:namelength)// '/'&
       &//gmsh_file_pos(1:namelen) // '_' // tval // 'z_re.pos'
@@ -182,33 +182,33 @@ q_average, plot_real, plot_imag, plot_abs)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // 'z_re.pdf'
       namelen2 = len_trim(tchar)
       write(34,*) "Print Sprintf(""", tchar(1:namelen2), """);"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // '_abs2.geo'
       open (unit=26,file=tchar)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2.pos'
       namelen2 = len_trim(tchar)
       write(26,*) " Include """, tchar(1:namelen2), """;"
-!        write(26,*) "Merge ""interface_c4.geo"";"
+      !        write(26,*) "Merge ""interface_c4.geo"";"
       close (unit=26)
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // '_abs2_eE.geo'
       open (unit=32,file=tchar)
       tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
       namelen2 = len_trim(tchar)
       write(32,*) " Include """, tchar(1:namelen2), """;"
-!        write(32,*) "Merge ""interface_c4.geo"";"
+      !        write(32,*) "Merge ""interface_c4.geo"";"
       close (unit=32)
 
-!      tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
-!     *           // '_' // tval // '_abs2_iE.geo'
-!      open (unit=33,file=tchar)
-!      tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
-!        namelen2 = len_trim(tchar)
-!        write(33,*) " Include """, tchar(1:namelen2), """;"
-!        write(33,*) "Merge ""interface_c4.geo"";"
-!      close (unit=33)
+      !      tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
+      !     *           // '_' // tval // '_abs2_iE.geo'
+      !      open (unit=33,file=tchar)
+      !      tchar = gmsh_file_pos(1:namelen) // '_' // tval // '_abs2_eE.pos'
+      !        namelen2 = len_trim(tchar)
+      !        write(33,*) " Include """, tchar(1:namelen2), """;"
+      !        write(33,*) "Merge ""interface_c4.geo"";"
+      !      close (unit=33)
 
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // '_abs2.pos'
@@ -221,11 +221,11 @@ q_average, plot_real, plot_imag, plot_abs)
       write(26,*) "View.MaxRecursionLevel = 2;"
       write(26,*) "View.IntervalsType = 3;"
       write(26,*) "View.Light = 0;"
-!        write(26,*) "View ""|E|^2: n = ", "|",tE_H,"|^2",
-!        write(26,*) "View ""|E|^2: n = ", "|",tE_H,"|^2: n = ",
+      !        write(26,*) "View ""|E|^2: n = ", "|",tE_H,"|^2",
+      !        write(26,*) "View ""|E|^2: n = ", "|",tE_H,"|^2: n = ",
       write(26,*) "View ""|",tE_H,"|^2: n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'x_re.pos'
       open (unit=27,file=tchar)
@@ -237,10 +237,10 @@ q_average, plot_real, plot_imag, plot_abs)
       write(27,*) "View.MaxRecursionLevel = 2;"
       write(27,*) "View.IntervalsType = 3;"
       write(27,*) "View.Light = 0;"
-!        write(27,*) "View ""Re Ex: n = ",
+      !        write(27,*) "View ""Re Ex: n = ",
       write(27,*) "View ""Re ",tE_H,"x: n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'y_re.pos'
       open (unit=28,file=tchar)
@@ -254,7 +254,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(28,*) "View.Light = 0;"
       write(28,*) "View ""Re ",tE_H,"y: n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'z_re.pos'
       open (unit=29,file=tchar)
@@ -268,7 +268,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(29,*) "View.Light = 0;"
       write(29,*) "View ""Re ",tE_H,"z: n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'v_re.pos'
       open (unit=30,file=tchar)
@@ -282,7 +282,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(30,*) "View.Light = 0;"
       write(30,*) "View ""Re ",tE_H,": n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &//'_ind.pos'
       open (unit=31,file=tchar)
@@ -295,7 +295,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(31,*) "View.IntervalsType = 3;"
       write(31,*) "View.Light = 0;"
       write(31,*) "View ""Refrac. index ", " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // '_abs2_eE.pos'
       open (unit=32,file=tchar)
@@ -309,22 +309,22 @@ q_average, plot_real, plot_imag, plot_abs)
       write(32,*) "View.Light = 0;"
       write(32,*) "View ""|",tE_H,"|^2: n = ",&
       &plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
-!      tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
-!     *           // '_' // tval // '_abs2_iD.pos'
-!      open (unit=33,file=tchar)
-!        write(33,*) "View.AdaptVisualizationGrid =1;"
-!        write(33,*) "View.IntervalsType = 3;"
-!        write(33,*) "View.Light = 0;"
-!        write(33,*) "View ""|",tE_H,"|^2: n = ",
-!     *     plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
-!
+      !
+      !      tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)
+      !     *           // '_' // tval // '_abs2_iD.pos'
+      !      open (unit=33,file=tchar)
+      !        write(33,*) "View.AdaptVisualizationGrid =1;"
+      !        write(33,*) "View.IntervalsType = 3;"
+      !        write(33,*) "View.Light = 0;"
+      !        write(33,*) "View ""|",tE_H,"|^2: n = ",
+      !     *     plot_val, ", beta_n =", v_re, "+ I *", v_im, " "" {"
+      !
       sol_max(4) = 0.0d0
       do iel=1,nel
          typ_e = type_el(iel)
          r_index = real(n_eff(typ_e))
-!          im_index = imag(sqrt(eps_eff(typ_e)))
-!          abs_index = abs(sqrt(eps_eff(typ_e)))
+         !          im_index = imag(sqrt(eps_eff(typ_e)))
+         !          abs_index = abs(sqrt(eps_eff(typ_e)))
          zz = 0.0d0
          do i=1,nnodes
             i1 = table_nod(i,iel)
@@ -332,8 +332,8 @@ q_average, plot_real, plot_imag, plot_abs)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
             ls_index(i) = r_index
-!            ls_im_index(i) = im_index
-!            ls_abs_index(i) = abs_index
+            !            ls_im_index(i) = im_index
+            !            ls_abs_index(i) = abs_index
          enddo
          do i=1,3
             i1 = table_nod(i,iel)
@@ -344,7 +344,7 @@ q_average, plot_real, plot_imag, plot_abs)
          do i=1,nnodes
             sol_el_abs2(i) = 0.0
             sol_el_abs2_eE(i) = 0.0
-!            sol_el_abs2_iD(i) = 0.0
+            !            sol_el_abs2_iD(i) = 0.0
             if (q_average .eq. 1) then
                i1 = table_nod(i,iel)
                do j=1,3
@@ -353,8 +353,8 @@ q_average, plot_real, plot_imag, plot_abs)
                   sol_el_abs2(i) = sol_el_abs2(i) + abs(z_tmp1)**2
                   sol_el_abs2_eE(i) = sol_el_abs2_eE(i) +&
                   &ls_index(i)**2 * abs(z_tmp1)**2
-!                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
-!     *               ls_im_index(i)**2 * abs(z_tmp1)**2
+                  !                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
+                  !     *               ls_im_index(i)**2 * abs(z_tmp1)**2
                enddo
             else
                do j=1,3
@@ -363,8 +363,8 @@ q_average, plot_real, plot_imag, plot_abs)
                   sol_el_abs2(i) = sol_el_abs2(i) + abs(z_tmp1)**2
                   sol_el_abs2_eE(i) = sol_el_abs2_eE(i) +&
                   &ls_index(i)**2 * abs(z_tmp1)**2
-!                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
-!     *               ls_im_index(i)**2 * abs(z_tmp1)**2
+                  !                sol_el_abs2_iD(i) = sol_el_abs2_iD(i) +
+                  !     *               ls_im_index(i)**2 * abs(z_tmp1)**2
                enddo
             endif
             if (dble(sol_max(4)) .lt. sol_el_abs2(i)) then
@@ -379,10 +379,10 @@ q_average, plot_real, plot_imag, plot_abs)
          write(28,10) xel, (dble(sol_el(2,i)),i=1,nnodes)
          write(29,10) xel, (dble(sol_el(3,i)),i=1,nnodes)
          write(30,11) xel_p1, ((dble(sol_el(j,i)),j=1,3),i=1,3)
-!          write(30,11) xel, ((dble(sol_el(j,i)),j=1,3),i=1,nnodes)
+         !          write(30,11) xel, ((dble(sol_el(j,i)),j=1,3),i=1,nnodes)
          write(31,10) xel, (ls_index(i),i=1,nnodes)
          write(32,10) xel, (sol_el_abs2_eE(i),i=1,nnodes)
-!          write(33,10) xel, (sol_el_abs2_iD(i),i=1,nnodes)
+         !          write(33,10) xel, (sol_el_abs2_iD(i),i=1,nnodes)
       enddo
       write(26,*) "};"
       write(27,*) "};"
@@ -391,7 +391,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(30,*) "};"
       write(31,*) "};"
       write(32,*) "};"
-!        write(33,*) "};"
+      !        write(33,*) "};"
       close(26)
       close(27)
       close(28)
@@ -399,13 +399,13 @@ q_average, plot_real, plot_imag, plot_abs)
       close(30)
       close(31)
       close(32)
-!      close(33)
+      !      close(33)
    endif
-!
-!###############################################
-!
+   !
+   !###############################################
+   !
    if (plot_imag .eq. 1) then
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'x_im.pos'
       open (unit=27,file=tchar)
@@ -419,7 +419,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(27,*) "View.Light = 0;"
       write(27,*) "View ""Im ",tE_H,"x: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'y_im.pos'
       open (unit=28,file=tchar)
@@ -433,7 +433,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(28,*) "View.Light = 0;"
       write(28,*) "View ""Im ",tE_H,"y: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'z_im.pos'
       open (unit=29,file=tchar)
@@ -447,7 +447,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(29,*) "View.Light = 0;"
       write(29,*) "View ""Im ",tE_H,"z: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'v_im.pos'
       open (unit=30,file=tchar)
@@ -461,7 +461,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(30,*) "View.Light = 0;"
       write(30,*) "View ""Im ",tE_H,": n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       sol_max(4) = 0.0d0
       do iel=1,nel
          typ_e = type_el(iel)
@@ -506,14 +506,14 @@ q_average, plot_real, plot_imag, plot_abs)
       close(29)
       close(30)
    endif
-!
-!###############################################
-!
-!
-!###############################################
-!
+   !
+   !###############################################
+   !
+   !
+   !###############################################
+   !
    if (plot_abs .eq. 1) then
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'x_abs.pos'
       open (unit=27,file=tchar)
@@ -527,7 +527,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(27,*) "View.Light = 0;"
       write(27,*) "View ""|",tE_H,"x|: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'y_abs.pos'
       open (unit=28,file=tchar)
@@ -541,7 +541,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(28,*) "View.Light = 0;"
       write(28,*) "View ""|",tE_H,"y|: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       tchar=dir_name(1:namelength)// '/' // gmsh_file_pos(1:namelen)&
       &// '_' // tval // 'z_abs.pos'
       open (unit=29,file=tchar)
@@ -555,7 +555,7 @@ q_average, plot_real, plot_imag, plot_abs)
       write(29,*) "View.Light = 0;"
       write(29,*) "View ""|",tE_H,"z|: n = ",&
       &plot_val, ", beta_n  =", v_re, "+ I *", v_im, " "" {"
-!
+      !
       sol_max(4) = 0.0d0
       do iel=1,nel
          typ_e = type_el(iel)
@@ -591,27 +591,27 @@ q_average, plot_real, plot_imag, plot_abs)
       close(28)
       close(29)
    endif
-!
-!###############################################
-!
-!     ST : Scalar triangle
+   !
+   !###############################################
+   !
+   !     ST : Scalar triangle
 10 format("ST2(",f10.6,17(",",f10.6),"){",&
    &g24.16,5(",",g24.16),"};")
 
-!     VT : Vector triangle
+   !     VT : Vector triangle
 11 format("VT(",f10.6,8(",",f10.6),"){",&
    &g24.16,8(",",g24.16),"};")
 
-! 11    format("VT2(",f10.6,17(",",f10.6),"){",
-!     *     g24.16,17(",",g24.16),"};")
+   ! 11    format("VT2(",f10.6,17(",",f10.6),"){",
+   !     *     g24.16,17(",",g24.16),"};")
 
    if (debug .eq. 1) then
       write(ui,*)
       write(ui,*) "gmsh_post_process: plot_val = ", plot_val
       write(ui,*) "gmsh_post_process: sol_max = ", sol_max
    endif
-!
+   !
    deallocate(sol_avg)
-!
+   !
    return
 end
