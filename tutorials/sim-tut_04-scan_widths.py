@@ -46,7 +46,7 @@ prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
 nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
-use_multiproc = num_cores >1  and not nbapp.is_macos()
+use_multiproc = num_cores >1  and nbapp.is_linux()
 
 # Width previous simo's done for, with known meshing params
 known_geo = 315.

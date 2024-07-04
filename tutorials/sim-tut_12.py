@@ -57,7 +57,7 @@ def plot_and_label (ax, vx, mat, sty, lab, col=None):
 
 
 # Solve the analytic dispersion relation using worker processes
-def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
+def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
 
     fib_em = TwoLayerFiberEM(ncore, nclad, rco)
 
@@ -82,7 +82,9 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     # Choose a reasonable number of processes to test the system
     # without grinding the computer to a halt
-    num_workers = max(2,int(os.cpu_count()/4))
+    num_workers = max(4,int(os.cpu_count()/4))
+    #num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+    if not nbapp.is_linux(): num_workers = 0
 
     manager = multiprocessing.Manager()
     #q_work = multiprocessing.JoinableQueue()        # for assigning the work
@@ -106,7 +108,7 @@ def solve_em_two_layer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
     return neff_TE_an, neff_TM_an, an_neff_hy
 
-def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco, ncore, nclad):
+def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbasis, rco, ncore, nclad):
     neff_num = np.zeros([len(kvec), nmodes], dtype=float)
 
     # Expected effective index of fundamental guided mode.
@@ -141,8 +143,10 @@ def solve_em_two_layer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rco
 
         return (ik, tk, neff_k)
 
-    #num_workers = max(2,int(os.cpu_count()/4))
-    num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+    num_workers = max(4,int(os.cpu_count()/4))
+    #num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+    if not nbapp.is_linux(): num_workers = 0
+
     launch_worker_processes_and_wait(num_workers, emcalc_callee, q_result, q_work)
 
 
@@ -229,7 +233,7 @@ def make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
 
 
 
-def solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad):
+def solve_em_dispersion(nbapp, prefix, ssys, wguide, rcore, ncore, nclad):
     print('\n\nElectromagnetic dispersion problem')
     print(    '----------------------------------')
     nmodes = 20
@@ -253,10 +257,10 @@ def solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad):
 
     #plot_em_chareq_at_k(kvec[-1], rcore, ncore, nclad) # for checking zero finding behaviour
 
-    neff_TE_an, neff_TM_an, neff_Hy_an = solve_em_two_layer_fiber_analytic(kvec_an, nmodes, rcore, ncore, nclad)
+    neff_TE_an, neff_TM_an, neff_Hy_an = solve_em_two_layer_fiber_analytic(nbapp, kvec_an, nmodes, rcore, ncore, nclad)
 
     print('Doing numerical problem')
-    neff_num = solve_em_two_layer_fiber_numerical(prefix, wguide, kvec_num, nmodes, nbasis, rcore, ncore, nclad)
+    neff_num = solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec_num, nmodes, nbasis, rcore, ncore, nclad)
 
     make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
                   Vvec_num, neff_num, ncore, nclad)
@@ -323,7 +327,7 @@ def do_main():
 
     #wguide.plot_mesh(prefix)
 
-    solve_em_dispersion(prefix, ssys, wguide, rcore, ncore, nclad)
+    solve_em_dispersion(nbapp, prefix, ssys, wguide, rcore, ncore, nclad)
 
     print(nbapp.final_report())
 
