@@ -497,7 +497,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username.
 
-# Copy the .dlls built earlier to this directory::
+#. Copy the .dlls built earlier to this directory::
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 

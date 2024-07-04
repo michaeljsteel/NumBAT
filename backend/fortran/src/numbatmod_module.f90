@@ -126,7 +126,6 @@ contains
       end interface
 
       integer(8) :: ui
-      integer(4) :: ret
       character(len=*) :: msg
 
       write(ui, '(A,A)') '>>>> ', msg

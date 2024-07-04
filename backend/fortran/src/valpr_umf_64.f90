@@ -291,7 +291,7 @@ subroutine valpr_64 (&
    logical arp_active
 
    type(stopwatch) :: clock_main
-   integer(8) ui, debug, i
+   integer(8) ui, debug
 
    ui = stdout
    errco = 0
