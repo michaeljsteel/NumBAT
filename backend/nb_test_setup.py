@@ -1,5 +1,5 @@
-import os 
-import sys 
+import os
+import sys
 import importlib
 from pathlib import Path
 import subprocess
@@ -39,15 +39,18 @@ def check_gmsh(nbapp, run_gmsh):
     s_exists = 'yes' if Path(path_gmsh).exists() else 'no'
     print(f'  File exists: {s_exists}')
 
-    if s_exists == 'yes' and run_gmsh:
-        print('\n  Attempting to open a Gmsh windows.')
-        print('  Close the window if it appears...')
-        procret = subprocess.run(path_gmsh)
-        if procret.returncode == 0:
-            print('  Executes ok: yes')
-            passed=True
+    if s_exists == 'yes':
+        if run_gmsh:
+            print('\n  Attempting to open a Gmsh windows.')
+            print('  Close the window if it appears...')
+            procret = subprocess.run(path_gmsh)
+            if procret.returncode == 0:
+                print('  Executes ok: yes')
+                passed=True
         else:
-            print('  Executes ok: no')
+            passed=True  # Is this what we want?
+    else:
+        print('  Executes ok: no')
 
     if passed:
         print('Gmsh tests completed: Pass')
@@ -69,7 +72,7 @@ def check_nb_fortran():
     print('\nChecking NumBAT core Fortran module')
 
     s_lib_nbfort = 'fortran.nb_fortran'
-    s_lib_nbfort_full = 'fortran/nb_fortranb.pyd' if is_windows() else 'fortran/nb_fortranb.so' 
+    s_lib_nbfort_full = 'fortran/nb_fortranb.pyd' if is_windows() else 'fortran/nb_fortranb.so'
 
     mod = None
     try:
@@ -83,7 +86,7 @@ def check_nb_fortran():
         passed = True
 
     print('\n\n')
-    
+
     return passed, mod
 
 def check_helper_apps(nbapp):
@@ -108,9 +111,9 @@ def do_main(argv):
 
     pass_nbfort, mod_nb = check_nb_fortran()
 
-    if not pass_nbfort: 
+    if not pass_nbfort:
         sys.exit(1)
-    
+
     import numbat
     nbapp = numbat.NumBATApp()
 
