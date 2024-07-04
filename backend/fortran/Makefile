@@ -289,7 +289,7 @@ SRCS_F90 = $(wildcard src/*.f90)
 OBJS = $(subst src/,build/,$(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o))
 
 #The build order of these matters
-SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90
+SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90 src/alloc_module.f90
 
 #src/nbinterfaces_module.f90
 

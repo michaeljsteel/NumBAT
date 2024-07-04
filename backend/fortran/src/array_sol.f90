@@ -1,4 +1,6 @@
 
+!  On entry, sol_0 is the raw eigenvectors from the arpack soln
+
 !  On exit:
 !  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that ineq(i) /= 0
 !  sol(i) : contains solution for all points

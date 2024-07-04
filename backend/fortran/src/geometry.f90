@@ -11,26 +11,29 @@
 !  - whether number of material types read matches expected value n_typ_el
 
 !  -  Fills:  mesh_xy, type_nod, type_el, table_nod
-subroutine construct_fem_node_tables(n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
-   dim_x, dim_y, mesh_file, mesh_xy, type_nod, type_el, table_nod, &
+subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
+   n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
+    mesh_xy, type_nod, type_el, table_nod, &
    errco, emsg)
 
    use numbatmod
 
+   ! ins
+   character(len=*) mesh_file
+   double precision dim_x, dim_y
+
+   ! outs
    integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el
    integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
-   double precision dim_x, dim_y
    double precision mesh_xy(2,n_msh_pts)
 
-   character(len=FNAME_LENGTH) mesh_file
    integer errco
    character(len=EMSG_LENGTH) :: emsg
 
 
-!  local vars
+   ! locals
    double precision xx(2)
-
 
    integer(8) n_typ_el2
    !integer, parameter :: max_typ_el=10

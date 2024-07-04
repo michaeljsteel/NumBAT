@@ -45,10 +45,10 @@ from fortran import nb_fortran
 #    return Simulation.load_simulation(prefix)
 
 
-#fill = '█',   # TODO: this messes with pdflatex in docs. Fix 
-def progressBar(iterable, prefix = '', suffix = '', 
-                decimals = 1, length = 100, 
-                fill = 'x', 
+#fill = '█',   # TODO: this messes with pdflatex in docs. Fix
+def progressBar(iterable, prefix = '', suffix = '',
+                decimals = 1, length = 100,
+                fill = 'x',
                 printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
@@ -483,6 +483,16 @@ class SimResult:
         if field_type == FieldType.EM_H:
             self.make_H_fields()
 
+        modetype = "acoustic" if field_type == FieldType.AC else "em"
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+
+        ntoplot = len(ival_range)
+
+        if ntoplot > 1:
+            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+        else:
+            print(f"Plotting {modetype} mode m={ival_range[0]}.")
+
         mode_helper = self.get_mode_helper()
         mode_helper.setup_plot_grid(n_pts=n_points)
 
@@ -502,14 +512,7 @@ class SimResult:
         if prefix and not pf.exists():
             pf.mkdir()
 
-        modetype = "acoustic" if field_type == FieldType.AC else "em"
-        ival_range = ivals if ivals is not None else range(self.n_modes)
-        ntoplot = len(ival_range)
 
-        if ntoplot > 1:
-            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
-        else:
-            print(f"Plotting {modetype} mode m={ival_range[0]}.")
 
         mode_helper.update_plot_params(
             {
