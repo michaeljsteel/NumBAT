@@ -66,6 +66,8 @@ module calc_em_impl
    use alloc
 
    use nbinterfaces
+   use nbinterfacesb
+
 
 contains
 
@@ -101,12 +103,11 @@ contains
       !  workspaces
 
       integer(8) neq
-      integer(8) n_edge, n_face, n_ddl, n_ddl_max
-      integer(8) nonz, nonz_max, max_row_len
+      integer(8) n_edge, n_face, n_ddl
+      integer(8) nonz
 
 
-      integer(8) int_max, cmplx_max, cmplx_used
-      integer(8) real_max
+      integer(8) int_max, cmplx_max, real_max
 
       double precision, dimension(:,:), allocatable :: xy_N_E_F
       integer(8), dimension(:,:), allocatable :: table_N_E_F
@@ -145,18 +146,11 @@ contains
 
       !  ----------------------------------------------
 
-      !  Pointers of the real super-vector
-      integer(8) jp_x_N_E_F
-
-
-      integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-      integer(8) jp_trav, jp_evecs
-
 
       integer(8) n_msh_pts_p3, ui_out
 
       !  Variable used by valpr
-      integer(8) dim_krylov, ltrav
+      integer(8) dim_krylov
       integer(8) n_conv, i_base
       double precision arp_tol
 
@@ -167,10 +161,6 @@ contains
 
       double precision time_fact, time_arpack
 
-
-
-      !Obselete
-      integer(8) jp_mat2
 
       integer(8) :: i_md
 
@@ -204,17 +194,14 @@ contains
 
 
       call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
+
 
       call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iperiod_N_E_F, n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(inperiod_N, n_msh_pts, 'inperiod_N', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(inperiod_N_E_F, n_ddl, 'inperiod_N_E_F', errco, emsg); RETONERROR(errco)
 
-      !  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
 
-
-      dim_krylov = 2*n_modes + n_modes/2 +3
 
       call clock_main%reset()
 
@@ -229,8 +216,8 @@ contains
 
       !  Storage locations in sequence
       !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
-      !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max = npt + n_msh_el = 4 n_msh_el
-      !  - table_edges     = a_iwork(ip_table_E)        shape: 4 x n_msh_pts
+      !  - visited         shape: npt + n_msh_el = 4 n_msh_el
+      !  - table_edges     shape: 4 x n_msh_pts
       !
       !  visited is used as workspace. has no meaning between functions
       !
@@ -247,10 +234,8 @@ contains
       !  TODO: move next three calls into a single  construct_table_N_E_F procedure
 
       !  Fills:  table_edge_face[1,:]
-      ! ip_table_N_E_F = 1
       call list_face (n_msh_el, table_N_E_F)
 
-      !  n_ddl_max = max(N_Vertices) + max(N_Edge) + max(N_Face)
       !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
       !  note: each element has 1 face, 3 edges and 10 P3 nodes
       !  so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
@@ -258,18 +243,15 @@ contains
       !  each element is a face
       n_face = n_msh_el
 
-      n_ddl_max = n_msh_pts + n_face
-
-
       !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
       !  Todo!  move n_edge later in list as an out variable
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
-      table_N_E_F, visited)
+         table_N_E_F, visited)
 
       !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
       !  Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-      table_N_E_F,  visited)
+         table_N_E_F,  visited)
 
       !  TODO: what is signif of this quanitty?
       n_ddl = n_edge + n_face + n_msh_pts_p3
@@ -279,7 +261,7 @@ contains
          write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
          write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
          write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
-         (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
+            (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
          write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
          & characteristic: V-E+F=1-(number of holes)"
          write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
@@ -287,95 +269,51 @@ contains
       endif
 
 
-      jp_x_N_E_F = 1
-
-
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       !  Should be using c_dwork for x_E_F ?
       call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-      table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
+         table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
 
 
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-      table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
+         table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
 
 
 
       ! From this point ip_visited is unused.
-      ! Replace with an allocated that is deleted here.
 
       deallocate(visited)
 
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-      type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
-      type_N_E_F, m_eqs, int_max, debug, &
-      iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
+         type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
+         type_N_E_F, m_eqs, debug, &
+         iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
 
+      ! We no longer need type_N_E_F, could deallocate
 
       !Now we know neq
 
 
-      !  Sparse matrix storage
-
-      call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
-
-      call csr_max_length (n_msh_el, n_ddl, neq, table_N_E_F, &
-      m_eqs, v_col_ptr, nonz_max)
+      !  Sparse matrix CSR setup
 
 
 
+         call make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
+            m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
+         RETONERROR(errco)
 
-      ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
-      ! length of v_row_ind is determined inside csr_length and so allocated there
-      call csr_length (n_msh_el, n_ddl, neq,  table_N_E_F, m_eqs, &
-      v_row_ind, v_col_ptr, &
-      nonz_max, nonz, max_row_len, int_max, debug, errco, emsg)
-      RETONERROR(errco)
-
-      call sort_csr (neq, nonz, max_row_len, v_row_ind, v_col_ptr,  iwork)
-
-
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      jp_mat2 = jp_x_N_E_F + 3*n_ddl
-
-      jp_vect1 = jp_mat2 + nonz
-      jp_vect2 = jp_vect1 + neq
-      jp_workd = jp_vect2 + neq
-      jp_resid = jp_workd + 3*neq
-
-      !  Eigenvectors
-      jp_vschur = jp_resid + neq
-      jp_trav = jp_vschur + neq*dim_krylov
-
-      ltrav = 3*dim_krylov*(dim_krylov+2)
-      jp_evecs = jp_trav + ltrav
-
-      cmplx_used = jp_evecs + neq*n_modes
-
-      if (cmplx_max .lt. cmplx_used)  then
-         write(emsg,*)'The size of the complex supervector is too small', 'complex super-vec: int_max  = ', &
-            cmplx_max, 'complex super-vec: int_used = ', cmplx_used
-         errco = -13
-         return
-      endif
-
-
-
-      !###############################################
 
       !  ----------------------------------------------------------------
       !  convert from 1-based to 0-based
       !  ----------------------------------------------------------------
+      !  The CSC indexing, i.e., ip_col_ptr, is 1-based
+      !  (but valpr.f will change the CSC indexing to 0-based indexing)
 
 
       v_row_ind = v_row_ind - 1
       v_col_ptr = v_col_ptr - 1
 
-
-      !  The CSC indexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC indexing to 0-based indexing)
       i_base = 0
 
 
@@ -413,6 +351,8 @@ contains
 
 
       !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
+      call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
+
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
          table_nod, table_N_E_F, type_el, &
@@ -422,6 +362,9 @@ contains
          v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass, &
          iwork)
+
+
+      dim_krylov = 2*n_modes + n_modes/2 +3
 
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
@@ -454,8 +397,6 @@ contains
 
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
-
-      write(*,*) 'write to lmat', nonz
 
       call valpr_64( &
          i_base, dim_krylov, n_modes, neq, itermax,  &
@@ -517,16 +458,7 @@ contains
       !  (see Eq. (25) of the JOSAA 2012 paper)
       !  TODO: is this really supposed to be x i beta , or just x beta  ?
       do i_md=1,n_modes
-         !!do iel=1,n_msh_el
-         !!  m_evecs(3,inod,i_md,iel) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,inod,i_md,iel)
-         !!enddo
-
-         !do inod=1,nodes_per_el+7
-         !  m_evecs(3,inod,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,inod,i_md,:)
-         !enddo
-
          m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
-
       enddo
 
 
@@ -567,7 +499,7 @@ contains
       !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
       !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !  n_typ_el, neq, nonz_max, dim_krylov, &
+      !  n_typ_el, neq, dim_krylov, &
       !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -700,7 +632,7 @@ contains
       time1, time2, time_fact, time_arpack, time1_postp, &
       lambda, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      n_typ_el, neq, nonz_max, dim_krylov, &
+      n_typ_el, neq, dim_krylov, &
       shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -711,7 +643,7 @@ contains
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
-      integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, dim_krylov
+      integer(8) n_conv, n_modes, n_typ_el, nonz,  n_core(2), neq, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
@@ -727,7 +659,6 @@ contains
       int_max = 0
       int_used =0
       nonz = 0
-      nonz_max = 0
       cmplx_used = 0
       real_max = 0
 
@@ -775,8 +706,6 @@ contains
          write(26,*) "n_modes, dim_krylov, n_conv = ", n_modes, dim_krylov, n_conv
          !write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
          !  n_msh_pts*n_modes, dble(nonz)/dble(n_msh_pts*n_modes)
-         !write(26,*) "nonz, nonz_max, nonz_max/nonz = ", nonz, nonz_max, dble(nonz_max)/dble(nonz)
-         !write(26,*) "nonz, int_used, int_used/nonz = ", nonz, int_used, dble(int_used)/dble(nonz)
 
          !  write(26,*) "len_skyl, n_msh_pts*n_modes, len_skyl/(n_msh_pts*n_modes) = ",
          !  *   len_skyl, n_msh_pts*n_modes, dble(len_skyl)/dble(n_msh_pts*n_modes)

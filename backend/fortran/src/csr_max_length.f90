@@ -27,12 +27,6 @@ subroutine csr_max_length (nel, n_ddl, neq, table_N_E_F, ineq, col_ptr, nonz)
       enddo
    enddo
 
-   ! !  TODO: This block seems pointless. Overridden by later part
-   ! nonz = 0
-   ! do i=1,neq
-   !    nonz = nonz + 3*nddl_0_em + 3*(nddl_0_em-1)*(col_ptr(i)-1)
-   ! enddo
-
 
    !  Compressed Row Storage (CRS): determine the row pointer
 
