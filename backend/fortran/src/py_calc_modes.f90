@@ -102,15 +102,14 @@ contains
 
       integer(8) neq
 
-      integer(8) int_max, cmplx_max, int_used, cmplx_used
+      integer(8) int_max, cmplx_max, cmplx_used
       integer(8) real_max
 
-      integer(8), dimension(:), allocatable :: a_iwork
       complex(8), dimension(:), allocatable :: b_zwork
       double precision, dimension(:,:), allocatable :: xy_N_E_F
       double precision, dimension(:), allocatable :: e_dwork  !  take over work from b_zwork but have same shape
 
-      integer(8), dimension(:), allocatable :: iindex
+      integer(8), dimension(:), allocatable :: v_eig_index
       complex(8), dimension(:,:), allocatable :: overlap_L
 
       complex(8), dimension(:,:), allocatable :: arp_evecs
@@ -129,24 +128,24 @@ contains
 
       integer(8), dimension(:,:), allocatable :: m_eqs
 
+      integer(8), dimension(:), allocatable :: iwork
 
-      integer(8), dimension(:), allocatable :: visited
+      integer(8), dimension(:), allocatable :: iperiod_N
+      integer(8), dimension(:), allocatable :: iperiod_N_E_F
+      integer(8), dimension(:), allocatable :: inperiod_N
+      integer(8), dimension(:), allocatable :: inperiod_N_E_F
 
-      integer(8), dimension(:), allocatable :: visited
 
-      !work_sort1 max_row_len
-      !work max_row_len
-      !work_sort2 max_row_len
 
 
       !  ----------------------------------------------
 
 
       !  Pointers of the integer super-vector
-      integer(8) ip_table_E, ip_table_N_E_F, ip_visited
-      integer(8) ip_type_N_E_F, ip_eq
-      integer(8) ip_period_N, ip_nperiod_N
-      integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
+      ! integer(8) ip_table_E, ip_table_N_E_F, ip_visited
+      ! integer(8) ip_type_N_E_F, ip_eq
+      ! integer(8) ip_period_N, ip_nperiod_N
+      ! integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
 
       !  Pointers of the real super-vector
       integer(8) jp_x_N_E_F
@@ -175,13 +174,11 @@ contains
       !  Declare the pointers of the real super-vector
 
       !  Declare the pointers of for sparse matrix storage
-      integer(8) ip_work, ip_work_sort, ip_work_sort2
       integer(8) nonz, nonz_max, max_row_len
 
 
       !Obselete
       integer(8) jp_mat2
-      integer(8) ip_col_ptr, ip_row
 
 
 
@@ -203,9 +200,9 @@ contains
          int_max, cmplx_max, real_max, n_ddl, errco, emsg)
       RETONERROR(errco)
 
-      call integer_alloc_1d(a_iwork, int_max, 'a_iwork', errco, emsg); RETONERROR(errco)
+
       call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(iindex, n_modes, 'iindex', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
 
       call double_alloc_2d(xy_N_E_F, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
       call integer_alloc_2d(type_N_E_F, 2_8, n_ddl, 'type_N_E_F', errco, emsg); RETONERROR(errco)
@@ -220,6 +217,13 @@ contains
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
       call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
+
+      call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
+
+      call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(iperiod_N_E_F, n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(inperiod_N, n_msh_pts, 'inperiod_N', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(inperiod_N_E_F, n_ddl, 'inperiod_N_E_F', errco, emsg); RETONERROR(errco)
 
       !  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
 
@@ -257,7 +261,7 @@ contains
       !  TODO: move next three calls into a single  construct_table_N_E_F procedure
 
       !  Fills:  table_edge_face[1,:]
-      ip_table_N_E_F = 1
+      ! ip_table_N_E_F = 1
       call list_face (n_msh_el, table_N_E_F)
 
       !  n_ddl_max = max(N_Vertices) + max(N_Edge) + max(N_Face)
@@ -270,8 +274,6 @@ contains
 
       n_ddl_max = n_msh_pts + n_face
 
-      ip_visited =  ip_table_N_E_F  + 14*n_msh_el
-      ip_table_E = ip_visited + n_ddl_max
 
       !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
       !  Todo!  move n_edge later in list as an out variable
@@ -301,24 +303,13 @@ contains
 
       !C  overwriting pointers ip_row_ptr, ..., ip_adjncy
 
-      ip_type_N_E_F = ip_table_E + 4*n_edge   !  not sure why 4* n_edge, not 4*n_msh_pts?
-
 
       !  TODO:
-      !  ip is an index into an a_iwork, make this clearer!
       !  jp is an index into an b_zwork
       !  kp is an index into an c_dwork
 
       !  Offsets into the b_zwork workspace
       jp_x_N_E_F = 1
-
-
-      !  Offsets into the a_iwork workspace
-      ip_period_N = ip_type_N_E_F + 2*n_ddl
-      ip_nperiod_N = ip_period_N + n_msh_pts
-      ip_period_N_E_F = ip_nperiod_N + n_msh_pts
-      ip_nperiod_N_E_F = ip_period_N_E_F + n_ddl
-      ip_eq = ip_nperiod_N_E_F + n_ddl
 
 
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
@@ -340,34 +331,21 @@ contains
 
       !  TODO: the b_zwork should actually be the xy_N_E_F containing x_N_E_F, but only matters for periodic
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-      type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, xy_N_E_F,  &
-      type_N_E_F, m_eqs, &
-      int_max, debug)
+      type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
+      type_N_E_F, m_eqs, int_max, debug, &
+      iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
+
 
       !Now we know neq
 
-      !  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
-
 
       !  Sparse matrix storage
-
-      ip_col_ptr = ip_eq + 3*n_ddl
 
       call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
 
       call csr_max_length (n_msh_el, n_ddl, neq, table_N_E_F, &
       m_eqs, v_col_ptr, nonz_max)
 
-      !  ip = ip_col_ptr + neq + 1 + nonz_max
-      !ip = ip_col_ptr + neq + 1
-      ip_row = ip_col_ptr + neq + 1
-
-      if (ip_row .gt. int_max) then
-         write(emsg,*) "py_calc_modes.f: ip_row > int_max : ", ip_row, int_max, "py_calc_modes.f: nonz_max = ", &
-         nonz_max, "py_calc_modes.f: increase the size of int_max"
-         errco = -11
-         return
-      endif
 
 
 
@@ -375,31 +353,10 @@ contains
       ! length of v_row_ind is determined inside csr_length and so allocated there
       call csr_length (n_msh_el, n_ddl, neq,  table_N_E_F, m_eqs, &
       v_row_ind, v_col_ptr, &
-      nonz_max, nonz, max_row_len, ip_row, int_max, debug, errco, emsg)
-
+      nonz_max, nonz, max_row_len, int_max, debug, errco, emsg)
       RETONERROR(errco)
 
-
-
-      ip_work = ip_row + nonz
-      ip_work_sort = ip_work + 3*n_ddl
-      ip_work_sort2 = ip_work_sort + max_row_len
-
-      call sort_csr (neq, nonz, max_row_len, &
-      v_row_ind, v_col_ptr, &
-      a_iwork(ip_work_sort), a_iwork(ip_work), &
-      a_iwork(ip_work_sort2))
-
-
-      int_used = ip_work_sort2 + max_row_len
-
-      if (int_max .lt. int_used) then
-         write(emsg,*)'The size of the integer supervector is too small', 'integer super-vec: int_max  = ', &
-         int_max, 'integer super-vec: int_used = ', int_used
-         errco = -12
-         return
-      endif
-
+      call sort_csr (neq, nonz, max_row_len, v_row_ind, v_col_ptr,  iwork)
 
 
 
@@ -482,12 +439,12 @@ contains
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
          table_nod, table_N_E_F, type_el, &
-         m_eqs, a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         m_eqs, iperiod_N, iperiod_N_E_F, &
          mesh_xy, &
          xy_N_E_F,  nonz,  &
          v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass, &
-         a_iwork(ip_work))
+         iwork)
 
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
@@ -547,15 +504,15 @@ contains
       write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 
-      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
+      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
 
 
       !  The eigenvectors will be stored in the array sol
       !  The eigenvalues and eigenvectors are renumbered
-      !  using the permutation vector iindex
+      !  using the permutation vector v_eig_index
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
-         m_eqs, a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         n_core, bloch_vec, v_eig_index, table_nod, table_N_E_F, type_el, &
+         m_eqs, iperiod_N, iperiod_N_E_F, &
          mesh_xy, e_dwork, v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
       RETONERROR(errco)
@@ -619,7 +576,7 @@ contains
       !  endif
       !
 
-      deallocate(a_iwork, b_zwork, iindex, xy_N_E_F, e_dwork, overlap_L, arp_evecs)
+      deallocate(b_zwork, v_eig_index, xy_N_E_F, e_dwork, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
       deallocate(v_row_ind, v_col_ptr)
 
@@ -873,12 +830,12 @@ contains
 
 
 
-   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
+   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
 
       integer(8), intent(in) :: n_modes
       complex(8), intent(in) :: shift_ksqr
       complex(8) :: v_evals_beta(:)
-      integer(8), dimension(:), allocatable :: iindex
+      integer(8), dimension(:), allocatable :: v_eig_index
 
       integer(8) i
 
@@ -906,8 +863,8 @@ contains
 
 
 
-      !  order v_evals_beta by magnitudes and store in iindex
-      call z_indexx (n_modes, v_evals_beta, iindex)
+      !  order v_evals_beta by magnitudes and store in v_eig_index
+      call z_indexx (n_modes, v_evals_beta, v_eig_index)
    end subroutine
 
 

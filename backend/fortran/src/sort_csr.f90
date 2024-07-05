@@ -2,7 +2,7 @@
 !       remove from elastic call and then drop them
 
 
-subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, ex_arr, indx, ex_istack)
+subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, indx)
 
    use numbatmod
    use alloc
@@ -10,8 +10,6 @@ subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, ex_arr, indx, ex_
    integer(8) neq, nonz, max_row_len
    integer(8) row_ptr(neq+1), col_ind(nonz)
    integer(8) indx(max_row_len)
-
-   integer(8) ex_arr(max_row_len), ex_istack(max_row_len)
 
 
    integer(8) row_start, row_end, row_len

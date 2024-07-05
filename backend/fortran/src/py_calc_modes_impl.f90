@@ -67,8 +67,9 @@ end subroutine prepare_workspaces
 !  ----------------------------------------------------------------------------------------
 
 subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_nodes_per_el, &
-   type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, &
-   a_iwork, d_dwork, type_N_E_F, m_eqs, int_max, debug)
+   type_nod, table_nod, n_ddl, neq, & !ip_type_N_E_F, ip_eq, &
+   d_dwork, type_N_E_F, m_eqs, int_max, debug, &
+   iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F )
 
    use numbatmod
 
@@ -82,9 +83,11 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
    integer(8) type_N_E_F(2, n_ddl)
    integer(8) m_eqs(3, n_ddl)
 
+   integer(8) :: iperiod_N(n_msh_pts), iperiod_N_E_F(n_ddl)
+   integer(8) :: inperiod_N(n_msh_pts), inperiod_N_E_F(n_ddl)
 
-   !  is this the right way to pass these?
-   integer(8), dimension(int_max) :: a_iwork
+
+
    double precision, dimension(2,n_ddl) :: d_dwork
 
    double precision, dimension(2,2) :: lat_vecs
@@ -100,26 +103,26 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
 
       !  reproduced in py_calc_modes.f
       jp_x_N_E_F = 1
-      ip_period_N = ip_type_N_E_F + 2*n_ddl
-      ip_nperiod_N = ip_period_N + n_msh_pts
-      ip_period_N_E_F = ip_nperiod_N + n_msh_pts
-      ip_nperiod_N_E_F = ip_period_N_E_F + n_ddl
-      ip_eq = ip_nperiod_N_E_F + n_ddl
+      ! ip_period_N = ip_type_N_E_F + 2*n_ddl
+      ! ip_nperiod_N = ip_period_N + n_msh_pts
+      ! ip_period_N_E_F = ip_nperiod_N + n_msh_pts
+      ! ip_nperiod_N_E_F = ip_period_N_E_F + n_ddl
+      ! ip_eq = ip_nperiod_N_E_F + n_ddl
 
       call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
 
-      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, type_nod, mesh_xy, a_iwork(ip_period_N), &
-         a_iwork(ip_nperiod_N), table_nod, lat_vecs)
+      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, type_nod, mesh_xy, iperiod_N, &
+         inperiod_N, table_nod, lat_vecs)
 
       if (debug .eq. 1) then
          write(*,*) "set_boundary_conditions: ###### periodic_N_E_F"
       endif
 
-      call periodic_N_E_F (n_ddl, type_N_E_F, d_dwork, a_iwork(ip_period_N_E_F), &
-         a_iwork(ip_nperiod_N_E_F), lat_vecs)
+      call periodic_N_E_F (n_ddl, type_N_E_F, d_dwork, iperiod_N_E_F, &
+         inperiod_N_E_F, lat_vecs)
 
       call periodic_cond ( bdy_cdn, n_ddl, neq, type_N_E_F, &
-         a_iwork(ip_period_N_E_F), m_eqs, debug)
+         iperiod_N_E_F, m_eqs, debug)
 
       if (debug .eq. 1) then
          write(*,*) "py_calc_modes.f: neq, n_ddl = ", neq, n_ddl

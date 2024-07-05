@@ -6,7 +6,7 @@
 subroutine csr_length (nel, n_ddl, neq,  &
    table_N_E_F, ineq, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
-   nonz_max, nonz, max_row_len, ipointer, int_max, debug, errco, emsg)
+   nonz_max, nonz, max_row_len,  int_max, debug, errco, emsg)
 
    use numbatmod
    use alloc
@@ -147,12 +147,12 @@ subroutine csr_length (nel, n_ddl, neq,  &
       write(ui,*) "csr_length: max_row_len = ", max_row_len
    endif
 
-   if ((ipointer+nonz) .gt. int_max) then
-      write(emsg,*) "csr_length: (ipointer+nonz) > int_max : ", &
-      &(ipointer+nonz), int_max, nonz_max
-      errco = NBERROR_120
-      return
-   endif
+   ! if ((ipointer+nonz) .gt. int_max) then
+   !    write(emsg,*) "csr_length: (ipointer+nonz) > int_max : ", &
+   !    &(ipointer+nonz), int_max, nonz_max
+   !    errco = NBERROR_120
+   !    return
+   ! endif
 
 
    ! Now we know nonz

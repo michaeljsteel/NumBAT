@@ -295,8 +295,11 @@ contains
 
       !  sorting csr ...
       call sort_csr (neq, nonz, max_row_len, a_iwork(ip_row), &
-         a_iwork(ip_col_ptr), a_iwork(ip_work_sort), a_iwork(ip_work), &
-         a_iwork(ip_work_sort2))
+         a_iwork(ip_col_ptr), &
+         !a_iwork(ip_work_sort),
+         a_iwork(ip_work))
+         !a_iwork(ip_work_sort2)
+
 
       if (debug .eq. 1) then
          write(ui_out,*) "py_calc_modes_AC: nonz_max = ", nonz_max

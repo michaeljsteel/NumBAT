@@ -5,7 +5,7 @@
 subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, pp, qq, &
    table_nod, table_N_E_F, type_el, &
-   ineq, ip_period_N, ip_period_E_F, &
+   m_eqs, ip_period_N, ip_period_E_F, &
    mesh_xy, xy_N_E_F, nonz, row_ind, col_ptr, &
    mat1, mat2, i_work)
 
@@ -22,7 +22,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    integer(8) table_nod(nnodes,n_msh_el)
    integer(8) table_N_E_F(14,n_msh_el)
    integer(8) type_el(n_msh_el)
-   integer(8) ineq(3,n_ddl)
+   integer(8) m_eqs(3,n_ddl)
    integer(8) ip_period_N(n_msh_pts), ip_period_E_F(n_ddl)
 
    double precision mesh_xy(2,n_msh_pts), xy_N_E_F(2,n_ddl)
@@ -219,7 +219,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
             jp = table_N_E_F(jtest,iel)
             do j_eq=1,3
 !  jp = table_N_E_F(jtest,iel)
-               ind_jp = ineq(j_eq,jp)
+               ind_jp = m_eqs(j_eq,jp)
                if (ind_jp .gt. 0) then
                   col_start = col_ptr(ind_jp) + i_base2
                   col_end = col_ptr(ind_jp+1) - 1 + i_base2
@@ -249,7 +249,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                      z_phase_fact = val_exp(jtest) * conjg(val_exp(itrial))
                      do i_eq=1,3
                         ip = table_N_E_F(itrial,iel)
-                        ind_ip = ineq(i_eq,ip)
+                        ind_ip = m_eqs(i_eq,ip)
                         if (ind_ip .gt. 0) then
                            if (ind_jp .eq. ind_ip .and. &
                               abs(imag(z_phase_fact)) .gt. 1.0d-15) then
