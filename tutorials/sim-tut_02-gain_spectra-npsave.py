@@ -84,7 +84,6 @@ print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz):
     print(f'{i:3d}  {np.real(kz):.4e}')
 
-sys.exit(0)
 # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args,
 # which specify the fraction of the axis to remove from the plot.
 # For instance xlim_min=0.2 will remove 20% of the x axis from the left outer edge
