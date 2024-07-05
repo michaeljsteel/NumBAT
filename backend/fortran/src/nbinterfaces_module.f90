@@ -29,5 +29,37 @@ module nbinterfaces
 
     end interface
 
+    interface
+
+        subroutine csr_length (nel, n_ddl, neq,  &
+                table_N_E_F, ineq, &
+               ! col_ind, row_ptr, &
+                ext_v_row_ind, ext_v_col_ptr, &
+                nonz_max, nonz, max_row_len, ipointer, int_max, debug, errco, emsg)
+
+
+            integer(8) nel, n_ddl, neq
+            integer(8) table_N_E_F(14,nel)
+            integer(8) ineq(3,n_ddl)
+
+            !integer(8) col_ind(*)
+            !integer(8) row_ptr(neq+1)
+
+            integer(8), dimension(:), allocatable, intent(inout) :: ext_v_row_ind
+            integer(8), dimension(:) :: ext_v_col_ptr(neq+1)
+
+
+            integer(8) nonz_max, nonz, max_row_len
+            integer(8) ipointer, int_max
+
+            integer(8) debug
+
+            integer errco
+            !character(len=EMSG_LENGTH) emsg
+            character(len=*) emsg
+        end subroutine
+
+    end interface
+
 
 end module nbinterfaces

@@ -1,51 +1,50 @@
+#include "numbat_decl.h"
+
+! row/col names seem backward
+! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
 subroutine csr_length (nel, n_ddl, neq,  &
-   table_N_E_F, ineq, col_ind, row_ptr, nonz_max, &
-   nonz, max_row_len, ipointer, int_max, debug)
+   table_N_E_F, ineq, &
+   col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
+   nonz_max, nonz, max_row_len, ipointer, int_max, debug, errco, emsg)
 
    use numbatmod
+   use alloc
 
-   integer(8) nel, neq, n_ddl,  nonz_max, nonz
-   integer(8) ipointer, int_max
+   integer(8) nel, n_ddl, neq
    integer(8) table_N_E_F(14,nel)
    integer(8) ineq(3,n_ddl)
-   integer(8) col_ind(*)
-   integer(8) row_ptr(neq+1)
-   integer(8) max_row_len
 
 
-   integer alloc_stat
+   integer(8), dimension(:), allocatable, intent(inout) :: col_ind
+   integer(8), dimension(:) :: row_ptr(neq+1)
+
+   integer(8) nonz_max, nonz, max_row_len
+   integer(8) ipointer, int_max
+
+   integer(8) debug
+
+   integer errco
+   character(len=EMSG_LENGTH) emsg
+
+   ! --------------------------------------------
+
    integer(8), dimension(:), allocatable :: col_ind_0
 
    integer(8) i, j, k, k1, i_ddl, j_ddl
    integer(8) iel, ind_ip, ip, ind_jp, jp
    integer(8) row_start, row_end, row_len
-   integer(8) row_start2, row_end2
-   integer(8) ui, debug
+   integer(8) row_start2, row_end2, ui
+
 
    ui = stdout
 
-   alloc_stat = 0
 
-   allocate(col_ind_0(nonz_max), STAT=alloc_stat)
-   if (alloc_stat /= 0) then
-      write(*,*)
-      write(*,*) "csr_length: ", "The allocation is unsuccessful"
-      write(*,*) "alloc_stat = ", alloc_stat
-      write(*,*) "Not enough memory for the array col_ind_0"
-      write(*,*) "nonz_max = ", nonz_max
-      write(*,*) "csr_length: Aborting..."
-      stop
-   endif
+   call integer_alloc_1d(col_ind_0, nonz_max, 'col_ind_0', errco, emsg); RETONERROR(errco)
 
-
-
-   !  do i=1,nonz_max
-   !  col_ind_0(i) = 0
-   !  enddo
    col_ind_0 = 0
 
-!  Determination of the column indices
+   !  Determination of the column indices
 
    nonz = 0
    do iel=1,nel
@@ -53,6 +52,7 @@ subroutine csr_length (nel, n_ddl, neq,  &
          ip = table_N_E_F(i,iel)
          do i_ddl=1,3
             ind_ip = ineq(i_ddl,ip)
+
             if (ind_ip .ne. 0) then
                row_start = row_ptr(ind_ip)
                row_end = row_ptr(ind_ip+1) - 1
@@ -60,6 +60,7 @@ subroutine csr_length (nel, n_ddl, neq,  &
                   jp = table_N_E_F(j,iel)
                   do j_ddl=1,3
                      ind_jp = ineq(j_ddl,jp)
+
                      if (ind_jp .ne. 0) then
 !  Search if the entry (ind_ip,ind_jp) is already stored
                         do k=row_start,row_end
@@ -67,19 +68,19 @@ subroutine csr_length (nel, n_ddl, neq,  &
                            if(col_ind_0(k) .eq. ind_jp) goto 30
                         enddo
 
-                        print*, "csr_length: There is a problem!",&
-                        &" Aborting..."
-                        stop
+                        ! bail out
+                        emsg = "csr_length: There is a problem with row/col indexing!"
+                        errco = NBERROR_118
+                        return
 
 20                      continue
 !  No entry exists for (ind_ip,ind_jp); create new one
                         nonz = nonz + 1
 
                         if (nonz .gt. nonz_max) then
-                           print*, "csr_length: nonz > nonz_max: ",&
-                           &nonz .gt. nonz_max
-                           print*, "csr_length: Aborting..."
-                           stop
+                           write(emsg, *) "csr_length: nonz > nonz_max: ", nonz, nonz_max
+                           errco = NBERROR_119
+                           return
                         endif
 
                         col_ind_0(k) = ind_jp
@@ -92,6 +93,7 @@ subroutine csr_length (nel, n_ddl, neq,  &
          enddo
       enddo
    enddo
+   write(*,*) 'csr2'
 
 
 !  squeeze away the zero entries
@@ -130,6 +132,9 @@ subroutine csr_length (nel, n_ddl, neq,  &
 50    continue
    endif
 
+   write(*,*) 'csr3'
+
+
    max_row_len = 0
    do i=1,neq
       row_start = row_ptr(i)
@@ -143,21 +148,21 @@ subroutine csr_length (nel, n_ddl, neq,  &
    endif
 
    if ((ipointer+nonz) .gt. int_max) then
-      write(ui,*) "csr_length: (ipointer+nonz) > int_max : ",&
-      &(ipointer+nonz), int_max
-      write(ui,*) "csr_length: nonz_max = ", nonz_max
-      write(ui,*) "csr_length: increase the size of int_max"
-      write(ui,*) "csr_length: Aborting..."
-      stop
-   else
-
-
-!  Copy the local array col_ind_0 into col_ind
-      !  do i=1,nonz
-      !  col_ind(i) = col_ind_0(i)
-      !  enddo
-      col_ind(1:nonz) = col_ind_0(1:nonz)
+      write(emsg,*) "csr_length: (ipointer+nonz) > int_max : ", &
+      &(ipointer+nonz), int_max, nonz_max
+      errco = NBERROR_120
+      return
    endif
+
+
+   ! Now we know nonz
+   call integer_alloc_1d(col_ind, nonz, 'col_ind', errco, emsg); RETONERROR(errco)
+
+
+   ! weird rreverse labelleling because of reverse convention in this file
+   col_ind(1:nonz) = col_ind_0(1:nonz)
+
+   deallocate(col_ind_0)
 
    return
 end
