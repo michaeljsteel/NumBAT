@@ -107,7 +107,7 @@ contains
 
       integer(8), dimension(:), allocatable :: a_iwork
       complex(8), dimension(:), allocatable :: b_zwork
-      double precision, dimension(:,:), allocatable :: d_dwork
+      double precision, dimension(:,:), allocatable :: xy_N_E_F
       double precision, dimension(:), allocatable :: e_dwork  !  take over work from b_zwork but have same shape
 
       integer(8), dimension(:), allocatable :: iindex
@@ -120,6 +120,9 @@ contains
 
       integer(8), dimension(:), allocatable :: v_row_ind
       integer(8), dimension(:), allocatable :: v_col_ptr
+
+      integer(8), dimension(:), allocatable :: visited
+
 
       !  ----------------------------------------------
 
@@ -191,11 +194,11 @@ contains
       call integer_alloc_1d(iindex, n_modes, 'iindex', errco, emsg); RETONERROR(errco)
 
       adim = 2  ! Replace with constant 2_8
-      call double_alloc_2d(d_dwork, adim, n_ddl, 'd_dwork', errco, emsg); RETONERROR(errco)
+      call double_alloc_2d(xy_N_E_F, adim, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
       call double_alloc_1d(e_dwork, cmplx_max, 'e_dwork', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
-
+      call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
 
       !  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
 
@@ -252,12 +255,12 @@ contains
       !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
       !  Todo!  move n_edge later in list as an out variable
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
-         a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
+         a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), visited)
 
       !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
       !  Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-         a_iwork(ip_table_N_E_F), a_iwork(ip_visited))
+         a_iwork(ip_table_N_E_F),  visited)
 
       !  TODO: what is signif of this quanitty?
       n_ddl = n_edge + n_face + n_msh_pts_p3
@@ -300,9 +303,9 @@ contains
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       !  Should be using c_dwork for x_E_F ?
       call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-         a_iwork(ip_table_N_E_F), a_iwork(ip_visited), a_iwork(ip_type_N_E_F), mesh_xy, &
+         a_iwork(ip_table_N_E_F), visited , a_iwork(ip_type_N_E_F), mesh_xy, &
       !b_zwork(jp_x_N_E_F) &
-         d_dwork &
+         xy_N_E_F &
          )
 
 
@@ -310,17 +313,20 @@ contains
       call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
          a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, &
       !b_zwork(jp_x_N_E_F), &
-         d_dwork, &
-         a_iwork(ip_visited))
+         xy_N_E_F, visited)
 
 
 
+          ! From this point ip_visited is unused.
+          ! Replace with an allocated that is deleted here.
 
-      !  TODO: the b_zwork should actually be the d_dwork containing x_N_E_F, but only matters for periodic
+         deallocate(visited)
+
+      !  TODO: the b_zwork should actually be the xy_N_E_F containing x_N_E_F, but only matters for periodic
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
          type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, &
       !b_zwork, &
-         d_dwork,  &
+         xy_N_E_F,  &
          int_max, debug)
 
          !Now we know neq
@@ -335,9 +341,7 @@ contains
       call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
 
       call csr_max_length (n_msh_el, n_ddl, neq, a_iwork(ip_table_N_E_F), &
-         a_iwork(ip_eq), &
-         !a_iwork(ip_col_ptr),
-         v_col_ptr, nonz_max)
+         a_iwork(ip_eq), v_col_ptr, nonz_max)
 
       !  ip = ip_col_ptr + neq + 1 + nonz_max
       !ip = ip_col_ptr + neq + 1
@@ -485,7 +489,7 @@ contains
          table_nod, a_iwork(ip_table_N_E_F), type_el, &
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
-         d_dwork,  nonz,  &
+         xy_N_E_F,  nonz,  &
          v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass, &
          a_iwork(ip_work))
@@ -629,7 +633,7 @@ contains
       !  endif
       !
 
-      deallocate(a_iwork, b_zwork, iindex, d_dwork, e_dwork, overlap_L, arp_evecs)
+      deallocate(a_iwork, b_zwork, iindex, xy_N_E_F, e_dwork, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
       deallocate(v_row_ind, v_col_ptr)
 
