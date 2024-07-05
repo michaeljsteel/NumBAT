@@ -11,19 +11,20 @@ subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, indx)
    integer(8) row_ptr(neq+1), col_ind(nonz)
    integer(8) indx(max_row_len)
 
+   integer  :: errco  ! TODO: hook up to function call
+   character(len=EMSG_LENGTH) :: emsg
+
+   ! -----------------------------------------------
 
    integer(8) row_start, row_end, row_len
    integer(8) i, j, k
 
    integer(8), dimension(:), allocatable :: arr, istack
 
-   integer  :: errco  ! TODO: hook up to function call
-   character(len=EMSG_LENGTH) :: emsg
-
+   ! -----------------------------------------------
 
    call integer_alloc_1d(arr, max_row_len, 'arr', errco, emsg)
    call integer_alloc_1d(istack, max_row_len, 'arr', errco, emsg)
-
 
 
    do i=1,neq
