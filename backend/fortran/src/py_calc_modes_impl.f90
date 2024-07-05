@@ -68,7 +68,7 @@ end subroutine prepare_workspaces
 
 subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_nodes_per_el, &
    type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, &
-   a_iwork, d_dwork, int_max, debug)
+   a_iwork, d_dwork, type_N_E_F, m_eqs, int_max, debug)
 
    use numbatmod
 
@@ -79,6 +79,9 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
    double precision mesh_xy(2,n_msh_pts)
    integer(8) type_nod(n_msh_pts)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
+   integer(8) type_N_E_F(2, n_ddl)
+   integer(8) m_eqs(3, n_ddl)
+
 
    !  is this the right way to pass these?
    integer(8), dimension(int_max) :: a_iwork
@@ -88,7 +91,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
 
    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
-      call bound_cond ( bdy_cdn, n_ddl, neq, a_iwork(ip_type_N_E_F), a_iwork(ip_eq))
+      call bound_cond ( bdy_cdn, n_ddl, neq, type_N_E_F, m_eqs)
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
       if (debug .eq. 1) then
@@ -112,11 +115,11 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
          write(*,*) "set_boundary_conditions: ###### periodic_N_E_F"
       endif
 
-      call periodic_N_E_F (n_ddl, a_iwork(ip_type_N_E_F), d_dwork, a_iwork(ip_period_N_E_F), &
+      call periodic_N_E_F (n_ddl, type_N_E_F, d_dwork, a_iwork(ip_period_N_E_F), &
          a_iwork(ip_nperiod_N_E_F), lat_vecs)
 
-      call periodic_cond ( bdy_cdn, n_ddl, neq, a_iwork(ip_type_N_E_F), &
-         a_iwork(ip_period_N_E_F), a_iwork(ip_eq), debug)
+      call periodic_cond ( bdy_cdn, n_ddl, neq, type_N_E_F, &
+         a_iwork(ip_period_N_E_F), m_eqs, debug)
 
       if (debug .eq. 1) then
          write(*,*) "py_calc_modes.f: neq, n_ddl = ", neq, n_ddl
