@@ -233,7 +233,8 @@ subroutine valpr_64 (&
    n_conv, time_fact, time_arpack, debug, errco, emsg, &
    row_ind, col_ptr, &
    mat1, mat2, &
-   lhs_re, lhs_im, rhs_re, rhs_im, &
+   !lhs_re, lhs_im, &
+   !rhs_re, rhs_im, &
    v_evals, v_evecs & !, &v_schur
    )
 
@@ -248,8 +249,8 @@ subroutine valpr_64 (&
    integer(8), intent(in) :: itermax, dim_krylov
    integer(8) neq, nonz, n_conv, i_base, n_modes
    integer(8) row_ind(nonz), col_ptr(neq+1)
-   double precision rhs_re(neq), rhs_im(neq)
-   double precision lhs_re(neq), lhs_im(neq)
+   !double precision rhs_re(neq), rhs_im(neq)
+   !double precision lhs_re(neq), lhs_im(neq)
 
    complex(8), intent(in) :: mat1(nonz)
    complex(8), intent(in) :: mat2(nonz)
@@ -270,7 +271,11 @@ subroutine valpr_64 (&
    ! complex(8) ext_resid(neq),  ext_workd(3*neq)
 
 
+   ! UMFPACK requires complex arrays as pairs of doubles
    double precision, allocatable, dimension(:) :: mat1_re, mat1_im
+   double precision, allocatable, dimension(:) :: loclhs_re, loclhs_im
+   double precision, allocatable, dimension(:) :: locrhs_re, locrhs_im
+
 
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
@@ -344,6 +349,11 @@ subroutine valpr_64 (&
 
    call double_alloc_1d(mat1_re, nonz, 'mat1_re', errco, emsg); RETONERROR(errco)
    call double_alloc_1d(mat1_im, nonz, 'mat1_im', errco, emsg); RETONERROR(errco)
+
+   call double_alloc_1d(loclhs_re, neq, 'loclhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(loclhs_im, neq, 'loclhs_im', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(locrhs_re, neq, 'locrhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(locrhs_im, neq, 'locrhs_im', errco, emsg); RETONERROR(errco)
 
 
 
@@ -474,7 +484,7 @@ subroutine valpr_64 (&
 
          call apply_arpack_OPx(neq, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
             nonz, row_ind, col_ptr, mat2, vecs%vect1, vecs%vect2, &
-            lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
+            loclhs_re, loclhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
 
       else if (arp_ido .eq. 2) then  !  Request for y = M*x    !TODO:  IO don't think this ever happens for bmat=I, ie M=I
@@ -490,18 +500,18 @@ subroutine valpr_64 (&
          call zcopy(neq_32, vecs%workd(ipntr_32(1)), 1, vecs%vect1, 1)
          call z_mxv_csc (neq, vecs%vect1, vecs%vect2, nonz, row_ind, col_ptr, mat2)
 
-         rhs_re = dble(vecs%vect2)
-         rhs_im = dimag(vecs%vect2)
+         locrhs_re = dble(vecs%vect2)
+         locrhs_im = dimag(vecs%vect2)
 
          !  solve Ax=b, without iterative refinement
-         call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
+         call umf4zsol (UMFPACK_A, loclhs_re, loclhs_im, locrhs_re, locrhs_im, umf_numeric, umf_control, umf_info)
          if (umf_info (1) .lt. 0) then
             write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
             errco = NBERROR_107
             return
          endif
 
-         vecs%vect2 = lhs_re + C_IM_ONE * lhs_im
+         vecs%vect2 = loclhs_re + C_IM_ONE * loclhs_im
 
          call zcopy(neq_32, vecs%vect2, 1, vecs%workd(ipntr_32(2)), 1)
 
@@ -587,6 +597,7 @@ subroutine valpr_64 (&
 
    call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
    deallocate(mat1_re, mat1_im)
+   deallocate(loclhs_re, loclhs_im)
 
    call clock_main%stop()
    time_arpack = clock_main%cpu_time()

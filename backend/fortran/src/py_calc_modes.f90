@@ -1,5 +1,10 @@
 #include "numbat_decl.h"
 
+
+
+
+
+
  !  Solves the electromagnetic FEM problem defined in
  !  Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
 
@@ -60,6 +65,8 @@ module calc_em_impl
    use class_stopwatch
    use alloc
 
+   use nbinterfaces
+
 contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
@@ -96,11 +103,10 @@ contains
       integer(8) neq
 
       integer(8) int_max, cmplx_max, int_used, cmplx_used
-      integer(8) real_max, real_used
+      integer(8) real_max
 
       integer(8), dimension(:), allocatable :: a_iwork
       complex(8), dimension(:), allocatable :: b_zwork
-      double precision, dimension(:), allocatable :: c_dwork
       double precision, dimension(:,:), allocatable :: d_dwork
       double precision, dimension(:), allocatable :: e_dwork  !  take over work from b_zwork but have same shape
 
@@ -109,10 +115,11 @@ contains
 
       complex(8), dimension(:,:), allocatable :: arp_evecs
 
-      complex(8), dimension(:), allocatable :: lmat1
-      complex(8), dimension(:), allocatable :: lmat2
+      complex(8), dimension(:), allocatable :: mOp_stiff
+      complex(8), dimension(:), allocatable :: mOp_mass
 
-
+      integer(8), dimension(:), allocatable :: v_row_ind
+      integer(8), dimension(:), allocatable :: v_col_ptr
 
       !  ----------------------------------------------
 
@@ -148,18 +155,15 @@ contains
       double precision time_fact, time_arpack
 
       !  Declare the pointers of the real super-vector
-      integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
 
       !  Declare the pointers of for sparse matrix storage
-      integer(8) ip_col_ptr, ip_row
       integer(8) ip_work, ip_work_sort, ip_work_sort2
       integer(8) nonz, nonz_max, max_row_len
 
 
       !Obselete
-
-      integer(8) kp_mat1_re, kp_mat1_im
       integer(8) jp_mat2
+      integer(8) ip_col_ptr, ip_row
 
 
 
@@ -184,7 +188,6 @@ contains
 
       call integer_alloc_1d(a_iwork, int_max, 'a_iwork', errco, emsg); RETONERROR(errco)
       call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
-      call double_alloc_1d(c_dwork, real_max, 'c_dwork', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iindex, n_modes, 'iindex', errco, emsg); RETONERROR(errco)
 
       adim = 2  ! Replace with constant 2_8
@@ -320,6 +323,7 @@ contains
          d_dwork,  &
          int_max, debug)
 
+         !Now we know neq
 
       !  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
 
@@ -328,8 +332,12 @@ contains
 
       ip_col_ptr = ip_eq + 3*n_ddl
 
+      call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
+
       call csr_max_length (n_msh_el, n_ddl, neq, a_iwork(ip_table_N_E_F), &
-         a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
+         a_iwork(ip_eq), &
+         !a_iwork(ip_col_ptr),
+         v_col_ptr, nonz_max)
 
       !  ip = ip_col_ptr + neq + 1 + nonz_max
       !ip = ip_col_ptr + neq + 1
@@ -343,22 +351,26 @@ contains
       endif
 
 
-      call csr_length (n_msh_el, n_ddl, neq,  a_iwork(ip_table_N_E_F), a_iwork(ip_eq), a_iwork(ip_row), &
-         a_iwork(ip_col_ptr), nonz_max, nonz, max_row_len, ip_row, int_max, debug)
+
+      ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
+      ! length of v_row_ind is determined inside csr_length and so allocated there
+      call csr_length (n_msh_el, n_ddl, neq,  a_iwork(ip_table_N_E_F), a_iwork(ip_eq), &
+         v_row_ind, v_col_ptr, &
+         nonz_max, nonz, max_row_len, ip_row, int_max, debug, errco, emsg)
+
+         RETONERROR(errco)
+
+
 
       ip_work = ip_row + nonz
       ip_work_sort = ip_work + 3*n_ddl
       ip_work_sort2 = ip_work_sort + max_row_len
 
-      !  sorting csr ...
-      call sort_csr (neq, nonz, max_row_len, a_iwork(ip_row), a_iwork(ip_col_ptr), a_iwork(ip_work_sort), a_iwork(ip_work), &
+      call sort_csr (neq, nonz, max_row_len, &
+      v_row_ind, v_col_ptr, &
+         a_iwork(ip_work_sort), a_iwork(ip_work), &
          a_iwork(ip_work_sort2))
 
-      if (debug .eq. 1) then
-         write(ui_out,*) "py_calc_modes.f: nonz_max = ", nonz_max
-         write(ui_out,*) "py_calc_modes.f: nonz = ", nonz
-         write(ui_out,*) "py_calc_modes.f: cmplx_max/nonz = ", dble(cmplx_max)/dble(nonz)
-      endif
 
       int_used = ip_work_sort2 + max_row_len
 
@@ -396,20 +408,6 @@ contains
          return
       endif
 
-      kp_rhs_re = 1
-      kp_rhs_im = kp_rhs_re + neq
-      kp_lhs_re = kp_rhs_im + neq
-      kp_lhs_im = kp_lhs_re + neq
-      kp_mat1_re = kp_lhs_im + neq
-      kp_mat1_im = kp_mat1_re + nonz
-      real_used = kp_mat1_im + nonz
-
-      if (real_max .lt. real_used) then
-         write(emsg,*) 'The size of the real supervector is too small', '2*nonz  = ', 2*nonz, &
-            'real super-vec: real_max  = ', real_max, 'real super-vec: real_used = ', real_used
-         errco = -14
-         return
-      endif
 
 
       !###############################################
@@ -426,15 +424,16 @@ contains
       !  end do
       !
 
-      ilo = ip_col_ptr-1 + 1
-      ihi = ip_col_ptr-1 + neq + 1
-      a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
+      ! ilo = ip_col_ptr-1 + 1
+      ! ihi = ip_col_ptr-1 + neq + 1
+      ! a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
 
-      ilo = ip_row-1 + 1
-      ihi = ip_row-1 + nonz
-      a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
+      ! ilo = ip_row-1 + 1
+      ! ihi = ip_row-1 + nonz
+      ! a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
 
-
+      v_row_ind = v_row_ind - 1
+      v_col_ptr = v_col_ptr - 1
 
 
       !  The CSC indexing, i.e., ip_col_ptr, is 1-based
@@ -465,13 +464,20 @@ contains
 
 
       ! These had to wait till we new nonz
-      call complex_alloc_1d(lmat1, nonz, 'lmat1', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(lmat2, nonz, 'lmat2', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(mOp_stiff, nonz, 'mOp_stiff', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
 
       write(*,*) 'write to lmat', nonz
-      lmat1(1)= C_ZERO
-      lmat1(nonz)= C_ZERO
-write(*,*) 'write to lmat'
+      mOp_stiff(1)= C_ZERO
+      mOp_stiff(nonz)= C_ZERO
+      write(*,*) 'write to lmat'
+
+
+
+      !a_iwork(ip_row), a_iwork(ip_col_ptr), &
+      !b_zwork(jp_x_N_E_F), &
+
+
 
       !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
@@ -479,10 +485,9 @@ write(*,*) 'write to lmat'
          table_nod, a_iwork(ip_table_N_E_F), type_el, &
          a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
-      !b_zwork(jp_x_N_E_F), &
-         d_dwork, &
-         nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-         lmat1, lmat2, &
+         d_dwork,  nonz,  &
+         v_row_ind, v_col_ptr, &
+         mOp_stiff, mOp_mass, &
          a_iwork(ip_work))
 
 
@@ -519,6 +524,9 @@ write(*,*) 'write to lmat'
       !b_zwork(jp_workd), b_zwork(jp_resid), ltrav,  &
       !b_zwork(jp_vschur)
       !b_zwork(jp_evecs)
+!c_dwork(kp_lhs_re), c_dwork(kp_lhs_im),
+      !c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
+      !a_iwork(ip_row), a_iwork(ip_col_ptr), &
 
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
@@ -529,9 +537,8 @@ write(*,*) 'write to lmat'
          i_base, dim_krylov, n_modes, neq, itermax,  &
          arp_tol, nonz, &
          n_conv, time_fact, time_arpack, debug, errco, emsg, &
-         a_iwork(ip_row), a_iwork(ip_col_ptr), &
-         lmat1, lmat2, &
-         c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
+         v_row_ind, v_col_ptr, &
+         mOp_stiff, mOp_mass, &
          v_evals_beta, arp_evecs)
       RETONERROR(errco)
 
@@ -622,8 +629,9 @@ write(*,*) 'write to lmat'
       !  endif
       !
 
-      deallocate(a_iwork, b_zwork, c_dwork, iindex, d_dwork, e_dwork, overlap_L, arp_evecs)
-      deallocate(lmat1, lmat2)
+      deallocate(a_iwork, b_zwork, iindex, d_dwork, e_dwork, overlap_L, arp_evecs)
+      deallocate(mOp_stiff, mOp_mass)
+      deallocate(v_row_ind, v_col_ptr)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -776,7 +784,7 @@ write(*,*) 'write to lmat'
       use numbatmod
 
       integer(8) debug, ui_out, e_h_field, bdy_cdn
-      integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max, real_used, n_msh_pts, n_msh_el
+      integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
       integer(8) n_conv, n_modes, n_typ_el, nonz, nonz_max, n_core(2), neq, dim_krylov
@@ -798,7 +806,7 @@ write(*,*) 'write to lmat'
       nonz_max = 0
       cmplx_used = 0
       real_max = 0
-      real_used = 0
+
 
       if (debug .eq. 1) then
          write(ui_out,*)
@@ -839,8 +847,6 @@ write(*,*) 'write to lmat'
          !write(26,*) "cmplx super-vector : "
          !write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)
 
-         !write(26,*) "Real super-vector : "
-         !write(26,*) "real_used, real_max, real_max/real_used = ", real_used, real_max, dble(real_max)/dble(real_used)
          write(26,*)
          write(26,*) "n_modes, dim_krylov, n_conv = ", n_modes, dim_krylov, n_conv
          !write(26,*) "nonz, n_msh_pts*n_modes, ", "nonz/(n_msh_pts*n_modes) = ", nonz, &
