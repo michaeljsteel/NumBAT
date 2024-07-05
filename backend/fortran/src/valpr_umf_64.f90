@@ -60,11 +60,11 @@ contains
    subroutine destructor(this)
       type(ValprVecs) :: this
 
-      write(*,*) 'in valprvecs destructor'
       deallocate(this%v_schur)
       deallocate(this%vect1,  this%vect2,    this%workd, this%workl)
       deallocate(this%resid,  this%eval_ritz)
       deallocate(this%workev, this%rwork,    this%arp_select)
+
    end subroutine
 
 
@@ -232,7 +232,7 @@ subroutine valpr_64 (&
    arp_tol, nonz, &
    n_conv, time_fact, time_arpack, debug, errco, emsg, &
    row_ind, col_ptr, &
-   mat1_re, mat1_im, mat2, &
+   mat1, mat2, &
    lhs_re, lhs_im, rhs_re, rhs_im, &
    v_evals, v_evecs & !, &v_schur
    )
@@ -243,14 +243,16 @@ subroutine valpr_64 (&
    use numbatmod
    use class_stopwatch
    use class_ValprVecs
+ use alloc
 
    integer(8), intent(in) :: itermax, dim_krylov
    integer(8) neq, nonz, n_conv, i_base, n_modes
    integer(8) row_ind(nonz), col_ptr(neq+1)
-   complex(8) mat2(nonz)
-   double precision mat1_re(nonz), mat1_im(nonz)
    double precision rhs_re(neq), rhs_im(neq)
    double precision lhs_re(neq), lhs_im(neq)
+
+   complex(8), intent(in) :: mat1(nonz)
+   complex(8), intent(in) :: mat2(nonz)
 
    complex(8), intent(out) :: v_evals(n_modes)
 
@@ -267,6 +269,8 @@ subroutine valpr_64 (&
    ! integer(8) ext_lworkl
    ! complex(8) ext_resid(neq),  ext_workd(3*neq)
 
+
+   double precision, allocatable, dimension(:) :: mat1_re, mat1_im
 
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
@@ -292,6 +296,7 @@ subroutine valpr_64 (&
 
    type(stopwatch) :: clock_main
    integer(8) ui, debug
+
 
    ui = stdout
    errco = 0
@@ -336,6 +341,15 @@ subroutine valpr_64 (&
    !  Pre-order and symbolic analysis
    !  factors neq x neq matrix  in CSR format with col and row arrays col_ptr, row_ind
    !  complex entries are in mat1_re and mat1_im
+
+   call double_alloc_1d(mat1_re, nonz, 'mat1_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(mat1_im, nonz, 'mat1_im', errco, emsg); RETONERROR(errco)
+
+
+
+   mat1_re = dble(mat1)
+   mat1_im = dimag(mat1)
+
    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
       umf_symbolic, umf_control, umf_info)
 
@@ -400,7 +414,7 @@ subroutine valpr_64 (&
 
    call umf4zfsym (umf_symbolic)   !  free the symbolic analysis
 
-   call clock_main%stop()
+   !call clock_main%stop()
    time_fact = clock_main%cpu_time()
 
 
@@ -572,6 +586,7 @@ subroutine valpr_64 (&
 
 
    call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
+   deallocate(mat1_re, mat1_im)
 
    call clock_main%stop()
    time_arpack = clock_main%cpu_time()

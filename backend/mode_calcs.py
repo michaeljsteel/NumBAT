@@ -126,7 +126,7 @@ class FemMesh:
         self.n_msh_el = mesh.n_msh_elts
 
         print(
-            f"\n The EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
+            f"\n The final EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
         )
 
         matvals = list(struc.d_materials.values())[: opt_props.n_mats_em]
@@ -274,7 +274,7 @@ class FemMesh:
         self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
 
         print(
-            f"\n The elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
+            f"\n The final elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
         )
 
         print(" The material index table is:", el_props.typ_el_AC, "\n")
@@ -1203,7 +1203,6 @@ class ACSimulation(Simulation):
             self.fem_evecs,
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
-        print('done AC cal')
 
         self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, mesh_xy_out)
 

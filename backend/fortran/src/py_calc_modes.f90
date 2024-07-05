@@ -90,9 +90,10 @@ contains
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
+      !  ----------------------------------------------
+      !  workspaces
 
       integer(8) neq
-
 
       integer(8) int_max, cmplx_max, int_used, cmplx_used
       integer(8) real_max, real_used
@@ -108,13 +109,21 @@ contains
 
       complex(8), dimension(:,:), allocatable :: arp_evecs
 
-      !  Declare the pointers of the integer super-vector
+      complex(8), dimension(:), allocatable :: lmat1
+      complex(8), dimension(:), allocatable :: lmat2
+
+
+
+      !  ----------------------------------------------
+
+
+      !  Pointers of the integer super-vector
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
       integer(8) ip_period_N, ip_nperiod_N
       integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
 
-      !  Declare the pointers of the real super-vector
+      !  Pointers of the real super-vector
       integer(8) jp_x_N_E_F
 
 
@@ -140,13 +149,19 @@ contains
 
       !  Declare the pointers of the real super-vector
       integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
-      integer(8) kp_mat1_re, kp_mat1_im
 
       !  Declare the pointers of for sparse matrix storage
       integer(8) ip_col_ptr, ip_row
-      integer(8) jp_mat2
       integer(8) ip_work, ip_work_sort, ip_work_sort2
       integer(8) nonz, nonz_max, max_row_len
+
+
+      !Obselete
+
+      integer(8) kp_mat1_re, kp_mat1_im
+      integer(8) jp_mat2
+
+
 
       integer(8) :: ilo, ihi, i_md
 
@@ -176,6 +191,7 @@ contains
       call double_alloc_2d(d_dwork, adim, n_ddl, 'd_dwork', errco, emsg); RETONERROR(errco)
       call double_alloc_1d(e_dwork, cmplx_max, 'e_dwork', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
+
 
 
       !  nsym = 1 !  nsym = 0 => symmetric or hermitian matrices
@@ -444,10 +460,18 @@ contains
       !  Assemble the coefficient matrix A and the right-hand side F of the
       !  finite element equations
 
-      write(ui_out,'(A,A)') "   - assembling linear system "
-
+      write(ui_out,'(A,A)') "   - assembling linear system:"
       call clock_spare%reset()
 
+
+      ! These had to wait till we new nonz
+      call complex_alloc_1d(lmat1, nonz, 'lmat1', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(lmat2, nonz, 'lmat2', errco, emsg); RETONERROR(errco)
+
+      write(*,*) 'write to lmat', nonz
+      lmat1(1)= C_ZERO
+      lmat1(nonz)= C_ZERO
+write(*,*) 'write to lmat'
 
       !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
@@ -458,14 +482,22 @@ contains
       !b_zwork(jp_x_N_E_F), &
          d_dwork, &
          nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work))
+         lmat1, lmat2, &
+         a_iwork(ip_work))
 
-      call clock_spare%stop()
-      write(ui_out,'(A,A)') '      ', clock_spare%to_string()
 
-      write(ui_out,*) "  - solving linear system"
+      write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
+      write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
+      write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
+      write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
+      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
+      write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**10, ' MB est. working memory '
 
-      call clock_spare%reset()
+      write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
+
+
+
+
 
       !  This is the main solver.
       !  On completion:
@@ -473,6 +505,10 @@ contains
       !  eigvectors are in are b_zwork[jp_evecs..?]
 
       !  TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
+
+      write(ui_out,'(/,A)') "  - solving linear system: "
+
+
 
 
       call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
@@ -484,12 +520,17 @@ contains
       !b_zwork(jp_vschur)
       !b_zwork(jp_evecs)
 
+      write(ui_out,'(/,A)') "      solving eigensystem"
+      call clock_spare%reset()
+
+      write(*,*) 'write to lmat', nonz
+
       call valpr_64( &
          i_base, dim_krylov, n_modes, neq, itermax,  &
          arp_tol, nonz, &
          n_conv, time_fact, time_arpack, debug, errco, emsg, &
          a_iwork(ip_row), a_iwork(ip_col_ptr), &
-         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
+         lmat1, lmat2, &
          c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
          v_evals_beta, arp_evecs)
       RETONERROR(errco)
@@ -503,17 +544,13 @@ contains
          return
       endif
 
-      call clock_spare%stop()
-      write(ui_out,'(A,A)') '      ', clock_spare%to_string()
+      write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
 
-      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
-
-
+      write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 
-      write(ui_out,*) "  - assembling eigen solutions"
-
+      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, iindex)
 
 
       !  The eigenvectors will be stored in the array sol
@@ -527,7 +564,6 @@ contains
       RETONERROR(errco)
 
 
-      write(ui_out,*) "  - finding mode energies "
       !  Calculate energy in each medium (typ_el)
       call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
          table_nod, type_el, n_typ_el, eps_eff,&
@@ -568,7 +604,7 @@ contains
       !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
       !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
 
-      write(ui_out,*) "  - finished"
+
       !if (debug .eq. 1) then
       !  write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
       !endif
@@ -586,11 +622,11 @@ contains
       !  endif
       !
 
-
-      call clock_spare%stop()
-      call clock_main%stop()
-
       deallocate(a_iwork, b_zwork, c_dwork, iindex, d_dwork, e_dwork, overlap_L, arp_evecs)
+      deallocate(lmat1, lmat2)
+
+
+      write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
       write(ui_out,*) "-----------------------------------------------"
 

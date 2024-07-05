@@ -7,7 +7,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    table_nod, table_N_E_F, type_el, &
    ineq, ip_period_N, ip_period_E_F, &
    mesh_xy, xy_N_E_F, nonz, row_ind, col_ptr, &
-   mat1_re, mat1_im, mat2, i_work)
+   mat1, mat2, i_work)
 
    !  NQUAD: The number of quadrature points used in each element.
 
@@ -29,8 +29,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
    integer(8) row_ind(nonz), col_ptr(neq+1)
 
-   double precision, intent(out) :: mat1_re(nonz), mat1_im(nonz)
-   complex(8), intent(out) :: mat2(nonz)
+   complex(8), intent(out) :: mat1(nonz), mat2(nonz)
 
    integer(8) i_work(3*n_ddl)
 
@@ -112,14 +111,9 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
 
-  !  do i=1,nonz
-  !  mat1_re(i) = 0.d0
-  !  mat1_im(i) = 0.d0
-  !  mat2(i) = 0.d0
-  !  enddo
-   mat1_re  = D_ZERO
-   mat1_im  = D_ZERO
-   mat2  = D_ZERO
+
+   mat1 = C_ZERO
+   mat2  = C_ZERO
 
 
    n_curved = 0
@@ -325,9 +319,8 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                            z_tmp1 = z_tmp1 - shift_ksqr*z_tmp2
 
                            k = i_work(ind_ip)
-                           if (k .gt. 0 .and. k .le. nonz) then
-                              mat1_re(k) = mat1_re(k) + dble(z_tmp1)
-                              mat1_im(k) = mat1_im(k) + imag(z_tmp1)
+                           if (k .gt. 0 .and. k .le. nonz) then   !is this test necessary?
+                              mat1(k) = mat1(k) + z_tmp1
                               mat2(k) = mat2(k) + z_tmp2
                            else
                               write(ui_stdout,*) "asmbly: problem with row_ind !!"

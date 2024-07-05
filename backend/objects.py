@@ -611,7 +611,7 @@ class Structure:
         '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
         to generate the NumBAT .mail file.'''
 
-        print('  Processing Gmsh')
+        print(' Calling Gmsh: ', end='')
 
         msh_template = self.wg_geom.gmsh_template_filename()
         msh_fname = self.wg_geom.get_instance_filename()
