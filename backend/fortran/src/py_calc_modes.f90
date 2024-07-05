@@ -108,7 +108,6 @@ contains
       integer(8) int_max, cmplx_max, cmplx_used
       integer(8) real_max
 
-      complex(8), dimension(:), allocatable :: b_zwork
       double precision, dimension(:,:), allocatable :: xy_N_E_F
       integer(8), dimension(:,:), allocatable :: table_N_E_F
       integer(8), dimension(:,:), allocatable :: type_N_E_F
@@ -189,7 +188,7 @@ contains
       time_arpack = 0.d0
 
       call array_size(n_msh_pts, n_msh_el, n_modes, &
-         int_max, cmplx_max, real_max, n_ddl, errco, emsg)
+         int_max, cmplx_max, real_max, n_ddl, errco, emsg) !Only useful number out of here is n_ddl
       RETONERROR(errco)
 
 
@@ -204,7 +203,6 @@ contains
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
 
-      call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
 
@@ -289,14 +287,6 @@ contains
       endif
 
 
-      !C  overwriting pointers ip_row_ptr, ..., ip_adjncy
-
-
-      !  TODO:
-      !  jp is an index into an b_zwork
-      !  kp is an index into an c_dwork
-
-      !  Offsets into the b_zwork workspace
       jp_x_N_E_F = 1
 
 
@@ -317,7 +307,6 @@ contains
 
       deallocate(visited)
 
-      !  TODO: the b_zwork should actually be the xy_N_E_F containing x_N_E_F, but only matters for periodic
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
       type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
       type_N_E_F, m_eqs, int_max, debug, &
@@ -451,7 +440,7 @@ contains
       !  This is the main solver.
       !  On completion:
       !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
-      !  eigvectors are in are b_zwork[jp_evecs..?]
+      !  eigvectors are in arp arp_evecs
 
 
 
@@ -564,7 +553,7 @@ contains
       !  endif
       !
 
-      deallocate(b_zwork, v_eig_index, xy_N_E_F, overlap_L, arp_evecs)
+      deallocate(v_eig_index, xy_N_E_F, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
       deallocate(v_row_ind, v_col_ptr)
 
