@@ -148,16 +148,13 @@ contains
 
       !  Variable used by valpr
       integer(8) dim_krylov
-      integer(8) n_conv, i_base
+      integer(8) i_base
       double precision arp_tol
 
 
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       double precision vacwavenum_k0, dim_x, dim_y
-
-      double precision time_fact, time_arpack
-
 
       integer(8) :: i_md
 
@@ -169,10 +166,6 @@ contains
       ui_out = stdout
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
-
-      n_conv = 0.d0
-      time_fact = 0.d0
-      time_arpack = 0.d0
 
       call array_size(n_msh_pts, n_msh_el, n_modes, &
          int_max, cmplx_max, real_max, n_ddl, errco, emsg) !Only useful number out of here is n_ddl
@@ -395,7 +388,7 @@ contains
       call valpr_64( &
          i_base, dim_krylov, n_modes, neq, itermax,  &
          arp_tol, nonz, &
-         n_conv, time_fact, time_arpack, debug, errco, emsg, &
+         debug, errco, emsg, &
          v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass, &
          v_evals_beta, arp_evecs)
@@ -403,12 +396,7 @@ contains
 
 
 
-      if (n_conv .ne. n_modes) then
-         write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
-            n_conv, n_modes ,"You should probably increase resolution of mesh!"
-         errco = -19
-         return
-      endif
+
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
@@ -499,6 +487,13 @@ contains
 
 
    end subroutine calc_em_modes_impl
+
+
+
+
+
+
+
 
    subroutine check_materials_and_fem_formulation(E_H_field,n_typ_el, &
       vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
