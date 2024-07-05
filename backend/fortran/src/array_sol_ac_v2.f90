@@ -8,8 +8,8 @@
 
 
 subroutine array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq,&
-&nnodes, iindex, table_nod, type_el, ineq,&
-&x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
+nnodes, iindex, table_nod, type_el, ineq,&
+x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
 
    use numbatmod

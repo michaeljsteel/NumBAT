@@ -310,7 +310,7 @@ PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
 	ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f \
 	ac_alpha_int.f ac_alpha_int_v2.f  \
 	array_size.f90 array_material_ac.f \
-	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f py_entry_cm.f90
+	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f90 py_entry_cm.f90
 
 	#py_calc_modes.f90 py_entry_cm.f90 py_calc_modes_ac.f90
 
