@@ -42,7 +42,7 @@ class MailData:
 
 
     def summarise_mesh(self):
-        s = (f'    Initial Gmsh mesh has: {self.n_msh_pts} nodes, {self.n_msh_elts} elements. \n' \
+        s = (f'    initial mesh has: {self.n_msh_pts} nodes, {self.n_msh_elts} elements. \n' \
              #f'  {len(self.v_node_physindex)} nodes \n'
              )
 

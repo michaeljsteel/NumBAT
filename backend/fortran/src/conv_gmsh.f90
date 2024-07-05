@@ -47,10 +47,8 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
 
    integer i, j
    integer fnamelen
-   double precision stime1, ctime1
    integer  iphyscurve, nd
 
-   call get_clocks(stime1, ctime1)
 
    gmsh_version = 2
    errco = 0
