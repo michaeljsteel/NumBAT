@@ -15,7 +15,7 @@
 subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
    ineq, ip_period_N, ip_period_N_E_F, &
-   mesh_xy, x_N_E_F, v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
+   mesh_xy, xy_N_E_F, v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
 
@@ -28,7 +28,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
    integer(8) table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
    double precision bloch_vec(2), mesh_xy(2,n_msh_pts)
-   double precision x_N_E_F(2,n_ddl)
+   double precision xy_N_E_F(2,n_ddl)
    complex(8) sol_0(neq,num_modes)
 
 !  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
@@ -125,9 +125,9 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                j1 = ip_period_N_E_F(jp)
                if (j1 /= 0) then
                   !do k=1,dim_32
-                  !  delta_xx(k) = x_N_E_F(k,jp) - x_N_E_F(k,j1)
+                  !  delta_xx(k) = xy_N_E_F(k,jp) - xy_N_E_F(k,j1)
                   !enddo
-                  delta_xx(:) = x_N_E_F(:,jp) - x_N_E_F(:,j1)
+                  delta_xx(:) = xy_N_E_F(:,jp) - xy_N_E_F(:,j1)
                   r_tmp1 = ddot(dim_32, bloch_vec, 1, delta_xx, 1)
                   val_exp(j) = exp(C_IM_ONE * r_tmp1)
                endif

@@ -101,13 +101,19 @@ contains
       !  workspaces
 
       integer(8) neq
+      integer(8) n_edge, n_face, n_ddl, n_ddl_max
+      integer(8) nonz, nonz_max, max_row_len
+
 
       integer(8) int_max, cmplx_max, cmplx_used
       integer(8) real_max
 
       complex(8), dimension(:), allocatable :: b_zwork
       double precision, dimension(:,:), allocatable :: xy_N_E_F
-      double precision, dimension(:), allocatable :: e_dwork  !  take over work from b_zwork but have same shape
+      integer(8), dimension(:,:), allocatable :: table_N_E_F
+      integer(8), dimension(:,:), allocatable :: type_N_E_F
+
+      integer(8), dimension(:,:), allocatable :: m_eqs
 
       integer(8), dimension(:), allocatable :: v_eig_index
       complex(8), dimension(:,:), allocatable :: overlap_L
@@ -121,14 +127,11 @@ contains
       integer(8), dimension(:), allocatable :: v_col_ptr
 
       integer(8), dimension(:), allocatable :: visited
-
-
-      integer(8), dimension(:,:), allocatable :: table_N_E_F
-      integer(8), dimension(:,:), allocatable :: type_N_E_F
-
-      integer(8), dimension(:,:), allocatable :: m_eqs
-
       integer(8), dimension(:), allocatable :: iwork
+
+
+
+      ! Currenly, periodic is not active
 
       integer(8), dimension(:), allocatable :: iperiod_N
       integer(8), dimension(:), allocatable :: iperiod_N_E_F
@@ -136,16 +139,12 @@ contains
       integer(8), dimension(:), allocatable :: inperiod_N_E_F
 
 
+      ! Should these be dynamic?
+      complex(8) pp(n_typ_el), qq(n_typ_el)
+      complex(8) eps_eff(n_typ_el)
 
 
       !  ----------------------------------------------
-
-
-      !  Pointers of the integer super-vector
-      ! integer(8) ip_table_E, ip_table_N_E_F, ip_visited
-      ! integer(8) ip_type_N_E_F, ip_eq
-      ! integer(8) ip_period_N, ip_nperiod_N
-      ! integer(8) ip_period_N_E_F, ip_nperiod_N_E_F
 
       !  Pointers of the real super-vector
       integer(8) jp_x_N_E_F
@@ -153,40 +152,33 @@ contains
 
       integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
       integer(8) jp_trav, jp_evecs
-      complex(8) pp(n_typ_el), qq(n_typ_el)
-      complex(8) eps_eff(n_typ_el)
+
 
       integer(8) n_msh_pts_p3, ui_out
 
       !  Variable used by valpr
       integer(8) dim_krylov, ltrav
       integer(8) n_conv, i_base
-      !double precision ls_data(10)
+      double precision arp_tol
+
+
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
-      integer(8) n_edge, n_face, n_ddl, n_ddl_max
-
-
       double precision vacwavenum_k0, dim_x, dim_y
 
       double precision time_fact, time_arpack
 
-      !  Declare the pointers of the real super-vector
-
-      !  Declare the pointers of for sparse matrix storage
-      integer(8) nonz, nonz_max, max_row_len
 
 
       !Obselete
       integer(8) jp_mat2
 
-
-
       integer(8) :: i_md
 
-      double precision arp_tol
 
       type(Stopwatch) :: clock_main, clock_spare
+
+
 
       ui_out = stdout
 
@@ -201,7 +193,6 @@ contains
       RETONERROR(errco)
 
 
-      call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
 
       call double_alloc_2d(xy_N_E_F, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
@@ -210,14 +201,11 @@ contains
 
       call integer_alloc_2d(m_eqs, 3_8, n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
 
-
-
-
-      call double_alloc_1d(e_dwork, cmplx_max, 'e_dwork', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
-      call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
 
+      call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
 
       call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
@@ -513,7 +501,7 @@ contains
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          n_core, bloch_vec, v_eig_index, table_nod, table_N_E_F, type_el, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         mesh_xy, e_dwork, v_evals_beta, mode_pol, arp_evecs, &
+         mesh_xy, xy_N_E_F, v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
       RETONERROR(errco)
 
@@ -576,7 +564,7 @@ contains
       !  endif
       !
 
-      deallocate(b_zwork, v_eig_index, xy_N_E_F, e_dwork, overlap_L, arp_evecs)
+      deallocate(b_zwork, v_eig_index, xy_N_E_F, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
       deallocate(v_row_ind, v_col_ptr)
 
