@@ -35,7 +35,7 @@ module nbinterfaces
                 table_N_E_F, ineq, &
                ! col_ind, row_ptr, &
                 ext_v_row_ind, ext_v_col_ptr, &
-                nonz_max, nonz, max_row_len, ipointer, int_max, debug, errco, emsg)
+                nonz_max, nonz, max_row_len, int_max, debug, errco, emsg)
 
 
             integer(8) nel, n_ddl, neq
@@ -50,7 +50,7 @@ module nbinterfaces
 
 
             integer(8) nonz_max, nonz, max_row_len
-            integer(8) ipointer, int_max
+            integer(8) int_max
 
             integer(8) debug
 
