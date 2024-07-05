@@ -1,4 +1,4 @@
-
+#include "numbat_decl.h"
 !  Construct the left hand and right hand matrices  mat1_re/im and mat_2
 !  for the main linear equations
 
@@ -7,11 +7,12 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    table_nod, table_N_E_F, type_el, &
    m_eqs, ip_period_N, ip_period_E_F, &
    mesh_xy, xy_N_E_F, nonz, row_ind, col_ptr, &
-   mat1, mat2, i_work)
+   mat1, mat2)
 
    !  NQUAD: The number of quadrature points used in each element.
 
    use numbatmod
+   use alloc
 
    integer(8) bdy_cdn, i_base,  nb_typ_el, nonz
    integer(8) n_msh_el, n_msh_pts, n_ddl, neq, nnodes
@@ -31,8 +32,11 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
    complex(8), intent(out) :: mat1(nonz), mat2(nonz)
 
-   integer(8) i_work(3*n_ddl)
+   integer errco
+   character(len=EMSG_LENGTH) emsg
 
+   ! -----------------
+   integer(8), dimension(:), allocatable :: i_work
 
 
 
@@ -84,9 +88,10 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    ui_stdout = stdout
    debug = 0
 
+   call integer_alloc_1d(i_work, 3*n_ddl, 'i_work', errco, emsg); RETONERROR(errco)
 
-!  The CSC indexing, i.e., col_ptr, is 1-based
-!  But valpr.f may have changed the CSC indexing to 0-based indexing)
+   !  The CSC indexing, i.e., col_ptr, is 1-based
+   !  But valpr.f may have changed the CSC indexing to 0-based indexing)
    if (i_base .eq. 0) then
       i_base2 = 1
    else
@@ -109,7 +114,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    !  write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
    !  endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
+   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
 
 
    mat1 = C_ZERO
