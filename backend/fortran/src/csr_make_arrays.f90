@@ -1,26 +1,73 @@
 #include "numbat_decl.h"
 
+subroutine make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
+   m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
+
+   use numbatmod
+   use alloc
+   use nbinterfacesb
+
+   integer(8) n_msh_el, n_ddl, neq, nonz
+   integer(8) table_N_E_F(14,n_msh_el)
+   integer(8) m_eqs(3,n_ddl)
+
+   integer(8), dimension(:), allocatable, intent(inout) :: v_row_ind
+   integer(8), dimension(:), allocatable, intent(inout) :: v_col_ptr
+
+   integer(8) debug
+
+   integer errco
+   character(len=EMSG_LENGTH) emsg
+
+   ! ------------------------------------------
+
+   integer(8) nonz_max, max_row_len
+   integer(8), dimension(:), allocatable  :: iwork
+
+   ! ------------------------------------------
+
+
+
+   call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
+
+   call csr_max_length (n_msh_el, n_ddl, neq, table_N_E_F, &
+      m_eqs, v_col_ptr, nonz_max)
+
+
+   ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
+   ! length of v_row_ind is determined inside csr_length and so allocated there
+   call csr_length (n_msh_el, n_ddl, neq,  table_N_E_F, m_eqs, &
+      v_row_ind, v_col_ptr, nonz_max, nonz, max_row_len, debug, errco, emsg)
+   RETONERROR(errco)
+
+   call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg);
+   RETONERROR(errco)
+
+   call sort_csr (neq, nonz, max_row_len, v_row_ind, v_col_ptr,  iwork)
+
+
+end subroutine
+
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine csr_length (nel, n_ddl, neq,  &
-   table_N_E_F, ineq, &
+subroutine csr_length (n_msh_el, n_ddl, neq,  &
+   table_N_E_F, m_eqs, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
-   nonz_max, nonz, max_row_len,  int_max, debug, errco, emsg)
+   nonz_max, nonz, max_row_len, debug, errco, emsg)
 
    use numbatmod
    use alloc
 
-   integer(8) nel, n_ddl, neq
-   integer(8) table_N_E_F(14,nel)
-   integer(8) ineq(3,n_ddl)
+   integer(8) n_msh_el, n_ddl, neq
+   integer(8) table_N_E_F(14,n_msh_el)
+   integer(8) m_eqs(3,n_ddl)
 
 
    integer(8), dimension(:), allocatable, intent(inout) :: col_ind
    integer(8), dimension(:) :: row_ptr(neq+1)
 
    integer(8) nonz_max, nonz, max_row_len
-   integer(8) ipointer, int_max
 
    integer(8) debug
 
@@ -47,11 +94,11 @@ subroutine csr_length (nel, n_ddl, neq,  &
    !  Determination of the column indices
 
    nonz = 0
-   do iel=1,nel
+   do iel=1,n_msh_el
       do i=1,nddl_0_em
          ip = table_N_E_F(i,iel)
          do i_ddl=1,3
-            ind_ip = ineq(i_ddl,ip)
+            ind_ip = m_eqs(i_ddl,ip)
 
             if (ind_ip .ne. 0) then
                row_start = row_ptr(ind_ip)
@@ -59,7 +106,7 @@ subroutine csr_length (nel, n_ddl, neq,  &
                do j=1,nddl_0_em
                   jp = table_N_E_F(j,iel)
                   do j_ddl=1,3
-                     ind_jp = ineq(j_ddl,jp)
+                     ind_jp = m_eqs(j_ddl,jp)
 
                      if (ind_jp .ne. 0) then
 !  Search if the entry (ind_ip,ind_jp) is already stored
@@ -77,12 +124,6 @@ subroutine csr_length (nel, n_ddl, neq,  &
 !  No entry exists for (ind_ip,ind_jp); create new one
                         nonz = nonz + 1
 
-                        if (nonz .gt. nonz_max) then
-                           write(emsg, *) "csr_length: nonz > nonz_max: ", nonz, nonz_max
-                           errco = NBERROR_119
-                           return
-                        endif
-
                         col_ind_0(k) = ind_jp
 
 30                      continue
@@ -99,40 +140,36 @@ subroutine csr_length (nel, n_ddl, neq,  &
 !  squeeze away the zero entries
 !  added so as to handle more type of domains/meshes
 
-   if (nonz .lt. nonz_max) then
-      do i=1,neq-1
-         row_start = row_ptr(i)
-         row_end = row_ptr(i+1) - 1
-         do j=row_start,row_end
-            if(col_ind_0(j) .eq. 0) then
-               row_start2 = row_ptr(i) + j - row_start
-               row_ptr(i+1) = row_start2
-               row_end2 = row_ptr(i+2) - 1
-               do k=row_end+1,row_end2
-                  k1 = row_start2 + k - (row_end+1)
-                  col_ind_0(k1) = col_ind_0(k)
-                  col_ind_0(k) = 0
-               enddo
-               goto 40
-            endif
-         enddo
-40       continue
-      enddo
-
-      i = neq
+   do i=1,neq-1
       row_start = row_ptr(i)
       row_end = row_ptr(i+1) - 1
       do j=row_start,row_end
          if(col_ind_0(j) .eq. 0) then
             row_start2 = row_ptr(i) + j - row_start
             row_ptr(i+1) = row_start2
-            goto 50
+            row_end2 = row_ptr(i+2) - 1
+            do k=row_end+1,row_end2
+               k1 = row_start2 + k - (row_end+1)
+               col_ind_0(k1) = col_ind_0(k)
+               col_ind_0(k) = 0
+            enddo
+            goto 40
          endif
       enddo
-50    continue
-   endif
+40    continue
+   enddo
 
-   write(*,*) 'csr3'
+   i = neq
+   row_start = row_ptr(i)
+   row_end = row_ptr(i+1) - 1
+   do j=row_start,row_end
+      if(col_ind_0(j) .eq. 0) then
+         row_start2 = row_ptr(i) + j - row_start
+         row_ptr(i+1) = row_start2
+         goto 50
+      endif
+   enddo
+50 continue
 
 
    max_row_len = 0
@@ -147,17 +184,8 @@ subroutine csr_length (nel, n_ddl, neq,  &
       write(ui,*) "csr_length: max_row_len = ", max_row_len
    endif
 
-   ! if ((ipointer+nonz) .gt. int_max) then
-   !    write(emsg,*) "csr_length: (ipointer+nonz) > int_max : ", &
-   !    &(ipointer+nonz), int_max, nonz_max
-   !    errco = NBERROR_120
-   !    return
-   ! endif
-
-
    ! Now we know nonz
    call integer_alloc_1d(col_ind, nonz, 'col_ind', errco, emsg); RETONERROR(errco)
-
 
    ! weird rreverse labelleling because of reverse convention in this file
    col_ind(1:nonz) = col_ind_0(1:nonz)
