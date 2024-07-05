@@ -127,9 +127,6 @@ contains
       integer(8), dimension(:), allocatable :: v_col_ptr
 
       integer(8), dimension(:), allocatable :: visited
-      integer(8), dimension(:), allocatable :: iwork
-
-
 
       ! Currenly, periodic is not active
 
@@ -350,18 +347,15 @@ contains
 
 
 
-      !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
-      call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg); RETONERROR(errco)
+      !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
          table_nod, table_N_E_F, type_el, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         mesh_xy, &
-         xy_N_E_F,  nonz,  &
+         mesh_xy,  xy_N_E_F,  nonz,  &
          v_row_ind, v_col_ptr, &
-         mOp_stiff, mOp_mass, &
-         iwork)
+         mOp_stiff, mOp_mass )
 
 
       dim_krylov = 2*n_modes + n_modes/2 +3
