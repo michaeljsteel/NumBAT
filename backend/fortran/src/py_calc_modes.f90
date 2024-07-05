@@ -124,6 +124,21 @@ contains
       integer(8), dimension(:), allocatable :: visited
 
 
+      integer(8), dimension(:,:), allocatable :: table_N_E_F
+      integer(8), dimension(:,:), allocatable :: type_N_E_F
+
+      integer(8), dimension(:,:), allocatable :: m_eqs
+
+
+      integer(8), dimension(:), allocatable :: visited
+
+      integer(8), dimension(:), allocatable :: visited
+
+      !work_sort1 max_row_len
+      !work max_row_len
+      !work_sort2 max_row_len
+
+
       !  ----------------------------------------------
 
 
@@ -170,10 +185,9 @@ contains
 
 
 
-      integer(8) :: ilo, ihi, i_md
+      integer(8) :: i_md
 
       double precision arp_tol
-      integer(8) :: adim
 
       type(Stopwatch) :: clock_main, clock_spare
 
@@ -193,8 +207,15 @@ contains
       call complex_alloc_1d(b_zwork, cmplx_max, 'b_zwork', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iindex, n_modes, 'iindex', errco, emsg); RETONERROR(errco)
 
-      adim = 2  ! Replace with constant 2_8
-      call double_alloc_2d(xy_N_E_F, adim, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
+      call double_alloc_2d(xy_N_E_F, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
+      call integer_alloc_2d(type_N_E_F, 2_8, n_ddl, 'type_N_E_F', errco, emsg); RETONERROR(errco)
+      call integer_alloc_2d(table_N_E_F, 14_8, n_msh_el, 'table_N_E_F', errco, emsg); RETONERROR(errco)
+
+      call integer_alloc_2d(m_eqs, 3_8, n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
+
+
+
+
       call double_alloc_1d(e_dwork, cmplx_max, 'e_dwork', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
@@ -217,7 +238,7 @@ contains
       RETONERROR(errco)
 
       !  Storage locations in sequence
-      !  - table_edge_face = a_iwork(ip_table_N_E_F),   shape: 14 x n_msh_el
+      !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
       !  - visited         = a_iwork(ip_visited),       shape: n_ddl_max = npt + n_msh_el = 4 n_msh_el
       !  - table_edges     = a_iwork(ip_table_E)        shape: 4 x n_msh_pts
       !
@@ -237,7 +258,7 @@ contains
 
       !  Fills:  table_edge_face[1,:]
       ip_table_N_E_F = 1
-      call list_face (n_msh_el, a_iwork(ip_table_N_E_F))
+      call list_face (n_msh_el, table_N_E_F)
 
       !  n_ddl_max = max(N_Vertices) + max(N_Edge) + max(N_Face)
       !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
@@ -255,12 +276,12 @@ contains
       !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
       !  Todo!  move n_edge later in list as an out variable
       call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
-         a_iwork(ip_table_E), a_iwork(ip_table_N_E_F), visited)
+      table_N_E_F, visited)
 
       !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
       !  Todo: move n_msh_pts_p3 later
       call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-         a_iwork(ip_table_N_E_F),  visited)
+      table_N_E_F,  visited)
 
       !  TODO: what is signif of this quanitty?
       n_ddl = n_edge + n_face + n_msh_pts_p3
@@ -270,7 +291,7 @@ contains
          write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
          write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
          write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
-            (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
+         (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
          write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
          & characteristic: V-E+F=1-(number of holes)"
          write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
@@ -303,33 +324,27 @@ contains
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       !  Should be using c_dwork for x_E_F ?
       call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-         a_iwork(ip_table_N_E_F), visited , a_iwork(ip_type_N_E_F), mesh_xy, &
-      !b_zwork(jp_x_N_E_F) &
-         xy_N_E_F &
-         )
+      table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
 
 
       !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
       call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-         a_iwork(ip_table_N_E_F), a_iwork(ip_type_N_E_F), mesh_xy, &
-      !b_zwork(jp_x_N_E_F), &
-         xy_N_E_F, visited)
+      table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
 
 
 
-          ! From this point ip_visited is unused.
-          ! Replace with an allocated that is deleted here.
+      ! From this point ip_visited is unused.
+      ! Replace with an allocated that is deleted here.
 
-         deallocate(visited)
+      deallocate(visited)
 
       !  TODO: the b_zwork should actually be the xy_N_E_F containing x_N_E_F, but only matters for periodic
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-         type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, &
-      !b_zwork, &
-         xy_N_E_F,  &
-         int_max, debug)
+      type_nod, table_nod, n_ddl, neq, ip_type_N_E_F, ip_eq, a_iwork, xy_N_E_F,  &
+      type_N_E_F, m_eqs, &
+      int_max, debug)
 
-         !Now we know neq
+      !Now we know neq
 
       !  Needed vars from above here:  ip_eq, jp_x_N_E_F, ip_period_N
 
@@ -340,8 +355,8 @@ contains
 
       call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
 
-      call csr_max_length (n_msh_el, n_ddl, neq, a_iwork(ip_table_N_E_F), &
-         a_iwork(ip_eq), v_col_ptr, nonz_max)
+      call csr_max_length (n_msh_el, n_ddl, neq, table_N_E_F, &
+      m_eqs, v_col_ptr, nonz_max)
 
       !  ip = ip_col_ptr + neq + 1 + nonz_max
       !ip = ip_col_ptr + neq + 1
@@ -349,7 +364,7 @@ contains
 
       if (ip_row .gt. int_max) then
          write(emsg,*) "py_calc_modes.f: ip_row > int_max : ", ip_row, int_max, "py_calc_modes.f: nonz_max = ", &
-            nonz_max, "py_calc_modes.f: increase the size of int_max"
+         nonz_max, "py_calc_modes.f: increase the size of int_max"
          errco = -11
          return
       endif
@@ -358,11 +373,11 @@ contains
 
       ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
       ! length of v_row_ind is determined inside csr_length and so allocated there
-      call csr_length (n_msh_el, n_ddl, neq,  a_iwork(ip_table_N_E_F), a_iwork(ip_eq), &
-         v_row_ind, v_col_ptr, &
-         nonz_max, nonz, max_row_len, ip_row, int_max, debug, errco, emsg)
+      call csr_length (n_msh_el, n_ddl, neq,  table_N_E_F, m_eqs, &
+      v_row_ind, v_col_ptr, &
+      nonz_max, nonz, max_row_len, ip_row, int_max, debug, errco, emsg)
 
-         RETONERROR(errco)
+      RETONERROR(errco)
 
 
 
@@ -372,15 +387,15 @@ contains
 
       call sort_csr (neq, nonz, max_row_len, &
       v_row_ind, v_col_ptr, &
-         a_iwork(ip_work_sort), a_iwork(ip_work), &
-         a_iwork(ip_work_sort2))
+      a_iwork(ip_work_sort), a_iwork(ip_work), &
+      a_iwork(ip_work_sort2))
 
 
       int_used = ip_work_sort2 + max_row_len
 
       if (int_max .lt. int_used) then
          write(emsg,*)'The size of the integer supervector is too small', 'integer super-vec: int_max  = ', &
-            int_max, 'integer super-vec: int_used = ', int_used
+         int_max, 'integer super-vec: int_used = ', int_used
          errco = -12
          return
       endif
@@ -420,21 +435,6 @@ contains
       !  convert from 1-based to 0-based
       !  ----------------------------------------------------------------
 
-      !  do j = 1, neq+1
-      !  a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
-      !  end do
-      !  do  j = 1, nonz
-      !  a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
-      !  end do
-      !
-
-      ! ilo = ip_col_ptr-1 + 1
-      ! ihi = ip_col_ptr-1 + neq + 1
-      ! a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
-
-      ! ilo = ip_row-1 + 1
-      ! ihi = ip_row-1 + nonz
-      ! a_iwork(ilo:ihi) = a_iwork(ilo:ihi) - 1
 
       v_row_ind = v_row_ind - 1
       v_col_ptr = v_col_ptr - 1
@@ -478,16 +478,11 @@ contains
 
 
 
-      !a_iwork(ip_row), a_iwork(ip_col_ptr), &
-      !b_zwork(jp_x_N_E_F), &
-
-
-
       !  Build the actual matrices A (mat_1) and M(mat_2) for the arpack solving.  (M = identity?)
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
-         table_nod, a_iwork(ip_table_N_E_F), type_el, &
-         a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         table_nod, table_N_E_F, type_el, &
+         m_eqs, a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, &
          xy_N_E_F,  nonz,  &
          v_row_ind, v_col_ptr, &
@@ -513,7 +508,7 @@ contains
       !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
       !  eigvectors are in are b_zwork[jp_evecs..?]
 
-      !  TODO: following are no longer needed:  b_zwork(jp_trav/vect1/vect2),
+
 
       write(ui_out,'(/,A)') "  - solving linear system: "
 
@@ -522,15 +517,6 @@ contains
 
       call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
 
-      !b_zwork(jp_vect1), &  !  unused
-      !b_zwork(jp_vect2), &  !  unused
-      !b_zwork(jp_trav), &  !  unused
-      !b_zwork(jp_workd), b_zwork(jp_resid), ltrav,  &
-      !b_zwork(jp_vschur)
-      !b_zwork(jp_evecs)
-!c_dwork(kp_lhs_re), c_dwork(kp_lhs_im),
-      !c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), &
-      !a_iwork(ip_row), a_iwork(ip_col_ptr), &
 
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
@@ -568,8 +554,8 @@ contains
       !  The eigenvalues and eigenvectors are renumbered
       !  using the permutation vector iindex
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec, iindex, table_nod, a_iwork(ip_table_N_E_F), type_el, &
-         a_iwork(ip_eq), a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
+         n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
+         m_eqs, a_iwork(ip_period_N), a_iwork(ip_period_N_E_F), &
          mesh_xy, e_dwork, v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
       RETONERROR(errco)
