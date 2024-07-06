@@ -36,7 +36,7 @@ module numbatmod
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
 
-   integer(8), parameter :: nodes_per_el = 6
+
 
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: nddl_t = 4

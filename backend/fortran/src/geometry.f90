@@ -8,11 +8,11 @@
 !  Reads .mail file to find
 !  - x,y coords of mesh points  (mesh_xy)
 !  - mesh points associated with each element (table_nod)
-!  - whether number of material types read matches expected value n_typ_el
+!  - whether number of material types read matches expected value n_elt_mats
 
 !  -  Fills:  mesh_xy, type_nod, type_el, table_nod
 subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
-   n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el, &
+   n_msh_el, n_msh_pts, d_nodes_per_el, n_elt_mats, &
     mesh_xy, type_nod, type_el, table_nod, &
    errco, emsg)
 
@@ -23,7 +23,7 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    double precision dim_x, dim_y
 
    ! outs
-   integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_typ_el
+   integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_elt_mats
    integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
    double precision mesh_xy(2,n_msh_pts)
@@ -35,7 +35,7 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    ! locals
    double precision xx(2)
 
-   integer(8) n_typ_el2
+   integer(8) n_elt_mats2
    !integer, parameter :: max_typ_el=10
    integer(8) n_msh_pts2, n_msh_el2
    integer(8) i, j, k
@@ -66,11 +66,11 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    enddo
 
 !  Connectivity table
-   n_typ_el2 = 1   !  largest index of materials in the file
+   n_elt_mats2 = 1   !  largest index of materials in the file
    do i=1,n_msh_el
       read(24,*) k, (table_nod(j,i),j=1,d_nodes_per_el), type_el(i)
       j = type_el(i)
-      if(n_typ_el2 .lt. j) n_typ_el2 = j
+      if(n_elt_mats2 .lt. j) n_elt_mats2 = j
       if(j .lt. 0) then
          write(emsg,*) "geometry: type_el(i) < 0 : ", i, type_el(i)
          errco=-9
@@ -79,8 +79,8 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    enddo
    close(24)
 
-   if(n_typ_el2 .gt. n_typ_el) then
-      write(emsg,*) "geometry: n_typ_el2 > n_typ_el : ", n_typ_el2, n_typ_el
+   if(n_elt_mats2 .gt. n_elt_mats) then
+      write(emsg,*) "geometry: n_elt_mats2 > n_elt_mats : ", n_elt_mats2, n_elt_mats
       errco=-10
       return
    endif

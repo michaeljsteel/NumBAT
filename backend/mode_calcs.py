@@ -1182,7 +1182,7 @@ class ACSimulation(Simulation):
             AC_FEM_debug,
             show_mem_est,
             tstruc.symmetry_flag,
-            #elastic_props.n_mats_ac,  # => fort: n_typ_el
+            #elastic_props.n_mats_ac,  # => fort: n_elt_mats
             elastic_props.c_IJ,
             elastic_props.rho,
             fm.ac_mesh_from_em,
