@@ -96,9 +96,12 @@ contains
       complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
 
       complex(8), intent(out) :: mode_pol(4,n_modes)
+
+      integer(8), intent(out) :: type_el(n_msh_el)
+      integer(8), intent(out) :: type_nod(n_msh_pts)
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
-      integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
       double precision, intent(out) :: xy_nodes(2,n_msh_pts)
+
       complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
 
       integer, intent(out) :: errco
@@ -109,12 +112,9 @@ contains
 
       integer(8) neq,n_ddl, nonz
 
-      !integer(8) n_edge, n_face, n_msh_pts_p3,
-
-
-      integer(8) int_max, cmplx_max, real_max
-
+      type(MeshProps) :: mesh_props
       type(N_E_F_Props) :: NEF_props
+
 
       integer(8), dimension(:,:), allocatable :: m_eqs
 
@@ -170,10 +170,19 @@ contains
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
-      call array_size(n_msh_pts, n_msh_el, n_modes, &
-         int_max, cmplx_max, real_max, n_ddl, errco, emsg) !Only useful number out of here is n_ddl
-      RETONERROR(errco)
+      ! call array_size(n_msh_pts, n_msh_el, n_modes, &
+      ! int_max, cmplx_max, real_max, n_ddl, errco, emsg) !Only useful number out of here is n_ddl
+      ! RETONERROR(errco)
 
+
+      ! write(*,*) 'size of n_ddl', n_msh_el, 9*n_msh_el, n_ddl
+
+      ! All reduces to this:
+      n_ddl = 9 * n_msh_el
+
+
+      call mesh_props%init(n_msh_pts, n_msh_el, errco, emsg)
+      RETONERROR(errco)
 
       call NEF_props%init(n_msh_el, n_ddl, errco, emsg)
       RETONERROR(errco)
@@ -197,20 +206,16 @@ contains
       dim_y = dimscale_in_m
 
       !  Fill:  xy_nodes, type_nod, type_el, table_nod
-      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
-         nodes_per_el, n_elt_mats, xy_nodes, type_nod, type_el, table_nod, errco, emsg)
+      call construct_fem_node_tables_em (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, mesh_props, errco, emsg)
       RETONERROR(errco)
 
 
       call build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-         type_nod, table_nod, xy_nodes, &
-         NEF_props, debug, errco, emsg)
+         mesh_props, NEF_props, debug, errco, emsg)
 
 
-      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, xy_nodes, nodes_per_el, &
-         type_nod, table_nod, n_ddl, neq, &
-         NEF_props%xy_nodes,  NEF_props%type_nod, &
-         m_eqs, debug, &
+      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, n_ddl, neq, &
+         mesh_props, NEF_props, m_eqs, debug, &
          iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
 
       ! We no longer need type_N_E_F, could deallocate
@@ -218,60 +223,62 @@ contains
       !Now we know neq
 
 
-      call make_csr_arrays(n_msh_el, n_ddl, neq, &
-      NEF_props%table_nod, &
+         call make_csr_arrays(n_msh_el, n_ddl, neq, &
+         NEF_props%table_nod, &
          m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
-      RETONERROR(errco)
+         RETONERROR(errco)
 
 
-      !  ----------------------------------------------------------------
-      !  convert from 1-based to 0-based
-      !  ----------------------------------------------------------------
-      !  The CSC indexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC indexing to 0-based indexing)
+
+         !  ----------------------------------------------------------------
+         !  convert from 1-based to 0-based
+         !  ----------------------------------------------------------------
+         !  The CSC indexing, i.e., ip_col_ptr, is 1-based
+         !  (but valpr.f will change the CSC indexing to 0-based indexing)
 
 
-      v_row_ind = v_row_ind - 1
-      v_col_ptr = v_col_ptr - 1
+         v_row_ind = v_row_ind - 1
+         v_col_ptr = v_col_ptr - 1
 
-      i_base = 0
-
-
-      write(ui_out,*)
-      write(ui_out,*) "-----------------------------------------------"
+         i_base = 0
 
 
-      vacwavenum_k0 = 2.0d0*D_PI/lambda
+         write(ui_out,*)
+         write(ui_out,*) "-----------------------------------------------"
 
 
-      call  check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
+         vacwavenum_k0 = 2.0d0*D_PI/lambda
+
+
+         call  check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
          vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
-      RETONERROR(errco)
+         RETONERROR(errco)
 
 
-      !  Main eigensolver
-      write(ui_out,*) "EM FEM: "
+         !  Main eigensolver
+         write(ui_out,*) "EM FEM: "
 
-      !  Assemble the coefficient matrix A and the right-hand side F of the
-      !  finite element equations
+         !  Assemble the coefficient matrix A and the right-hand side F of the
+         !  finite element equations
 
-      write(ui_out,'(A,A)') "   - assembling linear system:"
-      call clock_spare%reset()
-
-
-      ! These had to wait till we knew nonz
-      call complex_alloc_1d(mOp_stiff, nonz, 'mOp_stiff', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
+         write(ui_out,'(A,A)') "   - assembling linear system:"
+         call clock_spare%reset()
 
 
-      !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
+         ! These had to wait till we knew nonz
+         call complex_alloc_1d(mOp_stiff, nonz, 'mOp_stiff', errco, emsg); RETONERROR(errco)
+         call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
 
-      call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+
+         call mesh_props%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
+
+         !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
+
+         call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
-         table_nod, type_el, &
-         NEF_props%table_nod, NEF_props%xy_nodes, &
+         mesh_props, NEF_props,  &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         xy_nodes,    nonz,  v_row_ind, v_col_ptr, &
+           nonz,  v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass )
 
 

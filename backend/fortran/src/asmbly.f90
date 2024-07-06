@@ -1,18 +1,23 @@
 #include "numbat_decl.h"
-!  Construct the left hand and right hand matrices  mat1_re/im and mat_2
-!  for the main linear equations
+ !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
+ !  for the main linear equations
 
-subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
+subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, pp, qq, &
-   table_nod, type_el, table_N_E_F, xy_N_E_F, &
+   mesh_props, NEF_props, &
    m_eqs, ip_period_N, ip_period_E_F, &
-   xy_nodes,  nonz, row_ind, col_ptr, &
-   mat1, mat2)
+   nonz, row_ind, col_ptr, &
+   mOp_stiff, mOp_mass)
 
    !  NQUAD: The number of quadrature points used in each element.
 
    use numbatmod
    use alloc
+   use class_MeshProps
+
+   type(MeshProps) :: mesh_props
+   type(N_E_F_Props) :: NEF_props
+
 
    integer(8) bdy_cdn, i_base,  nb_typ_el, nonz
    integer(8) n_msh_el, n_msh_pts, n_ddl, neq, nnodes
@@ -20,17 +25,13 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    complex(8) pp(nb_typ_el), qq(nb_typ_el), shift_ksqr
    double precision bloch_vec(2)
 
-   integer(8) table_nod(nnodes,n_msh_el)
-   integer(8) table_N_E_F(14,n_msh_el)
-   integer(8) type_el(n_msh_el)
-   integer(8) m_eqs(3,n_ddl)
    integer(8) ip_period_N(n_msh_pts), ip_period_E_F(n_ddl)
 
-   double precision xy_nodes(2,n_msh_pts), xy_N_E_F(2,n_ddl)
+   integer(8) m_eqs(3,n_ddl)
 
    integer(8) row_ind(nonz), col_ptr(neq+1)
 
-   complex(8), intent(out) :: mat1(nonz), mat2(nonz)
+   complex(8), intent(out) :: mOp_stiff(nonz), mOp_mass(nonz)
 
    integer errco
    character(len=EMSG_LENGTH) emsg
@@ -42,8 +43,9 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
    integer(8) i_base2
 
-   integer(8) nquad, nquad_max
-   parameter (nquad_max = 25)
+   integer(8), parameter :: nquad_max = 25
+   integer(8) nquad
+
    double precision wq(nquad_max)
    double precision xq(nquad_max), yq(nquad_max)
    double precision xx(2), xx_g(2), ww, det
@@ -69,6 +71,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
    double precision vec_phi_j(2), curl_phi_j
    double precision vec_phi_i(2), curl_phi_i
+
    complex(8) val_exp(nddl_0), z_phase_fact
 
    integer(8) i, j, k, j1, iel, iq, typ_e
@@ -98,41 +101,24 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
       i_base2 = 0
    endif
 
-   !  if ( nnodes .ne. 6 ) then
-   !  write(ui_stdout,*) "asmbly: problem nnodes = ", nnodes
-   !  write(ui_stdout,*) "asmbly: nnodes should be equal to 14 !"
-   !  write(ui_stdout,*) "asmbly: Aborting..."
-   !  stop
-   !  endif
 
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
 
-   !  if (debug .eq. 1) then
-   !  write(ui_stdout,*) "asmbly: bloch_vec = ", bloch_vec
-   !  write(ui_stdout,*) "asmbly: nquad, nquad_max = ", &
-   !  nquad, nquad_max
-   !  write(ui_stdout,*) "asmbly: bdy_cdn = ", bdy_cdn
-   !  endif
 
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!c
-
-
-   mat1 = C_ZERO
-   mat2  = C_ZERO
+   mOp_stiff = C_ZERO
+   mOp_mass = C_ZERO
 
 
    n_curved = 0
 
    do iel=1,n_msh_el
-      typ_e = type_el(iel)
+      typ_e = mesh_props%type_el(iel)
 
       do j=1,nnodes
-         j1 = table_nod(j,iel)
+         j1 = mesh_props%table_nod(j,iel)
          nod_el_p(j) = j1
-         el_xy(1,j) = xy_nodes(1,j1)
-         el_xy(2,j) = xy_nodes(2,j1)
+         el_xy(:,j) = mesh_props%xy_nodes(:,j1)
 
-         !val_exp(j) = D_ONE
       enddo
 
       is_curved = log_is_curved_elem_tri (nnodes, el_xy)
@@ -150,20 +136,17 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
 
       call basis_ls(nod_el_p, basis_list)
 
-      !do j=1,nddl_0
-      !  val_exp(j) = 1.0d0
-      !enddo
       val_exp = C_ONE
 
       if (bdy_cdn .eq. BCS_PERIODIC) then
-!  val_exp: Bloch mod ephase factor between the origin point and destination point
-!  For a pair of periodic points, one is chosen as origin and the other is the destination
+         !  val_exp: Bloch mod ephase factor between the origin point and destination point
+         !  For a pair of periodic points, one is chosen as origin and the other is the destination
          do j=1,nddl_0
-            ip = table_N_E_F(j,iel)
+            ip = NEF_props%table_nod(j,iel)
             j1 = ip_period_E_F(ip)
             if (j1 .ne. 0) then
                do k=1,2
-                  delta_xx(k) = xy_N_E_F(k,ip) - xy_N_E_F(k,j1)
+                  delta_xx(k) = NEF_props%xy_nodes(k,ip) - NEF_props%xy_nodes(k,j1)
                enddo
                r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
                val_exp(j) = exp(C_IM_ONE*r_tmp1)
@@ -175,20 +158,22 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
          xx(1) = xq(iq)
          xx(2) = yq(iq)
          ww = wq(iq)
-!  xx   = coordinate on the reference triangle
-!  xx_g = coordinate on the actual triangle
+         !  xx   = coordinate on the reference triangle
+         !  xx_g = coordinate on the actual triangle
 
-!  We will also need the gradients of the P1 element
+         !  We will also need the gradients of the P1 element
          call phi1_2d_mat(xx, phi1_list, grad1_mat0)
-!  grad2_mat0 = gradient on the reference triangle (P2 element)
+
+         !  grad2_mat0 = gradient on the reference triangle (P2 element)
          call phi2_2d_mat(xx, phi2_list, grad2_mat0)
-!  grad3_mat0 = gradient on the reference triangle (P3 element)
+
+         !  grad3_mat0 = gradient on the reference triangle (P3 element)
          call phi3_2d_mat(xx, phi3_list, grad3_mat0)
 
          if (.not. is_curved ) then
-!  Rectilinear element
-            call jacobian_p1_2d(xx, el_xy, nnodes, &
-               xx_g, det, mat_B, mat_T)
+            !  Rectilinear element
+            call jacobian_p1_2d(xx, el_xy, nnodes, xx_g, det, mat_B, mat_T)
+
             if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
                write(ui_stdout,*) "   !!!"
                write(ui_stdout,*) "asmbly: det <= 0: iel, det ", iel, det
@@ -197,9 +182,9 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                write(ui_stdout,*) "y : ", (el_xy(2,j),j=1,3)
                write(ui_stdout,*)
             endif
+
          else !  Isoparametric element, 2024-06 fix
-            call jacobian_p2_2d(el_xy, nnodes, phi2_list, &
-               grad2_mat0, xx_g, det, mat_B, mat_T)
+            call jacobian_p2_2d(el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
          endif
 
          if(abs(det) .lt. 1.0d-20) then
@@ -210,9 +195,9 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
             stop
          endif
 
-!  grad_i  = gradient on the actual triangle
-!  grad_i  = Transpose(mat_T)*grad_i0
-!  Calculation of the matrix-matrix product:
+         !  grad_i  = gradient on the actual triangle
+         !  grad_i  = Transpose(mat_T)*grad_i0
+         !  Calculation of the matrix-matrix product:
 
          call DGEMM('Transpose','N', 2, 3, 2, D_ONE, mat_T, 2, grad1_mat0, 2, D_ZERO, grad1_mat, 2)
 
@@ -221,21 +206,22 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, grad3_mat0, 2, D_ZERO, grad3_mat, 2)
 
          do jtest=1,nddl_0
-            jp = table_N_E_F(jtest,iel)
+            jp = NEF_props%table_nod(jtest,iel)
+
             do j_eq=1,3
-!  jp = table_N_E_F(jtest,iel)
+               !  jp = NEF_props%table_nod(jtest,iel)
                ind_jp = m_eqs(j_eq,jp)
                if (ind_jp .gt. 0) then
                   col_start = col_ptr(ind_jp) + i_base2
                   col_end = col_ptr(ind_jp+1) - 1 + i_base2
-!  unpack row into i_work
+                  !  unpack row into i_work
                   do i=col_start,col_end
                      i_work(row_ind(i) + i_base2) = i
                   enddo
 
 
                   if (jtest .le. nddl_t) then !  edge or face element
-!  Determine the basis vector
+                     !  Determine the basis vector
                      call basis_vec (j_eq, jtest, basis_list, phi2_list,&
                         grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
                      grad_j(1) = 0.0d0
@@ -253,7 +239,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                   do itrial=1,nddl_0
                      z_phase_fact = val_exp(jtest) * conjg(val_exp(itrial))
                      do i_eq=1,3
-                        ip = table_N_E_F(itrial,iel)
+                        ip = NEF_props%table_nod(itrial,iel)
                         ind_ip = m_eqs(i_eq,ip)
                         if (ind_ip .gt. 0) then
                            if (ind_jp .eq. ind_ip .and. &
@@ -278,42 +264,46 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                               phi_z_i = phi3_list(itrial-nddl_t)
                            endif
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!
-!  Reference; see Eq. (40) of the FEM paper:
-!  K. Dossou and M. Fontaine
-!  "A high order isoparametric finite element method for the computation of wavegui_stdoutde modes"
-!  Computer Methods in Applied Mechanics and Engineering, vol. 194, no. 6-8, pp. 837-858, 2005.
-!!!!!!!!!!!!!!!!!!!!!!!!!!
-                           if (itrial .le. nddl_t .and. &
-                              jtest .le. nddl_t) then
+                           !!!!!!!!!!!!!!!!!!!!!!!!!!
+                           !  Reference; see Eq. (40) of the FEM paper:
+                           !  K. Dossou and M. Fontaine
+                           !  "A high order isoparametric finite element method for the computation of wavegui_stdoutde modes"
+                           !  Computer Methods in Applied Mechanics and Engineering, vol. 194, no. 6-8, pp. 837-858, 2005.
+                           !!!!!!!!!!!!!!!!!!!!!!!!!!
+                           if (itrial .le. nddl_t .and. jtest .le. nddl_t) then
+
                               r_tmp1 = curl_phi_j * curl_phi_i
                               r_tmp2 = ddot(2, vec_phi_j, 1, vec_phi_i, 1)
                               K_tt = r_tmp1 * pp(typ_e) - r_tmp2 * qq(typ_e)
                               M_tt = - r_tmp2 * pp(typ_e)
-                              z_tmp1 = K_tt * ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_tt * ww * abs(det) * z_phase_fact
-                           elseif (itrial .le. nddl_t .and. &
-                              jtest .gt. nddl_t) then
+                              z_tmp1 = K_tt !* ww * abs(det) * z_phase_fact
+                              z_tmp2 = M_tt !* ww * abs(det) * z_phase_fact
+
+                           elseif (itrial .le. nddl_t .and. jtest .gt. nddl_t) then
+
                               r_tmp1 = ddot(2, grad_j, 1, vec_phi_i, 1)
                               K_tz = 0.0d0
                               M_tz = r_tmp1 * pp(typ_e)
-                              z_tmp1 = K_tz * ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_tz * ww * abs(det) * z_phase_fact
-                           elseif (itrial .gt. nddl_t .and. &
-                              jtest .le. nddl_t) then
+                              z_tmp1 = K_tz !* ww * abs(det) * z_phase_fact
+                              z_tmp2 = M_tz !* ww * abs(det) * z_phase_fact
+
+                           elseif (itrial .gt. nddl_t .and. jtest .le. nddl_t) then
+
                               r_tmp1 = ddot(2, vec_phi_j, 1, grad_i, 1)
                               K_zt = r_tmp1 * pp(typ_e)
                               M_zt = 0.0d0
-                              z_tmp1 = K_zt * ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_zt * ww * abs(det) * z_phase_fact
-                           elseif (itrial .gt. nddl_t .and. &
-                              jtest .gt. nddl_t) then
+                              z_tmp1 = K_zt !* ww * abs(det) * z_phase_fact
+                              z_tmp2 = M_zt !* ww * abs(det) * z_phase_fact
+
+                           elseif (itrial .gt. nddl_t .and. jtest .gt. nddl_t) then
+
                               r_tmp1 = ddot(2, grad_j, 1, grad_i, 1)
                               r_tmp2 = phi_z_j * phi_z_i
                               K_zz = - r_tmp1 * pp(typ_e) + r_tmp2 * qq(typ_e)
                               M_zz = 0.0d0
-                              z_tmp1 = K_zz * ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_zz * ww * abs(det) * z_phase_fact
+                              z_tmp1 = K_zz !* ww * abs(det) * z_phase_fact
+                              z_tmp2 = M_zz !* ww * abs(det) * z_phase_fact
+
                            else
                               write(ui_stdout,*) "itrial or jtest has an ",&
                                  "invalid value"
@@ -321,18 +311,24 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
                               write(ui_stdout,*) "asmbly: Aborting..."
                               stop
                            endif
+
+                           z_tmp1 = z_tmp1 * ww * abs(det) * z_phase_fact
+                           z_tmp2 = z_tmp2 * ww * abs(det) * z_phase_fact
+
+
                            z_tmp1 = z_tmp1 - shift_ksqr*z_tmp2
 
                            k = i_work(ind_ip)
                            if (k .gt. 0 .and. k .le. nonz) then   !is this test necessary?
-                              mat1(k) = mat1(k) + z_tmp1
-                              mat2(k) = mat2(k) + z_tmp2
+                              mOp_stiff(k) = mOp_stiff(k) + z_tmp1
+                              mOp_mass(k) = mOp_mass(k) + z_tmp2
                            else
                               write(ui_stdout,*) "asmbly: problem with row_ind !!"
                               write(ui_stdout,*) "asmbly: k, nonz = ", k, nonz
                               write(ui_stdout,*) "asmbly: Aborting..."
                               stop
                            endif
+
                         endif
                      enddo
                   enddo
