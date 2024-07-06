@@ -31,7 +31,7 @@ contains
 
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       i_bnd_cdns, itermax, tol, debug, show_mem_est, &
-      symmetry_flag, n_typ_el, c_tensor, rho, supplied_geo_flag, &
+      symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
       mesh_file, n_msh_pts, n_msh_el, &
       type_nod, &
       table_nod, type_el, mesh_xy, &
@@ -40,7 +40,7 @@ contains
       use numbatmod
       use class_stopwatch
 
-      integer, parameter :: d_nodes_per_el = 6
+      integer, parameter :: nodes_per_el = 6
 
       integer(8), intent(in) :: n_modes
 
@@ -50,10 +50,10 @@ contains
       integer(8), intent(in) :: i_bnd_cdns, itermax, debug, show_mem_est
       double precision, intent(in) :: tol
       integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
-      integer(8), intent(in) :: n_typ_el
+      integer(8), intent(in) :: n_elt_mats
 
-      complex(8), intent(in) :: c_tensor(6,6,n_typ_el)
-      complex(8), intent(in) :: rho(n_typ_el)
+      complex(8), intent(in) :: c_tensor(6,6,n_elt_mats)
+      complex(8), intent(in) :: rho(n_elt_mats)
 
       character(len=FNAME_LENGTH), intent(in)  :: mesh_file
       integer(8), intent(in) :: n_msh_pts, n_msh_el
@@ -61,12 +61,12 @@ contains
       integer(8), intent(in) :: type_nod(n_msh_pts)
 
       integer(8), intent(inout) :: type_el(n_msh_el)
-      integer(8), intent(inout) :: table_nod(d_nodes_per_el, n_msh_el)
+      integer(8), intent(inout) :: table_nod(nodes_per_el, n_msh_el)
 
       double precision, intent(inout) ::  mesh_xy(2,n_msh_pts)
 
       complex(8), intent(out), target :: v_eigs_nu(n_modes)
-      complex(8), intent(out), target :: sol1(3,d_nodes_per_el,n_modes,n_msh_el)
+      complex(8), intent(out), target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
       complex(8), intent(out) :: mode_pol(4,n_modes)
 
       integer, intent(out) :: errco
@@ -151,7 +151,7 @@ contains
       !
       !ui_out = Unite dImpression
       ui_out = stdout
-      !  d_nodes_per_el = 6 !  Number of nodes per element
+      !  nodes_per_el = 6 !  Number of nodes per element
 
 
       !  nvect = 2*n_modes + n_modes/2 +3
@@ -223,7 +223,7 @@ contains
 
       if (supplied_geo_flag .eq. 0) then
          call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
-            d_nodes_per_el, n_typ_el, mesh_xy, type_nod, type_el, table_nod, errco, emsg)
+            nodes_per_el, n_elt_mats, mesh_xy, type_nod, type_el, table_nod, errco, emsg)
          if (errco .ne. 0) then
             return
          endif
@@ -241,14 +241,14 @@ contains
       !  write(64,*)
       !  write(64,*)
       !  do i=1,n_msh_el
-      !  do j=1,d_nodes_per_el
+      !  do j=1,nodes_per_el
       !  write(64,*) i, j, table_nod(j,i)
       !  enddo
       !  enddo
       !  write(64,*)
       !  write(64,*)
       !  write(64,*)
-      !  do j=1,d_nodes_per_el
+      !  do j=1,nodes_per_el
       !  write(64,*) j, type_nod(j)
       !  enddo
       !  close(63)
@@ -270,7 +270,7 @@ contains
       !  Sparse matrix storage
       ip_col_ptr = ip_eq + 3*n_msh_pts
 
-      call csr_max_length_AC (n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
+      call csr_max_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
          table_nod, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 
       ip = ip_col_ptr + neq + 1
@@ -285,7 +285,7 @@ contains
       !
       ip_row = ip_col_ptr + neq + 1
 
-      call csr_length_AC (n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
+      call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
          table_nod, a_iwork(ip_eq), a_iwork(ip_row), a_iwork(ip_col_ptr), nonz_max, &
          nonz, max_row_len, ip, int_max, debug)
 
@@ -325,7 +325,7 @@ contains
       jp_vect2 = jp_vect1 + neq
       jp_workd = jp_vect2 + neq
       jp_resid = jp_workd + 3*neq
-      jp_eigenum_modes_tmp = jp_resid+3*d_nodes_per_el*n_modes*n_msh_el
+      jp_eigenum_modes_tmp = jp_resid+3*nodes_per_el*n_modes*n_msh_el
       !  Eigenvectors
       jp_vschur = jp_eigenum_modes_tmp + n_modes + 1
       jp_eigen_pol = jp_vschur + neq*nvect
@@ -407,8 +407,8 @@ contains
       write(ui_out,'(A,A)') "   - assembling linear system:"
       call clock_spare%reset()
 
-      call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, d_nodes_per_el, &
-         shift_omsq, q_ac, n_typ_el, rho, c_tensor, &
+      call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, nodes_per_el, &
+         shift_omsq, q_ac, n_elt_mats, rho, c_tensor, &
          table_nod, type_el, a_iwork(ip_eq), &
          mesh_xy, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
          c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work), &
@@ -475,7 +475,7 @@ contains
          write(ui_out,*) "py_calc_modes_AC: call to array_sol"
       endif
       call array_sol_AC (n_modes, n_msh_el, n_msh_pts, neq, &
-         d_nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), mesh_xy, &
+         nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), mesh_xy, &
          v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), mode_pol, b_zwork(jp_vp), sol1)
 
       if (debug .eq. 1) then
@@ -497,7 +497,7 @@ contains
       !C    Save Original solution
       !  if (plot_modes .eq. 1) then
       !  dir_name = "AC_fields"
-      !C        call write_sol_AC (n_modes, n_msh_el, d_nodes_per_el, lambda,
+      !C        call write_sol_AC (n_modes, n_msh_el, nodes_per_el, lambda,
       !C      *       v_eigs_nu, sol1, mesh_file, dir_name)
       !C        call write_param (lambda, n_msh_pts, n_msh_el, i_bnd_cdns,
       !C    *       n_modes, nvect, itermax, tol, shift_omsq, lx, ly,
@@ -506,7 +506,7 @@ contains
       !  open (unit=34,file=tchar)
       !  do i=1,n_modes
       !  call gmsh_post_process_AC (i, n_modes, n_msh_el,
-      !  *         n_msh_pts, d_nodes_per_el, table_nod, type_el,
+      !  *         n_msh_pts, nodes_per_el, table_nod, type_el,
       !  *         mesh_xy, v_eigs_nu, sol1, b_zwork(jp_rhs), a_iwork(ip_visite),
       !  *         gmsh_file_pos, dir_name, dimscale_in_m, debug)
       !  enddo
@@ -535,8 +535,8 @@ contains
       !  write(26,*) "q_ac = ", q_ac
       !  write(26,*) "shift_omsq= ", shift_omsq
       !  write(26,*)
-      !  write(26,*) "n_msh_pts, n_msh_el, d_nodes_per_el  = ", n_msh_pts, &
-      !  n_msh_el, d_nodes_per_el
+      !  write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, &
+      !  n_msh_el, nodes_per_el
       !  write(26,*) "neq, i_bnd_cdns = ", neq, i_bnd_cdns
       !  write(26,*) " lat_vecs:  = "
       !  write(26,"(2(f18.10))") lat_vecs

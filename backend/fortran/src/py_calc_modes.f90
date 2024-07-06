@@ -44,7 +44,7 @@
  !  n_modes - desired number of eigenvectors
  !  n_msh_pts - number of FEM mesh points
  !  n_msh_el  - number of FEM (triang) elements
- !  n_typ_el  - number of types of elements (and therefore elements)
+ !  n_elt_mats  - number of types of elements (and therefore elements)
  !  v_refindex_n - array of effective index of materials
  !  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
  !  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
@@ -72,10 +72,12 @@ module calc_em_impl
 contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-      E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_typ_el, v_refindex_n, &
+      E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
       v_evals_beta, m_evecs, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
 
       implicit none
+
+      integer(8), parameter :: nodes_per_el = 6
 
       integer(8), intent(in) :: n_modes
       double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
@@ -83,9 +85,9 @@ contains
 
       integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
       character(len=*), intent(in) :: mesh_file
-      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_typ_el
+      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
 
-      complex(8), intent(in) ::  v_refindex_n(n_typ_el)
+      complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
       complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
@@ -137,14 +139,15 @@ contains
 
 
       ! Should these be dynamic?
-      complex(8) pp(n_typ_el), qq(n_typ_el)
-      complex(8) eps_eff(n_typ_el)
+      complex(8) pp(n_elt_mats), qq(n_elt_mats)
+      complex(8) eps_eff(n_elt_mats)
 
 
       !  ----------------------------------------------
 
 
       integer(8) ui_out
+      integer(8) :: i_md
 
       !  Variable used by valpr
       integer(8) dim_krylov
@@ -156,7 +159,6 @@ contains
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       double precision vacwavenum_k0, dim_x, dim_y
 
-      integer(8) :: i_md
 
 
       type(Stopwatch) :: clock_main, clock_spare
@@ -182,10 +184,6 @@ contains
       call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
-
-      !call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
-
-
       call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(iperiod_N_E_F, n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(inperiod_N, n_msh_pts, 'inperiod_N', errco, emsg); RETONERROR(errco)
@@ -200,7 +198,7 @@ contains
       dim_y = dimscale_in_m
 
       !  Fill:  mesh_xy, type_nod, type_el, table_nod
-      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el,   &
+      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats,   &
          mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
@@ -323,7 +321,7 @@ contains
       vacwavenum_k0 = 2.0d0*D_PI/lambda
 
 
-      call  check_materials_and_fem_formulation(E_H_field,n_typ_el, &
+      call  check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
          vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
       RETONERROR(errco)
 
@@ -352,7 +350,7 @@ contains
       !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         shift_ksqr, bloch_vec, n_typ_el, pp, qq, &
+         shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
          table_nod, table_N_E_F, type_el, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
          mesh_xy,  xy_N_E_F,  nonz,  &
@@ -429,12 +427,12 @@ contains
 
       !  Calculate energy in each medium (typ_el)
       call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
-         table_nod, type_el, n_typ_el, eps_eff,&
+         table_nod, type_el, n_elt_mats, eps_eff,&
          mesh_xy, m_evecs, v_evals_beta, mode_pol)
 
 
       !  Doubtful that this check is of any value: delete?
-      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
+      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_elt_mats, pp, table_nod, &
       !  type_el, mesh_xy, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
       !  overlap_L, overlap_file, debug, ui_out, &
       !  pair_warning, vacwavenum_k0, errco, emsg)
@@ -453,7 +451,7 @@ contains
       enddo
 
 
-      call array_material_EM (n_msh_el, n_typ_el, v_refindex_n, type_el, ls_material)
+      call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, type_el, ls_material)
 
       !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
       !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
@@ -468,7 +466,7 @@ contains
       !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
       !  overlap_file = "Orthogonal_n.txt"
       !  call get_clocks( systime1_J, time1_J)
-      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
+      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
       !  type_el, mesh_xy, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
       !  pair_warning, vacwavenum_k0)
       !  call get_clocks( systime2_J, time2_J)
@@ -490,7 +488,7 @@ contains
       !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
       !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !  n_typ_el, neq, dim_krylov, &
+      !  n_elt_mats, neq, dim_krylov, &
       !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -504,17 +502,17 @@ contains
 
 
 
-   subroutine check_materials_and_fem_formulation(E_H_field,n_typ_el, &
+   subroutine check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
       vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
 
       integer(8), intent(in) :: E_H_field, debug
-      integer(8), intent(in) :: n_typ_el, ui_out
+      integer(8), intent(in) :: n_elt_mats, ui_out
       double precision, intent(in):: vacwavenum_k0
-      complex(8), intent(in) :: v_refindex_n(n_typ_el)
-      complex(8), intent(out) :: eps_eff(n_typ_el)
+      complex(8), intent(in) :: v_refindex_n(n_elt_mats)
+      complex(8), intent(out) :: eps_eff(n_elt_mats)
 
       integer(8), intent(out) :: n_core(2)
-      complex(8), intent(out) :: pp(n_typ_el), qq(n_typ_el)
+      complex(8), intent(out) :: pp(n_elt_mats), qq(n_elt_mats)
       integer, intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
@@ -533,7 +531,7 @@ contains
 
       !  Check that the structure is not entirely homogeneous (TODO: does this actually matter?)
       is_homogeneous = .true.
-      do i=1,n_typ_el-1
+      do i=1,n_elt_mats-1
 
          if (.not. almost_equal(dble(eps_eff(i)), dble(eps_eff(i+1)))) then
             is_homogeneous = .false.
@@ -572,7 +570,7 @@ contains
 
    end subroutine
 
-   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_typ_el, pp, table_nod, &
+   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_elt_mats, pp, table_nod, &
       type_el, mesh_xy, v_evals_beta, m_evecs, &
    !v_evals_beta_pri, m_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
@@ -581,8 +579,8 @@ contains
       logical pair_warning
 
       integer(8), intent(in) :: n_modes, debug, ui_out
-      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_typ_el
-      complex(8) pp(n_typ_el)
+      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
+      complex(8) pp(n_elt_mats)
 
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
       integer(8), intent(out) :: type_el(n_msh_el)
@@ -612,7 +610,7 @@ contains
 
       overlap_file = "Orthogonal.txt"
 
-      call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_typ_el, pp, table_nod, &
+      call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
          type_el, mesh_xy, v_evals_beta, m_evecs, &
       !v_evals_beta_pri, m_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
@@ -630,7 +628,7 @@ contains
       time1, time2, time_fact, time_arpack, time1_postp, &
       lambda, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      n_typ_el, neq, dim_krylov, &
+      n_elt_mats, neq, dim_krylov, &
       shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -641,13 +639,13 @@ contains
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
-      integer(8) n_conv, n_modes, n_typ_el, nonz,  n_core(2), neq, dim_krylov
+      integer(8) n_conv, n_modes, n_elt_mats, nonz,  n_core(2), neq, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
-      complex(8) eps_eff(n_typ_el)
+      complex(8) eps_eff(n_elt_mats)
 
-      complex(8), intent(in) ::  v_refindex_n(n_typ_el)
+      complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
 
       complex(8) z_tmp
       integer(8) i
@@ -714,8 +712,8 @@ contains
          enddo
          write(26,*)
          write(26,*) "n_core = ", n_core
-         write(26,*) "eps_eff = ", (eps_eff(i),i=1,n_typ_el)
-         write(26,*) "v_refindex_n = ", (v_refindex_n(i),i=1,n_typ_el)
+         write(26,*) "eps_eff = ", (eps_eff(i),i=1,n_elt_mats)
+         write(26,*) "v_refindex_n = ", (v_refindex_n(i),i=1,n_elt_mats)
          write(26,*)
          !write(26,*) "conjugate pair problem", pair_warning, "times"
          write(26,*)
