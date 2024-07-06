@@ -17,7 +17,7 @@ class MailData:
 
     def __init__(self, lines):
 
-        # positions of each mesh point.  This is in gmsh coords.  Sim.mesh_xy includes scaling by d_in_m
+        # positions of each mesh point.  This is in gmsh coords.  Sim.xy_nodes includes scaling by d_in_m
         # length self.n_msh_pts
 
         self.v_x = None

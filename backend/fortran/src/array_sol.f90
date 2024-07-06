@@ -13,9 +13,10 @@
  !  Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
 
 subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
-   n_core, bloch_vec, iindex, table_nod, table_N_E_F, type_el, &
+   n_core, bloch_vec, iindex, table_nod, type_el, &
+   table_N_E_F, xy_N_E_F, &
    ineq, ip_period_N, ip_period_N_E_F, &
-   mesh_xy, xy_N_E_F, v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
+   xy_nodes,  v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
 
@@ -27,7 +28,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    integer(8) iindex(*)
    integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
    integer(8) table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
-   double precision bloch_vec(2), mesh_xy(2,n_msh_pts)
+   double precision bloch_vec(2), xy_nodes(2,n_msh_pts)
    double precision xy_N_E_F(2,n_ddl)
    complex(8) sol_0(neq,num_modes)
 
@@ -101,7 +102,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
          do inod=1,nnodes
             j = table_nod(inod,iel)
             nod_el_p(inod) = j
-            el_xy(:,inod) = mesh_xy(:,j)
+            el_xy(:,inod) = xy_nodes(:,j)
          enddo
 
          val_exp =  D_ONE
@@ -328,8 +329,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                write(*,*) "array_sol:"
                write(*,*) "i_mode, i1, iel = ", i_mode, i1, iel
                write(*,*) "array_sol: Field normalisaion point:"
-               write(*,*) "x = ", dble(mesh_xy(1,i1))
-               write(*,*) "y = ", dble(mesh_xy(2,i1))
+               write(*,*) "x = ", dble(xy_nodes(1,i1))
+               write(*,*) "y = ", dble(xy_nodes(2,i1))
                write(*,*) "i_sol_max = ", i_sol_max
                write(*,*) i_mode, i1, iel, (dble(sol(j,inod,i_mode,iel)),j=1,3)
                write(*,*) i_mode, i1, iel, (imag(sol(j,inod,i_mode,iel)),j=1,3)

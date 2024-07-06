@@ -56,14 +56,17 @@
  !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
  !  type_el   - n_msh_el array: material index for each element
  !  type_nod  - is boundary node?
- !  mesh_xy  - (2 , n_msh_pts)  x,y coords?
+ !  xy_nodes  - (2 , n_msh_pts)  x,y coords?
  !  ls_material  - (1, nodes_per_el+7, n_msh_el)
 
 module calc_em_impl
 
    use numbatmod
-   use class_stopwatch
    use alloc
+
+   use class_stopwatch
+   use class_MeshProps
+
 
    use nbinterfaces
    use nbinterfacesb
@@ -73,7 +76,7 @@ contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
-      v_evals_beta, m_evecs, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
+      v_evals_beta, m_evecs, mode_pol, table_nod, type_el, type_nod, xy_nodes, ls_material, errco, emsg)
 
       implicit none
 
@@ -95,7 +98,7 @@ contains
       complex(8), intent(out) :: mode_pol(4,n_modes)
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
       integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
-      double precision, intent(out) :: mesh_xy(2,n_msh_pts)
+      double precision, intent(out) :: xy_nodes(2,n_msh_pts)
       complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
 
       integer, intent(out) :: errco
@@ -111,9 +114,7 @@ contains
 
       integer(8) int_max, cmplx_max, real_max
 
-      double precision, dimension(:,:), allocatable :: xy_N_E_F
-      integer(8), dimension(:,:), allocatable :: table_N_E_F
-      integer(8), dimension(:,:), allocatable :: type_N_E_F
+      type(N_E_F_Props) :: NEF_props
 
       integer(8), dimension(:,:), allocatable :: m_eqs
 
@@ -174,10 +175,8 @@ contains
       RETONERROR(errco)
 
 
-
-      call double_alloc_2d(xy_N_E_F, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
-      call integer_alloc_2d(type_N_E_F, 2_8, n_ddl, 'type_N_E_F', errco, emsg); RETONERROR(errco)
-      call integer_alloc_2d(table_N_E_F, 14_8, n_msh_el, 'table_N_E_F', errco, emsg); RETONERROR(errco)
+      call NEF_props%init(n_msh_el, n_ddl, errco, emsg)
+      RETONERROR(errco)
 
       call integer_alloc_2d(m_eqs, 3_8, n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
 
@@ -197,94 +196,21 @@ contains
       dim_x = dimscale_in_m
       dim_y = dimscale_in_m
 
-      !  Fill:  mesh_xy, type_nod, type_el, table_nod
-      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats,   &
-         mesh_xy, type_nod, type_el, table_nod, errco, emsg)
+      !  Fill:  xy_nodes, type_nod, type_el, table_nod
+      call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
+         nodes_per_el, n_elt_mats, xy_nodes, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
 
-      call build_mesh_tables( &
-      n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-      type_nod, table_nod, mesh_xy, &
-      type_N_E_F, table_N_E_F, xy_N_E_F, &
-      debug, errco, emsg)
+      call build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+         type_nod, table_nod, xy_nodes, &
+         NEF_props, debug, errco, emsg)
 
 
-
-      ! !  Storage locations in sequence
-      ! !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
-      ! !  - visited         shape: npt + n_msh_el = 4 n_msh_el
-      ! !  - table_edges     shape: 4 x n_msh_pts
-      ! !
-      ! !  visited is used as workspace. has no meaning between functions
-      ! !
-      ! !  V = number of vertices
-      ! !  E = number of edges
-      ! !  F = number of faces
-      ! !  C = number of cells (3D, tetrahedron)
-      ! !
-      ! !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
-      ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
-      ! !
-      ! !  neq and nonz are some kind of dimension for the left and right eigenoperators
-
-      ! !  TODO: move next three calls into a single  construct_table_N_E_F procedure
-
-      ! !  Fills:  table_edge_face[1,:]
-      ! call list_face (n_msh_el, table_N_E_F)
-
-      ! !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
-      ! !  note: each element has 1 face, 3 edges and 10 P3 nodes
-      ! !  so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
-
-      ! !  each element is a face
-      ! n_face = n_msh_el
-
-      ! !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
-      ! !  Todo!  move n_edge later in list as an out variable
-      ! call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
-      !    table_N_E_F, visited)
-
-      ! !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
-      ! !  Todo: move n_msh_pts_p3 later
-      ! call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-      !    table_N_E_F,  visited)
-
-      ! !  TODO: what is signif of this quanitty?
-      ! n_ddl = n_edge + n_face + n_msh_pts_p3
-
-
-      ! if (debug .eq. 1) then
-      !    write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
-      !    write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
-      !    write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
-      !       (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
-      !    write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
-      !    & characteristic: V-E+F=1-(number of holes)"
-      !    write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
-      !    &= ", (n_msh_pts - n_edge) - n_edge + n_face
-      ! endif
-
-
-      ! !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-      ! !  Should be using c_dwork for x_E_F ?
-      ! call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-      !    table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
-
-
-      ! !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-      ! call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-      !    table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
-
-
-
-      ! ! From this point ip_visited is unused.
-
-      ! deallocate(visited)
-
-      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
-         type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
-         type_N_E_F, m_eqs, debug, &
+      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, xy_nodes, nodes_per_el, &
+         type_nod, table_nod, n_ddl, neq, &
+         NEF_props%xy_nodes,  NEF_props%type_nod, &
+         m_eqs, debug, &
          iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
 
       ! We no longer need type_N_E_F, could deallocate
@@ -292,13 +218,10 @@ contains
       !Now we know neq
 
 
-      !  Sparse matrix CSR setup
-
-
-
-         call make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
-            m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
-         RETONERROR(errco)
+      call make_csr_arrays(n_msh_el, n_ddl, neq, &
+      NEF_props%table_nod, &
+         m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
+      RETONERROR(errco)
 
 
       !  ----------------------------------------------------------------
@@ -336,25 +259,19 @@ contains
       call clock_spare%reset()
 
 
-      ! These had to wait till we new nonz
+      ! These had to wait till we knew nonz
       call complex_alloc_1d(mOp_stiff, nonz, 'mOp_stiff', errco, emsg); RETONERROR(errco)
       call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
-
-      write(*,*) 'write to lmat', nonz
-      mOp_stiff(1)= C_ZERO
-      mOp_stiff(nonz)= C_ZERO
-      write(*,*) 'write to lmat'
-
 
 
       !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
       call asmbly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
-         table_nod, table_N_E_F, type_el, &
+         table_nod, type_el, &
+         NEF_props%table_nod, NEF_props%xy_nodes, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         mesh_xy,  xy_N_E_F,  nonz,  &
-         v_row_ind, v_col_ptr, &
+         xy_nodes,    nonz,  v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass )
 
 
@@ -371,46 +288,31 @@ contains
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
 
-
-
-
       !  This is the main solver.
       !  On completion:
       !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
       !  eigvectors are in arp arp_evecs
 
-
-
       write(ui_out,'(/,A)') "  - solving linear system: "
-
-
-
-
-      call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
-
 
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
-      call valpr_64( &
-         i_base, dim_krylov, n_modes, neq, itermax,  &
-         arp_tol, nonz, &
+      call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
+
+      call valpr_64( i_base, dim_krylov, n_modes, neq, itermax,  arp_tol, nonz, &
          debug, errco, emsg, &
-         v_row_ind, v_col_ptr, &
-         mOp_stiff, mOp_mass, &
-         v_evals_beta, arp_evecs)
+         v_row_ind, v_col_ptr, mOp_stiff, mOp_mass, v_evals_beta, arp_evecs)
       RETONERROR(errco)
 
-
-
-
-
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
+
 
 
       write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 
+      ! identifies correct ordering but doesn't apply it
       call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
 
 
@@ -418,9 +320,10 @@ contains
       !  The eigenvalues and eigenvectors are renumbered
       !  using the permutation vector v_eig_index
       call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec, v_eig_index, table_nod, table_N_E_F, type_el, &
+         n_core, bloch_vec, v_eig_index, table_nod, type_el, &
+         NEF_props%table_nod, NEF_props%xy_nodes, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         mesh_xy, xy_N_E_F, v_evals_beta, mode_pol, arp_evecs, &
+         xy_nodes,  v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
       RETONERROR(errco)
 
@@ -428,12 +331,12 @@ contains
       !  Calculate energy in each medium (typ_el)
       call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
          table_nod, type_el, n_elt_mats, eps_eff,&
-         mesh_xy, m_evecs, v_evals_beta, mode_pol)
+         xy_nodes, m_evecs, v_evals_beta, mode_pol)
 
 
       !  Doubtful that this check is of any value: delete?
-      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_elt_mats, pp, table_nod, &
-      !  type_el, mesh_xy, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
+      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
+      !  type_el, xy_nodes, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
       !  overlap_L, overlap_file, debug, ui_out, &
       !  pair_warning, vacwavenum_k0, errco, emsg)
       !  RETONERROR(errco)
@@ -467,14 +370,14 @@ contains
       !  overlap_file = "Orthogonal_n.txt"
       !  call get_clocks( systime1_J, time1_J)
       !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-      !  type_el, mesh_xy, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
+      !  type_el, xy_nodes, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
       !  pair_warning, vacwavenum_k0)
       !  call get_clocks( systime2_J, time2_J)
       !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
       !  endif
       !
 
-      deallocate(v_eig_index, xy_N_E_F, overlap_L, arp_evecs)
+      deallocate(v_eig_index, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
       deallocate(v_row_ind, v_col_ptr)
 
@@ -570,21 +473,22 @@ contains
 
    end subroutine
 
-   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, n_elt_mats, pp, table_nod, &
-      type_el, mesh_xy, v_evals_beta, m_evecs, &
+   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, &
+      n_elt_mats, pp, table_nod, &
+      type_el, xy_nodes, v_evals_beta, m_evecs, &
    !v_evals_beta_pri, m_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
       use numbatmod
       logical pair_warning
 
-      integer(8), intent(in) :: n_modes, debug, ui_out
+      integer(8), intent(in) :: n_modes, debug, ui_out, nodes_per_el
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
       complex(8) pp(n_elt_mats)
 
       integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
       integer(8), intent(out) :: type_el(n_msh_el)
-      double precision, intent(out) :: mesh_xy(2,n_msh_pts)
+      double precision, intent(out) :: xy_nodes(2,n_msh_pts)
       double precision vacwavenum_k0
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
@@ -611,7 +515,7 @@ contains
       overlap_file = "Orthogonal.txt"
 
       call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-         type_el, mesh_xy, v_evals_beta, m_evecs, &
+         type_el, xy_nodes, v_evals_beta, m_evecs, &
       !v_evals_beta_pri, m_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
@@ -682,7 +586,7 @@ contains
          !  *   100*(time1_asmbl-time1)/(time2-time1),"%"
          write(26,*)
          write(26,*) "lambda  = ", lambda
-         write(26,*) "n_msh_pts, n_msh_el, nodes_per_el  = ", n_msh_pts, n_msh_el, nodes_per_el
+         write(26,*) "n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
          write(26,*) "neq, bdy_cdn = ", neq, bdy_cdn
          if ( E_H_field .eq. FEM_FORMULATION_E) then
             write(26,*) "E_H_field   = ", E_H_field, " (E-Field formulation)"

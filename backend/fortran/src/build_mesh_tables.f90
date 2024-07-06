@@ -1,22 +1,42 @@
 #include "numbat_decl.h"
 
+
+ ! !  Storage locations in sequence
+ ! !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
+ ! !  - table_edges     shape: 4 x n_msh_pts
+ ! !
+
+ ! !  V = number of vertices
+ ! !  E = number of edges
+ ! !  F = number of faces
+ ! !  C = number of cells (3D, tetrahedron)
+ ! !
+ ! !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
+ ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
+ ! !
+
+
 subroutine build_mesh_tables( &
-   n_msh_el, n_msh_pts, d_nodes_per_el, n_ddl, &
-   type_nod, table_nod, mesh_xy, &
-   type_N_E_F, table_N_E_F, xy_N_E_F, &
+   n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+   type_nod, table_nod, xy_nodes, &
+   !type_N_E_F, table_N_E_F, xy_N_E_F, &
+   NEF_props, &
    debug, errco, emsg)
 
    use numbatmod
-use alloc
-   integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_ddl
-   integer(8), intent(out) :: type_nod(n_msh_pts)
-   integer(8), intent(out) :: table_nod(d_nodes_per_el, n_msh_el)
-   !integer(8), intent(out) :: type_el(n_msh_el)
+   use alloc
+   use class_MeshProps
 
-   double precision, intent(out) :: mesh_xy(2,n_msh_pts)
+   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
+   integer(8), intent(out) :: type_nod(n_msh_pts)
+   integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
+
+   double precision, intent(out) :: xy_nodes(2,n_msh_pts)
    integer(8)  :: type_N_E_F(2, n_ddl)
    integer(8) :: table_N_E_F(14, n_msh_el)
    double precision :: xy_N_E_F(2, n_ddl)
+
+   type(N_E_F_Props) :: NEF_props
 
    integer(8) debug
    integer(4), intent(out) :: errco
@@ -37,7 +57,7 @@ use alloc
 
 
    !  Fills:  table_edge_face[1,:]
-   call list_face (n_msh_el, table_N_E_F)
+   call list_face (n_msh_el, NEF_props%table_nod)
 
 
    !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
@@ -49,13 +69,13 @@ use alloc
 
    !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
    !  Todo!  move n_edge later in list as an out variable
-   call list_edge (n_msh_el, n_msh_pts, d_nodes_per_el, n_edge, type_nod, table_nod, &
-      table_N_E_F, visited)
+   call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
+   NEF_props%table_nod, visited)
 
    !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
    !  Todo: move n_msh_pts_p3 later
-   call list_node_P3 (n_msh_el, n_msh_pts, d_nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-      table_N_E_F,  visited)
+   call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
+   NEF_props%table_nod,  visited)
 
 
    !  TODO: what is signif of this quanitty?
@@ -74,13 +94,19 @@ use alloc
    endif
 
 
-   !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+   !  Fills: NEF_props%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    !  Should be using c_dwork for x_E_F ?
    call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-      table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
+   NEF_props%table_nod, visited , NEF_props%type_nod, xy_nodes, NEF_props%xy_nodes )
 
 
-   !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+   !  Fills: NEF_props%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-      table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
+   NEF_props%table_nod, NEF_props%type_nod, xy_nodes, NEF_props%xy_nodes , visited)
+
+
+      !NEF_props%type_nod = type_N_E_F
+      !NEF_props%table_nod = table_N_E_F
+      !NEF_props%xy_nodes = xy_N_E_F
+
 end subroutine

@@ -1,7 +1,7 @@
 
 subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    type_nod, table_nod, table_N_E_F, &
-   visited, type_N_E_F, mesh_xy, x_E_F)
+   visited, type_N_E_F, xy_nodes, x_E_F)
 
 !!!!!!!!!!!!!!!!
 
@@ -10,7 +10,7 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    integer(8) type_nod(n_msh_pts)
    integer(8) table_nod(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
    integer(8) visited(n_ddl), type_N_E_F(2,n_ddl)
-   double precision mesh_xy(2,n_msh_pts), x_E_F(2,n_ddl)
+   double precision xy_nodes(2,n_msh_pts), x_E_F(2,n_ddl)
    double precision, parameter :: one_third = 1.d0/3.d0
 
 
@@ -49,8 +49,8 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
       do j=1,nodes_per_el
          j1 = table_nod(j,i)
          type_n(j) = type_nod(j1)
-         el_xy(1,j) = mesh_xy(1,j1)
-         el_xy(2,j) = mesh_xy(2,j1)
+         el_xy(1,j) = xy_nodes(1,j1)
+         el_xy(2,j) = xy_nodes(2,j1)
       enddo
 
       !  an element is a face

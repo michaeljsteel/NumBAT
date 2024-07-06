@@ -3,7 +3,7 @@ subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
         E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, &
         v_refindex_n, & !  inputs
         v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, &
-        mesh_xy, ls_material, errco, emsg)
+        xy_nodes, ls_material, errco, emsg)
 
     use numbatmod
     use calc_em_impl
@@ -26,7 +26,7 @@ subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
     complex(8), intent(out) :: mode_pol(4,n_modes)
     integer(8), intent(out) :: table_nod(d_nodes_per_el, n_msh_el)
     integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
-    double precision, intent(out) :: mesh_xy(2,n_msh_pts)
+    double precision, intent(out) :: xy_nodes(2,n_msh_pts)
     complex(8), intent(out) :: ls_material(1,d_nodes_per_el+7,n_msh_el)
 
     integer, intent(out) :: errco
@@ -34,7 +34,7 @@ subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
 
     call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
         E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
-        v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, mesh_xy, ls_material, errco, emsg)
+        v_eigs_beta, sol1, mode_pol, table_nod, type_el, type_nod, xy_nodes, ls_material, errco, emsg)
 
 end subroutine
 
@@ -43,7 +43,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
         symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
         mesh_file, n_msh_pts, n_msh_el, &
         type_nod, &
-        table_nod, type_el, mesh_xy, &
+        table_nod, type_el, xy_nodes, &
         v_eigs_nu, sol1, mode_pol, errco, emsg)
 
     use numbatmod
@@ -72,7 +72,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
     integer(8) :: type_el(n_msh_el)
     integer(8) :: table_nod(d_nodes_per_el, n_msh_el)
 
-    double precision ::  mesh_xy(2,n_msh_pts)
+    double precision ::  xy_nodes(2,n_msh_pts)
 
     complex(8), intent(out) :: v_eigs_nu(n_modes)
     complex(8), intent(out) :: sol1(3,d_nodes_per_el,n_modes,n_msh_el)
@@ -82,15 +82,15 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
     integer, intent(out) :: errco
     character(len=EMSG_LENGTH), intent(out) :: emsg
 
-    !f2py intent(in) table_nod, type_el, mesh_xy
-    !f2py intent(out) table_nod, type_el, mesh_xy
+    !f2py intent(in) table_nod, type_el, xy_nodes
+    !f2py intent(out) table_nod, type_el, xy_nodes
 
     call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
         i_bnd_cdns, itermax, tol, debug, show_mem_est, &
         symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
         mesh_file, n_msh_pts, n_msh_el, &
         type_nod, &
-        table_nod, type_el, mesh_xy, &
+        table_nod, type_el, xy_nodes, &
         v_eigs_nu, sol1, mode_pol, errco, emsg)
 
 end subroutine
