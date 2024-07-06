@@ -4,9 +4,9 @@
 
 subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, pp, qq, &
-   table_nod, table_N_E_F, type_el, &
+   table_nod, type_el, table_N_E_F, xy_N_E_F, &
    m_eqs, ip_period_N, ip_period_E_F, &
-   mesh_xy, xy_N_E_F, nonz, row_ind, col_ptr, &
+   xy_nodes,  nonz, row_ind, col_ptr, &
    mat1, mat2)
 
    !  NQUAD: The number of quadrature points used in each element.
@@ -26,7 +26,7 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    integer(8) m_eqs(3,n_ddl)
    integer(8) ip_period_N(n_msh_pts), ip_period_E_F(n_ddl)
 
-   double precision mesh_xy(2,n_msh_pts), xy_N_E_F(2,n_ddl)
+   double precision xy_nodes(2,n_msh_pts), xy_N_E_F(2,n_ddl)
 
    integer(8) row_ind(nonz), col_ptr(neq+1)
 
@@ -129,8 +129,8 @@ subroutine asmbly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
       do j=1,nnodes
          j1 = table_nod(j,iel)
          nod_el_p(j) = j1
-         el_xy(1,j) = mesh_xy(1,j1)
-         el_xy(2,j) = mesh_xy(2,j1)
+         el_xy(1,j) = xy_nodes(1,j1)
+         el_xy(2,j) = xy_nodes(2,j1)
 
          !val_exp(j) = D_ONE
       enddo

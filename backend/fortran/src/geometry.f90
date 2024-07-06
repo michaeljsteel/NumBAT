@@ -6,14 +6,14 @@
 !  type_nod != 0 => boundary point
 
 !  Reads .mail file to find
-!  - x,y coords of mesh points  (mesh_xy)
+!  - x,y coords of mesh points  (xy_nodes)
 !  - mesh points associated with each element (table_nod)
 !  - whether number of material types read matches expected value n_elt_mats
 
-!  -  Fills:  mesh_xy, type_nod, type_el, table_nod
+!  -  Fills:  xy_nodes, type_nod, type_el, table_nod
 subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    n_msh_el, n_msh_pts, d_nodes_per_el, n_elt_mats, &
-    mesh_xy, type_nod, type_el, table_nod, &
+    xy_nodes, type_nod, type_el, table_nod, &
    errco, emsg)
 
    use numbatmod
@@ -26,7 +26,7 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    integer(8) n_msh_el, n_msh_pts, d_nodes_per_el, n_elt_mats
    integer(8) type_nod(n_msh_pts), type_el(n_msh_el)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
-   double precision mesh_xy(2,n_msh_pts)
+   double precision xy_nodes(2,n_msh_pts)
 
    integer errco
    character(len=EMSG_LENGTH) :: emsg
@@ -61,8 +61,8 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
 !  Read coordinates of the FEM mesh points
    do i=1,n_msh_pts
       read(24,*) k, (xx(j),j=1,2), type_nod(i)
-      mesh_xy(1,i) = xx(1)*dim_x
-      mesh_xy(2,i) = xx(2)*dim_y
+      xy_nodes(1,i) = xx(1)*dim_x
+      xy_nodes(2,i) = xx(2)*dim_y
    enddo
 
 !  Connectivity table

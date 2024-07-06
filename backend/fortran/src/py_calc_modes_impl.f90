@@ -1,7 +1,7 @@
 #include "numbat_decl.h"
 
 
-subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_nodes_per_el, &
+subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, xy_nodes, d_nodes_per_el, &
    type_nod, table_nod, n_ddl, neq, & !ip_type_N_E_F, ip_eq, &
    d_dwork, type_N_E_F, m_eqs, debug, &
    iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F )
@@ -12,7 +12,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
    !integer(8) :: ip_type_N_E_F, ip_eq, jp_x_n_e_f
    !integer(8) :: ip_period_N, ip_nperiod_N, ip_period_N_E_F, ip_nperiod_N_E_F
    integer(8) :: debug
-   double precision mesh_xy(2,n_msh_pts)
+   double precision xy_nodes(2,n_msh_pts)
    integer(8) type_nod(n_msh_pts)
    integer(8) table_nod(d_nodes_per_el, n_msh_el)
    integer(8) type_N_E_F(2, n_ddl)
@@ -36,9 +36,9 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, d_node
          write(*,*) "###### periodic_node"
       endif
 
-      call lattice_vec (n_msh_pts, mesh_xy, lat_vecs, debug)
+      call lattice_vec (n_msh_pts, xy_nodes, lat_vecs, debug)
 
-      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, type_nod, mesh_xy, iperiod_N, &
+      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, type_nod, xy_nodes, iperiod_N, &
          inperiod_N, table_nod, lat_vecs)
 
       if (debug .eq. 1) then
