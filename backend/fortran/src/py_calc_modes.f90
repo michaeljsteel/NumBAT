@@ -102,9 +102,9 @@ contains
       !  ----------------------------------------------
       !  workspaces
 
-      integer(8) neq
-      integer(8) n_edge, n_face, n_ddl
-      integer(8) nonz
+      integer(8) neq,n_ddl, nonz
+
+      !integer(8) n_edge, n_face, n_msh_pts_p3,
 
 
       integer(8) int_max, cmplx_max, real_max
@@ -126,7 +126,7 @@ contains
       integer(8), dimension(:), allocatable :: v_row_ind
       integer(8), dimension(:), allocatable :: v_col_ptr
 
-      integer(8), dimension(:), allocatable :: visited
+      !integer(8), dimension(:), allocatable :: visited
 
       ! Currenly, periodic is not active
 
@@ -144,7 +144,7 @@ contains
       !  ----------------------------------------------
 
 
-      integer(8) n_msh_pts_p3, ui_out
+      integer(8) ui_out
 
       !  Variable used by valpr
       integer(8) dim_krylov
@@ -172,7 +172,6 @@ contains
       RETONERROR(errco)
 
 
-      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
 
       call double_alloc_2d(xy_N_E_F, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
       call integer_alloc_2d(type_N_E_F, 2_8, n_ddl, 'type_N_E_F', errco, emsg); RETONERROR(errco)
@@ -180,10 +179,11 @@ contains
 
       call integer_alloc_2d(m_eqs, 3_8, n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
 
+      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
 
-      call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
+      !call integer_alloc_1d(visited, n_ddl, 'visited', errco, emsg); RETONERROR(errco)
 
 
       call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
@@ -204,76 +204,85 @@ contains
          mesh_xy, type_nod, type_el, table_nod, errco, emsg)
       RETONERROR(errco)
 
-      !  Storage locations in sequence
-      !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
-      !  - visited         shape: npt + n_msh_el = 4 n_msh_el
-      !  - table_edges     shape: 4 x n_msh_pts
-      !
-      !  visited is used as workspace. has no meaning between functions
-      !
-      !  V = number of vertices
-      !  E = number of edges
-      !  F = number of faces
-      !  C = number of cells (3D, tetrahedron)
-      !
-      !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
-      !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
-      !
-      !  neq and nonz are some kind of dimension for the left and right eigenoperators
 
-      !  TODO: move next three calls into a single  construct_table_N_E_F procedure
-
-      !  Fills:  table_edge_face[1,:]
-      call list_face (n_msh_el, table_N_E_F)
-
-      !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
-      !  note: each element has 1 face, 3 edges and 10 P3 nodes
-      !  so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
-
-      !  each element is a face
-      n_face = n_msh_el
-
-      !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
-      !  Todo!  move n_edge later in list as an out variable
-      call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
-         table_N_E_F, visited)
-
-      !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
-      !  Todo: move n_msh_pts_p3 later
-      call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
-         table_N_E_F,  visited)
-
-      !  TODO: what is signif of this quanitty?
-      n_ddl = n_edge + n_face + n_msh_pts_p3
-
-
-      if (debug .eq. 1) then
-         write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
-         write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
-         write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
-            (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
-         write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
-         & characteristic: V-E+F=1-(number of holes)"
-         write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
-         &= ", (n_msh_pts - n_edge) - n_edge + n_face
-      endif
-
-
-      !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-      !  Should be using c_dwork for x_E_F ?
-      call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
-         table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
-
-
-      !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-      call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
-         table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
+      call build_mesh_tables( &
+      n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+      type_nod, table_nod, mesh_xy, &
+      type_N_E_F, table_N_E_F, xy_N_E_F, &
+      debug, errco, emsg)
 
 
 
-      ! From this point ip_visited is unused.
+      ! !  Storage locations in sequence
+      ! !  - table_edge_face = table_N_E_F,   shape: 14 x n_msh_el
+      ! !  - visited         shape: npt + n_msh_el = 4 n_msh_el
+      ! !  - table_edges     shape: 4 x n_msh_pts
+      ! !
+      ! !  visited is used as workspace. has no meaning between functions
+      ! !
+      ! !  V = number of vertices
+      ! !  E = number of edges
+      ! !  F = number of faces
+      ! !  C = number of cells (3D, tetrahedron)
+      ! !
+      ! !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
+      ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
+      ! !
+      ! !  neq and nonz are some kind of dimension for the left and right eigenoperators
 
-      deallocate(visited)
+      ! !  TODO: move next three calls into a single  construct_table_N_E_F procedure
+
+      ! !  Fills:  table_edge_face[1,:]
+      ! call list_face (n_msh_el, table_N_E_F)
+
+      ! !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
+      ! !  note: each element has 1 face, 3 edges and 10 P3 nodes
+      ! !  so table_N_E_F = table_edge_face has dimensions 14 x n_msh_el
+
+      ! !  each element is a face
+      ! n_face = n_msh_el
+
+      ! !  Fills: n_edge, table_edge[1..4,:], table_edge_face[2:4,:], visited[1:n_msh_pts]
+      ! !  Todo!  move n_edge later in list as an out variable
+      ! call list_edge (n_msh_el, n_msh_pts, nodes_per_el, n_edge, type_nod, table_nod, &
+      !    table_N_E_F, visited)
+
+      ! !  Fills: remainder of table_edge_face[5:,:], visited[1:n_msh_pts], n_msh_pts_3
+      ! !  Todo: move n_msh_pts_p3 later
+      ! call list_node_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, table_nod, &
+      !    table_N_E_F,  visited)
+
+      ! !  TODO: what is signif of this quanitty?
+      ! n_ddl = n_edge + n_face + n_msh_pts_p3
+
+
+      ! if (debug .eq. 1) then
+      !    write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
+      !    write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
+      !    write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
+      !       (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
+      !    write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
+      !    & characteristic: V-E+F=1-(number of holes)"
+      !    write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
+      !    &= ", (n_msh_pts - n_edge) - n_edge + n_face
+      ! endif
+
+
+      ! !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+      ! !  Should be using c_dwork for x_E_F ?
+      ! call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, type_nod, table_nod, &
+      !    table_N_E_F, visited , type_N_E_F, mesh_xy, xy_N_E_F )
+
+
+      ! !  Fills: type_N_E_F(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
+      ! call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, table_nod, type_nod, &
+      !    table_N_E_F, type_N_E_F, mesh_xy, xy_N_E_F, visited)
+
+
+
+      ! ! From this point ip_visited is unused.
+
+      ! deallocate(visited)
 
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el, mesh_xy, nodes_per_el, &
          type_nod, table_nod, n_ddl, neq,  xy_N_E_F,  &
@@ -359,7 +368,7 @@ contains
       write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
       write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
       write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**10, ' MB est. working memory '
+      write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
