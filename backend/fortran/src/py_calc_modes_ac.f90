@@ -420,7 +420,7 @@ contains
       write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
       write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
       write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', neq*(nvect+6)*16/2**10, ' MB est. working memory '
+      write(ui_out,'(A,i9,A)') '      ', neq*(nvect+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
