@@ -54,7 +54,7 @@
 
 
 
-subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, m_eqs)
+subroutine bound_cond (bdy_cdn, n_ddl, type_N_E_F, neq, m_eqs)
 
    use numbatmod
 

@@ -29,9 +29,10 @@ subroutine quad_triangle (nquad, nquad_max, wq, xq, yq)
    double precision wgt_2, coor_1_grp_2, coor_2_grp_2
    double precision wgt_3, coor_1_grp_3, coor_2_grp_3
    double precision wgt_4, coor_1_grp_4, coor_2_grp_4, coor_3_grp_4
-   !
+
+
    !     Check the number of quadrature points
-   !
+
    nquad = 16
    if (nquad .gt. nquad_max) then
       write(*,*)

@@ -175,13 +175,11 @@ contains
       ! RETONERROR(errco)
 
 
-      ! write(*,*) 'size of n_ddl', n_msh_el, 9*n_msh_el, n_ddl
-
       ! All reduces to this:
       n_ddl = 9 * n_msh_el
 
 
-      call mesh_props%init(n_msh_pts, n_msh_el, errco, emsg)
+      call mesh_props%init(n_msh_pts, n_msh_el, n_elt_mats, errco, emsg)
       RETONERROR(errco)
 
       call NEF_props%init(n_msh_el, n_ddl, errco, emsg)
@@ -205,23 +203,23 @@ contains
       dim_x = dimscale_in_m
       dim_y = dimscale_in_m
 
-      !  Fill:  xy_nodes, type_nod, type_el, table_nod
-      call construct_fem_node_tables_em (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, mesh_props, errco, emsg)
+      !  Fills:  MeshProps: xy_nodes, type_nod, type_el, table_nod
+      call construct_fem_node_tables_em (mesh_file, dim_x, dim_y, &
+         mesh_props, errco, emsg)
       RETONERROR(errco)
 
 
       call build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
          mesh_props, NEF_props, debug, errco, emsg)
+      RETONERROR(errco)
 
-
-      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, n_ddl, neq, &
-         mesh_props, NEF_props, m_eqs, debug, &
+      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, n_ddl,  &
+         mesh_props, NEF_props, neq, m_eqs, debug, &
          iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
 
       ! We no longer need type_N_E_F, could deallocate
 
       !Now we know neq
-
 
          call make_csr_arrays(n_msh_el, n_ddl, neq, &
          NEF_props%table_nod, &
@@ -230,6 +228,7 @@ contains
 
 
 
+         write(*,*) 'pcm5'
          !  ----------------------------------------------------------------
          !  convert from 1-based to 0-based
          !  ----------------------------------------------------------------
@@ -270,7 +269,6 @@ contains
          call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
 
 
-         call mesh_props%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
 
          !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
@@ -278,132 +276,136 @@ contains
          shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
          mesh_props, NEF_props,  &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-           nonz,  v_row_ind, v_col_ptr, &
+         nonz,  v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass )
 
 
-      dim_krylov = 2*n_modes + n_modes/2 +3
+         dim_krylov = 2*n_modes + n_modes/2 +3
 
 
-      write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
-      write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
-      write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
-      write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
-      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**20, ' MB est. working memory '
+         write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
+         write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
+         write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
+         write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
+         write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
+         write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**20, ' MB est. working memory '
 
-      write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
+         write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
 
-      !  This is the main solver.
-      !  On completion:
-      !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
-      !  eigvectors are in arp arp_evecs
+         !  This is the main solver.
+         !  On completion:
+         !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
+         !  eigvectors are in arp arp_evecs
 
-      write(ui_out,'(/,A)') "  - solving linear system: "
+         write(ui_out,'(/,A)') "  - solving linear system: "
 
-      write(ui_out,'(/,A)') "      solving eigensystem"
-      call clock_spare%reset()
+         write(ui_out,'(/,A)') "      solving eigensystem"
+         call clock_spare%reset()
 
-      call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
+         call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
 
-      call valpr_64( i_base, dim_krylov, n_modes, neq, itermax,  arp_tol, nonz, &
+         call valpr_64( i_base, dim_krylov, n_modes, neq, itermax,  arp_tol, nonz, &
          debug, errco, emsg, &
          v_row_ind, v_col_ptr, mOp_stiff, mOp_mass, v_evals_beta, arp_evecs)
-      RETONERROR(errco)
+         RETONERROR(errco)
 
-      write(ui_out,'(A,A)') '         ', clock_spare%to_string()
-
-
-
-      write(ui_out,'(/,A)') "      assembling modes"
-      call clock_spare%reset()
-
-      ! identifies correct ordering but doesn't apply it
-      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
+         write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
 
-      !  The eigenvectors will be stored in the array sol
-      !  The eigenvalues and eigenvectors are renumbered
-      !  using the permutation vector v_eig_index
-      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec, v_eig_index, table_nod, type_el, &
-         NEF_props%table_nod, NEF_props%xy_nodes, &
+
+         write(ui_out,'(/,A)') "      assembling modes"
+         call clock_spare%reset()
+
+         ! identifies correct ordering but doesn't apply it
+         call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
+
+
+         !  The eigenvectors will be stored in the array sol
+         !  The eigenvalues and eigenvectors are renumbered
+         !  using the permutation vector v_eig_index
+         call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+         n_core, bloch_vec, v_eig_index, mesh_props, &
+         NEF_props, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
-         xy_nodes,  v_evals_beta, mode_pol, arp_evecs, &
+         v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
-      RETONERROR(errco)
-
-
-      !  Calculate energy in each medium (typ_el)
-      call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
-         table_nod, type_el, n_elt_mats, eps_eff,&
-         xy_nodes, m_evecs, v_evals_beta, mode_pol)
-
-
-      !  Doubtful that this check is of any value: delete?
-      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-      !  type_el, xy_nodes, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
-      !  overlap_L, overlap_file, debug, ui_out, &
-      !  pair_warning, vacwavenum_k0, errco, emsg)
-      !  RETONERROR(errco)
-
-
-      !  Should this happen _before_ check_ortho?
-
-
-      !  The z-component must be multiplied by -ii*beta in order to
-      !  get the physical, un-normalised z-component
-      !  (see Eq. (25) of the JOSAA 2012 paper)
-      !  TODO: is this really supposed to be x i beta , or just x beta  ?
-      do i_md=1,n_modes
-         m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
-      enddo
-
-
-      call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, type_el, ls_material)
-
-      !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
-      !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
-
-
-      !if (debug .eq. 1) then
-      !  write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
-      !endif
-      !
-      !  Orthonormal integral
-      !  if (debug .eq. 1) then
-      !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
-      !  overlap_file = "Orthogonal_n.txt"
-      !  call get_clocks( systime1_J, time1_J)
-      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-      !  type_el, xy_nodes, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
-      !  pair_warning, vacwavenum_k0)
-      !  call get_clocks( systime2_J, time2_J)
-      !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
-      !  endif
-      !
-
-      deallocate(v_eig_index, overlap_L, arp_evecs)
-      deallocate(mOp_stiff, mOp_mass)
-      deallocate(v_row_ind, v_col_ptr)
-
-
-      write(ui_out,'(A,A)') '         ', clock_spare%to_string()
-
-      write(ui_out,*) "-----------------------------------------------"
-
-      !  call report_results_em(debug, ui_out, &
-      !  n_msh_pts, n_msh_el, &
-      !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
-      !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
-      !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !  n_elt_mats, neq, dim_krylov, &
-      !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
+         RETONERROR(errco)
 
 
 
-   end subroutine calc_em_modes_impl
+         !  Calculate energy in each medium (typ_el)
+         call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
+         mesh_props, &
+         n_elt_mats, eps_eff,&
+          m_evecs, v_evals_beta, mode_pol)
+
+
+         !  Doubtful that this check is of any value: delete?
+          !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
+          !  type_el, xy_nodes, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
+         !  overlap_L, overlap_file, debug, ui_out, &
+          !  pair_warning, vacwavenum_k0, errco, emsg)
+          !  RETONERROR(errco)
+
+
+          !  Should this happen _before_ check_ortho?
+
+
+          !  The z-component must be multiplied by -ii*beta in order to
+          !  get the physical, un-normalised z-component
+          !  (see Eq. (25) of the JOSAA 2012 paper)
+          !  TODO: is this really supposed to be x i beta , or just x beta  ?
+          do i_md=1,n_modes
+            m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
+         enddo
+
+
+         call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_props%type_el, ls_material)
+
+         !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
+         !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
+
+
+         !if (debug .eq. 1) then
+         !  write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
+         !endif
+         !
+         !  Orthonormal integral
+         !  if (debug .eq. 1) then
+         !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
+         !  overlap_file = "Orthogonal_n.txt"
+         !  call get_clocks( systime1_J, time1_J)
+         !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
+         !  type_el, xy_nodes, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
+         !  pair_warning, vacwavenum_k0)
+         !  call get_clocks( systime2_J, time2_J)
+         !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
+         !  endif
+         !
+
+         call mesh_props%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
+
+         deallocate(v_eig_index, overlap_L, arp_evecs)
+         deallocate(mOp_stiff, mOp_mass)
+         deallocate(v_row_ind, v_col_ptr)
+
+
+         write(ui_out,'(A,A)') '         ', clock_spare%to_string()
+
+         write(ui_out,*) "-----------------------------------------------"
+
+         !  call report_results_em(debug, ui_out, &
+         !  n_msh_pts, n_msh_el, &
+         !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
+         !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
+         !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
+         !  n_elt_mats, neq, dim_krylov, &
+         !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
+
+
+
+      end subroutine calc_em_modes_impl
 
 
 

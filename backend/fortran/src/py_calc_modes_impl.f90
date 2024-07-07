@@ -1,8 +1,8 @@
 #include "numbat_decl.h"
 
 
-subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  d_nodes_per_el, n_ddl, neq,&
-   mesh_props,  NEF_props , m_eqs, debug, &
+subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  d_nodes_per_el, n_ddl, &
+   mesh_props,  NEF_props, neq, m_eqs, debug, &
    iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F )
 
    use numbatmod
@@ -24,7 +24,7 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  d_nodes_per_el
 
    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
-      call bound_cond ( bdy_cdn, n_ddl, neq, NEF_props%type_nod, m_eqs)
+      call bound_cond ( bdy_cdn, n_ddl, NEF_props%type_nod, neq, m_eqs)
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 
