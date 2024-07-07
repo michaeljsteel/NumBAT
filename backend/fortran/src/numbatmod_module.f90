@@ -14,6 +14,8 @@ module numbatmod
 
    implicit none
 
+    integer(8), parameter :: P_NODES_PER_EL = 6
+
    integer, parameter :: EMSG_LENGTH = 2048
    integer, parameter :: FNAME_LENGTH = 1024
 

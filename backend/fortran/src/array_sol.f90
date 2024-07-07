@@ -13,24 +13,35 @@
  !  Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
 
 subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
-   n_core, bloch_vec, iindex, table_nod, type_el, &
-   table_N_E_F, xy_N_E_F, &
+   n_core, bloch_vec, iindex, &
+    mesh_props, &
+   !table_N_E_F, xy_N_E_F,
+    NEF_props, &
    ineq, ip_period_N, ip_period_N_E_F, &
-   xy_nodes,  v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
+   v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
+   use class_MeshProps
 
    integer(8) bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl
    integer(8) neq, nnodes
    integer(8) n_core(2)
-   integer(8) type_el(n_msh_el)
    integer(8) ineq(3,n_ddl)   !  bc info
    integer(8) iindex(*)
    integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
-   integer(8) table_nod(nnodes,n_msh_el), table_N_E_F(14,n_msh_el)
-   double precision bloch_vec(2), xy_nodes(2,n_msh_pts)
-   double precision xy_N_E_F(2,n_ddl)
+   double precision bloch_vec(2)
    complex(8) sol_0(neq,num_modes)
+
+   integer(8) table_N_E_F(14,n_msh_el)
+   double precision xy_N_E_F(2,n_ddl)
+
+
+   !integer(8) table_nod(nnodes,n_msh_el)
+   !double precision xy_nodes(2,n_msh_pts)
+   !integer(8) type_el(n_msh_el)
+   type(MeshProps) :: mesh_props
+   type(N_E_F_props) :: NEF_props
+
 
    !  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
    !  sol(3, nnodes+1..nnodes+7,num_modes, n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
@@ -94,22 +105,22 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
       i_sol_max = 0
 
       do iel=1,n_msh_el
-         typ_e = type_el(iel)
+         typ_e = mesh_props%type_el(iel)
 
 
          mode_comp =  D_ZERO
 
          do inod=1,nnodes
-            j = table_nod(inod,iel)
+            j = mesh_props%table_nod(inod,iel)
             nod_el_p(inod) = j
-            el_xy(:,inod) = xy_nodes(:,j)
+            el_xy(:,inod) = mesh_props%xy_nodes(:,j)
          enddo
 
          val_exp =  D_ONE
 
          if (bdy_cdn == BCS_PERIODIC) then
             do inod=1,nnodes
-               j = table_nod(inod,iel)
+               j = mesh_props%table_nod(inod,iel)
                k = ip_period_N(j)
                if (k /= 0) j=k
                nod_el_p(inod) = j
@@ -118,13 +129,13 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             !  val_exp: Bloch mod ephase factor between the origin point and destination point
             !  For a pair of periodic points, one is chosen as origin and the other is the destination
             do j=1,nddl_0
-               jp = table_N_E_F(j,iel)
+               jp = NEF_props%table_nod(j,iel)
                j1 = ip_period_N_E_F(jp)
                if (j1 /= 0) then
                   !do k=1,dim_32
-                  !  delta_xx(k) = xy_N_E_F(k,jp) - xy_N_E_F(k,j1)
+                  !  delta_xx(k) = NEF_props.xy_nodes(k,jp) - NEF_props.xy_nodes(k,j1)
                   !enddo
-                  delta_xx(:) = xy_N_E_F(:,jp) - xy_N_E_F(:,j1)
+                  delta_xx = NEF_props%xy_nodes(:,jp) - NEF_props%xy_nodes(:,j1)
                   r_tmp1 = ddot(dim_32, bloch_vec, 1, delta_xx, 1)
                   val_exp(j) = exp(C_IM_ONE * r_tmp1)
                endif
@@ -185,7 +196,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             !  Contribution to the transverse component
             do jtest=1,nddl_t
                do j_eq=1,3
-                  jp = table_N_E_F(jtest,iel)
+                  jp = NEF_props%table_nod(jtest,iel)
                   ind_jp = ineq(j_eq,jp)
                   if (ind_jp > 0) then
                      m  = basis_list(2, j_eq, jtest)
@@ -224,7 +235,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             do jtest=nddl_t+1,nddl_0
 
                do j_eq=1,1
-                  jp = table_N_E_F(jtest,iel)
+                  jp = NEF_props%table_nod(jtest,iel)
                   ind_jp = ineq(j_eq,jp)
                   if (ind_jp > 0) then
                      !z_tmp1 = sol_0(ind_jp, i_mode2)
@@ -244,7 +255,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                sol(j,inod,i_mode,iel) = z_tmp2
                if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max (by component not total?)
                   z_sol_max = z_tmp2
-                  i_sol_max = table_nod(inod,iel)
+                  i_sol_max = mesh_props%table_nod(inod,iel)
                endif
             enddo
 
@@ -262,7 +273,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             jtest = nddl_t+inod-nnodes+3
             j_eq = 1
-            jp = table_N_E_F(jtest,iel)
+            jp = NEF_props%table_nod(jtest,iel)
             ind_jp = ineq(j_eq,jp)
 
             if (ind_jp > 0) then
@@ -315,7 +326,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
       !  Normalization so that the maximum field component is 1
       do iel=1,n_msh_el
          do inod=1,nnodes
-            i1 = table_nod(inod,iel)
+            i1 = mesh_props%table_nod(inod,iel)
 
             !do j=1,3
             !!  z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
@@ -324,13 +335,13 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             sol(1:3,inod,i_mode,iel) = sol(1:3,inod,i_mode,iel)/z_sol_max
 
-            i1 = table_nod(inod,iel)
+            i1 = mesh_props%table_nod(inod,iel)
             if (i1 == i_sol_max .and. debug == 1) then
                write(*,*) "array_sol:"
                write(*,*) "i_mode, i1, iel = ", i_mode, i1, iel
                write(*,*) "array_sol: Field normalisaion point:"
-               write(*,*) "x = ", dble(xy_nodes(1,i1))
-               write(*,*) "y = ", dble(xy_nodes(2,i1))
+               write(*,*) "x = ", dble(mesh_props%xy_nodes(1,i1))
+               write(*,*) "y = ", dble(mesh_props%xy_nodes(2,i1))
                write(*,*) "i_sol_max = ", i_sol_max
                write(*,*) i_mode, i1, iel, (dble(sol(j,inod,i_mode,iel)),j=1,3)
                write(*,*) i_mode, i1, iel, (imag(sol(j,inod,i_mode,iel)),j=1,3)

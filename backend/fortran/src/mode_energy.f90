@@ -9,17 +9,20 @@
 !  It is assumed that the type number triangle in the cylinders is :
 !                           typ_e=n_core(1) or typ_e=n_core(2)
 !
-subroutine mode_energy (nval, nel, npt, nnodes, n_core, table_nod, type_el, nb_typ_el, &
-   eps_eff, x, sol, beta1, mode_pol)
+subroutine mode_energy (nval, nel, npt, nnodes, n_core, &
+   mesh_props, nb_typ_el, &
+   eps_eff,  sol, beta1, mode_pol)
+
+   use class_MeshProps
+
 
    integer(8) nval, nel, npt, nnodes
-   integer(8) nb_typ_el, n_core(2), type_el(nel)
-   integer(8) table_nod(nnodes,nel)
-   double precision x(2,npt)
+   integer(8) nb_typ_el, n_core(2)
    complex(8) sol(3,nnodes+7,nval,nel)
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)
    complex(8) beta1(nval)
 
+   type(MeshProps) :: mesh_props
 
 !
 !  variables for quadrature interpolation
@@ -67,12 +70,12 @@ subroutine mode_energy (nval, nel, npt, nnodes, n_core, table_nod, type_el, nb_t
 !	 loop over all elements
 
    do iel=1,nel
-      typ_e = type_el(iel)
+      typ_e = mesh_props%type_el(iel)
       do inode=1,nnodes
-         global = table_nod(inode,iel)
+         global = mesh_props%table_nod(inode,iel)
          nod_el_p(inode) = global
-         xel(1,inode) = x(1,global)
-         xel(2,inode) = x(2,global)
+         xel(1,inode) = mesh_props%xy_nodes(1,global)
+         xel(2,inode) = mesh_props%xy_nodes(2,global)
       enddo
 
       do iq=1,nquad
@@ -115,6 +118,7 @@ subroutine mode_energy (nval, nel, npt, nnodes, n_core, table_nod, type_el, nb_t
    !   Total energy and normalization
    do ival=1,nval
       z_tmp = mode_pol(1,ival) + mode_pol(2,ival)  + mode_pol(3,ival)
+
       !   if (abs(z_tmp) .lt. 1.0d-10) then
       if (abs(z_tmp) .lt. 1.0d-20) then
          write(*,*) "mode_energy: the total energy ",  "is too small : ", z_tmp
@@ -122,9 +126,11 @@ subroutine mode_energy (nval, nel, npt, nnodes, n_core, table_nod, type_el, nb_t
          write(*,*) "mode_energy: zero eigenvector; aborting..."
          stop
       endif
+
       do j=1,4
          mode_pol(j,ival) = mode_pol(j,ival) / z_tmp
       enddo
+
    enddo
 
    return
