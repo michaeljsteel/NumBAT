@@ -152,8 +152,8 @@ class ModePlotHelper:
 
         fm = self.sim_result.fem_mesh
 
-        x_min, x_max = np_min_max(fm.mesh_xy[0, :])
-        y_min, y_max = np_min_max(fm.mesh_xy[1, :])
+        x_min, x_max = np_min_max(fm.xy_nodes[0, :])
+        y_min, y_max = np_min_max(fm.xy_nodes[1, :])
 
         area = abs((x_max-x_min)*(y_max-y_min))
         n_pts_x = int(n_pts*abs(x_max-x_min)/np.sqrt(area))
@@ -183,13 +183,13 @@ class ModePlotHelper:
               + f' [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)')
         return shiftx, shifty
 
-    def _save_triangulation_plots(self, triang1p, triang6p, mesh_xy):
+    def _save_triangulation_plots(self, triang1p, triang6p, xy_nodes):
         fig, axs = plt.subplots(1, 1)
         axs[0].triplot(triang1p, linewidth=.5)
         # axs[1].triplot(triang6p, linewidth=.5)
         # for ax in axs:
         axs[0].set_aspect(1.0)
-        axs[0].scatter(mesh_xy[0, :], mesh_xy[1, :], s=2, c='red')
+        axs[0].scatter(xy_nodes[0, :], xy_nodes[1, :], s=2, c='red')
 
         axs[0].set_xlabel(r'$x$ [μm]')
         axs[0].set_ylabel(r'$y$ [μm]')
@@ -211,9 +211,9 @@ class ModePlotHelper:
 
         # unrolling data for the interpolators
         # TODO: for EM, table_nod seems to be identical to the MailData one
-        #       mesh_xy seems to be the same but with some fractional scaling.
+        #       xy_nodes seems to be the same but with some fractional scaling.
 
-        mesh_xy = fm.mesh_xy  # is in fortran order so indexing below looks backward
+        xy_nodes = fm.xy_nodes  # is in fortran order so indexing below looks backward
 
         tabnod_py = fm.table_nod.T - 1  # shift fortran to python indexing
 
@@ -241,8 +241,8 @@ class ModePlotHelper:
         for i_el in range(fm.n_msh_el):
             for i_node in range(6):
                 i_ex = tabnod_py[i_el, i_node]
-                v_x6p[i] = mesh_xy[0, i_ex]
-                v_y6p[i] = mesh_xy[1, i_ex]
+                v_x6p[i] = xy_nodes[0, i_ex]
+                v_y6p[i] = xy_nodes[1, i_ex]
                 i += 1
 
         # Interpolate onto triangular grid - honest to FEM elements
@@ -259,24 +259,24 @@ class ModePlotHelper:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation(mesh_xy[0, :], mesh_xy[1, :], self.v_triang1p)
+            check_triangulation(xy_nodes[0, :], xy_nodes[1, :], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
         tri_triang1p = matplotlib.tri.Triangulation(
-            mesh_xy[0, :], mesh_xy[1, :], v_triang1p)
+            xy_nodes[0, :], xy_nodes[1, :], v_triang1p)
 
         # The v_triangs are lists of index nodes
         # the tri_triangs are actual points
         pl_tri_triang6p = matplotlib.tri.Triangulation(
             v_x6p*1e6, v_y6p*1e6, v_triang6p)
         pl_tri_triang1p = matplotlib.tri.Triangulation(
-            mesh_xy[0, :]*1e6, mesh_xy[1, :]*1e6, v_triang1p)
+            xy_nodes[0, :]*1e6, xy_nodes[1, :]*1e6, v_triang1p)
 
         draw_triangulation = False
         if draw_triangulation:
             self._save_triangulation_plots(
-                pl_tri_triang1p, pl_tri_triang6p, mesh_xy*1e6)
+                pl_tri_triang1p, pl_tri_triang6p, xy_nodes*1e6)
 
         # building interpolators: triang1p for the finder, triang6p for the values
         # create rectangular arrays corresponding to the v_x, v_y grids

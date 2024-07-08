@@ -134,11 +134,16 @@ Building |NUMBAT| itself
 
    $ make build
 
-#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
 
-#. If the build halts with a ``make`` error of the form ``*** No rule to make target ...``, try running ``make build`` a couple more times.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
 
-#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+#. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
+
+    $ cd <NumBAT>/backend
+    $ python ./nb_install_tester.py
+
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
 
 
 
@@ -150,17 +155,13 @@ The default compiler for Linux is GCC's ``gfortran``.
 
 It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's free OneAPI HPC toolkit.
 
-**This is experimental and likely to fail for you.**
-
 To do so,
 
 #. Install the Intel OneAPI Base and HPC Toolkits.
 #. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.)
-#. Change the ``COMPILER_VENDOR`` switch in ``<NumBAT>/backend/fortran/Makefile``.
-#. In ``<NumBAT>/backend/fortran``, run::
+#. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make``, please use::
 
-    $ make clean
-    $ make
+    $ make intel
 
 
 Installing without root access
@@ -328,9 +329,16 @@ The following steps have worked for us:
 
    $ make
 
-#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
 
-#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
+
+#. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
+
+    $ cd <NumBAT>/backend
+    $ python ./nb_install_tester.py
+
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
 
 
 Installing on Windows
@@ -352,7 +360,6 @@ Visual Studio and the Intel Fortran compiler. There are a relatively large numbe
 
     If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
 
-#. Setup virtual env as in Linux FILL ME IN
 
 #. **Windows build tools**
 
@@ -473,6 +480,9 @@ At long last, we are ready to build |NUMBAT| itself.
 
 1. Create a python virtual environment for working with |NUMBAT|.
    You can use any name and location for your environment.
+
+   **Note:** This procedure has recently changed in anaconda  and these instructions may be slightly out of date.
+
    To specify a virtual environment tree called `nbpy3` in your home directory, open the *Anaconda prompt* from the Start Menu
    and  enter ::
 
@@ -508,9 +518,16 @@ At long last, we are ready to build |NUMBAT| itself.
 
    This should take 2 to 3 minutes.
 
-#. If this completes without error, you are ready to proceed to the next chapter to begin using |NUMBAT|.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
 
-#. If you hit a compile error you can't resolve, please get in touch at |NUMBAT_EMAIL|.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
+
+#. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
+
+    $ cd <NumBAT>/backend
+    $ python ./nb_install_tester.py
+
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
 
 
 

@@ -98,7 +98,7 @@ class FemMesh:
         # made by fortran
         self.table_nod = None  # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
         self.node_physindex = None  # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
-        self.mesh_xy = None  # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
+        self.xy_nodes = None  # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
 
         self.n_nodes = 6  # Nodes per each element (is always 6)
         self.ac_mesh_from_em = True  # Always True
@@ -126,7 +126,7 @@ class FemMesh:
         self.n_msh_el = mesh.n_msh_elts
 
         print(
-            f"\n The EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
+            f"\n The final EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
         )
 
         matvals = list(struc.d_materials.values())[: opt_props.n_mats_em]
@@ -138,10 +138,10 @@ class FemMesh:
                 f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.'
             )  # +1 because materials are reported by their Fortran index
 
-    def store_em_mode_outputs(self, type_el, node_physindex, table_nod, mesh_xy):
+    def store_em_mode_outputs(self, type_el, node_physindex, table_nod, xy_nodes):
         self.v_el_2_mat_idx = type_el
         self.table_nod = table_nod
-        self.mesh_xy = mesh_xy
+        self.xy_nodes = xy_nodes
         self.node_physindex = node_physindex
 
         #print("EM mesh properties:")
@@ -149,10 +149,10 @@ class FemMesh:
         #print("  elt2nodes index map", self.table_nod, self.table_nod.shape)
         #print( #    "  node_physindex index map", self.node_physindex, self.node_physindex.shape)
 
-    def store_ac_mode_outputs(self, type_el, table_nod, mesh_xy):
+    def store_ac_mode_outputs(self, type_el, table_nod, xy_nodes):
         self.v_el_2_mat_idx = type_el
         self.table_nod = table_nod
-        self.mesh_xy = mesh_xy
+        self.xy_nodes = xy_nodes
         #print("AC after sim mesh properties:")
         #print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
         #print("  elt2nodes index map", self.table_nod)
@@ -181,7 +181,7 @@ class FemMesh:
         n_msh_el = em_fem.n_msh_el
         # type_el = em_fem.v_el_2_mat_idx       # material index of each element into list self.v_refindexn (unit-based)
         table_nod = em_fem.table_nod
-        mesh_xy = em_fem.mesh_xy
+        xy_nodes = em_fem.xy_nodes
 
         type_el_AC = []  # material index for each element (length = n_msh_el)
         table_nod_AC_tmp = np.zeros(
@@ -241,9 +241,9 @@ class FemMesh:
         )  # list to np array and adjust to fortran indexing
 
         # Find the physical x-y coordinates of the chosen AC nodes.
-        mesh_xy_AC = np.zeros((2, n_msh_pts_AC))
+        xy_nodes_AC = np.zeros((2, n_msh_pts_AC))
         for node in nodes_AC:
-            mesh_xy_AC[:, d_nodes_2_acnodes[node]] = mesh_xy[:, node - 1]
+            xy_nodes_AC[:, d_nodes_2_acnodes[node]] = xy_nodes[:, node - 1]
 
         # AC FEM uses Neumann B.C.s so node_physindex is totally irrelevant!
         # # Find nodes on boundaries of materials
@@ -270,11 +270,11 @@ class FemMesh:
         self.n_msh_el = n_msh_el_AC
         self.table_nod = table_nod_AC
         self.v_el_2_mat_idx = type_el_AC
-        self.mesh_xy = mesh_xy_AC
+        self.xy_nodes = xy_nodes_AC
         self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
 
         print(
-            f"\n The elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
+            f"\n The final elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
         )
 
         print(" The material index table is:", el_props.typ_el_AC, "\n")
@@ -587,7 +587,7 @@ class EMSimResult(SimResult):
             fm.n_msh_pts,
             fm.n_nodes,
             fm.table_nod,
-            fm.mesh_xy,
+            fm.xy_nodes,
             self.eigs_kz,
             self.fem_evecs,
         )
@@ -982,7 +982,7 @@ class EMSimulation(Simulation):
             table_nod,
             type_el,
             node_physindex,
-            mesh_xy,
+            xy_nodes,
             self.ls_material,
         ) = process_fortran_return(resm, "solving for electromagnetic modes")
 
@@ -992,7 +992,7 @@ class EMSimulation(Simulation):
         #print("modepol", self.mode_pol)
         #print("ls material: n", self.ls_material, self.ls_material.shape)
 
-        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, table_nod, mesh_xy)
+        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, table_nod, xy_nodes)
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
@@ -1005,7 +1005,7 @@ class EMSimulation(Simulation):
                 fm.n_msh_pts,
                 fm.n_nodes,
                 fm.table_nod,
-                fm.mesh_xy,
+                fm.xy_nodes,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -1023,7 +1023,7 @@ class EMSimulation(Simulation):
                 fm.n_msh_pts,
                 fm.n_nodes,
                 fm.table_nod,
-                fm.mesh_xy,
+                fm.xy_nodes,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -1046,7 +1046,7 @@ class EMSimulation(Simulation):
                     fm.v_el_2_mat_idx,
                     opt_props.n_mats_em,
                     opt_props.v_refindexn,
-                    fm.mesh_xy,
+                    fm.xy_nodes,
                     self.fem_evecs,
                 )
             else:
@@ -1070,8 +1070,8 @@ class EMSimulation(Simulation):
         # x_tmp = []
         # y_tmp = []
         # for i in np.arange(self.n_msh_pts):
-        #     x_tmp.append(self.mesh_xy[0,i])
-        #     y_tmp.append(self.mesh_xy[1,i])
+        #     x_tmp.append(self.xy_nodes[0,i])
+        #     y_tmp.append(self.xy_nodes[1,i])
         # x_min = np.min(x_tmp); x_max=np.max(x_tmp)
         # y_min = np.min(y_tmp); y_max=np.max(y_tmp)
         # area = abs((x_max-x_min)*(y_max-y_min))
@@ -1182,7 +1182,7 @@ class ACSimulation(Simulation):
             AC_FEM_debug,
             show_mem_est,
             tstruc.symmetry_flag,
-            #elastic_props.n_mats_ac,  # => fort: n_typ_el
+            #elastic_props.n_mats_ac,  # => fort: n_elt_mats
             elastic_props.c_IJ,
             elastic_props.rho,
             fm.ac_mesh_from_em,
@@ -1192,20 +1192,19 @@ class ACSimulation(Simulation):
             fm.node_physindex,  # => fort: type_nod
             fm.table_nod,       # => fort: table_nod
             fm.v_el_2_mat_idx,  # => fort: type_el
-            fm.mesh_xy,         # => fort: mesh_xy
+            fm.xy_nodes,         # => fort: xy_nodes
         )
 
         (
             table_nod_out,
             type_el_out,
-            mesh_xy_out,
+            xy_nodes_out,
             self.eigs_nu,
             self.fem_evecs,
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
-        print('done AC cal')
 
-        self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, mesh_xy_out)
+        self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, xy_nodes_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME
@@ -1237,7 +1236,7 @@ class ACSimulation(Simulation):
                     fm.n_nodes,
                     fm.table_nod,
                     fm.v_el_2_mat_idx,
-                    fm.mesh_xy,
+                    fm.xy_nodes,
                     elastic_props.n_mats_ac,
                     elastic_props.c_IJ,
                     self.q_AC,
@@ -1258,7 +1257,7 @@ class ACSimulation(Simulation):
                     fm.n_nodes,
                     fm.table_nod,
                     fm.v_el_2_mat_idx,
-                    fm.mesh_xy,
+                    fm.xy_nodes,
                     elastic_props.n_mats_ac,
                     elastic_props.acten_cijkz,
                     self.q_AC,
@@ -1279,7 +1278,7 @@ class ACSimulation(Simulation):
                 fm.n_nodes,
                 fm.table_nod,
                 fm.v_el_2_mat_idx,
-                fm.mesh_xy,
+                fm.xy_nodes,
                 elastic_props.n_mats_ac,
                 elastic_props.rho,
                 Omega_AC,
@@ -1299,7 +1298,7 @@ class ACSimulation(Simulation):
                 fm.n_nodes,
                 fm.table_nod,
                 fm.v_el_2_mat_idx,
-                fm.mesh_xy,
+                fm.xy_nodes,
                 elastic_props.n_mats_ac,
                 elastic_props.rho,
                 Omega_AC,
@@ -1359,7 +1358,7 @@ class ACSimulation(Simulation):
                     fm.n_nodes,
                     fm.table_nod,
                     fm.v_el_2_mat_idx,
-                    fm.mesh_xy,
+                    fm.xy_nodes,
                     elastic_props.n_mats_ac,
                     elastic_props.eta_ijkl,
                     self.q_AC,
@@ -1384,7 +1383,7 @@ class ACSimulation(Simulation):
                     fm.n_nodes,
                     fm.table_nod,
                     fm.v_el_2_mat_idx,
-                    fm.mesh_xy,
+                    fm.xy_nodes,
                     elastic_props.n_mats_ac,
                     elastic_props.eta_ijkl,
                     self.q_AC,
@@ -1470,5 +1469,5 @@ def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
     #             int(i) for i in f.readline().split()]
     #     table_nod_AC = np.zeros((6, self.n_msh_el))
     #     type_el_AC = np.zeros(self.n_msh_el)
-    #     mesh_xy_AC = np.zeros((2, self.n_msh_pts))
+    #     xy_nodes_AC = np.zeros((2, self.n_msh_pts))
     #     node_physindex_AC = np.zeros(self.n_msh_pts)

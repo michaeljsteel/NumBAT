@@ -1,4 +1,4 @@
-for fb in moving_boundary.f quad_triangle.f
+for fb in get_H_field_p3.f h_mode_field_ez.f interp_nod_2d.f
 do
     fn=`basename $fb .f`
 
@@ -18,10 +18,7 @@ done
 #csr_length_AC.f
 #em_mode_e_energy_int.f em_mode_energy_int_ez.f em_mode_energy_int.f
 #em_mode_energy_int_v2_ez.f em_mode_energy_int_v2.f em_mode_energy_int_v2_wg.f
-#get_H_field_p3.f
-#gmsh_post_process_ac.f gmsh_post_process.f
-#h_mode_field_ez.f interp_nod_2d.f
 #jacobian_p1_2d.f jacobian_p2_2d.f
-#lattice_vec.f moving_boundary.f periodic_cond.f periodic_N_E_F.f periodic_node.f
+#lattice_vec.f moving_boundary.f 
 #photoelastic_int.f photoelastic_int_v2.f quad_triangle.f 
 #sort_csr.f sort_int.f z_indexx_AC.f z_indexx.f
