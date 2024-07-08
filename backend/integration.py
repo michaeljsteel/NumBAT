@@ -434,7 +434,7 @@ def gain_and_qs(
     #            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
     #                alpha = nb_fortran.ac_alpha_int_v2(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.mesh_xy,
+    #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.xy_nodes,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
     #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
     #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
@@ -445,7 +445,7 @@ def gain_and_qs(
     #                        "\n using slow quadrature integration by default.\n\n")
     #                alpha = nb_fortran.ac_alpha_int(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.mesh_xy,
+    #                    sim_AC.table_nod, sim_AC.v_el_2_mat_idx, sim_AC.xy_nodes,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
     #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
     #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
@@ -490,7 +490,7 @@ def gain_and_qs(
             nnodes,
             fem_ac.table_nod,
             fem_ac.v_el_2_mat_idx,
-            fem_ac.mesh_xy,
+            fem_ac.xy_nodes,
             elastic_props.n_mats_ac,
             elastic_props.p_ijkl,
             q_AC,
@@ -518,7 +518,7 @@ def gain_and_qs(
             nnodes,
             fem_ac.table_nod,
             fem_ac.v_el_2_mat_idx,
-            fem_ac.mesh_xy,
+            fem_ac.xy_nodes,
             elastic_props.n_mats_ac,
             elastic_props.p_ijkl,
             q_AC,
@@ -548,7 +548,7 @@ def gain_and_qs(
         nnodes,
         fem_ac.table_nod,
         fem_ac.v_el_2_mat_idx,
-        fem_ac.mesh_xy,
+        fem_ac.xy_nodes,
         elastic_props.n_mats_ac,
         typ_select_in,
         typ_select_out,
@@ -615,8 +615,8 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
     x_tmp = []
     y_tmp = []
     for i in np.arange(simres.n_msh_pts):
-        x_tmp.append(simres.mesh_xy[0, i])
-        y_tmp.append(simres.mesh_xy[1, i])
+        x_tmp.append(simres.xy_nodes[0, i])
+        y_tmp.append(simres.xy_nodes[1, i])
     x_min, x_max = np_min_max(x_tmp)
     y_min, y_max = np_min_max(y_tmp)
 
@@ -636,7 +636,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
 
     # unrolling data for the interpolators
     table_nod = simres.table_nod.T
-    mesh_xy = simres.mesh_xy.T
+    xy_nodes = simres.xy_nodes.T
 
     sym_list = []
 
@@ -664,8 +664,8 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
                 # index for the coordinates
                 i_ex = table_nod[i_el, i_node] - 1
                 # values
-                v_x6p[i] = mesh_xy[i_ex, 0]
-                v_y6p[i] = mesh_xy[i_ex, 1]
+                v_x6p[i] = xy_nodes[i_ex, 0]
+                v_y6p[i] = xy_nodes[i_ex, 1]
                 v_Ex6p[i] = mode_fields[0, i_node, ival, i_el]
                 v_Ey6p[i] = mode_fields[1, i_node, ival, i_el]
                 i += 1
@@ -701,7 +701,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         # triangulations
         triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
         triang1p = matplotlib.tri.Triangulation(
-            mesh_xy[:, 0], mesh_xy[:, 1], v_triang1p
+            xy_nodes[:, 0], xy_nodes[:, 1], v_triang1p
         )
 
         # building interpolators: triang1p for the finder, triang6p for the values
@@ -959,8 +959,8 @@ def interp_py_fields(
     x_tmp = []
     y_tmp = []
     for i in np.arange(sim_AC.n_msh_pts):
-        x_tmp.append(sim_AC.mesh_xy[0, i])
-        y_tmp.append(sim_AC.mesh_xy[1, i])
+        x_tmp.append(sim_AC.xy_nodes[0, i])
+        y_tmp.append(sim_AC.xy_nodes[1, i])
     x_min = np.min(x_tmp)
     x_max = np.max(x_tmp)
     y_min = np.min(y_tmp)
@@ -981,7 +981,7 @@ def interp_py_fields(
 
     # unrolling data for the interpolators
     table_nod = sim_AC.table_nod.T
-    mesh_xy = sim_AC.mesh_xy.T
+    xy_nodes = sim_AC.xy_nodes.T
 
     # dense triangulation with multiple points
     v_x6p = np.zeros(6 * sim_AC.n_msh_el)
@@ -1004,8 +1004,8 @@ def interp_py_fields(
             # index for the coordinates
             i_ex = table_nod[i_el, i_node] - 1
             # values
-            v_x6p[i] = mesh_xy[i_ex, 0]
-            v_y6p[i] = mesh_xy[i_ex, 1]
+            v_x6p[i] = xy_nodes[i_ex, 0]
+            v_y6p[i] = xy_nodes[i_ex, 1]
             v_ux6p[i] = sim_AC.fem_evecs[0, i_node, AC_ival, i_el]
             v_uy6p[i] = sim_AC.fem_evecs[1, i_node, AC_ival, i_el]
             v_uz6p[i] = sim_AC.fem_evecs[2, i_node, AC_ival, i_el]

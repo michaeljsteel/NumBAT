@@ -8,7 +8,7 @@
 
 subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    table_nod, type_nod, table_N_E_F, &
-   type_N_E_F, mesh_xy, x_N_E_F, visited)
+   type_N_E_F, xy_nodes, x_N_E_F, visited)
 
 
    implicit none
@@ -17,7 +17,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    integer(8) type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
    integer(8) visited(n_ddl)
 
-   double precision mesh_xy(2,n_msh_pts), x_N_E_F(2,n_ddl)
+   double precision xy_nodes(2,n_msh_pts), x_N_E_F(2,n_ddl)
 
    integer(8) nddl_0
    parameter (nddl_0 = 14)
@@ -72,8 +72,8 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             visited(k) = iel
             inod1 = nut0(inod)
             inod2 = nut_N_E_F(inod)
-            x_N_E_F(1,inod2) = mesh_xy(1,inod1)
-            x_N_E_F(2,inod2) = mesh_xy(2,inod1)
+            x_N_E_F(1,inod2) = xy_nodes(1,inod1)
+            x_N_E_F(2,inod2) = xy_nodes(2,inod1)
             type_N_E_F(1,inod2) = type_nod(inod1)
 
             !  Vertex => dimension zero
@@ -96,11 +96,11 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             visited(k) = iel
 !  Endpoints of the edge
             k1 = nut0(inod-3)
-            xx1 = mesh_xy(1,k1)
-            yy1 = mesh_xy(2,k1)
+            xx1 = xy_nodes(1,k1)
+            yy1 = xy_nodes(2,k1)
             k1 = nut0(ip(1,inod-3))
-            xx2 = mesh_xy(1,k1)
-            yy2 = mesh_xy(2,k1)
+            xx2 = xy_nodes(1,k1)
+            yy2 = xy_nodes(2,k1)
             dx1 = (xx2-xx1)/3.0d0
             dy1 = (yy2-yy1)/3.0d0
 
@@ -122,14 +122,14 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
       !  Coordinate of the vertices
       k1 = nut0(1)
-      xx1 = mesh_xy(1,k1)
-      yy1 = mesh_xy(2,k1)
+      xx1 = xy_nodes(1,k1)
+      yy1 = xy_nodes(2,k1)
       k1 = nut0(2)
-      xx2 = mesh_xy(1,k1)
-      yy2 = mesh_xy(2,k1)
+      xx2 = xy_nodes(1,k1)
+      yy2 = xy_nodes(2,k1)
       k1 = nut0(3)
-      xx3 = mesh_xy(1,k1)
-      yy3 = mesh_xy(2,k1)
+      xx3 = xy_nodes(1,k1)
+      yy3 = xy_nodes(2,k1)
 
       !  The tenth node is at the center of the triangle
       !  dimension(P3) = 10

@@ -31,7 +31,7 @@
 !  Output Parameters:
 
 !  neq: Total number of equations (DOFs).
-!  ineq: An array mapping each DOF to its equation number, considering the boundary conditions.
+!  m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
 !  Local Variables:
 !  i: Loop index.
 !  i_boundary: Indicates if the current DOF is on the boundary.
@@ -54,12 +54,12 @@
 
 
 
-subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
+subroutine bound_cond (bdy_cdn, n_ddl, type_N_E_F, neq, m_eqs)
 
    use numbatmod
 
    integer(8) bdy_cdn, n_ddl, neq
-   integer(8) ineq(3,n_ddl), type_N_E_F(2,n_ddl)
+   integer(8) m_eqs(3,n_ddl), type_N_E_F(2,n_ddl)
 
    integer(8) i, is_boundary, i_dim
 
@@ -71,33 +71,33 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
          i_dim = type_N_E_F(2,i)
 
          if (i_dim .eq. 2) then !  each element is associated to 3 interior Degrees Of Freedom (DOF)
-            ineq(1,i) = neq + 1
-            ineq(2,i) = neq + 2
-            ineq(3,i) = neq + 3
+            m_eqs(1,i) = neq + 1
+            m_eqs(2,i) = neq + 2
+            m_eqs(3,i) = neq + 3
             neq = neq + 3
 
          elseif (i_dim .eq. 1) then  !  each edge is associated to 3 Degrees Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               ineq(1,i) = neq + 1
-               ineq(2,i) = neq + 2
-               ineq(3,i) = neq + 3
+               m_eqs(1,i) = neq + 1
+               m_eqs(2,i) = neq + 2
+               m_eqs(3,i) = neq + 3
                neq = neq + 3
             else
-               ineq(1,i) = 0
-               ineq(2,i) = 0
-               ineq(3,i) = 0
+               m_eqs(1,i) = 0
+               m_eqs(2,i) = 0
+               m_eqs(3,i) = 0
             endif
 
          elseif (i_dim .eq. 0) then   !  each nodee is associated to 1 Degree Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               ineq(1,i) = neq + 1
-               ineq(2,i) = 0
-               ineq(3,i) = 0
+               m_eqs(1,i) = neq + 1
+               m_eqs(2,i) = 0
+               m_eqs(3,i) = 0
                neq = neq + 1
             else
-               ineq(1,i) = 0
-               ineq(2,i) = 0
-               ineq(3,i) = 0
+               m_eqs(1,i) = 0
+               m_eqs(2,i) = 0
+               m_eqs(3,i) = 0
             endif
          else
             write(*,*) "bound_cond: i_dim has invalid value : ", i_dim
@@ -114,14 +114,14 @@ subroutine bound_cond (bdy_cdn, n_ddl, neq, type_N_E_F, ineq)
       do i=1,n_ddl
          i_dim = type_N_E_F(2,i)
          if (i_dim .eq. 2 .or. i_dim .eq. 1) then !  Each element or edge is associated to 3 Degrees Of Freedom (DOF)
-            ineq(1,i) = neq + 1
-            ineq(2,i) = neq + 2
-            ineq(3,i) = neq + 3
+            m_eqs(1,i) = neq + 1
+            m_eqs(2,i) = neq + 2
+            m_eqs(3,i) = neq + 3
             neq = neq + 3
          elseif (i_dim .eq. 0) then
-            ineq(1,i) = neq + 1
-            ineq(2,i) = 0
-            ineq(3,i) = 0
+            m_eqs(1,i) = neq + 1
+            m_eqs(2,i) = 0
+            m_eqs(3,i) = 0
             neq = neq + 1
          else
             write(*,*) "bound_cond: i_dim has invalid value : ", i_dim

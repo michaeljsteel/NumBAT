@@ -6,6 +6,7 @@ module class_ValprVecs
 
    implicit none
    private
+
    type, public  :: ValprVecs
 
       integer(8) :: lworkl
@@ -60,11 +61,15 @@ contains
    subroutine destructor(this)
       type(ValprVecs) :: this
 
-      write(*,*) 'in valprvecs destructor'
-      deallocate(this%v_schur)
-      deallocate(this%vect1,  this%vect2,    this%workd, this%workl)
-      deallocate(this%resid,  this%eval_ritz)
-      deallocate(this%workev, this%rwork,    this%arp_select)
+      if (allocated(this%v_schur)) then
+
+         deallocate(this%v_schur)
+         deallocate(this%vect1,  this%vect2,    this%workd, this%workl)
+         deallocate(this%resid,  this%eval_ritz)
+         deallocate(this%workev, this%rwork,    this%arp_select)
+
+      endif
+
    end subroutine
 
 
@@ -230,42 +235,38 @@ end subroutine
 subroutine valpr_64 (&
    i_base, dim_krylov, n_modes, neq, itermax, &
    arp_tol, nonz, &
-   n_conv, time_fact, time_arpack, debug, errco, emsg, &
+   debug, errco, emsg, &
    row_ind, col_ptr, &
-   mat1_re, mat1_im, mat2, &
-   lhs_re, lhs_im, rhs_re, rhs_im, &
-   v_evals, v_evecs & !, &v_schur
-   )
+   mat1, mat2, &
+   v_evals, v_evecs )
 
    !  mat1 is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
    !  mat2 is the identity and hopefully never used ?
 
    use numbatmod
-   use class_stopwatch
    use class_ValprVecs
+   use alloc
 
    integer(8), intent(in) :: itermax, dim_krylov
-   integer(8) neq, nonz, n_conv, i_base, n_modes
+   integer(8) neq, nonz, i_base, n_modes
    integer(8) row_ind(nonz), col_ptr(neq+1)
-   complex(8) mat2(nonz)
-   double precision mat1_re(nonz), mat1_im(nonz)
-   double precision rhs_re(neq), rhs_im(neq)
-   double precision lhs_re(neq), lhs_im(neq)
+
+   complex(8), intent(in) :: mat1(nonz)
+   complex(8), intent(in) :: mat2(nonz)
 
    complex(8), intent(out) :: v_evals(n_modes)
 
    complex(8), intent(out) :: v_evecs(neq, n_modes)
 
-   double precision time_fact, time_arpack
    integer errco
    character(len=EMSG_LENGTH) emsg
 
-
    ! ----------------------------------------------------------
-   ! Obseletes
 
-   ! integer(8) ext_lworkl
-   ! complex(8) ext_resid(neq),  ext_workd(3*neq)
+   ! UMFPACK requires complex arrays as pairs of doubles
+   double precision, allocatable, dimension(:) :: mat1_re, mat1_im
+   double precision, allocatable, dimension(:) :: lhx_re, lhx_im
+   double precision, allocatable, dimension(:) :: rhs_re, rhs_im
 
 
    double precision umf_control(UMFPACK_CONTROL)
@@ -275,7 +276,7 @@ subroutine valpr_64 (&
 
    type(ValprVecs) :: vecs
 
-   integer(8) :: lworkl
+   integer(8) :: lworkl, n_conv
 
    !  32-bit integers for ARPACK
    integer(4) neq_32, n_modes_32, dim_krylov_32
@@ -290,8 +291,8 @@ subroutine valpr_64 (&
    character(2) arp_which
    logical arp_active
 
-   type(stopwatch) :: clock_main
    integer(8) ui, debug
+
 
    ui = stdout
    errco = 0
@@ -299,7 +300,7 @@ subroutine valpr_64 (&
 
    if (i_base .ne. 0) then
       write(emsg,*) "valpr_64: i_base != 0 : ", i_base, &
-      "valpr_64: UMFPACK requires 0-based indexing"
+         "valpr_64: UMFPACK requires 0-based indexing"
       errco = NBERROR_103
       return
 
@@ -315,9 +316,6 @@ subroutine valpr_64 (&
    !  ----------------------------------------------------------------
    !  factor the matrix and save to a file
    !  ----------------------------------------------------------------
-
-
-   call clock_main%reset()
 
 
    !  umfpack * report status (print level = umf_control(1)) :
@@ -336,6 +334,20 @@ subroutine valpr_64 (&
    !  Pre-order and symbolic analysis
    !  factors neq x neq matrix  in CSR format with col and row arrays col_ptr, row_ind
    !  complex entries are in mat1_re and mat1_im
+
+   call double_alloc_1d(mat1_re, nonz, 'mat1_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(mat1_im, nonz, 'mat1_im', errco, emsg); RETONERROR(errco)
+
+   call double_alloc_1d(lhx_re, neq, 'lhx_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(lhx_im, neq, 'lhx_im', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_re, neq, 'rhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_im, neq, 'rhs_im', errco, emsg); RETONERROR(errco)
+
+
+
+   mat1_re = dble(mat1)
+   mat1_im = dimag(mat1)
+
    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
       umf_symbolic, umf_control, umf_info)
 
@@ -344,24 +356,6 @@ subroutine valpr_64 (&
       write(emsg,*) 'Error occurred in sparse matrix symbolic factorization umf4zsym: ', umf_info (1)
       errco = NBERROR_104
       return
-   endif
-
-   !  print statistics computed so far
-   !  call umf4zpinf (umf_control, umf_info) could also be done.
-   if (debug .eq. 1) then
-      write(ui,80) umf_info (1), umf_info (16),&
-      &(umf_info (21) * umf_info (4)) / 2**20,&
-      &(umf_info (22) * umf_info (4)) / 2**20,&
-      &umf_info (23), umf_info (24), umf_info (25)
-80    format ('  symbolic analysis:',/,&
-         '   status:  ', f5.0, /,&
-         '   time:    ', e10.2, ' (sec)'/,&
-         '   estimates (upper bound) for umf_numeric LU:', /,&
-         '   size of LU:    ', f12.2, ' (MB)', /,&
-         '   memory needed: ', f12.2, ' (MB)', /,&
-         '   flop count:    ', e12.2, /&
-         '   nnz (L):       ', f12.0, /&
-         '   nnz (U):       ', f12.0)
    endif
 
 
@@ -375,35 +369,8 @@ subroutine valpr_64 (&
       return
    endif
 
-   !  print statistics for the umf_numeric factorization
-   !  call umf4zpinf (umf_control, umf_info) could also be done.
-   if (debug .eq. 1) then
-      write(ui,90) umf_info (1), umf_info (66),&
-      &(umf_info (41) * umf_info (4)) / 2**20,&
-      &(umf_info (42) * umf_info (4)) / 2**20,&
-      &umf_info (43), umf_info (44), umf_info (45)
-90    format ('  umf_numeric factorization:',/,&
-      &'   status:  ', f5.0, /,&
-      &'   time:    ', e10.2, /,&
-      &'   actual umf_numeric LU statistics:', /,&
-      &'   size of LU:    ', f12.2, ' (MB)', /,&
-      &'   memory needed: ', f12.2, ' (MB)', /,&
-      &'   flop count:    ', e12.2, /&
-      &'   nnz (L):       ', f12.0, /&
-      &'   nnz (U):       ', f12.0)
-   endif
-
-
-
-
-
 
    call umf4zfsym (umf_symbolic)   !  free the symbolic analysis
-
-   call clock_main%stop()
-   time_fact = clock_main%cpu_time()
-
-
 
    !  The arp_ido parameter is used for reverse communication.
    !  Initially, it should be set to 0.
@@ -431,8 +398,6 @@ subroutine valpr_64 (&
    !----------------------------------------------------
    !  Main loop in inverse communication mode
    !----------------------------------------------------
-
-   call clock_main%reset()
    arp_bmat = 'I'    !  plain (not generalised) eigenvalue problem
    arp_which = 'LM'  !  seek largest magnitude eigs
 
@@ -460,7 +425,7 @@ subroutine valpr_64 (&
 
          call apply_arpack_OPx(neq, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
             nonz, row_ind, col_ptr, mat2, vecs%vect1, vecs%vect2, &
-            lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
+            lhx_re, lhx_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
 
       else if (arp_ido .eq. 2) then  !  Request for y = M*x    !TODO:  IO don't think this ever happens for bmat=I, ie M=I
@@ -480,14 +445,14 @@ subroutine valpr_64 (&
          rhs_im = dimag(vecs%vect2)
 
          !  solve Ax=b, without iterative refinement
-         call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
+         call umf4zsol (UMFPACK_A, lhx_re, lhx_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
          if (umf_info (1) .lt. 0) then
             write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
             errco = NBERROR_107
             return
          endif
 
-         vecs%vect2 = lhs_re + C_IM_ONE * lhs_im
+         vecs%vect2 = lhx_re + C_IM_ONE * lhx_im
 
          call zcopy(neq_32, vecs%vect2, 1, vecs%workd(ipntr_32(2)), 1)
 
@@ -534,47 +499,47 @@ subroutine valpr_64 (&
 
       errco = NBERROR_108
       return
-   else
+   endif
 
-      !  Get the final eigenvectors
-      !'A' means get the actual eigenvectors, not just schur/arnolid vectors
-      arp_rvec = .true. !  get the full set of vectors
-
-      !TODO:  v_schur appears twice in here, feels weird.
-      ! call zneupd (arp_rvec, 'A', arp_select, eval_ritz, &
-      !    v_evecs, &
-      !    neq_32, arp_shift, &
-      !    workev, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
-      !    resid, dim_krylov_32, v_schur, neq_32, arp_iparam, ipntr_32, &
-      !    workd, workl, lworkl_32, rwork, arp_info)
-      call zneupd (arp_rvec, 'A', vecs%arp_select, vecs%eval_ritz, &
-         v_evecs, &
-         neq_32, arp_shift, &
-         vecs%workev, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
-         vecs%resid, dim_krylov_32, vecs%v_schur, neq_32, arp_iparam, ipntr_32, &
-         vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
-
-
-      !  Eigenvalues and eigenvectors:
-      !  The real part of an eigenvalue is listed in the first column of the D table.
-      !  The imaginary part of an eigenvalue is listed in the second column of the D table.
-      !  The eigenvectors are stored in the first n_modes_32 columns of the V table
-      !  when the arp_rvec option is set to true.
-      !  Otherwise, the V table contains an orthogonal basis of the eigenspace.
-
-      if (arp_info .ne. 0) then
-         write(emsg,*) 'VALPR_64: Error with _neupd, arp_info = ', arp_info
-         errco = NBERROR_109
-      else
-         v_evals = vecs%eval_ritz(1:n_modes) ! eval_ritz is one longer due to zneupd requirements
-      endif
+   if (n_conv .ne. n_modes) then
+      write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
+         n_conv, n_modes ,"You should probably increase resolution of mesh!"
+      errco = -19
+      return
    endif
 
 
-   call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
+   !  Get the final eigenvectors
+   !'A' means get the actual eigenvectors, not just schur/arnolid vectors
+   arp_rvec = .true. !  get the full set of vectors
 
-   call clock_main%stop()
-   time_arpack = clock_main%cpu_time()
+   call zneupd (arp_rvec, 'A', vecs%arp_select, vecs%eval_ritz, &
+      v_evecs, &
+      neq_32, arp_shift, &
+      vecs%workev, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
+      vecs%resid, dim_krylov_32, vecs%v_schur, neq_32, arp_iparam, ipntr_32, &
+      vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
+
+
+   !  Eigenvalues and eigenvectors:
+   !  The real part of an eigenvalue is listed in the first column of the D table.
+   !  The imaginary part of an eigenvalue is listed in the second column of the D table.
+   !  The eigenvectors are stored in the first n_modes_32 columns of the V table
+   !  when the arp_rvec option is set to true.
+   !  Otherwise, the V table contains an orthogonal basis of the eigenspace.
+
+   if (arp_info .ne. 0) then
+      write(emsg,*) 'VALPR_64: Error with _neupd, arp_info = ', arp_info
+      errco = NBERROR_109
+   else
+      v_evals = vecs%eval_ritz(1:n_modes) ! eval_ritz is one longer due to zneupd requirements
+   endif
+
+
+
+   call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
+   deallocate(mat1_re, mat1_im)
+   deallocate(lhx_re, lhx_im)
 
    return
 end

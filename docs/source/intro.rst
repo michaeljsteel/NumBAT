@@ -98,6 +98,7 @@ Some key changes you will need to make are as follows:
  * The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
  * The waveguide class ``Struct`` has been renamed to ``Structure``.
  * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
+ * The parameter names for some waveguide types have changed to become more intuitive than the generic ``inc_a_x`` approach.  You can find details for a given structure using ``NumBATApp().wg_structure_help(inc_shape)``.
  * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
  * To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
  * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.

@@ -14,6 +14,8 @@ module numbatmod
 
    implicit none
 
+    integer(8), parameter :: P_NODES_PER_EL = 6
+
    integer, parameter :: EMSG_LENGTH = 2048
    integer, parameter :: FNAME_LENGTH = 1024
 
@@ -35,8 +37,6 @@ module numbatmod
    double precision, parameter :: SI_EPS_0 = 8.8541878188d-12
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
-
-   integer(8), parameter :: nodes_per_el = 6
 
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: nddl_t = 4
