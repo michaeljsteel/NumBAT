@@ -134,7 +134,6 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  &
          enddo
       enddo
    enddo
-   write(*,*) 'csr2'
 
 
 !  squeeze away the zero entries

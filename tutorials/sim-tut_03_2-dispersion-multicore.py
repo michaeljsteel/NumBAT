@@ -94,6 +94,7 @@ acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 print(f"The acoustic wavevector 2*kp = {q_AC:f}")
 
 multiproc = nbapp.is_linux()  # multiproc not yet working for windows and macos
+multiproc = False
 
 # make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
 qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
