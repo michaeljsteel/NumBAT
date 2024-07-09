@@ -478,22 +478,25 @@ At long last, we are ready to build |NUMBAT| itself.
 1. Create a python virtual environment for working with |NUMBAT|.
    You can use any name and location for your environment.
 
-   **Note:** This procedure has recently changed in anaconda  and these instructions may be slightly out of date.
+   **Note:** Here we show the procedure for the Anaconda system.
 
-   To specify a virtual environment tree called `nbpy3` in your home directory, open the *Anaconda prompt* from the Start Menu
+   To specify a virtual environment tree called `nbpy3`, open the *Anaconda prompt* from the Start Menu
    and  enter ::
 
-    $ cd
-    $ python3 -m virtualenv nbpy3
+    $ conda create --name nbpy3
 
+   Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
+
+   Also curiously, the bare virtual environment does not actually contain Python.
 
 #. Activate the new python virtual environment ::
 
-    $ source ~/nbpy3/bin/activate
+    $ conda activate nbpy3
 
 #. Install the necessary python libraries ::
 
-    $ pip3 install numpy matplotlib scipy psutils
+    $ conda install python pip
+    $ pip3 install numpy matplotlib scipy psutil
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
@@ -526,7 +529,26 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
 
+Creating a self-contained command terminal
+---------------------------------------------
+To easily activate your python environment and ensure all paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
 
+Here is a procedure for doing this::
+
+  #. Copy the launcher file  ``numbat_cmd.bat`` to your |NUMBAT| root directory::
+
+    $ copy <NumBAT>\share\numbat_cmd.bat <NumBAT_BASE>
+
+  #. Create a desktop shortcut to the Windows command terminal by using File Explorer to open the folder ``c:\Windows\System32``, typing ``cmd.exe`` in the search box at top right, and then right-clicking *Send to Desktop*.
+
+  #. Right click on the new shortcut and open its *Properties* dialog.
+
+  #. Select the *General* tab and change the name field at the top to *NumBAT Terminal*.
+
+  #. Select the *Shortcut* tab and change the *Target* field to
+``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
+
+  #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
 
 Installing the Linux version via a Virtual Machine
 ------------------------------------------------------
