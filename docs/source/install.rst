@@ -235,7 +235,7 @@ The following steps have worked for us:
 
 #. Open a terminal window on your desktop.
 
-#. Ensure you have the Xcode Command Line Tools installed. This is the basic package for command line development on MacOS. Enter the following command and then follow the prompts::
+#. Ensure you have the Xcode Command Line Tools installed. This is the basic package for command line development on MacOS. If you do not or are not sure, enter the following command and then follow the prompts::
 
    $ xcode-select --install
 
@@ -243,14 +243,17 @@ The following steps have worked for us:
 
    If the installer says Xcode is installed but an upgrade exists, you almost certainly want to apply that upgrade.
 
-#. Make a folder for |NUMBAT| studies and clone the github repository::
+#. Make a folder for your |NUMBAT| work in a suitable location in your folder tree. Then clone the github repository::
 
    $ mkdir numbat
    $ cd numbat
    $ git clone https://github.com/michaeljsteel/NumBAT.git
    $ cd NumBAT
 
-#. If it is not already on your system, install the  `MacPorts package manager <https://macports.org/install.php>`_.
+This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the following.
+
+
+#. If it is not already on your system, install the  `MacPorts package manager <https://macports.org/install.php>`_ using the appropriate installer for your version of MacOS at that page.
 
 #. Install the  `Gmsh  <https://gmsh.info>`_ mesh generation tool.
    Just the main Gmsh installer is fine. The SDK and other features are not required.
@@ -261,19 +264,19 @@ The following steps have worked for us:
 
 #. Install a current gcc (we used gcc13)::
 
-   $ sudo port install gcc-devel
+   $ sudo /opt/local/bin/port install gcc-devel
 
 #. Install the Lapack and Blas linear algebra libraries::
 
-   $ sudo port install lapack
+   $ sudo /opt/local/bin/port install lapack
 
 #. Install the Arpack eigensolver::
 
-   $ sudo port install arpack
+   $ sudo /opt/local/bin/port install arpack
 
 #. Install the SuiteSparse matrix algebra suite::
 
-   $ sudo port install suitesparse
+   $ sudo /opt/local/bin/port install suitesparse
 
 #. Install a current python (we used python 3.12):
 
@@ -282,13 +285,13 @@ The following steps have worked for us:
    (Note that this will install everything in `/Library/Frameworks` and **not** override
    the System python in `/System/Library/Frameworks.`)
 
-#. Install python `virtualenv` package
+#. Install python `virtualenv` package ::
 
    $ cd /Library/Frameworks/Python.framework/Versions/3.12/bin/
    $ ./python3.12 -m pip install --upgrade pip
    $ ./pip3 install virtualenv
 
-#. Create a |NUMBAT|-specific python virtual environment in `~/nbpy3`
+#. Create a |NUMBAT|-specific python virtual environment in `~/nbpy3` ::
 
     $ cd /Library/Frameworks/Python.framework/Versions/3.12/bin/
     $ ./python3 -m virtualenv ~/nbpy3
@@ -312,22 +315,16 @@ The following steps have worked for us:
 
 #. Install the |NUMBAT| matplotlib style file::
 
-   $ mkdir -pR $HOME/.matplotlib/stylelib/
+   $ mkdir -p $HOME/.matplotlib/stylelib/
    $ cp <NumBAT>/backend/|NUMBAT|style.mplstyle $HOME/.matplotlib/stylelib
 
 #. Move to the |NUMBAT| fortran directory::
 
    $ cd backend/fortran
 
-#. Open the file `Makefile` in your preferred text editor and edit the lines at the top  of the file so that:
-
-     - The line `PLAT=MacOS` is active and the others are commented out with a leading `#` symbol.
-     - The value of `MYPYENV` matches the folder of your python virtual environment set up above.
-     - The value of `PYVERMAJMIN` and `SYSTEMPYINC` are set appropriately.
-
 #. Now at last, we can build |NUMBAT| ::
 
-   $ make
+   $ make -f Makefile.macos
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
 
