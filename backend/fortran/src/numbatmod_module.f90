@@ -125,13 +125,17 @@ contains
          end function fsync
       end interface
 
-      integer(8) :: ui, ret
       character(len=*) :: msg
+      integer(8) :: ui
+
+#ifdef __GNUC__
+      integer(8) :: ret
+#endif
 
       write(ui, '(A,A)') '>>>> ', msg
       flush(ui)
 
-#ifndef __INTEL_COMPILER
+#ifdef __GNUC__
             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
 #endif
 
