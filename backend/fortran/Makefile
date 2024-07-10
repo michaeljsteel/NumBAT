@@ -14,7 +14,7 @@ CCACHE=ccache
 gcc: COMPILER_VENDOR="gcc"
 gcc: F_COMP_EXE=$(CCACHE) f95
 gcc: C_COMP_EXE=$(CCACHE) gcc
-gcc: F77FLAGS=-Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./mods -fall-intrinsics -pedantic
+gcc: F77FLAGS=-Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build/mods -fall-intrinsics -pedantic
 gcc: F95FLAGS=$(F77FLAGS)
 gcc: CFLAGS=-Wall -W -g -O2 -fPIC -Ofast -funroll-loops
 gcc: COMP_LIB = -lgfortran -lm
@@ -33,7 +33,7 @@ intel: ONEAPICOMP=/opt/intel/oneapi/compiler/2024.2/bin
 intel: COMP_LIB=-L $(ONEAPI)/2024.2/lib -lifcoremt -lifport -limf
 intel: F_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/ifx
 intel: C_COMP_EXE=$(CCACHE) $(ONEAPICOMP)/icx
-intel: F77FLAGS=-nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module mods -I mods
+intel: F77FLAGS=-nologo -fpp -fPIC -O2 -g -warn all -warn noexternals -module build/mods -I build/mods
 intel: CFLAGS=-fPIC -O2 -Wall -g
 intel: F95FLAGS=$(F77FLAGS)
 
@@ -376,7 +376,7 @@ F2PY_OBJS = $(F2PY_OBJSB:.f90=.o)
 $(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 	-rm $(F2PY_SRCS)
 	-mkdir -p build
-	-mkdir -p mods
+	-mkdir -p build/mods
 	$(F2PY) -m $(NumBAT_MOD) -h $(NumBAT_MOD).pyf $(PYINTERFACE_SRCS) --overwrite-signature --lower
 	$(F2PY) -m $(NumBAT_MOD) $(PYINTERFACE_SRCS) --build-dir build --lower -include\"../src/myhead.h\"
 	cp $(F2PY_DIR)/fortranobject.c build
@@ -384,12 +384,12 @@ $(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 
 $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRAP_OBJ)
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
-	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./mods -o $(NumBAT_MOD).so
+	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./build/mods -o $(NumBAT_MOD).so
 
 
 clean:
 	-rm -f $(SSWRAP_DIR)/*.o
-	-rm -rf build mods __pycache__
+	-rm -rf build __pycache__
 	-rm ./*.mod src/*.mod
 	-rm -f $(NumBAT_MOD).pyf $(NumBAT_MOD).so $(NumBAT_MOD).*.so
 	-rm src/*__genmod.f90
@@ -407,5 +407,23 @@ check:
 	echo mods: $(MODULES_MODS)
 
 
+
+
+mesgccdebug:
+	CC=gcc meson setup --buildtype=debugoptimized mbuild_gccdebug
+	meson configure mbuild_gccdebug
+	meson compile -C mbuild_gccdebug
+
+mesinteldebug:
+	CC=icx meson setup --buildtype=debugoptimized mbuild_inteldebug
+	meson compile -C mbuild_inteldebug
+
+mesgcc:
+	CC=gcc meson setup --buildtype=release mbuild_gcc
+	meson compile -C mbuild_gcc
+
+mesintel:
+	CC=icx meson setup --buildtype=release mbuild_intel
+	meson compile -C mbuild_intel
 
 
