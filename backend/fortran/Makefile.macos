@@ -155,6 +155,7 @@ endif
 
 GCCROOT = /opt/local
 GCCBIN = $(GCCROOT)/bin
+#GCCVER = mp-devel
 GCCVER = mp-13
 
 F_COMP_EXE = $(GCCBIN)/gfortran-$(GCCVER)
@@ -169,7 +170,7 @@ ARPACK_LIB = -L/opt/local/lib -larpack $(LAPACK_LIB)
 #MKL_LIB =
 UMFPACK_INC = -I /opt/local/include
 UMFPACK_LIB = -L/opt/local/lib/ -lumfpack -lcholmod -lamd
-MATHINC = /opt/local/include $(MKL_INC) $(ARPACK_INC)
+MATHINC = -I /opt/local/include $(MKL_INC) $(ARPACK_INC)
 MATHLIB = $(ARPACK_LIB) $(UMFPACK_LIB) $(MKL_LIB) -L /opt/local/lib/gcc13
 #GENLIB = -lrt
 
@@ -186,6 +187,13 @@ PYCINC = -I $(PYFRAMEWORK)/Headers
 
 NUMPYDIR = $(PYPACKAGES)/numpy
 PYINC = -I $(PYROOT)/include/$(PYNAME) -I $(NUMPYDIR)/core/include -I $(NUMPYDIR)/f2py/src/ $(PYCINC)/ -I /opt/local/include/gcc13/c++
+
+ACTPY_DIR := $(shell which python)
+NUMPY_DIR := $(shell python -c "import numpy; print(numpy.get_include())")
+F2PY_DIR := $(shell python -c "import numpy.f2py; print(numpy.f2py.get_include())")
+NUMPY_INC = -I $(NUMPY_DIR)
+F2PY_INC = -I $(F2PY_DIR)
+PYINC = $(PYBASEINC) $(NUMPY_INC) $(F2PY_INC) -I $(SYSTEMPYINC)  -I $(PYFRAMEWORK)/Headers
 
 PYLIB = -L $(PYROOT)/lib -l$(PYNAME)
 PYLIB = -L $(PYFRAMEWORK)/lib -l$(PYNAME)
@@ -212,9 +220,8 @@ SRCS_F90 = $(wildcard src/*.f90)
 OBJS = $(subst src/,build/,$(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o))
 
 #The build order of these matters
-SRCS_MODS = src/numbatmod_module.f90
+SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90 src/alloc_module.f90 src/nbinterfaces_module.f90 src/meshprops.f90
 
-#src/nbinterfaces_module.f90
 
 OBJS_MODA = $(SRCS_MODS:.f90=.o)
 #OBJS_MOD= $(subst src,build,$(OBJS_MODA))
@@ -225,15 +232,20 @@ tt:
 	echo $(SRCS_MODS)
 	echo $(OBJS_MOD)
 	echo $(MODULES_MODS)
+	echo $(ACTPY_DIR)
+	echo $(NUMPY_DIR)
+	echo $(F2PY_DIR) 
+	echo $(NUMPY_INC)
+	echo $(F2PY_INC)
 
 PYINTERFACE_SRCS_IN = pyinterfaces.f90 conv_gmsh.f90 \
 	em_mode_energy_int_v2_ez.f em_mode_energy_int_ez.f em_mode_e_energy_int.f \
-	h_mode_field_ez.f \
+	h_mode_field_ez.f90 \
 	ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f \
 	ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f \
 	ac_alpha_int.f ac_alpha_int_v2.f  \
 	array_size.f90 array_material_ac.f \
-	photoelastic_int.f photoelastic_int_v2.f moving_boundary.f py_entry_cm.f90
+	photoelastic_int.f90 photoelastic_int_v2.f90 moving_boundary.f90 py_entry_cm.f90
 
 	#py_calc_modes.f90 py_entry_cm.f90 py_calc_modes_ac.f90
 
