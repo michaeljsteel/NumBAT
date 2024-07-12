@@ -211,6 +211,7 @@
         "*.win": "makefile",
         "fortranobject.h": "c",
         "numbat_decl.h": "fortran"
-    }
+    },
+    "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild"
 }
 

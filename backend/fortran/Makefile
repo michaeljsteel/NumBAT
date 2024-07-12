@@ -420,7 +420,7 @@ mesinteldebug:
 
 mesgcc:
 	CC=gcc meson setup --buildtype=release mbuild_gcc
-	meson compile -C mbuild_gcc
+#	meson compile -C mbuild_gcc
 
 mesintel:
 	CC=icx meson setup --buildtype=release mbuild_intel

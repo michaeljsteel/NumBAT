@@ -19,6 +19,9 @@ out
 *.pyf
 *.pyd
 *.dll
+explore
+explore/*
+
 
 
 backend/msh/*.msh
@@ -28,6 +31,7 @@ backend/msh/build/*
 
 backend/fortran/nb_build_config.txt
 backend/fortran/build/*
+backend/fortran/mbuild_*
 
 josab_tutorial/*.png
 lit_examples/*.png
