@@ -15,7 +15,7 @@
  ! !
 
 subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-   mesh_props, NEF_props, debug, errco, emsg)
+   mesh_props, NEF_props, errco, emsg)
 
    use numbatmod
    use alloc
@@ -26,8 +26,7 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    type(MeshProps) :: mesh_props
    type(N_E_F_Props) :: NEF_props
 
-   integer(8) debug
-   integer(4), intent(out) :: errco
+   integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
    !  ----------------------------------------------

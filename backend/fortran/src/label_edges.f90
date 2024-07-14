@@ -64,8 +64,7 @@ subroutine label_edges (mesh_props, NEF_props, n_edge, visited)
             !if (type_nod(table_nod(j1,i)) .eq. 0 .or. &
             !type_nod(table_nod(j2,i)) .eq. 0) then
 
-            if (.not. mesh_props%is_boundary_node_2(j1,i) .or. &
-               .not. mesh_props%is_boundary_node_2(j2,i)) then
+            if (.not. mesh_props%is_boundary_node_2(j1,i) .or. .not. mesh_props%is_boundary_node_2(j2,i)) then
 
                !TODO: hook up error msg
                write(*,*) "list_edge: table_nod = ", &

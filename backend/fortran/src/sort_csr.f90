@@ -11,7 +11,7 @@ subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, indx)
    integer(8) row_ptr(neq+1), col_ind(nonz)
    integer(8) indx(max_row_len)
 
-   integer  :: errco  ! TODO: hook up to function call
+   integer(8)  :: errco  ! TODO: hook up to function call
    character(len=EMSG_LENGTH) :: emsg
 
    ! -----------------------------------------------

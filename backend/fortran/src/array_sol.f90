@@ -32,8 +32,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    double precision bloch_vec(2)
    complex(8) sol_0(neq,num_modes)
 
-   integer(8) table_N_E_F(14,n_msh_el)
-   double precision xy_N_E_F(2,n_ddl)
+   !integer(8) table_N_E_F(14,n_msh_el)
+   !double precision xy_N_E_F(2,n_ddl)
 
 
    !integer(8) table_nod(nnodes,n_msh_el)
@@ -49,7 +49,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
    complex(8) v_eigs_beta(num_modes)
    complex(8) mode_pol(4,num_modes)
 
-   integer, intent(out) :: errco
+   integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
    !  Local variables

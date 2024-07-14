@@ -10,44 +10,82 @@
 subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
 
    use numbatmod
+   use alloc
 
    character(len=*), intent(in) :: geo_fname
 
-   integer assertions_on, errco
+   integer(8) assertions_on, errco
    character(len=EMSG_LENGTH) emsg
 
-   integer i_sym, gmsh_version
+   integer(8) i_sym, gmsh_version
 
    character(len=FNAME_LENGTH) :: fname_geo, fname_msh, fname_mail
-   integer n_elts, n_pts
+   integer(8) n_elts, n_pts
 
    !  d1 vars contain 3 node lines (node, node, edge)
    !  d2 vars contain 6 node triangs (node, node, node, edge, edge, edge)
    !  number of elts found
-   integer n_gelts_lines, n_gelts_triangs
+   integer(8) n_gelts_lines, n_gelts_triangs
 
    !TODO: these are potentially large arrays for the stack, amek dynamic
 
+!    !  node/edge codes for each elt
+!    integer(8) v_lines_nodes(3,MAX_N_ELTS)
+!    integer(8) v_triang_nodes(6,MAX_N_ELTS)
+
+!    !  material index for each elt
+!    integer(8) v_eltbdy_physcurve(MAX_N_ELTS)
+!    integer(8) v_eltint_physsurf(MAX_N_ELTS)
+!    integer(8) v_nd_iphyscurve(MAX_N_PTS)
+
+! !  Individual nodes, number and position
+!    integer(8) v_ipts(MAX_N_PTS)
+!    double precision vx(MAX_N_PTS),  vy(MAX_N_PTS)
+
+! !Elements, number and material index
+!    integer(8) v_gmsh_elt_type(MAX_N_ELTS)
+!    integer(8) v_ielts(MAX_N_ELTS)
+
+
    !  node/edge codes for each elt
-   integer v_lines_nodes(3,MAX_N_ELTS)
-   integer v_triang_nodes(6,MAX_N_ELTS)
+   integer(8),  dimension(:,:), allocatable :: v_lines_nodes
+   integer(8),  dimension(:,:), allocatable :: v_triang_nodes
 
    !  material index for each elt
-   integer v_eltbdy_physcurve(MAX_N_ELTS)
-   integer v_eltint_physsurf(MAX_N_ELTS)
-   integer v_nd_iphyscurve(MAX_N_PTS)
+   integer(8),  dimension(:), allocatable :: v_eltbdy_physcurve
+   integer(8),  dimension(:), allocatable :: v_eltint_physsurf
+   integer(8),  dimension(:), allocatable :: v_nd_iphyscurve
 
 !  Individual nodes, number and position
-   integer v_ipts(MAX_N_PTS)
-   double precision vx(MAX_N_PTS),  vy(MAX_N_PTS)
+   integer(8),  dimension(:), allocatable :: v_ipts
+   double precision, dimension(:), allocatable :: vx,  vy
 
 !Elements, number and material index
-   integer v_gmsh_elt_type(MAX_N_ELTS)
-   integer v_ielts(MAX_N_ELTS)
+   integer(8),  dimension(:), allocatable :: v_gmsh_elt_type
+   integer(8),  dimension(:), allocatable :: v_ielts
 
-   integer i, j
-   integer fnamelen
-   integer  iphyscurve, nd
+
+
+   integer(8) i, j
+   integer(8) fnamelen
+   integer(8)  iphyscurve, nd
+
+
+
+   call integer_alloc_2d(v_lines_nodes, 3_8, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_2d(v_triang_nodes, 6_8, MAX_N_ELTS, 'v_triang_nodes', errco, emsg); RETONERROR(errco)
+
+   call integer_alloc_1d(v_eltbdy_physcurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_eltint_physsurf, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_nd_iphyscurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_ipts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+
+   call double_alloc_1d(vx, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(vy, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+
+   call integer_alloc_1d(v_gmsh_elt_type, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_ielts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+
 
 
    gmsh_version = 2
@@ -145,7 +183,7 @@ end
 
 !  character(len=EMSG_LENGTH) :: com_line
 !  character(len=256) :: gmsh_app
-!  integer sysret
+!  integer(8) sysret
 
 
 ! #ifdef __APPLE__
@@ -174,18 +212,18 @@ subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
    implicit none
 
    character(len=*), intent(in) :: fname_msh
-   integer gmsh_version
+   integer(8) gmsh_version
 
-   integer n_pts, n_elts
-   integer errco
+   integer(8) n_pts, n_elts
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
-   integer v_ipts(MAX_N_PTS)
-   integer v_ielts(MAX_N_ELTS), v_gmsh_elt_type(MAX_N_ELTS)
+   integer(8) v_ipts(MAX_N_PTS)
+   integer(8) v_ielts(MAX_N_ELTS), v_gmsh_elt_type(MAX_N_ELTS)
    double precision vx(MAX_N_PTS), vy(MAX_N_PTS)
 
    character str_in*(FNAME_LENGTH)
-   integer ui_in, i, j, tmp1
+   integer(8) ui_in, i, j, tmp1
 
    !  Check size of .msh file
    ui_in = 24
@@ -209,6 +247,10 @@ subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
       close(ui_in)
       return
    endif
+
+
+
+   !TODO: allocate arrays here
 
    !  Maps gmsh node number to our sequence of node numbers 1..n_pts
    !  Seems like v_ipts just ends up as trivial mapping 1..n_pts,
@@ -289,34 +331,34 @@ subroutine decode_element_tags(fname_msh, gmsh_version, &
 
    use numbatmod
 
-   integer, parameter :: GMSH_TYPE_LINE2NODE=8
-   integer, parameter :: GMSH_TYPE_TRIANG6NODE=9
+   integer(8),  parameter :: GMSH_TYPE_LINE2NODE=8
+   integer(8),  parameter :: GMSH_TYPE_TRIANG6NODE=9
 
    character(len=*), intent(in) :: fname_msh
 
-   integer n_elts, n_pts, gmsh_version
-   integer n_gelts_triangs, n_gelts_lines
+   integer(8) n_elts, n_pts, gmsh_version
+   integer(8) n_gelts_triangs, n_gelts_lines
 
 
 
-   integer v_ipts(MAX_N_PTS)
-   integer v_gmsh_elt_type(MAX_N_ELTS)
+   integer(8) v_ipts(MAX_N_PTS)
+   integer(8) v_gmsh_elt_type(MAX_N_ELTS)
 
-   integer v_lines_nodes(3, MAX_N_ELTS)
-   integer v_triang_nodes(6, MAX_N_ELTS)
+   integer(8) v_lines_nodes(3, MAX_N_ELTS)
+   integer(8) v_triang_nodes(6, MAX_N_ELTS)
 
-   integer v_eltbdy_physcurve(MAX_N_ELTS)
-   integer v_eltint_physsurf(MAX_N_ELTS)
+   integer(8) v_eltbdy_physcurve(MAX_N_ELTS)
+   integer(8) v_eltint_physsurf(MAX_N_ELTS)
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    !-----------------------------------
 
    character str_in*(FNAME_LENGTH)
-   integer dummy(10), n_pretags, physmat_tag, i,j,k
+   integer(8) dummy(10), n_pretags, physmat_tag, i,j,k
 
-   integer ui_in
+   integer(8) ui_in
    double precision tmp1, tmp2, tmp3
 
 
@@ -413,17 +455,17 @@ subroutine write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
 
    use numbatmod
    implicit none
-   integer ui_out, i, k
+   integer(8) ui_out, i, k
 
    character fname_mail*(FNAME_LENGTH)
-   integer n_pts,  n_gelts_triangs
+   integer(8) n_pts,  n_gelts_triangs
 
-   integer v_triang_nodes(6,MAX_N_ELTS)
+   integer(8) v_triang_nodes(6,MAX_N_ELTS)
 
 
-   integer v_eltint_physsurf(MAX_N_ELTS)
+   integer(8) v_eltint_physsurf(MAX_N_ELTS)
    double precision vx(MAX_N_PTS), vy(MAX_N_PTS)
-   integer v_nd_iphyscurve(MAX_N_PTS)
+   integer(8) v_nd_iphyscurve(MAX_N_PTS)
 
 
    ui_out = 26

@@ -104,7 +104,7 @@ contains
 
       complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
 
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
       !  ----------------------------------------------
@@ -210,7 +210,7 @@ contains
 
 
       call build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-         mesh_props, NEF_props, debug, errco, emsg)
+         mesh_props, NEF_props, errco, emsg)
       RETONERROR(errco)
 
       call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, n_ddl,  &
@@ -304,7 +304,7 @@ contains
          call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
 
          call valpr_64( i_base, dim_krylov, n_modes, neq, itermax,  arp_tol, nonz, &
-         debug, errco, emsg, &
+         errco, emsg, &
          v_row_ind, v_col_ptr, mOp_stiff, mOp_mass, v_evals_beta, arp_evecs)
          RETONERROR(errco)
 
@@ -333,7 +333,7 @@ contains
 
 
          !  Calculate energy in each medium (typ_el)
-         call mode_energy (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_core, &
+         call mode_energy (n_modes, n_msh_el, nodes_per_el, n_core, &
          mesh_props, &
          n_elt_mats, eps_eff,&
           m_evecs, v_evals_beta, mode_pol)
@@ -423,7 +423,7 @@ contains
 
       integer(8), intent(out) :: n_core(2)
       complex(8), intent(out) :: pp(n_elt_mats), qq(n_elt_mats)
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
       integer(8) i
@@ -504,7 +504,7 @@ contains
       complex(8), dimension(:,:) :: overlap_L
 
 
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
       character(len=FNAME_LENGTH)  overlap_file
@@ -604,7 +604,7 @@ contains
          write(26,*) "bloch_vec/pi = ", (bloch_vec(i)/D_PI,i=1,2)
          z_tmp = sqrt(shift_ksqr)/(2.0d0*D_PI)
          write(26,*) "shift_ksqr = ", shift_ksqr, z_tmp
-         !  write(26,*) "integer super-vector :"
+         !  write(26,*) "integer(8) super-vector :"
          !  write(26,*) "int_used, int_max, int_used/int_max   = ", int_used , int_max, dble(int_used)/dble(int_max)
          !write(26,*) "cmplx super-vector : "
          !write(26,*) "cmplx_used, cmplx_max, cmplx_used/cmplx_max = ", cmplx_used, cmplx_max, dble(cmplx_used)/dble(cmplx_max)

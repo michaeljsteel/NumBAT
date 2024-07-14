@@ -10,21 +10,21 @@ subroutine balance_fem_node_graph(n_pts, n_gelts_triangs, v_triang_nodes, &
 
    use numbatmod
 
-   integer assertions_on, errco
+   integer(8) assertions_on, errco
    character(len=EMSG_LENGTH) emsg
-   integer n_pts, n_gelts_triangs
-   integer v_triang_nodes(6,n_gelts_triangs), v_nd_iphyscurve(n_pts)
+   integer(8) n_pts, n_gelts_triangs
+   integer(8) v_triang_nodes(6,n_gelts_triangs), v_nd_iphyscurve(n_pts)
    double precision vx(n_pts), vy(n_pts)
 
-   integer num_adj               !  total accumulated number of adj nodes
-   integer xadj(MAX_N_PTS+1)     !  cumulative number of connections
-   integer adjncy(MAX_LONG_ADJ)  !  how many nodes have a connection to this one
+   integer(8) num_adj               !  total accumulated number of adj nodes
+   integer(8) xadj(MAX_N_PTS+1)     !  cumulative number of connections
+   integer(8) adjncy(MAX_LONG_ADJ)  !  how many nodes have a connection to this one
 
    !  builds xadj and num_adj
    call make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj)
 
    if (assertions_on .ne. 0) then
-      call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11, errco, emsg)
+      call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11_8, errco, emsg)
       RETONERROR(errco)
    endif
 
@@ -45,15 +45,15 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nod
 
    use numbatmod
 
-   integer n_gelts_triangs, n_pts
-   integer v_triang_nodes(6,n_gelts_triangs)
-   integer xadj(MAX_N_PTS+1)     !  cumulative number of connections
-   integer num_adj
+   integer(8) n_gelts_triangs, n_pts
+   integer(8) v_triang_nodes(6,n_gelts_triangs)
+   integer(8) xadj(MAX_N_PTS+1)     !  cumulative number of connections
+   integer(8) num_adj
 
-   integer i, j, nd, i1
-   integer t_nodes(6)
+   integer(8) i, j, nd, i1
+   integer(8) t_nodes(6)
 
-   integer visited(MAX_N_PTS), neighbours(MAX_N_PTS)
+   integer(8) visited(MAX_N_PTS), neighbours(MAX_N_PTS)
 
    do i = 1,n_pts
       visited(i) = 0
@@ -80,7 +80,7 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nod
             !  Nodes in order clockwise around the triangle are 1(v) 4(e) 2(v) 5(e) 3(v) 6(e)
             nd = t_nodes(i)         !  the first vertex
             neighbours(nd) = neighbours(nd) - 2
-            nd = t_nodes(1+mod(i,3))          !  the second vertex, wrapping back to 1 if it is vertex 3
+            nd = t_nodes(1+mod(i,3_8))          !  the second vertex, wrapping back to 1 if it is vertex 3
             neighbours(nd) = neighbours(nd) - 2
             nd = t_nodes(i+3)       !  the edge
             neighbours(nd) = neighbours(nd) - 2
@@ -104,13 +104,14 @@ end subroutine
 subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, num_adj, adjncy)
 
    use numbatmod
-   integer n_gelts_triang, n_pts, num_adj
-   integer v_triang_nodes(6,n_gelts_triang)
-   integer xadj(n_pts+1), adjncy(num_adj)
+   integer(8) n_gelts_triang, n_pts
+   integer(8) num_adj
+   integer(8) v_triang_nodes(6,n_gelts_triang)
+   integer(8) xadj(n_pts+1), adjncy(num_adj)
 
-   integer lb2(MAX_N_PTS)
-   integer t_nodes(6)
-   integer i, j, k, i1, k1, ind1, ind2, m, m1
+   integer(8) lb2(MAX_N_PTS)
+   integer(8) t_nodes(6)
+   integer(8) i, j, k, i1, k1, ind1, ind2, m, m1
 
    do i = 1,n_pts
       lb2(i)=0
@@ -156,10 +157,10 @@ end subroutine
  !----------------------------------------------------------------------------
 subroutine check_point_separations(n_pts, vx, vy, errco, emsg)
    use numbatmod
-   integer n_pts, errco
+   integer(8) n_pts, errco
    double precision vx(*), vy(*)
    character(len=EMSG_LENGTH) emsg
-   integer i,j, mi, mj
+   integer(8) i,j, mi, mj
    double precision minsep, sep
 
    mi = 0
@@ -198,12 +199,13 @@ end subroutine
  !  Every elt of adjncy except the last should be nonzero (apparently).
 subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, emsg)
    use numbatmod
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
-   integer n_pts, num_adj
-   integer adjncy(num_adj), perm(*)
-   integer permcheck(n_pts)
-   integer found_bad, i
+   integer(8) n_pts
+   integer(8) num_adj
+   integer(8) adjncy(num_adj), perm(*)
+   integer(8) permcheck(n_pts)
+   integer(8) found_bad, i
 
    write(*,*)  'Checking permutation and adjacency invariants:'
    !  Is the permutation actually a permutation (a bijection)? Is every value mapped somewhere?
@@ -262,14 +264,14 @@ end subroutine
 subroutine apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy)
    use numbatmod
 
-   integer n_gelts_triang, n_pts
-   integer perm(MAX_N_PTS)
-   integer idfn(n_pts)
-   integer v_triang_nodes(6,n_gelts_triang)
+   integer(8) n_gelts_triang, n_pts
+   integer(8) perm(MAX_N_PTS)
+   integer(8) idfn(n_pts)
+   integer(8) v_triang_nodes(6,n_gelts_triang)
    double precision vx(n_pts), vy(n_pts)
 
-   integer i,j
-   integer invperm(MAX_N_PTS), idfn_r(MAX_N_PTS)
+   integer(8) i,j
+   integer(8) invperm(MAX_N_PTS), idfn_r(MAX_N_PTS)
    double precision x_r(MAX_N_PTS), y_r(MAX_N_PTS)
 
    do i = 1, n_pts
@@ -342,16 +344,17 @@ subroutine rebalance_adjacency_matrix(n_pts, n_gelts_triang, v_triang_nodes, &
 
    use numbatmod
 
-   integer errco, assertions_on
+   integer(8) errco, assertions_on
    character(len=EMSG_LENGTH) emsg
-   integer n_gelts_triang, n_pts, num_adj
-   integer v_triang_nodes(6,n_gelts_triang), idfn(n_pts)
-   integer xadj(n_pts+1), adjncy(num_adj)
+   integer(8) n_gelts_triang, n_pts
+   integer(8) num_adj
+   integer(8) v_triang_nodes(6,n_gelts_triang), idfn(n_pts)
+   integer(8) xadj(n_pts+1), adjncy(num_adj)
    double precision vx(n_pts), vy(n_pts)
 
 
-   integer mask(MAX_N_PTS), perm(MAX_N_PTS)
-   integer xls(MAX_N_PTS)
+   integer(8) mask(MAX_N_PTS), perm(MAX_N_PTS)
+   integer(8) xls(MAX_N_PTS)
 
 
    call genrcm(n_pts, xadj, adjncy, perm, mask, xls)
@@ -398,8 +401,8 @@ end subroutine
 
 subroutine  genrcm (neqns, xadj, adjncy, perm, mask, xls)
 
-   integer adjncy(*), mask(*), perm(*), xls(*)
-   integer xadj(*), ccsize, i, neqns, nlvl, num, root
+   integer(8) adjncy(*), mask(*), perm(*), xls(*)
+   integer(8) xadj(*), ccsize, i, neqns, nlvl, num, root
 
    do i = 1, neqns
       mask(i) = 1
@@ -447,9 +450,9 @@ subroutine fnroot (root,xadj,adjncy,mask,nlvl,xls,ls)
 
    !  ------------------------------------------------------------------
 
-   integer adjncy(*), ls(*), mask(*), xls(*)
-   integer xadj(*), ccsize, j, jstrt, k, kstop, kstrt
-   integer mindeg, nabor, ndeg, nlvl, node, nunlvl, root
+   integer(8) adjncy(*), ls(*), mask(*), xls(*)
+   integer(8) xadj(*), ccsize, j, jstrt, k, kstop, kstrt
+   integer(8) mindeg, nabor, ndeg, nlvl, node, nunlvl, root
 
    !  ------------------------------------------------------------------
 
@@ -523,9 +526,9 @@ subroutine  rcm (root,xadj,adjncy,mask,perm,ccsize,deg)
    !  In summary, this subroutine applies the Reverse Cuthill-McKee algorithm to generate a reordering (`perm`) that reduces the bandwidth of the graph's adjacency matrix. The degree information is used to influence the ordering during the BFS traversal. The output parameters include the size of the connected component (`ccsize`) and the degrees of nodes in the connected component (`deg`).
    !  ------------------------------------------------------------------
 
-   integer adjncy(*),deg(*),mask(*),perm(*)
-   integer xadj(*),ccsize,fnbr,i,j,jstop,jstrt,k,l,lbegin,lnbr
-   integer lperm,lvlend,nbr,node,root
+   integer(8) adjncy(*),deg(*),mask(*),perm(*)
+   integer(8) xadj(*),ccsize,fnbr,i,j,jstop,jstrt,k,l,lbegin,lnbr
+   integer(8) lperm,lvlend,nbr,node,root
 
    !  ------------------------------------------------------------------
 
@@ -614,9 +617,9 @@ subroutine  rootls (root,xadj,adjncy,mask,nlvl,xls,ls)
 
    !  ------------------------------------------------------------------
 
-   integer adjncy(*), ls(*), mask(*), xls(*)
-   integer xadj(*), i, j, jstop, jstrt, lbegin
-   integer ccsize, lvlend, lvsize, nbr, nlvl, node, root
+   integer(8) adjncy(*), ls(*), mask(*), xls(*)
+   integer(8) xadj(*), i, j, jstop, jstrt, lbegin
+   integer(8) ccsize, lvlend, lvsize, nbr, nlvl, node, root
    !  ------------------------------------------------------------------
 
    mask(root) = 0
@@ -693,9 +696,9 @@ end
 
 subroutine  degree (root, xadj, adjncy, mask, deg, ccsize, ls)
 
-   integer adjncy(*), deg(*), ls(*), mask(*)
-   integer xadj(*), ccsize, i, ideg, j, jstop, jstrt
-   integer lbegin, lvlend, lvsize, nbr, node, root
+   integer(8) adjncy(*), deg(*), ls(*), mask(*)
+   integer(8) xadj(*), ccsize, i, ideg, j, jstop, jstrt
+   integer(8) lbegin, lvlend, lvsize, nbr, node, root
 
 
    ls(1) = root
@@ -708,7 +711,7 @@ subroutine  degree (root, xadj, adjncy, mask, deg, ccsize, ls)
    do 400 i = lbegin, lvlend
       node = ls(i)
       jstrt = -xadj(node)
-      jstop = iabs(xadj(node + 1)) - 1
+      jstop = abs(xadj(node + 1)) - 1
       ideg = 0
 
       if (jstop.lt.jstrt) go to 300
@@ -743,9 +746,9 @@ end
  !  subroutine type_arete(i, i1, i2, ne_d1, nu_d1, typ_el_d1)
 
  !  use numbatmod
- !  integer i, i1, i2, ne_d1
- !  integer nu_d1(3,ne_d1), typ_el_d1(ne_d1)
- !  integer j, k, k1, k2
+ !  integer(8) i, i1, i2, ne_d1
+ !  integer(8) nu_d1(3,ne_d1), typ_el_d1(ne_d1)
+ !  integer(8) j, k, k1, k2
 
  !  i = 0
  !  do j=1,ne_d1
@@ -771,9 +774,9 @@ end
 
  !  ------------------------------------------------------------------
 
- !  integer flag, i, iplusj_mod3(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
- !  integer liste(maxvis,ns), maxvis, nb(ns), numero(maxvis,ns)
- !  integer tcp2(6,ne)
+ !  integer(8) flag, i, iplusj_mod3(3), is1, is2, j, jel, jj, ne, n_pts, ns, temp
+ !  integer(8) liste(maxvis,ns), maxvis, nb(ns), numero(maxvis,ns)
+ !  integer(8) tcp2(6,ne)
  !  c
  !  ------------------------------------------------------------------
  !  c
@@ -841,7 +844,7 @@ end
 
  !  ------------------------------------------------------------------!!
  !  subroutine prepmailp2(tcp1,maxvis,ne,ns,visited)!c!  ------------------------------------------------------------------!
- !  integer i, ii, jel, maxvis, ne, ns, tcp1(6,ne), visited(ns)!c!  ------------------------------------------------------------------!c
+ !  integer(8) i, ii, jel, maxvis, ne, ns, tcp1(6,ne), visited(ns)!c!  ------------------------------------------------------------------!c
  !  do i = 1, ns
  !  visited(i) = 0
  !  enddo!!  do jel = 1, ne
@@ -865,20 +868,20 @@ end
  !  *                       file1_mesh, ui)
 
  !  use numbatmod
- !  integer n_pts, i_err
- !  integer type_nod0(n_pts)
+ !  integer(8) n_pts, i_err
+ !  integer(8) type_nod0(n_pts)
  !  double precision x(n_pts), y(n_pts)
 
- !  integer type_nod, n_typ2
+ !  integer(8) type_nod, n_typ2
  !  double precision d_period, tmp, tmp2
 
- !  integer  n_border1, n_border2, n_typ1, ui
- !  integer i, j, i1, i2, j1, j2, max_period
+ !  integer(8)  n_border1, n_border2, n_typ1, ui
+ !  integer(8) i, j, i1, i2, j1, j2, max_period
  !  parameter(max_period=2000)
  !  double precision x2(2), x1(2), y_min, y_max
  !  double precision delta_x, tol
- !  integer period1(max_period), period2(max_period)
- !  integer period3(2,max_period)
+ !  integer(8) period1(max_period), period2(max_period)
+ !  integer(8) period3(2,max_period)
  !  character*(*) file1_mesh
  !  character file_ui*100
  !  common/imp_file/file_ui

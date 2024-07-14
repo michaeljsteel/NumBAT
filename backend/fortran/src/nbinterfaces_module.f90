@@ -17,7 +17,7 @@ module nbinterfaces
 
          integer(8) debug
 
-         integer errco
+         integer(8) errco
          character(len=EMSG_LENGTH) emsg
 
       end subroutine
@@ -51,7 +51,7 @@ module nbinterfacesb
 
          integer(8) debug
 
-         integer errco
+         integer(8) errco
          !character(len=EMSG_LENGTH) emsg
          character(len=*) emsg
       end subroutine

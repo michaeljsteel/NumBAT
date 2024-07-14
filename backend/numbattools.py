@@ -55,7 +55,7 @@ class CalcThread(threading.Thread):
     popped from queue.Queue q_work with results pushed to queue q_result.
 
     First element of the task tuple drawn from the queue should be
-    an integer identifying which piece of work is being done.
+    an integer(8) identifying which piece of work is being done.
 
     An additional optional queue q_work_noshare contains any tasks that may involve
     non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
@@ -164,7 +164,7 @@ class CalcThread(threading.Thread):
 
 
 def run_in_current_thread(task_func, q_result, q_work, verbose=False):
-    '''Simply executes task_func(tsk) on the tasks in q_work in a single 
+    '''Simply executes task_func(tsk) on the tasks in q_work in a single
     non-threaded loop, placing the results in q_result.'''
 
     total_tasks = q_work.qsize()
@@ -176,7 +176,7 @@ def run_in_current_thread(task_func, q_result, q_work, verbose=False):
         q_result.put(res)
 
 
-def launch_worker_threads_and_wait(num_workers, task_func, q_result, 
+def launch_worker_threads_and_wait(num_workers, task_func, q_result,
                                    q_work, q_work_noshare=None, verbose=False):
 
     if num_workers < 1:  # avoid separate thread if num_workers <= 0
@@ -258,7 +258,7 @@ class CalcProcess(multiprocessing.Process):
     popped from multiprocessing.JoinableQueue q_work with results pushed to queue q_result.
 
     First element of the task tuple drawn from the queue should be
-    an integer identifying which piece of work is being done.
+    an integer(8) identifying which piece of work is being done.
 
     An additional optional queue q_work_noshare contains any tasks that may involve
     non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
@@ -326,7 +326,7 @@ class CalcProcess(multiprocessing.Process):
         print(f"{self.name} is running off the end")
 
 
-def launch_worker_processes_and_wait(num_workers, task_func, 
+def launch_worker_processes_and_wait(num_workers, task_func,
                                      q_result, q_work, verbose=False):
 
     if num_workers < 1:  # avoid separate thread if num_workers <= 0

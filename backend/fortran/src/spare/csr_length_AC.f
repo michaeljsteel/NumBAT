@@ -7,7 +7,7 @@ c
      *   nonz, max_row_len, ipointer, int_max, debug)
 c
       use numbatmod
-      integer nnodes
+      integer(8) nnodes
       integer(8) nel, neq, n_ddl, nonz_max, nonz
       integer(8) ipointer, int_max
       integer(8) table_N_E_F(nnodes,nel)
@@ -20,7 +20,7 @@ c     Local variables
 C       integer(8) nonz_max_0
 C       parameter (nonz_max_0=2**22)
 C       integer(8) col_ind_0(nonz_max_0)
-      integer alloc_stat
+      integer(8) alloc_stat
       integer(8), dimension(:), allocatable :: col_ind_0
 
       integer(8), parameter :: nddl_0 = 6

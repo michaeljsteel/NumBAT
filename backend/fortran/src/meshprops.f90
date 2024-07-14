@@ -48,7 +48,7 @@ module class_MeshProps
    contains
 
       procedure :: init => MeshProps_init
-      final :: MeshProps_destructor
+      !final :: MeshProps_destructor
 
       procedure :: fill_python_arrays => MeshProps_fill_python_arrays
       procedure :: is_boundary_node => MeshProps_is_boundary_node
@@ -78,7 +78,7 @@ module class_MeshProps
    contains
 
       procedure :: init => N_E_F_Props_init
-      final :: N_E_F_Props_destructor
+      ! final :: N_E_F_Props_destructor
 
    end type N_E_F_Props
 
@@ -90,7 +90,7 @@ contains
 
       class(MeshProps) :: this
       integer(8) :: n_msh_el, n_msh_pts, n_elt_mats
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
       this%n_msh_pts = n_msh_pts
@@ -112,10 +112,10 @@ contains
 
    end subroutine
 
-   subroutine MeshProps_destructor(this)
-      type(MeshProps) :: this
+   ! subroutine MeshProps_destructor(this)
+   !    type(MeshProps) :: this
 
-   end subroutine
+   ! end subroutine
 
    subroutine MeshProps_fill_python_arrays(this, &
       type_el, type_nod, table_nod, xy_nodes)
@@ -135,16 +135,16 @@ contains
    end subroutine
 
    ! boundary nodes have non zero GMsh physindex codes
-   logical function  MeshProps_is_boundary_node(this, nd) result(res)
-      class(MeshProps) :: this
-      integer(8) :: nd
+   pure logical function  MeshProps_is_boundary_node(this, nd) result(res)
+      class(MeshProps), intent(in) :: this
+      integer(8), intent(in)  :: nd
 
       res = this%type_nod(nd) .ne. 0
    end function
 
-   logical function MeshProps_is_boundary_node_2(this, i_nd, i_el) result(res)
-      class(MeshProps) :: this
-      integer(8) :: i_nd, i_el
+   pure logical function MeshProps_is_boundary_node_2(this, i_nd, i_el) result(res)
+      class(MeshProps), intent(in) :: this
+      integer(8), intent(in)  :: i_nd, i_el
       res = this%type_nod(this%table_nod(i_nd, i_el)) .ne. 0
    end function
 
@@ -165,7 +165,7 @@ contains
 
       class(N_E_F_Props) :: this
       integer(8) :: n_msh_el, n_ddl
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
       call double_alloc_2d(this%xy_nodes, 2_8, n_ddl, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
@@ -174,10 +174,10 @@ contains
 
    end subroutine
 
-   subroutine N_E_F_Props_destructor(this)
-      type(N_E_F_Props) :: this
+   ! subroutine N_E_F_Props_destructor(this)
+   !    type(N_E_F_Props) :: this
 
-   end subroutine
+   ! end subroutine
 
 
 

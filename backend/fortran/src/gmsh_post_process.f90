@@ -17,7 +17,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
    integer(8) visited(npt)
    double precision x(2,npt)
    complex(8) sol(3,nnodes+7,nval,nel), n_eff(nb_typ_el)
-   integer alloc_stat
+   integer(8) alloc_stat
    complex(8), dimension(:,:), allocatable :: sol_avg
 
    complex(8) val_cmplx(nval)

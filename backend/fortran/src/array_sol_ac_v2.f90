@@ -14,7 +14,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
    use numbatmod
 
-   integer nnodes
+   integer(8) nnodes
    integer(8) num_modes, n_msh_el, n_msh_pts, neq
 !  TODO: n_core seems to be never initialised. Is that code ever called?
    integer(8) n_core(2), type_el(n_msh_el)
