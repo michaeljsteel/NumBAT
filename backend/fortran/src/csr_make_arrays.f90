@@ -16,7 +16,7 @@ subroutine make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
 
    integer(8) debug
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    ! ------------------------------------------
@@ -71,7 +71,7 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  &
 
    integer(8) debug
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    ! --------------------------------------------

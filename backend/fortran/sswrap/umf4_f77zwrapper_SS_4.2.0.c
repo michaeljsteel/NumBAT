@@ -32,7 +32,7 @@
 #define LEN 200
 
 /* -------------------------------------------------------------------------- */
-/* integer type: int or SuiteSparse_long */
+/* integer(8) type: int or SuiteSparse_long */
 /* -------------------------------------------------------------------------- */
 
 #if defined (ZLONG)

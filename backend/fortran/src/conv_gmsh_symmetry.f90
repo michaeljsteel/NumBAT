@@ -3,21 +3,21 @@ subroutine symmetry(n_pts, ne, max_n_gelts_triangs, idfn, nu, typ_el, x, y, i_sy
    !!  symmetry: symmetrize an FEM mesh!c*******************************************************
 
    use numbatmod
-   integer i_sym, max_n_gelts_triangs
+   integer(8) i_sym, max_n_gelts_triangs
 
-   integer ne, n_pts
-   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
-   integer idfn(MAX_N_PTS)
+   integer(8) ne, n_pts
+   integer(8) nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
+   integer(8) idfn(MAX_N_PTS)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
 
-   integer max_n_gelts_triangs_0, MAX_N_PTS_0
+   integer(8) max_n_gelts_triangs_0, MAX_N_PTS_0
    parameter(MAX_N_PTS_0=250000)
    parameter (max_n_gelts_triangs_0=120000)
-   integer ne_0, n_pts_0, idfn_0(MAX_N_PTS_0)
-   integer nu_0(6,max_n_gelts_triangs_0), typ_el_0(max_n_gelts_triangs_0)
+   integer(8) ne_0, n_pts_0, idfn_0(MAX_N_PTS_0)
+   integer(8) nu_0(6,max_n_gelts_triangs_0), typ_el_0(max_n_gelts_triangs_0)
    double precision x_0(MAX_N_PTS_0),  y_0(MAX_N_PTS_0)
-   integer tab_ne(max_n_gelts_triangs_0), tab_n_pts(MAX_N_PTS_0,3)!c
-   integer i, j
+   integer(8) tab_ne(max_n_gelts_triangs_0), tab_n_pts(MAX_N_PTS_0,3)!c
+   integer(8) i, j
 
    n_pts_0 = n_pts
    ne_0 = ne
@@ -73,24 +73,24 @@ end
 subroutine y_symmetry(n_pts, ne, ne_0, n_pts_0,  max_n_gelts_triangs, idfn, nu, typ_el, &
    idfn_0, nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
    use numbatmod
-   integer max_n_gelts_triangs
+   integer(8) max_n_gelts_triangs
 
-   integer ne_0, n_pts_0, idfn_0(MAX_N_PTS)
-   integer nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
+   integer(8) ne_0, n_pts_0, idfn_0(MAX_N_PTS)
+   integer(8) nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
 
-   integer ne, n_pts, idfn(MAX_N_PTS)
-   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
+   integer(8) ne, n_pts, idfn(MAX_N_PTS)
+   integer(8) nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
 
-   integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
+   integer(8) tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
    double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!  Local variables
-   integer i, i1, i2, i_a, i_b, j, j1, j2
-   integer ne_1, n_pts_1, n_pts_2
-   integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
+   integer(8) i, i1, i2, i_a, i_b, j, j1, j2
+   integer(8) ne_1, n_pts_1, n_pts_2
+   integer(8) t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
    double precision tol, y_min, y_max, y_mid
    double precision x_a, y_a, x_b, y_b
 
-   integer ui, debug
+   integer(8) ui, debug
    character file_ui*100
    common/imp/ui, debug
    common/imp_file/file_ui
@@ -226,24 +226,24 @@ end
 subroutine x_symmetry(n_pts, ne, ne_0, n_pts_0, max_n_gelts_triangs, idfn, nu, typ_el, &
    idfn_0, nu_0, typ_el_0, x, y, x_0, y_0, tab_ne, tab_n_pts)
    use numbatmod
-   integer max_n_gelts_triangs
+   integer(8) max_n_gelts_triangs
 
-   integer ne_0, n_pts_0, idfn_0(MAX_N_PTS)
-   integer nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
+   integer(8) ne_0, n_pts_0, idfn_0(MAX_N_PTS)
+   integer(8) nu_0(6,max_n_gelts_triangs), typ_el_0(max_n_gelts_triangs)
 
-   integer ne, n_pts, idfn(MAX_N_PTS)
-   integer nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
+   integer(8) ne, n_pts, idfn(MAX_N_PTS)
+   integer(8) nu(6,max_n_gelts_triangs), typ_el(max_n_gelts_triangs)
 
-   integer tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
+   integer(8) tab_ne(max_n_gelts_triangs), tab_n_pts(MAX_N_PTS,3)
    double precision x(MAX_N_PTS), y(MAX_N_PTS)
    double precision x_0(MAX_N_PTS),  y_0(MAX_N_PTS)!!  Local variables
-   integer i, i1, i2, i_a, i_b, j, j1, j2
-   integer ne_1, n_pts_1, n_pts_2
-   integer t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
+   integer(8) i, i1, i2, i_a, i_b, j, j1, j2
+   integer(8) ne_1, n_pts_1, n_pts_2
+   integer(8) t_nodes_0(6), t_nodes_a(6), t_nodes_b(6)
    double precision tol, x_min, x_max, x_mid
    double precision x_a, y_a, x_b, y_b
 
-   integer ui, debug
+   integer(8) ui, debug
    character file_ui*100
    common/imp/ui, debug
    common/imp_file/file_ui

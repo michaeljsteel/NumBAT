@@ -31,7 +31,7 @@ import starter
 # Specify Geometric Parameters - all in [nm].
 wl_nm = 1550 # Wavelength of EM wave in vacuum.
 # Unit cell dimensions must be sufficiently large to ensure fields are zero at outermost boundary.
-domain_x = 4.01*wl_nm #be careful to ensure not whole integer multiples
+domain_x = 4.01*wl_nm #be careful to ensure not whole integer(8) multiples
 domain_y = domain_x
 inc_a_x = 1000 # Waveguide widths.
 inc_a_y = inc_a_x

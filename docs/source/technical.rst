@@ -80,7 +80,7 @@ where the subscripts range over all values of
 
 Consequently we can use the Voigt notation
 
-in which pairs of indices are represented by a single integer in the range 1 to 6 as follows:
+in which pairs of indices are represented by a single integer(8) in the range 1 to 6 as follows:
 
 
 .. math:: \begin{bmatrix}  xx \\ yy \\ zz \\ xz \\ yz \\ zz \end{bmatrix}

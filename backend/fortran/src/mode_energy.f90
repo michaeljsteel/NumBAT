@@ -9,14 +9,14 @@
 !  It is assumed that the type number triangle in the cylinders is :
 !                           typ_e=n_core(1) or typ_e=n_core(2)
 !
-subroutine mode_energy (nval, nel, npt, nnodes, n_core, &
+subroutine mode_energy (nval, nel, nnodes, n_core, &
    mesh_props, nb_typ_el, &
    eps_eff,  sol, beta1, mode_pol)
 
    use class_MeshProps
 
 
-   integer(8) nval, nel, npt, nnodes
+   integer(8) nval, nel, nnodes
    integer(8) nb_typ_el, n_core(2)
    complex(8) sol(3,nnodes+7,nval,nel)
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)

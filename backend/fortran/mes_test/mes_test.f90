@@ -10,11 +10,11 @@ public :: mes_func
 
 contains
 
-integer function internal_function()
+integer(8) function internal_function()
     internal_function = 0
 end function internal_function
 
-integer function mes_func()
+integer(8) function mes_func()
     mes_func = internal_function()
 end function mes_func
 

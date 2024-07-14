@@ -22,7 +22,7 @@ c
       complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC)
 
 c     Local variables
-      integer debug
+      integer(8) debug
       integer(8) nb_visited(npt)
       integer(8) ls_edge_endpoint(2,npt)
       integer(8) edge_direction(npt)
@@ -603,9 +603,9 @@ c
 C       debug = 1
 C       if (debug .eq. 1) then
 C         version_number = 2.2
-C !  An integer equal to 0 in the ASCII file format
+C !  An integer(8) equal to 0 in the ASCII file format
 C         file_type = 0
-C !  An integer equal to the size of the floating point numbers used in the file
+C !  An integer(8) equal to the size of the floating point numbers used in the file
 C         data_size = 8
 C         open (unit=27,file="../Output/edge_data.msh")
 C         write(27,'(a11)') "$MeshFormat"

@@ -55,7 +55,7 @@ contains
       class(stopwatch), intent(in) :: this
 
       character(len=:), allocatable :: tstr
-      integer, parameter :: buflen = 512
+      integer(8),  parameter :: buflen = 512
       character(len=buflen) :: buffer
 
       write(buffer, '(A, f0.2, A, f0.2, A)') 'cpu time = ', this%cpu_time(), &

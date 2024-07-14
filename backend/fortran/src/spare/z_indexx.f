@@ -11,7 +11,7 @@ c     reorder the original array cor for other purposes where sorted order is re
       PARAMETER (M=7,NSTACK=50)
       integer(8) i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
       double precision a
-      integer :: allocate_status=0
+      integer(8) :: allocate_status=0
       double precision, dimension(:), allocatable :: arr_0
 c
 C

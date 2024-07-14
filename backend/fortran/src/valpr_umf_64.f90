@@ -36,7 +36,7 @@ contains
    subroutine ValprVecs_init(this, n_modes, dim_krylov, neq, errco, emsg)
       class(ValprVecs) :: this
       integer(8) :: n_modes, dim_krylov, neq
-      integer errco
+      integer(8) errco
       character(len=EMSG_LENGTH) emsg
 
       errco = 0
@@ -143,7 +143,7 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
    integer(8) umf_numeric
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
 
@@ -235,7 +235,7 @@ end subroutine
 subroutine valpr_64 (&
    i_base, dim_krylov, n_modes, neq, itermax, &
    arp_tol, nonz, &
-   debug, errco, emsg, &
+   errco, emsg, &
    row_ind, col_ptr, &
    mat1, mat2, &
    v_evals, v_evecs )
@@ -258,7 +258,7 @@ subroutine valpr_64 (&
 
    complex(8), intent(out) :: v_evecs(neq, n_modes)
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    ! ----------------------------------------------------------
@@ -281,7 +281,7 @@ subroutine valpr_64 (&
    !  32-bit integers for ARPACK
    integer(4) neq_32, n_modes_32, dim_krylov_32
    integer(4) arp_ido, arp_info, arp_iparam(11)
-   integer, parameter :: ARP_IPNTR_DIM = 14
+   integer(8),  parameter :: ARP_IPNTR_DIM = 14
    integer(4) ipntr_32(ARP_IPNTR_DIM), lworkl_32
    double precision arp_tol
    complex(8) arp_shift
@@ -291,7 +291,7 @@ subroutine valpr_64 (&
    character(2) arp_which
    logical arp_active
 
-   integer(8) ui, debug
+   integer(8) ui
 
 
    ui = stdout
@@ -345,8 +345,19 @@ subroutine valpr_64 (&
 
 
 
+
    mat1_re = dble(mat1)
    mat1_im = dimag(mat1)
+
+
+
+   ! do jj=1,neq+1
+   !    write(*,*) jj, col_ptr(jj)
+   ! end do
+
+   ! do jj=1,nonz
+   !    write(*,*) jj, row_ind(jj), mat1_re(jj), mat1_im(jj)
+   ! end do
 
    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
       umf_symbolic, umf_control, umf_info)

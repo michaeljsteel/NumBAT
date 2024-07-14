@@ -13,15 +13,18 @@ fcomp = meson.get_compiler('fortran')
 #message('@0@'.format(ccomp))
 #message('@0@'.format(fcomp))
 
-add_global_arguments(['-cpp', '-frecursive'], language: 'fortran')
+add_global_arguments(['-cpp',], language: 'fortran')
 
-subdir('src')
+#add_global_arguments(['-DNO_APPEND_FORTRAN',  '-DNO_UPPERCASE_FORTRAN'], language: 'c')
+
 subdir('sswrap')
+subdir('src')
 
 incdir = include_directories(
   [
     '/usr/local/include',
     '/usr/include',
+    '/usr/include/python3.12'  # find a better way
   ],
 )
 
@@ -32,7 +35,9 @@ r = run_command(
   '-c', 'import numpy.f2py; print(numpy.f2py.get_include())',
   check: true,
 )
+
 dir_f2py = r.stdout().strip()
+src_f2py_fortobj = dir_f2py / 'fortranobject.c'
 
 pyincs = include_directories([dir_numpy, dir_f2py])
 
@@ -40,11 +45,36 @@ message([dir_numpy, dir_f2py])
 
 incs = [incdir, pyincs]
 
-nblib = shared_library('nb_fortran',
-  nb_mod_fsrcs,
+# dep_arpack = declare_dependency(
+#   link_with : shared_library()
+
+# )
+
+# dep_suitesparse = declare_dependency(
+#    link_with : shared_library()
+#   include_directories: include_directories()
+# )
+
+srcs = [src_f2py_fortobj,
+  nb_pyf, nb_fortmodc,
+  nb_pyint_fsrcs, nb_mod_fsrcs,
   nb_fsrcs,
-  nb_pyf1, nb_pyf2,
-  include_directories: incs)
+  src_sswrap]
+
+nblib = shared_module('nb_fortran',
+srcs,
+  include_directories: incs,
+  name_prefix: '',
+  override_options: ['b_lundef=false'],
+  dependencies: [],
+  link_args: ['-L/usr/lib/x86_64-linux-gnu','-larpack',
+  '-L/usr/lib/x86_64-linux-gnu','-lumfpack','-lcholmod','-lamd', '-lsuitesparseconfig',
+  '-L/opt/intel/oneapi/mkl/latest/lib/intel64',
+  '-lmkl_rt',
+  '-lrt',
+  #'-L/home/msteel/mpy3-12/bin',
+  ]
+  )
 
 # # Set build configuration based on environment variables
 # build_target(

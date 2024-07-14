@@ -55,7 +55,7 @@
  !  This subroutine is typically used in finite element analysis where higher-order elements (like P3 elements) are used to achieve more accurate results. It ensures that each node is uniquely identified across the entire mesh, which is crucial for assembling the global system of equations.
 
  !  Notes:
- !  The subroutine uses integer(8) for large integer values, which allows handling large meshes.
+ !  The subroutine uses integer(8) for large integer(8) values, which allows handling large meshes.
  !  It uses some Fortran-specific features like parameter and implicit none for better code clarity and safety.
  !  The subroutine includes detailed error messages and stops execution if a problem is detected, aiding in debugging.
  !  This subroutine is a critical part of pre-processing in finite element analysis, ensuring that the mesh nodes are correctly numbered and identified for subsequent calculations.

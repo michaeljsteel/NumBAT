@@ -29,7 +29,7 @@ subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr,
     double precision, intent(out) :: xy_nodes(2,n_msh_pts)
     complex(8), intent(out) :: ls_material(1,d_nodes_per_el+7,n_msh_el)
 
-    integer, intent(out) :: errco
+    integer(8),  intent(out) :: errco
     character(len=EMSG_LENGTH), intent(out) :: emsg
 
     call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
@@ -49,7 +49,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
     use numbatmod
     use calc_ac_impl
 
-    integer, parameter :: d_nodes_per_el = 6
+    integer(8),  parameter :: d_nodes_per_el = 6
 
     integer(8), intent(in) :: n_modes
 
@@ -79,7 +79,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
     complex(8), intent(out) :: mode_pol(4,n_modes)
 
-    integer, intent(out) :: errco
+    integer(8),  intent(out) :: errco
     character(len=EMSG_LENGTH), intent(out) :: emsg
 
     !f2py intent(in) table_nod, type_el, xy_nodes

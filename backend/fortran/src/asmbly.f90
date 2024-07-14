@@ -33,7 +33,7 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
    complex(8), intent(out) :: mOp_stiff(nonz), mOp_mass(nonz)
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    ! -----------------

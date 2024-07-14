@@ -40,7 +40,7 @@ contains
       use numbatmod
       use class_stopwatch
 
-      integer, parameter :: nodes_per_el = 6
+      integer(8),  parameter :: nodes_per_el = 6
 
       integer(8), intent(in) :: n_modes
 
@@ -69,7 +69,7 @@ contains
       complex(8), intent(out), target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
       complex(8), intent(out) :: mode_pol(4,n_modes)
 
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
@@ -80,7 +80,7 @@ contains
       integer(8) real_max, real_used, n_ddl
       integer(8) neq
 
-      integer :: alloc_stat
+      integer(8) :: alloc_stat
 
       integer(8), dimension(:), allocatable :: a_iwork
       complex(8), dimension(:), allocatable :: b_zwork
@@ -89,7 +89,7 @@ contains
       !double precision, dimension(:,:), allocatable :: d_dwork
       !complex(8), dimension(:,:), allocatable :: dummy_overlap_L  !  not actually used.
 
-      !  Declare the pointers of the integer super-vector
+      !  Declare the pointers of the integer(8) super-vector
       integer(8) ip_eq
       integer(8) ip_visited
 
@@ -140,14 +140,14 @@ contains
 
       type(Stopwatch) :: clock_main, clock_spare
 
-      integer :: is_em
+      integer(8) :: is_em
 
 
 
       !
       !!!!!!!!!!!!!!!!!!!!!!!!!!  Start Program - get parameters   !!!!!!!!!!!!!!!!!!!!!!!!
       !
-      !  Set parameter for the super-vectors of integer and real numbers
+      !  Set parameter for the super-vectors of integer(8) and real numbers
       !
       !ui_out = Unite dImpression
       ui_out = stdout
@@ -311,9 +311,9 @@ contains
       int_used = ip_work_sort2 + max_row_len
 
       if (int_max .lt. int_used) then
-         write(emsg,*)"The size of the integer supervector is too small", &
-            "integer super-vec: int_max  = ", int_max, &
-            "integer super-vec: int_used = ", int_used
+         write(emsg,*)"The size of the integer(8) supervector is too small", &
+            "integer(8) super-vec: int_max  = ", int_max, &
+            "integer(8) super-vec: int_used = ", int_used
          errco = -4
          return
       endif

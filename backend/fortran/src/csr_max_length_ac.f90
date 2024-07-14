@@ -5,7 +5,7 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
    use numbatmod
 
    implicit none
-   integer, intent(in) :: nnodes
+   integer(8),  intent(in) :: nnodes
    integer(8), intent(in) :: nel, neq, npt
    integer(8), intent(in) ::  table_nod (nnodes,nel)
    integer(8), intent(in) :: ineq(3,npt)
@@ -20,9 +20,9 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
    integer(8) :: k_copy1, k_copy2
 
    call assert_or_die(nnodes == 6,  &
-      "csr_max_length problem: nnodes = " // int4_2_str(nnodes) // "." // &
+      "csr_max_length problem: nnodes = " // int_2_str(nnodes) // "." // &
       new_line('a') // " n_nodes should be equal to 6 !" // new_line('a') // &
-      " Aborting...",  20)
+      " Aborting...",  20_8)
 
    !do i=1,neq+1
    !lb(i) = 0

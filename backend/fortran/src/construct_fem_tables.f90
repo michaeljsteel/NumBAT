@@ -30,7 +30,7 @@ subroutine construct_fem_node_tables_em(mesh_file, dim_x, dim_y, &
 
    integer(8)  n_elt_mats
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) :: emsg
 
    ! ---------------------------------------------
@@ -139,7 +139,7 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    integer(8) table_nod(nodes_per_el, n_msh_el)
    double precision xy_nodes(2,n_msh_pts)
 
-   integer errco
+   integer(8) errco
    character(len=EMSG_LENGTH) :: emsg
 
 
@@ -147,11 +147,13 @@ subroutine construct_fem_node_tables(mesh_file, dim_x, dim_y, &
    double precision xx(2)
 
    integer(8) n_elt_mats2
-   !integer, parameter :: max_typ_el=10
+   !integer(8),  parameter :: max_typ_el=10
    integer(8) n_msh_pts2, n_msh_el2
    integer(8) i, j, k
    integer(8) ui
 
+
+   ui = 24
 
    !  check the mesh file is consistent with what we expect
    open (unit=ui,file=mesh_file, status='old')

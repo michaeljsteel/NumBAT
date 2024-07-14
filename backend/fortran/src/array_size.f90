@@ -15,7 +15,7 @@
 
       integer(8), intent(out) :: int_size, cmplx_size, real_size, n_ddl
 
-      integer, intent(out) :: errco
+      integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
 
@@ -27,7 +27,7 @@
       integer(8) n_edge, n_ddl_max
       integer(8) ltrav
 
-!  Declare the pointers of the integer super-vector
+!  Declare the pointers of the integer(8) super-vector
       integer(8) ip_type_nod, ip_type_el, ip_table_nod
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq

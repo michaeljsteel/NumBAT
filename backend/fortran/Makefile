@@ -14,7 +14,7 @@ CCACHE=ccache
 gcc: COMPILER_VENDOR="gcc"
 gcc: F_COMP_EXE=$(CCACHE) f95
 gcc: C_COMP_EXE=$(CCACHE) gcc
-gcc: F77FLAGS=-Wall -Wno-surprising -W -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build/mods -fall-intrinsics -pedantic
+gcc: F77FLAGS=-Wall -Wno-surprising -Wno-do-subscript -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build/mods -fall-intrinsics 
 gcc: F95FLAGS=$(F77FLAGS)
 gcc: CFLAGS=-Wall -W -g -O2 -fPIC -Ofast -funroll-loops
 gcc: COMP_LIB = -lgfortran -lm
@@ -419,11 +419,13 @@ mesinteldebug:
 	meson compile -C mbuild_inteldebug
 
 mesgcc:
-	CC=gcc meson setup --buildtype=release mbuild_gcc
-#	meson compile -C mbuild_gcc
+#	CC=gcc FC=f95 meson setup --buildtype=debug mbuild_gcc
+	meson compile -v -C mbuild_gcc
+	cp mbuild_gcc/nb_fortran.so .
 
 mesintel:
-	CC=icx meson setup --buildtype=release mbuild_intel
+	CC=icx FC=ifx meson setup --reconfigure --buildtype=release mbuild_intel
 	meson compile -C mbuild_intel
+	cp mbuild_gcc/nb_fortran.so .
 
 

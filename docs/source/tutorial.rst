@@ -61,7 +61,7 @@ For example, elastic frequencies :math:`\nu` are expressed in Hz, not GHz.
     The acoustic wavenumber is specified in :math:`\mathrm{m}^{-1}`.
 
 ``m``
-    This is an integer corresponding to the mode number :math:`m` of an electromagnetic
+    This is an integer(8) corresponding to the mode number :math:`m` of an electromagnetic
     mode :math:`\vec E_m(\vec r)` or an acoustic mode :math:`\vec u_m(\vec r)`.
 
     For both electromagnetic and acoustic modes, counting of modes begins with ``m=0``
@@ -77,7 +77,7 @@ For example, elastic frequencies :math:`\nu` are expressed in Hz, not GHz.
     The :math:`m=0` mode has the *lowest* frequency
     :math:`\nu` of any mode for a given wavenumber :math:`q`.
 
-    The integer :math:`m` therefore has no particular correspondence to
+    The integer(8) :math:`m` therefore has no particular correspondence to
     the conventional two index mode indices for fibre or rectangular waveguides.
 
 

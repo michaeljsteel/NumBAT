@@ -16,13 +16,13 @@ module numbatmod
 
     integer(8), parameter :: P_NODES_PER_EL = 6
 
-   integer, parameter :: EMSG_LENGTH = 2048
-   integer, parameter :: FNAME_LENGTH = 1024
+   integer(8),  parameter :: EMSG_LENGTH = 2048
+   integer(8),  parameter :: FNAME_LENGTH = 1024
 
-   integer, parameter :: MAX_N_PTS = 250000
-   integer, parameter :: MAX_N_ELTS = 120000
+   integer(8), parameter :: MAX_N_PTS = 250000
+   integer(8), parameter :: MAX_N_ELTS = 120000
 
-   integer, parameter :: MAX_LONG_ADJ = 2500000
+   integer(8), parameter :: MAX_LONG_ADJ = 2500000
 
    double precision, parameter :: D_PI = 3.141592653589793d0
    double precision, parameter :: D_ONE = 1.0d0
@@ -54,8 +54,8 @@ module numbatmod
 
 
 
-   integer, parameter :: UMFPACK_CONTROL = 20
-   integer, parameter :: UMFPACK_INFO = 90
+   integer(8),  parameter :: UMFPACK_CONTROL = 20
+   integer(8),  parameter :: UMFPACK_INFO = 90
    integer(8), parameter :: NBERR_BAD_PERMUTATION     = -52
    integer(8), parameter :: NBERR_BAD_ADJACENCY       = -53
    integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
@@ -128,20 +128,20 @@ contains
       character(len=*) :: msg
       integer(8) :: ui
 
-#ifdef __GNUC__
-      integer(8) :: ret
-#endif
+! #ifdef __GNUC__
+!       integer(8) :: ret
+! #endif
 
       write(ui, '(A,A)') '>>>> ', msg
       flush(ui)
 
-#ifdef __GNUC__
-            ret = fsync(fnum(ui))   ! actually sync to fs on GCC
-#endif
+! #ifdef __GNUC__
+!             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
+! #endif
 
    end subroutine
 
-   integer function nb_system(cmd)
+   integer(8) function nb_system(cmd)
       implicit none
 
       integer errco
@@ -170,12 +170,12 @@ contains
    subroutine assert_or_die(pred, msg, ec)  !  TODO: this is cheat rather than go back to python for reporting
       logical :: pred
       character(len=*) :: msg
-      integer :: ec
+      integer(8) :: ec
 
       if (pred) return
 
       write(*,*) msg
-      call exit(ec)
+      call exit(int(ec,4))
 
    end subroutine
 
@@ -183,10 +183,11 @@ contains
 
       implicit none
 
-      integer errco
+      integer(8) errco
       character(len=EMSG_LENGTH) emsg
       character location*(*), msg*(*)
-      integer val, limit, failco
+      integer(8) val, limit
+      integer(8) failco
 
       if (val .ge. limit) then
          write(emsg,*) 'Failed limit check at ', location, '.  ', &
@@ -203,7 +204,7 @@ contains
 
       character(len=:), allocatable :: str
 
-      integer, parameter :: buflen = 512
+      integer(8),  parameter :: buflen = 512
       character(len=buflen) :: buffer
 
       character(len=buflen) :: d_fmt = '(i0)'
@@ -224,7 +225,7 @@ contains
 
       character(len=:), allocatable :: str
 
-      integer, parameter :: buflen = 512
+      integer(8),  parameter :: buflen = 512
       character(len=buflen) :: buffer
 
       character(len=buflen) :: d_fmt = '(i0)'
@@ -243,7 +244,7 @@ contains
       character(len=*), intent(in), optional ::fmt
 
       character(len=:), allocatable :: str
-      integer, parameter :: buflen = 512
+      integer(8),  parameter :: buflen = 512
       character(len=buflen) :: buffer
 
       character(len=buflen) :: d_fmt = '(e)'

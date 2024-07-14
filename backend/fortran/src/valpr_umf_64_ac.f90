@@ -20,7 +20,7 @@ debug, show_mem_est, errno, emsg)
    integer(8) neq, nonz, n_conv, i_base, nvect, ltrav
    integer(8) row_ind(nonz), col_ptr(neq+1)
 
-   integer errno
+   integer(8) errno
    character(len=EMSG_LENGTH) emsg
 
 
@@ -46,7 +46,7 @@ debug, show_mem_est, errno, emsg)
 
    double precision tol
 
-   integer alloc_stat
+   integer(8) alloc_stat
    complex(8), dimension(:), allocatable :: workev
    double precision, dimension(:), allocatable :: rwork
    logical, dimension(:), allocatable :: selecto
