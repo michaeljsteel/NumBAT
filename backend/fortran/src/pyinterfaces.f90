@@ -11,9 +11,6 @@ subroutine conv_gmsh(geo_name, assertions_on, errco, emsg)
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
    errco = 0
-   write(*,*) 'in conv_gmsh'
-   write(*,*) 'in conv_gmsh>', geo_name, '<'
-
    call conv_gmsh_impl(geo_name, assertions_on, errco, emsg)
 
 end

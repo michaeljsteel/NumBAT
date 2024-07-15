@@ -13,12 +13,11 @@ import starter
 # Geometric Parameters - all in nm.
 #lambda_nm = 1550
 lambda_nm = 1000
-domain_x = lambda_nm
+domain_x = lambda_nm * 1.5
 domain_y = domain_x
-inc_a_x = 600      # base length (always horizontal)
-inc_a_y = inc_a_x  # not used
-inc_b_x = 500      # displacement of peak from left end of base
-inc_b_y = 500      # height of peak from base
+tri_wid = 800      
+tri_hgt = 500  
+tri_xoff = 300   
 
 inc_shape = 'triangular'
 
@@ -35,14 +34,11 @@ nbapp = numbat.NumBATApp(prefix)
 
 refine_fac = 1
 lc_bkg = .1 * refine_fac
-lc_norm = 3
-lc_corner = 6
+lc_norm = 30
+lc_corner = 30
 
-lc_norm = 1
-lc_corner = 1
-
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
-                              inc_b_x = inc_b_x, inc_b_y = inc_b_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
+                              base_width=tri_wid, peak_height=tri_hgt, peak_xoff=tri_xoff, 
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2021_Poulton"),
                         lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)

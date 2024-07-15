@@ -291,7 +291,7 @@ subroutine valpr_64 (&
    character(2) arp_which
    logical arp_active
 
-   integer(8) ui
+   integer(8) ui, jj
 
 
    ui = stdout
@@ -359,12 +359,13 @@ subroutine valpr_64 (&
    !    write(*,*) jj, row_ind(jj), mat1_re(jj), mat1_im(jj)
    ! end do
 
-   call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
+   umf_info(1) = 0
+    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
       umf_symbolic, umf_control, umf_info)
 
 
    if (umf_info (1) .lt. 0) then
-      write(emsg,*) 'Error occurred in sparse matrix symbolic factorization umf4zsym: ', umf_info (1)
+      write(emsg,'(A,i4)') 'Error occurred in sparse matrix symbolic factorization umf4zsym:', int(umf_info (1))
       errco = NBERROR_104
       return
    endif
