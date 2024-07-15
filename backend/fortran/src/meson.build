@@ -1,5 +1,6 @@
 fortmodc_h = files('myhead.h')
-nb_mod_fsrcs = files(
+
+nb_module_fsrcs = files(
     'alloc_module.f90',
     'nbinterfaces_module.f90',
     'numbatmod_module.f90',
@@ -7,7 +8,7 @@ nb_mod_fsrcs = files(
     'conv_gmsh_interfaces.f90',
 )
 
-nb_pyint_fsrcs = files(
+nb_pyinterface_fsrcs = files(
     'ac_alpha_int.f',
     'ac_alpha_int_v2.f',
     'ac_mode_elastic_energy_int.f',
@@ -31,7 +32,7 @@ nb_pyint_fsrcs = files(
 )
 
 
-nb_fsrcs = files(
+nb_impl_fsrcs = files(
     #'array_size.f90',
     'array_sol.f90',
     'array_sol_ac_v2.f90',
@@ -80,7 +81,6 @@ nb_fsrcs = files(
     'mat_p2y_p2y.f90',
     'meshprops.f90',
     'mode_energy.f90',
-    #'moving_boundary.f90',
     'normalisation.f90',
     'orthogonal.f90',
     'periodic_N_E_F.f90',
@@ -92,13 +92,9 @@ nb_fsrcs = files(
     'phi2_grad.f90',
     'phi3_2d_mat.f90',
     'phi3_grad_p2.f90',
-    #'photoelastic_int.f90',
-    #'photoelastic_int_v2.f90',
     'py_calc_modes.f90',
     'py_calc_modes_ac.f90',
     'py_calc_modes_impl.f90',
-    #'py_entry_cm.f90',
-    #'pyinterfaces.f90',
     'quad_triangle.f90',
     'sort_csr.f90',
     'sort_int.f90',
@@ -112,19 +108,10 @@ nb_fsrcs = files(
     'z_mxv_csc_64.f90',
 )
 
-message(
-    'n\n\n\n\nmeson seettings',
-    meson.current_build_dir(),
-    meson.build_root(),
-    meson.current_source_dir(),
-    meson.source_root(),
-)
-
-comp_f2py = find_program('f2py')
 
 nb_pyf = custom_target(
     'f2py_make_pyf',
-    input: nb_pyint_fsrcs,
+    input: nb_pyinterface_fsrcs,
     output: ['nb_fortran.pyf'],
     command: [
         comp_f2py,
@@ -138,7 +125,7 @@ nb_pyf = custom_target(
 
 nb_fortmodc = custom_target(
     'f2py_make_cmod',
-    input: [nb_pyint_fsrcs],
+    input: [nb_pyinterface_fsrcs],
     output: ['nb_fortranmodule.c',
     'nb_fortran-f2pywrappers.f'],
     command: [

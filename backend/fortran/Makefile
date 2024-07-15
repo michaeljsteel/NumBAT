@@ -424,12 +424,13 @@ mesinteldebug:
 	meson compile -C mbuild_inteldebug
 
 mesgcc:
-#	CC=gcc FC=f95 meson setup --buildtype=debug mbuild_gcc
+	CC=gcc FC=f95 meson setup --buildtype=debug mbuild_gcc
 	meson compile -v -C mbuild_gcc
 	cp mbuild_gcc/nb_fortran.so .
 
 mesintel:
-	CC=icx FC=ifx meson setup --reconfigure --buildtype=release mbuild_intel
+	export PATH=/opt/intel/oneapi/compiler/2024.2/bin:$(PATH); \
+		CC=icx FC=ifx meson setup --reconfigure --buildtype=release mbuild_intel
 	meson compile -C mbuild_intel
 	cp mbuild_gcc/nb_fortran.so .
 

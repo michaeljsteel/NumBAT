@@ -740,25 +740,3 @@ def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
                      suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
 
 
-
-       # # TODO: what is this for?
-    # modal_gain = {}
-    # if modal_gains is not None:
-    #     modal_gain['Tot'] = modal_gains[ival]
-    # if modal_gains_PE is not None:
-    #     modal_gain['PE'] = modal_gains_PE[ival]
-    # if modal_gains_MB is not None:
-    #     modal_gain['MB'] = modal_gains_MB[ival]
-
-
-#    plot_params={'xlim_min': xlim_min, 'xlim_max': xlim_max, 'ylim_min': ylim_min,
-#                 'ylim_max': ylim_max, 'ticks': ticks, 'num_ticks':num_ticks,
-#                  'colorbar':colorbar, 'contours':contours, 'contour_lst':contour_lst, 'field_type':field_type,
-#                  'prefix': prefix, 'suffix': suffix, 'pdf_png': pdf_png,
-#                  'stress_fields':stress_fields, 'modal_gain':modal_gain, 'decorator': decorator,
-#                  'suppress_imimre':suppress_imimre,
-#              # 'n_pts_x': n_pts_x, 'n_pts_y': n_pts_y,
-#               'quiver_points': quiver_points }
-## modal_gains_PE=modal_gains_PE, #purpose, can these go elsewhere?
-    # modal_gains_MB=modal_gains_MB,
-    # modal_gains=modal_gains)
