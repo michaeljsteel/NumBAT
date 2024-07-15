@@ -13,54 +13,85 @@ fcomp = meson.get_compiler('fortran')
 #message('@0@'.format(ccomp))
 #message('@0@'.format(fcomp))
 
+
+if host_machine.system() == 'linux'
+  dir_oneapi = '/opt/intel/oneapi/mkl/latest/lib'
+  dir_nblocal=['/usr/local/lib']
+  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi)
+
+elif host_machine.system() == 'darwin'
+  lib_blas = [ccomp.find_library('lapack', dirs: '/opt/local/lib'),
+    ccomp.find_library('blas', dirs: '/opt/local/lib')]
+
+else
+
+#MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
+ #   $(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
+
+  dir_nblocal = 'C:/Users/mq98002769/numbat/usr_local'
+  dir_oneapi = 'c:/Program Files (x86)/Intel/oneAPI'
+  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi)
+
+endif
+
+lib_arpack = ccomp.find_library('arpack', dirs: dir_nblocal)
+lib_umfpack = ccomp.find_library('umfpack', dirs: dir_nblocal)
+
+
 add_global_arguments(['-cpp',], language: 'fortran')
 add_global_arguments(['-DZLONG',], language: 'c')
 
 
 #add_global_arguments(['-DNO_APPEND_FORTRAN',  '-DNO_UPPERCASE_FORTRAN'], language: 'c')
 
+comp_f2py = find_program('f2py')
+
 subdir('sswrap')
 subdir('src')
 
-incdir = include_directories(
-  [
-    '/usr/local/include',
-    '/usr/include',
-    '/usr/include/python3.12'  # find a better way
-  ],
+message(
+    '\n\n\n\nmeson settings',
+    meson.current_build_dir(),
+    meson.build_root(),
+    meson.current_source_dir(),
+    meson.source_root(),
 )
 
-r = run_command('python', '-c', 'import numpy; print(numpy.get_include())', check: true)
+
+pymod = import('python')
+py_installation = pymod.find_installation()
+py_exe = find_program('python', py_installation.path() / 'bin')
+dep_py = py_installation.dependency()
+
+#message('Using python installation at: ', py_installation.path())
+
+# F2PY details
+r = run_command(py_exe, '-c', 'import numpy; print(numpy.get_include())', check: true)
 dir_numpy = r.stdout().strip()
-r = run_command(
-  'python',
-  '-c', 'import numpy.f2py; print(numpy.f2py.get_include())',
-  check: true,
-)
-
+r = run_command(py_exe, '-c', 'import numpy.f2py; print(numpy.f2py.get_include())', check: true)
 dir_f2py = r.stdout().strip()
 src_f2py_fortobj = dir_f2py / 'fortranobject.c'
 
-pyincs = include_directories([dir_numpy, dir_f2py])
+
+
+# TODO: unneeded
+incdir = include_directories(
+  [
+  #  '/usr/local/include',
+  #  '/usr/include',
+  #  '/usr/include/python3.12'  # find a better way
+  ],
+)
+incs_f2py = include_directories([dir_numpy, dir_f2py])
 
 message([dir_numpy, dir_f2py])
 
-incs = [incdir, pyincs]
-
-# dep_arpack = declare_dependency(
-#   link_with : shared_library()
-
-# )
-
-# dep_suitesparse = declare_dependency(
-#    link_with : shared_library()
-#   include_directories: include_directories()
-# )
+incs = [incdir, incs_f2py]
 
 srcs = [src_f2py_fortobj,
   nb_pyf, nb_fortmodc,
-  nb_pyint_fsrcs, nb_mod_fsrcs,
-  nb_fsrcs,
+  nb_pyinterface_fsrcs, nb_module_fsrcs,
+  nb_impl_fsrcs,
   src_sswrap]
 
 nblib = shared_module('nb_fortran',
@@ -68,109 +99,5 @@ srcs,
   include_directories: incs,
   name_prefix: '',
   override_options: ['b_lundef=false'],
-  dependencies: [],
-  link_args: ['-L/usr/lib/x86_64-linux-gnu','-larpack',
-  '-L/usr/lib/x86_64-linux-gnu','-lumfpack','-lcholmod','-lamd', '-lsuitesparseconfig',
-  '-L/opt/intel/oneapi/mkl/latest/lib/intel64',
-  '-lmkl_rt',
-  '-lrt',
-  #'-L/home/msteel/mpy3-12/bin',
-  ]
+  dependencies: [lib_arpack, lib_umfpack, lib_blas, dep_py],
   )
-
-# # Set build configuration based on environment variables
-# build_target(
-#   'gcc',
-#   compiler : 'gcc',
-#   cflags : [
-#     '-Wall',
-#     '-W',
-#     '-g',
-#     '-O2',
-#     '-fPIC',
-#     '-Ofast',
-#     '-funroll-loops'
-#   ],
-#   fortran_flags : [
-#     '-Wall',
-#     '-Wno-surprising',
-#     '-W',
-#     '-g',
-#     '-O2',
-#     '-fPIC',
-#     '-Ofast',
-#     '-funroll-loops',
-#     '-fimplicit-none',
-#     '-fno-second_underscore',
-#     '-O3',
-#     '-cpp',
-#     '@OSF77FLAGS@',
-#     '-J ./mods',
-#     '-fall-intrinsics',
-#     '-pedantic'
-#   ],
-#   links : '-lgfortran -lm',
-#   sources : [
-#     'src/*.c',
-#     'src/*.f',
-#     'src/*.f90'
-#   ],
-#   depends : [ 'nb_fortran_module' ]  # Dependency on custom target
-# )
-
-# build_target(
-#   'intel',
-#   compiler : 'intel',
-#   cflags : [
-#     '-fPIC',
-#     '-O2',
-#     '-Wall',
-#     '-g'
-#   ],
-#   fortran_flags : [
-#     '-nologo',
-#     '-fpp',
-#     '-fPIC',
-#     '-O2',
-#     '-g',
-#     '-warn all',
-#     '-warn noexternals',
-#     '-module mods',
-#     '-I mods'
-#   ],
-#   links : [
-#     '-L@ONEAPI@/2024.2/lib',
-#     '-lifcoremt',
-#     '-lifport',
-#     '-limf'
-#   ],
-#   include_directories : '@ONEAPI@/include',  # Using environment variable
-#   sources : [
-#     'src/*.c',
-#     'src/*.f',
-#     'src/*.f90'
-#   ],
-#   depends : [ 'nb_fortran_module' ]  # Dependency on custom target
-# )
-
-# # Custom target for Fortran module compilation
-# custom_target(
-#   'nb_fortran_module',
-#   input : 'src/nb_fortranmodule.f90',
-#   output : 'build/nb_fortranmodule.mod',
-#   command : [
-#     executable('fcomp'),  # Assuming a custom Fortran compiler wrapper
-#     '-c',
-#     '@F95FLAGS@',
-#     '@MATHINC@',
-#     '-o',
-#     '@OUTPUT@',
-#     '@INPUT@'
-#   ]
-# )
-
-# # Define executables or libraries based on your needs
-# # ... (e.g., using `executable` or `shared_library` functions)
-
-# # Define test targets if applicable
-# # ... (e.g., using `test` function)
