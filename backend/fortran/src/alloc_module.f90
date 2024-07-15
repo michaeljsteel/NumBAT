@@ -55,7 +55,9 @@ contains
       integer(8) alloc_stat
 
       allocate(vec(m), STAT=alloc_stat)
+
       call check_alloc(alloc_stat, m, nm, NBERROR_130, errco, emsg)
+
    end subroutine
 
    subroutine complex_alloc_1d(vec, m, nm, errco, emsg)

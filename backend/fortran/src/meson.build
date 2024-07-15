@@ -4,6 +4,7 @@ nb_mod_fsrcs = files(
     'nbinterfaces_module.f90',
     'numbatmod_module.f90',
     'stopwatch_module.f90',
+    'conv_gmsh_interfaces.f90',
 )
 
 nb_pyint_fsrcs = files(

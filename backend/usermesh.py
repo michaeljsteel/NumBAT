@@ -83,6 +83,7 @@ class UserGeometryBase():
 
         # report unexpected keys
         goodkeys = reqkws + self._allowed_params
+        goodkeys.append('lc') # remove special case once everything is moved to lc_bkg
         for key in user_params.keys():
             if key not in goodkeys:
                 reporting.report(

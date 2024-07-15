@@ -14,9 +14,9 @@ CCACHE=ccache
 gcc: COMPILER_VENDOR="gcc"
 gcc: F_COMP_EXE=$(CCACHE) f95
 gcc: C_COMP_EXE=$(CCACHE) gcc
-gcc: F77FLAGS=-Wall -Wno-surprising -Wno-do-subscript -g -O2 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build/mods -fall-intrinsics 
+gcc: F77FLAGS=-Wall -Wno-surprising -Wno-do-subscript -g -O0 -D_FILE_OFFSET_BITS=64 -fPIC -Ofast -funroll-loops -fimplicit-none -fno-second-underscore -O3 -cpp $(OSF77FLAGS) -J ./build/mods -fall-intrinsics
 gcc: F95FLAGS=$(F77FLAGS)
-gcc: CFLAGS=-Wall -W -g -O2 -fPIC -Ofast -funroll-loops
+gcc: CFLAGS=-Wall -W -g -O0 -fPIC -Ofast -funroll-loops -D_FILE_OFFSET_BITS=64
 gcc: COMP_LIB = -lgfortran -lm
 
 gcc: all
@@ -289,7 +289,9 @@ SRCS_F90 = $(wildcard src/*.f90)
 OBJS = $(subst src/,build/,$(SRCS_F:.f=.o) $(SRCS_F90:.f90=.o))
 
 #The build order of these matters
-SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90 src/alloc_module.f90 src/nbinterfaces_module.f90 src/meshprops.f90
+SRCS_MODS = src/numbatmod_module.f90 src/stopwatch_module.f90 \
+			src/alloc_module.f90 src/nbinterfaces_module.f90 src/meshprops.f90 \
+			src/conv_gmsh_interfaces.f90
 
 OBJS_MODA = $(SRCS_MODS:.f90=.o)
 #OBJS_MOD= $(subst src,build,$(OBJS_MODA))
@@ -382,10 +384,13 @@ $(NumBAT_MOD).pyf: $(PYINTERFACE_SRCS)
 	cp $(F2PY_DIR)/fortranobject.c build
 
 
+# $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRAP_OBJ)
+# 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
+# 	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./build/mods -o $(NumBAT_MOD).so
+
 $(NumBAT_MOD).so: $(NumBAT_MOD).pyf $(MODULES_MODS) $(F2PY_OBJS) $(OBJS) $(SSWRAP_OBJ)
 	$(C_COMP_EXE) -shared -Wall --verbose $(DEFS)  $(OBJS) $(F2PY_OBJS) $(SSWRAP_OBJ) \
-	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -I ./build/mods -o $(NumBAT_MOD).so
-
+	-Wl,--as-needed 	 $(MATHLIB) $(GENLIB) $(PYLIB) $(COMP_LIB) -lm -o $(NumBAT_MOD).so
 
 clean:
 	-rm -f $(SSWRAP_DIR)/*.o

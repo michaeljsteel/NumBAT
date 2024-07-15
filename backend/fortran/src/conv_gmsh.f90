@@ -1,5 +1,8 @@
 #include "numbat_decl.h"
 
+
+
+
 !*******************************************************
 
 !  conv_gmsh: convert the Gmsh .geo to mesh format and
@@ -11,6 +14,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
 
    use numbatmod
    use alloc
+   use conv_gmsh_interfaces
 
    character(len=*), intent(in) :: geo_fname
 
@@ -71,20 +75,12 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    integer(8)  iphyscurve, nd
 
 
+   !call double_alloc_1d(vx, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   !call double_alloc_1d(vy, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
 
-   call integer_alloc_2d(v_lines_nodes, 3_8, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call integer_alloc_2d(v_triang_nodes, 6_8, MAX_N_ELTS, 'v_triang_nodes', errco, emsg); RETONERROR(errco)
-
-   call integer_alloc_1d(v_eltbdy_physcurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(v_eltint_physsurf, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(v_nd_iphyscurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(v_ipts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-
-   call double_alloc_1d(vx, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(vy, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-
-   call integer_alloc_1d(v_gmsh_elt_type, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(v_ielts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   !call integer_alloc_1d(v_ipts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   !call integer_alloc_1d(v_gmsh_elt_type, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   !call integer_alloc_1d(v_ielts, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
 
 
 
@@ -104,15 +100,21 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    fname_mail = geo_fname(1:fnamelen)//".mail"
 
    !Second stage conversion:  .msh to .mail
-   call parse_msh_file(fname_msh, gmsh_version, &
-      n_pts, n_elts, v_ipts, v_ielts, &
-      vx, vy, v_gmsh_elt_type, errco, emsg)
+   call parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, &
+      vx, vy, v_ipts, v_ielts, v_gmsh_elt_type, errco, emsg)
    RETONERROR(errco)
 
    if (assertions_on .ne. 0) then
       write(*,*) 'Node check fresh from gmsh:'
       call check_point_separations(n_pts, vx, vy, errco, emsg)
    endif
+
+
+   call integer_alloc_2d(v_lines_nodes, 3_8, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_2d(v_triang_nodes, 6_8, MAX_N_ELTS, 'v_triang_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_eltbdy_physcurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_eltint_physsurf, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(v_nd_iphyscurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
 
    !  Now we know the number of points and mappings (even if trivial)
    !  Next we load elt data according to the gmsh element types
@@ -160,7 +162,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
       assertions_on, errco, emsg)
    RETONERROR(errco)
 
-   call write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
+   call write_mail_file(fname_mail, n_pts, n_elts, n_gelts_triangs, &
       vx, vy, v_nd_iphyscurve, v_triang_nodes, &
       v_eltint_physsurf)
 
@@ -204,115 +206,8 @@ end
 
  !##################################################################################
 
- ! TODO: could move to to a python call
-subroutine parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, v_ipts, &
-   v_ielts, vx, vy, v_gmsh_elt_type, errco, emsg)
 
-   use numbatmod
-   implicit none
-
-   character(len=*), intent(in) :: fname_msh
-   integer(8) gmsh_version
-
-   integer(8) n_pts, n_elts
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
-
-   integer(8) v_ipts(MAX_N_PTS)
-   integer(8) v_ielts(MAX_N_ELTS), v_gmsh_elt_type(MAX_N_ELTS)
-   double precision vx(MAX_N_PTS), vy(MAX_N_PTS)
-
-   character str_in*(FNAME_LENGTH)
-   integer(8) ui_in, i, j, tmp1
-
-   !  Check size of .msh file
-   ui_in = 24
-   open (unit=ui_in,file=fname_msh)
-
-   if (gmsh_version .eq. 2) then  !  what is alternative to v2 ?
-      read(ui_in,'(a1)') str_in   !  $MeshFormat
-      read(ui_in,'(a1)') str_in   !  $Version string
-      read(ui_in,'(a1)') str_in   !  $EndMeshFormat
-   endif
-
-   read(ui_in,'(a5)') str_in      !  $Nodes
-   read(ui_in,*) n_pts            !  $Number of nodes
-
-   if (MAX_N_PTS .lt. n_pts) then
-      write(emsg,*) 'Grid too large: The requested number of ', &
-         'nodes ', n_pts, &
-         'exceeds the maximum allowed of ', MAX_N_PTS, ' nodes.', &
-         'Try reducing the lc_* grid resolution parameters.'
-      errco = NBERROR_111
-      close(ui_in)
-      return
-   endif
-
-
-
-   !TODO: allocate arrays here
-
-   !  Maps gmsh node number to our sequence of node numbers 1..n_pts
-   !  Seems like v_ipts just ends up as trivial mapping 1..n_pts,
-   !  but perhaps this is not guaranteed by gmsh?
-   do i=1,n_pts
-      read(ui_in,*) j, vx(i), vy(i), tmp1 !  Node number, xval, yval
-      v_ipts(j) = i
-
-      if (v_ipts(j) .ne. j)  then !  REMOVE ME
-         write(emsg,*) 'v_ipts misalignment in conv_gmsh'
-         errco = NBERROR_112
-         close(ui_in)
-         return
-      endif
-
-   enddo
-
-   read(ui_in,'(a5)') str_in      !  $EndNodes
-
-
-   !  Read elements
-   read(ui_in,'(a5)') str_in      !  $Elements
-   read(ui_in,*) n_elts           !  Number of elements
-
-   if(MAX_N_ELTS .lt. n_elts) then
-      write(emsg,*) 'Too many FEM elts: MAX_N_ELTSlts < n_elts', &
-         MAX_N_ELTS, n_elts
-      errco = NBERROR_114
-      close(ui_in)
-      return
-   endif
-
-   !  Read array of elements:
-   !  Index EltType(8 or 9) Number_of_tags <tag>  node-number-list (3 or 6 nodes)
-   do i=1,n_elts
-      read(ui_in,*) j, v_gmsh_elt_type(i)
-      v_ielts(j) = i   !  map gmsh index to our index (if they are ever different?!) TODO: this is never used, REMOVE
-   enddo
-
-   close(ui_in)
-
-   !  confirm that v_ipts and v_ielts are trivial
-   do i=1,n_pts
-      if (v_ipts(i) .ne. i) then
-         write(emsg,*) 'v_ipts(i) mismatch at i=', i
-         errco = NBERROR_115
-         return
-      endif
-   enddo
-
-   do i=1,n_elts
-      if (v_ielts(i) .ne. i) then
-         write(emsg,*) 'v_ielts(i) mismatch at i=', i
-         errco = NBERROR_116
-         return
-      endif
-   enddo
-
-end subroutine
-
-
-!  Format of Gmsh Element lines
+ !  Format of Gmsh Element lines
 !  GMSH_TYPE_LINE2NODE = 8
 !  These elements are edges at the outer boundary and so are associated with one material
 !  line format:  index "8" "2" Physical_Line Line Node_index x 3
@@ -341,14 +236,14 @@ subroutine decode_element_tags(fname_msh, gmsh_version, &
 
 
 
-   integer(8) v_ipts(MAX_N_PTS)
-   integer(8) v_gmsh_elt_type(MAX_N_ELTS)
+   integer(8) v_ipts(n_pts)
+   integer(8) v_gmsh_elt_type(n_elts)
 
-   integer(8) v_lines_nodes(3, MAX_N_ELTS)
-   integer(8) v_triang_nodes(6, MAX_N_ELTS)
+   integer(8) v_lines_nodes(3, n_elts)
+   integer(8) v_triang_nodes(6, n_elts)
 
-   integer(8) v_eltbdy_physcurve(MAX_N_ELTS)
-   integer(8) v_eltint_physsurf(MAX_N_ELTS)
+   integer(8) v_eltbdy_physcurve(n_elts)
+   integer(8) v_eltint_physsurf(n_elts)
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
@@ -443,7 +338,10 @@ subroutine decode_element_tags(fname_msh, gmsh_version, &
 end
 
 
-subroutine write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
+
+
+
+subroutine write_mail_file(fname_mail, n_pts, n_elts, n_gelts_triangs, &
    vx, vy, v_nd_iphyscurve, v_triang_nodes, &
    v_eltint_physsurf)
 
@@ -457,15 +355,15 @@ subroutine write_mail_file(fname_mail, n_pts, n_gelts_triangs, &
    implicit none
    integer(8) ui_out, i, k
 
-   character fname_mail*(FNAME_LENGTH)
-   integer(8) n_pts,  n_gelts_triangs
+   character(len=*) fname_mail
+   integer(8) n_pts,  n_elts, n_gelts_triangs
 
-   integer(8) v_triang_nodes(6,MAX_N_ELTS)
+   double precision vx(n_pts), vy(n_pts)
+   integer(8) v_triang_nodes(6,n_elts)
+   integer(8) v_eltint_physsurf(n_elts)
+   integer(8) v_nd_iphyscurve(n_elts)
 
 
-   integer(8) v_eltint_physsurf(MAX_N_ELTS)
-   double precision vx(MAX_N_PTS), vy(MAX_N_PTS)
-   integer(8) v_nd_iphyscurve(MAX_N_PTS)
 
 
    ui_out = 26

@@ -779,7 +779,7 @@ class Structure:
 
         return sim.get_sim_result()
 
-    def plot_refractive_index_profile(self, prefix, as_epsilon=False):
+    def plot_refractive_index_profile(self, prefix, n_points = 200, as_epsilon=False):
         print('\n\nPlotting ref index')
 
 
@@ -798,23 +798,24 @@ class Structure:
 
         for i in range(len(v_elt_refindex)):
             v_elt_refindex[i] = np.real(list(self.d_materials.values())[i].refindex_n)
+        print('elt refs', v_elt_refindex)
 
         for i,elt in enumerate(v_elt_indices):
-            v_refindex[i] = v_elt_refindex[elt-1]
+            v_refindex[i] = v_elt_refindex[elt-1]  # the type of element is labelled by gmsh from 1.
+
+        # Now we have an irregular x,y,n array to interpolate onto.
 
 
-        # Now have an irregular x,y,n array to interpolate onto.
-
+        # Construct a regular rect array with n_pts_x * n_pts_y ~ n_points**2
+        # and with approximately square pixels
         x_min = np.min(v_x)
         x_max = np.max(v_x)
         y_min = np.min(v_y)
         y_max = np.max(v_y)
 
-        n_points = 40
         area = abs((x_max-x_min)*(y_max-y_min))
         n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
         n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
-
 
         v_regx = np.linspace(x_min, x_max, n_pts_x)
         v_regy = np.linspace(y_min, y_max, n_pts_y)
@@ -827,6 +828,10 @@ class Structure:
         v_regindex = scipy.interpolate.griddata(xy_in, v_refindex, xy_out).reshape([n_pts_y, n_pts_x])
         fig, ax = plt.subplots()
 
+        #v_regindex = np.where(v_regindex==0, 1, v_regindex)
+        v_regindex = np.nan_to_num(v_regindex, nan=1.0)
+        print(np.min(v_regindex))
+
         if as_epsilon:
             v_regindex = v_regindex**2
             fig.suptitle('Dielectric constant')
@@ -834,10 +839,15 @@ class Structure:
             fig.suptitle('Refractive index')
 
         cmap='cool'
-        cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0)
-        ax.set_xlabel(r'$x$')
-        ax.set_ylabel(r'$y$')
-        fig.colorbar(cf)
+        cf=ax.imshow(v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex), origin='lower',
+                     extent = [x_min, x_max, y_min, y_max])
+        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
+        ax.set_xlabel(r'$x$ [μm]')
+        ax.set_ylabel(r'$y$ [μm]')
+        cb = fig.colorbar(cf)
+        cf.set_clim(1,np.nanmax(v_regindex))
+        cb.outline.set_linewidth(.5)
+        cb.outline.set_color('gray')
 
 
         plotting.save_and_close_figure(fig, prefix+'refn.png')

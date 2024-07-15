@@ -190,15 +190,15 @@ class Triangular(UserGeometryBase):
         desc = '''A NumBAT geometry template for a triangular waveguide.'''
         self.set_properties('triangular', 2, False, desc)
         self.set_required_parameters(['base_width', 'peak_xoff', 'peak_height'],  num_mats=1)
-        self.set_allowed_parameters(['lc_refine_1','lc_refine_2'], num_allowed_mats=2)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1','lc_refine_2'], num_allowed_mats=2)
         self.set_parameter_help(
             {
                 'base_width' : "length of base of triangle along x-axis",
                 'peak_xoff' :  "horizontal offset of peak along x-axis from left vertex",
                 'peak_height': "perpendicular height of triangle",
-                'mat_a': "material of triangular core",
-                'mat_bkg': "background material",
-}
+                'material_bkg': "background material",
+                'material_a': "material of triangular core",
+                }
             )
 
     def apply_parameters(self):

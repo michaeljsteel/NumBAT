@@ -14,6 +14,8 @@ fcomp = meson.get_compiler('fortran')
 #message('@0@'.format(fcomp))
 
 add_global_arguments(['-cpp',], language: 'fortran')
+add_global_arguments(['-DZLONG',], language: 'c')
+
 
 #add_global_arguments(['-DNO_APPEND_FORTRAN',  '-DNO_UPPERCASE_FORTRAN'], language: 'c')
 
