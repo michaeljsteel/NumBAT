@@ -13,34 +13,51 @@ fcomp = meson.get_compiler('fortran')
 #message('@0@'.format(ccomp))
 #message('@0@'.format(fcomp))
 
-
+inc_nblocal = ''
 if host_machine.system() == 'linux'
   dir_oneapi = '/opt/intel/oneapi/mkl/latest/lib'
-  dir_nblocal=['/usr/local/lib']
-  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi)
+  dir_nblocal = ['/usr/local/lib']
+
+  inc_nblocal = include_directories('/usr/local/include')
+  lib_blas = ccomp.find_library('mkl_rt',
+    dirs: dir_oneapi,
+    header_include_directories: inc_nblocal)
 
 elif host_machine.system() == 'darwin'
-  lib_blas = [ccomp.find_library('lapack', dirs: '/opt/local/lib'),
-    ccomp.find_library('blas', dirs: '/opt/local/lib')]
+  lib_blas = [
+    ccomp.find_library('lapack', dirs: '/opt/local/lib'),
+    ccomp.find_library('blas', dirs: '/opt/local/lib'),
+  ]
 
 else
 
-#MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
- #   $(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
+  #MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
+  #   $(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
 
-  dir_nblocal = 'C:/Users/mq98002769/numbat/usr_local'
-  dir_oneapi = 'c:/Program Files (x86)/Intel/oneAPI'
-  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi)
+  dir_nblocal = 'C:/Users/mq98002769/numbat/usr_local/lib'
+  dir_oneapi = 'c:/Program Files (x86)/Intel/oneAPI/mkl/2024.1/lib'
+  inc_nblocal = include_directories('C:/Users/mq98002769/numbat/usr_local/include')
 
+  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi,
+  header_include_directories:inc_nblocal)
 endif
 
 lib_arpack = ccomp.find_library('arpack', dirs: dir_nblocal)
 lib_umfpack = ccomp.find_library('umfpack', dirs: dir_nblocal)
 
 
-add_global_arguments(['-cpp',], language: 'fortran')
-add_global_arguments(['-DZLONG',], language: 'c')
+if host_machine.system() == 'windows'
+  add_global_arguments(['-fpp', ], language: 'fortran',)
+  add_global_arguments(['-D UPPERCASE_FORTRAN','-D NO_APPEND_FORTRAN', ], language: 'c',)
 
+endif
+
+add_global_arguments(
+  [
+    '-DZLONG',
+  ],
+  language: 'c',
+)
 
 #add_global_arguments(['-DNO_APPEND_FORTRAN',  '-DNO_UPPERCASE_FORTRAN'], language: 'c')
 
@@ -50,13 +67,12 @@ subdir('sswrap')
 subdir('src')
 
 message(
-    '\n\n\n\nmeson settings',
-    meson.current_build_dir(),
-    meson.build_root(),
-    meson.current_source_dir(),
-    meson.source_root(),
+  '\n\n\n\nmeson settings',
+  meson.current_build_dir(),
+  meson.build_root(),
+  meson.current_source_dir(),
+  meson.source_root(),
 )
-
 
 pymod = import('python')
 py_installation = pymod.find_installation()
@@ -68,36 +84,39 @@ dep_py = py_installation.dependency()
 # F2PY details
 r = run_command(py_exe, '-c', 'import numpy; print(numpy.get_include())', check: true)
 dir_numpy = r.stdout().strip()
-r = run_command(py_exe, '-c', 'import numpy.f2py; print(numpy.f2py.get_include())', check: true)
+r = run_command(
+  py_exe,
+  '-c', 'import numpy.f2py; print(numpy.f2py.get_include())',
+  check: true,
+)
 dir_f2py = r.stdout().strip()
 src_f2py_fortobj = dir_f2py / 'fortranobject.c'
 
-
-
 # TODO: unneeded
 incdir = include_directories(
-  [
-  #  '/usr/local/include',
-  #  '/usr/include',
-  #  '/usr/include/python3.12'  # find a better way
-  ],
+  [],
 )
 incs_f2py = include_directories([dir_numpy, dir_f2py])
 
 message([dir_numpy, dir_f2py])
 
-incs = [incdir, incs_f2py]
+incs = [inc_nblocal, incdir, incs_f2py]
 
-srcs = [src_f2py_fortobj,
-  nb_pyf, nb_fortmodc,
-  nb_pyinterface_fsrcs, nb_module_fsrcs,
+srcs = [
+  src_f2py_fortobj,
+  nb_pyf,
+  nb_fortmodc,
+  nb_pyinterface_fsrcs,
+  nb_module_fsrcs,
   nb_impl_fsrcs,
-  src_sswrap]
+  src_sswrap,
+]
 
-nblib = shared_module('nb_fortran',
-srcs,
+nblib = shared_module(
+  'nb_fortran',
+  srcs,
   include_directories: incs,
   name_prefix: '',
   override_options: ['b_lundef=false'],
   dependencies: [lib_arpack, lib_umfpack, lib_blas, dep_py],
-  )
+)

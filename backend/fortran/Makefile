@@ -435,3 +435,7 @@ mesintel:
 	cp mbuild_gcc/nb_fortran.so .
 
 
+win:
+	CC=icx FC=ifx meson setup --reconfigure --buildtype=release mbuild_win
+	meson compile -C mbuild_win
+	cp mbuild_win/nb_fortran.pyd .
