@@ -31,8 +31,7 @@ def plot_em_chareq_at_k(k, rcore, ncore, nclad):
     fig, axs = plt.subplots(1, 3, figsize=(20, 6))
     for m in range(5):
         for i, neff in enumerate(v_neff):
-            v_dr_TE[i] = chareq_em_fib2_TE_m(
-                neff, m, k, rcore, ncore, nclad)+.1
+            v_dr_TE[i] = chareq_em_fib2_TE_m(neff, m, k, rcore, ncore, nclad)
             v_dr_TM[i] = chareq_em_fib2_TM_m(neff, m, k, rcore, ncore, nclad)
             v_dr_hy[i] = chareq_em_fib2_hy_m(neff, m, k, rcore, ncore, nclad)
         axs[0].plot(v_neff, v_dr_TE)
