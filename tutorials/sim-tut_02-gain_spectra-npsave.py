@@ -93,6 +93,8 @@ for (i, kz) in enumerate(v_kz):
 
 # Let's plot fields for only the first few modes (ival=range(4)=0--3)
 
+simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
+
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
 simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
@@ -105,10 +107,16 @@ simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
-print("The fundamental optical mode has effective index n_eff = {n_eff_sim:.6f}")
+print(f'The fundamental optical mode has effective index n_eff = {n_eff_sim:.6f}')
+
+sys.exit(0)
+
+
+
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
+
 
 if recalc_fields:
     # Calculate and save acoustic modes.
