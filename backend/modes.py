@@ -11,7 +11,7 @@ from numbattools import int2d_trapz, np_min_max
 import reporting
 from plottools import save_and_close_figure
 import plotmodes
-
+import plotmoderaw
 
 # Checks of mesh and triangles satisfy conditions for triangulation
 # Quadratic algorithm. Use on the smallest grid possible
@@ -168,6 +168,7 @@ class ModePlotHelper:
         v_y = np.linspace(y_min, y_max, n_pts_y)
         m_X, m_Y = np.meshgrid(v_x, v_y)
 
+        # raw means in meters and with no position shifts
         self.xy_raw = {'v_x': v_x, 'v_y': v_y, 'm_x': m_X, 'm_y': m_Y}
 
         v_x_out = (v_x + shiftx) / SI_um
@@ -218,9 +219,8 @@ class ModePlotHelper:
         tabnod_py = fm.table_nod.T - 1  # shift fortran to python indexing
 
         # dense triangulation with multiple points
-        v_x6p = np.zeros(6*fm.n_msh_el)
-        v_y6p = np.zeros(6*fm.n_msh_el)
-        v_triang6p = []
+        v_x6p, v_y6p = fm.get_fullmesh_nodes_xy()
+
 
         # In table_nod
         # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
@@ -228,33 +228,40 @@ class ModePlotHelper:
         # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
 
         # create sub-triangles from combos of the element nodes
-        for idx in range(0, 6*fm.n_msh_el, 6):
-            triangles = [[idx+0, idx+3, idx+5],
-                         [idx+1, idx+4, idx+3],
-                         [idx+2, idx+5, idx+4],
-                         [idx+3, idx+4, idx+5]]
-            v_triang6p.extend(triangles)
+        # v_triang6p = []
+        # for idx in range(0, 6*fm.n_msh_el, 6):
+        #     triangles = [[idx+0, idx+3, idx+5],
+        #                  [idx+1, idx+4, idx+3],
+        #                  [idx+2, idx+5, idx+4],
+        #                  [idx+3, idx+4, idx+5]]
+        #     v_triang6p.extend(triangles)
 
-        # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
-        # i is the index for the coordinates FIND A BETTER NAME
-        i = 0
-        for i_el in range(fm.n_msh_el):
-            for i_node in range(6):
-                i_ex = tabnod_py[i_el, i_node]
-                v_x6p[i] = xy_nodes[0, i_ex]
-                v_y6p[i] = xy_nodes[1, i_ex]
-                i += 1
+        v_triang6p, v_triang1p = fm.make_sub_triangulation()
+
+
+        # # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
+        # # i is the index for the coordinates FIND A BETTER NAME
+        #v_x6p = np.zeros(6*fm.n_msh_el)
+        #v_y6p = np.zeros(6*fm.n_msh_el)
+        # i = 0
+        # for i_el in range(fm.n_msh_el):
+        #     for i_node in range(6):
+        #         i_ex = tabnod_py[i_el, i_node]
+        #         v_x6p[i] = xy_nodes[0, i_ex]
+        #         v_y6p[i] = xy_nodes[1, i_ex]
+        #         i += 1
 
         # Interpolate onto triangular grid - honest to FEM elements
         # dense triangulation with unique points
-        v_triang1p = []
-        # table_nod = self.table_nod
-        for i_el in np.arange(fm.n_msh_el):
-            triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
-                         [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
-                         [tabnod_py[i_el, 2], tabnod_py[i_el, 5], tabnod_py[i_el, 4]],
-                         [tabnod_py[i_el, 3], tabnod_py[i_el, 4], tabnod_py[i_el, 5]]]
-            v_triang1p.extend(triangles)
+
+        # v_triang1p = []
+        # # table_nod = self.table_nod
+        # for i_el in np.arange(fm.n_msh_el):
+        #     triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
+        #                  [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
+        #                  [tabnod_py[i_el, 2], tabnod_py[i_el, 5], tabnod_py[i_el, 4]],
+        #                  [tabnod_py[i_el, 3], tabnod_py[i_el, 4], tabnod_py[i_el, 5]]]
+        #     v_triang1p.extend(triangles)
 
         # This is for testing only. Normally turn off
         check_tris = False
@@ -262,24 +269,31 @@ class ModePlotHelper:
             check_triangulation(xy_nodes[0, :], xy_nodes[1, :], self.v_triang1p)
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
+
+        # Plots show that these are equivalent meshes with different mesh point orderings
+        # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the table_nod
+        # triang1p: tabnod_py[i_el, i_node] ordering: straight node ordering 0, 1, 2, ..5, 6+(0, 1, 2, ..5), 12+ 0, 1, 2, ..5
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        tri_triang1p = matplotlib.tri.Triangulation(
-            xy_nodes[0, :], xy_nodes[1, :], v_triang1p)
+        tri_triang1p = matplotlib.tri.Triangulation(xy_nodes[0, :], xy_nodes[1, :], v_triang1p)
+
+        #fig, ax = plt.subplots(1,2,dpi=600)
+        #ax[0].scatter(tri_triang6p.x, tri_triang6p.y, s=.2)
+        #ax[1].scatter(tri_triang1p.x, tri_triang1p.y, s=.2)
+        #save_and_close_figure(fig,'tt-tritest.png')
+
+
 
         # The v_triangs are lists of index nodes
         # the tri_triangs are actual points
-        pl_tri_triang6p = matplotlib.tri.Triangulation(
-            v_x6p*1e6, v_y6p*1e6, v_triang6p)
-        pl_tri_triang1p = matplotlib.tri.Triangulation(
-            xy_nodes[0, :]*1e6, xy_nodes[1, :]*1e6, v_triang1p)
+        pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p/SI_um, v_y6p/SI_um, v_triang6p)
+        pl_tri_triang1p = matplotlib.tri.Triangulation(xy_nodes[0, :]/SI_um, xy_nodes[1, :]/SI_um, v_triang1p)
 
         draw_triangulation = False
         if draw_triangulation:
-            self._save_triangulation_plots(
-                pl_tri_triang1p, pl_tri_triang6p, xy_nodes*1e6)
+            self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p, xy_nodes*1e6)
 
         # building interpolators: triang1p for the finder, triang6p for the values
-        # create rectangular arrays corresponding to the v_x, v_y grids
+        # create npts_x * npts_y rectangular arrays corresponding to the v_x, v_y grids
 
         # There might be a cleaner way of doing this
         v_x_flat = self.xy_raw['m_x'].flatten('F') - shiftx
@@ -287,6 +301,8 @@ class ModePlotHelper:
 
         finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
 
+        # The solutions we plug in are in 6p ordering so using tri_triang6p for the interperloator makes sense
+        # But why is the trifinder based on 1p?  Does it make a difference?
         nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
         self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
             tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(
@@ -350,6 +366,17 @@ class Mode:
 
     def plot_mode_H(self, comps):  # plot magnetic field for EM modes
         self.plot_mode(comps, field_type=FieldType.EM_H)
+
+    def plot_mode_raw_fem(self, comps):
+        '''Plot the requested field components on the sim mesh with no interpolation.'''
+
+        simres = self.sim_result
+        ft = self.field_type
+        mh = self.get_mode_helper()
+
+        fem_evecs = simres.fem_evecs_H if ft == FieldType.EM_H else simres.fem_evecs
+        plotmoderaw.do_raw_fem_mode_plot(comps, mh,
+                                         self.sim_result.fem_mesh, fem_evecs, self.mode_num)
 
     def plot_strain(self):
         if not self.sim_result.is_AC():
