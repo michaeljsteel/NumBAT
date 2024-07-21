@@ -1,7 +1,57 @@
 
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
-from nbtypes import SI_to_gmpercc
+from math import sqrt
+
+
+from nbtypes import SI_to_gmpercc, SI_um
+import numbat
+from plottools import save_and_close_figure
+import reporting
+
+
+
+# Checks of mesh and triangles satisfy conditions for triangulation
+# Quadratic algorithm. Use on the smallest grid possible
+def check_triangulation(vx, vy, triangs):
+    # are points unique
+    print('\n\nChecking triangulation goodness')
+    npts = len(vx)
+    dsepmin = 1e6
+    dsi = 0
+    dsj = 0
+    for i in range(npts):
+        for j in range(i+1, npts):
+            dsep = sqrt((vx[i]-vx[j])**2 + (vy[i]-vy[j])**2)
+            if dsep < dsepmin:
+                dsepmin = dsep
+                dsi = i
+                dsj = j
+
+    print('  Closest space of triangle points was', dsepmin)
+    if dsepmin < 1e-11:
+        msg = f'Point collision at {dsi}, {
+            dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
+        msg += '\nIt seems the mesh grid reordering has failed.'
+        reporting.report_and_exit(msg)
+
+    # is list of triangles unique
+    s_vtri = set()
+    clean = True
+    for tri in triangs:
+        stri = str(tri)
+        if stri in s_vtri:
+            print("        Double triangle at", stri)
+            clean = False
+        else:
+            s_vtri.add(stri)
+    if clean:
+        print("  No doubled triangles found")
+    else:
+        print("  Found doubled triangles")
+
 
 
 class FemMesh:
@@ -282,3 +332,64 @@ class FemMesh:
             v_triang1p.extend(triangles)
 
         return v_triang6p, v_triang1p
+
+    def _save_triangulation_plots(self, triang1p, triang6p, xy_nodes):
+        fig, axs = plt.subplots(1, 1)
+        axs[0].triplot(triang1p, linewidth=.5)
+        # axs[1].triplot(triang6p, linewidth=.5)
+        # for ax in axs:
+        axs[0].set_aspect(1.0)
+        axs[0].scatter(xy_nodes[0, :], xy_nodes[1, :], s=2, c='red')
+
+        axs[0].set_xlabel(r'$x$ [μm]')
+        axs[0].set_ylabel(r'$y$ [μm]')
+
+        pref = numbat.NumBATApp().outprefix()
+        fname = pref + \
+            f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
+        save_and_close_figure(fig, fname)
+
+    def make_interpolator(self, vx_out, vy_out, nx, ny):
+
+        v_triang6p, v_triang1p = self.make_sub_triangulation()
+
+        # This is for testing only. Normally turn off
+        check_tris = False
+        if check_tris:
+            check_triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :],
+                                      v_triang1p)
+
+
+        v_x6p, v_y6p = self.get_fullmesh_nodes_xy()
+
+        # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
+
+        # Plots show that these are equivalent meshes with different mesh point orderings
+        # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the table_nod
+        # triang1p: tabnod_py[i_el, i_node] ordering: straight node ordering 0, 1, 2, ..5, 6+(0, 1, 2, ..5), 12+ 0, 1, 2, ..5
+        tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
+        tri_triang1p = matplotlib.tri.Triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :], v_triang1p)
+
+        draw_triangulation = False
+        if draw_triangulation:
+            pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p/SI_um, v_y6p/SI_um, v_triang6p)
+            pl_tri_triang1p = matplotlib.tri.Triangulation(self.xy_nodes[0, :]/SI_um, self.xy_nodes[1, :]/SI_um, v_triang1p)
+
+            self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p,
+                                           self.xy_nodes/SI_um)
+
+        # The trifinder only works with triang1p, not triang6p.
+        # The latter is apparently an 'invalid triangulation'.
+        # Why?!  Perhaps it's clockwise, when anticlock is required?
+       # finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
+        finder = tri_triang1p.get_trifinder()
+        #finder = tri_triang6p.get_trifinder()
+
+
+        # The solutions we plug in are in 6p ordering so using tri_triang6p for the interperloator makes sense
+        # But why is the trifinder based on 1p?  Does it make a difference?
+        #nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
+        self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
+            tri_triang6p, x, trifinder=finder)(vx_out, vy_out).reshape(
+                nx, ny)
+
