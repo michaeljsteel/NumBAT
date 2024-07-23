@@ -13,10 +13,10 @@ import materials
 mat_bkg = materials.make_material("Vacuum")
 mat_air = materials.make_material("Air")
 mat_a = materials.make_material("Si_2016_Smith")
-mat_b = materials.make_material("SiO2_2016_Smith")
+mat_b = materials.make_material("As2S3_2023_Steel")
 mat_c = materials.make_material("SiO2_2016_Smith")
-mat_d = materials.make_material("SiO2_2016_Smith")
-mat_e = materials.make_material("SiO2_2016_Smith")
+mat_d = materials.make_material("Si3N4_2021_Steel")
+mat_e = materials.make_material("GaAs_2021_Poulton")
 
 fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
 
@@ -116,13 +116,17 @@ def do_oneincl_rect(nbapp):
     un_x = 4000; un_y = 3000; inc_a_x = 1500; inc_a_y = 750
 
     # plain rect waveguide
-    wguide = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rectangular',
+    wguide = nbapp.make_structure( 'rectangular', un_x, un_y, inc_a_x, inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     frt = 'rect'
-    wguide.plot_mesh('rect'+fn_suff_raw)
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
     
+    do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y)
+
+def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
     with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
         (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
 
@@ -134,7 +138,7 @@ def do_oneincl_rect(nbapp):
         add_mat_lab(im, bw, bh, 'mat_bkg', x0-2*dx, y0+dy)
         add_mat_lab(im, bw, bh, 'mat_a', x0-dx*6, y0+dy*5)
 
-        add_lc(im, bw, bh, 'lc_bg', x0-dx*3, bt-.5*dy, 'SW')
+        add_lc(im, bw, bh, 'lc_bkg', x0-dx*3, bt-dy, 'SW')
         add_lc(im, bw, bh, 'lc_1',  x0-inc_a_x*scalx*.5, y0-dy, 'SW')
 
         xs = x0-.53*inc_a_x*scalx; xf=xs
@@ -145,19 +149,25 @@ def do_oneincl_rect(nbapp):
         ys = y0-.53*inc_a_y*scaly; yf = ys
         add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 
-
-
         im.show()
         im.save(frt+fn_ext_anno)
+
+
+
 
 def do_oneincl_circ(nbapp):
     un_x = 4000; un_y = 3000; inc_a_x = 1500; inc_a_y = 750
 
-    wguide = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'circular',
+    wguide = nbapp.make_structure('circular', un_x, un_y, inc_a_x, inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     frt = 'circ'
     wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+
+    do_oneincl_circ_annotate(frt, un_x, un_y, inc_a_x, inc_a_y)
+
+def do_oneincl_circ_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
 
     with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
         (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
@@ -171,7 +181,7 @@ def do_oneincl_circ(nbapp):
         add_mat_lab(im, bw, bh, 'mat_a',   x0-5*dx, y0+dy*5)
 
 
-        add_lc(im, bw, bh, 'lc_bkg', x0-2*dx, bt-.5*dy, 'SW')
+        add_lc(im, bw, bh, 'lc_bkg', x0-2*dx, bt-dy, 'SW')
         add_lc(im, bw, bh, 'lc_2',   x0-dx, y0+bh/8, 'SW')
         add_lc(im, bw, bh, 'lc_3',   x0,      y0, 'SE')
 
@@ -189,49 +199,53 @@ def do_oneincl_circ(nbapp):
         im.save(frt+fn_ext_anno)
 
 def do_oneincl_triang(nbapp):
-    un_x = 4000; un_y = 3000; inc_a_x = 2000; inc_a_y = 750; inc_b_x = 600; inc_b_y = 1100
+    un_x = 4000; un_y = 3000; bw = 2000; pxo = 750; ph = 600; 
 
-    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'triangular',
-                            material_bkg=mat_bkg, material_a=mat_a,
-                            inc_b_x = inc_b_x, inc_b_y = inc_b_y,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
+    wguide = nbapp.make_structure('triangular', un_x, un_y, 
+                                   base_width=bw, peak_xoff = pxo, peak_height=ph,
+                                   material_bkg=mat_bkg, material_a=mat_a, 
+                                   lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
 
 
     frt = 'triangular'
-    wguide3.plot_mesh(frt+fn_suff_raw) 
+    wguide.plot_mesh(frt+fn_suff_raw) 
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
+    do_oneincl_triang_annotate(frt, un_x, un_y, bw, pxo, ph)
+
+def do_oneincl_triang_annotate(frt, un_x, un_y, basewid, pxo, ph):
     with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
         (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
 
         dx = (br-bl)/20
-        dy = (bt-bb)/20
+        dy = (bt-bb)/20   # negative value so adding dy moves curso up screen
 
         bumpx = -.0*bw
         bumpy = +.01*bh
 
-        x0 = (bl+br)/2  + bumpx
+        x0 = (bl+br)/2 + bumpx
         y0 = (bt+bb)/2 + bumpy
-        ymid = bt+bh*.5+.5*inc_b_y*scaly + bumpy
+        ymid = bt+bh*.5+.5*ph*scaly + bumpy  # bh is middle of triangle, ymid is baseline
 
-        add_mat_lab(im, bw, bh, 'mat_b1', x0-bw/15, ymid-bh/8)
-        add_mat_lab(im, bw, bh, 'mat_bg', x0-bw/3, y0-bh/6)
-        add_mat_lab(im, bw, bh, 'mat_bg', x0+bw/3, y0-bh/6)
-        add_mat_lab(im, bw, bh, 'mat_bg', x0, ymid+bh/6)
+        add_mat_lab(im, bw, bh, 'mat_a',   x0-bw/15, ymid-bh/8)
+        add_mat_lab(im, bw, bh, 'mat_bkg', x0-bw/3,  y0-bh/6)
+        add_mat_lab(im, bw, bh, 'mat_bkg', x0+bw/3,  y0-bh/6)
+        add_mat_lab(im, bw, bh, 'mat_bkg', x0,       ymid+bh/6)
 
-        add_lc(im, bw, bh, 'lc_bkg', x0-bw/6, bt-.5*dy, 'SW')
-        add_lc(im, bw, bh, 'lc_1',  x0-bw/3, ymid, 'SW')
+        add_lc(im, bw, bh, 'lc_bkg', x0-bw/6, bt-dy, 'SW')
+        add_lc(im, bw, bh, 'lc_1',   x0-bw/3, ymid,  'SW')
 
-        x1 = x0-.5*inc_a_x*scalx; x2 = x1+inc_a_x*scalx
+        x1 = x0-.5*basewid*scalx; x2 = x1+basewid*scalx
         y1 = ymid+.03*bh; y2 = ymid+.03*bh
-        add_dim(im, bw, bh, 'inc_a_x', x1, y1, x2, y2, 'S')
+        add_dim(im, bw, bh, 'base_width', x1, y1, x2, y2, 'S')
 
-        x1 = x0-.5*inc_a_x*scalx; x2 = x1+inc_b_x*scalx
+        x1 = x0-.5*basewid*scalx; x2 = x1+pxo*scalx
         y1 = ymid-.03*bh; y2 = ymid-.03*bh
-        add_dim(im, bw, bh, 'inc_b_x', x1, y1, x2, y2, 'N')
+        add_dim(im, bw, bh, 'peak_xoff', x1, y1, x2, y2, 'N')
 
-        x1 = x0+.5*inc_a_x*scalx; x2 = x1
-        y1 = ymid; y2 = y1-inc_b_y*scaly
-        add_dim(im, bw, bh, 'inc_b_y', x1, y1, x2, y2, 'E')
+        x1 = x0+.5*ph*scalx; x2 = x1
+        y1 = ymid; y2 = y1-ph*scaly
+        add_dim(im, bw, bh, 'peak_height', x1, y1, x2, y2, 'E')
 
 
         im.show()
@@ -260,17 +274,21 @@ def do_twoincl(nbapp):
     inc_b_y = inc_a_y*2
     incs_y_offset = -400
     two_inc_sep=500
-    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rectangular',
+    wguide1 = nbapp.make_structure('rectangular', un_x,un_y,inc_a_x,inc_a_y,
                                 inc_b_x=inc_b_x, inc_b_y=inc_b_y, two_inc_sep=two_inc_sep,
                                incs_y_offset=incs_y_offset,
-                            material_bkg=mat_air, material_a=mat_a,
+                            material_bkg=mat_air, material_a=mat_a, material_b=mat_b,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
+
+    wguide1.plot_mesh('twoincl_rect_wg')
+    wguide1.plot_refractive_index_profile('twoincl_rect_wg')
     # circ inclusions
-    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'circular',
+    wguide2 = nbapp.make_structure('circular', un_x,un_y,inc_a_x,inc_a_y,
                                 inc_b_x=inc_b_x, inc_b_y=inc_b_y, two_inc_sep=two_inc_sep,
-                            material_bkg=mat_a, material_a=mat_a,
+                            material_bkg=mat_air, material_a=mat_a, material_b=mat_b,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide2.plot_mesh('twoincl_circ_wg')
+    wguide2.plot_refractive_index_profile('twoincl_circ_wg')
     
    
 def do_rib(nbapp):
@@ -283,37 +301,36 @@ def do_rib(nbapp):
     slab_a_x = 3000
     slab_a_y = 400
     slab_b_y = 100
-    coat_x = 50
-    coat_y = 50
-    coat2_x = 70
-    coat2_y = 70
+    coat_x = 70
+    coat_y = 70
+    coat2_x = 140
+    coat2_y = 140
 
-    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
+    wguide1 = nbapp.make_structure('rib',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y,
+                                slab_w=slab_a_x, slab_h=slab_a_y, 
                             material_bkg=mat_bkg, material_a=mat_a, 
                                 material_b=mat_b,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10)
+                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide1.plot_mesh('rib_wg')
+    wguide1.plot_refractive_index_profile('rib_wg')
 
-    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib_coated',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
-                                coat_x=coat_x, coat_y=coat_y, 
-                            material_bkg=mat_bkg, material_a=mat_a, 
-                                material_b=mat_b,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10, lc_refine_4=20)
+    wguide2 = nbapp.make_structure('rib_coated', un_x, un_y, rib_w=inc_a_x, rib_h=inc_a_y, 
+                                   slab_w=slab_a_x, slab_h=slab_a_y, coat_w=coat_x, coat_h=coat_y, 
+                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c, 
+                                   lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide2.plot_mesh('rib_coated_wg')
+    wguide2.plot_refractive_index_profile('rib_coated_wg')
 
 
-    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'rib_double_coated',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
-                                coat_x=coat_x, coat_y=coat_y, 
-                                coat2_x=coat2_x, coat2_y=coat2_y, 
-                            material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
-                                material_c=mat_c, material_d=mat_d, material_e=mat_e,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10, 
-                                lc_refine_4=20, lc_refine_5=20)
+    wguide3 = nbapp.make_structure('rib_double_coated',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y, 
+                                   slab_w=slab_a_x, slab_h=slab_a_y, 
+                                   coat_w=coat_x, coat_h=coat_y, coat2_w=coat2_x, coat2_h=coat2_y, 
+                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c, 
+                                   material_d=mat_d, material_e=mat_e, 
+                                   lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10, lc_refine_4=20, lc_refine_5=20)
     #wguide3.check_mesh()
     wguide3.plot_mesh('rib_double_coated_wg')
+    wguide3.plot_refractive_index_profile('rib_double_coated_wg')
 
     
 def do_slot(nbapp):
@@ -490,9 +507,9 @@ def do_main():
 
     nbapp = numbat.NumBATApp()
 
-    do_oneincl(nbapp)
+    #do_oneincl(nbapp)
     #do_twoincl(nbapp)
-    #do_rib(nbapp)
+    do_rib(nbapp)
     #do_slot(nbapp)
     #do_onion(nbapp)
     #do_trapezoid(nbapp)

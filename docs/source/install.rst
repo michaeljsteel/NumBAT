@@ -134,9 +134,9 @@ Building |NUMBAT| itself
 
    $ make build
 
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
-#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
 #. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
 
@@ -326,9 +326,9 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
    $ make -f Makefile.macos
 
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
-#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
 #. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
 
@@ -518,9 +518,9 @@ At long last, we are ready to build |NUMBAT| itself.
 
    This should take 2 to 3 minutes.
 
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
-#. If you hit a compile error you can't resolve, please see the instructions at :ref:`helpinstall-label` on how to seek help.
+#. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
 #. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
 
@@ -545,8 +545,7 @@ Here is a procedure for doing this::
 
   #. Select the *General* tab and change the name field at the top to *NumBAT Terminal*.
 
-  #. Select the *Shortcut* tab and change the *Target* field to
-``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
+  #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
 
   #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
 
