@@ -24,8 +24,7 @@ import os
 import subprocess
 import copy
 import traceback
-import time
-import sys
+import itertools
 
 
 import tempfile
@@ -33,6 +32,7 @@ from pathlib import Path
 import json
 import importlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 import numpy as np
 import scipy.interpolate
@@ -42,12 +42,15 @@ import scipy.interpolate
 import numbat
 import reporting
 from nbtypes import SI_nm
+from numbattools import np_min_max
 
 import materials
 from mode_calcs import EMSimulation, ACSimulation
 import nbgmsh
 import plotting
 import plottools
+import femmesh
+
 from fortran import nb_fortran
 
 def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
@@ -779,6 +782,76 @@ class Structure:
 
         return sim.get_sim_result()
 
+    def plot_refractive_index_profile_fem(self, prefix, n_points = 200, as_epsilon=False,
+                                          aspect=1.0, with_cb=True):
+        print('\n\nPlotting ref index fem like')
+        fem_mesh = femmesh.FemMesh()
+        fem_mesh.build_from_gmsh_mail(self)
+
+        neff_nodes = np.zeros([6, fem_mesh.n_msh_el], dtype=np.float64)
+
+        opt_props = self.optical_props
+
+
+        # Assign a common refractive index to all nodes of each element
+        for i_el in range(fem_mesh.n_msh_el):
+            neff_nodes[:,i_el] = np.real(
+                opt_props.v_refindexn[fem_mesh.v_el_2_mat_idx[i_el]-1])  # -1 because of fortran indexing
+
+        neff_nodes = neff_nodes.flatten('F')
+
+
+        # neff_nodes is now a refractive index map on the full fem mesh to which we can
+        # apply triangular interpolation
+
+
+        # get approx square pixel rectangular grid
+        v_x, v_y = fem_mesh.rect_grid(n_points)
+
+        m_x, m_y = np.meshgrid(v_x, v_y)
+
+        v_x_flat = m_x.flatten('F')
+        v_y_flat = m_y.flatten('F')
+
+        interp = fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(v_x), len(v_y))
+        m_neffeps = interp(neff_nodes)
+
+        fig, ax = plt.subplots()
+        if as_epsilon:
+            m_neffeps = m_neffeps**2
+            label=r'$\epsilon(\vec x)$'
+        else:
+            label=r'$n(\vec x)$'
+
+        # TODO: explain the need for the transpose in the imshow call below
+        epslo, epshi = np_min_max(m_neffeps)
+
+        cmap='cool'
+        im=ax.imshow(m_neffeps.T, cmap=cmap, vmin=1.0, vmax=epshi, origin='lower',
+                     extent = [np.min(v_x), np.max(v_x), np.min(v_y), np.max(v_y) ])
+        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
+        ax.set_xlabel(r'$x$ [μm]')
+        ax.set_ylabel(r'$y$ [μm]')
+        ax.set_aspect(aspect)
+        im.set_clim(1,np.nanmax(m_neffeps))
+        if with_cb:
+            ticks = np.linspace(epslo, epshi,5)
+            fmts = ((f'{epslo:.4f}',), map(lambda x: f'{x:.1f}', ticks[1:-1]),
+                                             (f'{epshi:.4f}',))
+            fmts = list(itertools.chain.from_iterable(fmts))
+
+            fmt = mticker.FixedFormatter(fmts)
+            cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
+            cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
+            cb.ax.set_title(label)
+            cb.ax.tick_params(labelsize=12)
+            cb.outline.set_linewidth(.5)
+            cb.outline.set_color('gray')
+
+
+        plotting.save_and_close_figure(fig, prefix+'refn_fem.png')
+
+
     def plot_refractive_index_profile(self, prefix, n_points = 200, as_epsilon=False):
         print('\n\nPlotting ref index')
 
@@ -798,7 +871,7 @@ class Structure:
 
         for i in range(len(v_elt_refindex)):
             v_elt_refindex[i] = np.real(list(self.d_materials.values())[i].refindex_n)
-        print('elt refs', v_elt_refindex)
+
 
         for i,elt in enumerate(v_elt_indices):
             v_refindex[i] = v_elt_refindex[elt-1]  # the type of element is labelled by gmsh from 1.

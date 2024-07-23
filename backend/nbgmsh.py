@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-import numbat
-
 from plotmodes import TidyAxes
 from plottools import save_and_close_figure
 
@@ -130,6 +128,10 @@ class MailData:
         self.v_node_physindex = np.zeros(npts, dtype=np.int32)
         self.v_elts = np.zeros([nelts, 7], dtype=np.int32)
 
+        self.v_elts_mat = np.zeros(nelts, dtype=np.int32)
+
+
+
         self.v_centx = np.zeros(nelts)
         self.v_centy = np.zeros(nelts)
 
@@ -158,3 +160,4 @@ class MailData:
             self.v_centx[i] = (vx[eltnds[0]] + vx[eltnds[1]] + vx[eltnds[2]])/3.0
             self.v_centy[i] = (vy[eltnds[0]] + vy[eltnds[1]] + vy[eltnds[2]])/3.0
 
+        self.v_elts_mat = self.v_elts[:,-1]
