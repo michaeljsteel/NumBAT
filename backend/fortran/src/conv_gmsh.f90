@@ -363,9 +363,6 @@ subroutine write_mail_file(fname_mail, n_pts, n_elts, n_gelts_triangs, &
    integer(8) v_eltint_physsurf(n_elts)
    integer(8) v_nd_iphyscurve(n_elts)
 
-
-
-
    ui_out = 26
    open (unit=ui_out,file=fname_mail)
 

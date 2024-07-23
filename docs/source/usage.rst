@@ -60,7 +60,7 @@ specified in nanometres.  All other quantities in |NUMBAT| are expressed
 in the standard SI base units.
 
 .. figure::  images/meshes/tut01_mesh.png
-   :width: 15cm
+   :width: 16cm
 
    Generated mesh for this example as displayed by ``guide.check_mesh()``.
 
@@ -206,18 +206,31 @@ These structures consist of a single medium inclusion (``mat_a``) with a backgro
 The dimensions are set with ``inc_a_x`` and ``inc_a_y``.
 
 .. figure:: images/meshes/rect_wg-mesh-annotated.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/rect_wg-ref_index.png
+   :width: 10cm
 
    Rectangular waveguide using shape ``rectangular`` (template ``oneincl_msh``).
 
+
+
 .. figure:: images/meshes/circ_wg-mesh-annotated.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/circ_wg-ref_index.png
+   :width: 10cm
 
    Elliptical waveguide using shape ``circular`` (template ``oneincl_msh``).
 
 
+
+
 .. figure:: images/meshes/triangular_wg-mesh-annotated.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/triangular_wg-ref_index.png
+   :width: 10cm
 
    Triangular waveguide using shape ``triangular``.
 
@@ -231,12 +244,19 @@ The dimensions are set by ``inc_a_x/inc_a_y`` and  ``inc_b_x/inc_b_y``. They are
 horizontally by ``two_inc_sep`` and the right waveguide has a vertical offset of ``y_off``.
 
 .. figure::  images/meshes/twoincl_rect_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/twoincl_rect_wg-ref_index.png
+   :width: 10cm
 
    Coupled rectangular waveguides using shape ``rectangular`` (template ``twoincl_msh``).
 
 .. figure::  images/meshes/twoincl_circ_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/twoincl_circ_wg-ref_index.png
+   :width: 10cm
+
 
    Coupled circular waveguides using shape ``circular`` (template ``twoincl_msh``).
    There appears to be a bug here!
@@ -248,23 +268,40 @@ Rib waveguides
 These structures consist of a rib on one or more substrate layers with zero to two  coating layers.
 
 .. figure::  images/meshes/rib_wg-mesh-annotated.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/rib_wg-ref_index.png
+   :width: 10cm
 
    A conventional rib waveguide using shape ``rib`` (template ``rib``).
 
+
+
 .. figure:: images/meshes/rib_coated_wg-mesh-annotated.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/rib_coated_wg-ref_index.png
+   :width: 10cm
 
    A coated rib waveguide using shape ``rib_coated`` (template ``rib_coated``).
 
+
+
+
 .. figure:: images/meshes/rib_double_coated_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
+
+.. figure:: images/meshes/rib_double_coated_wg-ref_index.png
+   :width: 10cm
 
    A rib waveguide on two substrates using shape ``rib_double_coated`` (template ``rib_double_coated``).
 
+
+
+
 .. .. figure:: images/meshes/slot_wg-mesh-annotated.png
 .. figure:: images/meshes/slot_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
 Engineered rib  waveguides
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -273,12 +310,12 @@ These are examples of more complex rib geometries. These are good examples to st
 using the user-specified waveguide and mesh mechanism.
 
 .. figure:: images/meshes/trapezoidal_rib_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A trapezoidal rib structure using shape ``trapezoidal_rib``.
 
 .. figure:: images/meshes/pedestal_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A supported pedestal structure using shape ``pedestal``.
 
@@ -293,7 +330,7 @@ by the 'slot' effect.
 
 .. .. figure:: images/meshes/slot_coated_wg-mesh-annotated.png
 .. figure:: images/meshes/slot_coated_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A coated slot waveguide using shape ``slot_coated`` (``material_a`` is low index) (template ``slot_coated``).
 
@@ -308,33 +345,33 @@ The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thic
 
 
 .. figure:: images/meshes/onion_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A many-layered concentric structure using shape ``onion`` (template ``onion``).
 
 
 
 .. figure:: images/meshes/onion2_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A two-layered concentric structure with background using shape ``onion2`` (template ``onion2``).
 
 .. figure:: images/meshes/onion3_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A three-layered concentric structure with background using shape ``onion3`` (template ``onion3``).
 
 .. figure:: images/meshes/circ_onion_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
 .. figure:: images/meshes/circ_onion2_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A two-layered concentric structure with a circular outer boundary using shape ``circ_onion2`` (template ``circ_onion2``).
 
 .. figure:: images/meshes/circ_onion3_wg-mesh.png
-   :width: 15cm
+   :width: 16cm
 
    A three-layered concentric structure with a circular outer boundary using shape ``circ_onion3`` (template ``circ_onion3``).
 

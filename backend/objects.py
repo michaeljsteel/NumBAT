@@ -38,7 +38,6 @@ import numpy as np
 import scipy.interpolate
 
 
-
 import numbat
 import reporting
 from nbtypes import SI_nm
@@ -637,7 +636,9 @@ class Structure:
             cmd  = [gmsh_exe]
             cmd.extend(args.split())
 
-            subprocess.run(cmd, cwd=self.msh_location_out)
+            comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+            if comp_stat.returncode:
+                reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
 
             assertions_on = False
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
@@ -693,7 +694,9 @@ class Structure:
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
-        subprocess.run(cmd, cwd=self.msh_location_out)
+        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+        if comp_stat.returncode:
+            reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
 
         with open(Path(self.msh_location_in, 'msh2png.scr'), 'r') as fin:
             conv_tmp = fin.read()
@@ -706,7 +709,9 @@ class Structure:
         with open(fn_scr, 'w') as fout:
             fout.write(conv)
 
-        subprocess.run(cmd, cwd=self.msh_location_out)
+        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+        if comp_stat.returncode:
+            reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
 
         plottools.join_figs([tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',],
@@ -782,9 +787,8 @@ class Structure:
 
         return sim.get_sim_result()
 
-    def plot_refractive_index_profile_fem(self, prefix, n_points = 200, as_epsilon=False,
+    def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
                                           aspect=1.0, with_cb=True):
-        print('\n\nPlotting ref index fem like')
         fem_mesh = femmesh.FemMesh()
         fem_mesh.build_from_gmsh_mail(self)
 
@@ -849,10 +853,10 @@ class Structure:
             cb.outline.set_color('gray')
 
 
-        plotting.save_and_close_figure(fig, prefix+'refn_fem.png')
+        plotting.save_and_close_figure(fig, prefix+'-ref_index.png')
 
 
-    def plot_refractive_index_profile(self, prefix, n_points = 200, as_epsilon=False):
+    def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
         print('\n\nPlotting ref index')
 
 

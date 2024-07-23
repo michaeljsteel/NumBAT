@@ -471,7 +471,17 @@ class Rib(UserGeometryBase):
         self.set_properties('rib', nt, False, desc)
 
         self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_refine_1','lc_refine_2'],  num_allowed_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1','lc_refine_2'],  num_allowed_mats=nt)
+        self.set_parameter_help(
+                {
+                'rib_w': "width of raised rib region",
+                'rib_h': "height of raised rib region",
+                'slab_w': "width of slab substrate region",
+                'slab_h': "height of slab substrate region",
+                'material_bkg': "background material",
+                'material_a': "material of triangular core",
+                    }
+                )
 
 
     def apply_parameters(self):
@@ -485,10 +495,8 @@ class Rib(UserGeometryBase):
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_w')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_h')))
         subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
+        subs.append( ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
+        subs.append( ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
 
         return subs
 
@@ -501,28 +509,38 @@ class RibCoated(UserGeometryBase):
 
         self.set_properties('rib_coated', 4, False, desc)
 
-    def apply_parameters(self):
+        nt=4 
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'coat_w', 'coat_h'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],  num_allowed_mats=nt)
+        self.set_parameter_help(
+                {
+                'rib_w': "width of raised rib region",
+                'rib_h': "height of raised rib region",
+                'slab_w': "width of slab substrate region",
+                'slab_h': "height of slab substrate region",
+                'coat_w': "horizontal thickness of coating layer",
+                'coat_h': "vertical thickness of coating layer",
+                'material_bkg': "background material",
+                'material_a': "material of raised rib core",
+                'material_b': "material of substrate slab",
+                'material_c': "material of coating layer",
+                    }
+                )
 
-        # msh_name = self._make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('domain_x, self.get_param('domain_y,
-        #                                  self.get_param('inc_a_x, self.get_param('inc_a_y,
-        #                                  self.get_param('coat_x, self.get_param('coat_y, self.get_param('slab_a_x, self.get_param('slab_a_y')))
+    def apply_parameters(self):
 
         subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
-        subs.append(('coatx = 2;', 'coatx = %f;', self.get_param('coat_x')))
-        subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_y')))
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
-        subs.append(
-            ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.get_param('lc_refine_3')))
+        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('rib_w')))
+        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('rib_h')))
+        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_w')))
+        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_h')))
+        subs.append(('coatx = 2;', 'coatx = %f;', self.get_param('coat_w')))
+        subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_h')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc_bkg')))
+        subs.append( ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
+        subs.append( ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
+        subs.append( ('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.get_param('lc_refine_3')))
 
         return subs
 
@@ -532,6 +550,29 @@ class RibDoubleCoated(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a double coated rib waveguide.  '''
         self.set_properties('rib_double_coated', 6, False, desc)
+
+        nt=5 
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 
+                                      'coat_w', 'coat_h', 'coat2_w', 'coat2_h' ],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3', 
+                                     'lc_refine_4', 'lc_refine_5' ],  num_allowed_mats=nt)
+        self.set_parameter_help(
+                {
+                'rib_w': "width of raised rib region",
+                'rib_h': "height of raised rib region",
+                'slab_w': "width of slab substrate region",
+                'slab_h': "height of slab substrate region",
+                'coat_w': "horizontal thickness of inner coating layer",
+                'coat_h': "vertical thickness of inner coating layer",
+                'coat2_w': "horizontal thickness of outer coating layer",
+                'coat2_h': "vertical thickness of outer coating layer",
+                'material_bkg': "background material",
+                'material_a': "material of raised rib core",
+                'material_b': "material of substrate slab",
+                'material_c': "material of inner coating layer",
+                'material_d': "material of outer coating layer",
+                    }
+                )
 
     def apply_parameters(self):
 
@@ -544,15 +585,17 @@ class RibDoubleCoated(UserGeometryBase):
 
         subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
         subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
+        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('rib_w')))
+        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('rib_h')))
+        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_w')))
+        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_h')))
+        subs.append(('coatx = 2;', 'coatx = %f;', self.get_param('coat_w')))
+        subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_h')))
+
         subs.append(('slab2y = 5;', 'slab2y = %f;', self.get_param('slab_b_y')))
-        subs.append(('coatx = 2;', 'coatx = %f;', self.get_param('coat_x')))
-        subs.append(('coaty = 2;', 'coaty = %f;', self.get_param('coat_y')))
-        subs.append(('coat2x = 4;', 'coat2x = %f;', self.get_param('coat2_x')))
-        subs.append(('coat2y = 4;', 'coat2y = %f;', self.get_param('coat2_y')))
+        subs.append(('coat2x = 4;', 'coat2x = %f;', self.get_param('coat2_w')))
+        subs.append(('coat2y = 4;', 'coat2y = %f;', self.get_param('coat2_h')))
+
         subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
