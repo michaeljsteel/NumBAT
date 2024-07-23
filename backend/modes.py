@@ -131,17 +131,16 @@ class ModePlotHelper:
                         np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
 
         # Always need these ones.
-        interper_f = self.sim_result.fem_mesh.interper_f
 
-        m_ReFx = interper_f(v_Fx6p.real)
-        m_ReFy = interper_f(v_Fy6p.real)
-        m_ImFz = interper_f(v_Fz6p.imag)
-        m_AbsF = interper_f(v_F6p)
+        m_ReFx = self.interper_f(v_Fx6p.real)
+        m_ReFy = self.interper_f(v_Fy6p.real)
+        m_ImFz = self.interper_f(v_Fz6p.imag)
+        m_AbsF = self.interper_f(v_F6p)
 
         # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
-        m_ImFx = interper_f(v_Fx6p.imag)
-        m_ImFy = interper_f(v_Fy6p.imag)
-        m_ReFz = interper_f(v_Fz6p.real)
+        m_ImFx = self.interper_f(v_Fx6p.imag)
+        m_ImFy = self.interper_f(v_Fy6p.imag)
+        m_ReFz = self.interper_f(v_Fz6p.real)
 
         d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx, 'Fyr': m_ReFy, 'Fyi': m_ImFy,
                     'Fzr': m_ReFz, 'Fzi': m_ImFz, 'Fabs': m_AbsF}
@@ -149,7 +148,7 @@ class ModePlotHelper:
         return d_fields
 
     def _choose_plot_points(self, n_pts):
-        '''Picks actual data points for the plot grid based on requested resolution.'''
+        '''Picks actual data points for the maplot grid based on requested resolution.'''
         self.setup_for_npoints = n_pts
 
         fm = self.sim_result.fem_mesh
@@ -198,106 +197,12 @@ class ModePlotHelper:
 
         shiftx, shifty = self._choose_plot_points(n_pts)
 
-        # # unrolling data for the interpolators
-        # # TODO: for EM, table_nod seems to be identical to the MailData one
-        # #       xy_nodes seems to be the same but with some fractional scaling.
-
-        # xy_nodes = fm.xy_nodes  # is in fortran order so indexing below looks backward
-
-        # tabnod_py = fm.table_nod.T - 1  # shift fortran to python indexing
-
-        # # dense triangulation with multiple points
-        # v_x6p, v_y6p = fm.get_fullmesh_nodes_xy()
-
-
-        # # In table_nod
-        # # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
-        # # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
-        # # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
-
-        # # create sub-triangles from combos of the element nodes
-        # # v_triang6p = []
-        # # for idx in range(0, 6*fm.n_msh_el, 6):
-        # #     triangles = [[idx+0, idx+3, idx+5],
-        # #                  [idx+1, idx+4, idx+3],
-        # #                  [idx+2, idx+5, idx+4],
-        # #                  [idx+3, idx+4, idx+5]]
-        # #     v_triang6p.extend(triangles)
-
-        # v_triang6p, v_triang1p = fm.make_sub_triangulation()
-
-
-        # # # Create vectors v_x6p, v_y6p which are unwrapped points at nodes of each element
-        # # # i is the index for the coordinates FIND A BETTER NAME
-        # #v_x6p = np.zeros(6*fm.n_msh_el)
-        # #v_y6p = np.zeros(6*fm.n_msh_el)
-        # # i = 0
-        # # for i_el in range(fm.n_msh_el):
-        # #     for i_node in range(6):
-        # #         i_ex = tabnod_py[i_el, i_node]
-        # #         v_x6p[i] = xy_nodes[0, i_ex]
-        # #         v_y6p[i] = xy_nodes[1, i_ex]
-        # #         i += 1
-
-        # # Interpolate onto triangular grid - honest to FEM elements
-        # # dense triangulation with unique points
-
-        # # v_triang1p = []
-        # # # table_nod = self.table_nod
-        # # for i_el in np.arange(fm.n_msh_el):
-        # #     triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
-        # #                  [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
-        # #                  [tabnod_py[i_el, 2], tabnod_py[i_el, 5], tabnod_py[i_el, 4]],
-        # #                  [tabnod_py[i_el, 3], tabnod_py[i_el, 4], tabnod_py[i_el, 5]]]
-        # #     v_triang1p.extend(triangles)
-
-        # # This is for testing only. Normally turn off
-        # check_tris = False
-        # if check_tris:
-        #     check_triangulation(xy_nodes[0, :], xy_nodes[1, :], self.v_triang1p)
-
-        # # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
-
-        # # Plots show that these are equivalent meshes with different mesh point orderings
-        # # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the table_nod
-        # # triang1p: tabnod_py[i_el, i_node] ordering: straight node ordering 0, 1, 2, ..5, 6+(0, 1, 2, ..5), 12+ 0, 1, 2, ..5
-        # tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        # tri_triang1p = matplotlib.tri.Triangulation(xy_nodes[0, :], xy_nodes[1, :], v_triang1p)
-
-        # #fig, ax = plt.subplots(1,2,dpi=600)
-        # #ax[0].scatter(tri_triang6p.x, tri_triang6p.y, s=.2)
-        # #ax[1].scatter(tri_triang1p.x, tri_triang1p.y, s=.2)
-        # #save_and_close_figure(fig,'tt-tritest.png')
-
-        # pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p/SI_um, v_y6p/SI_um, v_triang6p)
-        # pl_tri_triang1p = matplotlib.tri.Triangulation(xy_nodes[0, :]/SI_um, xy_nodes[1, :]/SI_um, v_triang1p)
-
-        # draw_triangulation = False
-        # if draw_triangulation:
-        #     self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p, xy_nodes*1e6)
-
-        # building interpolators: triang1p for the finder, triang6p for the values
-        # create npts_x * npts_y rectangular arrays corresponding to the v_x, v_y grids
-        # There might be a cleaner way of doing this
         v_x_flat = self.xy_raw['m_x'].flatten('F') - shiftx
         v_y_flat = self.xy_raw['m_y'].flatten('F') - shifty
 
-    #     # The trifinder only works with triang1p, not triang6p.
-    #     # The latter is apparently an 'invalid triangulation'.
-    #     # Why?!  Perhaps it's clockwise, when anticlock is required?
-    #    # finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
-    #     finder = tri_triang1p.get_trifinder()
-    #     #finder = tri_triang6p.get_trifinder()
-
-
-    #     # The solutions we plug in are in 6p ordering so using tri_triang6p for the interperloator makes sense
-    #     # But why is the trifinder based on 1p?  Does it make a difference?
         nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
-    #     self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
-    #         tri_triang6p, x, trifinder=finder)(v_x_flat, v_y_flat).reshape(
-    #             nx, ny)
 
-        fm.make_interpolator(v_x_flat, v_y_flat, nx, ny)
+        self.interper_f = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
 
 class Mode:
     '''This is a base class for both EM and AC modes.'''

@@ -59,7 +59,7 @@ class FemMesh:
         self.mesh_mail_fname = ""  # filename of original Gmsh-derived .mail file
 
         self.n_msh_pts = 0  # Number of mesh nodes (points) in the FEM calculation
-                            # (Different to origianl underlying mesh because of elt sub-triangulation)
+                            # (Different to original underlying mesh because of elt sub-triangulation)
         self.n_msh_el = 0   # Number of elements in .msh mesh file
 
         # made by python
@@ -83,6 +83,8 @@ class FemMesh:
         self.el_convert_tbl = None  # Dict map of elastically active mesh elements into original em mesh elements.
         #    Length: n_msh_el(ac).   Values in [1..n_msh_el(em)]
 
+        self.extents = None  # measured from nbgmsh to have them early before we know xy_nodes
+
         # Seems never used
         # self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
         # self.node_convert_tbl = None
@@ -98,9 +100,23 @@ class FemMesh:
 
         mesh = struc.get_mail_mesh_data()
 
+        self.v_el_2_mat_idx = mesh.v_elts_mat
+
+
         # Electromagnetic so the mesh properties come straight from the Mail file.
         self.n_msh_pts = mesh.n_msh_pts  # TODO: get rid of these
         self.n_msh_el = mesh.n_msh_elts
+
+
+        self.table_nod = mesh.v_elts[:,:6].T
+        self.xy_nodes = np.zeros([2, self.n_msh_pts])
+
+        # Messy: Mail file does not include the domain scaling which is in nm, not microns
+        self.xy_nodes[0,:] = mesh.v_x * struc.domain_x*0.001
+        self.xy_nodes[1,:] = mesh.v_y * struc.domain_y*0.001
+
+        self.extents = [np.min(self.xy_nodes[0,:]), np.max(self.xy_nodes[0,:]),
+                        np.min(self.xy_nodes[1,:]), np.max(self.xy_nodes[1,:])]
 
         print(
             f"\n The final EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
@@ -116,6 +132,7 @@ class FemMesh:
             )  # +1 because materials are reported by their Fortran index
 
     def store_em_mode_outputs(self, type_el, node_physindex, table_nod, xy_nodes):
+        print('storing em')
         self.v_el_2_mat_idx = type_el
         self.table_nod = table_nod
         self.xy_nodes = xy_nodes
@@ -349,7 +366,18 @@ class FemMesh:
             f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
         save_and_close_figure(fig, fname)
 
-    def make_interpolator(self, vx_out, vy_out, nx, ny):
+    def make_interpolator_for_grid(self, vx_out, vy_out, nx, ny):
+        '''Constructs interpolator to map triangular fem grid scalar functions onto requested rectangular grid.
+
+        Args:
+            vx_out (array(float)): Flattened x-values of rectangular grid
+            vy_out (array(float)): Flattened x-values of rectangular grid
+            nx (int): x-dimension of rectangular grid
+            ny (int): y-dimension of rectangular grid
+
+        Returns:
+            make_interpolator_for_grid: The interpolator ready for use
+        '''
 
         v_triang6p, v_triang1p = self.make_sub_triangulation()
 
@@ -381,15 +409,30 @@ class FemMesh:
         # The trifinder only works with triang1p, not triang6p.
         # The latter is apparently an 'invalid triangulation'.
         # Why?!  Perhaps it's clockwise, when anticlock is required?
-       # finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
+        # finder = matplotlib.tri.TrapezoidMapTriFinder(tri_triang1p)
         finder = tri_triang1p.get_trifinder()
         #finder = tri_triang6p.get_trifinder()
 
 
         # The solutions we plug in are in 6p ordering so using tri_triang6p for the interperloator makes sense
         # But why is the trifinder based on 1p?  Does it make a difference?
-        #nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
-        self.interper_f = lambda x: matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, x, trifinder=finder)(vx_out, vy_out).reshape(
+
+        def interper_f(femsol):
+            return matplotlib.tri.LinearTriInterpolator(
+            tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
                 nx, ny)
 
+        return interper_f
+
+    def rect_grid(self, n_points):
+
+        x_min, x_max = self.extents[0:2]
+        y_min, y_max = self.extents[2:]
+
+        area = abs((x_max-x_min)*(y_max-y_min))
+        n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
+        n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
+
+        v_regx = np.linspace(x_min, x_max, n_pts_x)
+        v_regy = np.linspace(y_min, y_max, n_pts_y)
+        return v_regx, v_regy
