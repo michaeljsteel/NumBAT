@@ -291,7 +291,7 @@ subroutine valpr_64 (&
    character(2) arp_which
    logical arp_active
 
-   integer(8) ui, jj
+   integer(8) ui
 
 
    ui = stdout

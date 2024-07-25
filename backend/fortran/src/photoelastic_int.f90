@@ -4,9 +4,11 @@
 subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
 &ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,&
 &nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,&
-&eps_lst, debug, overlap)
-   !
+&eps_lst, debug, overlap, errco, emsg)
+
    use numbatmod
+   use alloc
+
    integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
    integer(8) nel, npt, nnodes, nb_typ_el
    integer(8) type_el(nel), debug
@@ -15,13 +17,19 @@ subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
    complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
    complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
    complex(8) soln_AC(3,nnodes,nval_AC,nel)
-   complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
    complex(8) p_tensor(3,3,3,3,nb_typ_el)
+   complex(8) beta_AC
+
+   complex(8), intent(out) :: overlap(nval_EM_S, nval_EM_p, nval_AC)
+   integer(8), intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) ::  emsg
 
    !     Local variables
 
    double precision xel(2,nnodes_0)
-   complex(8) basis_overlap(3*nnodes_0,3*nnodes_0,3,3*nnodes_0)
+   !complex(8) basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
+   complex(8), dimension(:,:,:,:), allocatable :: basis_overlap
+
    complex(8) E1star, E2, Ustar, eps
    integer(8) i, j, k, l, j1, typ_e
    integer(8) iel, ind_ip, i_eq
@@ -76,24 +84,29 @@ subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
       write(ui,*) "photoelastic_int: Aborting..."
       stop
    endif
-   !
+
    overlap = 0.0d0
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
    if (debug .eq. 1) then
       write(ui,*) "photoelastic_int: nquad, nquad_max = ",&
       &nquad, nquad_max
    endif
-   !ccccccccccc
-   do i=1,nval_EM_S
-      do j=1,nval_EM_p
-         do k=1,nval_AC
-            overlap(i,j,k) = 0.0d0
-         enddo
-      enddo
-   enddo
-   !ccccccccccc
+
+   call complex_alloc_4d(basis_overlap, 3*nnodes, 3*nnodes, 3_8, 3*nnodes, &
+   'basis_overlap', errco, emsg)
+
+   ! do i=1,nval_EM_S
+   !    do j=1,nval_EM_p
+   !       do k=1,nval_AC
+   !          overlap(i,j,k) = 0.0d0
+   !       enddo
+   !    enddo
+   ! enddo
+   overlap = D_ZERO
+
+
    ! Loop over elements - start
-   !ccccccccccc
+
    do iel=1,nel
       typ_e = type_el(iel)
       do j=1,nnodes

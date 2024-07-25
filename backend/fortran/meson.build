@@ -10,8 +10,10 @@ project(
 ccomp = meson.get_compiler('c')
 fcomp = meson.get_compiler('fortran')
 
-#message('@0@'.format(ccomp))
-#message('@0@'.format(fcomp))
+message('@0@'.format(ccomp.get_id()))
+message('@0@'.format(fcomp.get_id()))
+
+libs_extra = []
 
 inc_nblocal = ''
 if host_machine.system() == 'linux'
@@ -42,14 +44,21 @@ else
   header_include_directories:inc_nblocal)
 endif
 
+if ccomp.get_id() == 'intel-llvm'
+  lib_oneapi = ccomp.find_library('ifport',
+                                  dirs: dir_oneapi
+                                  )
+  libs_extra = [lib_oneapi]
+endif
+
 lib_arpack = ccomp.find_library('arpack', dirs: dir_nblocal)
 lib_umfpack = ccomp.find_library('umfpack', dirs: dir_nblocal)
-
 
 if host_machine.system() == 'windows'
   add_global_arguments(['-fpp', ], language: 'fortran',)
   add_global_arguments(['-D UPPERCASE_FORTRAN','-D NO_APPEND_FORTRAN', ], language: 'c',)
-
+else
+  add_global_arguments(['-cpp', ], language: 'fortran',)
 endif
 
 add_global_arguments(
@@ -118,5 +127,5 @@ nblib = shared_module(
   include_directories: incs,
   name_prefix: '',
   override_options: ['b_lundef=false'],
-  dependencies: [lib_arpack, lib_umfpack, lib_blas, dep_py],
+  dependencies: [lib_arpack, lib_umfpack, lib_blas, libs_extra, dep_py],
 )
