@@ -4,28 +4,38 @@
 subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
 &ival1, ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,&
 &nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,&
-&eps_lst, debug, overlap)
-   !
+&eps_lst, debug, overlap, errco, emsg)
+
    use numbatmod
+   use alloc
    integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
    integer(8) nel, npt, nnodes, nb_typ_el
    integer(8) type_el(nel), debug
    integer(8) table_nod(nnodes,nel)
    double precision x(2,npt)
-   !      complex(8) x(2,npt)
    complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
    complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
    complex(8) soln_AC(3,nnodes,nval_AC,nel)
-   complex(8) overlap(nval_EM_S, nval_EM_p, nval_AC), beta_AC
    complex(8) p_tensor(3,3,3,3,nb_typ_el)
 
-   !     Local variables
+   complex(8) beta_AC
+
+   complex(8), intent(out) :: overlap(nval_EM_S, nval_EM_p, nval_AC)
+   integer(8), intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) ::  emsg
+
+   !---------------------------
+
    integer(8) nnodes0
    parameter (nnodes0 = 6)
    double precision xel(2,nnodes0)
-   complex(8) basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
+
+   !complex(8) basis_overlap(3*nnodes0,3*nnodes0,3,3*nnodes0)
+   complex(8), dimension(:,:,:,:), allocatable :: basis_overlap
+
+
    complex(8) E1star, E2, Ustar
-   integer(8) i, j, k, l, j1, typ_e
+   integer(8) i, j, k, j1, typ_e
    integer(8) iel, ind_ip, i_eq
    integer(8) jtest, ind_jp, j_eq, k_eq
    integer(8) ltest, ind_lp, l_eq
@@ -34,7 +44,7 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
    complex(8) zt1
    double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
    double precision det_b
-   !
+
    !     NQUAD: The number of quadrature points used in each element.
    integer(8) nquad, nquad_max
    !  Limit to P2 polynomials
@@ -46,26 +56,26 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
 
    double precision p2_p2_p2(6,6,6)
    double precision p2_p2_p2x(6,6,6), p2_p2_p2y(6,6,6)
+
+
+   !fo2py intent(in) nval_EM_p, nval_EM_S, nval_AC
+   !fo2py intent(in) ival1, ival2, ival3, nb_typ_el
+   !fo2py intent(in) nel, npt, nnodes, table_nod, p_tensor, beta_AC, debug
+   !fo2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC, eps_lst
    !
+   !fo2py depend(table_nod) nnodes, nel
+   !fo2py depend(type_el) npt
+   !fo2py depend(x) npt
+   !fo2py depend(soln_EM_p) nnodes, nval_EM_p, nel
+   !fo2py depend(soln_EM_S) nnodes, nval_EM_S, nel
+   !fo2py depend(soln_AC) nnodes, nval_AC, nel
+   !fo2py depend(p_tensor) nb_typ_el
+   !fo2py depend(eps_lst) nb_typ_el
    !
-   !f2py intent(in) nval_EM_p, nval_EM_S, nval_AC
-   !f2py intent(in) ival1, ival2, ival3, nb_typ_el
-   !f2py intent(in) nel, npt, nnodes, table_nod, p_tensor, beta_AC, debug
-   !f2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC, eps_lst
-   !
-   !f2py depend(table_nod) nnodes, nel
-   !f2py depend(type_el) npt
-   !f2py depend(x) npt
-   !f2py depend(soln_EM_p) nnodes, nval_EM_p, nel
-   !f2py depend(soln_EM_S) nnodes, nval_EM_S, nel
-   !f2py depend(soln_AC) nnodes, nval_AC, nel
-   !f2py depend(p_tensor) nb_typ_el
-   !f2py depend(eps_lst) nb_typ_el
-   !
-   !f2py intent(out) overlap
-   !
-   !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
-   !
+   !fo2py intent(out) overlap
+
+
+
    ui = stdout
 
 
@@ -82,18 +92,23 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
       write(ui,*) "photoelastic_int_v2: nquad, nquad_max = ",&
       &nquad, nquad_max
    endif
-   !ccccccccccc
-   do i=1,nval_EM_S
-      do j=1,nval_EM_p
-         do k=1,nval_AC
-            overlap(i,j,k) = 0.0d0
-         enddo
-      enddo
-   enddo
 
-   !ccccccccccc
+   call complex_alloc_4d(basis_overlap, 3*nnodes0, 3*nnodes0, 3_8, 3*nnodes0, &
+   'basis_overlap', errco, emsg)
+
+
+   ! do i=1,nval_EM_S
+   !    do j=1,nval_EM_p
+   !       do k=1,nval_AC
+   !          overlap(i,j,k) = 0.0d0
+   !       enddo
+   !    enddo
+   ! enddo
+   overlap = D_ZERO
+
+
    ! Loop over elements - start
-   !ccccccccccc
+
    do iel=1,nel
       typ_e = type_el(iel)
       do j=1,nnodes
@@ -101,7 +116,7 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
          xel(1,j) = x(1,j1)
          xel(2,j) = x(2,j1)
       enddo
-      !ccccccccc
+
       !       The geometric transformation (x,y) -> (x_g,y_g) = mat_B*(x,y)^t + (x_0, y_0, z_0)^t
       !       maps the current triangle to the reference triangle.
       do i=1,2
@@ -116,6 +131,7 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
          write(*,*) 'Aborting...'
          stop
       endif
+
       !       We also need, is the matrix mat_T of the reverse transformation
       !                (from reference to current triangle):
       !       mat_T = inverse matrix of de mat_B
@@ -123,6 +139,7 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
       mat_T(2,2) =  mat_B(1,1) / det_b
       mat_T(1,2) = -mat_B(1,2) / det_b
       mat_T(2,1) = -mat_B(2,1) / det_b
+
       !       Note that if grad_i_0 is the gradient on the reference triangle,
       !       then the gradient on the actual triangle is:
       !       grad_i  = Transpose(mat_T)*grad_i0
@@ -132,22 +149,23 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
       mat_T_tr(2,2) = mat_T(2,2)
       mat_T_tr(1,2) = mat_T(2,1)
       mat_T_tr(2,1) = mat_T(1,2)
-      !
+
       call mat_p2_p2_p2 (p2_p2_p2, det_b)
       call mat_p2_p2_p2x (p2_p2_p2x, mat_T_tr, det_b)
       call mat_p2_p2_p2y (p2_p2_p2y, mat_T_tr, det_b)
-      !
-      !ccccccccc
-      do i=1,3*nnodes
-         do j=1,3*nnodes
-            do k=1,3
-               do l=1,3*nnodes
-                  basis_overlap(i,j,k,l) = 0.0d0
-               enddo
-            enddo
-         enddo
-      enddo
-      !ccccccccc
+
+      ! do i=1,3*nnodes
+      !    do j=1,3*nnodes
+      !       do k=1,3
+      !          do l=1,3*nnodes
+      !             basis_overlap(i,j,k,l) = 0.0d0
+      !          enddo
+      !       enddo
+      !    enddo
+      ! enddo
+
+      basis_overlap = D_ZERO
+
       do itrial=1,nnodes0
          do i_eq=1,3
             ind_ip = i_eq + 3*(itrial-1)

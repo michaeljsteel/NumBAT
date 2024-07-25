@@ -46,7 +46,7 @@ nb_impl_fsrcs = files(
     'construct_fem_tables.f90',
     #'conv_gmsh.f90',
     'conv_gmsh_subroutines_mod.f90',
-    'conv_gmsh_symmetry.f90',
+    #'conv_gmsh_symmetry.f90',
     'csr_length_AC.f',
     'csr_make_arrays.f90',
     'csr_max_length.f90',

@@ -29,7 +29,7 @@ import matplotlib
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from nbtypes import SI_permittivity_eps0
-from numbattools import np_min_max
+from numbattools import np_min_max, process_fortran_return
 import reporting
 import plotting
 from fortran import nb_fortran
@@ -478,7 +478,7 @@ def gain_and_qs(
 
     print("\n Photoelastic calc")
     if struc.using_linear_elements():
-        Q_PE = nb_fortran.photoelastic_int_v2(
+        resm = nb_fortran.photoelastic_int_v2(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -500,13 +500,15 @@ def gain_and_qs(
             relevant_eps_effs,
             Fortran_debug,
         )
+
+        (Q_PE, ) = process_fortran_return(resm, "finding photoelastic couplings")
     else:
         if not struc.using_curvilinear_elements():
             print(
                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                 "\n using slow quadrature integration by default.\n\n",
             )
-        Q_PE = nb_fortran.photoelastic_int(
+        resm = nb_fortran.photoelastic_int(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -528,6 +530,8 @@ def gain_and_qs(
             relevant_eps_effs,
             Fortran_debug,
         )
+
+        (Q_PE, ) = process_fortran_return(resm, "finding photoelastic couplings")
 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
