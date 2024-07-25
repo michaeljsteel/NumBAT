@@ -133,6 +133,7 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
    lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
    use numbatmod
+   use alloc
 
    integer(8) neq
    complex(8) :: x(neq), y(neq)
@@ -147,9 +148,16 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
    character(len=EMSG_LENGTH) emsg
 
 
-   double precision rhs_re(neq), rhs_im(neq)
+   ! --------------------------------------------
+   double precision, dimension(:), allocatable :: rhs_re, rhs_im
    integer(4) neq_32
-   !integer(8) sys
+
+   !TODO: probably faster to have these arrays declared one subroutine up
+   ! and passed in rather than repeatedly requested many times
+
+   call double_alloc_1d(rhs_re, neq, 'rhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_im, neq, 'rhs_im', errco, emsg); RETONERROR(errco)
+
 
    neq_32 = int(neq, 4)
 
