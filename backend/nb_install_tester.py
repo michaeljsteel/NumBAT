@@ -80,7 +80,7 @@ def check_nb_fortran():
     except ModuleNotFoundError:
         print(f"  Can't find module file {s_lib_nbfort_full}.")
     except ImportError as err:
-        print(f"Module failed to load: {err=}.\n One or more shared libraries can't be located.")
+        print(f"Module failed to load: {err=}.\n Possibly one or more shared libraries can't be located.")
     else:
         print(f"  Successfully loaded.")
         passed = True
