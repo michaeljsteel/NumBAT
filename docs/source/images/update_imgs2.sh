@@ -8,10 +8,11 @@ do
 mkdir -p tutorial/tut_${tdir}-fields
 done
 
-cd tutorial 
+cd tutorial
 
-for im in tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spectra_zoom.png  \
-    tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
+for im in tut_01-mesh.png tut_01-ref_index.png \
+        tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spectra_zoom.png  \
+        tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
         tut_06-gain_spectra.png tut_06-gain_spectra-logy.png \
         tut_07-gain_spectra.png tut_07-gain_spectra-logy.png \
         tut_08-acdisp_coating.png \
@@ -33,8 +34,8 @@ for im in tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spect
 
     #    tut_08-fields/AC_field_00_20.png tut_08-fields/AC_field_01_20.png tut_08-fields/AC_field_02_20.png \
 
-    for im in tut_04-out/tut_04-gain_spectra-scan.png tut_05-out/tut_05-convergence-freq_AC.png tut_05-out/tut_05-convergence-freq_EM.png tut_05-out/tut_05-convergence-gain_MB.png tut_05-out/tut_05-convergence-gain_PE.png tut_05-out/tut_05-convergence-gain.png 
-    do 
+    for im in tut_04-out/tut_04-gain_spectra-scan.png tut_05-out/tut_05-convergence-freq_AC.png tut_05-out/tut_05-convergence-freq_EM.png tut_05-out/tut_05-convergence-gain_MB.png tut_05-out/tut_05-convergence-gain_PE.png tut_05-out/tut_05-convergence-gain.png
+    do
         cp -pR ../../../../tutorials/$im $im
     done
 
@@ -88,6 +89,6 @@ for im in lit_01-gain_spectra-logy.png lit_01-fields/EM_E_field_00.png \
     lit_08-fields/EM_E_field_00.png lit_08-fields/EM_E_field_01.png \
     lit_08-fields/AC_field_23.png lit_08-gain_spectra.png \
     lit_09-gain_spectra.png lit_10a-gain_spectra.png lit_10b-gain_spectra.png
-do 
-    cp -pR ../../../lit_examples/$im lit_examples/$im 
+do
+    cp -pR ../../../lit_examples/$im lit_examples/$im
 done

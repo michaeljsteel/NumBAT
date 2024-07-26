@@ -420,10 +420,16 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
 
 
 
-#. Your ``<NumBAT_BASE>`` tree should now look like this:
+#. Your ``<NumBAT_BASE>`` tree should now look like this::
 
-.. figure:: ./images/win_install_tree.png
-   :width: 6cm
+    %HOME%
+        |---numbat
+            |---nb_releases
+            |---usr_local
+                |---include
+                |---lib
+                |---packages
+
 
 
 Building SuiteSparse
