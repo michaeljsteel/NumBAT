@@ -55,3 +55,7 @@ tutorials/.sim-tut_17-rotations.py.swp
 tutorials/core*
 tutorials/tut_03b-disp
 tutorials/roumani.py
+backend/fortran/.hgignore
+backend/fortran/.ninja_deps
+backend/fortran/build.ninja
+backend/fortran/.ninja_log
