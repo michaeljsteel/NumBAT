@@ -478,6 +478,7 @@ def gain_and_qs(
 
     print("\n Photoelastic calc")
     if struc.using_linear_elements():
+
         resm = nb_fortran.photoelastic_int_v2(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
@@ -501,8 +502,9 @@ def gain_and_qs(
             Fortran_debug,
         )
 
-        (Q_PE, ) = process_fortran_return(resm, "finding photoelastic couplings")
+        (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
     else:
+
         if not struc.using_curvilinear_elements():
             print(
                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
@@ -531,7 +533,7 @@ def gain_and_qs(
             Fortran_debug,
         )
 
-        (Q_PE, ) = process_fortran_return(resm, "finding photoelastic couplings")
+        (Q_PE, ) = process_fortran_return(resm, "finding curvilinear element photoelastic couplings")
 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
