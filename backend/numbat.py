@@ -7,6 +7,7 @@ from pathlib import Path
 
 import reporting
 import objects
+from mode_calcs import Simulation
 
 
 _evar_gmsh_path = 'NUMBAT_PATH_GMSH'
@@ -182,3 +183,5 @@ class _NumBATPlotPrefs:
 def NumBATPlotPrefs():
     return _NumBATPlotPrefs()
 
+def load_simulation(prefix):
+    return Simulation.load_simulation(prefix)

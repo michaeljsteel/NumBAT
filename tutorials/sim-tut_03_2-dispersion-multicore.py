@@ -87,7 +87,7 @@ def solve_ac_mode_freqs(qset):
 
 
 # Now we utilise multi-core calculations to perform parallel simulations and speed up the simulation
-n_qs = 50  # start with a low number of q_AC values to get an idea of the scale of the problem
+n_qs = 100  # start with a low number of q_AC values to get an idea of the scale of the problem
 acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 
 # Output the normalisation k value for reference
@@ -99,7 +99,7 @@ multiproc = False
 # make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
 qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
 
-if multiproc:  
+if multiproc:
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
     num_cores = 4
     with  Pool(num_cores) as pool:
@@ -110,27 +110,27 @@ else:
         pooled_mode_freqs.append(solve_ac_mode_freqs((ik, nk, nu_k)))
 
 # We will pack the above values into a single array for plotting purposes, initialise first
-freq_arr = np.zeros((n_qs, num_modes_AC+1))
+m_nu_ac = np.zeros((n_qs, num_modes_AC+1))
 for i_w, sim_freqs in enumerate(pooled_mode_freqs):
     # Set the value to the values in the frequency array
-    freq_arr[i_w, 0] = acoustic_qs[i_w]
-    freq_arr[i_w, 1:] = sim_freqs
+    m_nu_ac[i_w, 0] = acoustic_qs[i_w]
+    m_nu_ac[i_w, 1:] = sim_freqs
 
 # Now that we have packed will save to a numpy file for better plotting and reference
 file_name = prefix+'-disp'
-# mat=np.transpose([acoustic_qs, freq_arr])  # arrange the data as two columns of wavenumber and frequency
-np.savetxt(file_name, freq_arr)
+# mat=np.transpose([acoustic_qs, m_nu_ac])  # arrange the data as two columns of wavenumber and frequency
+np.savetxt(file_name, m_nu_ac)
 
 # Also plot a figure for reference
 plot_range = num_modes_AC
 fig, ax = plt.subplots()
 for idx in range(plot_range):
     # slicing in the row direction for plotting purposes
-    freq_slice = freq_arr[:, 1+idx]
-    ax.plot(acoustic_qs/q_AC, freq_slice, 'b.')
+    nu_slice = m_nu_ac[:, 1+idx]
+    ax.plot(acoustic_qs/q_AC, nu_slice, '.', markersize=2)
 
 # Set the limits and plot axis labels
-ax.set_ylim(0, 25)
+ax.set_ylim(0, 20)
 ax.set_xlim(0, 1.1)
 ax.set_xlabel(r'Normalised acoustic wavenumber $q/(2\beta)$')
 ax.set_ylabel(r'Frequency $\Omega/(2\pi)$ [GHz]')

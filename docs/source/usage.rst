@@ -32,20 +32,21 @@ In many more tutorials in the subsequent chapters, we will meet much more conven
 
 The sequence of operations (annotated in the source code below as Step 1, Step 2, etc) is:
 
-  #. Add the |NUMBAT| install directory to Python's module search path and then import
-       the |NUMBAT| python modules.
+  #. Add the |NUMBAT| install directory to Python's module search path and then import the |NUMBAT| python modules.
   #. Set parameters to define the structure shape and dimensions.
   #. Set parameters determining the range of electromagnetic and elastic modes to be solved.
-  #. Construct the waveguide with ``objects.Structure`` out of a number of ``materials.Material`` objects. The generated mesh  is shown in the figure below.
-
-  #. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``mode_calcs.calc_EM_modes()`` returns an object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods.
+  #. Create the primary ``NumBatApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
+  #. Construct the waveguide with ``objects.Structure`` out of a number of ``materials.Material`` objects.
+  #. Generate output files containing images of the finite element mesh and final refractive index. These are illustrated in figures below.
+  #. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``mode_calcs.calc_EM_modes()`` returns an ``EMSimResult`` object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods we will meet in later tutorials. The calculation is provided with a rough estimate of the effective index to guide the solver the find guided eigenmodes in the desired part of the spectrum. After the calculation, we can obtain the exact effective index of the fundamental mode using ``mode_calcs.neff()``.
   #. Display the propagation constants in units of :math:`\text{m}^{-1}` of the EM modes using ``mode_calcs.kz_EM_all()``
-  #. Obtain the effective index of the fundamental mode using ``mode_calcs.neff()``
-  #. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``mode_calcs.calc_AC_modes()`` returns an object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
+  #. Calculate the electromagnetic fields for the Stokes mode. As the pump and Stokes frequencies are very similar, the Stokes modes can be found with high precision by a simple complex conjugate transformation of the pump fields.
+  #. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``mode_calcs.calc_AC_modes()`` returns an ``ACSimResult`` object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
   #. Display the elastic frequencies in Hz using ``mode_calcs.nu_AC_all()``.
-  #. Calculate the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss using ``integration.gain_and_qs()``, and print them to the screen.
+  #. Use ``integration.gain_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
+  #. Extract desired values from the gain properties and print them to the screen.
 
-Note from this description that the eigenproblems for the
+You may have noticed from this description that the eigenproblems for the
 electromagnetic and acoustic problems are framed in opposite senses. The
 electromagnetic problem finds the wavenumbers :math:`k_{z,n}(\omega)` (or
 equivalently the effective indices) of the modes at a given free space
@@ -59,10 +60,15 @@ We emphasise again, that for convenience, the physical dimensions of waveguides 
 specified in nanometres.  All other quantities in |NUMBAT| are expressed
 in the standard SI base units.
 
-.. figure::  images/meshes/tut01_mesh.png
+.. figure::  images/tutorial/tut_01-mesh.png
    :width: 16cm
 
-   Generated mesh for this example as displayed by ``guide.check_mesh()``.
+.. figure::  images/tutorial/tut_01-ref_index.png
+   :width: 10cm
+
+
+
+   Generated meshes and refractive index profile.
 
 Here's the full source code for this tutorial:
 
@@ -130,7 +136,8 @@ In |NUMBAT|, this data is read in from human-readable ``.json`` files, which are
 
 These files not only provide the numerical values for optical and acoustic variables, but provide links to the origin of the data. Often they are taken from the literature and the naming convention allows users to select from different parameter values chosen by different authors for the same nominal material.
 
-The intention of this arrangement is to create a library of materials that can we hope can form a standard amongst the research community.
+The intention of this arrangement is to create a library of materials that can serves as
+standard reference data within the research community.
 They also allow users to check the sensitivity of their results on particular parameters for a given material.
 
 At present, the library contains the following materials:

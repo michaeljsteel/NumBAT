@@ -25,13 +25,18 @@ print('\n\nCommencing NumBAT tutorial 1')
 
 # Step 2
 # Geometric Parameters - all in nm.
-lambda_nm = 1550  # Wavelength of EM wave in vacuum.
-# Unit cell must be large to ensure fields are zero at boundary.
-domain_x = 2.5*lambda_nm
-domain_y = domain_x
+
+lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.
+
 # Waveguide widths.
-inc_a_x = 300
-inc_a_y = 280
+inc_a_x = 300.0
+inc_a_y = 280.0
+
+# Unit cell must be large to ensure fields are zero at boundary.
+domain_x = 1500.0
+domain_y = domain_x
+
+
 # Shape of the waveguide.
 inc_shape = 'rectangular'
 
@@ -39,8 +44,10 @@ inc_shape = 'rectangular'
 # Number of electromagnetic modes to solve for.
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
-# Number of acoustic modes to solve for.
+
+# Number of acoustic modes to solve for
 num_modes_AC = 20
+
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
 EM_ival_pump = 0
@@ -50,11 +57,13 @@ EM_ival_Stokes = 0
 AC_ival = 'All'
 
 # Step 4
+# Create the primary NumBAT application object and set the file output prefix
+prefix = 'tut_01'
+nbapp = numbat.NumBATApp(prefix)
+
+# Step 5
 # Use specified parameters to create a waveguide object.
 # to save the geometry and mesh as png files in backend/fortran/msh/
-
-nbapp = numbat.NumBATApp('tut_01')
-
 
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
@@ -63,57 +72,65 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            lc_refine_1=5.0,  # on cylinder surfaces
                            lc_refine_2=5.0)  # on cylinder center
 
-# Note use of rough mesh for demonstration purposes by turning this line on.
-# wguide.check_mesh()
+# Step 6
+# Optionally output plots of the mesh and refractive index distribution
+wguide.plot_mesh(prefix)
+wguide.plot_refractive_index_profile(prefix)
 
-# Explicitly remind ourselves what data we're using.
-print('\nUsing material data: ', wguide.get_material('a'))
+# Step 7
+# Calculate the Electromagnetic modes of the pump field.
 
-# Step 5
-# Estimate expected effective index of fundamental guided mode.
+# We provide an estimated effective index of the fundamental guided mode to steer the solver.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
-# Calculate the Electromagnetic modes of the pump field.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
 
+# Report the exact effective index of the fundamental mode
+n_eff_sim = np.real(sim_EM_pump.neff(0))
+print("\n Fundamental optical mode ")
+print(" n_eff = ", np.round(n_eff_sim, 4))
+
+
+# Step 8
 # Display the wavevectors of EM modes.
 v_kz = sim_EM_pump.kz_EM_all()
 print('\n k_z of electromagnetic modes [1/m]:')
 for (i, kz) in enumerate(v_kz):
     print(f'{i:3d}  {np.real(kz):.4e}')
 
+# Step 9
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
 sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-# # Alt
+
+# Alternatively, solve again directly
 # sim_EM_Stokes = wguide.calc_EM_modes(lambda_nm, num_modes_EM_Stokes, n_eff, Stokes=True)
 
-# Step 6
-# Find the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff(0))
-print("\n Fundamental optical mode ")
-print(" n_eff = ", np.round(n_eff_sim, 4))
 
-# Acoustic wavevector
+# Step 10
+# Calculate Acoustic modes, using the mesh from the EM calculation.
+
+# Find the required acoustic wavevector for backward SBS phase-matching
 q_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))
 
 print('\n Acoustic wavenumber (1/m) = ', np.round(q_AC, 4))
 
-# Step 7
-# Calculate Acoustic modes, using the mesh from the EM calculation.
 sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
+# Step 11
 # Print the frequencies of AC modes.
 v_nu = sim_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
     print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
+
+# Step 12
+
 # Do not calculate the acoustic loss from our fields, instead set a Q factor.
 set_q_factor = 1000.
 
-# Step 8
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 #SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.##gain_and_qs(
@@ -124,6 +141,7 @@ gain = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
     EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
+# Step 13
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:
 
