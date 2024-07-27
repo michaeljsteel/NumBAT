@@ -21,6 +21,7 @@ import math
 from pathlib import Path
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 
 #import matplotlib.colors as mplcolors
@@ -41,10 +42,12 @@ keep_plots_open = False
 
 # TODO: make this some kind of global numbat setting and get it out of the startup space
 try:
+    # Location search path is at matplotlib.get_configdir()
     # Will load from ~/.config/matplotlib/NumBATstyle.mplstyle if found
     plt.style.use('NumBATstyle')
-except (ValueError, IOError, AttributeError):
+except (ValueError, IOError, AttributeError) as err:
     print("Preferred NumBAT matplotlib style file not found. Using matplotlib defaults.")
+
 mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
 
 
