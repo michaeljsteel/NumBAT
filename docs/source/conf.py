@@ -19,6 +19,7 @@
 
 import sys
 import re
+from pathlib import Path
 
 
 #MOCK_MODULES = ['scipy', 'scipy.interpolate', 'numpy',
@@ -47,8 +48,11 @@ import re
 #sys.path.insert(0, os.path.abspath('../../backend/'))
 #
 
+sys.path.insert(0, str(Path.home() / 'numbat/nb_releases/nb_latest/backend'))
 #sys.path.insert(0, '../backend')
-sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
+#sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
+#sys.path.insert(0, r'%HOMEPATH%\numbat\nb_releases\nb_latest\backend')
+
 
 # -- General configuration ------------------------------------------------
 
@@ -162,21 +166,21 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_themes = ['alabaster', 'classic', 'sphinxdox', 'scrolls', 
-               'agogo', 'nature', 'pyramid', 'haiku', 'traditional', 
+html_themes = ['alabaster', 'classic', 'sphinxdox', 'scrolls',
+               'agogo', 'nature', 'pyramid', 'haiku', 'traditional',
                'epub', 'bizstyle', 'sphinx_rtd_theme']
 html_theme = 'default' #'alabaster'
-html_theme = 'pyramid' 
+html_theme = 'pyramid'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {
-        'logo_only': True,
-        'sticky_navigation': False,
-        'display_version': True,
-        }
+# html_theme_options = {
+#         'logo_only': True,
+#         'sticky_navigation': False,
+#         'display_version': True,
+#         }
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -338,9 +342,9 @@ latex_elements = {
 
 #        'preamble': r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
         }
-latex_elements['preamble'] = r'\usepackage{amsmath} ' 
-latex_elements['preamble'] += r'\usepackage{amssymb} ' 
-#latex_elements['preamble'] += r'\usepackage{boldsymbol} ' 
+latex_elements['preamble'] = r'\usepackage{amsmath} '
+latex_elements['preamble'] += r'\usepackage{amssymb} '
+#latex_elements['preamble'] += r'\usepackage{boldsymbol} '
 
 #latex_elements['preamble'] = r'\usepackage{amsmath}' + '\n' +r'\usepackage{amssymb}'
 

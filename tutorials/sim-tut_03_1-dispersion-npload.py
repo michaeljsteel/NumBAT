@@ -47,46 +47,47 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
 n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Assuming this calculation is run directly after sim-tut_02
-# we don't need to recalculate EM modes, but can load them in.
-#sim_EM_pump = mode_calcs.load_simulation('tut02_wguide_data')
-#sim_EM_Stokes = mode_calcs.load_simulation('tut02_wguide_data2')
+# we don't need to reuse_old_fieldsulate EM modes, but can load them in.
+reuse_old_fields = False
+if reuse_old_fields:
+    simres_EM_pump = numbat.load_simulation('tut02_em_pump')
+    simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
+else:
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
-simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
 
 # Will scan from forward to backward SBS so need to know q_AC of backward SBS.
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
 
 # Number of wavevector steps.
-nu_ks = 50
+nu_qs = 50
 
 fig, ax = plt.subplots()
 symmetries_working = False
-for i_ac, q_ac in enumerate(np.linspace(0.0, q_AC, nu_ks)):
+for i_ac, q_ac in enumerate(np.linspace(0.0, q_AC, nu_qs)):
+    print("Wavevector loop", i_ac+1, "/", nu_qs)
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_ac, EM_sim=simres_EM_pump)
-    prop_AC_modes = np.array(
+    v_Nu = np.array(
         [np.real(x) for x in sim_AC.nu_AC_all() if abs(np.real(x)) > abs(np.imag(x))])
 
     if symmetries_working:
         sym_list = integration.symmetries(sim_AC)
         for i in range(len(prop_AC_modes)):
-            Om = prop_AC_modes[i]/SI_GHz
+            Nu = v_Nu[i]/SI_GHz
             if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:
-                sym_A, = ax.plot(np.real(q_ac/q_AC), Om, 'or', markersize=2)
+                sym_A, = ax.plot(np.real(q_ac/q_AC), Nu, 'or', markersize=2)
             if sym_list[i][0] == -1 and sym_list[i][1] == 1 and sym_list[i][2] == -1:
-                sym_B1, = ax.plot(np.real(q_ac/q_AC), Om, 'vc', markersize=2)
+                sym_B1, = ax.plot(np.real(q_ac/q_AC), Nu, 'vc', markersize=2)
             if sym_list[i][0] == 1 and sym_list[i][1] == -1 and sym_list[i][2] == -1:
-                sym_B2, = ax.plot(np.real(q_ac/q_AC), Om, 'sb', markersize=2)
+                sym_B2, = ax.plot(np.real(q_ac/q_AC), Nu, 'sb', markersize=2)
             if sym_list[i][0] == -1 and sym_list[i][1] == -1 and sym_list[i][2] == 1:
-                sym_B3, = ax.plot(np.real(q_ac/q_AC), Om, '^g', markersize=2)
+                sym_B3, = ax.plot(np.real(q_ac/q_AC), Nu, '^g', markersize=2)
 
     else:
-        for i in range(len(prop_AC_modes)):
-            Om = prop_AC_modes[i]/SI_GHz
-            ax.plot(np.real(q_ac/q_AC), Om, 'o', markersize=2)
+        ax.plot(np.real(q_ac/q_AC)*np.ones(len(v_Nu)), v_Nu/SI_GHz, 'o', markersize=2)
 
-    print("Wavevector loop", i_ac+1, "/", nu_ks)
 
 ax.set_ylim(0, 25)
 ax.set_xlim(0, 1)

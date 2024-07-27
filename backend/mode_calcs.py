@@ -42,9 +42,6 @@ from plotmodes import Decorator
 import integration
 from fortran import nb_fortran
 
-# TODO move this to NBApp interface
-# def load_simulation(prefix):
-#    return Simulation.load_simulation(prefix)
 
 
 #fill = '█',   # TODO: this messes with pdflatex in docs. Fix
@@ -54,14 +51,15 @@ def progressBar(iterable, prefix = '', suffix = '',
                 printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
-    @params:
-        iterable    - Required  : iterable object (Iterable)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+        @params:
+            iterable    - Required  : iterable object (Iterable)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+
     """
     total = len(iterable)
     # Progress Bar Printing Function
@@ -84,9 +82,8 @@ def progressBar(iterable, prefix = '', suffix = '',
 class SimResult:
 
     def __init__(self, sim):
-        self._structure = (
-            sim.structure
-        )  # TODO: limit and ultimately remove access to these
+        self._structure = ( sim.structure )
+        # TODO: limit and ultimately remove access to these
         self._sim = sim
         self._mode_plot_helper = None
         self.sim_type = None  # Unknown at this point
@@ -111,17 +108,14 @@ class SimResult:
         if self._mode_plot_helper is not None:
             self._mode_plot_helper.cleanup()
 
-    def save_simulation(self, prefix):
+        if self.is_AC():
+            # Acoustic sims can contain EM sims which must also be clean for saving
+            if self._sim.simres_EM is not None:  # TODO: to clean_for_asve9
+                self._sim.simres_EM.clean_for_save()
 
-        print("save simulation is currently broken")
-        return
+    def save_simulation(self, prefix): # must be overidden
 
         self.clean_for_save()
-
-        # Acoustic sims can contain EM sims which must also be clean for saving
-        if self.simres_EM is not None:  # TODO: to clean_for_asve9)
-            self.simres_EM.clean_for_save()
-
         np.savez(prefix, simulation=self)
 
     def get_mode_helper(self):
@@ -367,6 +361,16 @@ class EMSimResult(SimResult):
         self.EM_mode_energy = sim.EM_mode_energy
         self.EM_mode_power = sim.EM_mode_power
 
+
+    # def clean_for_save(self):
+    #     if self._mode_plot_helper is not None:
+    #         self._mode_plot_helper.cleanup()
+
+    # def save_simulation(self, prefix):
+    #     self.clean_for_save()
+    #     np.savez(prefix, simulation=self)
+
+
     def make_H_fields(self):
         n_modes = len(self.eigs_kz)
         fm = self.fem_mesh
@@ -489,6 +493,15 @@ class ACSimResult(SimResult):
         self.ac_alpha_t = sim.ac_alpha_t
         self.ac_Qmech = sim.ac_Qmech
         self.ac_linewidth = sim.ac_linewidth
+
+    # def clean_for_save(self):
+    #     if self._mode_plot_helper is not None:
+    #         self._mode_plot_helper.cleanup()
+
+    # def save_simulation(self, prefix):
+    #     self.clean_for_save()
+    #     np.savez(prefix, simulation=self)
+
 
     def is_AC(self):
         return True

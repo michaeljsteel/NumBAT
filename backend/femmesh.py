@@ -52,6 +52,18 @@ def check_triangulation(vx, vy, triangs):
     else:
         print("  Found doubled triangles")
 
+def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
+    return lambda femsol: matplotlib.tri.LinearTriInterpolator(
+    tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
+        nx, ny)
+
+def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
+
+    def mif2d(femsol):
+        return matplotlib.tri.LinearTriInterpolator(
+            tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
+        nx, ny)
+    return mif2d
 
 
 class FemMesh:
@@ -417,10 +429,9 @@ class FemMesh:
         # The solutions we plug in are in 6p ordering so using tri_triang6p for the interperloator makes sense
         # But why is the trifinder based on 1p?  Does it make a difference?
 
-        def interper_f(femsol):
-            return matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
-                nx, ny)
+        interper_f = make_interper_f_2d(tri_triang6p, finder,
+                                        vx_out, vy_out, nx, ny)
+
 
         return interper_f
 

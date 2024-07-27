@@ -20,14 +20,18 @@ import integration
 import mode_calcs
 import materials
 
-
-
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
-domain_x = 2*lambda_nm
+lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.
+
+# Waveguide widths.
+inc_a_x = 300.0
+inc_a_y = 280.0
+
+# Unit cell must be large to ensure fields are near-zero at boundary.
+domain_x = 2000.0
 domain_y = domain_x
-inc_a_x = 300
-inc_a_y = 280
+
+
 inc_shape = 'rectangular'
 
 num_modes_EM_pump = 20
@@ -61,22 +65,18 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
 # Estimate expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
-recalc_fields = True     # run the calculation from scratch
-# recalc_fields=False   # reuse saved fields from previous calculation
-
-if recalc_fields:
-    # Calculate Electromagnetic modes.
+# Calculate Electromagnetic modes.
+reuse_old_fields = False
+if reuse_old_fields:
+    print('\nLoading EM fields')
+    simres_EM_pump = numbat.load_simulation('tut02_em_pump')
+    simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
+else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
     simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
-
     print('\nSaving EM fields')
-    simres_EM_pump.save_simulation('tut02_wguide_data')
-    simres_EM_Stokes.save_simulation('tut02_wguide_data2')
-else:
-    # Once npz files have been saved from one simulation run,
-    # set recalc_fields=True to use the saved data
-    simres_EM_pump = mode_calcs.load_simulation('tot02_wguide_data')
-    simres_EM_Stokes = mode_calcs.load_simulation('tot02_wguide_data2')
+    simres_EM_pump.save_simulation('tut02_em_pump')
+    simres_EM_Stokes.save_simulation('tut02_em_stokes')
 
 # Print the wavevectors of EM modes.
 v_kz = simres_EM_pump.kz_EM_all()
@@ -93,7 +93,7 @@ print(f'\nThe fundamental optical mode has effective index n_eff = {n_eff_sim:.6
 # which specify the fraction of the axis to remove from the plot.
 # For instance xlim_min=0.2 will remove 20% of the x axis from the left outer edge
 # to the center. xlim_max=0.2 will remove 20% from the right outer edge towards the center.
-# This leaves just the inner 20% of the unit cell displayed in the plot.
+# This leaves just the inner 60% of the unit cell displayed in the plot.
 # The ylim variables perform the equivalent actions on the y axis.
 
 # Let's plot fields for only the first few modes (ival=range(4)=0--3)
@@ -108,27 +108,20 @@ simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
 
 # Plot the H field of the pump mode
 simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-                          ylim_max=0.2, ivals=range(4), 
+                          ylim_max=0.2, ivals=range(4),
                           field_type='EM_H')
-
-
-#sys.exit(0)
-
-
-
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
 
 
-if recalc_fields:
+if reuse_old_fields:
+    simres_AC = numbat.load_simulation('tut_02_ac')
+else:
     # Calculate and save acoustic modes.
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
-
     print('Saving AC fields')
-    simres_AC.save_simulation('tot02_wguide_data_AC')
-else:
-    simres_AC = mode_calcs.load_simulation('tot02_wguide_data_AC')
+    simres_AC.save_simulation('tut_02_ac')
 
 # Print the frequencies of AC modes.
 v_nu = simres_AC.nu_AC_all()
@@ -143,18 +136,18 @@ for (i, nu) in enumerate(v_nu):
 print('\nPlotting acoustic modes')
 simres_AC.plot_modes(contours=True, quiver_points=20, ivals=range(10))
 
-if recalc_fields:
-    # Calculate the acoustic loss from our fields.
-    # Calculate interaction integrals and SBS gain for PE and MB effects combined,
-    # as well as just for PE, and just for MB.
-    gain = integration.get_gains_and_qs(
-        simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_ival_pump=EM_ival_pump,
-        EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
-    # Save the gain calculation results
-    #np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
-else:
-    npzfile = np.load('wguide_data_AC_gain.npz', allow_pickle=True)
-    gain = npzfile['SBS_gain']
+#if reuse_old_fields:
+# Calculate the acoustic loss from our fields.
+# Calculate interaction integrals and SBS gain for PE and MB effects combined,
+# as well as just for PE, and just for MB.
+gain = integration.get_gains_and_qs(
+    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_ival_pump=EM_ival_pump,
+    EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+# Save the gain calculation results
+#np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
+#else:
+ #   npzfile = np.load('wguide_data_AC_gain.npz', allow_pickle=True)
+  #  gain = npzfile['SBS_gain']
 
 # The following function shows how integrals can be implemented purely in python,
 # which may be of interest to users wanting to calculate expressions not currently
