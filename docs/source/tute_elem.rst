@@ -90,8 +90,7 @@ profile. These parameters can also be extracted using a range of function calls 
 .. figure:: ./images/tutorial/tut_02-fields/EM_E_field_00.png
    :width: 10cm
 
-   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_field_00.png``. The figures shows the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the
-   mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
+   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_field_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_H_field_00.png
    :width: 10cm
@@ -122,12 +121,12 @@ Miscellaneous comments
 Here are some further elements to note about this example:
 
   #.  When using the ``fast=`` mode, the output data and fields directory begin with ``ftut_02`` rather than ``tut_02``.
-  #. It is frequently useful to be able to save and load the results of simulations to adjust plots without having to repeat the entire calculation. Here the flag ``recalc_fields`` determines whether the calculation should be done afresh and use previously saved data. This is performed using the ``save_simulation()`` and ``load_simulation()`` calls.
-  #. Plots of the modal field profiles are obtained using ``plotting.plot_modes``. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``EM_AC`` argument. The mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
-     Later we will see how an alternative approach in which we extract a ``Mode`` object from a ``Simulation`` which represent a single mode that is able to plot itself. This can be more convenient.
+  #. It is frequently useful to be able to save and load the results of simulations to adjust plots without having to repeat the entire calculation. Here the flag ``reuse_old_fields`` determines whether the calculation should be done afresh and use previously saved data. This is performed using the ``save_simulation()`` and ``load_simulation()`` calls.
+  #. Plots of the modal field profiles are obtained using the ``plot_modes`` methods of the EM and elastic sim result objects. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``field_type`` argument. The selection of mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
+     Later we will see how an alternative approach in which we extract a ``Mode`` object from a ``Simulation`` which represents a single mode that is able to plot itself. This can be more convenient.
   #. The overall amplitude of the modal fields is arbitrary.
-     In |NUMBAT|, the maximum value of the electric field is set to be 1.0, and this may be interpreted as a quantity in units of V/m, :math:`\sqrt{\mathrm{W}}` or other units as desired.
-     Importantly, the plotted *magnetic* field :math:`\vec H(\vec r)` is multiplied by the impedance of free space :math:`Z_0=\sqrt{\mu_0/\epsilon_0}` so that :math:`Z_0 \vec H(\vec r)` and :math:`\vec E(\vec r)` *have the same units*, and the relative amplitudes between the electric and magnetic field plots are meaningful.
+     In |NUMBAT|, the maximum value of the electric field is normalised to be 1.0, and this may be interpreted as a quantity in units of V/m, :math:`\sqrt{\mathrm{W}}` or other units as desired.
+     Importantly, when plotted, the *magnetic* field :math:`\vec H(\vec r)` is multiplied by the impedance of free space :math:`Z_0=\sqrt{\mu_0/\epsilon_0}` so that the plotted quantities :math:`Z_0 \vec H(\vec r)` and :math:`\vec E(\vec r)` *have the same units*, and the relative amplitudes of the electric and magnetic field plots can be compared meaningfully.
   #. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[x]`, :math:`\text{Im}[y]` and :math:`\text{Re}[z]` components of the fields which in a lossless non-leaky problem should normally be zero at all points and therefore not useful to plot.
   #. By default, plots are exported as ``png`` format. Pass the option ``pdf_png=pdf`` to plot functions to generate a ``pdf`` output.
   #. Plots of both spectra and modes are generated with a best attempt at font sizes, line widths etc, but the range of potential cases make it impossible to find a selection that works in all cases. Most plot functions therefore support the passing of a ``plotting.Decorator`` object that can vary the settings of these parameters and also pass additional commands to write on the plot axes. See the plotting API for details. This should be regarded as a relatively advanced |NUMBAT| feature.
@@ -147,29 +146,23 @@ The full code for this simulation is as follows:
 
 Tutorial 3a -- Investigating Dispersion and np.save/np.load
 ------------------------------------------------------------
-This example, contained in ``tutorials/sim-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q`
-and frequency :math:`\Omega`-- for the problem in the previous tutorial.
-This is done by scanning over the elastic wavenumber ``q_AC`` and finding the
-eigenfrequencies for each value.
+This example, contained in ``tutorials/sim-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q` and frequency :math:`\Omega`-- for the problem in the previous tutorial.
+This is done by scanning over the elastic wavenumber ``q_AC`` and finding the eigenfrequencies for each value.
 
 
 As discussed in  *Formal selection rules for Brillouin scattering in integrated waveguides and structured fibers* by C. Wolff, M. J. Steel, and C. G. Poulton `DOI:/10.1364/OE.22.032489 <https://dx.doi.org/10.1364/OE.22.032489>`_, the elastic modes of any waveguide may be classified according to their representation of the point group symmetry class  corresponding to the waveguide
 profile. For this problem, the waveguide is rectangular with symmetry group :math:`C_{2v}`
 which  has four symmetry classes, which are marked in the dispersion diagram.
 
-This example also takes advantage of the ability to load and save simulation results
-to save repeated calculation.
-using the ``save_simulation`` and ``load_simulation`` methods defined
+This example also takes advantage of the ability to load and save simulation results to save repeated calculation using the ``save_simulation`` and ``load_simulation`` methods defined
 in the ``mode_calcs`` module.
 The previous tutorial saved its electromagnetic
 results in the file ``tut02_wguide_data.npz``
-using the ``Simulation.save_simulation()`` method, while these tutorial
-has recovered those results using ``mode_calc.load_simulation()``.
+using the ``Simulation.save_simulation()`` method, while the present example recovers those results using ``mode_calc.load_simulation()``.
 This can be a very useful technique when trying to adjust the appearance
 of plots without having to repeat the whole calculation effort.
 
-*Note*: from now on, we do not include the code for each tutorial and refer the reader
-to the relevant files in the ``<NumBAT>/tutorials`` directory.
+*Note*: from now on, we do not include the code for each tutorial and refer the reader to the relevant files in the ``<NumBAT>/tutorials`` directory.
 
 
 .. figure:: ./images/tutorial/tut_03a-dispersion_symmetrised.png
@@ -208,7 +201,7 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 ``np.savetxt`` for later analysis.
 
 .. figure:: ./images/tutorial/tut_03b-dispersion_multicore.png
-   :width: 10cm
+   :width: 14cm
 
    Acoustic dispersion diagram. The elastic wave number :math:`q` is scaled by the phase-matched SBS wavenumber :math:`2\beta` where :math:`\beta` is the propagation constant of the optical pump mode.
 
@@ -219,8 +212,9 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 
 Tutorial 4 -- Parameter Scan of Widths
 ----------------------------------------
-This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a
-parameter scan of a waveguide property, in this case the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
+This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a parameter scan of a waveguide property, in this case the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
+
+This calculation generates a lot of data files. For this reason, we have provided a second argument to the ``NumBATApp`` call to specify the name of a new sub-directory, in this case ``tut_04-out``, to store all the generated files.
 
 
 .. figure:: ./images/tutorial/tut_04-out/tut_04-gain_spectra-scan.png

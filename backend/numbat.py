@@ -7,6 +7,7 @@ from pathlib import Path
 
 import reporting
 import objects
+from mode_calcs import Simulation
 
 
 _evar_gmsh_path = 'NUMBAT_PATH_GMSH'
@@ -170,3 +171,6 @@ def NumBATApp(outprefix='', outdir='.'):
 def assert_numbat_object_created():
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
+
+def load_simulation(prefix):
+    return Simulation.load_simulation(prefix)
