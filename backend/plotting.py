@@ -67,7 +67,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                       freq_min=0., freq_max=50e9, num_interp_pts=3000,
                       dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                       pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
-                      show_gains='All', mark_modes_thresh=0.02):
+                      show_gains='All', mark_modes_threshold=0.02):
     r""" Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 
 
@@ -210,7 +210,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     v_gain_global_PE = np.zeros(num_interp_pts)
     v_gain_global_MB = np.zeros(num_interp_pts)
 
-    show_mode_indices = mark_modes_thresh > 0.0
+    show_mode_indices = mark_modes_threshold > 0.0
 
     if show_gains not in ('All', 'PE', 'MB', 'Total'):
         show_gains = 'All'
@@ -253,33 +253,33 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             v_gain_loc = gain_m * v_Lorentz
             interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
             v_gain_global_tot += interp_spectrum
-            if gain_m > mark_modes_thresh*maxG:
+            if gain_m > mark_modes_threshold*maxG:
                 ax.plot(nu0_m*1e-9, gain_m, 'ob')
 
         if do_PE:
             gain_PE_m = abs(np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_PE_m * v_Lorentz
             v_gain_global_PE += np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            if gain_PE_m > mark_modes_thresh*maxG:
+            if gain_PE_m > mark_modes_threshold*maxG:
                 ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
 
         if do_MB:
             gain_MB_m = abs(np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
             v_gain_loc = gain_MB_m * v_Lorentz
             v_gain_global_MB += np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            if gain_MB_m > mark_modes_thresh*maxG:
+            if gain_MB_m > mark_modes_threshold*maxG:
                 ax.plot(nu0_m*1e-9, gain_MB_m, 'og')
 
         if show_mode_indices:  # mark modes with gains larger than 5% of the maximum found
             Gm = {'All': max(gain_m, gain_PE_m, gain_MB_m),
                   'Total': gain_m, 'PE': gain_PE_m, 'MB': gain_MB_m}[show_gains]
             xloc = nu0_m*1e-9 + .01*(nu_max_GHz-nu_min_GHz)
-            if Gm > mark_modes_thresh*maxG and nu_min_GHz < xloc < nu_max_GHz:
+            if Gm > mark_modes_threshold*maxG and nu_min_GHz < xloc < nu_max_GHz:
                 ax.text(xloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
                         verticalalignment='top')
                 modelabs.append((xloc, Gm, m))
             # keep extra small ones for the log display
-            if Gm > mark_modes_thresh*maxG/1000 and nu_min_GHz < xloc < nu_max_GHz:
+            if Gm > mark_modes_threshold*maxG/1000 and nu_min_GHz < xloc < nu_max_GHz:
                 modelabs_logy.append((xloc, Gm, m))
 
     if do_PE:
