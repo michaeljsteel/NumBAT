@@ -229,13 +229,11 @@ This calculation generates a lot of data files. For this reason, we have provide
 
 Tutorial 5 -- Convergence Study
 ----------------------------------------
-This tutorial, contained in ``sim-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our by now familiar silicon-in-air problem to test the convergence of the calculation results.
-This is done by scanning the value of the ``lc_refine`` parameters.
+This tutorial, contained in ``sim-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our by now familiar silicon-in-air problem to test the convergence of the calculation results. This is done by scanning the value of the ``lc_refine`` parameters.
 The number of mesh elements (and simulation time) increases with roughly the square of the
 mesh refinement factor.
 
-For the purpose of convergence estimates, the values calculated at the finest mesh (the rightmost
-values) are taken as the ``exact`` values, notated with the subscript 0,
+For the purpose of convergence estimates, the values calculated at the finest mesh (the rightmost values) are taken as the ``exact`` values, notated with the subscript 0,
 eg. :math:`\beta_0`.
 The graphs below show both relative errors and absolute values for each  quantity.
 
@@ -288,14 +286,19 @@ Tutorial 6 -- Silica Nanowire
 ----------------------------------------
 In this tutorial, contained in ``sim-tut_06_silica_nanowire.py`` we start
 to explore the Brillouin gain properties in a range of different structures,
-in this case a silica nanowire surrounded by vacuum.
+in this case a silica circular nanowire surrounded by vacuum.
+
+
+.. figure:: ./images/tutorial/tut_06-ref_index.png
+   :width: 10cm
+
+   Refractive index profile of the silica nanowire.
 
 The ``gain-spectra`` plot below shows the Brillouin gain as a function of
 Stokes shift.  Each resonance peak is marked with the number of the acoustic
 mode associated with the resonance.  This is very helpful in identifying which
 acoustic mode profiles to examine more closely.  In this case, modes 5, 8 and
-23 give the most significant Brillouin gain.  The number of modes labelled in the gain spectrum can
-be controlled using the parameter ``mark_mode_thresh`` in the function
+23 give the most significant Brillouin gain.  The number of modes labelled in the gain spectrum can be controlled using the parameter ``mark_mode_threshold`` in the function
 ``plot_spectra()`` to avoid many labels from modes giving
 negligible gain.
 Other parameters allow selecting only one type of gain (PE or MB),

@@ -88,7 +88,6 @@ else:
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump, shift_Hz=shift_Hz)
     simres_AC.save_simulation(prefix+'_acoustic')
 
-
 # Print the frequencies of AC modes.
 v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
@@ -103,7 +102,8 @@ print('\nCalculating gains')
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes,
+    AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
