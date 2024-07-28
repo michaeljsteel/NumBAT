@@ -4,9 +4,6 @@ project(
   version: '2.0.1',
 )
 
-#fortran_args : lib_args,
-#gnu_symbol_visibility : 'hidden',
-
 ccomp = meson.get_compiler('c')
 fcomp = meson.get_compiler('fortran')
 
@@ -17,12 +14,12 @@ libs_extra = []
 
 inc_nblocal = ''
 if host_machine.system() == 'linux'
-  dir_oneapi = '/opt/intel/oneapi/mkl/latest/lib'
+  dir_mkl = dir_oneapi / 'mkl/latest/lib'
   dir_nblocal = ['/usr/local/lib']
 
   inc_nblocal = include_directories('/usr/local/include')
   lib_blas = ccomp.find_library('mkl_rt',
-    dirs: dir_oneapi,
+    dirs: dir_mkl,
     header_include_directories: inc_nblocal)
 
 elif host_machine.system() == 'darwin'
@@ -37,16 +34,16 @@ else
   #   $(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
 
   dir_nblocal = 'C:/Users/mq98002769/numbat/usr_local/lib'
-  dir_oneapi = 'c:/Program Files (x86)/Intel/oneAPI/mkl/2024.1/lib'
+  dir_mkl = 'c:/Program Files (x86)/Intel/oneAPI/mkl/2024.1/lib'
   inc_nblocal = include_directories('C:/Users/mq98002769/numbat/usr_local/include')
 
-  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_oneapi,
+  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
   header_include_directories:inc_nblocal)
 endif
 
 if ccomp.get_id() == 'intel-llvm'
   lib_oneapi = ccomp.find_library('ifport',
-                                  dirs: dir_oneapi
+                                  dirs: dir_mkl
                                   )
   libs_extra = [lib_oneapi]
 endif
