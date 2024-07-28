@@ -479,6 +479,8 @@ def gain_and_qs(
     print("\n Photoelastic calc")
     if struc.using_linear_elements():
 
+
+        print('the linear tricky bit', fem_ac.xy_nodes.shape )
         resm = nb_fortran.photoelastic_int_v2(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
@@ -510,6 +512,7 @@ def gain_and_qs(
                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                 "\n using slow quadrature integration by default.\n\n",
             )
+        print('the curvilinear tricky bit', fem_ac.xy_nodes.shape )
         resm = nb_fortran.photoelastic_int(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
