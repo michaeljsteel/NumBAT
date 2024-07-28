@@ -63,16 +63,19 @@ subroutine photoelastic_int_v2 (nval_EM_p, nval_EM_S, nval_AC,&
    !fo2py intent(in) nel, npt, nnodes, table_nod, p_tensor, beta_AC, debug
    !fo2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC, eps_lst
    !
-   !fo2py depend(table_nod) nnodes, nel
-   !fo2py depend(type_el) npt
-   !fo2py depend(x) npt
-   !fo2py depend(soln_EM_p) nnodes, nval_EM_p, nel
-   !fo2py depend(soln_EM_S) nnodes, nval_EM_S, nel
-   !fo2py depend(soln_AC) nnodes, nval_AC, nel
-   !fo2py depend(p_tensor) nb_typ_el
-   !fo2py depend(eps_lst) nb_typ_el
+   ! Need these dependencies to get f2py calling to work
+   !f2py depend(table_nod) nnodes, nel
+   !f2py depend(type_el) npt
+   !f2py depend(x) npt
+   !f2py depend(soln_EM_p) nnodes, nval_EM_p, nel
+   !f2py depend(soln_EM_S) nnodes, nval_EM_S, nel
+   !f2py depend(soln_AC) nnodes, nval_AC, nel
+   !f2py depend(p_tensor) nb_typ_el
+   !f2py depend(eps_lst) nb_typ_el
    !
    !fo2py intent(out) overlap
+   !fo2py intent(out) errco
+   !fo2py intent(out) emsg
 
 
 
