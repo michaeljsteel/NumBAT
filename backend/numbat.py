@@ -172,5 +172,16 @@ def assert_numbat_object_created():
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
 
+class _NumBATPlotPrefs:
+
+    def __init__(self):
+        self.cmap_field_signed = 'seismic'
+        self.cmap_field_unsigned = 'OrRd'
+        self.cmap_ref_index = 'cool'
+
+
+def NumBATPlotPrefs():
+    return _NumBATPlotPrefs()
+
 def load_simulation(prefix):
     return Simulation.load_simulation(prefix)
