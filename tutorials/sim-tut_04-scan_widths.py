@@ -29,7 +29,7 @@ import starter
 
 # Select the number of CPUs to use in simulation.
 num_cores = os.cpu_count()
-num_cores = 2
+num_cores = 4
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
@@ -97,25 +97,18 @@ for width in waveguide_widths:
 
     l_wguides.append((width, wguide))
 
-    # wguide.plot_mesh(prefix+'_%d'%int(width))
+    #wguide.plot_refractive_index_profile(prefix+'_%d'%int(width))
 
-new_calcs = True
-if new_calcs:
-  # Run widths in parallel across num_cores CPUs using multiprocessing package.
-    if use_multiproc:
-        with Pool(num_cores) as pool:
-            l_width_data = pool.map(modes_n_gain, l_wguides)
-    else:
-        l_width_data = list(map(modes_n_gain, l_wguides))
-
-    v_width_data = np.array(l_width_data, dtype=object)
-
-    # This generates a warning abut ragged nested sequences. Is there an option to pool.map that would clean this up?
-    np.savez(f'{prefix}_simo_results', width_objs=v_width_data)
-
+# Run widths in parallel across num_cores CPUs using multiprocessing package.
+if use_multiproc:
+    with Pool(num_cores) as pool:
+        l_width_data = pool.map(modes_n_gain, l_wguides)
 else:
-    npzfile = np.load(f'{prefix}_simo_results.npz', allow_pickle=True)
-    v_width_data = npzfile['width_objs'].tolist()
+    l_width_data = list(map(modes_n_gain, l_wguides))
+
+v_width_data = np.array(l_width_data, dtype=object)
+
+
 
 n_effs = []
 freqs_gains = []
@@ -128,11 +121,7 @@ for i_w, width_obj in enumerate(v_width_data):
     interp_values = np.zeros(interp_grid_points)
     width, simres_EM_pump, simres_AC, gain_box = width_obj
 
-    #simres_EM_pump.plot_modes(suffix='_wid_%d' % i_w, ivals=range(5))
-    #simres_AC.plot_modes(suffix='_wid_%d' % i_w, ivals=range(20))
-
     # Calculate the EM effective index of the waveguide (q_AC = 2*k_EM).
-    # np.round(np.real((q_AC/2.)*((lambda_nm*1e-9)/(2.*np.pi))), 4)
     n_eff_sim = simres_EM_pump.neff(0)
     n_effs.append(n_eff_sim)
 
@@ -157,40 +146,25 @@ for i_w, width_obj in enumerate(v_width_data):
     gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
     for m in range(num_modes):
         gain_list = np.real(gain_box.gain_total(m) * linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
-                #gain_box.SBS_gain[EM_ival_Stokes, EM_ival_pump, m]
         freq_list = np.real(simres_AC.nu_AC(m) + detuning_range)
         interp_spectrum = np.interp(interp_grid, freq_list, gain_list)
         interp_values += interp_spectrum
     freqs_gains.append(list(zip(interp_grid/SI_GHz, abs(interp_values))))
-
-print('Widths', waveguide_widths)
-print('n_effs', n_effs)
-
-fig, ax = plt.subplots()
-ax.set_xlabel('Frequency (GHz)', fontsize=14)
-ax.set_ylabel('|Gain| (1/Wm)', fontsize=14)
-ax.set_yscale('log')
 fgs = np.array(freqs_gains)
-print(fgs)
+
+fig, ax = plt.subplots(1,2, figsize=(14,6))
+ax[0].set_xlabel('Frequency (GHz)', fontsize=14)
+ax[0].set_ylabel('|Gain| (1/Wm)', fontsize=14)
+ax[0].set_yscale('log')
 for ifg,fg in enumerate(fgs):
-    ax.plot(fg[:,0], fg[:,1], lw=1, label=r'$d=$'+f'{waveguide_widths[ifg]:.1f} nm')
-ax.legend()
+    ax[0].plot(fg[:,0], fg[:,1], lw=1, label=r'$d=$'+f'{waveguide_widths[ifg]:.1f} nm')
+ax[0].legend(loc='upper left', fontsize='x-small')
+
+ax[1].set_xlabel('Width', fontsize=16)
+ax[1].set_ylabel('Effective index', fontsize=16)
+ax[1].plot(waveguide_widths, n_effs, '-o')
+
+
 plt.savefig(str(nbapp.outpath())+'-gain_spectra-scan.png')
-
-## Plot a 'waterfall' plot.
-#ax = plt.figure().add_subplot(projection='3d')
-#poly = PolyCollection(freqs_gains)
-#poly.set_alpha(0.7)
-#ax.add_collection3d(poly, zs=waveguide_widths, zdir='y')
-#ax.set_xlabel('Frequency (GHz)', fontsize=14)
-#ax.set_xlim3d(int_min*1e-9, int_max*1e-9)
-#ax.set_ylabel('Width (nm)', fontsize=14)
-#ax.set_ylim3d(waveguide_widths[0], waveguide_widths[-1])
-#ax.set_zlabel('|Gain| (1/Wm)', fontsize=14)
-#ax.set_zlim3d(0, 1500)
-#plt.tick_params(axis='both', which='major', labelsize=12, pad=-2)
-#plt.savefig(nbapp.outpath()+'-gain_spectra-waterfall.png')
-#plt.close()
-
 
 print(nbapp.final_report())
