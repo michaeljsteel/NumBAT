@@ -290,8 +290,8 @@ def get_quiver_skip_range(npts, skip):
 
 def add_contour_plot(fig, ax, d_xy, c_field, cc_cont, plps, decorator):
 
-    cmap_signed = 'seismic'   # This should be a plot_param
-    cmap_unsigned = 'OrRd'
+    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed  
+    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned 
 
     cont_signed = cc_cont.is_signed_field()
     cmap = cmap_signed if cont_signed else cmap_unsigned
