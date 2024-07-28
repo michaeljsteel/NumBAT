@@ -70,13 +70,17 @@ Required libraries
 
    On Ubuntu, perform the following::
 
-    $ sudo apt-get install gcc gfortran make gmsh
+    $ sudo apt-get install gcc gfortran make gmsh python3-venv meson
+
+    $ sudo add-apt-repository universe
+
+    $ sudo apt-get install libarpack2-dev libaprpack2-dev
 
     $ sudo apt-get install libatlas-base-dev libblas-dev liblapack-dev
 
-    $ sudo apt-get install suitesparse umfpack libsuitesparse-dev arpack-ng
+    $ sudo apt-get install libsuitesparse-dev
 
-#. If you using the Intel OneAPI math libraries, you need both of the following:
+#. If you wish to use the Intel OneAPI math libraries, you need both of the following:
 
     - *Intel OneAPI Base Toolkit*:
         This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
@@ -103,7 +107,7 @@ Building |NUMBAT| itself
    To specify a virtual environment tree called `nbpy3` in your home directory, enter ::
 
     $ cd ~
-    $ python3 -m virtualenv nbpy3
+    $ python3 -m venv nbpy3
 
 
 #. Activate the new python virtual environment ::
@@ -126,6 +130,17 @@ Building |NUMBAT| itself
 
     $ git clone https://github.com/michaeljsteel/NumBAT.git
     $ cd NumBAT
+
+#. To build with the new ``meson`` system, move to the ``backend\fortran`` directory.  Alternatively skip to step XX.
+
+#. To build with the ``gcc`` compilers, run::
+
+    $ make -f Makefile.meson mesgcc
+
+#. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
+
+    $ make -f Makefile.meson mesintel
+
 
 
 #. Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
