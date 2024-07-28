@@ -25,10 +25,10 @@ import starter
 lambda_nm = 1000
 domain_x = lambda_nm
 domain_y = domain_x
-inc_a_x = 600      # base length (always horizontal)
-inc_a_y = inc_a_x  # not used
-inc_b_x = 500      # displacement of peak from left end of base
-inc_b_y = 500      # height of peak from base
+basewid = 600      # base length (always horizontal)
+inc_a_y = basewid  # not used
+peak_xoff = 500      # displacement of peak from left end of base
+peak_ht = 500      # height of peak from base
 
 inc_shape = 'triangular'
 
@@ -45,69 +45,71 @@ nbapp = numbat.NumBATApp(prefix)
 
 refine_fac = 1;
 lc_bkg = .1 * refine_fac
-lc_norm = 3
-lc_corner = 6
 
 lc_norm = 1
 lc_corner = 1
 
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
-                              inc_b_x = inc_b_x, inc_b_y = inc_b_y,
-                        material_bkg=materials.make_material("Vacuum"),
-                        material_a=materials.make_material("Si_2021_Poulton"),
-                        lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
+                              base_width=basewid, peak_height=peak_ht,
+                              peak_xoff = peak_xoff, 
+                              material_bkg=materials.make_material("Vacuum"), 
+                              material_a=materials.make_material("Si_2021_Poulton"), 
+                              lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
+
+wguide.plot_refractive_index_profile(prefix)
 
 # Expected effective index of fundamental guided mode.
 n_eff = 2.5
 
-recalc_fields=True     # run the calculation from scratch
-#recalc_fields=False   # reuse saved fields from previous calculation
+#use_old_fields=True   # reuse saved fields from previous calculation
+use_old_fields=False     # run the calculation from scratch
 
 # Calculate Electromagnetic Modes
-if recalc_fields:
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
-
-    sim_EM_pump.save_simulation('tut_06_pump')
-    sim_EM_Stokes.save_simulation('tut_06_stokes')
+if use_old_fields:
+    simres_EM_pump = mode_calcs.load_simulation('tut_06bpump')
+    simres_EM_Stokes = mode_calcs.load_simulation('tut_06bstokes')
 else:
-    sim_EM_pump = mode_calcs.load_simulation('tut_06_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
+    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
 
-sim_EM_pump.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
-sim_EM_Stokes.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
+    simres_EM_pump.save_simulation('tut_06bpump')
+    simres_EM_Stokes.save_simulation('tut_06bstokes')
+
+#simres_EM_pump.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
+#simres_EM_Stokes.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 
 print('\nPlotting EM fields')
-sim_EM_pump.plot_modes(ivals=[0])
+simres_EM_pump.plot_modes(ivals=[0])
 
 # Display the wavevectors of EM modes.
-v_kz=sim_EM_pump.kz_EM_all()
+v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 # Calculate the EM effective index of the waveguide.
-n_eff_sim = np.real(sim_EM_pump.neff(0))
+n_eff_sim = np.real(simres_EM_pump.neff(0))
 print(f"n_eff = {n_eff_sim:.4e}")
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_ival_Stokes))
 
 shift_Hz = 4e9
 
 # Calculate Acoustic modes.
-if recalc_fields:
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
-    sim_AC.save_simulation('tut_06_acoustic')
+if use_old_fields:
+    simres_AC = mode_calcs.load_simulation('tut_06bacoustic')
 else:
-    sim_AC = mode_calcs.load_simulation('tut_06_acoustic')
+    simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump, shift_Hz=shift_Hz)
+    simres_AC.save_simulation('tut_06bacoustic')
 
-sim_AC.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
-sim_AC.plot_modes()
+#simres_AC.set_r0_offset(0, -0.5e-9*domain_y)  # ensure plots identify centre as (0,0)
 
 # Print the frequencies of AC modes.
-v_nu=sim_AC.nu_AC_all()
+v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu) * 1e-09:.5f}')
+
+simres_AC.plot_modes()
 
 set_q_factor = 1000.
 
@@ -115,7 +117,7 @@ print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
+    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
     EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
 
 # np.savez('wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE, SBS_gain_MB=SBS_gain_MB, alpha=alpha)
