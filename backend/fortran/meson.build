@@ -13,13 +13,18 @@ message('@0@'.format(fcomp.get_id()))
 
 libs_extra = []
 
-dir_oneapi = get_option('dir_oneapi')
-inc_nblocal = ''
-if host_machine.system() == 'linux'
-  dir_mkl = dir_oneapi / 'mkl/latest/lib'
-  dir_nblocal = ['/usr/local/lib']
+plat_pref = host_machine.system() + '_'
 
-  inc_nblocal = include_directories(['/usr/local/include','/usr/include/suitesparse'])
+dir_oneapi = get_option(plat_pref + 'dir_oneapi')
+dir_usrlocal = get_option(plat_pref + 'dir_nb_usrlocal')
+dir_usrlocal_lib = dir_usrlocal / 'lib'
+dir_mkl = dir_oneapi / 'mkl/latest/lib'
+
+dir_usrlocal_inc = dir_usrlocal / 'include'
+if host_machine.system() == 'linux'
+
+  inc_nblocal = include_directories([dir_usrlocal_inc,
+                                     '/usr/include/suitesparse'])
   lib_blas = ccomp.find_library('mkl_rt',
     dirs: dir_mkl,
     header_include_directories: inc_nblocal)
@@ -30,18 +35,12 @@ elif host_machine.system() == 'darwin'
     ccomp.find_library('blas', dirs: '/opt/local/lib'),
   ]
 
-else
+else # Windows
 
-  #MKL_LIB=$(MKLROOT)\lib\mkl_intel_lp64.lib $(MKLROOT)\lib\mkl_rt.lib \
-  #   $(MKLROOT)\lib\mkl_core_dll.lib  $(MKLROOT)\lib\mkl_intel_thread_dll.lib
-
-  dir_nblocal = 'C:/Users/mq98002769/numbat/usr_local/lib'
-  dir_mkl = 'c:/Program Files (x86)/Intel/oneAPI/mkl/2024.1/lib'
-  inc_nblocal = include_directories('C:/Users/mq98002769/numbat/usr_local/include')
-
+  inc_nblocal = include_directories([dir_usrlocal_inc])
   lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
   header_include_directories:inc_nblocal)
-endif
+  endif
 
 if ccomp.get_id() == 'intel-llvm'
   lib_oneapi = ccomp.find_library('ifport',
@@ -50,8 +49,8 @@ if ccomp.get_id() == 'intel-llvm'
   libs_extra = [lib_oneapi]
 endif
 
-lib_arpack = ccomp.find_library('arpack', dirs: dir_nblocal)
-lib_umfpack = ccomp.find_library('umfpack', dirs: dir_nblocal)
+lib_arpack = ccomp.find_library('arpack', dirs: dir_usrlocal_lib)
+lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
 if host_machine.system() == 'windows'
   add_global_arguments(['-fpp', ], language: 'fortran',)
@@ -67,28 +66,18 @@ add_global_arguments(
   language: 'c',
 )
 
-#add_global_arguments(['-DNO_APPEND_FORTRAN',  '-DNO_UPPERCASE_FORTRAN'], language: 'c')
+
 
 comp_f2py = find_program('f2py')
 
 subdir('sswrap')
 subdir('src')
 
-# message(
-#   '\nmeson settings',
-#   meson.current_build_dir(),
-#   meson.build_root(),
-#   meson.current_source_dir(),
-#   meson.source_root(),
-# )
-
 pymod = import('python')
 py_installation = pymod.find_installation()
 message('pypath', py_installation.path())
 py_exe = find_program('python', py_installation.path() / 'bin')
 dep_py = py_installation.dependency()
-
-#message('Using python installation at: ', py_installation.path())
 
 # F2PY details
 r = run_command(py_exe, '-c', 'import numpy; print(numpy.get_include())', check: true)
@@ -101,15 +90,12 @@ r = run_command(
 dir_f2py = r.stdout().strip()
 src_f2py_fortobj = dir_f2py / 'fortranobject.c'
 
-# TODO: unneeded
-incdir = include_directories(
-  [],
-)
+
 incs_f2py = include_directories([dir_numpy, dir_f2py])
 
 message([dir_numpy, dir_f2py])
 
-incs = [inc_nblocal, incdir, incs_f2py]
+incs = [inc_nblocal, incs_f2py]
 
 srcs = [
   src_f2py_fortobj,
