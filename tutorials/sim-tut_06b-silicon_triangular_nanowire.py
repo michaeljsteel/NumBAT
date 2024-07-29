@@ -21,11 +21,11 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-#lambda_nm = 1550
-lambda_nm = 1000
+lambda_nm = 1550
+#lambda_nm = 1000
 domain_x = lambda_nm
 domain_y = domain_x
-basewid = 600      # base length (always horizontal)
+basewid = 1000      # base length (always horizontal)
 inc_a_y = basewid  # not used
 peak_xoff = 500      # displacement of peak from left end of base
 peak_ht = 500      # height of peak from base
@@ -49,12 +49,14 @@ lc_bkg = .1 * refine_fac
 lc_norm = 1
 lc_corner = 1
 
+
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
                               base_width=basewid, peak_height=peak_ht,
                               peak_xoff = peak_xoff, 
                               material_bkg=materials.make_material("Vacuum"), 
                               material_a=materials.make_material("Si_2021_Poulton"), 
                               lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
+
 
 wguide.plot_refractive_index_profile(prefix)
 
@@ -109,7 +111,15 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu) * 1e-09:.5f}')
 
-simres_AC.plot_modes()
+simres_AC.plot_modes(ivals=range(4))
+
+for m in range(4):
+    md = simres_AC.get_mode(m)
+    md = simres_AC.mode_set[m]
+    md.set_width_r0_reference(0, peak_ht/2*1e-9) # set width reference to top of triangle
+    md.analyse_mode()
+    print(f'mode {m:2d}: r0=({md.center_of_mass_x(): .4f}, {md.center_of_mass_y(): .4f}), '
+    + f'wid= ({md.wx():.4f},{md.wy():.4f})')
 
 set_q_factor = 1000.
 
@@ -129,7 +139,7 @@ gain_box = integration.get_gains_and_qs(
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
-freq_max = 12e9  # Hz
+freq_max = 42e9  # Hz
 
 gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 

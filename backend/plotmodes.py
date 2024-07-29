@@ -595,7 +595,7 @@ def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
     _write_line(x0, y0, f'$f_x:$ {f_x:.3f}, $f_y$: {f_y:.3f}'); y0 -= dy
     _write_line(x0, y0, f'$f_t:$ {f_t:.3f}, $f_z$: {f_z:.3f}'); y0 -= dy
     _write_line(x0, y0, r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm'); y0 -= dy
-    _write_line(x0, y0, f'$(w_x, w_y):$ ({wx:.2f}, {wy:.2f}) ' + r'μm'); y0 -= dy
+    _write_line(x0, y0, f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm'); y0 -= dy
 
     if mode.field_type == FieldType.EM_H:
         _write_line(x0, y0, r'$H$ field multiplied by $Z_0=376.7\, \Omega$'); y0 -= dy
