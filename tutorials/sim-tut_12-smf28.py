@@ -929,7 +929,7 @@ def do_main():
         mat_bkg = mat_vac
         prefix = pref0+'-em-sil'
 
-    nbapp = numbat.NumBATApp(prefix)
+    nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
     rcore = dcore/2.0
     rclad = dclad/2.0

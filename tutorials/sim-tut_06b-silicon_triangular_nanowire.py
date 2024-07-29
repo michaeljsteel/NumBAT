@@ -21,11 +21,11 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-#lambda_nm = 1550
-lambda_nm = 1000
+lambda_nm = 1550
+#lambda_nm = 1000
 domain_x = lambda_nm
 domain_y = domain_x
-basewid = 600      # base length (always horizontal)
+basewid = 1000      # base length (always horizontal)
 inc_a_y = basewid  # not used
 peak_xoff = 500      # displacement of peak from left end of base
 peak_ht = 500      # height of peak from base
@@ -49,12 +49,14 @@ lc_bkg = .1 * refine_fac
 lc_norm = 1
 lc_corner = 1
 
+
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
                               base_width=basewid, peak_height=peak_ht,
                               peak_xoff = peak_xoff, 
                               material_bkg=materials.make_material("Vacuum"), 
                               material_a=materials.make_material("Si_2021_Poulton"), 
                               lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
+
 
 wguide.plot_refractive_index_profile(prefix)
 
@@ -109,9 +111,39 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu) * 1e-09:.5f}')
 
-simres_AC.plot_modes()
+#simres_AC.plot_modes()
+v_widy = np.zeros(num_modes_AC)
+v_w2 = np.zeros(num_modes_AC)
+v_x0 = np.zeros(num_modes_AC)
+v_y0 = np.zeros(num_modes_AC)
+
+nm_to_um = 0.001
+m_likely_wedge = 0
+peak_ht_um = peak_ht*nm_to_um
+m_apex_dist=5*peak_ht_um # comfortably large to be displaced. Convert peak_ht to microns.
+for m in range(num_modes_AC):
+    md = simres_AC.get_mode(m)
+    md = simres_AC.mode_set[m]
+    md.set_width_r0_reference(0, peak_ht_um/2) # set width reference to top of triangle # this part done in m!
+    md.analyse_mode()
+    v_widy[m] = md.wy()
+    v_w2[m] = md.w0()
+    v_x0[m] = md.center_of_mass_x()
+    v_y0[m] = md.center_of_mass_y()
+
+    # look for mode with energy most concentrated near the apex
+    if abs(peak_ht_um-v_y0[m])<m_apex_dist:
+        m_apex_dist = abs(peak_ht_um-v_y0[m])
+        m_likely_wedge = m
+
+
+    print(f'mode {m:2d}: r0=({md.center_of_mass_x(): .4f}, {md.center_of_mass_y(): .4f}), '
+    + f'wid= ({md.wx():.4f},{md.wy():.4f},{md.w0():.4f})')
+
+print(f'The apex wedge mode is most likely  mode {m_likely_wedge}')
 
 set_q_factor = 1000.
+
 
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
@@ -129,7 +161,7 @@ gain_box = integration.get_gains_and_qs(
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
-freq_max = 12e9  # Hz
+freq_max = 42e9  # Hz
 
 gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 

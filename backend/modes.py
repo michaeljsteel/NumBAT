@@ -216,6 +216,7 @@ class Mode:
         self.r0 = None  # centre of mass
         self.w2 = None  # second moment width
         self.r0_offset = (0.0, 0.0)
+        self._width_r0_ref = None
         self.extra_data = {}
         self.analysed = False
         self.interpolated = {FieldType.EM_E: False,
@@ -283,6 +284,8 @@ class Mode:
     def clear_mode_plot_data(self):
         for k in self.d_fields.keys():
             self.d_fields[k] = None
+        self.interpolated = {FieldType.EM_E: False,
+                             FieldType.EM_H: False, FieldType.AC: False}
 
     def interpolate_mode(self, mode_helper):
         mh = mode_helper
@@ -438,6 +441,13 @@ class Mode:
            '''
         return self.w2[2]
 
+    def set_width_r0_reference(self, x0, y0):
+        '''Set reference point for calculation of second moment width.
+
+        Positions are measured in microns.'''
+
+        self._width_r0_ref=(x0/SI_um, y0/SI_um)
+
     def set_r0_offset(self, x0, y0):
         '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
 
@@ -512,8 +522,15 @@ class Mode:
             y0 = 0.0
 
         # unit = um^2 [|F|^2]
-        m_x2mod = np.power((m_x-x0), 2) * m_Fall2
-        m_y2mod = np.power((m_yud-y0), 2) * m_Fall2
+        if self._width_r0_ref is None: # allow user setting of the second width moment reference point
+            w_x0 = x0
+            w_y0 = y0
+        else:
+            w_x0 = self._width_r0_ref[0] #
+            w_y0 = self._width_r0_ref[1]
+
+        m_x2mod = np.power((m_x - w_x0), 2) * m_Fall2
+        m_y2mod = np.power((m_yud - w_y0), 2) * m_Fall2
         w2x = sqrt(int2d_trapz(m_x2mod, dx, dy)/s_f)
         w2y = sqrt(int2d_trapz(m_y2mod, dx, dy)/s_f)
         w2 = sqrt(w2x*w2x+w2y*w2y)

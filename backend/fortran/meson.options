@@ -1,0 +1,2 @@
+option('dir_oneapi', type:'string', value:'/opt/intel/oneapi',
+    description: 'Location of the Intel oneAPI tree')

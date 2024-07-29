@@ -22,7 +22,7 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 5*lambda_nm
+domain_x = 3*lambda_nm
 domain_y = domain_x
 inc_a_x = 550
 inc_a_y = inc_a_x
@@ -42,30 +42,24 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
-                        #lc_bkg=.1, lc_refine_1=12.0*refine_fac, lc_refine_2=4.0*refine_fac)
-                        #lc_bkg=.1, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
                         lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3.0*refine_fac)
-
-#wguide.plot_mesh(prefix)
 wguide.plot_refractive_index_profile(prefix)
 
 # Expected effective index of fundamental guided mode.
 n_eff = 1.4
 
-#reuse_old_fields=True     # run the calculation from scratch
-reuse_old_fields=False   # reuse saved fields from previous calculation
+use_old_fields=False     # run the calculation from scratch
+#use_old_fields=True   # reuse saved fields from previous calculation
 
 # Calculate Electromagnetic Modes
-if reuse_old_fields:
-    simres_EM_pump = mode_calcs.load_simulation('tut_06_pump')
-    simres_EM_Stokes = mode_calcs.load_simulation('tut_06_stokes')
-
+if use_old_fields:
+    simres_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
+    simres_EM_Stokes = mode_calcs.load_simulation(prefix+'_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
     simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
-
-    simres_EM_pump.save_simulation('tut_06_pump')
-    simres_EM_Stokes.save_simulation('tut_06_stokes')
+    simres_EM_pump.save_simulation(prefix+'_pump')
+    simres_EM_Stokes.save_simulation(prefix+'_stokes')
 
 print('\nPlotting EM fields')
 trim=0.4
@@ -88,12 +82,11 @@ q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_iv
 shift_Hz = 4e9
 
 # Calculate Acoustic modes.
-if reuse_old_fields:
-    simres_AC = mode_calcs.load_simulation('tut_06_acoustic')
+if use_old_fields:
+    simres_AC = mode_calcs.load_simulation(prefix+'_acoustic')
 else:
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump, shift_Hz=shift_Hz)
-    simres_AC.save_simulation('tut_06_acoustic')
-
+    simres_AC.save_simulation(prefix+'_acoustic')
 
 # Print the frequencies of AC modes.
 v_nu=simres_AC.nu_AC_all()

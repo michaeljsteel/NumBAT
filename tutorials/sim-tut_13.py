@@ -480,7 +480,7 @@ def do_main():
         mat_bkg = mat_vac
         prefix = pref0 + "-em-sil"
 
-    nbapp = numbat.NumBATApp(prefix)
+    nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
     # Elastic problem of a single rod in vacuum
     rcore = 1000
