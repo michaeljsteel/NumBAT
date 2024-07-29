@@ -1,2 +1,26 @@
-option('dir_oneapi', type:'string', value:'/opt/intel/oneapi',
+# Linux
+option('linux_dir_oneapi', type:'string', value:'/opt/intel/oneapi',
     description: 'Location of the Intel oneAPI tree')
+
+option('linux_dir_nb_usrlocal', type:'string', value:'/usr/local',
+    description: 'Location of various packages')
+
+# Windows
+
+option('windows_dir_oneapi', type:'string',
+    value:'c:/Program Files (x86)/Intel/oneAPI',
+    description: 'Location of the Intel oneAPI tree')
+
+option('windows_dir_mkl', type:'string',
+    value:'c:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib',
+    description: 'Location of the Intel oneAPI tree')
+
+option('windows_dir_nb_usrlocal', type:'string',
+    value: 'C:/Users/mq98002769/numbat/usr_local',
+    description: 'Location of various packages')
+
+# MacOS
+
+option('darwin_dir_nb_usrlocal', type:'string',
+    value: '/opt/local',
+    description: 'Location of various packages')

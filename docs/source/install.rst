@@ -133,23 +133,25 @@ Building |NUMBAT| itself
     $ git clone https://github.com/michaeljsteel/NumBAT.git
     $ cd NumBAT
 
-#. To build with the new ``meson`` system, move to the ``backend\fortran`` directory.  Alternatively skip to step XX.
+#. **New method**
+    To build with the new ``meson`` system, move to the ``backend\fortran`` directory.  Alternatively skip to step XX.
 
-#. To build with the ``gcc`` compilers, run::
+    #. To build with the ``gcc`` compilers, run::
 
-    $ make -f Makefile.meson mesgcc
+        $ make -f Makefile.meson gcc
 
-#. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
+    #. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
 
-    $ make -f Makefile.meson mesintel
+        $ make -f Makefile.meson intel
 
 
 
-#. Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
+#. **Old method**
+    Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
 
-#. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+    #. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-   $ make build
+        $ make build
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
@@ -362,10 +364,7 @@ Installing on Windows
 Installing the Native Windows version
 -------------------------------------------
 
-**This build is quite new and likely to have some hiccups. To ensure the libraries link correctly, it is vital to follow every step exactly. Please provide any feedback on your success or otherwise.**
-
-The Windows version of |NUMBAT| is built entirely using the native Windows toolchain including
-Visual Studio and the Intel Fortran compiler. There are a relatively large number of steps and tools required, but it should go relatively smoothly.
+The Windows version of |NUMBAT| is built entirely using the native Windows toolchain including Visual Studio and the Intel Fortran compiler. There is a substantial number of steps and tools required, but it should go relatively smoothly.
 
 
 #. **Python environment**
@@ -519,7 +518,7 @@ At long last, we are ready to build |NUMBAT| itself.
 #. Install the necessary python libraries ::
 
     $ conda install python pip
-    $ pip3 install numpy matplotlib scipy psutil
+    $ pip3 install numpy matplotlib scipy psutil meson ninja
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
@@ -528,24 +527,30 @@ At long last, we are ready to build |NUMBAT| itself.
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
-#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username.
+#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
 
-#. Copy the .dlls built earlier to this directory::
+#. To initiate the build, enter ::
 
-    $ copy ..\..\..\..\usr_local\lib\*.dll .
+    $ make -f Makefile.meson win
 
-#. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+    This should take 2 to 3 minutes.
 
-   $ cd backend\fortran
-   $ make -f Makefile.win
+.. #. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-   This should take 2 to 3 minutes.
+..    $ cd backend\fortran
+..    $ make -f Makefile.win
+
+
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
 #. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
-#. Once the build has apparently succeeded, it is time to test the installation with a short script that tests whether required applications and libraries can be found and loaded. Perform the following commands::
+#. Copy the .dlls built earlier to this directory::
+
+    $ copy ..\..\..\..\usr_local\lib\*.dll .
+
+#. At this point, we are ready to test the installation with a short script that checks whether required applications and libraries can be found and loaded. Perform the following commands::
 
     $ cd <NumBAT>/backend
     $ python ./nb_install_tester.py
