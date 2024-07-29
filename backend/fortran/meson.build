@@ -10,14 +10,16 @@ fcomp = meson.get_compiler('fortran')
 message('@0@'.format(ccomp.get_id()))
 message('@0@'.format(fcomp.get_id()))
 
+
 libs_extra = []
 
+dir_oneapi = get_option('dir_oneapi')
 inc_nblocal = ''
 if host_machine.system() == 'linux'
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
   dir_nblocal = ['/usr/local/lib']
 
-  inc_nblocal = include_directories('/usr/local/include')
+  inc_nblocal = include_directories(['/usr/local/include','/usr/include/suitesparse'])
   lib_blas = ccomp.find_library('mkl_rt',
     dirs: dir_mkl,
     header_include_directories: inc_nblocal)
@@ -72,16 +74,17 @@ comp_f2py = find_program('f2py')
 subdir('sswrap')
 subdir('src')
 
-message(
-  '\n\n\n\nmeson settings',
-  meson.current_build_dir(),
-  meson.build_root(),
-  meson.current_source_dir(),
-  meson.source_root(),
-)
+# message(
+#   '\nmeson settings',
+#   meson.current_build_dir(),
+#   meson.build_root(),
+#   meson.current_source_dir(),
+#   meson.source_root(),
+# )
 
 pymod = import('python')
 py_installation = pymod.find_installation()
+message('pypath', py_installation.path())
 py_exe = find_program('python', py_installation.path() / 'bin')
 dep_py = py_installation.dependency()
 

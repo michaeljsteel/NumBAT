@@ -15,10 +15,12 @@ inteldebug:
 	meson compile -C mbuild_inteldebug
 
 gcc:
-	- rm -rf mbuild_gcc
-	CC=gcc FC=f95 meson setup --buildtype=debug mbuild_gcc
-	meson compile -v -C mbuild_gcc
-	cp mbuild_gcc/nb_fortran.so .
+	- rm -rf build_gcc
+	#CC=gcc FC=f95
+	meson setup --reconfigure --buildtype=release build_gcc \
+		-D dir_oneapi='/home/msteel/intel/oneapi'
+	meson compile -v -C build_gcc
+	cp build_gcc/nb_fortran.so .
 
 intelt:
 	- rm -rf mbuild_intel
@@ -27,17 +29,10 @@ intelt:
 		-D dir_oneapi='/home/msteel/intel'
 
 intel:
-#- rm -rf mbuild_intel
-#export PATH=/opt/intel/oneapi/compiler/2024.2/bin:$(PATH); \
-#	CC=icx FC=ifx meson setup --reconfigure --buildtype=release mbuild_intel
-#meson compile -C mbuild_intel
-#cp mbuild_gcc/nb_fortran.so .
-
-    # How to do this without native-file trick. Doesn't seem to find the right compiler without it.
-	- rm -rf mbuild_intel
-	meson setup --reconfigure --buildtype=release mbuild_intel \
+	- rm -rf build_intel
+	meson setup --reconfigure --buildtype=release build_intel \
 		--native-file nb-linuxintel-native-file.ini \
 		-D dir_oneapi='/home/msteel/intel/oneapi'
 
-	meson compile -C mbuild_intel
-	cp mbuild_intel/nb_fortran.so .
+	meson compile -C build_intel
+	cp build_intel/nb_fortran.so .
