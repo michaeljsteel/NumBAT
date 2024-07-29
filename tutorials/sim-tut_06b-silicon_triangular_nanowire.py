@@ -111,17 +111,39 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu) * 1e-09:.5f}')
 
-simres_AC.plot_modes(ivals=range(4))
+#simres_AC.plot_modes()
+v_widy = np.zeros(num_modes_AC)
+v_w2 = np.zeros(num_modes_AC)
+v_x0 = np.zeros(num_modes_AC)
+v_y0 = np.zeros(num_modes_AC)
 
-for m in range(4):
+nm_to_um = 0.001
+m_likely_wedge = 0
+peak_ht_um = peak_ht*nm_to_um
+m_apex_dist=5*peak_ht_um # comfortably large to be displaced. Convert peak_ht to microns.
+for m in range(num_modes_AC):
     md = simres_AC.get_mode(m)
     md = simres_AC.mode_set[m]
-    md.set_width_r0_reference(0, peak_ht/2*1e-9) # set width reference to top of triangle
+    md.set_width_r0_reference(0, peak_ht_um/2) # set width reference to top of triangle # this part done in m!
     md.analyse_mode()
+    v_widy[m] = md.wy()
+    v_w2[m] = md.w0()
+    v_x0[m] = md.center_of_mass_x()
+    v_y0[m] = md.center_of_mass_y()
+
+    # look for mode with energy most concentrated near the apex
+    if abs(peak_ht_um-v_y0[m])<m_apex_dist:
+        m_apex_dist = abs(peak_ht_um-v_y0[m])
+        m_likely_wedge = m
+
+
     print(f'mode {m:2d}: r0=({md.center_of_mass_x(): .4f}, {md.center_of_mass_y(): .4f}), '
-    + f'wid= ({md.wx():.4f},{md.wy():.4f})')
+    + f'wid= ({md.wx():.4f},{md.wy():.4f},{md.w0():.4f})')
+
+print(f'The apex wedge mode is most likely  mode {m_likely_wedge}')
 
 set_q_factor = 1000.
+
 
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,

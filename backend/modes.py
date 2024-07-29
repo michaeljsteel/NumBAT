@@ -442,7 +442,11 @@ class Mode:
         return self.w2[2]
 
     def set_width_r0_reference(self, x0, y0):
-        self._width_r0_ref=(x0, y0)
+        '''Set reference point for calculation of second moment width.
+
+        Positions are measured in microns.'''
+
+        self._width_r0_ref=(x0/SI_um, y0/SI_um)
 
     def set_r0_offset(self, x0, y0):
         '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
