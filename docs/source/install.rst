@@ -70,11 +70,13 @@ Required libraries
 
    On Ubuntu, perform the following::
 
-    $ sudo apt-get install gcc gfortran make gmsh python3-venv meson
+    $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev
+
+    $ sudo apt-get install meson pkg-config ninja-build
 
     $ sudo add-apt-repository universe
 
-    $ sudo apt-get install libarpack2-dev libaprpack2-dev
+    $ sudo apt-get install libarpack2-dev libparpack2-dev
 
     $ sudo apt-get install libatlas-base-dev libblas-dev liblapack-dev
 
