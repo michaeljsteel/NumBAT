@@ -16,23 +16,14 @@ inteldebug:
 
 gcc:
 	- rm -rf build_gcc
-	#CC=gcc FC=f95
-	meson setup --reconfigure --buildtype=release build_gcc \
-		-D dir_oneapi='/home/msteel/intel/oneapi'
+	meson setup --reconfigure --buildtype=release build_gcc 
 	meson compile -v -C build_gcc
 	cp build_gcc/nb_fortran.so .
-
-intelt:
-	- rm -rf mbuild_intel
-	meson setup --buildtype=release mbuild_intel \
-		--native-file nb-linuxintel-native-file.ini \
-		-D dir_oneapi='/home/msteel/intel'
 
 intel:
 	- rm -rf build_intel
 	meson setup --reconfigure --buildtype=release build_intel \
-		--native-file nb-linuxintel-native-file.ini \
-		-D dir_oneapi='/home/msteel/intel/oneapi'
+		--native-file nb-linuxintel-native-file.ini 
 
 	meson compile -C build_intel
 	cp build_intel/nb_fortran.so .
