@@ -23,8 +23,7 @@ dir_mkl = dir_oneapi / 'mkl/latest/lib'
 dir_usrlocal_inc = dir_usrlocal / 'include'
 if host_machine.system() == 'linux'
 
-  inc_nblocal = include_directories([dir_usrlocal_inc,
-                                     '/usr/include/suitesparse'])
+  inc_nblocal = include_directories([dir_usrlocal_inc,])
   lib_blas = ccomp.find_library('mkl_rt',
     dirs: dir_mkl,
     header_include_directories: inc_nblocal)
