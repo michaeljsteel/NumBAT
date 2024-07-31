@@ -24,3 +24,5 @@ option('windows_dir_nb_usrlocal', type:'string',
 option('darwin_dir_nb_usrlocal', type:'string',
     value: '/opt/local',
     description: 'Location of various packages')
+
+

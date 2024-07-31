@@ -27,3 +27,11 @@ intel:
 
 	meson compile -C build_intel
 	cp build_intel/nb_fortran.so .
+
+mac: 
+	- rm -rf build_mac
+	meson setup --reconfigure --buildtype=release build_mac \
+		--native-file nb-darwin-native-file.ini 
+
+	meson compile -C build_mac
+	cp build_mac/nb_fortran.dylib nb_fortran.so 
