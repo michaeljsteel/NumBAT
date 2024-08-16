@@ -432,7 +432,7 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
     $ cd ..\nb_releases
     $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
-#. Download the `Windows build of Gmsh <gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
+#. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
 
 
 
@@ -489,7 +489,7 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
-    $ copy packages\arpack-ng\Release\* lib
+    $ copy packages\arpack-ng\build\Release\* lib
     $ copy packages\arpack-ng\ICB\*.h include
 
 
@@ -509,7 +509,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
    Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
 
-   Also curiously, the bare virtual environment does not actually contain Python.
+   Also curiously, the bare virtual environment does not actually contain Python so we have to install that along with some other libraries.
 
 #. Activate the new python virtual environment ::
 
@@ -518,7 +518,10 @@ At long last, we are ready to build |NUMBAT| itself.
 #. Install the necessary python libraries ::
 
     $ conda install python pip
-    $ pip3 install numpy matplotlib scipy psutil meson ninja
+    $ pip3 install numpy matplotlib scipy psutil ninja
+    $ pip3 install meson=1.4.1
+
+    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
@@ -527,15 +530,20 @@ At long last, we are ready to build |NUMBAT| itself.
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
-#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
+#. Setup the environment variables for the Intel compiler::
+
+    $  c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+
+#. Move to the ``<NumBAT>\backend\fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
 
 #. To initiate the build, enter ::
 
-    $ make -f Makefile.meson win
+    $ make win
 
     This should take 2 to 3 minutes.
 
-.. #. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+.. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
 ..    $ cd backend\fortran
 ..    $ make -f Makefile.win
