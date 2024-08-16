@@ -518,10 +518,12 @@ At long last, we are ready to build |NUMBAT| itself.
 #. Install the necessary python libraries ::
 
     $ conda install python pip
-    $ pip3 install numpy matplotlib scipy psutil ninja
+    $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
     $ pip3 install meson=1.4.1
 
     Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+
+    Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
