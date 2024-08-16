@@ -485,7 +485,8 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select
+the *Build solution* option. This will take a few minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
@@ -569,7 +570,13 @@ At long last, we are ready to build |NUMBAT| itself.
 
 Creating a self-contained command terminal
 ---------------------------------------------
-To easily activate your python environment and ensure all paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
+Both the python and Intel oneAPI paths need to be set up every time you open a terminal to run |NUMBAT|.
+Doing this manually requires typing::
+
+    $ conda activate nbpy3
+    $  c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
 
 Here is a procedure for doing this::
 
