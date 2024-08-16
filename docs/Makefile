@@ -18,8 +18,8 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(SPHINXOPTS) source
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
 .PHONY: mike
-mike: 
-	make clean 
+mike:
+	make clean
 	make latexpdf
 
 .PHONY: view
@@ -157,6 +157,7 @@ latexpdf:
 	@echo "Running LaTeX files through pdflatex..."
 	$(MAKE) -C $(BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
+	cp build/NumBAT.pdf ..
 
 .PHONY: latexpdfja
 latexpdfja:
