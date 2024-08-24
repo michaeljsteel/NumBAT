@@ -566,7 +566,7 @@ At long last, we are ready to build |NUMBAT| itself.
     $ cd <NumBAT>/backend
     $ python ./nb_install_tester.py
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`troubleshooting-windows-label:`.
 
 Creating a self-contained command terminal
 ---------------------------------------------
@@ -593,6 +593,31 @@ Here is a procedure for doing this::
   #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
 
   #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
+
+
+
+
+
+.. _sec-troubleshooting-windows-label:
+
+
+Troubleshooting a Windows installation
+-------------------------------------------
+
+#. My build of |NUMBAT| completes but the  ``nb_install_tester.py`` program complains the |NUMBAT| fortran ``nb_fortran.pyd`` dynamically linked library (DLL) can't be loaded.
+
+  This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
+
+  #. Download the *Dependencies* tool available as a zip file install from github at `https://github.com/lucasg/Dependencies`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
+
+  Apply the tool to the |NUMBAT| python dll. Start the ``DependenciesGui.exe`` tool::
+
+    $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+
+  Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortray.pyd``.
+
+
+  Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
 
 Installing the Linux version via a Virtual Machine
 ------------------------------------------------------
