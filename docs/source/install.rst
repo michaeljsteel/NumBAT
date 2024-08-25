@@ -434,7 +434,7 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
     $ cd ..\nb_releases
     $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
-#. Download the `Windows build of Gmsh <gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
+#. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
 
 
 
@@ -487,11 +487,12 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select
+the *Build solution* option. This will take a few minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
-    $ copy packages\arpack-ng\Release\* lib
+    $ copy packages\arpack-ng\build\Release\* lib
     $ copy packages\arpack-ng\ICB\*.h include
 
 
@@ -511,7 +512,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
    Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
 
-   Also curiously, the bare virtual environment does not actually contain Python.
+   Also curiously, the bare virtual environment does not actually contain Python so we have to install that along with some other libraries.
 
 #. Activate the new python virtual environment ::
 
@@ -520,7 +521,12 @@ At long last, we are ready to build |NUMBAT| itself.
 #. Install the necessary python libraries ::
 
     $ conda install python pip
-    $ pip3 install numpy matplotlib scipy psutil meson ninja
+    $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
+    $ pip3 install meson=1.4.1
+
+    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+
+    Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
@@ -529,7 +535,12 @@ At long last, we are ready to build |NUMBAT| itself.
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
-#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
+#. Setup the environment variables for the Intel compiler::
+
+    $  c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+
+#. Move to the ``<NumBAT>\backend\fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
 
 #. To initiate the build, enter ::
 
@@ -537,7 +548,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
     This should take 2 to 3 minutes.
 
-.. #. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+.. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
 ..    $ cd backend\fortran
 ..    $ make -f Makefile.win
@@ -557,11 +568,17 @@ At long last, we are ready to build |NUMBAT| itself.
     $ cd <NumBAT>/backend
     $ python ./nb_install_tester.py
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`troubleshooting-windows-label:`.
 
 Creating a self-contained command terminal
 ---------------------------------------------
-To easily activate your python environment and ensure all paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
+Both the python and Intel oneAPI paths need to be set up every time you open a terminal to run |NUMBAT|.
+Doing this manually requires typing::
+
+    $ conda activate nbpy3
+    $  c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
 
 Here is a procedure for doing this::
 
@@ -578,6 +595,31 @@ Here is a procedure for doing this::
   #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
 
   #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
+
+
+
+
+
+.. _sec-troubleshooting-windows-label:
+
+
+Troubleshooting a Windows installation
+-------------------------------------------
+
+#. My build of |NUMBAT| completes but the  ``nb_install_tester.py`` program complains the |NUMBAT| fortran ``nb_fortran.pyd`` dynamically linked library (DLL) can't be loaded.
+
+  This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
+
+  #. Download the *Dependencies* tool available as a zip file install from github at `https://github.com/lucasg/Dependencies`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
+
+  Apply the tool to the |NUMBAT| python dll. Start the ``DependenciesGui.exe`` tool::
+
+    $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+
+  Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortray.pyd``.
+
+
+  Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
 
 Installing the Linux version via a Virtual Machine
 ------------------------------------------------------
