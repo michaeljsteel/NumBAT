@@ -138,20 +138,20 @@ Building |NUMBAT| itself
 
     #. To build with the ``gcc`` compilers, run::
 
-        $ make -f Makefile.meson gcc
+        $ make gcc
 
     #. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
 
-        $ make -f Makefile.meson intel
+        $ make intel
 
 
 
 #. **Old method**
-    Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
+    Open the file ``<NumBAT>/backend/fortran/Makefile.old`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
 
     #. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-        $ make build
+        $ make -f Makefile.old build
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
@@ -178,7 +178,7 @@ To do so,
 
 #. Install the Intel OneAPI Base and HPC Toolkits.
 #. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.)
-#. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make``, please use::
+#. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make gcc``, please use::
 
     $ make intel
 
@@ -322,15 +322,15 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
 #. Install necessary python libraries ::
 
-    $ pip3 install numpy matplotlib scipy psutil
+    $ pip3 install numpy matplotlib scipy psutil meson ninja
 
-#. Check that the python installs work and create a matplotlib .config directory::
+#. Check that the python installs work.
 
    $ python3.12
-   $ import matplotlib
-   $ import numpy
-   $ import scipy
-   $ import psutil
+   >>> import matplotlib
+   >>> import numpy
+   >>> import scipy
+   >>> import psutil
 
 #. Install the |NUMBAT| matplotlib style file::
 
@@ -341,9 +341,11 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
    $ cd backend/fortran
 
-#. Now at last, we can build |NUMBAT| ::
+#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``MacOS`` section and change any of the paths in the ``value`` fields as required.
 
-   $ make -f Makefile.macos
+#. To start the build, enter:: 
+   
+   $ make mac
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
@@ -531,7 +533,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. To initiate the build, enter ::
 
-    $ make -f Makefile.meson win
+    $ make win
 
     This should take 2 to 3 minutes.
 
