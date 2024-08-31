@@ -29,7 +29,14 @@ at  `ReadTheDocs <http://numbat-au.readthedocs.io/en/latest/>`_ or in the ``NumB
 Installation
 -------------
 
-NumBAT builds natively on Linux and MacOS, and can be run on Windows using a virtual machine on the Windows Subsystem for Linux
+Build from source
+^^^^^^^^^^^^^^^^^^
 
-For detailed instructions, please see the Installation chapter in the documentation files above.
+NumBAT builds natively on Linux, MacOS and Windows.
+
+For detailed instructions, please see the Installation chapter in the pdf or HTML documentation files, including ``NumBAT.pdf`` in the main directory.
+
+Binary install
+^^^^^^^^^^^^^^^^^^
+There is also an experimental `binary installer for Windows <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.0.0.1>`_.
 
