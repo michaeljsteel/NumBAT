@@ -429,7 +429,7 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
     $ cd usr_local\packages
     $ git clone https://github.com/opencollab/arpack-ng.git arpack-ng
     $ git clone https://github.com/jlblancoc/suitesparse-metis-for-windows.git suitesparse-metis
-    $ cd ..\nb_releases
+    $ cd ..\..\nb_releases
     $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
 #. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
@@ -456,11 +456,13 @@ This library performs sparse matrix algebra, used in the eigensolving routines o
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -D WITH_MKL=ON -B build .
+     $ cmake -D WITH_MKL=ON -B build .
+
+   Make sure to include the fullstop after ``build``.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis\build\SuiteSparseProject.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu, select the *Build Solution* item to commence the build.  This will take a couple of minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
@@ -479,9 +481,9 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -B build -T "fortran=ifx" -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF .
+      $ cmake -B build -T "fortran=ifx" -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF .
 
-    (Note the final dot!)
+   Note the final fullstop!
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
@@ -516,15 +518,16 @@ At long last, we are ready to build |NUMBAT| itself.
 
     $ conda activate nbpy3
 
-#. Install the necessary python libraries ::
+#. Install the necessary python tools and libraries ::
 
-    $ conda install python pip
-    $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
-    $ pip3 install meson=1.4.1
+     $ conda install python pip
+     $ conda install conda-forge::make
+     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
+     $ pip3 install meson==1.4.1
 
-    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-    Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
+   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
@@ -535,16 +538,16 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. Setup the environment variables for the Intel compiler::
 
-    $  c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+    $  "c:\Program Files (x86)\Intel\oneAPI\setvars.bat"
 
 
-#. Move to the ``<NumBAT>\backend\fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
+#. Move to the ``<NumBAT>\backend\fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section, particularly the value for ``windows_dir_nb_usrlocal`` and change any of the paths in the ``value`` fields as required.
 
 #. To initiate the build, enter ::
 
-    $ make win
+     $ make win
 
-    This should take 2 to 3 minutes.
+   This should take 2 to 3 minutes.
 
 .. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
@@ -561,10 +564,19 @@ At long last, we are ready to build |NUMBAT| itself.
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 
+#. Copy Intel oneAPI .dlls to this directory::
+
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.2.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.2.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\svml_dispmd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libmmd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libifcoremd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libifportMD.dll" .
+
 #. At this point, we are ready to test the installation with a short script that checks whether required applications and libraries can be found and loaded. Perform the following commands::
 
     $ cd <NumBAT>/backend
-    $ python ./nb_install_tester.py
+    $ python .\nb_install_tester.py
 
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`troubleshooting-windows-label:`.
 
@@ -608,16 +620,24 @@ Troubleshooting a Windows installation
 
   This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
 
-  #. Download the *Dependencies* tool available as a zip file install from github at `https://github.com/lucasg/Dependencies`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
+  #. Download the *Dependencies* tool available as a zip file install from  `github <https://github.com/lucasg/Dependencies>`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
 
-  Apply the tool to the |NUMBAT| python dll. Start the ``DependenciesGui.exe`` tool::
+  #. Now we can apply the tool to the |NUMBAT| python dll.
 
-    $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+    Start the ``DependenciesGui.exe`` tool::
 
-  Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortray.pyd``.
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+
+    Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
 
 
-  Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+    Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+
+  #. Alternatively, you can try the command line version of this tool::
+
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 1 -modules nb_fortran.pydcd
+
+
 
 Installing the Linux version via a Virtual Machine
 ------------------------------------------------------
@@ -634,10 +654,10 @@ using the `Windows Subsystem for Linux
 with installing the additional required packages may be quite painful.
 
 
-Installing via Docker
-----------------------------------
+.. Installing via Docker
+.. ----------------------------------
 
-There is also an outdated Docker package for Windows that could be updated to support the current version of |NUMBAT| if there is demand. Let us know.
+.. There is also an outdated Docker package for Windows that could be updated to support the current version of |NUMBAT| if there is demand. Let us know.
 
 .. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.
 
