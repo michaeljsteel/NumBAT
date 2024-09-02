@@ -289,7 +289,7 @@ to explore the Brillouin gain properties in a range of different structures,
 in this case a silica circular nanowire surrounded by vacuum.
 
 
-.. figure:: ./images/tutorial/tut_06-ref_index.png
+.. figure:: ./images/tutorial/tut_06b-ref_index.png
    :width: 10cm
 
    Refractive index profile of the silica nanowire.
