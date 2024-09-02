@@ -4,14 +4,14 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from math import sqrt
-
+import nbgmsh
 
 from nbtypes import SI_to_gmpercc, SI_um
 import numbat
 from plottools import save_and_close_figure
 import reporting
 
-
+from numbattools import np_min_max
 
 # Checks of mesh and triangles satisfy conditions for triangulation
 # Quadratic algorithm. Use on the smallest grid possible
@@ -101,16 +101,16 @@ class FemMesh:
         # self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
         # self.node_convert_tbl = None
 
-    def build_from_gmsh_mail(self, struc):
+    def build_from_gmsh_mail(self, mesh_mail_fname, struc):
         # Takes list of all material refractive indices
         # Discards any that are zero
 
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
 
-        self.mesh_mail_fname = struc.mesh_mail_fname
-        opt_props = struc.optical_props
+        self.mesh_mail_fname = mesh_mail_fname
+        mesh = nbgmsh.MailData(self.mesh_mail_fname)
 
-        mesh = struc.get_mail_mesh_data()
+       # mesh = struc.get_mail_mesh_data()
 
         self.v_el_2_mat_idx = mesh.v_elts_mat
 
@@ -130,6 +130,9 @@ class FemMesh:
         self.extents = [np.min(self.xy_nodes[0,:]), np.max(self.xy_nodes[0,:]),
                         np.min(self.xy_nodes[1,:]), np.max(self.xy_nodes[1,:])]
 
+
+        # TODO: this is just reporting.  Move elsewhere?
+        opt_props = struc.optical_props
         print(
             f"\n The final EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
         )
@@ -447,3 +450,61 @@ class FemMesh:
         v_regx = np.linspace(x_min, x_max, n_pts_x)
         v_regy = np.linspace(y_min, y_max, n_pts_y)
         return v_regx, v_regy
+
+    def element_to_material_index(self, i_el):
+        return self.v_el_2_mat_idx[i_el]-1   # -1 because FEM material indices are fortran unit-indexed
+
+
+class FEMScalarFieldPlotter:
+    def __init__(self, mesh_mail_fname, struc, n_points):
+        fem_mesh = FemMesh()
+        fem_mesh.build_from_gmsh_mail(mesh_mail_fname, struc)
+
+
+        # get approx square pixel rectangular grid
+        self.v_x, self.v_y = self.rect_grid(n_points)
+
+        m_x, m_y = np.meshgrid(v_x, v_y)
+
+        v_x_flat = m_x.flatten('F')
+        v_y_flat = m_y.flatten('F')
+
+        interp = fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(v_x), len(v_y))
+
+    def n_elts(self):
+        return self.fem_mesh.n_elts
+
+    def element_to_material_index(self, i_el):
+        return self.fem_mesh.element_to_material_index(i_el)
+
+    def make_plot(self, mesh_scalar,
+                  lab_x, lab_y, lab_z,
+                  aspect=1.0, with_cb=True):
+
+        m_scalar = self.interp(mesh_scalar)
+
+        # TODO: explain the need for the transpose in the imshow call below
+        epslo, epshi = np_min_max(m_scalar)
+
+        fig, ax = plt.subplots()
+        cmap='cool'
+        im=ax.imshow(m_scalar.T, cmap=cmap, vmin=1.0, vmax=epshi, origin='lower',
+                     extent = [np.min(self.v_x), np.max(self.v_x), np.min(self.v_y), np.max(self.v_y) ])
+        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
+        ax.set_xlabel(lab_x)
+        ax.set_ylabel(lab_y)
+        ax.set_aspect(aspect)
+        im.set_clim(1,np.nanmax(m_scalar))
+        if with_cb:
+            ticks = np.linspace(epslo, epshi,5)
+            fmts = ((f'{epslo:.4f}',), map(lambda x: f'{x:.1f}', ticks[1:-1]),
+                                             (f'{epshi:.4f}',))
+            fmts = list(itertools.chain.from_iterable(fmts))
+
+            fmt = mticker.FixedFormatter(fmts)
+            cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
+            cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
+            cb.ax.set_title(label)
+            cb.ax.tick_params(labelsize=12)
+            cb.outline.set_linewidth(.5)
+            cb.outline.set_color('gray')

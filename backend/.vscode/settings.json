@@ -1,4 +1,6 @@
 {
     "git.ignoreLimitWarning": true,
-    "esbonio.sphinx.confDir": ""
+    "esbonio.sphinx.confDir": "",
+    "C_Cpp.default.compileCommands": "/home/msteel/research/numbat/devel_1/backend/fortran/builddir/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild"
 }

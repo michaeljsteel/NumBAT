@@ -707,7 +707,10 @@ class EMSimulation(Simulation):
         self.simres_EM = None  # kludge to simplify save code in Simulation. Fix
 
         self.fem_mesh = FemMesh()
-        self.fem_mesh.build_from_gmsh_mail(self.structure)
+        self.fem_mesh.build_from_gmsh_mail(self.structure.mesh_mail_fname,
+                                           self.structure)
+
+        #self.fem_mesh.report_properties(structure)
 
     def make_result(self):
         self.sim_result = EMSimResult(self)
@@ -757,6 +760,7 @@ class EMSimulation(Simulation):
         #print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
         #print(f'bloch:', self.k_perp)
         #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
+
 
         resm = nb_fortran.calc_em_modes(
             self.n_modes,

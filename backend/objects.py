@@ -658,11 +658,7 @@ class Structure:
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
         self.msh_name = msh_fname
 
-        # read in first line giving number of msh points and elements
-        with open(self.mesh_mail_fname) as f:
-            mail_lines= f.readlines()
-
-        self.mail_data = nbgmsh.MailData(mail_lines)  #keep track of the Mail format
+        self.mail_data = nbgmsh.MailData(self.mesh_mail_fname)  #keep track of the Mail format
 
     def plot_mail_mesh(self, outpref):
         path = numbat.NumBATApp().outpath()
@@ -787,20 +783,47 @@ class Structure:
 
         return sim.get_sim_result()
 
+    def plot_refractive_index_profile2(self, prefix, n_points = 500, as_epsilon=False,
+                                          aspect=1.0, with_cb=True):
+
+        # get struc out of build_from_gmsh
+        # make fem_report separate
+        # make fem_mesh.element_to_material_index()
+
+        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+
+        n_elts = fsfp.n_elts()
+        # Make the scalar to be filled out
+        mesh_neffeps = np.zeros([6, n_elts], dtype=np.float128)
+
+        v_neffeps = self.optical_props.v_refindexn
+
+        if as_epsilon:
+            v_neffeps = v_neffeps**2
+            label=r'$\epsilon(\vec x)$'
+        else:
+            label=r'$n(\vec x)$'
+
+        # Assign a common refractive index to all nodes of each element
+        for i_el in range(n_elts):
+            mesh_neffeps[:,i_el] = np.real(v_neffeps[fsfp.element_to_material_index(i_el)])
+
+        fsfp.make_plot(mesh_neffeps, '$x$ [μm]', '$y$ [μm]', label)
+
     def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
                                           aspect=1.0, with_cb=True):
         fem_mesh = femmesh.FemMesh()
-        fem_mesh.build_from_gmsh_mail(self)
+
+        fem_mesh.build_from_gmsh_mail(self.mesh_mail_fname, self)
 
         neff_nodes = np.zeros([6, fem_mesh.n_msh_el], dtype=np.float64)
 
-        opt_props = self.optical_props
+        v_refindexn = self.optical_props.v_refindexn
 
 
         # Assign a common refractive index to all nodes of each element
         for i_el in range(fem_mesh.n_msh_el):
-            neff_nodes[:,i_el] = np.real(
-                opt_props.v_refindexn[fem_mesh.v_el_2_mat_idx[i_el]-1])  # -1 because of fortran indexing
+            neff_nodes[:,i_el] = np.real(v_refindexn[fem_mesh.element_to_material_index(i_el)])
 
         neff_nodes = neff_nodes.flatten('F')
 
