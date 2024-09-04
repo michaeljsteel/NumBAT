@@ -50,7 +50,7 @@ to see this image:
 
 Note how the different contributions from the photoelastic and moving-boundary effects
 are visible. In some cases, the total gain (blue) may be less than one or both of
-the separate effects if the two components act with opposite sign.
+the separate effects if the two components act with opposite sign. (This is because the different contributions to the gain add as complex amplitudes).
 :ref:`chap-josab-label` and :ref:`chap-literature-label`.
 (See Literature example 1 in the chapter :ref:`chap-literature-label`
 for an interesting cexample of this phenomenon.)
@@ -88,21 +88,21 @@ profile. These parameters can also be extracted using a range of function calls 
 ``Mode`` object (see the API docs).
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_E_field_00.png
-   :width: 10cm
+   :width: 12cm
 
    Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_field_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_H_field_00.png
-   :width: 10cm
+   :width: 12cm
 
    Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.  Note that the :math:`H_z` component is :math:`\pi/2` out of phase with the transverse components.
 
 
 .. figure:: ./images/tutorial/tut_02-fields/AC_field_03.png
-   :width: 10cm
+   :width: 12cm
 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=3` acoustic mode with gain
-   dominated by the moving boundary effect (green curve in gain spectra).
+   dominated by the moving boundary effect (green curve in gain spectra). As with the optical fields, the :math:`u_z` component is :math:`\pi/2` out of phase with the transverse components.
    Note that the frequency of :math:`\Omega/(2\pi)=11.99` GHz
    (listed in the upper-left corner) corresponds to the first peak in the gain spectrum.
 
@@ -127,7 +127,7 @@ Here are some further elements to note about this example:
   #. The overall amplitude of the modal fields is arbitrary.
      In |NUMBAT|, the maximum value of the electric field is normalised to be 1.0, and this may be interpreted as a quantity in units of V/m, :math:`\sqrt{\mathrm{W}}` or other units as desired.
      Importantly, when plotted, the *magnetic* field :math:`\vec H(\vec r)` is multiplied by the impedance of free space :math:`Z_0=\sqrt{\mu_0/\epsilon_0}` so that the plotted quantities :math:`Z_0 \vec H(\vec r)` and :math:`\vec E(\vec r)` *have the same units*, and the relative amplitudes of the electric and magnetic field plots can be compared meaningfully.
-  #. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[x]`, :math:`\text{Im}[y]` and :math:`\text{Re}[z]` components of the fields which in a lossless non-leaky problem should normally be zero at all points and therefore not useful to plot.
+  #. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[F_x]`, :math:`\text{Im}[F_y]` and :math:`\text{Re}[F_z]` components of the fields :math:`\vec F \in [\vec E, \vec H, \vec u]`. In a lossless non-leaky problem, these fields should normally be zero at all points and therefore not useful to plot.
   #. By default, plots are exported as ``png`` format. Pass the option ``pdf_png=pdf`` to plot functions to generate a ``pdf`` output.
   #. Plots of both spectra and modes are generated with a best attempt at font sizes, line widths etc, but the range of potential cases make it impossible to find a selection that works in all cases. Most plot functions therefore support the passing of a ``plotting.Decorator`` object that can vary the settings of these parameters and also pass additional commands to write on the plot axes. See the plotting API for details. This should be regarded as a relatively advanced |NUMBAT| feature.
   #. Vector field plots often require tweaking to get an attractive set of vector arrows.  The ``quiver_points`` option controls the number of arrows drawn along each direction.
@@ -230,8 +230,7 @@ This calculation generates a lot of data files. For this reason, we have provide
 Tutorial 5 -- Convergence Study
 ----------------------------------------
 This tutorial, contained in ``sim-tut_05_convergence_study.py`` demonstrates a scan of numerical parameters for our by now familiar silicon-in-air problem to test the convergence of the calculation results. This is done by scanning the value of the ``lc_refine`` parameters.
-The number of mesh elements (and simulation time) increases with roughly the square of the
-mesh refinement factor.
+Since these are two-dimensional FEM calculations, the number of mesh elements (and simulation time) increases with roughly the *square* of the mesh refinement factor.
 
 For the purpose of convergence estimates, the values calculated at the finest mesh (the rightmost values) are taken as the ``exact`` values, notated with the subscript 0,
 eg. :math:`\beta_0`.
@@ -289,7 +288,7 @@ to explore the Brillouin gain properties in a range of different structures,
 in this case a silica circular nanowire surrounded by vacuum.
 
 
-.. figure:: ./images/tutorial/tut_06b-ref_index.png
+.. figure:: ./images/tutorial/tut_06a-ref_index.png
    :width: 10cm
 
    Refractive index profile of the silica nanowire.
@@ -308,35 +307,35 @@ Note that plots with log scales do not include any noise floor so the peaks
 look much cleaner than could be observed in the laboratory.
 
 It is important to remember that the total gain is not the simple sum of the photoelastic
-(PE) and moving boundary (MB) gains. Rather it is the coupling terms :math:`Q_\text{PE}`
+(PE) and moving boundary (MB) gains. Rather it is the complex coupling amplitudes :math:`Q_\text{PE}`
 and :math:`Q_\text{MB}` which are added before squaring to give the total gain.
 Indeed the two effects may have opposite sign so that the net gain can be
 smaller than either contribution.
 
-.. figure:: ./images/tutorial/tut_06-gain_spectra.png
+.. figure:: ./images/tutorial/tut_06a-gain_spectra.png
    :width: 10cm
 
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving
    boundary effect (PB), and the net gain (Total).
 
-.. figure:: ./images/tutorial/tut_06-gain_spectra-logy.png
+.. figure:: ./images/tutorial/tut_06a-gain_spectra-logy.png
    :width: 10cm
 
    The same data displayed on a log plot using ``logy=True``.
 
-.. figure:: ./images/tutorial/tut_06-fields/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_06a-fields/EM_E_field_00.png
    :width: 10cm
 
    Electromagnetic mode profile of the pump and Stokes field in the :math:`x`-polarised
    fundamental mode of the waveguide.
 
 
-.. figure:: ./images/tutorial/tut_06-fields/AC_field_05.png
+.. figure:: ./images/tutorial/tut_06a-fields/AC_field_05.png
    :width: 10cm
 
    Mode profiles for acoustic mode 5 which is visible as a MB-dominated peak in the gain spectrum.
 
-.. figure:: ./images/tutorial/tut_06-fields/AC_field_08.png
+.. figure:: ./images/tutorial/tut_06a-fields/AC_field_08.png
    :width: 10cm
 
    Mode profiles for acoustic mode 8 which is visible as a PE-dominated peak in the gain spectrum.
@@ -354,9 +353,14 @@ This tutorial, contained in ``sim-tut_07-slot.py`` examines backward SBS in a mo
 slot effect which expels the optical field into the lower index medium, enhancing the fraction of the EM field inside the soft chalcogenide glass which guides the acoustic mode
 and increasing the gain.
 
-Comparing the :math:`m=2` and :math:`m=5` acoustic mode profiles with the
-pump EM profile, it is apparent that the field overlap is favourable, where as
-the :math:`m=1` mode gives zero gain due to its anti-symmetry relative to the pump field.
+.. figure:: ./images/tutorial/tut_07-ref_index.png
+   :width: 10cm
+
+   Refractive index profile of the slot index waveguide.
+
+Comparing the :math:`m=2` and :math:`m=4` acoustic mode profiles with the
+pump EM profile, it is apparent that the field overlap is favourable, whereas
+the :math:`m=3` mode gives zero gain due to its anti-symmetry relative to the pump field.
 
 
 .. figure:: ./images/tutorial/tut_07-gain_spectra.png
@@ -376,25 +380,21 @@ the :math:`m=1` mode gives zero gain due to its anti-symmetry relative to the pu
 
    Electromagnetic mode profile of the pump and Stokes field.
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_00.png
-   :width: 10cm
-
-   Acoustic mode profiles for mode 0.
 
 .. figure:: ./images/tutorial/tut_07-fields/AC_field_02.png
    :width: 10cm
 
    Acoustic mode profiles for mode 2.
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_01.png
+.. figure:: ./images/tutorial/tut_07-fields/AC_field_04.png
    :width: 10cm
 
-   Acoustic mode profiles for mode 1.
+   Acoustic mode profiles for mode 4.
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_05.png
+.. figure:: ./images/tutorial/tut_07-fields/AC_field_03.png
    :width: 10cm
 
-   Acoustic mode profiles for mode 5.
+   Acoustic mode profiles for mode 3.
 
 .. raw:: latex
 

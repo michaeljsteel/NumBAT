@@ -546,7 +546,7 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
-    $ cd ``<NumBAT_BASE>``
+    $ cd <NumBAT_BASE>
     $ cd nb_releases\nb_latest
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
@@ -556,7 +556,7 @@ At long last, we are ready to build |NUMBAT| itself.
     $  "c:\Program Files (x86)\Intel\oneAPI\setvars.bat"
 
 
-#. Move to the ``<NumBAT>\backend\fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section, particularly the value for ``windows_dir_nb_usrlocal`` and change any of the paths in the ``value`` fields as required.
+#. Move to the ``<NumBAT>\backend\fortran`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section, particularly the value for ``windows_dir_nb_usrlocal`` and change any of the paths in the ``value`` fields as required.
 
 #. To initiate the build, enter ::
 
