@@ -125,7 +125,8 @@ class FemMesh:
 
         # Messy: Mail file does not include the domain scaling which is in nm, not microns
         self.xy_nodes[0,:] = mesh.v_x * struc.domain_x*0.001
-        self.xy_nodes[1,:] = mesh.v_y * struc.domain_y*0.001
+        self.xy_nodes[1,:] = mesh.v_y * struc.domain_x*0.001  # Everything including yvalues is scaled by domain_x, not domain_y 
+
 
         self.extents = [np.min(self.xy_nodes[0,:]), np.max(self.xy_nodes[0,:]),
                         np.min(self.xy_nodes[1,:]), np.max(self.xy_nodes[1,:])]

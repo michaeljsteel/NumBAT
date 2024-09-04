@@ -593,6 +593,7 @@ class Structure:
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
 
         wg_geom.check_parameters(params)
+        wg_geom.check_dimensions()
         self.wg_geom = wg_geom
 
 
@@ -783,7 +784,7 @@ class Structure:
 
         return sim.get_sim_result()
 
-    def plot_refractive_index_profile2(self, prefix, n_points = 500, as_epsilon=False,
+    def plot_refractive_index_profile_2(self, prefix, n_points = 500, as_epsilon=False,
                                           aspect=1.0, with_cb=True):
 
         # get struc out of build_from_gmsh
@@ -810,8 +811,11 @@ class Structure:
 
         fsfp.make_plot(mesh_neffeps, '$x$ [μm]', '$y$ [μm]', label)
 
+
+
     def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
                                           aspect=1.0, with_cb=True):
+
         fem_mesh = femmesh.FemMesh()
 
         fem_mesh.build_from_gmsh_mail(self.mesh_mail_fname, self)
@@ -880,6 +884,8 @@ class Structure:
 
 
     def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
+        ''' Draws refractive index profile by primitive sampling, not proper triangular mesh sampling'''
+
         print('\n\nPlotting ref index')
 
 

@@ -35,7 +35,7 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
   #. Add the |NUMBAT| install directory to Python's module search path and then import the |NUMBAT| python modules.
   #. Set parameters to define the structure shape and dimensions.
   #. Set parameters determining the range of electromagnetic and elastic modes to be solved.
-  #. Create the primary ``NumBatApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
+  #. Create the primary ``NumBATApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
   #. Construct the waveguide with ``objects.Structure`` out of a number of ``materials.Material`` objects.
   #. Generate output files containing images of the finite element mesh and final refractive index. These are illustrated in figures below.
   #. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``mode_calcs.calc_EM_modes()`` returns an ``EMSimResult`` object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods we will meet in later tutorials. The calculation is provided with a rough estimate of the effective index to guide the solver the find guided eigenmodes in the desired part of the spectrum. After the calculation, we can obtain the exact effective index of the fundamental mode using ``mode_calcs.neff()``.
@@ -109,7 +109,7 @@ simulation objects are in the same state as in the script when it has finished e
 classes and methods. For example::
 
     >>> from pydoc import help
-    >>> help(objects.Struct)
+    >>> help(objects.Structure)
 
 where we have accessed the docstring of the Struct class from ``objects.py``.
 
@@ -187,8 +187,9 @@ Most users will find they can construct all waveguides of interest using the
 existing templates. However, new templates can be added by adding a new
 ``.geo`` file to the ``<NumBAT>/backend/fortran/msh`` directory and making a
 new subclass of the ``UserGeometryBase`` class in the
-``<NumBAT>/backend/msh/user_meshes.py`` file.  Interested users can get in
-touch with <michael.steel@mq.edu.au>.  All the builtin examples below are
+``<NumBAT>/backend/msh/user_meshes.py`` file.  This procedure is described in detail in :ref:`sec-user-defined-waveguides-label`.
+
+All the builtin examples below are
 constructed in the same fashion in a parallel ``builtin_meshes.py`` file and
 can be used as models for your own designs.
 
@@ -388,6 +389,8 @@ The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thic
 .. raw:: latex
 
     \clearpage
+
+.. _sec-user-defined-waveguides-label:
 
 User-defined waveguide geometries
 -----------------------------------

@@ -20,15 +20,15 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 4 * lambda_nm
-domain_y = 0.3 * domain_x
-inc_shape = "slot"
+domain_x = 3000
+domain_y = 1500
+inc_shape = 'slot'
 inc_a_x = 150
 inc_a_y = 190
 inc_b_x = 250
 # Current mesh template assume inc_b_y = inc_a_y
-slab_a_x = 2000
-slab_a_y = 100
+slab_a_x = 2500
+slab_a_y = 300
 
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
@@ -50,10 +50,11 @@ mat_walls=materials.make_material("Si_2016_Smith")  # walls of slot
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     inc_a_x, inc_a_y, slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
     material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_walls,
-    lc_bkg=0.05, lc_refine_1=7.0 * refine_fac, lc_refine_2=7.0 * refine_fac,
+    lc_bkg=0.05, lc_refine_1=3.0 * refine_fac, lc_refine_2=3.0 * refine_fac,
 )
 
-# wguide.plot_mesh(prefix)
+wguide.plot_mesh(prefix)
+wguide.plot_refractive_index_profile(prefix)
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1
@@ -74,8 +75,8 @@ else:
 
 simres_EM_pump.plot_modes(
     quiver_points=20,
-    xlim_min=0.2,
-    xlim_max=0.2,
+    xlim_min=0.0,
+    xlim_max=0.0,
     ylim_min=0.0,
     ylim_max=0.0,
     aspect=1.5,

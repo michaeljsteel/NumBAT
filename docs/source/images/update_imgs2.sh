@@ -3,7 +3,7 @@ mkdir -p tutorial
 mkdir -p josab_tutorial
 mkdir -p lit_examples
 
-for tdir in  02 06 07 08 11a 14_0 14_5 14_10
+for tdir in  02 06a 06b 07 08 11a 14_0 14_5 14_10
 do
 mkdir -p tutorial/tut_${tdir}-fields
 done
@@ -13,8 +13,8 @@ cd tutorial
 for im in tut_01-mesh.png tut_01-ref_index.png \
         tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spectra_zoom.png  \
         tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
-        tut_06-gain_spectra.png tut_06-gain_spectra-logy.png tut_06b-ref_index.png \
-        tut_07-gain_spectra.png tut_07-gain_spectra-logy.png \
+        tut_06a-gain_spectra.png tut_06a-gain_spectra-logy.png tut_06a-ref_index.png tut_06b-ref_index.png \
+        tut_07-gain_spectra.png tut_07-gain_spectra-logy.png tut_07-ref_index.png \
         tut_08-acdisp_coating.png \
         tut_09-gain_spectra.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \
@@ -22,8 +22,9 @@ for im in tut_01-mesh.png tut_01-ref_index.png \
         tut_13-acdisp_qneff.png tut_13-acdisp_qnu.png \
         tut_14_0-fields tut_14_10-fields tut_14_5-fields tut_14-emdisp_ng.png tut_14-emdisp_Vneff.png \
         tut_02-fields/AC_field_03.png tut_02-fields/AC_field_04.png tut_02-fields/EM_E_field_00.png tut_02-fields/EM_H_field_00.png \
-        tut_06-fields/AC_field_05.png tut_06-fields/AC_field_08.png tut_06-fields/EM_E_field_00.png \
-        tut_07-fields/AC_field_00.png tut_07-fields/AC_field_01.png tut_07-fields/AC_field_02.png tut_07-fields/AC_field_05.png tut_07-fields/EM_E_field_00.png \
+        tut_06a-fields/AC_field_05.png tut_06a-fields/AC_field_08.png tut_06a-fields/EM_E_field_00.png \
+        tut_07-fields/EM_E_field_00.png \
+        tut_07-fields/AC_field_02.png tut_07-fields/AC_field_03.png tut_07-fields/AC_field_04.png \
         tut_11a-fields/AC_field_17.png tut_11a-fields/AC_field_32.png tut_11a-fields/AC_field_39.png tut_11a-fields/AC_field_44.png tut_11a-fields/AC_field_66.png tut_11a-fields/AC_field_69.png tut_11a-fields/EM_E_field_00.png \
         tut_14_0-fields/EM_E_field_00.png tut_14_0-fields/EM_E_field_01.png tut_14_0-fields/EM_E_field_02.png tut_14_0-fields/EM_E_field_03.png tut_14_10-fields/EM_E_field_00.png tut_14_10-fields/EM_E_field_01.png tut_14_10-fields/EM_E_field_02.png tut_14_10-fields/EM_E_field_03.png tut_14_5-fields/EM_E_field_00.png tut_14_5-fields/EM_E_field_01.png tut_14_5-fields/EM_E_field_02.png tut_14_5-fields/EM_E_field_03.png
     do
