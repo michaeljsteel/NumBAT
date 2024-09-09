@@ -53,7 +53,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     lc_bkg=0.05, lc_refine_1=3.0 * refine_fac, lc_refine_2=3.0 * refine_fac,
 )
 
-wguide.plot_mesh(prefix)
+#wguide.plot_mesh(prefix)
 wguide.plot_refractive_index_profile(prefix)
 
 # Expected effective index of fundamental guided mode.
