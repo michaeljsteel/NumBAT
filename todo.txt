@@ -9,4 +9,7 @@
 
 - Restore and improve symmetry classification
 
+- option for field profiles to have common amplitude color scale
 
+- annotate max and min refindex or phase velocities on mode profiles 
+      to identify genuinely trapped modes

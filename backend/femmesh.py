@@ -1,7 +1,10 @@
 
+import itertools
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 from math import sqrt
 import nbgmsh
@@ -456,24 +459,25 @@ class FemMesh:
         return self.v_el_2_mat_idx[i_el]-1   # -1 because FEM material indices are fortran unit-indexed
 
 
-class FEMScalarFieldPlotter:
+class FEMScalarField2DPlotter:
     def __init__(self, mesh_mail_fname, struc, n_points):
-        fem_mesh = FemMesh()
-        fem_mesh.build_from_gmsh_mail(mesh_mail_fname, struc)
+        self.fem_mesh = FemMesh()
+        self.fem_mesh.build_from_gmsh_mail(mesh_mail_fname, struc)
 
 
         # get approx square pixel rectangular grid
-        self.v_x, self.v_y = self.rect_grid(n_points)
+        self.v_x, self.v_y = self.fem_mesh.rect_grid(n_points)
 
-        m_x, m_y = np.meshgrid(v_x, v_y)
+        m_x, m_y = np.meshgrid(self.v_x, self.v_y)
 
         v_x_flat = m_x.flatten('F')
         v_y_flat = m_y.flatten('F')
 
-        interp = fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(v_x), len(v_y))
+        self.interper = self.fem_mesh.make_interpolator_for_grid(
+                v_x_flat, v_y_flat, len(self.v_x), len(self.v_y))
 
-    def n_elts(self):
-        return self.fem_mesh.n_elts
+    def n_elts(self): # NAME PROBLEMATIC
+        return self.fem_mesh.n_msh_el
 
     def element_to_material_index(self, i_el):
         return self.fem_mesh.element_to_material_index(i_el)
@@ -482,7 +486,7 @@ class FEMScalarFieldPlotter:
                   lab_x, lab_y, lab_z,
                   aspect=1.0, with_cb=True):
 
-        m_scalar = self.interp(mesh_scalar)
+        m_scalar = self.interper(mesh_scalar)
 
         # TODO: explain the need for the transpose in the imshow call below
         epslo, epshi = np_min_max(m_scalar)
@@ -505,7 +509,7 @@ class FEMScalarFieldPlotter:
             fmt = mticker.FixedFormatter(fmts)
             cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
             cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
-            cb.ax.set_title(label)
+            cb.ax.set_title(lab_z)
             cb.ax.tick_params(labelsize=12)
             cb.outline.set_linewidth(.5)
             cb.outline.set_color('gray')
