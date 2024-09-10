@@ -54,7 +54,11 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
 )
 
 #wguide.plot_mesh(prefix)
-wguide.plot_refractive_index_profile(prefix)
+pl_ref = wguide.get_structure_plotter_refractive_index()
+pl_ref.make_plot_2D(prefix)
+pl_ref.make_plot_xcut(prefix, .1)
+pl_ref.make_plot_ycut(prefix, .2)
+pl_ref.make_plot_1D(prefix, (-.3, -.2), (.3, .2))
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1
