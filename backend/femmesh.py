@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import copy
 
 from math import sqrt
 import nbgmsh
@@ -56,10 +57,10 @@ def check_triangulation(vx, vy, triangs):
     else:
         print("  Found doubled triangles")
 
-def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
-    return lambda femsol: matplotlib.tri.LinearTriInterpolator(
-    tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
-        nx, ny)
+#def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
+#    return lambda femsol: matplotlib.tri.LinearTriInterpolator(
+#    tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
+#        nx, ny)
 
 def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
     '''vx_out and vy_out are flattened 1D lists of x and y coords from a 2D grid of dimension nx x ny.'''
@@ -137,7 +138,7 @@ class FemMesh:
 
         # Messy: Mail file does not include the domain scaling which is in nm, not microns
         self.xy_nodes[0,:] = mesh.v_x * struc.domain_x*0.001
-        self.xy_nodes[1,:] = mesh.v_y * struc.domain_x*0.001  # Everything including yvalues is scaled by domain_x, not domain_y 
+        self.xy_nodes[1,:] = mesh.v_y * struc.domain_x*0.001  # Everything including yvalues is scaled by domain_x, not domain_y
 
 
         self.extents = [np.min(self.xy_nodes[0,:]), np.max(self.xy_nodes[0,:]),
@@ -447,7 +448,7 @@ class FemMesh:
 
         if ny > 1:  # a 2D sampling, not a line cut
             interper_f = make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny)
-        else:  
+        else:
             interper_f = make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out)
 
         return interper_f
@@ -475,7 +476,7 @@ class FEMScalarFieldPlotter:
         '''Build objects to hold a scalar field represented on a FEM mesh.
 
         The FEM mesh is constructed from the mesh file mesh_mail_fname.
-        n_points is the nominal linear resolution of the rectangular grid output, 
+        n_points is the nominal linear resolution of the rectangular grid output,
         partitioned so that x-y pixels are roughly square.
         That is, in the final grid, nx * ny ~= n_points^2, and dx ~= dy.
 
@@ -487,6 +488,8 @@ class FEMScalarFieldPlotter:
         self.quantity_name = ''
         self.file_suffix = ''
         self.n_points = n_points
+
+        self.scalar_fields = []
 
         # get approx square pixel rectangular grid
         self.v_x, self.v_y = self.fem_mesh.rect_grid(n_points)
@@ -500,6 +503,25 @@ class FEMScalarFieldPlotter:
         self.y_lab = r'$y$ [μm]'
         self.d_lab = r'$d$ [μm]'
 
+    def setup_scalar_properties(self, nm_eng, unit, nm_math, fname_suffix):
+        self.dim = 1
+        self.nm_eng = nm_eng
+        self.nm_math = nm_math
+        self.unit = unit
+        self.fname_suffix = fname_suffix
+
+    def setup_vector_properties(self, dim, nm_eng, unit, nm_math,
+                                nm_math_comps, fname_suffix, fname_suffix_comps):
+        self.dim = dim
+        self.nm_eng = nm_eng
+        self.nm_math = nm_math
+        self.unit = unit
+        self.nm_math_comps = nm_math_comps
+        self.fname_suffix = fname_suffix
+        self.fname_suffix_comps = fname_suffix_comps
+        print('nm_eng', nm_eng, 'vp', fname_suffix_comps)
+
+
     def set_quantity_name(self, nm, suf):
         self.quantity_name = nm
         self.file_suffix = suf
@@ -507,20 +529,30 @@ class FEMScalarFieldPlotter:
     def n_elts(self): # NAME PROBLEMATIC
         return self.fem_mesh.n_msh_el
 
-    def fill_scalar_by_material_index(self, mati_to_scalar):
+    def fill_quantity_by_material_index(self, mati_to_scalars):
         '''Takes an array mati_to_scalar that maps the index of a material to the desired scalar property, eg refractive index.
 
         mati_to_scalar is indexed from 0 with 0 being the vacuum material
         '''
 
+        # make both scalar and vector inputs usable
+        if self.dim >1:
+            mati_to_vals = mati_to_scalars
+        else:
+            mati_to_vals = np.expand_dims(copy.deepcopy(mati_to_scalars), axis=1)
+
         n_elts = self.fem_mesh.n_msh_el
-        self.scalar_field = mesh_neffeps = np.zeros([6, n_elts], dtype=np.float128)
+        self.scalar_fields = []
+        for i in range(self.dim):
+            t_scalar_field = np.zeros([6, n_elts], dtype=np.float128)
 
-        for i_el in range(n_elts):
-            matel = self.element_to_material_index(i_el)
-            self.scalar_field[:,i_el] = np.real(mati_to_scalar[matel])
+            for i_el in range(n_elts):
+                matel = self.element_to_material_index(i_el)
+                t_scalar_field[:,i_el] = np.real(mati_to_vals[matel, i])
 
-        self.scalar_field = self.scalar_field.flatten('F')
+            t_scalar_field = t_scalar_field.flatten('F')
+            self.scalar_fields.append(t_scalar_field)
+
 
     def element_to_material_index(self, i_el):
         return self.fem_mesh.element_to_material_index(i_el)
@@ -531,16 +563,20 @@ class FEMScalarFieldPlotter:
         v_y_flat = y0 +np.zeros(len(self.v_x))
         self.interper = self.fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(self.v_x), 1)
 
-        v_scalar = self.interper(self.scalar_field)
 
         ## TODO: explain the need for the transpose in the imshow call below
         #epslo, epshi = np_min_max(m_scalar)
 
         fig, ax = plt.subplots()
         ax.set_xlabel(self.x_lab)
-        ax.set_ylabel(self.quantity_name)
-        ax.plot(self.v_x, v_scalar)
-        plotting.save_and_close_figure(fig, prefix+'-'+self.file_suffix + '_xcut.png')
+        ylab = self.nm_eng + ' ' + self.nm_math + ' ' + self.unit
+        ax.set_ylabel(ylab)
+
+        for i in range(self.dim):
+            v_scalar = self.interper(self.scalar_fields[i])
+            ax.plot(self.v_x, v_scalar)
+
+        plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_xcut.png')
 
 
     def make_plot_ycut(self, prefix, x0):
@@ -549,16 +585,17 @@ class FEMScalarFieldPlotter:
 
         self.interper = self.fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(self.v_y), 1)
 
-        v_scalar = self.interper(self.scalar_field)
-
-        ## TODO: explain the need for the transpose in the imshow call below
-        #epslo, epshi = np_min_max(m_scalar)
-
         fig, ax = plt.subplots()
         ax.set_xlabel(self.y_lab)
-        ax.set_ylabel(self.quantity_name)
-        ax.plot(self.v_y, v_scalar)
-        plotting.save_and_close_figure(fig, prefix+'-'+self.file_suffix + '_ycut.png')
+
+        ylab = self.nm_eng + ' ' + self.nm_math + ' ' + self.unit
+        ax.set_ylabel(ylab)
+
+        for i in range(self.dim):
+            v_scalar = self.interper(self.scalar_fields[i])
+            ax.plot(self.v_y, v_scalar)
+
+        plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_ycut.png')
 
     def make_plot_1D(self, prefix, pt0, pt1):
 
@@ -570,16 +607,16 @@ class FEMScalarFieldPlotter:
 
         self.interper = self.fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(v_x_flat), 1)
 
-        v_scalar = self.interper(self.scalar_field)
-
-        ## TODO: explain the need for the transpose in the imshow call below
-        #epslo, epshi = np_min_max(m_scalar)
-
         fig, ax = plt.subplots()
         ax.set_xlabel(self.d_lab)
-        ax.set_ylabel(self.quantity_name)
-        ax.plot(v_d, v_scalar)
-        plotting.save_and_close_figure(fig, prefix+'-'+self.file_suffix + '_linecut.png')
+        ylab = self.nm_eng + ' ' + self.nm_math + ' ' + self.unit
+        ax.set_ylabel(ylab)
+
+        for i in range(self.dim):
+            v_scalar = self.interper(self.scalar_fields[i])
+            ax.plot(v_d, v_scalar)
+
+        plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_linecut.png')
 
 
     def make_plot_2D(self, prefix, aspect=1.0, with_cb=True):
@@ -588,33 +625,44 @@ class FEMScalarFieldPlotter:
         v_x_flat = m_x.flatten('F')
         v_y_flat = m_y.flatten('F')
         self.interper = self.fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(self.v_x), len(self.v_y))
-        m_scalar = self.interper(self.scalar_field)
 
-        # TODO: explain the need for the transpose in the imshow call below
-        epslo, epshi = np_min_max(m_scalar)
+        for i in range(self.dim):
+            m_scalar = self.interper(self.scalar_fields[i])
 
-        fig, ax = plt.subplots()
-        cmap='cool'
-        im=ax.imshow(m_scalar.T, cmap=cmap, vmin=1.0, vmax=epshi, origin='lower',
-                     extent = [np.min(self.v_x), np.max(self.v_x), np.min(self.v_y), np.max(self.v_y) ])
-        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
-        ax.set_xlabel(self.x_lab)
-        ax.set_ylabel(self.y_lab)
-        ax.set_aspect(aspect)
-        im.set_clim(1,np.nanmax(m_scalar))
-        if with_cb:
-            ticks = np.linspace(epslo, epshi,5)
-            fmts = ((f'{epslo:.4f}',), map(lambda x: f'{x:.1f}', ticks[1:-1]),
-                                             (f'{epshi:.4f}',))
-            fmts = list(itertools.chain.from_iterable(fmts))
 
-            fmt = mticker.FixedFormatter(fmts)
-            cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
-            cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
-            cb.ax.set_title(self.quantity_name)
-            cb.ax.tick_params(labelsize=12)
-            cb.outline.set_linewidth(.5)
-            cb.outline.set_color('gray')
+            # TODO: explain the need for the transpose in the imshow call below
+            epslo, epshi = np_min_max(m_scalar)
 
-        plotting.save_and_close_figure(fig, prefix+'-'+self.file_suffix + '.png')
+            fig, ax = plt.subplots()
+            cmap='cool'
+            im=ax.imshow(m_scalar.T, cmap=cmap, vmin=1.0, vmax=epshi, origin='lower',
+                        extent = [np.min(self.v_x), np.max(self.v_x), np.min(self.v_y), np.max(self.v_y) ])
+            #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
+            ax.set_xlabel(self.x_lab)
+            ax.set_ylabel(self.y_lab)
+            ax.set_aspect(aspect)
+            im.set_clim(1,np.nanmax(m_scalar))
+            if with_cb:
+                ticks = np.linspace(epslo, epshi,5)
+                fmts = ((f'{epslo:.4f}',), map(lambda x: f'{x:.1f}', ticks[1:-1]),
+                                                (f'{epshi:.4f}',))
+                fmts = list(itertools.chain.from_iterable(fmts))
 
+                fmt = mticker.FixedFormatter(fmts)
+                cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
+                cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
+
+                if self.dim==1:
+                    fname = prefix+'-'+self.fname_suffix + '.png'
+                    qlab = self.nm_eng + ' ' + self.nm_math + ' ' + self.unit
+                else:
+                    print('fnames', self.fname_suffix_comps, '<>', self.fname_suffix_comps[i])
+                    fname = prefix+'-'+self.fname_suffix + f'_{self.fname_suffix_comps[i]}.png'
+                    qlab = self.nm_eng + ' ' + self.nm_math_comps[i] + ' ' + self.unit
+
+                fig.suptitle(qlab)
+                cb.ax.tick_params(labelsize=12)
+                cb.outline.set_linewidth(.5)
+                cb.outline.set_color('gray')
+
+            plotting.save_and_close_figure(fig, fname)

@@ -792,13 +792,24 @@ class Structure:
 
         if as_epsilon:
             v_neffeps = v_neffeps**2
-            nm=r'$\epsilon(\vec x)$'
+            nm_eng = 'Dielectric constant'
+            nm_math=r'$\epsilon(\vec x)$'
+            fname_suffix='dielectric_constant'
         else:
-            nm=r'$n(\vec x)$'
+            nm_eng = 'Refractive index'
+            nm_math=r'$n(\vec x)$'
+            fname_suffix='refractive_index'
 
         fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
-        fsfp.set_quantity_name(nm, 'ref_index')
-        fsfp.fill_scalar_by_material_index(v_neffeps)
+        #fsfp.set_quantity_name(nm_math, fname_suffix)
+
+        unit=''
+
+        fsfp.setup_scalar_properties(nm_eng, unit, nm_math, fname_suffix)
+        fsfp.fill_quantity_by_material_index(v_neffeps)
+
+
+
         return fsfp
 
     def get_structure_plotter_refractive_index(self, n_points=500):
@@ -819,18 +830,19 @@ class Structure:
         fsfp.set_quantity_name(qname, suffname)
         fsfp.fill_scalar_by_material_index(v_stiff)
 
-    def get_structure_plotter_acoustic_velocity(self, v_i, n_points=500):
-        if v_i not in (1,2,3):
-            reporting.report_and_exit('Acoustic velocity index v_i must be in the range 1..3.')
+    def get_structure_plotter_acoustic_velocity(self, n_points=500):
+        v_mats = list(self.d_materials.values())
+        v_acvel = np.zeros([len(v_mats),3])
+        for i in range(len(v_mats)):
+            if v_mats[i].has_elastic_properties():
+                v_acvel[i,:] = v_mats[i].Vac_phase()
 
-        v_acvel = np.zeros(5) # fill me
         fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
-        qname = 'Elastic velocity $v_{'+f'{v_i}' + '}$'
-        suffname = f'elastic_velocity_v_{v_i}'
+        fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$', [r'$v_0$', r'$v_1$', r'$v_2$'],
+                                     'elastic_velocity', ['v0', 'v1', 'v2'])
 
-        fsfp.set_quantity_name(qname, suffname)
-
-        fsfp.fill_scalar_by_material_index(v_acvel)
+        fsfp.fill_quantity_by_material_index(v_acvel)
+        return fsfp
 
     # def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
     #                                       aspect=1.0, with_cb=True):

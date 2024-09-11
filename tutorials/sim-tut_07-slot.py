@@ -60,6 +60,12 @@ pl_ref.make_plot_xcut(prefix, .1)
 pl_ref.make_plot_ycut(prefix, .2)
 pl_ref.make_plot_1D(prefix, (-.3, -.2), (.3, .2))
 
+pl_vac = wguide.get_structure_plotter_acoustic_velocity()
+pl_vac.make_plot_2D(prefix)
+pl_vac.make_plot_xcut(prefix, .1)
+pl_vac.make_plot_ycut(prefix, .2)
+pl_vac.make_plot_1D(prefix, (-.3, -.2), (.3, .2))
+
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1
 

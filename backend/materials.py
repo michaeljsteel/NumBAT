@@ -238,6 +238,13 @@ class Material(object):
         else:
             return math.sqrt(self.stiffness_c_IJ[4, 4] / self.rho)
 
+    def Vac_phase(self):
+        '''Returns triple of phase velocities for propagation along z given current orientation of cyrstal.'''
+        vkap=np.array([0,0,1], dtype=np.float128)
+        v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
+        return v_vphase
+
+
     def has_elastic_properties(self):
         """Returns true if the material has at least some elastic properties defined."""
         return self.rho is not None
