@@ -20,14 +20,16 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 3000
+#domain_x = 3000
+domain_x = 5000
 domain_y = 1500
 inc_shape = 'slot'
 inc_a_x = 150
 inc_a_y = 190
 inc_b_x = 250
 # Current mesh template assume inc_b_y = inc_a_y
-slab_a_x = 2500
+#slab_a_x = 2500
+slab_a_x = 4000
 slab_a_y = 300
 
 num_modes_EM_pump = 20
@@ -38,6 +40,7 @@ EM_ival_Stokes = 1
 AC_ival = "All"
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
+prefix +='b'
 
 nbapp = numbat.NumBATApp(prefix)
 

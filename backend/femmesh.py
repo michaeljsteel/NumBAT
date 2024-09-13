@@ -303,8 +303,9 @@ class FemMesh:
         print(" The material index table is:", el_props.typ_el_AC, "\n")
         print(f" There are {el_props.n_mats_ac} active materials:")
         for mat in el_props.v_active_mats:
+            vphases = mat.Vac_phase()
             print(
-                f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc.'
+                f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc, v_i = [{vphases[0]:.4f}, {vphases[1]:.4f}, {vphases[2]:.4f}] km/s.'
             )
 
         #print("AC mesh properties:")
@@ -519,7 +520,6 @@ class FEMScalarFieldPlotter:
         self.nm_math_comps = nm_math_comps
         self.fname_suffix = fname_suffix
         self.fname_suffix_comps = fname_suffix_comps
-        print('nm_eng', nm_eng, 'vp', fname_suffix_comps)
 
 
     def set_quantity_name(self, nm, suf):
@@ -656,7 +656,6 @@ class FEMScalarFieldPlotter:
                     fname = prefix+'-'+self.fname_suffix + '.png'
                     qlab = self.nm_eng + ' ' + self.nm_math + ' ' + self.unit
                 else:
-                    print('fnames', self.fname_suffix_comps, '<>', self.fname_suffix_comps[i])
                     fname = prefix+'-'+self.fname_suffix + f'_{self.fname_suffix_comps[i]}.png'
                     qlab = self.nm_eng + ' ' + self.nm_math_comps[i] + ' ' + self.unit
 
