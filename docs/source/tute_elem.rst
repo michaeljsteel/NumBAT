@@ -350,17 +350,62 @@ smaller than either contribution.
 Tutorial 7 -- Slot Waveguide
 ----------------------------------------
 This tutorial, contained in ``sim-tut_07-slot.py`` examines backward SBS in a more complex structure: chalcogenide soft glass (:math:`\text{As}_2\text{S}_3`) embedded in a silicon slot waveguide on a silica slab. This structure takes advantage of the
-slot effect which expels the optical field into the lower index medium, enhancing the fraction of the EM field inside the soft chalcogenide glass which guides the acoustic mode
-and increasing the gain.
+slot effect which expels the optical field into the lower index medium, enhancing the fraction of the
+EM field inside the soft chalcogenide glass which guides the acoustic mode and increasing the gain.
 
-.. figure:: ./images/tutorial/tut_07-ref_index.png
-   :width: 10cm
+To understand this, it is helpful to see the refractive index and acoustic velocity profiles.
+Previously, we have seen how to generate images of the Gmsh template and mesh, but that only gives
+an indirect sense of the final structure.
 
-   Refractive index profile of the slot index waveguide.
+In this example, we create objects that can plot the refractive index profile and acoustic velocity profile directly.
+These are created with the calls ``wguide.get_structure_plotter_refractive_index()`` and
+``wguide.get_structure_plotter_acoustic_velocity()``. Then, on each of these objects we can call one or more methods to generate
+files containing 1D and 2D profiles. The 1D profiles can be made along any x-cut, any y-cut, or along a straight line between
+any two points.
 
-Comparing the :math:`m=2` and :math:`m=4` acoustic mode profiles with the
-pump EM profile, it is apparent that the field overlap is favourable, whereas
-the :math:`m=3` mode gives zero gain due to its anti-symmetry relative to the pump field.
+In the case of the elastic velocity, since there are in general three phase velocities in each material
+(in this isotropic case, there are two, corresponding to the longitudinal and shear modes), the 1D profiles include all
+the velocities, and multiple 2D plots are generated.
+
+Here are a few of these.
+
+.. subfigure:: AA|BC
+
+   .. image:: ./images/tutorial/tut_07-refractive_index.png
+      :width: 14cm
+
+   .. image:: ./images/tutorial/tut_07-refractive_index_xcut.png
+      :width: 8cm
+
+   .. image:: ./images/tutorial/tut_07-refractive_index_ycut.png
+      :width: 8cm
+
+   Refractive index profiles (2D,
+   :math:`x`-cut at :math:`y=0.1`, :math:`y`-cut at :math:`x=0.2`
+   ) of the slot index waveguide.
+
+
+.. subfigure:: AA|BC
+
+
+   .. image:: ./images/tutorial/tut_07-elastic_velocity_v0.png
+      :width: 14cm
+
+   .. image:: ./images/tutorial/tut_07-elastic_velocity_xcut.png
+      :width: 8cm
+
+   .. image:: ./images/tutorial/tut_07-elastic_velocity_linecut.png
+      :width: 8cm
+
+   Elastic velocity profiles (2D, :math:`x`-cut at :math:`y=0.1`, 1D slice between the points :math:`(-0.3, -0.2)` and :math:`(0.3, 0.2)`) of the slot index waveguide.
+
+Observe that the refractive index is largest in the pillars surrounding the slot and so the optical localisation to the
+gap region will be via the *slot effect*. On the other hand, for the elastic problem, *both* the elastic
+velocities in the gap are lower than in any other part of the structure, and so we can expect one or more elastic
+modes truly localised to the slot region by total internal reflection.
+
+Now we can look at the gain spectra and mode profiles. The highest gain occurs for elastic modes :math:`m=2` and :math:`m=4`.
+
 
 
 .. figure:: ./images/tutorial/tut_07-gain_spectra.png
@@ -374,25 +419,35 @@ the :math:`m=3` mode gives zero gain due to its anti-symmetry relative to the pu
 
    Gain data shown on a log scale.
 
+Comparing the :math:`m=2` and :math:`m=4` acoustic mode profiles with the
+pump EM profile, it is apparent that the field overlap is favourable, whereas
+the :math:`m=3` mode gives zero gain due to its anti-symmetry relative to the pump field.
+
+We also find that the lowest elastic modes are not as localised to the slot region as might be expected.
+Here, we are seeing a hybridisation of the guided slot mode and Rayleigh-like surface states that are supported
+on the free boundaries of the slab which is adjacent to the vacuum. This effect could be mitigated
+by choosing an alternative outer material.
+
+
 
 .. figure:: ./images/tutorial/tut_07-fields/EM_E_field_00.png
-   :width: 10cm
+   :width: 12cm
 
    Electromagnetic mode profile of the pump and Stokes field.
 
 
 .. figure:: ./images/tutorial/tut_07-fields/AC_field_02.png
-   :width: 10cm
+   :width: 12cm
 
    Acoustic mode profiles for mode 2.
 
 .. figure:: ./images/tutorial/tut_07-fields/AC_field_04.png
-   :width: 10cm
+   :width: 12cm
 
    Acoustic mode profiles for mode 4.
 
 .. figure:: ./images/tutorial/tut_07-fields/AC_field_03.png
-   :width: 10cm
+   :width: 12cm
 
    Acoustic mode profiles for mode 3.
 

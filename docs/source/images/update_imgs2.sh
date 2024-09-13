@@ -14,7 +14,9 @@ for im in tut_01-mesh.png tut_01-ref_index.png \
         tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spectra_zoom.png  \
         tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
         tut_06a-gain_spectra.png tut_06a-gain_spectra-logy.png tut_06a-ref_index.png tut_06b-ref_index.png \
-        tut_07-gain_spectra.png tut_07-gain_spectra-logy.png tut_07-ref_index.png \
+        tut_07-gain_spectra.png tut_07-gain_spectra-logy.png \
+        tut_07-refractive_index.png tut_07-refractive_index_xcut.png tut_07-refractive_index_ycut.png \
+        tut_07-elastic_velocity_v0.png tut_07-elastic_velocity_xcut.png  tut_07-elastic_velocity_linecut.png \
         tut_08-acdisp_coating.png \
         tut_09-gain_spectra.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \

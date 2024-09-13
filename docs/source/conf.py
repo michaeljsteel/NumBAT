@@ -70,7 +70,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'nbsphinx',             # parser for jupyter notebooks
-    'sphinxcontrib.bibtex'
+    'sphinxcontrib.bibtex',
+    'sphinx_subfigure'
 
 #    'sphinx.ext.coverage',
 #    'sphinx.ext.viewcode',
