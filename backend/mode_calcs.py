@@ -285,8 +285,6 @@ class SimResult:
 
         nbapp = numbat.NumBATApp()
 
-        #if not prefix:
-        #    prefix = nbapp.outprefix()
         if prefix:
             nbapp.set_outprefix(prefix)
         else:
@@ -320,20 +318,12 @@ class SimResult:
             }
         )
 
-
         if ntoplot > 1:
             for m in progressBar(ival_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps, field_type)
 
         else:
             self.get_mode(ival_range[0]).plot_mode(comps, field_type)
-
-        # for m in ival_range:
-        #     self.get_mode(m).plot_mode(comps, field_type)
-        #     if m%10==0: print ('.', end='')  # primitive progress bar
-
-            #if m%10==0: print ('.', end='')  # primitive progress bar
-
 
 
 class EMSimResult(SimResult):
