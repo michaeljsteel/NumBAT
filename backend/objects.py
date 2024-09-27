@@ -637,7 +637,9 @@ class Structure:
             cmd  = [gmsh_exe]
             cmd.extend(args.split())
 
+
             comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+
             if comp_stat.returncode:
                 reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
 
@@ -811,6 +813,10 @@ class Structure:
 
 
         return fsfp
+
+    def plot_refractive_index_profile(self, pref):
+        pl_ref = self.get_structure_plotter_refractive_index()
+        pl_ref.make_plot_2D(pref)
 
     def get_structure_plotter_refractive_index(self, n_points=500):
         return self._make_refindex_plotter(False, n_points)

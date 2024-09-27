@@ -27,6 +27,10 @@ view:
 	evince build/latex/NumBAT.pdf
 
 BROWSER=google-chrome
+
+image_updates:
+	cd source/images; update_imgs2.sh
+
 hview:
 	$(BROWSER) build/html/index.html
 

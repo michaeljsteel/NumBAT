@@ -24,11 +24,15 @@ lambda_nm = 1550
 domain_x = 5000
 domain_y = 1500
 inc_shape = 'slot'
-inc_a_x = 150
-inc_a_y = 190
-inc_b_x = 250
-# Current mesh template assume inc_b_y = inc_a_y
-#slab_a_x = 2500
+slot_w = 150
+rib_h = 190
+rib_w = 250
+
+
+#inc_a_x = 500
+#inc_a_y = 400
+#inc_b_x = 1000
+
 slab_a_x = 4000
 slab_a_y = 300
 
@@ -40,34 +44,39 @@ EM_ival_Stokes = 1
 AC_ival = "All"
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
-prefix +='b'
 
-nbapp = numbat.NumBATApp(prefix)
+nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 mat_vac=materials.make_material("Vacuum")  # background
-mat_slot=materials.make_material("As2S3_2017_Morrison")  # slot
-mat_slab=materials.make_material("SiO2_2013_Laude")  # slab
-mat_walls=materials.make_material("Si_2016_Smith")  # walls of slot
+mat_slot=materials.make_material("As2S3_2017_Morrison")
+mat_slab=materials.make_material("SiO2_2013_Laude")
+mat_ribs=materials.make_material("Si_2016_Smith")
 
 
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
-    inc_a_x, inc_a_y, slab_a_x=slab_a_x, slab_a_y=slab_a_y, inc_b_x=inc_b_x,
-    material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_walls,
+    slot_w=slot_w, rib_w=rib_w, rib_h=rib_h, slab_w=slab_a_x, slab_h=slab_a_y,
+    material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_ribs,
     lc_bkg=0.05, lc_refine_1=3.0 * refine_fac, lc_refine_2=3.0 * refine_fac,
 )
 
 #wguide.plot_mesh(prefix)
 pl_ref = wguide.get_structure_plotter_refractive_index()
 pl_ref.make_plot_2D(prefix)
-pl_ref.make_plot_xcut(prefix, .1)
-pl_ref.make_plot_ycut(prefix, .2)
-pl_ref.make_plot_1D(prefix, (-.3, -.2), (.3, .2))
+
+
+pl_ref.make_plot_1D_cut(prefix, 'x', .2)
+pl_ref.make_plot_1D_cut(prefix, 'y', .1)
+pl_ref.make_plot_1D_cut(prefix, 'line', (-.3, -.2), (.3, .2))
+
+
 
 pl_vac = wguide.get_structure_plotter_acoustic_velocity()
 pl_vac.make_plot_2D(prefix)
-pl_vac.make_plot_xcut(prefix, .1)
-pl_vac.make_plot_ycut(prefix, .2)
-pl_vac.make_plot_1D(prefix, (-.3, -.2), (.3, .2))
+pl_vac.make_plot_1D_cut(prefix, 'x', .2)
+pl_vac.make_plot_1D_cut(prefix, 'y', .1)
+pl_vac.make_plot_1D_cut(prefix, 'line', (-.3, -.2), (.3, .2))
+
+
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1

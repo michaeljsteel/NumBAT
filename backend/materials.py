@@ -699,7 +699,8 @@ class Material(object):
 
         self._add_3d_dispersion_curves_to_axes(ax_vp, ax_vg)
 
-        plt.savefig(pref + "-bulkdisp3D.png")
+        fig.savefig(pref + "-bulkdisp3D.png")
+        plt.close(fig)
 
     def plot_bulk_dispersion(self, pref, label=None):
         """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
@@ -727,7 +728,8 @@ class Material(object):
 
         self._add_3d_dispersion_curves_to_axes(ax_ivp_3d)
 
-        plt.savefig(pref + "-bulkdisp.png")
+        fig.savefig(pref + "-bulkdisp.png")
+        plt.close(fig)
 
     def add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
         npolpts = 28

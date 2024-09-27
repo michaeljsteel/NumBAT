@@ -15,6 +15,7 @@ import numbat
 from plottools import save_and_close_figure
 import reporting
 import plotting
+from pathlib import Path
 
 from numbattools import np_min_max
 
@@ -558,7 +559,33 @@ class FEMScalarFieldPlotter:
         return self.fem_mesh.element_to_material_index(i_el)
 
 
-    def make_plot_xcut(self, prefix, y0):
+    def make_plot_1D_cut(self, pref, s_cut, val1, val2=None):
+        '''Make a 1D plot of the scalar along a line.
+
+        s_cut is a string determining the cut direction, with allowed values: 'x', 'y', or 'line'.
+
+        For s_cut='x', the function is plotted along y at fixed x=val1, where val1 is a float.
+
+        For s_cut='y', the function is plotted along x at fixed x=val1, where val1 is a float.
+
+        For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
+
+
+        '''
+
+        # full out-directory parth
+        prefix = str(Path(numbat.NumBATApp().outdir(), pref))
+
+
+        if s_cut.lower()=='x':
+            self._make_plot_xcut(prefix, val1)
+        elif s_cut.lower()=='y':
+            self._make_plot_ycut(prefix, val1)
+        else:
+            self._make_plot_1D(prefix, val1, val2)
+
+
+    def _make_plot_ycut(self, prefix, y0):
         v_x_flat = self.v_x
         v_y_flat = y0 +np.zeros(len(self.v_x))
         self.interper = self.fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(self.v_x), 1)
@@ -579,7 +606,7 @@ class FEMScalarFieldPlotter:
         plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_xcut.png')
 
 
-    def make_plot_ycut(self, prefix, x0):
+    def _make_plot_xcut(self, prefix, x0):
         v_y_flat = self.v_y
         v_x_flat = x0 +np.zeros(len(self.v_y))
 
@@ -597,7 +624,7 @@ class FEMScalarFieldPlotter:
 
         plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_ycut.png')
 
-    def make_plot_1D(self, prefix, pt0, pt1):
+    def _make_plot_1D(self, prefix, pt0, pt1):
 
         x0, y0 = pt0
         x1, y1 = pt1
@@ -619,7 +646,10 @@ class FEMScalarFieldPlotter:
         plotting.save_and_close_figure(fig, prefix+'-'+self.fname_suffix + '_linecut.png')
 
 
-    def make_plot_2D(self, prefix, aspect=1.0, with_cb=True):
+    def make_plot_2D(self, pref, aspect=1.0, with_cb=True):
+
+        # full out-directory parth
+        prefix = str(Path(numbat.NumBATApp().outdir(), pref))
 
         m_x, m_y = np.meshgrid(self.v_x, self.v_y)
         v_x_flat = m_x.flatten('F')

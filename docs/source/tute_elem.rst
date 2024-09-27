@@ -408,13 +408,13 @@ Now we can look at the gain spectra and mode profiles. The highest gain occurs f
 
 
 
-.. figure:: ./images/tutorial/tut_07-gain_spectra.png
+.. figure:: ./images/tutorial/tut_07-out/tut_07-gain_spectra.png
    :width: 10cm
 
    Gain spectrum showing the gain due to the photoelastic effect (PE), the moving
    boundary effect (PB), and the net gain (Total).
 
-.. figure:: ./images/tutorial/tut_07-gain_spectra-logy.png
+.. figure:: ./images/tutorial/tut_07-out/tut_07-gain_spectra-logy.png
    :width: 10cm
 
    Gain data shown on a log scale.
@@ -430,23 +430,23 @@ by choosing an alternative outer material.
 
 
 
-.. figure:: ./images/tutorial/tut_07-fields/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_07-out/EM_E_field_00.png
    :width: 12cm
 
    Electromagnetic mode profile of the pump and Stokes field.
 
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_02.png
+.. figure:: ./images/tutorial/tut_07-out/AC_field_02.png
    :width: 12cm
 
    Acoustic mode profiles for mode 2.
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_04.png
+.. figure:: ./images/tutorial/tut_07-out/AC_field_04.png
    :width: 12cm
 
    Acoustic mode profiles for mode 4.
 
-.. figure:: ./images/tutorial/tut_07-fields/AC_field_03.png
+.. figure:: ./images/tutorial/tut_07-out/AC_field_03.png
    :width: 12cm
 
    Acoustic mode profiles for mode 3.
@@ -458,33 +458,32 @@ by choosing an alternative outer material.
 
 Tutorial 8 -- Slot Waveguide Cover Width Scan
 ----------------------------------------------
-This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by examining the dependence of the acoustic spectrum on the thickness of a silica capping layer.  As before, this parameter scan is accelerated by the use
-of multi-processing.
+This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by
+examining the dependence of the acoustic spectrum on the width of the pillars.  As before, this parameter
+scan is accelerated by the use of multi-processing.
 
-It is interesting to look at different mode profiles and try to understand why
-the eigenfrequency of some modes are more affected  by the capping layer.
-The lowest mode, for instance, is noticeably unaffected.
+.. It is interesting to look at different mode profiles and try to understand why the eigenfrequency of some modes are more affected  by the capping layer. The lowest mode, for instance, is noticeably unaffected.
 
 
-.. figure:: ./images/tutorial/tut_08-acdisp_coating.png
-   :width: 10cm
+.. figure:: ./images/tutorial/tut_08-acdisp_slotwidth.png
+   :width: 12cm
 
    Acoustic frequencies as function of covering layer thickness.
 
 
 .. figure:: ./images/tutorial/tut_08-out/AC_field_00.png
-   :width: 10cm
+   :width: 12cm
 
    Modal profiles of lowest acoustic mode.
 
 
 .. figure:: ./images/tutorial/tut_08-out/AC_field_01.png
-   :width: 10cm
+   :width: 12cm
 
    Modal profiles of second acoustic mode.
 
 .. figure:: ./images/tutorial/tut_08-out/AC_field_02.png
-   :width: 10cm
+   :width: 12cm
 
    Modal profiles of third acoustic mode.
 
