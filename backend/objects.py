@@ -24,7 +24,7 @@ import os
 import subprocess
 import copy
 import traceback
-import itertools
+#import itertools
 
 
 import tempfile
@@ -32,7 +32,7 @@ from pathlib import Path
 import json
 import importlib
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
+#import matplotlib.ticker as mticker
 
 import numpy as np
 import scipy.interpolate
@@ -41,7 +41,7 @@ import scipy.interpolate
 import numbat
 import reporting
 from nbtypes import SI_nm
-from numbattools import np_min_max
+#from numbattools import np_min_max
 
 import materials
 from mode_calcs import EMSimulation, ACSimulation
@@ -641,7 +641,8 @@ class Structure:
             comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
 
             if comp_stat.returncode:
-                reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
+                tcmd = ' '.join(cmd)
+                reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
             assertions_on = False
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
