@@ -1,0 +1,15 @@
+- Complete replacment of ref_index_profile with generic version
+  Make axis labels  nicer.
+
+- Sync different onion set_alloweds, set_help, check_dimensions into common functions
+
+- Continue adding refractive index plots in Chapter 4 and labelling the parameters
+
+- Document newer UserMesh methods (check_dimensions etc)
+
+- Restore and improve symmetry classification
+
+- option for field profiles to have common amplitude color scale
+
+- annotate max and min refindex or phase velocities on mode profiles 
+      to identify genuinely trapped modes

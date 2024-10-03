@@ -285,8 +285,6 @@ class SimResult:
 
         nbapp = numbat.NumBATApp()
 
-        #if not prefix:
-        #    prefix = nbapp.outprefix()
         if prefix:
             nbapp.set_outprefix(prefix)
         else:
@@ -320,20 +318,12 @@ class SimResult:
             }
         )
 
-
         if ntoplot > 1:
             for m in progressBar(ival_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps, field_type)
 
         else:
             self.get_mode(ival_range[0]).plot_mode(comps, field_type)
-
-        # for m in ival_range:
-        #     self.get_mode(m).plot_mode(comps, field_type)
-        #     if m%10==0: print ('.', end='')  # primitive progress bar
-
-            #if m%10==0: print ('.', end='')  # primitive progress bar
-
 
 
 class EMSimResult(SimResult):
@@ -707,7 +697,10 @@ class EMSimulation(Simulation):
         self.simres_EM = None  # kludge to simplify save code in Simulation. Fix
 
         self.fem_mesh = FemMesh()
-        self.fem_mesh.build_from_gmsh_mail(self.structure)
+        self.fem_mesh.build_from_gmsh_mail(self.structure.mesh_mail_fname,
+                                           self.structure)
+
+        #self.fem_mesh.report_properties(structure)
 
     def make_result(self):
         self.sim_result = EMSimResult(self)
@@ -757,6 +750,7 @@ class EMSimulation(Simulation):
         #print('optprops', fm.n_msh_pts, fm.n_msh_el, opt_props.n_mats_em, opt_props.v_refindexn)
         #print(f'bloch:', self.k_perp)
         #print(f'ksqr: {np.real(shift_ksqr):.4e} {np.imag(shift_ksqr):.4e}')
+
 
         resm = nb_fortran.calc_em_modes(
             self.n_modes,

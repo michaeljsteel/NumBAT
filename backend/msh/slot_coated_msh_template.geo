@@ -1,78 +1,82 @@
-// Template mesh geometry file for a slot waveguide.
+// Template mesh geometry file for a coated slot waveguide.
 
 // Force Gmsh to use legacy msh file format v2
 Mesh.MshFileVersion = 2.2;
 
 d = 1; // grating period
-dx_in_nm = 100;
-dy_in_nm = 50;
+dx_in_nm = 1000;
+dy_in_nm = 500;
 dy = dy_in_nm/dx_in_nm;
-a1 = 20;
-a1y = 10;
-radius1 = (a1/(2*dx_in_nm))*d;
-radius1y = (a1y/(2*dx_in_nm))*d;
-a2 = 20;
-radius2 = (a2/(2*dx_in_nm))*d;
-radius2y = radius1y;
 
-slabx = 80;
-slaby = 10;
-slab_w = slabx/dx_in_nm;
-slab_h = slaby/dx_in_nm;
+slot_w = 200;
+rib_h = 100;
 
-c1y = 10;
-cov1y = (c1y/(2*dx_in_nm))*d;
+slot_hwidth = (slot_w/(2*dx_in_nm))*d;
+rib_height = (rib_h/(dx_in_nm))*d;
 
-lc = 0.1; // background and unitcell edge
-lc_refine_1 = lc/1; // rib
-lc_refine_2 = lc/1; // slab
-lc_refine_3 = lc/1; // coating
+rib_w = 200;
+rib_width = (rib_w/(dx_in_nm))*d;
 
-hy = dy/2 + (slab_h/2) + radius1y; // 
-hx = 0.;
+slab_w = 800;
+slab_h = 100;
+slab_width = slab_w/dx_in_nm;
+slab_height = slab_h/dx_in_nm;
+
+coat_y = 100;
+cov1y = (coat_y/(dx_in_nm))*d;
+
+lc_bkg = 0.1; // background and unitcell edge
+lc_refine_1 = lc_bkg/1; // rib
+lc_refine_2 = lc_bkg/1; // slab
+lc_refine_3 = lc_bkg/1; // coating
+
+hy = dy/2 + (slab_height/2) + rib_height/2; // 
 x0 = -d/2;
-y0 = hy-slab_h;
+x1 = x0+d;
+xmid = x0+d/2;
+
+y0 = hy-slab_height;
 
 
-Point(1) = {x0, y0, 0, lc};
-Point(2) = {x0-hx, y0-dy, 0, lc};
-Point(3) = {x0-hx+d, y0-dy, 0, lc};
-Point(4) = {x0+d, y0, 0,lc};
+Point(1) = {x0, y0, 0, lc_bkg};
+Point(2) = {x0, y0-dy, 0, lc_bkg};
+Point(3) = {x0+d, y0-dy, 0, lc_bkg};
+Point(4) = {x0+d, y0, 0,lc_bkg};
 
 // Slab
-Point(5) = {x0+d/2-slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
-Point(6) = {x0+d/2+slab_w/2, y0-hy+slab_h, 0, lc_refine_2};
-Point(13) = {x0+d/2-slab_w/2,y0 -hy, 0, lc_refine_2};
-Point(14) = {x0+d/2+slab_w/2, y0-hy, 0, lc_refine_2};
+Point(5) = {x0+d/2-slab_width/2, y0-hy+slab_height, 0, lc_refine_2};
+Point(6) = {x0+d/2+slab_width/2, y0-hy+slab_height, 0, lc_refine_2};
+Point(13) = {x0+d/2-slab_width/2, y0 -hy, 0, lc_refine_2};
+Point(14) = {x0+d/2+slab_width/2, y0-hy, 0, lc_refine_2};
 
 // Slot centre
-Point(7) = {x0+-hx+d/2-radius1, y0-hy+slab_h, 0, lc_refine_1};
-Point(8) = {x0+-hx+d/2+radius1, y0-hy+slab_h, 0, lc_refine_1};
-Point(9) = {x0+-hx+d/2-radius1, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
-Point(10) = {x0+-hx+d/2+radius1, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(7) = {x0+d/2-slot_hwidth, y0-hy+slab_height, 0, lc_refine_1};
+Point(8) = {x0+d/2+slot_hwidth, y0-hy+slab_height, 0, lc_refine_1};
+Point(9) = {x0+d/2-slot_hwidth, y0-hy+rib_height+slab_height, 0, lc_refine_1};
+Point(10) = {x0+d/2+slot_hwidth, y0-hy+rib_height+slab_height, 0, lc_refine_1};
 
 // Slot left wall
-Point(20) = {x0+-hx+d/2-radius1-radius2, y0-hy+slab_h, 0, lc_refine_1};
-Point(21) = {x0+-hx+d/2+radius1+radius2, y0-hy+slab_h, 0, lc_refine_1};
-Point(22) = {x0+-hx+d/2-radius1-radius2, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
-Point(23) = {x0+-hx+d/2+radius1+radius2, y0-hy+2*radius1y+slab_h, 0, lc_refine_1};
+Point(20) = {x0+d/2-slot_hwidth-rib_width, y0-hy+slab_height, 0, lc_refine_1};
+Point(21) = {x0+d/2+slot_hwidth+rib_width, y0-hy+slab_height, 0, lc_refine_1};
+Point(22) = {x0+d/2-slot_hwidth-rib_width, y0-hy+rib_height+slab_height, 0, lc_refine_1};
+Point(23) = {x0+d/2+slot_hwidth+rib_width, y0-hy+rib_height+slab_height, 0, lc_refine_1};
 
 // Coating
-Point(30) = {x0-hx+d/2-radius1, y0-hy+2*radius1y+slab_h+cov1y, 0, lc_refine_3};
-Point(31) = {x0-hx+d/2+radius1, y0-hy+2*radius1y+slab_h+cov1y, 0, lc_refine_3};
-Point(32) = {x0-hx+d/2-radius1-radius2, y0-hy+2*radius1y+slab_h+cov1y, 0, lc_refine_3};
-Point(33) = {x0-hx+d/2+radius1+radius2, y0-hy+2*radius1y+slab_h+cov1y, 0, lc_refine_3};
+Point(30) = {x0+d/2-slot_hwidth, y0-hy+rib_height+slab_height+cov1y, 0, lc_refine_3};
+Point(31) = {x0+d/2+slot_hwidth, y0-hy+rib_height+slab_height+cov1y, 0, lc_refine_3};
+Point(32) = {x0+d/2-slot_hwidth-rib_width, y0-hy+rib_height+slab_height+cov1y, 0, lc_refine_3};
+Point(33) = {x0+d/2+slot_hwidth+rib_width, y0-hy+rib_height+slab_height+cov1y, 0, lc_refine_3};
 
-Point(11) = {x0, y0-hy+slab_h, 0, lc};
-Point(12) = {x0+d, y0-hy+slab_h, 0, lc};
-Point(15) = {x0-hx+d/2+radius1, y0, 0, lc};
-Point(16) = {x0-hx+d/2-radius1, y0, 0, lc};
-Point(17) = {x0-hx+d/2+radius1, y0-dy, 0, lc};
-Point(18) = {x0-hx+d/2-radius1, y0-dy, 0, lc};
-Point(24) = {x0-hx+d/2+radius1+radius2, y0, 0, lc};
-Point(25) = {x0-hx+d/2-radius1-radius2, y0, 0, lc};
-Point(26) = {x0-hx+d/2+radius1+radius2, y0-dy, 0, lc};
-Point(27) = {x0-hx+d/2-radius1-radius2, y0-dy, 0, lc};
+Point(11) = {x0, y0-hy+slab_height, 0, lc_bkg};
+Point(12) = {x0+d, y0-hy+slab_height, 0, lc_bkg};
+Point(15) = {x0+d/2+slot_hwidth, y0, 0, lc_bkg};
+Point(16) = {x0+d/2-slot_hwidth, y0, 0, lc_bkg};
+Point(17) = {x0+d/2+slot_hwidth, y0-dy, 0, lc_bkg};
+Point(18) = {x0+d/2-slot_hwidth, y0-dy, 0, lc_bkg};
+Point(24) = {x0+d/2+slot_hwidth+rib_width, y0, 0, lc_bkg};
+Point(25) = {x0+d/2-slot_hwidth-rib_width, y0, 0, lc_bkg};
+Point(26) = {x0+d/2+slot_hwidth+rib_width, y0-dy, 0, lc_bkg};
+Point(27) = {x0+d/2-slot_hwidth-rib_width, y0-dy, 0, lc_bkg};
 
 
 Line(6) = {7, 9};

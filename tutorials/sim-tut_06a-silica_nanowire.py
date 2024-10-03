@@ -22,8 +22,8 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 3*lambda_nm
-domain_y = domain_x
+domain_x = 4500
+domain_y = 1.0*domain_x
 inc_a_x = 550
 inc_a_y = inc_a_x
 inc_shape = 'circular'
@@ -35,7 +35,7 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-prefix, refine_fac = starter.read_args(6, sys.argv)
+prefix, refine_fac = starter.read_args(6, sys.argv, sub='a')
 
 nbapp = numbat.NumBATApp(prefix)
 
@@ -43,6 +43,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
                         lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3.0*refine_fac)
+
 wguide.plot_refractive_index_profile(prefix)
 
 # Expected effective index of fundamental guided mode.
@@ -62,7 +63,7 @@ else:
     simres_EM_Stokes.save_simulation(prefix+'_stokes')
 
 print('\nPlotting EM fields')
-trim=0.4
+trim=0.0
 #trim=0.0
 
 # Display the wavevectors of EM modes.
@@ -70,7 +71,7 @@ v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
-#simres_EM_pump.plot_modes(ivals=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
+simres_EM_pump.plot_modes(ivals=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
@@ -93,7 +94,7 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
-#simres_AC.plot_modes()
+simres_AC.plot_modes()
 
 set_q_factor = 1000.
 
