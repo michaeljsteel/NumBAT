@@ -161,11 +161,15 @@ comsol_ivals = 5  # Number of modes contained in data file.
 # Print the PE contribution to gain SBS gain of the AC modes.
 print("\n Displaying results of first five modes with negligible components masked out")
 SBS_gain_PE = gain.gain_PE_all()
+SBS_gain_MB = gain.gain_MB_all()
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
 masked_PE = np.ma.masked_inside(SBS_gain_PE[:comsol_ivals], 0, threshold)
+masked_MB = np.ma.masked_inside(SBS_gain_MB[:comsol_ivals], 0, threshold)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
+print("SBS_gain [1/(Wm)] MB NumBAT default (Fortran)\n", masked_MB)
+
 #masked = np.ma.masked_inside(
 #    SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
 #print("SBS_gain [1/(Wm)] python integration routines \n", masked)

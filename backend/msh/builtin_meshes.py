@@ -602,14 +602,12 @@ class TrapezoidalRib(UserGeometryBase):
         #                                 (self.get_param('domain_x, self.get_param('inc_a_x,
         #                                  self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y))
 
-        subs = [    ('dx_in_nm = 100.0;', 'dx_in_nm = %f;',  self.get_param('domain_x'))]
-        subs.append(('dy_in_nm = 50.0;', 'dy_in_nm = %f;', self.get_param('domain_y')))
+        subs = [    ('dx_in_nm = 4000.0;', 'dx_in_nm = %f;',  self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 2000.0;', 'dy_in_nm = %f;', self.get_param('domain_y')))
         subs.append(('top_rib_width = 600.0;',     'top_rib_width = %f;',    self.get_param('inc_a_x')))
-        subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
-
         subs.append(('mid_rib_width = 900.0;',     'mid_rib_width = %f;',    self.get_param('slab_a_x')))
-
         subs.append(('bottom_rib_width = 1800.0;', 'bottom_rib_width = %f;', self.get_param('slab_b_x')))
+        subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
         subs.append(('slab_thickness = 300.0;',    'slab_thickness = %f;',   self.get_param('slab_a_y')))
 
         subs.append(('lc = 0.020000;',         "lc = %f;", self.get_param('lc_bkg')))
@@ -617,6 +615,19 @@ class TrapezoidalRib(UserGeometryBase):
         subs.append(('lc_refine_2 = lc/5.0;',  "lc_refine_2 = lc/%f;", self.get_param('lc_refine_2')))
 
         return subs
+
+    def check_dimensions(self):
+
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        rib_wbot = self.get_param('slab_b_x')
+
+        msg = ''
+
+        if rib_wbot >= dom_x :
+            msg = 'Slab width (slab_b_x) is wider than domain width (domain_x).\n'
+
+        dims_ok = not len(msg)
 
 
 class Rib(UserGeometryBase):
