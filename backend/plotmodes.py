@@ -412,8 +412,11 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     # grid points to skip for each arrow
     # this could probably be chosen nicer. make equally spaced on aspect=1?
-    quiver_skip_x = int(round(n_pts_x/quiver_points * (1-xlmi-xlma)))
-    quiver_skip_y = int(round(n_pts_y/quiver_points * (1-ylmi-ylma)))
+    quiver_points_x = quiver_points
+    #quiver_points_y = int(quiver_points*plps['aspect'])
+    quiver_points_y = quiver_points
+    quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
+    quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
 
 
     # getting a nice symmetric pattern of points to do quivers centred around the middle

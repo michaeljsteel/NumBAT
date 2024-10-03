@@ -475,6 +475,7 @@ def gain_and_qs(
 
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
+    print('alpha', alpha)
 
     print("\n Photoelastic calc")
     if struc.using_linear_elements():
@@ -565,7 +566,6 @@ def gain_and_qs(
         relevant_eps_effs,
         Fortran_debug,
     )
-
     Q = Q_PE + Q_MB  # TODO: the Q couplings come out as non trivially complex. Why?
 
     gain = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q * np.conj(Q))

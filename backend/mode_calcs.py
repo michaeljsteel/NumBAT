@@ -1206,14 +1206,20 @@ class ACSimulation(Simulation):
             # alpha = 0.5*(q_AC/fixed_Q)*np.ones(n_modes) # appropriate for alpha in [1/m]
             self.ac_Qmech = fixed_Q * np.ones(self.n_modes)
             # appropriate for alpha in [1/s]
-            self.ac_alpha_t = (
-                0.5 * (np.real(Omega_AC) / fixed_Q) * np.ones(self.n_modes)
-            )
+            self.ac_alpha_t =  0.5 * (np.real(Omega_AC) / fixed_Q) * np.ones(self.n_modes)
 
         # SBS linewidth of each resonance in [Hz]   #TODO: not sure about the 1/pi.
         self.ac_linewidth = self.ac_alpha_t / np.pi
         # If linewdith should be amplitude rate in Hz, wouldn't it be
         # alpha/(2 * 2pi)  since alpha is a power decay rate
+
+
+        #TODO: this Sim/SimResult ownership is a mess. 
+        # find a cleaner way to deal with the call of this function from gain_calculation
+        if self.sim_result is not None:  
+            self.sim_result.ac_alpha_t = self.ac_alpha_t
+            self.sim_result.ac_Qmech = self.ac_Qmech
+            self.sim_result.ac_linewidth = self.ac_linewidth
 
     def make_result(self):
         self.sim_result = ACSimResult(self)
