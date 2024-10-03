@@ -475,7 +475,6 @@ def gain_and_qs(
 
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
-    print('alpha', alpha)
 
     print("\n Photoelastic calc")
     if struc.using_linear_elements():

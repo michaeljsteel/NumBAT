@@ -2,14 +2,14 @@
 from math import sqrt
 
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.tri
+#import matplotlib.pyplot as plt
+#import matplotlib.tri
 
-import numbat
+#import numbat
 from nbtypes import FieldType, component_t, SI_um, SI_vacuum_impedance_Z0
 from numbattools import int2d_trapz, np_min_max
-import reporting
-from plottools import save_and_close_figure
+#import reporting
+#from plottools import save_and_close_figure
 import plotmodes
 import plotmoderaw
 

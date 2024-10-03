@@ -59,7 +59,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
                  pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                  show_gains='All'):
     reporting.report_and_exit('The function plotting.gain_spectra() is deprecated.\n'
-                              + 'Please now use plotting.plot_gain_spectra() and observe the changes in calling convention described in the Release notes.')
+                              + 'Please now use Gain.plot_spectra() and observe the changes in calling convention described in the Release notes.')
 
 
 def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
@@ -178,6 +178,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         v_nu_loc = np.real(sim_AC.nu_AC(m) + detuning_range)
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
         v_gain_loc = np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]) * v_Lorentz
+        lor_glob = np.interp(nu_grid, v_nu_loc, v_Lorentz)
 
         if mode_comps:
             ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
