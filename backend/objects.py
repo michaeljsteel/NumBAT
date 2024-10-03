@@ -696,7 +696,8 @@ class Structure:
 
         comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
         if comp_stat.returncode:
-            reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
+            tcmd = ' '.join(cmd)
+            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
         with open(Path(self.msh_location_in, 'msh2png.scr'), 'r') as fin:
             conv_tmp = fin.read()
@@ -711,7 +712,8 @@ class Structure:
 
         comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
         if comp_stat.returncode:
-            reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
+            tcmd = ' '.join(cmd)
+            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
         plottools.join_figs([tmpoutpref+'-mesh_geom.png',
                           tmpoutpref+'-mesh_nodes.png',],
