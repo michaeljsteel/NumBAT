@@ -1,13 +1,11 @@
 
 PYTHON=python
 
-all: tut01 tut02 tut03a tut03b tut04 tut05 tut06 tut07 \
-				tut08 tut09 tut11a  tut11b tut12 tut13 tut14
+all: tut01 tut02 tut03a tut03b tut04 tut05 tut06a tut06b \
+		tut07 tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 
-allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
-				ftut08 ftut09 ftut11a  ftut12 ftut13 
-allfastb: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06 ftut07 \
-				ftut08 ftut09 ftut11a  ftut12 ftut13 
+allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b \
+		ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
 
 broken: tut10
 
@@ -44,10 +42,10 @@ tut05:
 ftut05:
 	$(PYTHON) sim-tut_05-convergence_study.py fast=1
 
-tut06:
-	$(PYTHON) sim-tut_06-silica_nanowire.py
-ftut06:
-	$(PYTHON) sim-tut_06-silica_nanowire.py fast=1
+tut06a:
+	$(PYTHON) sim-tut_06a-silica_nanowire.py
+ftut06a:
+	$(PYTHON) sim-tut_06a-silica_nanowire.py fast=1
 
 tut06b:
 	$(PYTHON) sim-tut_06b-silicon_triangular_nanowire.py

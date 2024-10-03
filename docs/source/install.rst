@@ -138,20 +138,20 @@ Building |NUMBAT| itself
 
     #. To build with the ``gcc`` compilers, run::
 
-        $ make -f Makefile.meson gcc
+        $ make gcc
 
     #. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
 
-        $ make -f Makefile.meson intel
+        $ make intel
 
 
 
 #. **Old method**
-    Open the file ``<NumBAT>/backend/fortran/Makefile`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
+    Open the file ``<NumBAT>/backend/fortran/Makefile.old`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
 
     #. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-        $ make build
+        $ make -f Makefile.old build
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
@@ -178,7 +178,7 @@ To do so,
 
 #. Install the Intel OneAPI Base and HPC Toolkits.
 #. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.)
-#. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make``, please use::
+#. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make gcc``, please use::
 
     $ make intel
 
@@ -322,15 +322,15 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
 #. Install necessary python libraries ::
 
-    $ pip3 install numpy matplotlib scipy psutil
+    $ pip3 install numpy matplotlib scipy psutil meson ninja
 
-#. Check that the python installs work and create a matplotlib .config directory::
+#. Check that the python installs work.
 
    $ python3.12
-   $ import matplotlib
-   $ import numpy
-   $ import scipy
-   $ import psutil
+   >>> import matplotlib
+   >>> import numpy
+   >>> import scipy
+   >>> import psutil
 
 #. Install the |NUMBAT| matplotlib style file::
 
@@ -341,9 +341,11 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
    $ cd backend/fortran
 
-#. Now at last, we can build |NUMBAT| ::
+#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``MacOS`` section and change any of the paths in the ``value`` fields as required.
 
-   $ make -f Makefile.macos
+#. To start the build, enter::
+
+   $ make mac
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
@@ -360,23 +362,63 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 Installing on Windows
 ================================
 
+There are several approaches for installing |NUMBAT| on Windows. You can build the entire system from scratch, as with the Linux and MacOS installs, or you can use a pre-built installer available from the github page.
 
-Installing the Native Windows version
--------------------------------------------
+In both cases, you need to set up the python environment.  This is described first below, followed by the two alternative
+methods of installing |NUMBAT| itself.
 
-The Windows version of |NUMBAT| is built entirely using the native Windows toolchain including Visual Studio and the Intel Fortran compiler. There is a substantial number of steps and tools required, but it should go relatively smoothly.
+Setting up Python on Windows
+-------------------------------------
 
-
-#. **Python environment**
-
-    The standard Python solution for Windows is the Anaconda distribution.
-
-    If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
+The standard Python solution for Windows is the Anaconda distribution.  Proceed as follows.
 
 
-#. **Windows build tools**
+  #. If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
 
-    The following tools are all free but will use several GB of disk space.
+
+  #. Create a python virtual environment for working with |NUMBAT|.
+      You can use any name and location for your environment.
+
+    **Note:** Here we show the procedure for the Anaconda system.
+
+    To specify a virtual environment tree called `nbpy3`, open the *Anaconda prompt* from the Start Menu
+    and  enter ::
+
+        $ conda create --name nbpy3
+
+    Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
+
+    Also curiously, the bare virtual environment does not actually contain Python so we have to install that along with some other libraries.
+
+  #. Activate the new python virtual environment ::
+
+       $ conda activate nbpy3
+
+  #. Install the necessary python tools and libraries ::
+
+     $ conda install python pip
+     $ conda install conda-forge::make
+     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
+     $ pip3 install meson==1.4.1
+
+   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+
+   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
+
+  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
+
+
+Installing |NUMBAT| Method 1: full build from source
+----------------------------------------------------------
+
+
+The Windows version of |NUMBAT| is built using the native Windows toolchain including Visual Studio and the Intel Fortran compiler. There is a substantial number of steps and tools required, but it should go relatively smoothly.
+
+
+Windows build tools
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following tools are all free but will use several GB of disk space.
 
     - *Visual Studio*:
         This is the primary Microsoft development environment.
@@ -429,10 +471,10 @@ We can now build the supporting libraries, and then |NUMBAT| itself.
     $ cd usr_local\packages
     $ git clone https://github.com/opencollab/arpack-ng.git arpack-ng
     $ git clone https://github.com/jlblancoc/suitesparse-metis-for-windows.git suitesparse-metis
-    $ cd ..\nb_releases
+    $ cd ..\..\nb_releases
     $ git clone https://github.com/michaeljsteel/NumBAT.git nb_latest
 
-#. Download the `Windows build of Gmsh <gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
+#. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
 
 
 
@@ -456,11 +498,13 @@ This library performs sparse matrix algebra, used in the eigensolving routines o
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -D WITH_MKL=ON -B build .
+     $ cmake -D WITH_MKL=ON -B build .
+
+   Make sure to include the fullstop after ``build``.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\suitesparse-metis\build\SuiteSparseProject.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu, select the *Build Solution* item to commence the build.  This will take a couple of minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
@@ -479,17 +523,18 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 2. Enter the following command. It may take a minute or two to complete::
 
-    $ cmake -B build -T "fortran=ifx" -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF .
+      $ cmake -B build -T "fortran=ifx" -D CMAKE_BUILD_TYPE=Release -D BUILD_SHARED_LIBS=OFF .
 
-    (Note the final dot!)
+   Note the final fullstop!
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then hit the second Green Arrow in the ribbon to build the whole project.  This will take a couple of minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select
+the *Build solution* option. This will take a few minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
-    $ copy packages\arpack-ng\Release\* lib
+    $ copy packages\arpack-ng\build\Release\* lib
     $ copy packages\arpack-ng\ICB\*.h include
 
 
@@ -497,45 +542,29 @@ Building |NUMBAT|
 """"""""""""""""""""""
 At long last, we are ready to build |NUMBAT| itself.
 
-1. Create a python virtual environment for working with |NUMBAT|.
-   You can use any name and location for your environment.
 
-   **Note:** Here we show the procedure for the Anaconda system.
-
-   To specify a virtual environment tree called `nbpy3`, open the *Anaconda prompt* from the Start Menu
-   and  enter ::
-
-    $ conda create --name nbpy3
-
-   Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
-
-   Also curiously, the bare virtual environment does not actually contain Python.
-
-#. Activate the new python virtual environment ::
-
-    $ conda activate nbpy3
-
-#. Install the necessary python libraries ::
-
-    $ conda install python pip
-    $ pip3 install numpy matplotlib scipy psutil meson ninja
 
 #. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
-    $ cd ``<NumBAT_BASE>``
+    $ cd <NumBAT_BASE>
     $ cd nb_releases\nb_latest
 
    From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
-#. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section and change any of the paths in the ``value`` fields as required.
+#. Setup the environment variables for the Intel compiler::
+
+    $  "c:\Program Files (x86)\Intel\oneAPI\setvars.bat"
+
+
+#. Move to the ``<NumBAT>\backend\fortran`` directory and open the file ``meson.options`` in a text editor. Check the values of the options in the ``Windows`` section, particularly the value for ``windows_dir_nb_usrlocal`` and change any of the paths in the ``value`` fields as required.
 
 #. To initiate the build, enter ::
 
-    $ make -f Makefile.meson win
+     $ make win
 
-    This should take 2 to 3 minutes.
+   This should take 2 to 3 minutes.
 
-.. #. Move to the ``<NumBAT>/backend/fortran/`` directory and open the file ``<NumBAT>/backend/fortran/Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
+.. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
 ..    $ cd backend\fortran
 ..    $ make -f Makefile.win
@@ -550,22 +579,79 @@ At long last, we are ready to build |NUMBAT| itself.
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 
+#. Copy Intel oneAPI .dlls to this directory::
+
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.2.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.2.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\svml_dispmd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libmmd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libifcoremd.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libifportMD.dll" .
+
 #. At this point, we are ready to test the installation with a short script that checks whether required applications and libraries can be found and loaded. Perform the following commands::
 
     $ cd <NumBAT>/backend
-    $ python ./nb_install_tester.py
+    $ python .\nb_install_tester.py
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`sec-troubleshooting-windows-label`.
+
+
+Installing |NUMBAT| Method 2: pre-built Windows installer
+-------------------------------------------------------------
+*Note*: The installer will allow you to run |NUMBAT| problems and make changes to the code on the Python side only. (For most people, this is fine.)
+The installer is not updated as frequently as the main source tree.
+
+
+#. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
+    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
+
+#. Use the Start Menu to open the *Acaconda prompt*.
+   This is simply a Windows terminal with some Anaconda python environment variables pre-defined.
+
+#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands::
+
+    $ mkdir nb_releases
+    $ mkdir usr_local
+    $ mkdir usr_local\packages
+
+#. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
+
+#. Download the `Windows installer for |NUMBAT| <https://github.com/michaeljsteel/NumBAT>`_ from the |NUMBAT| github page. The link to the installer can be found at the bottom of the *Readme* section and also under the *Releases* heading in the right-hand column of the page.
+
+   Run the installer choosing an install directory in the ``<NumBAT_BASE>\nb_releases`` folder.
+
+#. In the Anaconda terminal, change directory to the newly installed |NUMBAT| folder.
+
+#. Activate your python environment and then move to the |NUMBAT| tutorials directory::
+
+      $ conda activate nbpy3
+      $ cd tutorials
+
+#. You should now be able to run a |NUMBAT| calculation::
+
+      $ make tut01
+
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please check the instructions above again, and if still stuck, follow the instructions under :ref:`sec-helpinstall-label` to seek assistance.
+
+
 
 Creating a self-contained command terminal
 ---------------------------------------------
-To easily activate your python environment and ensure all paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
 
-Here is a procedure for doing this::
+If you plan to build the fortran code frequently,
+both the python and Intel oneAPI paths need to be set up in your terminal.
+Doing this manually requires typing::
+
+    $ conda activate nbpy3
+    $ c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
+
+Here is a procedure for doing this
 
   #. Copy the launcher file  ``numbat_cmd.bat`` to your |NUMBAT| root directory::
 
-    $ copy <NumBAT>\share\numbat_cmd.bat <NumBAT_BASE>
+       $ copy <NumBAT>\share\numbat_cmd.bat <NumBAT_BASE>
 
   #. Create a desktop shortcut to the Windows command terminal by using File Explorer to open the folder ``c:\Windows\System32``, typing ``cmd.exe`` in the search box at top right, and then right-clicking *Send to Desktop*.
 
@@ -573,9 +659,40 @@ Here is a procedure for doing this::
 
   #. Select the *General* tab and change the name field at the top to *NumBAT Terminal*.
 
-  #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat
+  #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat``
 
   #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
+
+
+
+.. _sec-troubleshooting-windows-label:
+
+
+Troubleshooting a Windows installation
+-------------------------------------------
+
+#. My build of |NUMBAT| completes but the  ``nb_install_tester.py`` program complains the |NUMBAT| fortran ``nb_fortran.pyd`` dynamically linked library (DLL) can't be loaded.
+
+  This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
+
+  #. Download the *Dependencies* tool available as a zip file install from  `github <https://github.com/lucasg/Dependencies>`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
+
+  #. Now we can apply the tool to the |NUMBAT| python dll.
+
+    Start the ``DependenciesGui.exe`` tool::
+
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+
+    Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
+
+
+    Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+
+  #. Alternatively, you can try the command line version of this tool::
+
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 1 -modules nb_fortran.pyd
+
+
 
 Installing the Linux version via a Virtual Machine
 ------------------------------------------------------
@@ -591,89 +708,6 @@ using the `Windows Subsystem for Linux
 <https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
 with installing the additional required packages may be quite painful.
 
-
-Installing via Docker
-----------------------------------
-
-There is also an outdated Docker package for Windows that could be updated to support the current version of |NUMBAT| if there is demand. Let us know.
-
-.. On non-ubuntu OSes you may also need to compile a local version of Suitesparse, which is described in the next section.
-
-.. Manual installation of SuiteSparse
-.. ----------------------------------
-
-.. The FEM routine used in |NUMBAT| makes use of the highly optimised `UMFPACK <https://www.cise.ufl.edu/research/sparse/umfpack/>`_ (Unsymmetric MultiFrontal Package) direct solver for sparse matrices developed by Prof. Timothy A. Davis. This is distributed as part of the  SuiteSparse libraries under a GPL license. It can be downloaded from `https://www.cise.ufl.edu/research/sparse/SuiteSparse/ <https://www.cise.ufl.edu/research/sparse/SuiteSparse/>`_
-
-.. This is the process we have used in the past, however this was some years ago and may need to be modified.
-
-.. Unpack SuiteSparse into ``|NUMBAT|/backend/fortran/``, it should create a directory there; ``SuiteSparse/``
-.. Make a directory where you want SuiteSparse installed, in my case SS_installed ::
-
-    $ mkdir SS_installed/
-
-.. edit SuiteSparse/SuiteSparse\_config/SuiteSparse\_config.mk for consistency across the whole build; i.e. if using intel fortran compiler ::
-
-    line 75 F77 = gfortran --> ifort
-
-.. set path to install folder::
-
-    line 85 INSTALL_LIB = /$Path_to_EMustack/|NUMBAT|/backend/fortran/SS_installed/lib
-    line 86 INSTALL_INCLUDE = /$Path_to_EMustack/|NUMBAT|/backend/fortran/SS_installed/include
-
-.. line 290ish commenting out all other references to these::
-
-    F77 = ifort
-    CC = icc
-    BLAS   = -L/apps/intel-ct/12.1.9.293/mkl/lib/intel64 -lmkl_rt
-    LAPACK = -L/apps/intel-ct/12.1.9.293/mkl/lib/intel64 -lmkl_rt
-
-.. Now make new directories for the paths you gave 2 steps back::
-
-    $ mkdir SS_installed/lib SS_installed/include
-
-.. Download `metis-4.0 <http://glaros.dtc.umn.edu/gkhome/fsroot/sw/metis/OLD>`_ and unpack metis into SuiteSparse/ Now move to the metis directory::
-
-    $ cd SuiteSparse/metis-4.0
-
-.. Optionally edit ``metis-4.0/Makefile.in`` as per ``SuiteSparse/README.txt`` plus with ``-fPIC``::
-
-    CC = gcc
-    or
-    CC = icc
-    OPTFLAGS = -O3 -fPIC
-
-.. Now make ``metis`` (still in SuiteSparse/metis-4.0/)::
-
-    $ make
-
-.. Now move back to ``|NUMBAT|/backend/fortran/`` ::
-
-    $ cp SuiteSparse/metis-4.0/libmetis.a SS_installed/lib/
-
-.. and then move to ``SuiteSparse/`` and execute the following::
-
-    $ make library
-    $ make install
-    $ cd SuiteSparse/UMFPACK/Demo
-    $ make fortran64
-    $ cp SuiteSparse/UMFPACK/Demo/umf4_f77zwrapper64.o into SS_installed/lib/
-
-.. Copy the libraries into ``|NUMBAT|/backend/fortran/Lib/`` so that ``|NUMBAT|/`` is a complete package that can be moved across machine without alteration. This will override the pre-compiled libraries from the release (you may wish to save these somewhere).::
-
-    $ cp SS_installed/lib/*.a |NUMBAT|/backend/fortran/Lib/
-    $ cp SS_installed/lib/umf4_f77zwrapper64.o |NUMBAT|/backend/fortran/Lib/
-
-
-.. Edit ``|NUMBAT|/backend/fortran/Makefile`` to reflect what compiler you are using and how you installed the libraries. The Makefile has further details.
-
-.. Then finally run the setup.sh script!
-
-#. To build the pdf documentation you are currently reading, use ::
-
-    $ make docs
-
-Note however most of the figures will only be available after you have run all the example problems in the  ``tutorial`` ``lit_ex`` and ``JOSAB_tutorial`` directories.
-This can be done by running ``make`` in each of those directories. Be aware that  some of these problems are quite large and may require some time to complete depending on your computer's performance.
 
 
 Building the documentation

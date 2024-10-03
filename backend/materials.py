@@ -238,6 +238,13 @@ class Material(object):
         else:
             return math.sqrt(self.stiffness_c_IJ[4, 4] / self.rho)
 
+    def Vac_phase(self):
+        '''Returns triple of phase velocities for propagation along z given current orientation of cyrstal.'''
+        vkap=np.array([0,0,1], dtype=np.float128)
+        v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
+        return v_vphase
+
+
     def has_elastic_properties(self):
         """Returns true if the material has at least some elastic properties defined."""
         return self.rho is not None
@@ -692,7 +699,8 @@ class Material(object):
 
         self._add_3d_dispersion_curves_to_axes(ax_vp, ax_vg)
 
-        plt.savefig(pref + "-bulkdisp3D.png")
+        fig.savefig(pref + "-bulkdisp3D.png")
+        plt.close(fig)
 
     def plot_bulk_dispersion(self, pref, label=None):
         """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
@@ -720,7 +728,8 @@ class Material(object):
 
         self._add_3d_dispersion_curves_to_axes(ax_ivp_3d)
 
-        plt.savefig(pref + "-bulkdisp.png")
+        fig.savefig(pref + "-bulkdisp.png")
+        plt.close(fig)
 
     def add_bulk_slowness_curves_to_axes(self, pref, fig, ax_sl, ax_vp, ax_vg, cm):
         npolpts = 28

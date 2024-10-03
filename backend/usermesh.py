@@ -38,7 +38,6 @@ class UserGeometryBase():
         self._req_params.extend(l_nms)
         self._num_named_materials = num_mats
 
-
     def set_allowed_parameters(self, l_nms, num_allowed_mats):
         self._allowed_params.extend(l_nms)
         for im in range(num_allowed_mats): # need mat_a, mat_b, mat_c, etc
@@ -89,6 +88,16 @@ class UserGeometryBase():
                 reporting.report(
                     f"Waveguide '{self._geom_name}' will ignore the parameter '{key}' in make_structure().")
 
+
+    def check_dimensions(self):  # override to implement check for each mesh design
+        dims_ok = True
+        msg=''
+        return dims_ok, msg
+
+    def validate_dimensions(self):
+        '''Checks that the combination of user parameters defines a well-defined consistent geometry.'''
+        dims_ok, msg = self.check_dimensions()
+        if not dims_ok: reporting.report_and_exit(f'There is a problem with the waveguide structure:\n{msg}')
 
     def set_num_type_materials(self, n):
         self._num_type_materials = n

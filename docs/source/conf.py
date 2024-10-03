@@ -48,12 +48,14 @@ from pathlib import Path
 #sys.path.insert(0, os.path.abspath('../../backend/'))
 #
 
-sys.path.insert(0, str(Path.home() / 'numbat/nb_releases/nb_latest/backend'))
+#sys.path.insert(0, str(Path.home() / 'research/numbat/nb_releases/nb_latest/backend'))
 #sys.path.insert(0, '../backend')
 #sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
 #sys.path.insert(0, r'%HOMEPATH%\numbat\nb_releases\nb_latest\backend')
+sys.path.insert(0, str(Path.home() / 'research/numbat/devel_1/backend'))
 
 
+print('path is', sys.path)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -68,7 +70,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'nbsphinx',             # parser for jupyter notebooks
-    'sphinxcontrib.bibtex'
+    'sphinxcontrib.bibtex',
+    'sphinx_subfigure'
 
 #    'sphinx.ext.coverage',
 #    'sphinx.ext.viewcode',

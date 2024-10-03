@@ -207,7 +207,7 @@ contains
       !  tol = 0.0 !  ARPACK accuracy (0.0 for machine precision)
 
       dim_x = dimscale_in_m
-      dim_y= dimscale_in_m
+      dim_y = dimscale_in_m
       shift_omsq= (2*D_PI*shift_nu)**2
 
       !####################  Start FEM PRE-PROCESSING  #######################

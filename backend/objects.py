@@ -24,7 +24,7 @@ import os
 import subprocess
 import copy
 import traceback
-import itertools
+#import itertools
 
 
 import tempfile
@@ -32,7 +32,7 @@ from pathlib import Path
 import json
 import importlib
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
+#import matplotlib.ticker as mticker
 
 import numpy as np
 import scipy.interpolate
@@ -41,7 +41,7 @@ import scipy.interpolate
 import numbat
 import reporting
 from nbtypes import SI_nm
-from numbattools import np_min_max
+#from numbattools import np_min_max
 
 import materials
 from mode_calcs import EMSimulation, ACSimulation
@@ -593,6 +593,7 @@ class Structure:
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
 
         wg_geom.check_parameters(params)
+        wg_geom.check_dimensions()
         self.wg_geom = wg_geom
 
 
@@ -636,9 +637,12 @@ class Structure:
             cmd  = [gmsh_exe]
             cmd.extend(args.split())
 
+
             comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+
             if comp_stat.returncode:
-                reporting.report_and_exit(f'Gmsh call failed executing: "{' '.join(cmd)}".')
+                tcmd = ' '.join(cmd)
+                reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
             assertions_on = False
             err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
@@ -658,11 +662,7 @@ class Structure:
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
         self.msh_name = msh_fname
 
-        # read in first line giving number of msh points and elements
-        with open(self.mesh_mail_fname) as f:
-            mail_lines= f.readlines()
-
-        self.mail_data = nbgmsh.MailData(mail_lines)  #keep track of the Mail format
+        self.mail_data = nbgmsh.MailData(self.mesh_mail_fname)  #keep track of the Mail format
 
     def plot_mail_mesh(self, outpref):
         path = numbat.NumBATApp().outpath()
@@ -787,76 +787,96 @@ class Structure:
 
         return sim.get_sim_result()
 
-    def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
-                                          aspect=1.0, with_cb=True):
-        fem_mesh = femmesh.FemMesh()
-        fem_mesh.build_from_gmsh_mail(self)
 
-        neff_nodes = np.zeros([6, fem_mesh.n_msh_el], dtype=np.float64)
-
-        opt_props = self.optical_props
+    def _make_refindex_plotter(self, as_epsilon, n_points):
 
 
-        # Assign a common refractive index to all nodes of each element
-        for i_el in range(fem_mesh.n_msh_el):
-            neff_nodes[:,i_el] = np.real(
-                opt_props.v_refindexn[fem_mesh.v_el_2_mat_idx[i_el]-1])  # -1 because of fortran indexing
+        v_neffeps = self.optical_props.v_refindexn  # mapping from material index to refractive index
 
-        neff_nodes = neff_nodes.flatten('F')
-
-
-        # neff_nodes is now a refractive index map on the full fem mesh to which we can
-        # apply triangular interpolation
-
-
-        # get approx square pixel rectangular grid
-        v_x, v_y = fem_mesh.rect_grid(n_points)
-
-        m_x, m_y = np.meshgrid(v_x, v_y)
-
-        v_x_flat = m_x.flatten('F')
-        v_y_flat = m_y.flatten('F')
-
-        interp = fem_mesh.make_interpolator_for_grid(v_x_flat, v_y_flat, len(v_x), len(v_y))
-        m_neffeps = interp(neff_nodes)
-
-        fig, ax = plt.subplots()
         if as_epsilon:
-            m_neffeps = m_neffeps**2
-            label=r'$\epsilon(\vec x)$'
+            v_neffeps = v_neffeps**2
+            nm_eng = 'Dielectric constant'
+            nm_math=r'$\epsilon(\vec x)$'
+            fname_suffix='dielectric_constant'
         else:
-            label=r'$n(\vec x)$'
+            nm_eng = 'Refractive index'
+            nm_math=r'$n(\vec x)$'
+            fname_suffix='refractive_index'
 
-        # TODO: explain the need for the transpose in the imshow call below
-        epslo, epshi = np_min_max(m_neffeps)
+        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        #fsfp.set_quantity_name(nm_math, fname_suffix)
 
-        cmap='cool'
-        im=ax.imshow(m_neffeps.T, cmap=cmap, vmin=1.0, vmax=epshi, origin='lower',
-                     extent = [np.min(v_x), np.max(v_x), np.min(v_y), np.max(v_y) ])
-        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
-        ax.set_xlabel(r'$x$ [μm]')
-        ax.set_ylabel(r'$y$ [μm]')
-        ax.set_aspect(aspect)
-        im.set_clim(1,np.nanmax(m_neffeps))
-        if with_cb:
-            ticks = np.linspace(epslo, epshi,5)
-            fmts = ((f'{epslo:.4f}',), map(lambda x: f'{x:.1f}', ticks[1:-1]),
-                                             (f'{epshi:.4f}',))
-            fmts = list(itertools.chain.from_iterable(fmts))
+        unit=''
 
-            fmt = mticker.FixedFormatter(fmts)
-            cax = ax.inset_axes([1.04, .1, 0.03, 0.8])
-            cb=fig.colorbar(im, cax=cax, ticks=ticks, format=fmt)
-            cb.ax.set_title(label)
-            cb.ax.tick_params(labelsize=12)
-            cb.outline.set_linewidth(.5)
-            cb.outline.set_color('gray')
+        fsfp.setup_scalar_properties(nm_eng, unit, nm_math, fname_suffix)
+        fsfp.fill_quantity_by_material_index(v_neffeps)
 
 
-        plotting.save_and_close_figure(fig, prefix+'-ref_index.png')
+
+        return fsfp
+
+    def plot_refractive_index_profile(self, pref):
+        pl_ref = self.get_structure_plotter_refractive_index()
+        pl_ref.make_plot_2D(pref)
+
+    def get_structure_plotter_refractive_index(self, n_points=500):
+        return self._make_refindex_plotter(False, n_points)
+
+    def get_structure_plotter_epsilon(self, n_points=500):
+        return self._make_refindex_plotter(True, n_points)
+
+    def get_structure_plotter_stiffness(self, c_I, c_J, n_points=500):
+        if c_I <1 or c_I > 6 or c_J<1 or c_J>6:
+            reporting.report_and_exit('Stiffness tensor indices c_I, c_J must be in the range 1..6.')
+
+        v_stiff = np.zeros(5) # fill me
+
+        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        qname = 'Stiffness $c_{'+f'{c_I},{c_J}' +'}$'
+        suffname = f'stiffness_c_{c_I}{c_J}'
+        fsfp.set_quantity_name(qname, suffname)
+        fsfp.fill_scalar_by_material_index(v_stiff)
+
+    def get_structure_plotter_acoustic_velocity(self, n_points=500):
+        v_mats = list(self.d_materials.values())
+        v_acvel = np.zeros([len(v_mats),3])
+        for i in range(len(v_mats)):
+            if v_mats[i].has_elastic_properties():
+                v_acvel[i,:] = v_mats[i].Vac_phase()
+
+        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$', [r'$v_0$', r'$v_1$', r'$v_2$'],
+                                     'elastic_velocity', ['v0', 'v1', 'v2'])
+
+        fsfp.fill_quantity_by_material_index(v_acvel)
+        return fsfp
+
+    # def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
+    #                                       aspect=1.0, with_cb=True):
+
+    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
+    #     fsfp.make_plot_2d(prefix )
+
+    # def plot_refractive_index_profile_xcut(self, prefix, y0=0, n_points = 500, as_epsilon=False):
+    #     ''' Find index profile along line y=y0'''
+    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
+    #     fsfp.make_plot_xcut(prefix, y0)
+
+
+    # def plot_refractive_index_profile_ycut(self, prefix, x0=0, n_points = 500, as_epsilon=False):
+    #     ''' Find index profile along line y=x0'''
+    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
+    #     fsfp.make_plot_ycut(prefix, x0)
+
+    # def plot_refractive_index_profile_1D(self, prefix, pt0, pt1, n_points = 500, as_epsilon=False):
+    #     ''' Find index profile along line from pt0=(x0,y0) to pt1=(x1,y1).'''
+    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
+    #     fsfp.make_plot_1D(prefix, pt0, pt1, n_points)
 
 
     def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
+        ''' Draws refractive index profile by primitive sampling, not proper triangular mesh sampling'''
+
         print('\n\nPlotting ref index')
 
 

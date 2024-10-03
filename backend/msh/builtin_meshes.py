@@ -143,6 +143,21 @@ class Rectangular(UserGeometryBase):
         ax.add_patch(mplpatches.Rectangle((-wid/2, -hgt/2), wid, hgt,
                       facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        wid = self.get_param('inc_a_x')
+        hgt = self.get_param('inc_a_y')
+
+        msg= ''
+
+        if wid >= dom_x: msg += 'Waveguide width (inc_a_x) is larger than domain width (domain_x).\n'
+        if hgt >= dom_y: msg += 'Waveguide height (inc_a_y) is larger than domain height (domain_y).\n'
+
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
+
 
 class TwoIncl(UserGeometryBase):
 
@@ -214,6 +229,24 @@ class Triangular(UserGeometryBase):
 
         return subs
 
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        base_wid = self.get_param('base_width')
+        peak_xoff = self.get_param('peak_xoff')
+        peak_height = self.get_param('peak_height')
+        
+        peak_locx = -base_wid/2 + peak_xoff
+
+        msg= ''
+
+        if base_wid < dom_x: msg += 'Waveguide base width (base_width) is larger than the domain width (domain_x).\n'
+
+        if peak_locx < -dom_x/2 or peak_locx > dom_x/2: msg += 'Waveguide peak is outside the x-domain (domain_x).\n'
+        if peak_height > dom_y/2 or peak_height< -dom_y/2: msg += 'Waveguide height (peak_height) is too large for the domain height (domain_y).\n'
+
+        dims_ok = not len(msg)
+        return dims_ok, msg
 
     def draw_mpl_frame(self, ax):
         wid = self.get_param('base_width') * nmtoum
@@ -245,7 +278,7 @@ def make_onion_subs(umb):
     subs.append(('a13 = 100;', 'a13 = %f;', umb.get_param('inc_m_x')))
     subs.append(('a14 = 100;', 'a14 = %f;', umb.get_param('inc_n_x')))
     subs.append(('a15 = 100;', 'a15 = %f;', umb.get_param('inc_o_x')))
-    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc')))
+    subs.append(('lc = 0.1;', 'lc = %f;', umb.get_param('lc_bkg')))
     subs.append(
         ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', umb.get_param('lc_refine_1')))
     subs.append(
@@ -296,31 +329,127 @@ class Onion(UserGeometryBase):
 class Onion1(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a one-layer circular waveguide in a square domain.'''
-        self.set_properties('onion1', 2, True, desc)
+        nt=2
+
+        self.set_properties('onion1', nt, True, desc)
+
+        self.set_required_parameters(['inc_a_x'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+        self.set_parameter_help(
+                { 'inc_a_x': "diameter of central cylinder",
+                  'material_a': "material of central cylinder",
+                  'lc_bkg': "mesh spacing on outer boundary",
+                  'lc_refine_2': "mesh refinement on cylinder 1",
+                  }
+                )
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        diam_a = self.get_param('inc_a_x')
+
+        msg= ''
+
+        if diam_a >= dom_x: msg += 'Waveguide cylinder a (inc_a_x) has diameter larger than domain width (domain_x).\n'
+        if diam_a >= dom_y: msg += 'Waveguide cylinder a (inc_a_x) has diameter larger than domain height (domain_y).\n'
+
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
     def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
+
+
 
 class Onion2(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a two-layer circular waveguide in a square domain.'''
-        self.set_properties('onion2', 3, True, desc)
+
+        nt = 3
+        self.set_properties('onion2', nt, True, desc)
+
+        self.set_required_parameters(['inc_a_x', 'inc_b_x'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+
+        self.set_parameter_help(
+                { 'inc_a_x': "diameter of central (a) cylinder",
+                  'inc_b_x': "annular radius of second (b) ring",
+                  'material_a': "material of central (a) cylinder",
+                  'material_a': "material of second (b) ring",
+                  'lc_bkg': "mesh spacing on outer boundary",
+                  'lc_refine_2': "mesh refinement on cylinders",
+                  }
+                )
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        rad_a = self.get_param('inc_a_x')/2.0
+        rad_ann_b = self.get_param('inc_b_x')
+
+        msg= ''
+
+        diam_outer = 2*(rad_a+rad_ann_b)
+
+        if diam_outer >= dom_x: msg += 'Outer cylinder has total diameter larger than domain width (domain_x).\n'
+        if diam_outer >= dom_y: msg += 'Outer cylinder has total diameter larger than domain height (domain_y).\n'
+
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
     def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
+
+
 
 class Onion3(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a square domain.'''
-        self.set_properties('onion3', 4, True, desc)
+        nt=4
+        self.set_properties('onion3', nt, True, desc)
+
+        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+
+        self.set_parameter_help(
+                { 'inc_a_x': "diameter of central (a) cylinder",
+                  'inc_b_x': "annular radius of second (b) ring",
+                  'inc_c_x': "annular radius of third (c) ring",
+                  'material_a': "material of central (a) cylinder",
+                  'material_b': "material of second (b) ring",
+                  'material_c': "material of third (c) ring",
+                  'lc_bkg': "mesh spacing on outer boundary",
+                  'lc_refine_2': "mesh refinement on cylinders",
+                  }
+                )
+
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        rad_a = self.get_param('inc_a_x')/2.0
+        rad_ann_b = self.get_param('inc_b_x')
+        rad_ann_c = self.get_param('inc_c_x')
+
+        msg= ''
+
+        diam_outer = 2*(rad_a+rad_ann_b+rad_ann_c)
+
+        if diam_outer >= dom_x: msg += 'Outer cylinder has total diameter larger than domain width (domain_x).\n'
+        if diam_outer >= dom_y: msg += 'Outer cylinder has total diameter larger than domain height (domain_y).\n'
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
 
     def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
@@ -364,9 +493,42 @@ class CircOnion3(UserGeometryBase):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a circular domain.'''
         self.set_properties('circ_onion3', 4, True, desc)
 
+        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+
+        self.set_parameter_help(
+                { 'inc_a_x': "diameter of central (a) cylinder",
+                  'inc_b_x': "annular radius of second (b) ring",
+                  'inc_c_x': "annular radius of third (c) ring",
+                  'material_a': "material of central (a) cylinder",
+                  'material_b': "material of second (b) ring",
+                  'material_c': "material of third (c) ring",
+                  'lc_bkg': "mesh spacing on outer boundary",
+                  'lc_refine_2': "mesh refinement on cylinders",
+                  }
+                )
+
+
     def apply_parameters(self):
         subs = make_onion_subs(self)
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        rad_a = self.get_param('inc_a_x')/2.0
+        rad_ann_b = self.get_param('inc_b_x')
+        rad_ann_c = self.get_param('inc_c_x')
+
+        msg= ''
+
+        diam_outer = 2*(rad_a+rad_ann_b+rad_ann_c)
+
+        if diam_outer >= dom_x: msg += 'Outer cylinder has total diameter larger than domain width (domain_x).\n'
+        if diam_outer >= dom_y: msg += 'Outer cylinder has total diameter larger than domain height (domain_y).\n'
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
 
     def draw_mpl_frame(self, ax): draw_onion_frame(ax, self)
 
@@ -398,7 +560,7 @@ class Pedestal(UserGeometryBase):
         subs.append(('slabxtop = 60;', 'slabxtop = %f;', self.get_param('slab_b_x')))
         subs.append(('px = 2;', 'px = %f;', self.get_param('pillar_x')))
         subs.append(('py = 5;', 'py = %f;', self.get_param('pillar_y')))
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc_bkg')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -450,7 +612,7 @@ class TrapezoidalRib(UserGeometryBase):
         subs.append(('bottom_rib_width = 1800.0;', 'bottom_rib_width = %f;', self.get_param('slab_b_x')))
         subs.append(('slab_thickness = 300.0;',    'slab_thickness = %f;',   self.get_param('slab_a_y')))
 
-        subs.append(('lc = 0.020000;',         "lc = %f;", self.get_param('lc')))
+        subs.append(('lc = 0.020000;',         "lc = %f;", self.get_param('lc_bkg')))
         subs.append(('lc_refine_1 = lc/10.0;', "lc_refine_1 = lc/%f;", self.get_param('lc_refine_1')))
         subs.append(('lc_refine_2 = lc/5.0;',  "lc_refine_2 = lc/%f;", self.get_param('lc_refine_2')))
 
@@ -494,7 +656,7 @@ class Rib(UserGeometryBase):
         subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('rib_h')))
         subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_w')))
         subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_h')))
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc_bkg')))
         subs.append( ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append( ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
 
@@ -596,7 +758,7 @@ class RibDoubleCoated(UserGeometryBase):
         subs.append(('coat2x = 4;', 'coat2x = %f;', self.get_param('coat2_w')))
         subs.append(('coat2y = 4;', 'coat2y = %f;', self.get_param('coat2_h')))
 
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
+        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc_bkg')))
         subs.append(
             ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
         subs.append(
@@ -618,22 +780,61 @@ class Slot(UserGeometryBase):
         desc = '''A NumBAT geometry template for a slot waveguide.  '''
         self.set_properties('slot', 4, False, desc)
 
+        nt=4
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w' ],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2' ],  num_allowed_mats=nt)
+        self.set_parameter_help(
+                {
+                'rib_w': "width of raised ribs",
+                'rib_h': "height of raised ribs",
+                'slot_w': "width of slot between ribs",
+                'slab_w': "width of slab substrate region",
+                'slab_h': "height of slab substrate region",
+                'material_bkg': "background material",
+                'material_a': "material of slot",
+                'material_b': "material of substrate slab",
+                'material_c': "material of ribs",
+                'lc_refine_1': "refine factor for slot and ribs",
+                'lc_refine_2': "refine factor for slab and ribs",
+
+                    }
+                )
+
     def apply_parameters(self):
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
-        subs.append(('a2 = 20;', 'a2 = %f;', self.get_param('inc_b_x')))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
-        subs.append(('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
-        subs.append(('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
-        subs.append(('lc_refine_3 = lc/1;', 'lc_refine_3 = lc/%f;', self.get_param('lc_refine_3')))
+        subs = [('dx_in_nm = 1000;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 500;', 'dy_in_nm = %f;', self.get_param('domain_y')))
+        subs.append(('slot_w = 200;', 'slot_w = %f;', self.get_param('slot_w')))
+        subs.append(('rib_h = 100;', 'rib_h = %f;', self.get_param('rib_h')))
+        subs.append(('rib_w = 200;', 'rib_w = %f;', self.get_param('rib_w')))
+        subs.append(('slab_w = 800;', 'slab_w = %f;', self.get_param('slab_w')))
+        subs.append(('slab_h = 100;', 'slab_h = %f;', self.get_param('slab_h')))
+        subs.append(('lc_bkg = 0.1;', 'lc_bkg = %f;', self.get_param('lc_bkg')))
+        subs.append(('lc_refine_1 = lc_bkg/1;', 'lc_refine_1 = lc_bkg/%f;', self.get_param('lc_refine_1')))
+        subs.append(('lc_refine_2 = lc_bkg/1;', 'lc_refine_2 = lc_bkg/%f;', self.get_param('lc_refine_2')))
 
         return subs
 
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        slot_w = self.get_param('slot_w')
+        rib_w = self.get_param('rib_w')
+        rib_h = self.get_param('rib_h')
+        slab_w = self.get_param('slab_w')
+        slab_h = self.get_param('slab_h')
+
+        msg= ''
+
+        if slab_w >= dom_x: msg += 'Slab width (slab_w) is larger than domain width (domain_x).\n'
+        if slab_h >= dom_y/2: msg += 'Slab height (slab_h) is larger than half the domain height (domain_y).\n'
+        if rib_h >= dom_y/2: msg += 'Rib height (rib_h) is larger than half the domain height (domain_y).\n'
+
+        if slot_w+2*rib_w >= dom_x: msg += 'Slot and ribs are together wider than domain width (domain_x).\n'
+
+        dims_ok = not len(msg)
+
+        return dims_ok, msg
 
 class SlotCoated(UserGeometryBase):
 
@@ -642,24 +843,68 @@ class SlotCoated(UserGeometryBase):
         desc = '''A NumBAT geometry template for a slot waveguide.  '''
         self.set_properties('slot_coated', 6, False, desc)
 
-    def apply_parameters(self):
-        # msh_name = self.get_param('_make_mesh_name(self.msh_template,
-        #                                 (self.get_param('domain_x, self.get_param('domain_y, self.get_param('inc_a_x,
-        #                                  self.get_param('inc_a_y, self.get_param('inc_b_x, self.get_param('slab_a_x,
-        #                                  self.get_param('slab_a_y, self.get_param('coat_y')))
+        nt=5
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w', 'coat_t' ],  num_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],  
+                                    num_allowed_mats=nt)
+        self.set_parameter_help(
+                {
+                'rib_w': "width of raised ribs",
+                'rib_h': "height of raised ribs",
+                'slot_w': "width of slot between ribs",
+                'slab_w': "width of slab substrate region",
+                'slab_h': "height of slab substrate region",
+                'coat_t': "thickness of coating layer",
+                'material_bkg': "background material",
+                'material_a': "material of slot",
+                'material_b': "material of substrate slab",
+                'material_c': "material of ribs",
+                'material_d': "material of coating",
+                'lc_refine_1': "refine factor for slot and ribs",
+                'lc_refine_2': "refine factor for slab",
+                'lc_refine_2': "refine factor for coating",
 
-        subs = [('dx_in_nm = 100;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
-        subs.append(('dy_in_nm = 50;', 'dy_in_nm = %f;', self.get_param('domain_y')))
-        subs.append(('a1 = 20;', 'a1 = %f;', self.get_param('inc_a_x')))
-        subs.append(('a1y = 10;', 'a1y = %f;', self.get_param('inc_a_y')))
-        subs.append(('a2 = 20;', 'a2 = %f;', self.get_param('inc_b_x')))
-        subs.append(('slabx = 80;', 'slabx = %f;', self.get_param('slab_a_x')))
-        subs.append(('slaby = 10;', 'slaby = %f;', self.get_param('slab_a_y')))
-        subs.append(('c1y = 10;', 'c1y = %f;', self.get_param('coat_y')))
-        subs.append(('lc = 0.1;', 'lc = %f;', self.get_param('lc')))
-        subs.append(
-            ('lc_refine_1 = lc/1;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')))
-        subs.append(
-            ('lc_refine_2 = lc/1;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2')))
+                    }
+                )
+
+    def apply_parameters(self):
+
+        subs = [('dx_in_nm = 1000;', 'dx_in_nm = %f;', self.get_param('domain_x'))]
+        subs.append(('dy_in_nm = 500;', 'dy_in_nm = %f;', self.get_param('domain_y')))
+
+        subs.append(('slot_w = 200;', 'slot_w = %f;', self.get_param('slot_w')))
+        subs.append(('rib_h = 100;', 'rib_h = %f;', self.get_param('rib_h')))
+        subs.append(('rib_w = 200;', 'rib_w = %f;', self.get_param('rib_w')))
+        subs.append(('slab_w = 800;', 'slab_w = %f;', self.get_param('slab_w')))
+        subs.append(('slab_h = 100;', 'slab_h = %f;', self.get_param('slab_h')))
+        subs.append(('coat_y = 100;', 'coat_y = %f;', self.get_param('coat_t')))
+
+        subs.append(('lc_bkg = 0.1;', 'lc_bkg = %f;', self.get_param('lc_bkg')))
+        subs.append(('lc_refine_1 = lc_bkg/1;', 'lc_refine_1 = lc_bkg/%f;', self.get_param('lc_refine_1')))
+        subs.append(('lc_refine_2 = lc_bkg/1;', 'lc_refine_2 = lc_bkg/%f;', self.get_param('lc_refine_2')))
+        subs.append(('lc_refine_3 = lc_bkg/1;', 'lc_refine_3 = lc_bkg/%f;', self.get_param('lc_refine_3')))
 
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        slot_w = self.get_param('slot_w')
+        rib_w = self.get_param('rib_w')
+        rib_h = self.get_param('rib_h')
+        slab_w = self.get_param('slab_w')
+        slab_h = self.get_param('slab_h')
+        coat_t = self.get_param('coat_t')
+
+        msg= ''
+
+        if slab_w >= dom_x: msg += 'Slab width (slab_w) is larger than domain width (domain_x).\n'
+        if slab_h >= dom_y/2: msg += 'Slab height (slab_h) is larger than half the domain height (domain_y).\n'
+        if rib_h >= dom_y/2: msg += 'Rib height (rib_h) is larger than half the domain height (domain_y).\n'
+        if rib_h+coat_t >= dom_y/2: msg += 'Rib height (rib_h) + coat thickness (coat_t) are together larger than half the domain height (domain_y).\n'
+
+        if slot_w+2*rib_w >= dom_x: msg += 'Slot and ribs are together wider than domain width (domain_x).\n'
+
+        dims_ok = not len(msg)
+
+        return dims_ok, msg
