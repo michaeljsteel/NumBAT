@@ -414,8 +414,7 @@ class FemMesh:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :],
-                                      v_triang1p)
+            check_triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :], v_triang1p)
 
 
         v_x6p, v_y6p = self.get_fullmesh_nodes_xy()
@@ -544,7 +543,7 @@ class FEMScalarFieldPlotter:
         n_elts = self.fem_mesh.n_msh_el
         self.scalar_fields = []
         for i in range(self.dim):
-            t_scalar_field = np.zeros([6, n_elts], dtype=np.float128)
+            t_scalar_field = np.zeros([6, n_elts], dtype=np.float64)
 
             for i_el in range(n_elts):
                 matel = self.element_to_material_index(i_el)

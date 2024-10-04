@@ -240,7 +240,7 @@ class Material(object):
 
     def Vac_phase(self):
         '''Returns triple of phase velocities for propagation along z given current orientation of cyrstal.'''
-        vkap=np.array([0,0,1], dtype=np.float128)
+        vkap=np.array([0,0,1], dtype=np.float64)
         v_vphase, vecs, v_vgroup = solve_christoffel(vkap, self.stiffness_c_IJ, self.rho)
         return v_vphase
 
