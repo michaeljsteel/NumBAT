@@ -404,19 +404,25 @@ def gain_and_qs(
         (ncomps, nnodes, n_modes_EM_Stokes, fem_ac.n_msh_el), dtype=complex
     )
 
+    # We want EM fields on the AC grid and only the first six FEM nodes per elt
+    # of the full 13 FEM
     for el in range(fem_ac.n_msh_el):
         new_el = fem_ac.el_convert_tbl[el]
-        for n in range(nnodes):
-            for x in range(ncomps):
-                for ival in range(n_modes_EM_pump):
-                    trimmed_EM_pump_field[x, n, ival, el] = sim_EM_pump.fem_evecs[
-                        x, n, ival, new_el
-                    ]
+        trimmed_EM_pump_field[:,:,:, el] = sim_EM_pump.fem_evecs[:,:6,:, new_el]
+        trimmed_EM_Stokes_field[:,:,:, el] = sim_EM_Stokes.fem_evecs[:,:6,:, new_el]
 
-                for ival in range(n_modes_EM_Stokes):
-                    trimmed_EM_Stokes_field[x, n, ival, el] = sim_EM_Stokes.fem_evecs[
-                        x, n, ival, new_el
-                    ]
+
+        # for n in range(nnodes):
+        #     for x in range(ncomps):
+        #         for ival in range(n_modes_EM_pump):
+        #             trimmed_EM_pump_field[x, n, ival, el] = sim_EM_pump.fem_evecs[
+        #                 x, n, ival, new_el
+        #             ]
+
+        #         for ival in range(n_modes_EM_Stokes):
+        #             trimmed_EM_Stokes_field[x, n, ival, el] = sim_EM_Stokes.fem_evecs[
+        #                 x, n, ival, new_el
+        #             ]
 
     relevant_eps_effs = []  # TODO: move this into ElProps
     for el_typ in range(opt_props.n_mats_em):
@@ -543,6 +549,7 @@ def gain_and_qs(
     elif typ_select_out is None:
         typ_select_out = -1
     print("\n Moving boundary calc")
+
     Q_MB = nb_fortran.moving_boundary(
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
