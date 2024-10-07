@@ -1,14 +1,10 @@
 !
-!!!!!!!!!!!!!!!!
-!
 !      Compute the integral: m_ijk = Integrate[P(i) * P(j) * P(k), over an interval]
 !
-!!!!!!!!!!!!!!!!
-!
+
 subroutine mat_p2_p2_p2_1d (mat, det_b)
-!
-!!!!!!!!!!!!!!!!
-!
+
+
    implicit none
    double precision mat(3,3,3), det_b
 
@@ -47,14 +43,17 @@ subroutine mat_p2_p2_p2_1d (mat, det_b)
 
    factor = 420
    factor2 = dt / factor
-   do k=1,3
-      do j=1,3
-         do i=1,3
-            mat(i,j,k) = mat(i,j,k) * factor2
-         enddo
-      enddo
-   enddo
-!
+
+   mat = mat * factor2
+
+   ! do k=1,3
+   !    do j=1,3
+   !       do i=1,3
+   !          mat(i,j,k) = mat(i,j,k) * factor2
+   !       enddo
+   !    enddo
+   ! enddo
+
    return
 end
 
