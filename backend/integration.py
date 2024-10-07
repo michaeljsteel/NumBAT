@@ -575,19 +575,11 @@ def gain_and_qs(
     Q = Q_PE + Q_MB  # TODO: the Q couplings come out as non trivially complex. Why?
 
     gain = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q * np.conj(Q))
-    gain_PE = (
-        2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE * np.conj(Q_PE))
-    )
-    gain_MB = (
-        2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_MB * np.conj(Q_MB))
-    )
+    gain_PE = (2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE * np.conj(Q_PE)))
+    gain_MB = (2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_MB * np.conj(Q_MB)))
 
-    normal_fact = np.zeros(
-        (n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex
-    )
-    for i in range(
-        n_modes_EM_Stokes
-    ):  # TODO: express this as some one line outer product?
+    normal_fact = np.zeros((n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=np.complex)
+    for i in range(n_modes_EM_Stokes):  # TODO: express this as some one line outer product?
         P1 = sim_EM_Stokes.EM_mode_power[i]
         for j in range(n_modes_EM_pump):
             P2 = sim_EM_pump.EM_mode_power[j]

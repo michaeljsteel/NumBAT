@@ -294,4 +294,30 @@ contains
 
    end function
 
+   complex(8) function v2_dot_v3(dveca, cvecb)
+   double precision dveca(2)
+      complex (8) cvecb(3)
+    v2_dot_v3 = dveca(1) * cvecb(1) +  dveca(2) * cvecb(2)
+   end function
+
+   complex(8) function cv3_dot_cv3(cveca, cvecb)
+      complex (8) cveca(3), cvecb(3)
+    cv3_dot_cv3 = cveca(1) * cvecb(1) + cveca(2) * cvecb(2) + cveca(3) * cvecb(3)
+   end function
+
+
+
+subroutine v2_cross_v3(dveca, cvecb, vres)
+complex(8) vres(3)
+   double precision dveca(2)
+      complex (8) cvecb(3)
+
+
+   vres(1) = dveca(2) * cvecb(3)   ! fx = gy hz - gz hy = gy hz
+   vres(2) = -dveca(1) * cvecb(3)  ! fy = gz hx - gx hz = -gx hz
+   vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
+end subroutine
+
+
+
 end module numbatmod
