@@ -1,14 +1,14 @@
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 !  Compute the gradient of the 10 P3 Lagrange polynomial basis function at the 6 P2 Lagrange nodes
 
 !  Note that if grad_i_0 is the gradient on the reference triangle,
 !  then the gradient on the actual triangle is:
 !  grad_i  = Transpose(mat_T)*grad_i0
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!  Finds the gradient of each basis function in the parametrised element
+!  at node inode in [1..6]
+!  Transformation using mat_jac, returned in vec_grad
 
 subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
 
@@ -20,35 +20,38 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
 
 !  Local variables
    double precision c(2,2)
-   integer(8) nnodes_P2_0
-   parameter (nnodes_P2_0 = 6)
-   double precision xel_0(2,nnodes_P2_0)
+   integer(8), parameter :: nnodes_P2_0 = 6
+   !double precision xel_0(2,nnodes_P2_0)
+
+   double precision, dimension(2,nnodes_P2_0) :: xel_0 = &
+      reshape( (/ 0.d0, 1.d0, 0.d0, 0.5d0, 0.5d0, 0.d0, &
+                  0.d0, 0.d0, 1.d0, 0.0d0, 0.5d0, 0.5d0 /), &
+                  shape(xel_0), order=(/2,1/))
+
    double precision phi_xi, phi_yi
    double precision phi0_xi, phi0_yi
    double precision x, y
    integer(8) i
 
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 !  Coordinates (x,y)= xel_0(1..2,inode) of the P2 Lagrange interpolaion nodes
-   xel_0(1,1) = 0
-   xel_0(2,1) = 0
+   ! xel_0(1,1) = 0
+   ! xel_0(2,1) = 0
 
-   xel_0(1,2) = 1
-   xel_0(2,2) = 0
+   ! xel_0(1,2) = 1
+   ! xel_0(2,2) = 0
 
-   xel_0(1,3) = 0
-   xel_0(2,3) = 1
+   ! xel_0(1,3) = 0
+   ! xel_0(2,3) = 1
 
-   xel_0(1,4) = 0.5d0
-   xel_0(2,4) = 0
+   ! xel_0(1,4) = 0.5d0
+   ! xel_0(2,4) = 0
 
-   xel_0(1,5) = 0.5d0
-   xel_0(2,5) = 0.5d0
+   ! xel_0(1,5) = 0.5d0
+   ! xel_0(2,5) = 0.5d0
 
-   xel_0(1,6) = 0
-   xel_0(2,6) = 0.5d0
+   ! xel_0(1,6) = 0
+   ! xel_0(2,6) = 0.5d0
 
 !  C = Tanspose[mat_jac]
    c(1,1) = mat_jac(1,1)

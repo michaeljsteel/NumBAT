@@ -15,8 +15,8 @@ subroutine phi2_2d_mat (vx, phi, mat_grad)
    double precision x0, y0
    integer(8) inode
 
-   x0 = x(1)
-   y0 = x(2)
+   x0 = vx(1)
+   y0 = vx(2)
 
    inode = 1
    phi(inode) = (-1 + x0 + y0)*(-1 + 2*x0 + 2*y0)

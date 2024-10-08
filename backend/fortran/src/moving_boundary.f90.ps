@@ -1,0 +1,2378 @@
+%!PS-Adobe-3.0
+%%Title: moving_boundary.f90
+%%For: Michael Steel
+%%Creator: a2ps version 4.15.5
+%%CreationDate: Thu Oct  3 17:10:51 2024
+%%BoundingBox: 24 24 571 818
+%%DocumentData: Clean7Bit
+%%Orientation: Landscape
+%%Pages: 7
+%%PageOrder: Ascend
+%%DocumentMedia: a4 595 842 0 () ()
+%%DocumentNeededResources: font Courier
+%%+ font Courier-Bold
+%%+ font Helvetica
+%%+ font Helvetica-Bold
+%%+ font Symbol
+%%+ font Times-Bold
+%%+ font Times-Roman
+%%DocumentProcessColors: Black Blue Green Red 
+%%DocumentSuppliedResources: procset a2ps-color-prolog
+%%+ encoding ISO-8859-1Encoding
+%%EndComments
+/a2psdict 200 dict def
+a2psdict begin
+%%BeginProlog
+%%Copyright: (c) 1988-2017 Free Software Foundation, Inc.
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+
+% EPSF import as in the Red Book
+/BeginInclude {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack 
+  userdict begin
+    0 setgray 0 setlinecap
+    1 setlinewidth 0 setlinejoin
+    10 setmiterlimit [ ] 0 setdash newpath
+    gs_languagelevel 1 ne {
+      false setstrokeadjust false setoverprint 
+    } if
+} bind def
+
+/EndInclude {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+/BeginEPSF {
+  BeginInclude
+  /showpage { } def
+} bind def
+
+/EndEPSF {
+  EndInclude
+} bind def
+
+% Page prefeed
+/page_prefeed {         % bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} bind def
+
+/deffont {
+  findfont exch scalefont def
+} bind def
+
+/reencode_font {
+  findfont reencode 2 copy definefont pop def
+} bind def
+
+% Function c-show (str => -)
+% centers text only according to x axis.
+/c-show { 
+  dup stringwidth pop
+  2 div neg 0 rmoveto
+  show
+} bind def
+
+% Function l-show (str => -)
+% prints texts so that it ends at currentpoint
+/l-show {
+  dup stringwidth pop neg 
+  0 
+  rmoveto show
+} bind def
+
+% center-fit show (str w => -)
+% show centered, and scale currentfont so that the width is less than w
+/cfshow {
+  exch dup stringwidth pop
+  % If the title is too big, try to make it smaller
+  3 2 roll 2 copy
+  gt
+  { % if, i.e. too big
+    exch div
+    currentfont exch scalefont setfont
+  } { % ifelse
+    pop pop 
+  }
+  ifelse
+  c-show			% center title
+} bind def
+
+% Return the y size of the current font
+% - => fontsize
+/currentfontsize {
+  currentfont /FontType get 0 eq {
+    currentfont /FontMatrix get 3 get
+  }{
+    currentfont /FontMatrix get 3 get 1000 mul
+  } ifelse
+} bind def
+
+% reencode the font
+% <encoding-vector> <fontdict> -> <newfontdict>
+/reencode { %def
+  dup length 5 add dict begin
+    { %forall
+      % <vector> <key> <val>
+      1 index /FID ne 
+      { def }{ pop pop } ifelse
+    } forall
+    /Encoding exch def % -
+
+    % Use the font's bounding box to determine the ascent, descent,
+    % and overall height; don't forget that these values have to be
+    % transformed using the font's matrix.
+    % We use `load' because sometimes BBox is executable, sometimes not.
+    % Since we need 4 numbers an not an array avoid BBox from being executed
+    /FontBBox load aload pop
+    FontMatrix transform /Ascent exch def pop
+    FontMatrix transform /Descent exch def pop
+    /FontHeight Ascent Descent sub def
+
+    % Get the underline position and thickness if they're defined.
+    % Use 1 if they are not defined.
+    currentdict /FontInfo 2 copy known
+    { get
+      /UnderlinePosition 2 copy % <FontInfo> /UP <FontInfo> /UP
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+
+      /UnderlineThickness 2 copy % <FontInfo> /UT <FontInfo> /UT
+      2 copy known
+      { get }{ pop pop 1 } ifelse
+      0 exch FontMatrix transform exch pop
+      def % <FontInfo>
+      pop % -
+    }{ pop pop
+    } ifelse
+
+    currentdict
+  end 
+} bind def
+
+% composite fonts for ASCII-EUC mixed strings
+% Version 1.2 1/31/1990
+% Original Ken'ichi HANDA (handa@etl.go.jp)
+% Modified Norio Katayama (katayama@rd.nacsis.ac.jp),1998
+% Extend & Fix Koji Nakamaru (maru@on.cs.keio.ac.jp), 1999
+% Anyone can freely copy, modify, distribute this program.
+
+/copyfont {	% font-dic extra-entry-count  copyfont  font-dic
+	1 index maxlength add dict begin
+	{	1 index /FID ne 2 index /UniqueID ne and
+		{def} {pop pop} ifelse
+	} forall
+	currentdict
+	end
+} bind def
+
+/compositefont { % ASCIIFontName EUCFontName RomanScale RomanOffset Rot(T/F) compositefont font
+    /RomanRotation exch def
+    /RomanOffset exch def
+    /RomanScale exch def
+    userdict /fixeucfont_dict known not {
+	userdict begin
+	    /fixeucfont_dict 2 dict begin
+		/UpperByteEncoding [
+		    16#00 1 16#20 { pop 0 } for
+		    16#21 1 16#28 { 16#20 sub } for
+		    16#29 1 16#2F { pop 0 } for
+		    16#30 1 16#74 { 16#27 sub } for
+		    16#75 1 16#FF { pop 0 } for
+		] def
+	        /LowerByteEncoding [
+		    16#00 1 16#A0 { pop /.notdef } for
+		    16#A1 1 16#FE { 16#80 sub 16 2 string cvrs
+				    (cXX) dup 1 4 -1 roll
+				    putinterval cvn } for
+		    /.notdef
+		] def
+		currentdict
+	    end def
+	end
+    } if
+    findfont dup /FontType get 0 eq {
+	14 dict begin
+	    %
+	    % 7+8 bit EUC font
+	    %
+	    12 dict begin
+		/EUCFont exch def
+		/FontInfo (7+8 bit EUC font) readonly def
+		/PaintType 0 def
+		/FontType 0 def
+		/FontMatrix matrix def
+		% /FontName
+		/Encoding fixeucfont_dict /UpperByteEncoding get def
+		/FMapType 2 def
+		EUCFont /WMode known
+		{ EUCFont /WMode get /WMode exch def }
+		{ /WMode 0 def } ifelse
+		/FDepVector [
+		    EUCFont /FDepVector get 0 get
+		    [ 16#21 1 16#28 {} for 16#30 1 16#74 {} for ]
+		    {
+			13 dict begin
+			    /EUCFont EUCFont def
+			    /UpperByte exch 16#80 add def	
+			    % /FontName
+			    /FontInfo (EUC lower byte font) readonly def
+			    /PaintType 0 def
+			    /FontType 3 def
+			    /FontMatrix matrix def
+			    /FontBBox {0 0 0 0} def
+			    /Encoding
+				fixeucfont_dict /LowerByteEncoding get def
+			    % /UniqueID
+			    % /WMode
+			    /BuildChar {
+				gsave
+				exch dup /EUCFont get setfont
+				/UpperByte get
+				2 string
+				dup 0 4 -1 roll put
+				dup 1 4 -1 roll put
+				dup stringwidth setcharwidth
+				0 0 moveto show
+				grestore
+			    } bind def
+			    currentdict
+			end
+			/lowerbytefont exch definefont
+		    } forall
+		] def
+		currentdict
+	    end
+	    /eucfont exch definefont
+	    exch
+	    findfont 1 copyfont dup begin
+		RomanRotation {
+			/FontMatrix FontMatrix
+			[ 0 RomanScale neg RomanScale 0 RomanOffset neg 0 ]
+			matrix concatmatrix def
+		}{
+			/FontMatrix FontMatrix
+			[ RomanScale 0 0 RomanScale 0 RomanOffset ] matrix concatmatrix
+			def
+			/CDevProc
+			    {pop pop pop pop 0 exch -1000 exch 2 div 880} def
+		} ifelse
+	    end
+	    /asciifont exch definefont
+	    exch
+	    /FDepVector [ 4 2 roll ] def
+	    /FontType 0 def
+	    /WMode 0 def
+	    /FMapType 4 def
+	    /FontMatrix matrix def
+	    /Encoding [0 1] def
+	    /FontBBox {0 0 0 0} def
+%	    /FontHeight 1.0 def % XXXX
+	    /FontHeight RomanScale 1.0 ge { RomanScale }{ 1.0 } ifelse def
+	    /Descent -0.3 def   % XXXX
+	    currentdict
+	end
+	/tmpfont exch definefont
+	pop
+	/tmpfont findfont
+    }{
+	pop findfont 0 copyfont
+    } ifelse
+} def	
+
+/slantfont {	% FontName slant-degree  slantfont  font'
+    exch findfont 1 copyfont begin
+    [ 1 0 4 -1 roll 1 0 0 ] FontMatrix exch matrix concatmatrix
+    /FontMatrix exch def
+    currentdict
+    end
+} def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+
+% -------- Some routines to enlight plain b/w printings ---------
+
+% Underline
+% width --
+/dounderline {
+  currentpoint
+  gsave
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    0 rlineto
+    stroke
+  grestore
+} bind def
+
+% Underline a string
+% string --
+/dounderlinestring {
+  stringwidth pop
+  dounderline
+} bind def
+
+/UL {
+  /ul exch store
+} bind def
+
+% Draw a box of WIDTH wrt current font
+% width --
+/dobox {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    stroke
+  grestore
+} bind def
+
+/BX {
+  /bx exch store
+} bind def
+
+% Box a string
+% string --
+/doboxstring {
+  stringwidth pop
+  dobox
+} bind def
+
+%
+% ------------- Color routines ---------------
+%
+/FG /setrgbcolor load def
+
+% Draw the background
+% width --
+/dobackground {
+  currentpoint
+  gsave
+    newpath
+    moveto
+    0 currentfont /Descent get currentfontsize mul rmoveto
+    dup 0 rlineto
+    0 currentfont /FontHeight get currentfontsize mul rlineto
+    neg 0 rlineto
+    closepath
+    bgcolor aload pop setrgbcolor
+    fill
+  grestore
+} bind def
+
+% Draw bg for a string
+% string --
+/dobackgroundstring {
+  stringwidth pop
+  dobackground
+} bind def
+
+
+/BG {
+  dup /bg exch store
+  { mark 4 1 roll ] /bgcolor exch store } if
+} bind def
+
+
+/Show {
+  bg { dup dobackgroundstring } if
+  ul { dup dounderlinestring } if
+  bx { dup doboxstring } if
+  show
+} bind def
+
+% Function T(ab), jumps to the n-th tabulation in the current line
+/T {
+  cw mul x0 add
+  bg { dup currentpoint pop sub dobackground } if
+  ul { dup currentpoint pop sub dounderline } if
+  bx { dup currentpoint pop sub dobox } if
+  y0 moveto
+} bind def
+
+% Function n: move to the next line
+/n {
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+% Function N: show and move to the next line
+/N {
+  Show
+  /y0 y0 bfs sub store
+  x0 y0 moveto
+} bind def
+
+/S {
+  Show
+} bind def
+
+%%Copyright: (c) 1988, 89, 90, 91, 92, 93 Miguel Santana
+%%Copyright: (c) 1995, 96, 97, 98 Akim Demaille, Miguel Santana
+% Function title: prints page header.
+% <ct> <rt> <lt> are passed as argument
+/title { 
+  % 1. Draw the background
+  x v get y v get moveto
+  0 setgray
+  gsave
+    0 th 2 div neg rmoveto 
+    th setlinewidth
+    0.5 0.5 1 setrgbcolor
+    pw 0 rlineto stroke
+  grestore
+  % 2. Border it
+  gsave
+    0.7 setlinewidth
+    pw 0 rlineto
+    0 th neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+  % stk: ct rt lt
+  x v get y v get th sub 1 add moveto
+%%IncludeResource: font Helvetica
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  % 3. The left title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    fnfs 0.8 mul hm rmoveto
+    show			% left title
+  grestore
+  exch
+  % stk: ct ltw rt
+  % 4. the right title
+  gsave
+    dup stringwidth pop fnfs 0.8 mul add exch % leave space took on stack
+    dup
+    pw exch stringwidth pop fnfs 0.8 mul add sub
+    hm
+    rmoveto
+    show			% right title
+  grestore
+  % stk: ct ltw rtw
+  % 5. the center title
+  gsave
+    pw 3 1 roll
+    % stk: ct pw ltw rtw
+    3 copy 
+    % Move to the center of the left room
+    sub add 2 div hm rmoveto
+    % What is the available space in here?
+    add sub fnfs 0.8 mul sub fnfs 0.8 mul sub
+    % stk: ct space_left
+%%IncludeResource: font Helvetica-Bold
+  fHelvetica-Bold fnfs scalefont setfont
+    1 setgray
+    cfshow
+  grestore
+} bind def
+
+% Function border: prints virtual page border
+/border { %def
+  gsave				% print four sides
+    0 setgray
+    x v get y v get moveto
+    0.7 setlinewidth		% of the square
+    pw 0 rlineto
+    0 ph neg rlineto
+    pw neg 0 rlineto
+    closepath stroke
+  grestore
+} bind def
+
+% Function water: prints a water mark in background
+/water { %def
+  gsave
+    scx scy moveto rotate
+%%IncludeResource: font Times-Bold
+  fTimes-Bold 100 scalefont setfont
+    .97 setgray
+    dup stringwidth pop 2 div neg -50 rmoveto
+    show
+  grestore
+} bind def
+
+% Function rhead: prints the right header
+/rhead {  %def
+  lx ly moveto
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  l-show
+} bind def
+
+% Function footer (cf rf lf -> -)
+/footer {
+  fHelvetica fnfs 0.8 mul scalefont setfont
+  dx dy moveto
+  show
+
+  snx sny moveto
+  l-show
+  
+  fnx fny moveto
+  c-show
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul neg 2 div 0 rmoveto
+    f# setfont
+    c-show
+  grestore
+} bind def
+%%BeginResource: procset a2ps-color-prolog 2.0 1
+
+%% Definition of the color faces.
+/p {
+  0 0 0 FG
+  false BG
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/sy {
+  0 0 0 FG
+  false BG
+  fSymbol bfs scalefont setfont
+  Show
+} bind def
+
+/k {
+  false BG
+  false UL
+  false BX
+  0 0 0.9 FG
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/K {
+  false BG
+  false UL
+  false BX
+  0 0 0.8 FG
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/c {
+  false BG
+  false UL
+  false BX
+  0.8 0 0 FG
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/C {
+  false BG
+  false UL
+  false BX
+  0.8 0 0 FG
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/l {
+  0 0 0 FG
+  0.8 0.8 0 true BG
+  false UL
+  false BX
+  fCourier bfs scalefont setfont
+  Show
+} bind def
+
+/L {
+  0 0 0 FG
+  1 1 0 true BG
+  false UL
+  false BX
+  fCourier-Bold bfs scalefont setfont
+  Show
+} bind def
+
+/str {
+  false BG
+  false UL
+  false BX
+  0 0.5 0 FG
+  fTimes-Roman bfs scalefont setfont
+  Show
+} bind def
+
+/e{
+  1 0 0 true BG
+  false UL
+  true BX
+  1 1 1 FG
+  fHelvetica-Bold bfs scalefont setfont
+  Show
+} bind def
+
+% Function print line number (<string> # -)
+/# {
+  gsave
+    sx cw mul 2 div neg 0 rmoveto
+    f# setfont
+    0.8 0.1 0.1 FG
+    c-show
+  grestore
+} bind def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Times-Roman
+%%IncludeResource: font Symbol
+%%BeginResource: encoding ISO-8859-1Encoding
+/ISO-8859-1Encoding [
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright 
+/parenleft /parenright /asterisk /plus /comma /minus /period /slash 
+/zero /one /two /three /four /five /six /seven 
+/eight /nine /colon /semicolon /less /equal /greater /question 
+/at /A /B /C /D /E /F /G 
+/H /I /J /K /L /M /N /O 
+/P /Q /R /S /T /U /V /W 
+/X /Y /Z /bracketleft /backslash /bracketright /asciicircum /underscore 
+/quoteleft /a /b /c /d /e /f /g 
+/h /i /j /k /l /m /n /o 
+/p /q /r /s /t /u /v /w 
+/x /y /z /braceleft /bar /braceright /asciitilde /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef 
+/space /exclamdown /cent /sterling /currency /yen /brokenbar /section 
+/dieresis /copyright /ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron 
+/degree /plusminus /twosuperior /threesuperior /acute /mu /paragraph /bullet 
+/cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf /threequarters /questiondown 
+/Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla 
+/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis 
+/Eth /Ntilde /Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply 
+/Oslash /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn /germandbls 
+/agrave /aacute /acircumflex /atilde /adieresis /aring /ae /ccedilla 
+/egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis 
+/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide 
+/oslash /ugrave /uacute /ucircumflex /udieresis /yacute /thorn /ydieresis 
+] def
+%%EndResource
+% Initialize page description variables.
+/sh 595 def
+/sw 842 def
+/llx 24 def
+/urx 818 def
+/ury 571 def
+/lly 24 def
+/#copies 1 def
+/th 15.000000 def
+/fnfs 11 def
+/bfs 8.005733 def
+/cw 4.803440 def
+
+% Dictionary for ISO-8859-1 support
+/iso1dict 6 dict begin
+  /fCourier ISO-8859-1Encoding /Courier reencode_font
+  /fCourier-Bold ISO-8859-1Encoding /Courier-Bold reencode_font
+  /fHelvetica ISO-8859-1Encoding /Helvetica reencode_font
+  /fHelvetica-Bold ISO-8859-1Encoding /Helvetica-Bold reencode_font
+  /fTimes-Bold ISO-8859-1Encoding /Times-Bold reencode_font
+  /fTimes-Roman ISO-8859-1Encoding /Times-Roman reencode_font
+currentdict end def
+/bgcolor [ 0 0 0 ] def
+/bg false def
+/ul false def
+/bx false def
+% The font for line numbering
+/f# /Helvetica findfont bfs .6 mul scalefont def
+/fSymbol /Symbol findfont def
+/hm fnfs 0.25 mul def
+/pw
+   cw 81.400000 mul
+def
+/ph
+   501.959430 th add
+def
+/pmw urx llx sub pw 2 mul sub 1 div def
+/pmh 0 def
+/v 0 def
+/x [
+  0
+  dup pmw add pw add
+] def
+/y [
+  pmh ph add 0 mul ph add
+  dup
+] def
+/scx sw 2 div def
+/scy sh 2 div def
+/snx urx def
+/sny lly 2 add def
+/dx llx def
+/dy sny def
+/fnx scx def
+/fny dy def
+/lx snx def
+/ly ury fnfs 0.8 mul sub def
+/sx 0 def
+/tab 8 def
+/x0 0 def
+/y0 0 def
+%%EndSetup
+
+%%Page: (1-2) 1
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(subroutine) K
+( ) p
+(moving_boundary) L
+( \(nval_EM_p, nval_EM_S, nval_AC, ival1,&) p n
+(   ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,&) N
+(   nb_typ_el, typ_select_in, typ_select_out,&) N
+(   soln_EM_p, soln_EM_S,&) N
+(   soln_AC, eps_lst, debug, overlap\)) N
+() N
+(   ) S
+(use) K
+( ) p
+(numbatmod) l n
+(   ) p
+(integer) K
+(\(8\) nel, npt, nnodes, nb_typ_el) p n
+(   ) S
+(integer) K
+(\(8\) type_el\(nel\)) p n
+(   ) S
+(integer) K
+(\(8\) table_nod\(6,nel\)) p n
+(   ) S
+(double precision) K
+( x\(2,npt\)) p n
+(   ) S
+(integer) K
+(\(8\) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3) p n
+(   ) S
+(integer) K
+(\(8\) ival3s, ival2s, ival1s) p n
+(   ) S
+(integer) K
+(\(8\) typ_select_in, typ_select_out) p n
+(   ) S
+(complex) K
+(\(8\) soln_EM_p\(3,nnodes,nval_EM_p,nel\)) p n
+(   ) S
+(complex) K
+(\(8\) soln_EM_S\(3,nnodes,nval_EM_S,nel\)) p n
+(   ) S
+(complex) K
+(\(8\) soln_AC\(3,nnodes,nval_AC,nel\)) p n
+(   ) S
+(complex) K
+(\(8\) eps_lst\(nb_typ_el\)) p n
+(   ) S
+(complex) K
+(\(8\) overlap\(nval_EM_S, nval_EM_p, nval_AC\)) p n
+() N
+(   ) S
+(!     Local variables) c n
+(   ) p
+(integer) K
+(\(8\) debug) p n
+(   ) S
+(integer) K
+(\(8\) nb_visited\(npt\)) p n
+(   ) S
+(integer) K
+(\(8\) ls_edge_endpoint\(2,npt\)) p n
+(   ) S
+(integer) K
+(\(8\) edge_direction\(npt\)) p n
+(   ) S
+(integer) K
+(\(8\) iel, inod, typ_e) p n
+(   ) S
+(integer) K
+(\(8\) inod_1, inod_2, inod_3, ls_inod\(3\)) p n
+(   ) S
+(integer) K
+(\(8\) j, j_1, j_2, j_3, i, k) p n
+(   ) S
+(integer) K
+(\(8\) nb_edges, nb_interface_edges) p n
+(   ) S
+(integer) K
+(\(8\) edge_endpoints\(2,3\), opposite_node\(3\)) p n
+(   ) S
+(double precision) K
+( xy_1\(2\), xy_2\(2\), xy_3\(2\), ls_xy\(2,3\)) p n
+(   ) S
+(double precision) K
+( edge_vec\(2\), edge_perp\(2\), vec_0\(2\)) p n
+(   ) S
+(double precision) K
+( edge_length, r_tmp) p n
+(   ) S
+(complex) K
+(\(8\) ls_n_dot\(3\), ls_n_cross\(3,3\)) p n
+(   ) S
+(complex) K
+(\(8\) vec\(3,3\)) p n
+(   ) S
+(complex) K
+(\(8\) n_dot_d\(2\)) p n
+(   ) S
+(complex) K
+(\(8\) eps_a, eps_b, tmp1, tmp2) p n
+(   ) S
+(double precision) K
+( p2_p2_p2_1d\(3,3,3\)) p n
+() N
+(   ) S
+(!) c n
+(   ) p
+(!) c n
+(   ) p
+(!f2py intent\(in\) nval_EM_p, nval_EM_S, nval_AC) c n
+(   ) p
+(!f2py intent\(in\) ival1, ival2, ival3, nb_typ_el) c n
+(   ) p
+(!f2py intent\(in\) nel, npt, nnodes, table_nod, debug) c n
+(   ) p
+(!f2py intent\(in\) type_el, x, soln_EM_p, soln_EM_S, soln_AC) c n
+(   ) p
+(!f2py intent\(in\) typ_select_in, typ_select_out, eps_lst, debug) c n
+(   ) p
+(!) c n
+(   ) p
+(!f2py depend\(table_nod\) nnodes, nel) c n
+(   ) p
+(!f2py depend\(type_el\) npt) c n
+(   ) p
+(!f2py depend\(x\) npt) c n
+(   ) p
+(!f2py depend\(soln_EM_p\) nnodes, nval_EM_p, nel) c n
+(   ) p
+(!f2py depend\(soln_EM_S\) nnodes, nval_EM_S, nel) c n
+(   ) p
+(!f2py depend\(soln_AC\) nnodes, nval_AC, nel) c n
+(   ) p
+(!f2py depend\(eps_lst\) nb_typ_el) c n
+(   ) p
+(!) c n
+(   ) p
+(!f2py intent\(out\) overlap) c n
+(   ) p
+(!) c n
+(   ) p
+(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(!) c n
+(   ) p
+(!     typ_select_in: Only the elements iel with type_el\(iel\)=typ_select_in wi) c n
+(ll be analysed) N
+(   ) p
+(!     When nb_visited\(j\) is not zero: nb_visited\(j\) indicates the number of e) c n
+(moving_boundary.f90) (Page 1/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(lement the edge j belongs) c n
+(   ) p
+(!) c n
+(   ) p
+(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(!) c n
+() p n
+() N
+() N
+(   nb_visited = 0) N
+(   ls_edge_endpoint = 0) N
+(   ls_edge_endpoint = 0) N
+(   edge_direction = 0) N
+() N
+(   edge_endpoints\(1,1\) = 1) N
+(   edge_endpoints\(2,1\) = 2) N
+(   edge_endpoints\(1,2\) = 2) N
+(   edge_endpoints\(2,2\) = 3) N
+(   edge_endpoints\(1,3\) = 3) N
+(   edge_endpoints\(2,3\) = 1) N
+() N
+(   ) S
+(!) c n
+(   ) p
+(!     opposite_node\(i\): Node which is opposite to the edge i) c n
+(   ) p
+(!     i = 1 is inod = 4 etc) c n
+() p n
+(   opposite_node\(1\) = 3) N
+(   opposite_node\(2\) = 1) N
+(   opposite_node\(3\) = 2) N
+() N
+(   overlap = D_ZERO) N
+() N
+(   ) S
+(do) K
+( iel=1,nel) p n
+(      typ_e = type_el\(iel\)) N
+(      ) S
+(if) K
+(\(typ_e == typ_select_in\) ) p
+(then) K n
+(         ) p
+(!           !  Scan the edges) c n
+(         ) p
+(do) K
+( inod=4,6) p n
+(            j = table_nod\(inod,iel\)) N
+(            ) S
+(!             !  Will indicate the number of) c n
+(            nb_visited\(j\) = nb_visited\(j\) + 1) p n
+(         ) S
+(enddo) K n
+(      ) p
+(endif) K n
+(   ) p
+(enddo) K n
+() p n
+(   nb_edges = 0) N
+(   nb_interface_edges = 0) N
+(   ) S
+(do) K
+( inod=1,npt) p n
+(      ) S
+(if) K
+( \(nb_visited\(inod\) >= 1\) ) p
+(then) K n
+(         nb_edges = nb_edges + 1) p n
+(      ) S
+(endif) K n
+(      ) p
+(if) K
+( \(nb_visited\(inod\) == 1\) ) p
+(then) K n
+(         nb_interface_edges = nb_interface_edges + 1) p n
+(      ) S
+(endif) K n
+(   ) p
+(enddo) K n
+() p n
+(   ) S
+(if) K
+( \(debug ) p
+(.eq.) K
+( 1\) ) p
+(then) K n
+(      ) p
+(write) K
+(\(*,*\)) p n
+(      ) S
+(write) K
+(\(*,*\) ") p
+(edge_orientation: npt, nel = ) str
+(", npt, nel) p n
+(      ) S
+(write) K
+(\(*,*\) ") p
+(edge_orientation: nb_edges = ) str
+(", nb_edges) p n
+(      ) S
+(write) K
+(\(*,*\) ") p
+(nb_interface_edges = ) str
+(", nb_interface_edges) p n
+(   ) S
+(endif) K n
+() p n
+(   ) S
+(!     Outward pointing normal vector to the interface edges) c n
+(   ) p
+(do) K
+( iel=1,nel) p n
+(      typ_e = type_el\(iel\)) N
+(moving_boundary.f90) (Page 2/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (1/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (3-4) 2
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(      ) p
+(if) K
+(\(typ_e == typ_select_in\) ) p
+(then) K n
+(         ) p
+(!           !  Scan the edges) c n
+(         ) p
+(do) K
+( inod=4,6) p n
+(            j = table_nod\(inod,iel\)) N
+(            ) S
+(if) K
+( \(nb_visited\(j\) == 1\) ) p
+(then) K n
+(               inod_1 = edge_endpoints\(1,inod-3\)) p n
+(               inod_2 = edge_endpoints\(2,inod-3\)) N
+(               ls_edge_endpoint\(1,j\) = table_nod\(inod_1,iel\)) N
+(               ls_edge_endpoint\(2,j\) = table_nod\(inod_2,iel\)) N
+(               xy_1\(1\) = x\(1,table_nod\(inod_1,iel\)\)) N
+(               xy_1\(2\) = x\(2,table_nod\(inod_1,iel\)\)) N
+(               xy_2\(1\) = x\(1,table_nod\(inod_2,iel\)\)) N
+(               xy_2\(2\) = x\(2,table_nod\(inod_2,iel\)\)) N
+(               ) S
+(!             edge_vec: vector parallel to the edge) c n
+(               edge_vec\(1\) = xy_2\(1\) - xy_1\(1\)) p n
+(               edge_vec\(2\) = xy_2\(2\) - xy_1\(2\)) N
+(               ) S
+(!             Normalisation of edge_vec) c n
+(               r_tmp = ) p
+(sqrt) K
+(\(edge_vec\(1\)**2+edge_vec\(2\)**2\)) p n
+(               edge_vec\(1\) = edge_vec\(1\) / r_tmp) N
+(               edge_vec\(2\) = edge_vec\(2\) / r_tmp) N
+(               ) S
+(!             edge_vec: vector perpendicular to the edge \(rotatio) c n
+(n of edge_vec by -pi/2\)) N
+(               edge_perp\(1\) = edge_vec\(2\)) p n
+(               edge_perp\(2\) = -edge_vec\(1\)) N
+(               ) S
+(!             Node opposite to the edge inod) c n
+(               inod_3 = opposite_node\(inod-3\)) p n
+(               xy_3\(1\) = x\(1,table_nod\(inod_3,iel\)\)) N
+(               xy_3\(2\) = x\(2,table_nod\(inod_3,iel\)\)) N
+(               vec_0\(1\) = xy_3\(1\) - xy_1\(1\)) N
+(               vec_0\(2\) = xy_3\(2\) - xy_1\(2\)) N
+(               ) S
+(!             Scalar product of edge_perp and vec_0:) c n
+(               r_tmp = edge_perp\(1\)*vec_0\(1\)+edge_perp\(2\)*vec_0\(2\)) p n
+(               ) S
+(!             if r_tmp < 0: then edge_perp is oriented in the out) c n
+(ward direction) N
+(               ) p
+(if) K
+(\( r_tmp < 0\) ) p
+(then) K n
+(                  edge_direction\(j\) = 1) p n
+(               ) S
+(elseif) K
+(\( r_tmp > 0\) ) p
+(then) K n
+(                  edge_direction\(j\) = -1) p n
+(               ) S
+(else) K n
+(                  ) p
+(write) K
+(\(*,*\) ") p
+(edge_orientation: illegal:) str
+(") p n
+(                  ) S
+(write) K
+(\(*,*\) ") p
+(edge_perp is perpendicular to vec_0) str
+(") p n
+(                  ) S
+(write) K
+(\(*,*\) ") p
+(edge_orientation: Aborting...) str
+(") p n
+(                  ) S
+(stop) K n
+(               ) p
+(endif) K n
+(            ) p
+(endif) K n
+(         ) p
+(enddo) K n
+(      ) p
+(endif) K n
+(   ) p
+(enddo) K n
+() p n
+() N
+() N
+(   ) S
+(!     Numerical integration) c n
+(   ) p
+(do) K
+( iel=1,nel) p n
+(      typ_e = type_el\(iel\)) N
+(      ) S
+(if) K
+(\(typ_e == typ_select_in\) ) p
+(then) K n
+(         eps_a = eps_lst\(typ_e\)) p n
+(         ) S
+(if) K
+( \(typ_select_out ) p
+(.eq.) K
+( -1\) ) p
+(then) K n
+(            eps_b = 1.0d0) p n
+(         ) S
+(else) K n
+(            eps_b = eps_lst\(typ_select_out\)) p n
+(         ) S
+(endif) K n
+(         ) p
+(!           !  Scan the edges) c n
+(moving_boundary.f90) (Page 3/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(         ) p
+(do) K
+( inod=4,6) p n
+(            j = table_nod\(inod,iel\)) N
+(            xy_3\(1\) = x\(1,j\)) N
+(            xy_3\(2\) = x\(2,j\)) N
+(            ) S
+(if) K
+( \(ls_edge_endpoint\(1,j\) ) p
+(.ne.) K
+( 0\) ) p
+(then) K n
+(               ) p
+(!               write\(*,*\) "an edge") c n
+(               inod_1 = ls_edge_endpoint\(1,j\)) p n
+(               inod_2 = ls_edge_endpoint\(2,j\)) N
+(               xy_1\(1\) = x\(1,inod_1\)) N
+(               xy_1\(2\) = x\(2,inod_1\)) N
+(               xy_2\(1\) = x\(1,inod_2\)) N
+(               xy_2\(2\) = x\(2,inod_2\) ) N
+(               ) S
+(!             List of the nodes coordinates) c n
+(               ls_xy\(1,1\) = xy_1\(1\) ) p
+(!               !  x-coord. of node 1) c n
+(               ls_xy\(2,1\) = xy_1\(2\) ) p
+(!               !  y-coord. of node 1) c n
+(               ls_xy\(1,2\) = xy_2\(1\) ) p
+(!               !  x-coord. of node 2) c n
+(               ls_xy\(2,2\) = xy_2\(2\) ) p
+(!               !  y-coord. of node 2) c n
+(               ls_xy\(1,3\) = xy_3\(1\) ) p
+(!               !  x-coord. of mid-edge node) c n
+(               ls_xy\(2,3\) = xy_3\(2\) ) p
+(!               !  y-coord. of mid-edge node) c n
+() p n
+(                ) N
+(               edge_vec\(1\) = ls_xy\(1,2\) - ls_xy\(1,1\)) N
+(               edge_vec\(2\) = ls_xy\(2,2\) - ls_xy\(2,1\)) N
+() N
+(               ) S
+(!             Normalisation of edge_vec) c n
+(               r_tmp = ) p
+(sqrt) K
+(\(edge_vec\(1\)**2+edge_vec\(2\)**2\)) p n
+(               edge_vec\(1\) = -1*edge_direction\(j\)*edge_vec\(1\) / r_tmp) N
+(               edge_vec\(2\) = -1*edge_direction\(j\)*edge_vec\(2\) / r_tmp) N
+() N
+(               ) S
+(!             edge_vec: vector perpendicular to the edge \(rotatio) c n
+(n of edge_vec by -pi/2\)) N
+(               edge_perp\(1\) = -1*edge_vec\(2\)) p n
+(               edge_perp\(2\) = edge_vec\(1\)) N
+() N
+(                ) N
+(               r_tmp = \(ls_xy\(1,2\) - ls_xy\(1,1\)\)**2 + \(ls_xy\(2,2\) - ls_xy\(2,1\)\)*) N
+(*2) N
+(               edge_length = ) S
+(sqrt) K
+(\(r_tmp\)) p n
+(               ) S
+(call) K
+( ) p
+(mat_p2_p2_p2_1d) l
+( \(p2_p2_p2_1d, edge_length\)) p n
+() N
+(               ) S
+(!             Identification number of the two end-points and mid) c n
+(-edge point) N
+(               ls_inod\(1\) = edge_endpoints\(1,inod-3\)) p n
+(               ls_inod\(2\) = edge_endpoints\(2,inod-3\)) N
+(               ls_inod\(3\) = inod) N
+() N
+(                ) N
+(               ) S
+(! If only want overlap of one given combination of EM modes and A) c n
+(C mode.) N
+(               ) p
+(if) K
+( \(ival1 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival2 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival3 ) p
+(.ge.) K
+( 0\) ) p
+(then) K n
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( j_1=1,3) p n
+(                     ) S
+(!               \(x,y,z\)-components of the electric field) c n
+(                     vec\(1,1\) = soln_EM_p\(1,ls_inod\(j_1\),ival1,iel\)) p n
+(                     vec\(2,1\) = soln_EM_p\(2,ls_inod\(j_1\),ival1,iel\)) N
+(                     vec\(3,1\) = soln_EM_p\(3,ls_inod\(j_1\),ival1,iel\)) N
+() N
+(                     ) S
+(!               ls_n_dot\(1\): Normal component of vec\(:,1\)) c n
+(                     ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\) + vec\(2,1\) * edge_per) p n
+(p\(2\)) N
+(                     ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) N
+(                     ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(moving_boundary.f90) (Page 4/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (2/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (5-6) 3
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                     ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\) - vec\(1,1\) * edge) p n
+(_perp\(2\)) N
+() N
+(                     ) S
+(do) K
+( j_2=1,3) p n
+(                        ) S
+(!                 \(x,y,z\)-components of the electric fie) c n
+(ld) N
+(                        vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2,iel\)) p n
+(                        vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2,iel\)) N
+(                        vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2,iel\)) N
+() N
+(                        ) S
+(!                 ls_n_dot\(2\): Normal component of vec\(:) c n
+(,2\)) N
+(                        ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\) + vec\(2,2\) * edge_) p n
+(perp\(2\)) N
+(                        ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                        ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                        ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\) - vec\(1,2\) * e) N
+(dge_perp\(2\)) N
+() N
+(                        ) S
+(do) K
+( j_3=1,3) p n
+(                           ) S
+(!                   \(x,y,z\)-components of the acousti) c n
+(c field) N
+(                           vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3,iel\)) p n
+(                           vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3,iel\)) N
+(                           vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3,iel\)) N
+() N
+(                           ) S
+(!                   ls_n_dot\(3\): scalar product of ve) c n
+(c\(:,3\) and normal vector edge_perp) N
+(                           ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\) + vec\(2,3\) * ed) p n
+(ge_perp\(2\)) N
+(                           tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+(                           tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,2\)&) N
+(                           &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                           &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+() N
+(                           n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) N
+(                           n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+() N
+(                           tmp2 = \(1.0d0/eps_b - 1.0d0/eps_a\)*\(1.0d0/SI_EPS_0\)) N
+(                           tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                           r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+(                           overlap\(ival1,ival2,ival3\) = overlap\(ival1,ival2,ival) N
+(3\) +&) N
+(                           &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                        ) S
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(                   ) p n
+(                  ) S
+(! If want overlap of given EM mode 1 and 2 and all AC modes.) c n
+(               ) p
+(else) K
+( ) p
+(if) K
+( \(ival1 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival2 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival3 ) p
+(.eq.) K
+( -1\) ) p
+(the) K n
+(n) N
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( j_1=1,3) p n
+(                  ) N
+(                     ) S
+(!               \(x,y,z\)-components of the electric field) c n
+(                     vec\(1,1\) = ) p
+(conjg) K
+(\(soln_EM_S\(1,ls_inod\(j_1\),ival1,iel\)\)) p n
+(                     vec\(2,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(2,ls_inod\(j_1\),ival1,iel\)\)) p n
+(                     vec\(3,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(3,ls_inod\(j_1\),ival1,iel\)\)) p n
+() N
+(                     ) S
+(!               ls_n_dot\(1\): Normal component of vec\(:,1\)) c n
+(                     ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\) + vec\(2,1\) * edge_per) p n
+(p\(2\)) N
+(moving_boundary.f90) (Page 5/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                     ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) p n
+(                     ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(                     ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\) - vec\(1,1\) * edge) N
+(_perp\(2\)) N
+() N
+(                     ) S
+(do) K
+( j_2=1,3) p n
+(                        ) S
+(!                 \(x,y,z\)-components of the electric fie) c n
+(ld) N
+(                        vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2,iel\)) p n
+(                        vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2,iel\)) N
+(                        vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2,iel\)) N
+() N
+(                        ) S
+(!                 ls_n_dot\(2\): Normal component of vec\(:) c n
+(,2\)) N
+(                        ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\) + vec\(2,2\) * edge_) p n
+(perp\(2\)) N
+(                        ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                        ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                        ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\) - vec\(1,2\) * e) N
+(dge_perp\(2\)) N
+() N
+(                        ) S
+(do) K
+( ival3s = 1,nval_AC) p n
+(                           ) S
+(do) K
+( j_3=1,3) p n
+(                              ) S
+(!                     \(x,y,z\)-components of the ac) c n
+(oustic field) N
+(                              vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3s,iel\)) p n
+(                              vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3s,iel\)) N
+(                              vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3s,iel\)) N
+() N
+(                              ) S
+(!                     ls_n_dot\(3\): scalar product ) c n
+(of vec\(:,3\) and normal vector edge_perp) N
+(                              ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\) + vec\(2,3\) *) p n
+( edge_perp\(2\)) N
+(                              tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+(                              tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,2\)&) N
+(                              &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                              &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+() N
+(                              n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) N
+(                              n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+() N
+(                              tmp2 = \(1.0d0/eps_b - 1.0d0/eps_a\)*\(1.0d0/SI_EPS_0) N
+(\)) N
+(                              tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                              r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+() N
+(                              overlap\(ival1,ival2,ival3s\) = overlap\(ival1,ival2,) N
+(ival3s\) +&) N
+(                              &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                           ) S
+(enddo) K n
+(                        ) p
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(                  ) p
+(!) c n
+() p n
+(                  ) S
+(! If want overlap of given EM mode 1 and all EM modes 2 and al) c n
+(l AC modes.) N
+(               ) p
+(else) K
+( ) p
+(if) K
+( \(ival1 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival2 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival3 ) p
+(.eq.) K
+( -1\) ) p
+(th) K n
+(en) N
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( j_1=1,3) p n
+(                     ) S
+(!               \(x,y,z\)-components of the electric field) c n
+(moving_boundary.f90) (Page 6/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (3/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (7-8) 4
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                     vec\(1,1\) = ) p
+(conjg) K
+(\(soln_EM_S\(1,ls_inod\(j_1\),ival1,iel\)\)) p n
+(                     vec\(2,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(2,ls_inod\(j_1\),ival1,iel\)\)) p n
+(                     vec\(3,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(3,ls_inod\(j_1\),ival1,iel\)\)) p n
+() N
+(                     ) S
+(!               ls_n_dot\(1\): Normal component of vec\(:,1\)) c n
+(                     ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\) + vec\(2,1\) * edge_per) p n
+(p\(2\)) N
+(                     ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) N
+(                     ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(                     ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\) - vec\(1,1\) * edge) N
+(_perp\(2\)) N
+(                     ) S
+(do) K
+( ival2s = 1,nval_EM_p) p n
+(                        ) S
+(do) K
+( j_2=1,3) p n
+(                           ) S
+(!                   \(x,y,z\)-components of the electri) c n
+(c field) N
+(                           vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2s,iel\)) p n
+(                           vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2s,iel\)) N
+(                           vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2s,iel\)) N
+() N
+(                           ) S
+(!                   ls_n_dot\(2\): Normal component of ) c n
+(vec\(:,2\)) N
+(                           ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\)+ vec\(2,2\) * edg) p n
+(e_perp\(2\)) N
+(                           ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                           ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                           ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\)- vec\(1,2\) *) N
+( edge_perp\(2\)) N
+() N
+(                           ) S
+(do) K
+( ival3s = 1,nval_AC) p n
+(                              ) S
+(do) K
+( j_3=1,3) p n
+(                                 ) S
+(!                       \(x,y,z\)-components of t) c n
+(he acoustic field) N
+(                                 vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3s,iel\)) p n
+(                                 vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3s,iel\)) N
+(                                 vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3s,iel\)) N
+() N
+(                                 ) S
+(!                       ls_n_dot\(3\): scalar pro) c n
+(duct of vec\(:,3\) and normal vector edge_perp) N
+(                                 ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\)+ vec\(2,3\)) p n
+( * edge_perp\(2\)) N
+(                                 tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+(                                 tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,2\)&) N
+(                                 &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                                 &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+(                                 n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) N
+(                                 n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+() N
+(                                 tmp2 = \(1.0d0/eps_b - 1.0d0/eps_a\)*\(1.0d0/SI_EP) N
+(S_0\)) N
+(                                 tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                                 r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+(                                 overlap\(ival1,ival2s,ival3s\) =overlap\(ival1,iva) N
+(l2s,ival3s\)+&) N
+(                                 &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                              ) S
+(enddo) K n
+(                           ) p
+(enddo) K n
+(                        ) p
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(                  ) p
+(!) c n
+(                  ) p
+(! If want overlap of given EM mode 2 and all EM modes 1 and al) c n
+(l AC modes.) N
+(moving_boundary.f90) (Page 7/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(               ) p
+(else) K
+( ) p
+(if) K
+( \(ival1 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival2 ) p
+(.ge.) K
+( 0 ) p
+(.and.) K
+( ival3 ) p
+(.eq.) K
+( -1\) ) p
+(th) K n
+(en) N
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( ival1s = 1,nval_EM_S) p n
+(                     ) S
+(do) K
+( j_1=1,3) p n
+(                        ) S
+(!                 \(x,y,z\)-components of the electric fie) c n
+(ld) N
+(                        vec\(1,1\) = ) p
+(conjg) K
+(\(soln_EM_S\(1,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(2,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(2,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(3,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(3,ls_inod\(j_1\),ival1s,iel\)\)) p n
+() N
+(                        ) S
+(!                 ls_n_dot\(1\): Normal component of vec\(:) c n
+(,1\)) N
+(                        ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\) + vec\(2,1\) * edge_) p n
+(perp\(2\)) N
+() N
+(                        ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) N
+(                        ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(                        ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\)- vec\(1,1\) * ed) N
+(ge_perp\(2\)) N
+(                        ) S
+(do) K
+( j_2=1,3) p n
+(                           ) S
+(!                   \(x,y,z\)-components of the electri) c n
+(c field) N
+(                           vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2,iel\)) p n
+(                           vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2,iel\)) N
+(                           vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2,iel\)) N
+() N
+(                           ) S
+(!                   ls_n_dot\(2\): Normal component of ) c n
+(vec\(:,2\)) N
+(                           ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\) + vec\(2,2\) * ed) p n
+(ge_perp\(2\)) N
+(                           ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                           ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                           ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\)- vec\(1,2\) *) N
+( edge_perp\(2\)) N
+(                           ) S
+(do) K
+( ival3s = 1,nval_AC) p n
+(                              ) S
+(do) K
+( j_3=1,3) p n
+(                                 ) S
+(!                       \(x,y,z\)-components of t) c n
+(he acoustic field) N
+(                                 vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3s,iel\)) p n
+(                                 vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3s,iel\)) N
+(                                 vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3s,iel\)) N
+() N
+(                                 ) S
+(!                       ls_n_dot\(3\): scalar pro) c n
+(duct of vec\(:,3\) and normal vector edge_perp) N
+(                                 ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\)+ vec\(2,3\)) p n
+( * edge_perp\(2\)) N
+(                                 tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+(                                 tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,2\)&) N
+(                                 &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                                 &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+(                                 n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) N
+(                                 n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+(                                 tmp2 = \(1.0d0/eps_b - 1.0d0/eps_a\)*\(1.0d0/SI_EP) N
+(S_0\)) N
+(                                 tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                                 r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+(                                 overlap\(ival1s,ival2,ival3s\) =&) N
+(                                 &overlap\(ival1s,ival2,ival3s\)+&) N
+(                                 &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                              ) S
+(enddo) K n
+(                           ) p
+(enddo) K n
+(moving_boundary.f90) (Page 8/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (4/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (9-10) 5
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                        ) p
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(                  ) p
+(!) c n
+(                  ) p
+(! If want overlap of all EM mode 1, all EM modes 2 and all AC ) c n
+(modes.) N
+(               ) p
+(else) K
+( ) p
+(if) K
+( \(ival1 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival2 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival3 ) p
+(.eq.) K
+( -1\) ) p
+(t) K n
+(hen) N
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( ival1s = 1,nval_EM_S) p n
+(                     ) S
+(do) K
+( j_1=1,3) p n
+(                        ) S
+(!                 \(x,y,z\)-components of the electric fie) c n
+(ld) N
+(                        vec\(1,1\) = ) p
+(conjg) K
+(\(soln_EM_S\(1,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(2,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(2,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(3,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(3,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        ) S
+(!                 ls_n_dot\(1\): Normal component of vec\(:) c n
+(,1\)) N
+(                        ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\)+ vec\(2,1\) * edge_p) p n
+(erp\(2\)) N
+(                        ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) N
+(                        ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(                        ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\)- vec\(1,1\) * ed) N
+(ge_perp\(2\)) N
+(                        ) S
+(do) K
+( ival2s = 1,nval_EM_p) p n
+(                           ) S
+(do) K
+( j_2=1,3) p n
+(                              ) S
+(!                     \(x,y,z\)-components of the el) c n
+(ectric field) N
+(                              vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2s,iel\)) p n
+(                              vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2s,iel\)) N
+(                              vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2s,iel\)) N
+() N
+(                              ) S
+(!                     ls_n_dot\(2\): Normal componen) c n
+(t of vec\(:,2\)) N
+(                              ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\)+ vec\(2,2\) * ) p n
+(edge_perp\(2\)) N
+(                              ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                              ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                              ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\)- vec\(1,2) N
+(\) * edge_perp\(2\)) N
+(                              ) S
+(do) K
+( ival3s = 1,nval_AC) p n
+(                                 ) S
+(do) K
+( j_3=1,3) p n
+(                                    ) S
+(!                         \(x,y,z\)-components) c n
+( of the acoustic field) N
+(                                    vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3s,iel) p n
+(\)) N
+(                                    vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3s,iel) N
+(\)) N
+(                                    vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3s,iel) N
+(\)) N
+() N
+(                                    ) S
+(!                         ls_n_dot\(3\): scala) c n
+(r product of vec\(:,3\) and normal vector edge_perp) N
+(                                    ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\)+ vec\(2) p n
+(,3\) * edge_perp\(2\)) N
+(                                    tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+() N
+(                                    tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,) N
+(2\)&) N
+(                                    &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                                    &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+() N
+(moving_boundary.f90) (Page 9/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                                    n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) p n
+(                                    n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+(                                    tmp2 = \(1.0d0/eps_b-1.0d0/eps_a\)*\(1.0d0/SI_E) N
+(PS_0\)) N
+(                                    tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                                    r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+(                                    overlap\(ival1s,ival2s,ival3s\) =overlap\(ival1) N
+(s,ival2s,ival3s\)+&) N
+(                                    &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                                 ) S
+(enddo) K n
+(                              ) p
+(enddo) K n
+(                           ) p
+(enddo) K n
+(                        ) p
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(                  ) p
+(!) c n
+(                  ) p
+(! If want overlap of all EM mode 1, all EM modes 2 and one AC ) c n
+(mode.) N
+(               ) p
+(else) K
+( ) p
+(if) K
+( \(ival1 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival2 ) p
+(.eq.) K
+( -1 ) p
+(.and.) K
+( ival3 ) p
+(.ge.) K
+( 0\) ) p
+(th) K n
+(en) N
+(                  ) p
+(!             Nodes of the edge) c n
+(                  ) p
+(do) K
+( ival1s = 1,nval_EM_S) p n
+(                     ) S
+(do) K
+( j_1=1,3) p n
+(                        ) S
+(!                 \(x,y,z\)-components of the electric fie) c n
+(ld) N
+(                        vec\(1,1\) = ) p
+(conjg) K
+(\(soln_EM_S\(1,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(2,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(2,ls_inod\(j_1\),ival1s,iel\)\)) p n
+(                        vec\(3,1\) = ) S
+(conjg) K
+(\(soln_EM_S\(3,ls_inod\(j_1\),ival1s,iel\)\)) p n
+() N
+(                        ) S
+(!                 ls_n_dot\(1\): Normal component of vec\(:) c n
+(,1\)) N
+(                        ls_n_dot\(1\) = vec\(1,1\) * edge_perp\(1\)+ vec\(2,1\) * edge_p) p n
+(erp\(2\)) N
+(                        ls_n_cross\(1,1\) = vec\(3,1\) * edge_perp\(2\)) N
+(                        ls_n_cross\(2,1\) = -1*vec\(3,1\) * edge_perp\(1\)) N
+(                        ls_n_cross\(3,1\) = vec\(2,1\) * edge_perp\(1\)- vec\(1,1\) * ed) N
+(ge_perp\(2\)) N
+(                        ) S
+(do) K
+( ival2s = 1,nval_EM_p) p n
+(                           ) S
+(do) K
+( j_2=1,3) p n
+(                              ) S
+(!                     \(x,y,z\)-components of the el) c n
+(ectric field) N
+(                              vec\(1,2\)=soln_EM_p\(1,ls_inod\(j_2\),ival2s,iel\)) p n
+(                              vec\(2,2\)=soln_EM_p\(2,ls_inod\(j_2\),ival2s,iel\)) N
+(                              vec\(3,2\)=soln_EM_p\(3,ls_inod\(j_2\),ival2s,iel\)) N
+() N
+(                              ) S
+(!                     ls_n_dot\(2\): Normal componen) c n
+(t of vec\(:,2\)) N
+(                              ls_n_dot\(2\) = vec\(1,2\) * edge_perp\(1\)+ vec\(2,2\) * ) p n
+(edge_perp\(2\)) N
+(                              ls_n_cross\(1,2\) = vec\(3,2\) * edge_perp\(2\)) N
+(                              ls_n_cross\(2,2\) = -1*vec\(3,2\) * edge_perp\(1\)) N
+(                              ls_n_cross\(3,2\) = vec\(2,2\) * edge_perp\(1\)- vec\(1,2) N
+(\) * edge_perp\(2\)) N
+(                              ) S
+(do) K
+( j_3=1,3) p n
+(                                 ) S
+(!                       \(x,y,z\)-components of t) c n
+(he acoustic field) N
+(                                 vec\(1,3\) = soln_AC\(1,ls_inod\(j_3\),ival3,iel\)) p n
+(                                 vec\(2,3\) = soln_AC\(2,ls_inod\(j_3\),ival3,iel\)) N
+(                                 vec\(3,3\) = soln_AC\(3,ls_inod\(j_3\),ival3,iel\)) N
+() N
+(                                 ) S
+(!                       ls_n_dot\(3\): scalar pro) c n
+(duct of vec\(:,3\) and normal vector edge_perp) N
+(moving_boundary.f90) (Page 10/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (5/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (11-12) 6
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(                                 ls_n_dot\(3\) = vec\(1,3\) * edge_perp\(1\)+ vec\(2,3\)) p n
+( * edge_perp\(2\)) N
+(                                 tmp1 = \(eps_a - eps_b\)*SI_EPS_0) N
+(                                 tmp1 = tmp1*\(\(ls_n_cross\(1,1\)\)*ls_n_cross\(1,2\)&) N
+(                                 &+ \(ls_n_cross\(2,1\)\)*ls_n_cross\(2,2\)&) N
+(                                 &+ \(ls_n_cross\(3,1\)\)*ls_n_cross\(3,2\)\)) N
+(                                 n_dot_d\(1\) = SI_EPS_0*eps_a * ls_n_dot\(1\)) N
+(                                 n_dot_d\(2\) = SI_EPS_0*eps_a * ls_n_dot\(2\)) N
+(                                 tmp2 = \(1.0d0/eps_b-1.0d0/eps_a\)*\(1.0d0/SI_EPS_) N
+(0\)) N
+(                                 tmp2 = tmp2*\(n_dot_d\(1\)\)*n_dot_d\(2\)) N
+(                                 r_tmp = p2_p2_p2_1d\(j_1, j_2, j_3\)) N
+(                                 overlap\(ival1s,ival2s,ival3\) = overlap\(ival1s,i) N
+(val2s,ival3\) +&) N
+(                                 &r_tmp*) S
+(conjg) K
+(\(ls_n_dot\(3\)\)*\(tmp1 + tmp2\)) p n
+(                              ) S
+(enddo) K n
+(                           ) p
+(enddo) K n
+(                        ) p
+(enddo) K n
+(                     ) p
+(enddo) K n
+(                  ) p
+(enddo) K n
+(               ) p
+(endif) K n
+(            ) p
+(endif) K n
+(         ) p
+(enddo) K n
+(      ) p
+(endif) K n
+(   ) p
+(enddo) K n
+() p n
+() N
+(   ) S
+(!) c n
+(   ) p
+(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(!) c n
+(   ) p
+(!       open \(unit=26,file="Output/edge_data.txt"\)) c n
+(   ) p
+(!       write\(26,*\)) c n
+(   ) p
+(!       write\(26,*\) "typ_select_in = ", typ_select_in) c n
+(   ) p
+(!       write\(26,*\) "npt, nel = ", npt, nel) c n
+(   ) p
+(!       write\(26,*\) "nb_edges = ", nb_edges) c n
+(   ) p
+(!       write\(26,*\) "nb_interface_edges = ", nb_interface_edges) c n
+(   ) p
+(!       write\(26,*\) "nb_interface_edges: z_integral = ", z_integral) c n
+(   ) p
+(!       j = 0) c n
+(   ) p
+(!       do inod=1,npt) c n
+(   ) p
+(!         if \(ls_edge_endpoint\(1,inod\) .ne. 0\) then) c n
+(   ) p
+(!           j = j + 1) c n
+(   ) p
+(!           write\(26,*\) j, inod, ls_edge_endpoint\(1,inod\),) c n
+(   ) p
+(!      *              ls_edge_endpoint\(2,inod\),) c n
+(   ) p
+(!      *              edge_direction\(inod\)) c n
+(   ) p
+(!         endif) c n
+(   ) p
+(!       enddo) c n
+(   ) p
+(!       close\(26\)) c n
+(   ) p
+(!) c n
+(   ) p
+(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(!) c n
+(   ) p
+(!       debug = 1) c n
+(   ) p
+(!       if \(debug .eq. 1\) then) c n
+(   ) p
+(!         version_number = 2.2) c n
+(   ) p
+(! !  An integer\(8\) equal to 0 in the ASCII file format) c n
+(   ) p
+(!         file_type = 0) c n
+(   ) p
+(! !  An integer\(8\) equal to the size of the floating point numbers used in th) c n
+(e file) N
+(   ) p
+(!         data_size = 8) c n
+(   ) p
+(!         open \(unit=27,file="../Output/edge_data.msh"\)) c n
+(   ) p
+(!         write\(27,'\(a11\)'\) "$MeshFormat") c n
+(   ) p
+(!         write\(27,'\(\(f4.1,1x,I1,1x,I1,1x\)\)'\) version_number,) c n
+(   ) p
+(!      *            file_type, data_size) c n
+(moving_boundary.f90) (Page 11/13) (Oct 03, 2024 16:48) title
+border
+/v 1 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(   ) p
+(!         write\(27,'\(a14\)'\) "$EndMeshFormat") c n
+(   ) p
+(!         write\(27,'\(a6\)'\) "$Nodes") c n
+(   ) p
+(!         write\(27,'\(I0.1\)'\) nb_interface_edges) c n
+(   ) p
+(!         zz = 0.0d0) c n
+(   ) p
+(!         j = 0) c n
+(   ) p
+(!         do inod=1,npt) c n
+(   ) p
+(!           if \(ls_edge_endpoint\(1,inod\) .ne. 0\) then) c n
+(   ) p
+(!               xy_1\(1\) = 100*x\(1,inod\)) c n
+(   ) p
+(!               xy_1\(2\) = 100*x\(2,inod\)) c n
+(   ) p
+(!             j = j + 1) c n
+(   ) p
+(!             write\(27,*\) j, xy_1\(1\), xy_1\(2\), zz) c n
+(   ) p
+(!           endif) c n
+(   ) p
+(!         enddo) c n
+(   ) p
+(!         write\(27,'\(a9\)'\) "$EndNodes") c n
+(   ) p
+(!         write\(27,'\(a9\)'\) "$Elements") c n
+(   ) p
+(!         write\(27,'\(I0.1\)'\) nb_interface_edges) c n
+(   ) p
+(! !  1-node point) c n
+(   ) p
+(!         element_type = 15) c n
+(   ) p
+(!         number_of_tags = 2) c n
+(   ) p
+(!         j = 0) c n
+(   ) p
+(!         do inod=1,npt) c n
+(   ) p
+(!           if \(ls_edge_endpoint\(1,inod\) .ne. 0\) then) c n
+(   ) p
+(!             j = j + 1) c n
+(   ) p
+(!           physical_tag = j) c n
+(   ) p
+(!           elementary_tag = j) c n
+(   ) p
+(!           write\(27,'\(100\(I0.1,2x\)\)'\) j, element_type,) c n
+(   ) p
+(!      *      number_of_tags, physical_tag, elementary_tag,) c n
+(   ) p
+(!      *      j) c n
+(   ) p
+(!           endif) c n
+(   ) p
+(!         enddo) c n
+(   ) p
+(!         write\(27,'\(a12\)'\) "$EndElements") c n
+(   ) p
+(!         number_of_string_tags = 1) c n
+(   ) p
+(!         number_of_real_tags = 1) c n
+(   ) p
+(!         number_of_integer_tags = 3) c n
+(   ) p
+(!         write\(27,'\(a9\)'\) "$NodeData") c n
+(   ) p
+(!         write\(27,*\) number_of_string_tags) c n
+(   ) p
+(!         write\(27,*\) " ""View of tangential vector"" ") c n
+(   ) p
+(!         write\(27,*\) number_of_real_tags) c n
+(   ) p
+(!         write\(27,*\) 0.0) c n
+(   ) p
+(!         write\(27,*\) number_of_integer_tags) c n
+(   ) p
+(! !  the time step \(0; time steps always start at 0\)) c n
+(   ) p
+(!         write\(27,*\) 0) c n
+(   ) p
+(! !  3-component \(vector\) field) c n
+(   ) p
+(!         write\(27,*\) 3) c n
+(   ) p
+(! !  Number of associated nodal values) c n
+(   ) p
+(!         write\(27,*\) nb_interface_edges) c n
+(   ) p
+(! c        node-number value) c n
+(   ) p
+(!         zz = 0.0d0) c n
+(   ) p
+(!         j = 0) c n
+(   ) p
+(!         do inod=1,npt) c n
+(   ) p
+(!           if \(ls_edge_endpoint\(1,inod\) .ne. 0\) then) c n
+(   ) p
+(!             inod_1 = ls_edge_endpoint\(1,inod\)) c n
+(   ) p
+(!             inod_2 = ls_edge_endpoint\(2,inod\)) c n
+(   ) p
+(!             xy_1\(1\) = x\(1,inod_1\)) c n
+(   ) p
+(!             xy_1\(2\) = x\(2,inod_1\)) c n
+(   ) p
+(!             xy_2\(1\) = x\(1,inod_2\)) c n
+(   ) p
+(!             xy_2\(2\) = x\(2,inod_2\)) c n
+(   ) p
+(!             edge_vec\(1\) = xy_2\(1\) - xy_1\(1\)) c n
+(   ) p
+(!             edge_vec\(2\) = xy_2\(2\) - xy_1\(2\)) c n
+(   ) p
+(! c            Normalisation of edge_vec) c n
+(   ) p
+(!             r_tmp = sqrt\(edge_vec\(1\)**2+edge_vec\(2\)**2\)) c n
+(   ) p
+(!             edge_vec\(1\) = -1*edge_direction\(inod\)*edge_vec\(1\) / r_tmp) c n
+(moving_boundary.f90) (Page 12/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (6/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+%%Page: (13) 7
+%%BeginPageSetup
+/pagesave save def
+sh 0 translate 90 rotate
+%%EndPageSetup
+iso1dict begin
+gsave
+llx lly 12 add translate
+/v 0 store
+/x0 x v get 3.362408 add sx cw mul add store
+/y0 y v get bfs th add sub store
+x0 y0 moveto
+(   ) p
+(!             edge_vec\(2\) = -1*edge_direction\(inod\)*edge_vec\(2\) / r_tmp) c n
+(   ) p
+(!             j = j + 1) c n
+(   ) p
+(!             write\(27,*\) j, edge_vec\(1\), edge_vec\(2\), zz) c n
+(   ) p
+(!           endif) c n
+(   ) p
+(!         enddo) c n
+(   ) p
+(!         write\(27,'\(a12\)'\) "$EndNodeData") c n
+(   ) p
+(! c) c n
+(   ) p
+(!  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(! c) c n
+(   ) p
+(!         write\(27,'\(a9\)'\) "$NodeData") c n
+(   ) p
+(!         write\(27,*\) number_of_string_tags) c n
+(   ) p
+(!         write\(27,*\) " ""View of the normal vector"" ") c n
+(   ) p
+(!         write\(27,*\) number_of_real_tags) c n
+(   ) p
+(!         write\(27,*\) 0.0) c n
+(   ) p
+(!         write\(27,*\) number_of_integer_tags) c n
+(   ) p
+(! !  the time step \(0; time steps always start at 0\)) c n
+(   ) p
+(!         write\(27,*\) 0) c n
+(   ) p
+(! !  3-component \(vector\) field) c n
+(   ) p
+(!         write\(27,*\) 3) c n
+(   ) p
+(! !  Number of associated nodal values) c n
+(   ) p
+(!         write\(27,*\) nb_interface_edges) c n
+(   ) p
+(! c        node-number value) c n
+(   ) p
+(!         zz = 0.0d0) c n
+(   ) p
+(!         j = 0) c n
+(   ) p
+(!         do inod=1,npt) c n
+(   ) p
+(!           if \(ls_edge_endpoint\(1,inod\) .ne. 0\) then) c n
+(   ) p
+(!             inod_1 = ls_edge_endpoint\(1,inod\)) c n
+(   ) p
+(!             inod_2 = ls_edge_endpoint\(2,inod\)) c n
+(   ) p
+(!             xy_1\(1\) = x\(1,inod_1\)) c n
+(   ) p
+(!             xy_1\(2\) = x\(2,inod_1\)) c n
+(   ) p
+(!             xy_2\(1\) = x\(1,inod_2\)) c n
+(   ) p
+(!             xy_2\(2\) = x\(2,inod_2\)) c n
+(   ) p
+(!             edge_vec\(1\) = xy_2\(1\) - xy_1\(1\)) c n
+(   ) p
+(!             edge_vec\(2\) = xy_2\(2\) - xy_1\(2\)) c n
+(   ) p
+(! c            Normalisation of edge_vec) c n
+(   ) p
+(!             r_tmp = sqrt\(edge_vec\(1\)**2+edge_vec\(2\)**2\)) c n
+(   ) p
+(!             edge_vec\(1\) = -1*edge_direction\(inod\)*edge_vec\(1\) / r_tmp) c n
+(   ) p
+(!             edge_vec\(2\) = -1*edge_direction\(inod\)*edge_vec\(2\) / r_tmp) c n
+(   ) p
+(! c            edge_vec: vector perpendicular to the edge \(rotation of edge_v) c n
+(ec by -pi/2\)) N
+(   ) p
+(!             edge_perp\(1\) = -edge_vec\(2\)) c n
+(   ) p
+(!             edge_perp\(2\) = edge_vec\(1\)) c n
+(   ) p
+(! C             edge_perp\(1\) = edge_perp\(1\) * edge_direction\(inod\)) c n
+(   ) p
+(! C             edge_perp\(2\) = edge_perp\(2\) * edge_direction\(inod\)) c n
+(   ) p
+(!             j = j + 1) c n
+(   ) p
+(!             write\(27,*\) j, edge_perp\(1\), edge_perp\(2\), zz) c n
+(   ) p
+(!           endif) c n
+(   ) p
+(!         enddo) c n
+(   ) p
+(!         write\(27,'\(a12\)'\) "$EndNodeData") c n
+(   ) p
+(!         close\(27\)) c n
+(   ) p
+(!       endif) c n
+(   ) p
+(!) c n
+(   ) p
+(!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!) c n
+(   ) p
+(!) c n
+(end) K
+( ) p
+(subroutine) K
+( ) p
+(moving_boundary) L n
+(moving_boundary.f90) (Page 13/13) (Oct 03, 2024 16:48) title
+border
+grestore
+(Printed by Michael Steel) rhead
+(moving_boundary.f90) (7/7) (Thursday October 03, 2024) footer
+end % of iso1dict
+pagesave restore
+showpage
+
+%%Trailer
+end
+%%EOF

@@ -1,19 +1,18 @@
-
-!  phi3_2d_mat evaluates a linear basis function (P3) and its derivative.
-
+!  evaluates a cubic basis function (P3) and its derivative.
 !  P3 basis function over the unit Triangle
+!  phi(i) is the basis element i evaluated at vx=(x,y)
+!  mat_grad(i,j) is Jacobian: x and y derivatives indexed by i, basis element by j
+!    See lag_interpolation.nb
 
-
-subroutine phi3_2d_mat(x, phi, mat_grad)
+subroutine phi3_2d_mat(vx, phi, mat_grad)
 
    implicit none
-   double precision x(2), phi(10), mat_grad(2,10)
+   double precision vx(2), phi(10), mat_grad(2,10)
    double precision x0, y0
    integer(8) inode
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   x0 = x(1)
-   y0 = x(2)
+   x0 = vx(1)
+   y0 = vx(2)
 
    inode = 1
    phi(inode) = -((-1 + x0 + y0)*(-2 + 3*x0 + 3*y0) *(-1 + 3*x0 + 3*y0))/2.
@@ -65,7 +64,4 @@ subroutine phi3_2d_mat(x, phi, mat_grad)
    mat_grad(1,inode) = -27*y0*(-1 + 2*x0 + y0)
    mat_grad(2,inode) = -27*x0*(-1 + x0 + 2*y0)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-   return
 end
