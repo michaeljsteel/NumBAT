@@ -24,7 +24,7 @@ nb_pyinterface_fsrcs = files(
     'em_mode_energy_int_ez.f',
     'em_mode_energy_int_v2_ez.f',
     'h_mode_field_ez.f90',
-    'moving_boundary.f90',
+    'moving_boundary_old.f90',
     'photoelastic_int.f90',
     'photoelastic_int_v2.f90',
     'py_entry_cm.f90',

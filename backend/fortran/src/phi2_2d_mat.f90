@@ -1,18 +1,17 @@
 
 
-!  phi2_2d_mat evaluates a linear basis function (P3) and its derivative.
-!  P3 basis function over the unit Triangle
-!
-!  Mike:
-!    Actually is quadratic lin poly over the unit triangle
+!  phi2_2d_mat evaluates a quadratic basis function (P2) and its derivative.
+!  P2 basis function over the unit Triangle
+!  phi(i) is the basis element i evaluated at vx=(x,y)
+!  mat_grad(i,j) is Jacobian: x and y derivatives indexed by i, basis element by j
 !    See lag_interpolation.nb
 !
 
 
-subroutine phi2_2d_mat (x, phi, mat_grad)
+subroutine phi2_2d_mat (vx, phi, mat_grad)
 
    implicit none
-   double precision x(2), phi(6), mat_grad(2,6)
+   double precision vx(2), phi(6), mat_grad(2,6)
    double precision x0, y0
    integer(8) inode
 
