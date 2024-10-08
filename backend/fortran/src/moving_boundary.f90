@@ -152,7 +152,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
       !   Scan the edges
       do inod=4,6
          j = table_nod(inod,iel)
-         if (nb_visited(j) .ne 1) then ! not an active edge
+         if (nb_visited(j) .ne. 1) then ! not an active edge
             continue
          endif
 

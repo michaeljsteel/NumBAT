@@ -5,10 +5,13 @@
 !  then the gradient on the actual triangle is:
 !  grad_i  = Transpose(mat_T)*grad_i0
 
-
+!  Finds the gradient of each basis function in the parametrised element
+!  at node inode in [1..6]
+!  Transformation using mat_jac, returned in vec_grad
 
 subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
 
+   ! TODO: can nnodes ever not be 6?
 
    implicit none
    integer(8) inode, nnodes
@@ -17,15 +20,13 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
 
 !  Local variables
    double precision c(2,2)
-   integer(8) nnodes_0
-   parameter (nnodes_0 = 6)
-   double precision xel_0(2,nnodes_0)
+   integer(8), parameter :: nnodes_0 = 6
+
+   double precision xel_0(2,nnodes_0)  ! TODO: define values as initialisation
    double precision phi_xi, phi_yi
    double precision phi0_xi, phi0_yi
    double precision x, y
    integer(8) i
-
-!  integer(8) ui, debug
 
 !  Coordinates (x,y)= xel_0(1..2,inode) of the P2 Lagrange interpolaion nodes
    xel_0(1,1) = 0
@@ -46,7 +47,7 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
    xel_0(1,6) = 0
    xel_0(2,6) = 0.5d0
 
-!  C = Tanspose[mat_jac]
+!  C = Transpose[mat_jac]
    c(1,1) = mat_jac(1,1)
    c(2,2) = mat_jac(2,2)
    c(1,2) = mat_jac(2,1)
@@ -55,19 +56,13 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
    x = xel_0(1,inode)
    y = xel_0(2,inode)
 
+   ! Basis element 1
    i = 1
-!  x-derivative over the reference triangle
-   phi0_xi = 4.0d0*(x+y) - 3.0d0
 
-!  y-derivative over the reference triangle
-   phi0_yi = 4.0d0*(x+y) - 3.0d0
-
-!  x-derivative over the current triangle
-
-   phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi
-
-!  y-derivative over the current triangle
-   phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi
+   phi0_xi = 4.0d0*(x+y) - 3.0d0  !  x-derivative over the reference triangle
+   phi0_yi = 4.0d0*(x+y) - 3.0d0  !  y-derivative over the reference triangle
+   phi_xi =c(1,1)*phi0_xi+c(1,2)*phi0_yi  !  x-derivative over the current triangle
+   phi_yi =c(2,1)*phi0_xi+c(2,2)*phi0_yi  !  y-derivative over the current triangle
    vec_grad(1,i) = phi_xi
    vec_grad(2,i) = phi_yi
 
