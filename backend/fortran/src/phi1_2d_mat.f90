@@ -1,5 +1,6 @@
-!  phi1_2d_mat evaluates a linear basis function (P1) and its derivative.
-!  P1 basis function over the unit Triangle
+!  phi1_2d_mat evaluates a linear P1 basis function and its derivative
+!  at a single point vx
+!
 !  phi1_i = L^1(x) L^1(y)
 !  See lag_interpolation.nb
 

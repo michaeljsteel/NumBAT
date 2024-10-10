@@ -1,6 +1,6 @@
 
 
-!  Compute the gradient of the 10 P3 Lagrange polynomial basis function at the 6 P2 Lagrange nodes
+!  Compute the gradient of the 10 P3 Lagrange polynomial basis function at one of the 6 P2 Lagrange nodes
 
 !  Note that if grad_i_0 is the gradient on the reference triangle,
 !  then the gradient on the actual triangle is:

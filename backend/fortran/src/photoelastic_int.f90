@@ -53,13 +53,13 @@ subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
    complex(8) coeff_1, coeff_2
    double precision phi2_list(6), grad2_mat0(2,6)
    double precision grad2_mat(2,6)
-    
-    
+
+
    !fo2py intent(in) nval_EM_p, nval_EM_S, nval_AC
    !fo2py intent(in) ival1, ival2, ival3, nb_typ_el
    !fo2py intent(in) nel, npt, nnodes, table_nod, p_tensor, beta_AC , debug
    !fo2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC, eps_lst
-    
+
    !f2py depend(table_nod) nnodes, nel
    !f2py depend(type_el) npt
    !f2py depend(x) npt
@@ -68,14 +68,14 @@ subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
    !f2py depend(soln_AC) nnodes, nval_AC, nel
    !f2py depend(p_tensor) nb_typ_el
    !f2py depend(eps_lst) nb_typ_el
-    
+
    !fo2py intent(out) overlap
    !fo2py intent(out) errco
    !fo2py intent(out) emsg
-    
-    
+
+
    !!!!!!!!!!!!!!!!!!!!!!!!  Start Program  !!!!!!!!!!!!!!!!!!!!!!!!
-    
+
    ui = stdout
 
 
@@ -145,12 +145,10 @@ subroutine photoelastic_int (nval_EM_p, nval_EM_S, nval_AC, ival1,&
          !
          if (.not. is_curved) then
             !           Rectilinear element
-            call jacobian_p1_2d(xx, xel, nnodes,&
-            &xx_g, det, mat_B, mat_T)
+            call jacobian_p1_2d(xx, xel, nnodes, xx_g, det, mat_B, mat_T, errco, emsg)
          else
             !           Isoparametric element !  fixed 2024/6/12
-            call jacobian_p2_2d(xel, nnodes, phi2_list,&
-            &grad2_mat0, xx_g, det, mat_B, mat_T)
+            call jacobian_p2_2d(xel, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
          endif
          if(abs(det) .lt. 1.0d-20) then
             write(*,*)

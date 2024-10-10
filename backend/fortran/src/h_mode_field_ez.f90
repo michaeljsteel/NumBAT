@@ -30,7 +30,7 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, table_nod, &
    integer(8) i, j, j1
    integer(8) iel, ival, inod
    integer(8) ui
-   complex(8) z_tmp1
+   !complex(8) z_tmp1
 
    double precision mat_B(2,2), mat_T(2,2), det_b
    integer(8), parameter :: ZCOMP = 3

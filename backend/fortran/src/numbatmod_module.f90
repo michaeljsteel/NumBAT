@@ -38,6 +38,10 @@ module numbatmod
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
 
+   integer(8), parameter :: N_P1_NODES = 3
+   integer(8), parameter :: N_P2_NODES = 6
+   integer(8), parameter :: N_P3_NODES = 10
+
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: nddl_t = 4
 
@@ -59,6 +63,9 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_PERMUTATION     = -52
    integer(8), parameter :: NBERR_BAD_ADJACENCY       = -53
    integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
+   integer(8), parameter :: NBERR_BAD_JACOBIAN        = -55
+   integer(8), parameter :: NBERR_BAD_DETERMINANT     = -56
+   integer(8), parameter :: NBERR_BAD_ASSEMBLY        = -57`
 
 
    !  UMFPACK Solve codes

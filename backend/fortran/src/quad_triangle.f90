@@ -154,5 +154,4 @@ subroutine quad_triangle (nquad, nquad_max, wq, xq, yq)
    yq(i) = coor_3_grp_4
    wq(i) = wgt_4
 
-   return
 end
