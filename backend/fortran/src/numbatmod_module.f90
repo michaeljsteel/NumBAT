@@ -65,7 +65,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_NODE_SEPARATION = -54
    integer(8), parameter :: NBERR_BAD_JACOBIAN        = -55
    integer(8), parameter :: NBERR_BAD_DETERMINANT     = -56
-   integer(8), parameter :: NBERR_BAD_ASSEMBLY        = -57`
+   integer(8), parameter :: NBERR_BAD_ASSEMBLY        = -57
 
 
    !  UMFPACK Solve codes
