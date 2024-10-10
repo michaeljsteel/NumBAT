@@ -19,8 +19,9 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
    integer(8) type_el(n_msh_el)
    integer(8) table_nod(6,n_msh_el)
    double precision x(2,n_msh_pts)
-   integer(8) nval_EM_p, nval_EM_S, nval_AC, ival_p, ival_s, ival_ac
-   integer(8) ivals_ac, ivals_s, ivals_p
+   integer(8) nval_EM_p, nval_EM_S, nval_AC
+   integer(8) ival_p, ival_s, ival_ac
+
    integer(8) typ_select_in, typ_select_out
    complex(8) soln_EM_p(3,nodes_per_el,nval_EM_p,n_msh_el)
    complex(8) soln_EM_S(3,nodes_per_el,nval_EM_S,n_msh_el)
@@ -35,14 +36,17 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
    integer(8) edge_direction(n_msh_pts)
    integer(8) iel, inod, typ_e
    integer(8) inod_1, inod_2, inod_3, ls_inod(3)
-   integer(8) j, j_1, j_2, j_3, i, k
+   integer(8) j, j_1, j_2, j_3
    integer(8) nb_edges, nb_interface_edges
    integer(8) edge_endpoints(2,3), opposite_node(3)
    double precision xy_1(2), xy_2(2), xy_3(2), ls_xy(2,3)
    double precision edge_vec(2), edge_perp(2), vec_0(2)
    double precision edge_length, r_tmp
-   complex(8) ls_n_dot(3), ls_n_cross(3,3)
+   !complex(8) ls_n_dot(3)
+   !complex(8)  ls_n_cross(3,3)
    !complex(8) vec(3,3)
+   !integer(8) ivals_ac, ivals_s, ivals_p
+
    complex(8) evec_p(3), evec_sc(3), uvec_ac(3)
 
    complex(8) n_dot_d(2)
@@ -106,6 +110,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
    Q_MB = D_ZERO
 
 
+
    ! build arrays holding which modes to be calculated
    call fill_ival_arrays(v_ival_p, nval_EM_p, ival_p)
    call fill_ival_arrays(v_ival_s, nval_EM_s, ival_s)
@@ -142,18 +147,20 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
       write(*,*) "nb_interface_edges = ", nb_interface_edges
    endif
 
+
+
    ! Outward pointing normal vector to the interface edges
    do iel=1,n_msh_el
       typ_e = type_el(iel)
       if(typ_e .ne. typ_select_in) then
-         continue
+         cycle
       endif
 
       !   Scan the edges
       do inod=4,6
          j = table_nod(inod,iel)
          if (nb_visited(j) .ne. 1) then ! not an active edge
-            continue
+            cycle
          endif
 
          inod_1 = edge_endpoints(1,inod-3)
@@ -197,12 +204,15 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
       enddo
    enddo
 
+
+
+
    ! Numerical integration
    do iel=1,n_msh_el
 
       typ_e = type_el(iel)
       if(typ_e .ne. typ_select_in) then
-         continue
+         cycle
       endif
 
       eps_a = eps_lst(typ_e)
@@ -213,12 +223,12 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
       endif
 
       !   Scan the edges
-      do inod=4,6
-         j = table_nod(inod,iel)
+       do inod=4,6
+          j = table_nod(inod,iel)
 
-         if (ls_edge_endpoint(1,j) .eq. 0) then ! Not an edge
-            continue
-         endif
+          if (ls_edge_endpoint(1,j) .eq. 0) then ! Not an edge
+             cycle
+          endif
 
          inod_1 = ls_edge_endpoint(1,j)
          inod_2 = ls_edge_endpoint(2,j)
@@ -262,20 +272,20 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
          ls_inod(3) = inod
 
 
-         do ivs = 1,nval_EM_s
+
+         !             !
+         ! ! \nhat is the surface normal vector from material a into material b
+         ! ! Q_MB = \int_C  dr
+         ! !         (\vec u^* \dot \hatn)
+         ! !           \cross
+         ! !  [   eps0  (eps_a - eps_b)     (\hatn \cross \vecEs)^* \dot (\hatn \cross \vecEp)
+         ! !   - 1/eps0 (1/eps_a - 1/epsb)  (\hatn \dot \vecDs)^*   \dot (\hatn \dot \vecdp)  ]
+
+          do ivs = 1,nval_EM_s
             t_ival_s = v_ival_s(ivs)
             if (t_ival_s .eq. 0) then
-               continue
+               exit
             endif
-
-            !
-! \nhat is the surface normal vector from material a into material b
-! Q_MB = \int_C  dr
-!         (\vec u^* \dot \hatn)
-!           \cross
-!  [   eps0  (eps_a - eps_b)     (\hatn \cross \vecEs)^* \dot (\hatn \cross \vecEp)
-!   - 1/eps0 (1/eps_a - 1/epsb)  (\hatn \dot \vecDs)^*   \dot (\hatn \dot \vecdp)  ]
-
 
 
             ! Nodes of the edge
@@ -285,7 +295,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                evec_sc(2) = conjg(soln_EM_S(2,ls_inod(j_1),t_ival_s,iel))
                evec_sc(3) = conjg(soln_EM_S(3,ls_inod(j_1),t_ival_s,iel))
                ! ls_n_dot(1): Normal component of vec(:,1)
-              ! ls_n_dot(1) = evec_sc(1) * edge_perp(1) + evec_sc(2) * edge_perp(2)
+               ! ls_n_dot(1) = evec_sc(1) * edge_perp(1) + evec_sc(2) * edge_perp(2)
                ! ls_n_dot(1) = v2_dot_v3(edge_perp, evec_sc)
                ! ls_n_cross(1,1) = evec_sc(3) * edge_perp(2)
                ! ls_n_cross(2,1) = -1*evec_sc(3) * edge_perp(1)
@@ -298,7 +308,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                do ivp = 1,nval_EM_p
                   t_ival_p = v_ival_p(ivp)
                   if (t_ival_p .eq. 0) then
-                     continue
+                     exit
                   endif
 
                   do j_2=1,3
@@ -319,7 +329,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                      do ivac = 1,nval_AC
                         t_ival_ac = v_ival_ac(ivac)
                         if (t_ival_ac .eq. 0) then
-                           continue
+                           exit
                         endif
 
                         do j_3=1,3
@@ -337,270 +347,45 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                            !tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
                            tmp1 = (eps_a - eps_b)*SI_EPS_0 * cv3_dot_cv3(n_cross_ev_sc, n_cross_ev_p)
 
-                           n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-                           n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                           !n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
+                           !n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
+                           n_dot_d(1) = SI_EPS_0*eps_a * n_dot_ev_sc
+                           n_dot_d(2) = SI_EPS_0*eps_a * n_dot_ev_p
+
                            tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/SI_EPS_0)
                            tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
                            r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
 
-                           Q_MB(ivals_p,ivals_s,ivals_ac) = Q_MB(ivals_p,ivals_s,ivals_ac)+ r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
+!                            !Q_MB(ivals_p,ivals_s,ivals_ac) = Q_MB(ivals_p,ivals_s,ivals_ac)+ r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
+                            Q_MB(t_ival_p, t_ival_s, t_ival_ac) = Q_MB(t_ival_p, t_ival_s, t_ival_ac) &
+                               + r_tmp*conjg(n_dot_uv_ac)*(tmp1 + tmp2)
+
                         enddo
-                     enddo
-                  enddo
-               enddo
-            enddo
-         enddo
-      enddo
+                      enddo
+                   enddo
+                enddo
+             enddo
+          enddo
+     enddo
    enddo
 
-   end subroutine moving_boundary
+end subroutine moving_boundary
 
 
 
-   subroutine fill_ival_arrays(v_ival, n_ivals, ival)
+subroutine fill_ival_arrays(v_ival, n_ivals, ival)
 
-      integer(8) n_ivals, ival
-      integer(8) v_ival(n_ivals)
-      integer(8) i
+   integer(8) n_ivals, ival
+   integer(8) v_ival(n_ivals)
+   integer(8) i
 
-      v_ival = 0
-      if (ival .gt. 0) then
-         v_ival(1) = ival
-      else
-         do i=1,n_ivals
-            v_ival(i) = i
-         enddo
-      endif
+   v_ival = 0
+   if (ival .gt. 0) then
+      v_ival(1) = ival
+   else
+      do i=1,n_ivals
+         v_ival(i) = i
+      enddo
+   endif
 
-   end subroutine
-
-
-           ! ! If only want Q_MB of one given combination of EM modes and AC mode.
-               ! if (ival_p .ge. 0 .and. ival_s .ge. 0 .and. ival_ac .ge. 0) then
-               !    ! Nodes of the edge
-               !    do j_1=1,3
-               !       ! (x,y,z)-components of the electric field
-               !       vec(1,1) = soln_EM_p(1,ls_inod(j_1),ival_p,iel)
-               !       vec(2,1) = soln_EM_p(2,ls_inod(j_1),ival_p,iel)
-               !       vec(3,1) = soln_EM_p(3,ls_inod(j_1),ival_p,iel)
-               !       ! ls_n_dot(1): Normal component of vec(:,1)
-               !       ls_n_dot(1) = vec(1,1) * edge_perp(1) + vec(2,1) * edge_perp(2)
-               !       ls_n_cross(1,1) = vec(3,1) * edge_perp(2)
-               !       ls_n_cross(2,1) = -1*vec(3,1) * edge_perp(1)
-               !       ls_n_cross(3,1) = vec(2,1) * edge_perp(1) - vec(1,1) * edge_perp(2)
-               !       do j_2=1,3
-               !          ! (x,y,z)-components of the electric field
-               !          vec(1,2)=soln_EM_p(1,ls_inod(j_2),ival_s,iel)
-               !          vec(2,2)=soln_EM_p(2,ls_inod(j_2),ival_s,iel)
-               !          vec(3,2)=soln_EM_p(3,ls_inod(j_2),ival_s,iel)
-               !          ! ls_n_dot(2): Normal component of vec(:,2)
-               !          ls_n_dot(2) = vec(1,2) * edge_perp(1) + vec(2,2) * edge_perp(2)
-               !          ls_n_cross(1,2) = vec(3,2) * edge_perp(2)
-               !          ls_n_cross(2,2) = -1*vec(3,2) * edge_perp(1)
-               !          ls_n_cross(3,2) = vec(2,2) * edge_perp(1) - vec(1,2) * edge_perp(2)
-               !          do j_3=1,3
-               !             ! (x,y,z)-components of the acoustic field
-               !             vec(1,3) = soln_AC(1,ls_inod(j_3),ival_ac,iel)
-               !             vec(2,3) = soln_AC(2,ls_inod(j_3),ival_ac,iel)
-               !             vec(3,3) = soln_AC(3,ls_inod(j_3),ival_ac,iel)
-               !             ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
-               !             ls_n_dot(3) = vec(1,3) * edge_perp(1) + vec(2,3) * edge_perp(2)
-               !             tmp1 = (eps_a - eps_b)*SI_EPS_0
-               !             tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
-               !             n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-               !             n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
-               !             tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
-               !             tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
-               !             r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-               !             Q_MB(ival_p,ival_s,ival_ac) = Q_MB(ival_p,ival_s,ival_ac) + r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
-               !          enddo
-               !       enddo
-               !    enddo
-               !    !
-               !    ! If want Q_MB of given EM mode 1 and 2 and all AC modes.
-               ! else if (ival_p .ge. 0 .and. ival_s .ge. 0 .and. ival_ac .eq. -1) then
-               !    ! Nodes of the edge
-               !    do j_1=1,3
-               !       ! (x,y,z)-components of the electric field
-               !       vec(1,1) = conjg(soln_EM_S(1,ls_inod(j_1),ival_p,iel))
-               !       vec(2,1) = conjg(soln_EM_S(2,ls_inod(j_1),ival_p,iel))
-               !       vec(3,1) = conjg(soln_EM_S(3,ls_inod(j_1),ival_p,iel))
-               !       ! ls_n_dot(1): Normal component of vec(:,1)
-               !       ls_n_dot(1) = vec(1,1) * edge_perp(1) + vec(2,1) * edge_perp(2)
-               !       ls_n_cross(1,1) = vec(3,1) * edge_perp(2)
-               !       ls_n_cross(2,1) = -1*vec(3,1) * edge_perp(1)
-               !       ls_n_cross(3,1) = vec(2,1) * edge_perp(1) - vec(1,1) * edge_perp(2)
-               !       do j_2=1,3
-               !          ! (x,y,z)-components of the electric field
-               !          vec(1,2)=soln_EM_p(1,ls_inod(j_2),ival_s,iel)
-               !          vec(2,2)=soln_EM_p(2,ls_inod(j_2),ival_s,iel)
-               !          vec(3,2)=soln_EM_p(3,ls_inod(j_2),ival_s,iel)
-               !          ! ls_n_dot(2): Normal component of vec(:,2)
-               !          ls_n_dot(2) = vec(1,2) * edge_perp(1) + vec(2,2) * edge_perp(2)
-               !          ls_n_cross(1,2) = vec(3,2) * edge_perp(2)
-               !          ls_n_cross(2,2) = -1*vec(3,2) * edge_perp(1)
-               !          ls_n_cross(3,2) = vec(2,2) * edge_perp(1) - vec(1,2) * edge_perp(2)
-               !          do ivals_ac = 1,nval_AC
-               !             do j_3=1,3
-               !                ! (x,y,z)-components of the acoustic field
-               !                vec(1,3) = soln_AC(1,ls_inod(j_3),ivals_ac,iel)
-               !                vec(2,3) = soln_AC(2,ls_inod(j_3),ivals_ac,iel)
-               !                vec(3,3) = soln_AC(3,ls_inod(j_3),ivals_ac,iel)
-               !                ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
-               !                ls_n_dot(3) = vec(1,3) * edge_perp(1) + vec(2,3) * edge_perp(2)
-               !                tmp1 = (eps_a - eps_b)*SI_EPS_0
-               !                tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
-               !                n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-               !                n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
-               !                tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
-               !                tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
-               !                r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-               !                Q_MB(ival_p,ival_s,ivals_ac) = Q_MB(ival_p,ival_s,ivals_ac) + r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
-               !             enddo
-               !          enddo
-               !       enddo
-               !    enddo
-               !    !
-               !    ! If want Q_MB of given EM mode 1 and all EM modes 2 and all AC modes.
-               ! else if (ival_p .ge. 0 .and. ival_s .eq. -1 .and. ival_ac .eq. -1) then
-               !    ! Nodes of the edge
-               !    do j_1=1,3
-               !       ! (x,y,z)-components of the electric field
-               !       vec(1,1) = conjg(soln_EM_S(1,ls_inod(j_1),ival_p,iel))
-               !       vec(2,1) = conjg(soln_EM_S(2,ls_inod(j_1),ival_p,iel))
-               !       vec(3,1) = conjg(soln_EM_S(3,ls_inod(j_1),ival_p,iel))
-               !       ! ls_n_dot(1): Normal component of vec(:,1)
-               !       ls_n_dot(1) = vec(1,1) * edge_perp(1) + vec(2,1) * edge_perp(2)
-               !       ls_n_cross(1,1) = vec(3,1) * edge_perp(2)
-               !       ls_n_cross(2,1) = -1*vec(3,1) * edge_perp(1)
-               !       ls_n_cross(3,1) = vec(2,1) * edge_perp(1) - vec(1,1) * edge_perp(2)
-               !       do ivals_s = 1,nval_EM_p
-               !          do j_2=1,3
-               !             ! (x,y,z)-components of the electric field
-               !             vec(1,2)=soln_EM_p(1,ls_inod(j_2),ivals_s,iel)
-               !             vec(2,2)=soln_EM_p(2,ls_inod(j_2),ivals_s,iel)
-               !             vec(3,2)=soln_EM_p(3,ls_inod(j_2),ivals_s,iel)
-               !             ! ls_n_dot(2): Normal component of vec(:,2)
-               !             ls_n_dot(2) = vec(1,2) * edge_perp(1) + vec(2,2) * edge_perp(2)
-               !             ls_n_cross(1,2) = vec(3,2) * edge_perp(2)
-               !             ls_n_cross(2,2) = -1*vec(3,2) * edge_perp(1)
-               !             ls_n_cross(3,2) = vec(2,2) * edge_perp(1) - vec(1,2) * edge_perp(2)
-               !             do ivals_ac = 1,nval_AC
-               !                do j_3=1,3
-               !                   ! (x,y,z)-components of the acoustic field
-               !                   vec(1,3) = soln_AC(1,ls_inod(j_3),ivals_ac,iel)
-               !                   vec(2,3) = soln_AC(2,ls_inod(j_3),ivals_ac,iel)
-               !                   vec(3,3) = soln_AC(3,ls_inod(j_3),ivals_ac,iel)
-               !                   ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
-               !                   ls_n_dot(3) = vec(1,3) * edge_perp(1) + vec(2,3) * edge_perp(2)
-               !                   tmp1 = (eps_a - eps_b)*SI_EPS_0
-               !                   tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
-               !                   n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-               !                   n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
-
-               !                   tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
-               !                   tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
-               !                   r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-               !                   Q_MB(ival_p,ivals_s,ivals_ac) = Q_MB(ival_p,ivals_s,ivals_ac)+ r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
-               !                enddo
-               !             enddo
-               !          enddo
-               !       enddo
-               !    enddo
-               !    !
-               !    ! If want Q_MB of given EM mode 2 and all EM modes 1 and all AC modes.
-               ! else if (ival_p .eq. -1 .and. ival_s .ge. 0 .and. ival_ac .eq. -1) then
-               !    ! Nodes of the edge
-               !    do ivals_p = 1,nval_EM_S
-               !       do j_1=1,3
-               !          ! (x,y,z)-components of the electric field
-               !          vec(1,1) = conjg(soln_EM_S(1,ls_inod(j_1),ivals_p,iel))
-               !          vec(2,1) = conjg(soln_EM_S(2,ls_inod(j_1),ivals_p,iel))
-               !          vec(3,1) = conjg(soln_EM_S(3,ls_inod(j_1),ivals_p,iel))
-               !          ! ls_n_dot(1): Normal component of vec(:,1)
-               !          ls_n_dot(1) = vec(1,1) * edge_perp(1) + vec(2,1) * edge_perp(2)
-               !          ls_n_cross(1,1) = vec(3,1) * edge_perp(2)
-               !          ls_n_cross(2,1) = -1*vec(3,1) * edge_perp(1)
-               !          ls_n_cross(3,1) = vec(2,1) * edge_perp(1) - vec(1,1) * edge_perp(2)
-               !          do j_2=1,3
-               !             ! (x,y,z)-components of the electric field
-               !             vec(1,2)=soln_EM_p(1,ls_inod(j_2),ival_s,iel)
-               !             vec(2,2)=soln_EM_p(2,ls_inod(j_2),ival_s,iel)
-               !             vec(3,2)=soln_EM_p(3,ls_inod(j_2),ival_s,iel)
-               !             ! ls_n_dot(2): Normal component of vec(:,2)
-               !             ls_n_dot(2) = vec(1,2) * edge_perp(1) + vec(2,2) * edge_perp(2)
-               !             ls_n_cross(1,2) = vec(3,2) * edge_perp(2)
-               !             ls_n_cross(2,2) = -1*vec(3,2) * edge_perp(1)
-               !             ls_n_cross(3,2) = vec(2,2) * edge_perp(1) - vec(1,2) * edge_perp(2)
-               !             do ivals_ac = 1,nval_AC
-               !                do j_3=1,3
-               !                   ! (x,y,z)-components of the acoustic field
-               !                   vec(1,3) = soln_AC(1,ls_inod(j_3),ivals_ac,iel)
-               !                   vec(2,3) = soln_AC(2,ls_inod(j_3),ivals_ac,iel)
-               !                   vec(3,3) = soln_AC(3,ls_inod(j_3),ivals_ac,iel)
-               !                   ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
-               !                   ls_n_dot(3) = vec(1,3) * edge_perp(1) + vec(2,3) * edge_perp(2)
-               !                   tmp1 = (eps_a - eps_b)*SI_EPS_0
-               !                   tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
-               !                   n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-               !                   n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
-               !                   tmp2 = (1.0d0/eps_b - 1.0d0/eps_a)*(1.0d0/SI_EPS_0)
-               !                   tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
-               !                   r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-               !                   Q_MB(ivals_p,ival_s,ivals_ac) = Q_MB(ivals_p,ival_s,ivals_ac)+ r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
-               !                enddo
-               !             enddo
-               !          enddo
-               !       enddo
-               !    enddo
-               !    !
-
-
-                  !
-                  ! If want Q_MB of all EM mode 1, all EM modes 2 and one AC mode.
-            !    else if (ival_p .eq. -1 .and. ival_s .eq. -1 .and. ival_ac .ge. 0) then
-            !       ! Nodes of the edge
-            !       do ivals_p = 1,nval_EM_S
-            !          do j_1=1,3
-            !             ! (x,y,z)-components of the electric field
-            !             vec(1,1) = conjg(soln_EM_S(1,ls_inod(j_1),ivals_p,iel))
-            !             vec(2,1) = conjg(soln_EM_S(2,ls_inod(j_1),ivals_p,iel))
-            !             vec(3,1) = conjg(soln_EM_S(3,ls_inod(j_1),ivals_p,iel))
-            !             ! ls_n_dot(1): Normal component of vec(:,1)
-            !             ls_n_dot(1) = vec(1,1) * edge_perp(1) + vec(2,1) * edge_perp(2)
-            !             ls_n_cross(1,1) = vec(3,1) * edge_perp(2)
-            !             ls_n_cross(2,1) = -1*vec(3,1) * edge_perp(1)
-            !             ls_n_cross(3,1) = vec(2,1) * edge_perp(1) - vec(1,1) * edge_perp(2)
-            !             do ivals_s = 1,nval_EM_p
-            !                do j_2=1,3
-            !                   ! (x,y,z)-components of the electric field
-            !                   vec(1,2)=soln_EM_p(1,ls_inod(j_2),ivals_s,iel)
-            !                   vec(2,2)=soln_EM_p(2,ls_inod(j_2),ivals_s,iel)
-            !                   vec(3,2)=soln_EM_p(3,ls_inod(j_2),ivals_s,iel)
-            !                   ! ls_n_dot(2): Normal component of vec(:,2)
-            !                   ls_n_dot(2) = vec(1,2) * edge_perp(1) + vec(2,2) * edge_perp(2)
-            !                   ls_n_cross(1,2) = vec(3,2) * edge_perp(2)
-            !                   ls_n_cross(2,2) = -1*vec(3,2) * edge_perp(1)
-            !                   ls_n_cross(3,2) = vec(2,2) * edge_perp(1) - vec(1,2) * edge_perp(2)
-            !                   do j_3=1,3
-            !                      ! (x,y,z)-components of the acoustic field
-            !                      vec(1,3) = soln_AC(1,ls_inod(j_3),ival_ac,iel)
-            !                      vec(2,3) = soln_AC(2,ls_inod(j_3),ival_ac,iel)
-            !                      vec(3,3) = soln_AC(3,ls_inod(j_3),ival_ac,iel)
-            !                      ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
-            !                      ls_n_dot(3) = vec(1,3) * edge_perp(1) + vec(2,3) * edge_perp(2)
-            !                      tmp1 = (eps_a - eps_b)*SI_EPS_0
-            !                      tmp1 = tmp1*((ls_n_cross(1,1))*ls_n_cross(1,2) + (ls_n_cross(2,1))*ls_n_cross(2,2) + (ls_n_cross(3,1))*ls_n_cross(3,2))
-            !                      n_dot_d(1) = SI_EPS_0*eps_a * ls_n_dot(1)
-            !                      n_dot_d(2) = SI_EPS_0*eps_a * ls_n_dot(2)
-            !                      tmp2 = (1.0d0/eps_b-1.0d0/eps_a)*(1.0d0/SI_EPS_0)
-            !                      tmp2 = tmp2*(n_dot_d(1))*n_dot_d(2)
-            !                      r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
-            !                      Q_MB(ivals_p,ivals_s,ival_ac) = Q_MB(ivals_p,ivals_s,ival_ac) + r_tmp*conjg(ls_n_dot(3))*(tmp1 + tmp2)
-            !                   enddo
-            !                enddo
-            !             enddo
-            !          enddo
-            !       enddo
-            !    endif
-            ! endif
+end subroutine

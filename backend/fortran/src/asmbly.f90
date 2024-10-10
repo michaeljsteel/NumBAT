@@ -3,11 +3,11 @@
  !  for the main linear equations
 
 subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
-   shift_ksqr, bloch_vec, nb_typ_el, pp, qq, &
+   shift_ksqr, bloch_vec, nb_typ_el, perm_pp, perm_qq, &
    mesh_props, NEF_props, &
    m_eqs, ip_period_N, ip_period_E_F, &
    nonz, row_ind, col_ptr, &
-   mOp_stiff, mOp_mass)
+   mOp_stiff, mOp_mass, errco, emsg)
 
    !  NQUAD: The number of quadrature points used in each element.
 
@@ -22,7 +22,16 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
    integer(8) bdy_cdn, i_base,  nb_typ_el, nonz
    integer(8) n_msh_el, n_msh_pts, n_ddl, neq, nnodes
 
-   complex(8) pp(nb_typ_el), qq(nb_typ_el), shift_ksqr
+   !if(E_H_field .eq. FEM_FORMULATION_E) then
+   !   perm_qq = eps_eff*vacwavenum_k0**2
+   !   pp = 1.0d0
+   !elseif(E_H_field .eq. FEM_FORMULATION_H) then
+   !   perm_qq = vacwavenum_k0**2
+   !   pp = 1.0d0/eps_eff
+   !endif
+
+
+   complex(8) perm_pp(nb_typ_el), perm_qq(nb_typ_el), shift_ksqr
    double precision bloch_vec(2)
 
    integer(8) ip_period_N(n_msh_pts), ip_period_E_F(n_ddl)
@@ -48,7 +57,7 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
    double precision wq(nquad_max)
    double precision xq(nquad_max), yq(nquad_max)
-   double precision xx(2), xx_g(2), ww, det
+   double precision x_act(2), x_ref(2), ww, det
    double precision mat_B(2,2), mat_T(2,2)
    double precision grad_i(2), grad_j(2)
    double precision phi_z_i, phi_z_j
@@ -56,36 +65,39 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
    integer(8)   ui_stdout
 
    integer(8), parameter :: nddl_0 = 14
-   !parameter (nddl_t=4)
 
-   integer(8) nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
-   double precision el_xy(2,nnodes_0)
 
-   double precision phi1_list(3), grad1_mat0(2,3), grad1_mat(2,3)
+   integer(8) nod_el_p(N_P2_NODES)
+   integer(8) basis_list(4,3,nddl_t)
+   double precision el_xy(2, N_P2_NODES)
 
-   double precision phi2_list(6), grad2_mat0(2,6)
-   double precision grad2_mat(2,6)
+   ! values of basis functions and gradients at given point in reference and actual triangles
+   double precision phi1_ref(N_P1_NODES)
+   double precision grad1_ref(2,N_P1_NODES), grad1_act(2,N_P1_NODES)
 
-   double precision phi3_list(10), grad3_mat0(2,10)
-   double precision grad3_mat(2,10)
+   double precision phi2_ref(N_P2_NODES)
+   double precision grad2_ref(2,N_P2_NODES), grad2_act(2,N_P2_NODES)
 
-   double precision vec_phi_j(2), curl_phi_j
+   double precision phi3_ref(N_P3_NODES)
+   double precision grad3_ref(2,N_P3_NODES), grad3_act(2,N_P3_NODES)
+
    double precision vec_phi_i(2), curl_phi_i
+   double precision vec_phi_j(2), curl_phi_j
 
    complex(8) val_exp(nddl_0), z_phase_fact
 
-   integer(8) i, j, k, j1, iel, iq, typ_e
-   integer(8) jtest, jp, ind_jp, j_eq
-   integer(8) itrial, ip, ind_ip, i_eq
+   integer(8) i, j, k, j_mshpt, iel, iq, typ_e
+   integer(8) jcol, jp, ind_jp, j_eq
+   integer(8) irow, ip, ind_ip, i_eq
    integer(8) n_curved, debug, col_start, col_end
-   complex(8) z_tmp1, z_tmp2
+   complex(8) K_elt, M_elt
    logical is_curved
 
    double precision delta_xx(2)
    double precision ddot, r_tmp1, r_tmp2
    complex(8) M_tt, M_zz, M_tz, M_zt
    complex(8) K_tt, K_zz, K_tz, K_zt
-
+   complex(8) tperm_pp, tperm_qq
 
 
    ui_stdout = stdout
@@ -101,24 +113,28 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
       i_base2 = 0
    endif
 
-
+   ! Determine quadrature weights for triangle integrations at 16 points (seets nquad)
    call quad_triangle (nquad, nquad_max, wq, xq, yq)
 
-
+   ! These are the K and M matrices in Kokou's paper expressed in CSR format
    mOp_stiff = C_ZERO
    mOp_mass = C_ZERO
 
 
    n_curved = 0
 
-   do iel=1,n_msh_el
-      typ_e = mesh_props%type_el(iel)
+   !write(*,*) 'ddls', n_ddl_0, n_ddl, nddl_t
 
-      do j=1,nnodes
-         j1 = mesh_props%table_nod(j,iel)
-         nod_el_p(j) = j1
-         el_xy(:,j) = mesh_props%xy_nodes(:,j1)
+   do iel=1,n_msh_el                     ! For each element
+      typ_e = mesh_props%type_el(iel)       ! Find the material
 
+      tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
+      tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
+
+      do j=1,nnodes                              ! For each of the 6 P2 nodes
+         j_mshpt = mesh_props%table_nod(j,iel)        !    find the index of the mesh point
+         nod_el_p(j) = j_mshpt                        !    store the mesh point indices for this element
+         el_xy(:,j) = mesh_props%xy_nodes(:,j_mshpt)  !    find their physical positions
       enddo
 
       is_curved = log_is_curved_elem_tri (nnodes, el_xy)
@@ -129,8 +145,8 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
       if (bdy_cdn .eq. BCS_PERIODIC) then
          do j=1,nnodes
-            j1 = ip_period_N(nod_el_p(j))
-            if (j1 .ne. 0) nod_el_p(j) = j1
+            j_mshpt = ip_period_N(nod_el_p(j))
+            if (j_mshpt .ne. 0) nod_el_p(j) = j_mshpt
          enddo
       endif
 
@@ -143,36 +159,31 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
          !  For a pair of periodic points, one is chosen as origin and the other is the destination
          do j=1,nddl_0
             ip = NEF_props%table_nod(j,iel)
-            j1 = ip_period_E_F(ip)
-            if (j1 .ne. 0) then
-               do k=1,2
-                  delta_xx(k) = NEF_props%xy_nodes(k,ip) - NEF_props%xy_nodes(k,j1)
-               enddo
+            j_mshpt = ip_period_E_F(ip)
+            if (j_mshpt .ne. 0) then
+               delta_xx(:) = NEF_props%xy_nodes(:,ip) - NEF_props%xy_nodes(:,j_mshpt)
                r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
                val_exp(j) = exp(C_IM_ONE*r_tmp1)
             endif
          enddo
       endif
 
-      do iq=1,nquad
-         xx(1) = xq(iq)
-         xx(2) = yq(iq)
+      do iq=1,nquad         ! for each quadrature point in reference triangle
+         x_ref(1) = xq(iq)     !    find local points and weighting
+         x_ref(2) = yq(iq)
          ww = wq(iq)
          !  xx   = coordinate on the reference triangle
          !  xx_g = coordinate on the actual triangle
 
-         !  We will also need the gradients of the P1 element
-         call phi1_2d_mat(xx, phi1_list, grad1_mat0)
+         ! Evaluate the basis functions and gradients at the quadrature point
 
-         !  grad2_mat0 = gradient on the reference triangle (P2 element)
-         call phi2_2d_mat(xx, phi2_list, grad2_mat0)
-
-         !  grad3_mat0 = gradient on the reference triangle (P3 element)
-         call phi3_2d_mat(xx, phi3_list, grad3_mat0)
+         call phi1_2d_mat(x_ref, phi1_ref, grad1_ref)  ! P1 elements
+         call phi2_2d_mat(x_ref, phi2_ref, grad2_ref)  ! P2 elements
+         call phi3_2d_mat(x_ref, phi3_ref, grad3_ref)  ! P3 elements
 
          if (.not. is_curved ) then
             !  Rectilinear element
-            call jacobian_p1_2d(xx, el_xy, nnodes, xx_g, det, mat_B, mat_T)
+            call jacobian_p1_2d(x_ref, el_xy, nnodes, x_act, det, mat_B, mat_T, errco, emsg)
 
             if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
                write(ui_stdout,*) "   !!!"
@@ -184,32 +195,23 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
             endif
 
          else !  Isoparametric element, 2024-06 fix
-            call jacobian_p2_2d(el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
+            call jacobian_p2_2d(el_xy, nnodes, phi2_ref, grad2_ref, x_act, det, mat_B, mat_T)
          endif
 
-         if(abs(det) .lt. 1.0d-20) then
-            write(ui_stdout,*)
-            write(ui_stdout,*) "   ???"
-            write(ui_stdout,*) "asmbly: det = 0 : iel, det = ", iel, det
-            write(ui_stdout,*) "asmbly: Aborting..."
-            stop
-         endif
+         !  grad_i_mat  = gradient on the actual triangle
+         !  grad_i_act  = Transpose(mat_T)*grad_i_ref
 
-         !  grad_i  = gradient on the actual triangle
-         !  grad_i  = Transpose(mat_T)*grad_i0
-         !  Calculation of the matrix-matrix product:
+         call DGEMM('Transpose','N', 2, 3, 2,  D_ONE, mat_T, 2, grad1_ref, 2, D_ZERO, grad1_act, 2)
+         call DGEMM('Transpose','N', 2, 6, 2,  D_ONE, mat_T, 2, grad2_ref, 2, D_ZERO, grad2_act, 2)
+         call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, grad3_ref, 2, D_ZERO, grad3_act, 2)
 
-         call DGEMM('Transpose','N', 2, 3, 2, D_ONE, mat_T, 2, grad1_mat0, 2, D_ZERO, grad1_mat, 2)
-
-         call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2, grad2_mat0, 2, D_ZERO, grad2_mat, 2)
-
-         call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, grad3_mat0, 2, D_ZERO, grad3_mat, 2)
-
-         do jtest=1,nddl_0
-            jp = NEF_props%table_nod(jtest,iel)
+         ! nddl_0 is number of field dof per elt, each associated with one mesh point
+         ! nddl_t is number of transverse ones
+         do jcol=1,nddl_0
+            jp = NEF_props%table_nod(jcol,iel)
 
             do j_eq=1,3
-               !  jp = NEF_props%table_nod(jtest,iel)
+               !  jp = NEF_props%table_nod(jcol,iel)
                ind_jp = m_eqs(j_eq,jp)
                if (ind_jp .gt. 0) then
                   col_start = col_ptr(ind_jp) + i_base2
@@ -220,113 +222,124 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
                   enddo
 
 
-                  if (jtest .le. nddl_t) then !  edge or face element
-                     !  Determine the basis vector
-                     call basis_vec (j_eq, jtest, basis_list, phi2_list,&
-                        grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
-                     grad_j(1) = 0.0d0
-                     grad_j(2) = 0.0d0
-                     phi_z_j = 0.0d0
-                  else
-                     vec_phi_j(1) = 0.0d0
-                     vec_phi_j(2) = 0.0d0
+                  if (jcol .le. nddl_t) then ! A transverse dof (edge or face)
+                     ! Uses P2 vector elements so determine the basis vector
+                     call basis_vec (j_eq, jcol, basis_list, phi2_ref, &
+                        grad1_act, grad2_act, vec_phi_j, curl_phi_j)
+                     grad_j = D_ZERO
+                     phi_z_j = D_ZERO
+                  else   ! a longitudinal dof, use P3 scalar element
+                     vec_phi_j = D_ZERO
                      curl_phi_j = 0.0d0
-                     grad_j(1) = grad3_mat(1,jtest-nddl_t)
-                     grad_j(2) = grad3_mat(2,jtest-nddl_t)
-                     phi_z_j = phi3_list(jtest-nddl_t)
+                     grad_j(:) = grad3_act(:,jcol-nddl_t)
+                     phi_z_j = phi3_ref(jcol-nddl_t)
                   endif
 
-                  do itrial=1,nddl_0
-                     z_phase_fact = val_exp(jtest) * conjg(val_exp(itrial))
+                  do irow=1,nddl_0
+                     z_phase_fact = val_exp(jcol) * conjg(val_exp(irow))
+                     ip = NEF_props%table_nod(irow,iel)
                      do i_eq=1,3
-                        ip = NEF_props%table_nod(itrial,iel)
                         ind_ip = m_eqs(i_eq,ip)
                         if (ind_ip .gt. 0) then
-                           if (ind_jp .eq. ind_ip .and. &
-                              abs(imag(z_phase_fact)) .gt. 1.0d-15) then
-                              write(ui_stdout,*) "phase_fact: ", ind_jp, ind_ip, &
-                                 z_phase_fact, val_exp(jtest), val_exp(itrial)
-                           endif
 
-                           if (itrial .le. nddl_t) then  !  edge or face element
-                              call basis_vec (i_eq, itrial, basis_list, &
-                                 phi2_list, grad1_mat, grad2_mat, vec_phi_i, &
+                           !if (ind_jp .eq. ind_ip .and. &
+                           !   abs(imag(z_phase_fact)) .gt. 1.0d-15) then
+                           !   write(ui_stdout,*) "phase_fact: ", ind_jp, ind_ip, &
+                           !      z_phase_fact, val_exp(jcol), val_exp(irow)
+                           !endif
+
+                           if (irow .le. nddl_t) then  !  edge or face element
+                              call basis_vec (i_eq, irow, basis_list, &
+                                 phi2_ref, grad1_act, grad2_act, vec_phi_i, &
                                  curl_phi_i)
-                              grad_i(1) = 0.0d0
-                              grad_i(2) = 0.0d0
-                              phi_z_i = 0.0d0
+                              grad_i = D_ZERO
+                              phi_z_i = D_ZERO
                            else
-                              vec_phi_i(1) = 0.0d0
-                              vec_phi_i(2) = 0.0d0
-                              curl_phi_i = 0.0d0
-                              grad_i(1) = grad3_mat(1,itrial-nddl_t)
-                              grad_i(2) = grad3_mat(2,itrial-nddl_t)
-                              phi_z_i = phi3_list(itrial-nddl_t)
+                              vec_phi_i = D_ZERO
+                              curl_phi_i = D_ZERO
+                              grad_i(:) = grad3_act(:,irow-nddl_t)
+                              phi_z_i = phi3_ref(irow-nddl_t)
                            endif
 
                            !!!!!!!!!!!!!!!!!!!!!!!!!!
                            !  Reference; see Eq. (40) of the FEM paper:
                            !  K. Dossou and M. Fontaine
-                           !  "A high order isoparametric finite element method for the computation of wavegui_stdoutde modes"
+                           !  "A high order isoparametric finite element method for the computation of waveguide modes"
                            !  Computer Methods in Applied Mechanics and Engineering, vol. 194, no. 6-8, pp. 837-858, 2005.
                            !!!!!!!!!!!!!!!!!!!!!!!!!!
-                           if (itrial .le. nddl_t .and. jtest .le. nddl_t) then
 
+                           ! Here we are building Eqs. 13
+                           ! We use capital E, F for transverse vector parts
+                           !        lower    e,f for hatted longitudinal part
+                           ! F_i, f_i are the test functions indexed by rows
+                           ! E_i, e_i are the soln functions indexed by cols
+                           if (irow .le. nddl_t .and. jcol .le. nddl_t) then    ! [tt] part
+                              ! K_tt =   (curl E_j).(curl F_i)-k^2 eps (E_j, F_i)
+                              ! M_tt = - (E_j, F_i)
                               r_tmp1 = curl_phi_j * curl_phi_i
                               r_tmp2 = ddot(2, vec_phi_j, 1, vec_phi_i, 1)
-                              K_tt = r_tmp1 * pp(typ_e) - r_tmp2 * qq(typ_e)
-                              M_tt = - r_tmp2 * pp(typ_e)
-                              z_tmp1 = K_tt !* ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_tt !* ww * abs(det) * z_phase_fact
+                              K_tt = r_tmp1 * tperm_pp - r_tmp2 * tperm_qq
+                              M_tt = - r_tmp2 * tperm_pp
+                              K_elt = K_tt
+                              M_elt = M_tt
 
-                           elseif (itrial .le. nddl_t .and. jtest .gt. nddl_t) then
-
+                           elseif (irow .le. nddl_t .and. jcol .gt. nddl_t) then  ! [tz] part
+                              ! K_tz =  0
+                              ! M_tz = (grad e_j, F_i)
                               r_tmp1 = ddot(2, grad_j, 1, vec_phi_i, 1)
                               K_tz = 0.0d0
-                              M_tz = r_tmp1 * pp(typ_e)
-                              z_tmp1 = K_tz !* ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_tz !* ww * abs(det) * z_phase_fact
+                              M_tz = r_tmp1 * tperm_pp
+                              K_elt = K_tz
+                              M_elt = M_tz
 
-                           elseif (itrial .gt. nddl_t .and. jtest .le. nddl_t) then
-
+                           elseif (irow .gt. nddl_t .and. jcol .le. nddl_t) then ! [zt] part
+                              ! K_tz =  (E_j, grad f_i)
+                              ! M_tz =  0
                               r_tmp1 = ddot(2, vec_phi_j, 1, grad_i, 1)
-                              K_zt = r_tmp1 * pp(typ_e)
+                              K_zt = r_tmp1 * tperm_pp
                               M_zt = 0.0d0
-                              z_tmp1 = K_zt !* ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_zt !* ww * abs(det) * z_phase_fact
+                              K_elt = K_zt
+                              M_elt = M_zt
 
-                           elseif (itrial .gt. nddl_t .and. jtest .gt. nddl_t) then
-
+                           elseif (irow .gt. nddl_t .and. jcol .gt. nddl_t) then ! [zz] part
+                              ! K_zz =  - (grad e_j, grad f_i) + eps_r k^2 (e_j, f_i )
+                              ! M_zz =  0
                               r_tmp1 = ddot(2, grad_j, 1, grad_i, 1)
                               r_tmp2 = phi_z_j * phi_z_i
-                              K_zz = - r_tmp1 * pp(typ_e) + r_tmp2 * qq(typ_e)
+                              K_zz = - r_tmp1 * tperm_pp + r_tmp2 * tperm_qq
                               M_zz = 0.0d0
-                              z_tmp1 = K_zz !* ww * abs(det) * z_phase_fact
-                              z_tmp2 = M_zz !* ww * abs(det) * z_phase_fact
+                              K_elt = K_zz
+                              M_elt = M_zz
 
                            else
-                              write(ui_stdout,*) "itrial or jtest has an ",&
-                                 "invalid value"
-                              write(ui_stdout,*) "itrial jtest, = ", itrial, jtest
-                              write(ui_stdout,*) "asmbly: Aborting..."
-                              stop
+                              errco = NBERR_BAD_ASSEMBLY
+                              write(emsg,*) "irow or jcol has an ", "invalid value",  &
+                                "irow jcol, = ", irow, jcol
+                                return
                            endif
 
-                           z_tmp1 = z_tmp1 * ww * abs(det) * z_phase_fact
-                           z_tmp2 = z_tmp2 * ww * abs(det) * z_phase_fact
+                           ! without periodic bcs, z_phase_fact = 0 always
+                           ! add term to sum weighted by quadrature factor and area det
+                           K_elt = K_elt * ww * abs(det) * z_phase_fact
+                           M_elt = M_elt * ww * abs(det) * z_phase_fact
 
-
-                           z_tmp1 = z_tmp1 - shift_ksqr*z_tmp2
+                           ! TODO:
+                           !  This is an arpack solver thing.
+                           !   No reason to do this deep in loop.
+                           !  Should do once the matrices have been constructed
+                           !  And closer to the solver
+                           !
+                           K_elt = K_elt - shift_ksqr*M_elt
 
                            k = i_work(ind_ip)
                            if (k .gt. 0 .and. k .le. nonz) then   !is this test necessary?
-                              mOp_stiff(k) = mOp_stiff(k) + z_tmp1
-                              mOp_mass(k) = mOp_mass(k) + z_tmp2
+                              mOp_stiff(k) = mOp_stiff(k) + K_elt
+                              mOp_mass(k) = mOp_mass(k) + M_elt
                            else
-                              write(ui_stdout,*) "asmbly: problem with row_ind !!"
-                              write(ui_stdout,*) "asmbly: k, nonz = ", k, nonz
-                              write(ui_stdout,*) "asmbly: Aborting..."
-                              stop
+                              errco = NBERR_BAD_ASSEMBLY
+                              write(emsg,*) "asmbly: problem with row_ind: k, nonz = ", k, nonz
+                              return
+
                            endif
 
                         endif
@@ -347,11 +360,11 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
    if (debug .eq. 1) then
       write(ui_stdout,*)
-      write(ui_stdout,*) "  Re pp = ", dble(pp)
-      write(ui_stdout,*) "imag pp = ", imag(pp)
+      write(ui_stdout,*) "  Re perm_pp = ", dble(perm_pp)
+      write(ui_stdout,*) "imag perm_pp = ", imag(perm_pp)
       write(ui_stdout,*)
-      write(ui_stdout,*) "  Re qq = ", dble(qq)
-      write(ui_stdout,*) "imag qq = ", imag(qq)
+      write(ui_stdout,*) "  Re perm_qq = ", dble(perm_qq)
+      write(ui_stdout,*) "imag perm_qq = ", imag(perm_qq)
    endif
 
 

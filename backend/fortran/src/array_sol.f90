@@ -12,6 +12,8 @@
 
  !  Eigenmodes stored in v_eigs_beta and XX are reordered according to iindex to sort by largest eigenvalue
 
+#include "numbat_decl.h"
+
 subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    n_core, bloch_vec, iindex, &
     mesh_props, &
@@ -168,7 +170,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             if (.not. is_curved ) then
                !  Rectilinear element
-               call jacobian_p1_2d (xx, el_xy, nnodes, xx_g, det, mat_B, mat_T)
+               call jacobian_p1_2d (xx, el_xy, nnodes, xx_g, det, mat_B, mat_T, errco, emsg)
+               RETONERROR(errco)
 
                if (det <= 0 .and. debug == 1) then
                   write(*,*) "   !!!"
@@ -177,14 +180,10 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             else
                !  Isoparametric element, 2024-06-14 fix
-               call jacobian_p2_2d (el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
+               call jacobian_p2_2d (el_xy, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
+               RETONERROR(errco)
             endif
 
-            if(abs(det) < 1.0d-20) then
-               write(emsg,*) "array_sol: det = 0 : iel, det = ", iel, det
-               errco = -56
-               return
-            endif
 
             !  grad_i  = gradient on the actual triangle
             !  grad_i  = Transpose(mat_T)*grad_i0

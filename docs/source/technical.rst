@@ -37,9 +37,7 @@ the *bird's-eye view* corresponding to viewing a photonic circuit from above is 
   - :math:`z`: Increases up the screen.  Usually the dominant electric field component for modes labelled as TM polarisation.
 
 When dealing with elastically anisotropic materials, it is important to understand the relationship between the
-
 |NUMBAT| coordinate system and that of any literature source you may be consulting, as it may be necessary to
-
 perform a rotation on the tensor properties of the material in question.  This is discussed below.
 
 

@@ -1,5 +1,5 @@
-!  evaluates a cubic basis function (P3) and its derivative.
-!  P3 basis function over the unit Triangle
+!  evaluates a cubic P3 basis function and its derivative
+!  at the point vx in the reference triangle
 !  phi(i) is the basis element i evaluated at vx=(x,y)
 !  mat_grad(i,j) is Jacobian: x and y derivatives indexed by i, basis element by j
 !    See lag_interpolation.nb

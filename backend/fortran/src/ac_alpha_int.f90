@@ -6,7 +6,7 @@
 subroutine AC_alpha_int (nval,&
 nel, npt, nnodes, table_nod, type_el, x,&
 nb_typ_el, eta_tensor, beta_AC, Omega_AC, soln_AC,&
-AC_mode_energy_elastic, debug, overlap, errco, emsg)
+AC_mode_energy_elastic, debug, overlap)
 
 
    use numbatmod
@@ -138,7 +138,7 @@ AC_mode_energy_elastic, debug, overlap, errco, emsg)
          endif
 
 
-           grad_i  = gradient on the actual triangle
+           ! grad_i  = gradient on the actual triangle
 !          grad_i  = Transpose(mat_T)*grad_i0
 !          Calculation of the matrix-matrix product:
          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,&

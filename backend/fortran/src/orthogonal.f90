@@ -21,6 +21,8 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    complex(8) pp(nb_typ_el)
    complex(8) beta1(n_modes)
    complex(8) beta2(n_modes)
+   integer(8) errco
+   character(len=EMSG_LENGTH) emsg
 
    !  complex(8) mat_overlap(n_modes,n_modes)
    complex(8), dimension(n_modes,n_modes) :: mat_overlap
@@ -122,7 +124,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
 
          if (.not. is_curved ) then
             !  Rectilinear element
-            call jacobian_p1_2d(xx, xel, nnodes, xx_g, det, mat_B, mat_T)
+            call jacobian_p1_2d(xx, xel, nnodes, xx_g, det, mat_B, mat_T, errco, emsg)
             !  if (det .le. 0) then
             if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
                write(*,*) "   !!!"
@@ -132,7 +134,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
             !  Isoparametric element
             !  24/6/12 Deleting first broken argument xx:
             !  p2_2d is diff to p1_2d.
-            call jacobian_p2_2d(xel, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T)
+            call jacobian_p2_2d(xel, nnodes, phi2_list, grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
          endif
          !  if(abs(det) .lt. 1.0d-10) then
          if(abs(det) .lt. 1.0d-20) then

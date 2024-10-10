@@ -13,6 +13,8 @@ C
       complex(8) soln_EM(3,nnodes+7,nval,nel)
       complex(8) n_lst(nb_typ_el), eps_lst(nb_typ_el)
       complex(8), dimension(nval) :: overlap
+      integer(8) errco
+      character(len=EMSG_LENGTH) emsg
 
 c     Local variables
       integer(8) nod_el_p(nnodes_0)
@@ -110,7 +112,7 @@ c
           if (.not. is_curved) then
 c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
-     *               xx_g, det, mat_B, mat_T)
+     *               xx_g, det, mat_B, mat_T, errco, emsg)
 c            if (det .le. 0) then
             if (det .le. 0 .and. debug .eq. 2 .and. iq .eq. 1) then
               write(*,*) "   !!!"
@@ -119,7 +121,7 @@ c            if (det .le. 0) then
           else
 c           Isoparametric element , 2024-06-13 fixed version
             call jacobian_p2_2d(xel, nnodes, phi2_list,
-     *               grad2_mat0, xx_g, det, mat_B, mat_T)
+     *               grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
           endif
            if(abs(det) .lt. 1.0d-20) then
              write(*,*)

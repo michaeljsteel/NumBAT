@@ -1,4 +1,4 @@
-for fb in get_H_field_p3.f h_mode_field_ez.f interp_nod_2d.f
+for fb in ac_alpha_int_v2.f ac_alpha_int.f
 do
     fn=`basename $fb .f`
 

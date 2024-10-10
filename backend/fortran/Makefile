@@ -9,6 +9,7 @@ gccdebug:
 	CC=gcc meson setup --buildtype=debugoptimized mbuild_gccdebug
 	meson configure mbuild_gccdebug
 	meson compile -C mbuild_gccdebug
+	cp build_gccdebug/nb_fortran.so .
 
 inteldebug:
 	CC=icx meson setup --buildtype=debugoptimized mbuild_inteldebug

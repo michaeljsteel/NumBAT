@@ -446,7 +446,8 @@ class Mode:
 
         Positions are measured in microns.'''
 
-        self._width_r0_ref=(x0/SI_um, y0/SI_um)
+        #self._width_r0_ref=(x0/SI_um, y0/SI_um)
+        self._width_r0_ref=(x0, y0)
 
     def set_r0_offset(self, x0, y0):
         '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
@@ -533,6 +534,7 @@ class Mode:
         m_y2mod = np.power((m_yud - w_y0), 2) * m_Fall2
         w2x = sqrt(int2d_trapz(m_x2mod, dx, dy)/s_f)
         w2y = sqrt(int2d_trapz(m_y2mod, dx, dy)/s_f)
+
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
         self.w2 = np.array([w2x, w2y, w2])

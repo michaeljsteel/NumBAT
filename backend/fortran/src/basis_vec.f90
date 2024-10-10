@@ -13,14 +13,14 @@
 !  basis_list(4,j,i)     : it will be used only if k=4
 
 
-
+! generate the vector function i_ddl and its curl in terms of the P1 and P2 functions
 subroutine basis_vec (i_eq, i_ddl, basis_list, p2_list,&
 grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
 
-   implicit none
+   use numbatmod
 
    integer(8), parameter :: nnodes = 6
-   integer(8), parameter :: nddl_t=4
+   !integer(8), parameter :: nddl_t=4
    integer(8), parameter :: dimm=2
 
    integer(8) i_eq, i_ddl

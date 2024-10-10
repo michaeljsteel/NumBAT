@@ -9,8 +9,8 @@ nb_module_fsrcs = files(
 )
 
 nb_pyinterface_fsrcs = files(
-    'ac_alpha_int.f',
-    'ac_alpha_int_v2.f',
+    'ac_alpha_int.f90',
+    'ac_alpha_int_v2.f90',
     'ac_mode_elastic_energy_int.f',
     'ac_mode_elastic_energy_int_v4.f',
     'ac_mode_power_int.f',

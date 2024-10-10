@@ -22,30 +22,37 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
    double precision c(2,2)
    integer(8), parameter :: nnodes_0 = 6
 
-   double precision xel_0(2,nnodes_0)  ! TODO: define values as initialisation
+   !double precision xel_0(2,nnodes_0)  ! TODO: define values as initialisation
+
+   double precision, dimension(2,nnodes_0) :: xel_0 = &
+   reshape( (/ 0.d0, 1.d0, 0.d0, 0.5d0, 0.5d0, 0.d0, &
+               0.d0, 0.d0, 1.d0, 0.0d0, 0.5d0, 0.5d0 /), &
+               shape(xel_0), order=(/2,1/))
+
+
    double precision phi_xi, phi_yi
    double precision phi0_xi, phi0_yi
    double precision x, y
    integer(8) i
 
 !  Coordinates (x,y)= xel_0(1..2,inode) of the P2 Lagrange interpolaion nodes
-   xel_0(1,1) = 0
-   xel_0(2,1) = 0
+   ! xel_0(1,1) = 0
+   ! xel_0(2,1) = 0
 
-   xel_0(1,2) = 1
-   xel_0(2,2) = 0
+   ! xel_0(1,2) = 1
+   ! xel_0(2,2) = 0
 
-   xel_0(1,3) = 0
-   xel_0(2,3) = 1
+   ! xel_0(1,3) = 0
+   ! xel_0(2,3) = 1
 
-   xel_0(1,4) = 0.5d0
-   xel_0(2,4) = 0
+   ! xel_0(1,4) = 0.5d0
+   ! xel_0(2,4) = 0
 
-   xel_0(1,5) = 0.5d0
-   xel_0(2,5) = 0.5d0
+   ! xel_0(1,5) = 0.5d0
+   ! xel_0(2,5) = 0.5d0
 
-   xel_0(1,6) = 0
-   xel_0(2,6) = 0.5d0
+   ! xel_0(1,6) = 0
+   ! xel_0(2,6) = 0.5d0
 
 !  C = Transpose[mat_jac]
    c(1,1) = mat_jac(1,1)
