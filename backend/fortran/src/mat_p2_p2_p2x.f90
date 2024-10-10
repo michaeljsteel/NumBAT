@@ -241,14 +241,17 @@ subroutine mat_p2_p2_p2x (mat, b_inv_t, det_b)
 
    factor = 2520
    factor2 = dt / factor
-   do k=1,6
-      do j=1,6
-         do i=1,6
-            mat(i,j,k) = mat(i,j,k) * factor2
-         enddo
-      enddo
-   enddo
-!
-   return
+
+   mat = mat * factor2
+
+!    do k=1,6
+!       do j=1,6
+!          do i=1,6
+!             mat(i,j,k) = mat(i,j,k) * factor2
+!          enddo
+!       enddo
+!    enddo
+! !
+!    return
 end
 

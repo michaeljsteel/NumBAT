@@ -1,14 +1,8 @@
 !
-!!!!!!!!!!!!!!!!
+!  Compute the integral: m_ijk = Integrate[P(i) * P(j) * P(k), over the unit triangle
 !
-!      Compute the integral: m_ijk = Integrate[P(i) * P(j) * P(k), over a triangle]
-!
-!!!!!!!!!!!!!!!!
 !
 subroutine mat_p2_p2_p2 (mat, det_b)
-!
-!!!!!!!!!!!!!!!!
-!
    implicit none
    double precision mat(6,6,6), det_b
 
@@ -236,15 +230,15 @@ subroutine mat_p2_p2_p2 (mat, det_b)
 
    factor = 2520
    factor2 = dt / factor
-   do k=1,6
-      do j=1,6
-         do i=1,6
-            mat(i,j,k) = mat(i,j,k) * factor2
-         enddo
-      enddo
-   enddo
-!
-   return
+
+   mat = mat * factor2
+   ! do k=1,6
+   !    do j=1,6
+   !       do i=1,6
+   !          mat(i,j,k) = mat(i,j,k) * factor2
+   !       enddo
+   !    enddo
+   ! enddo
 end
 
 

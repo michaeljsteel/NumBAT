@@ -43,7 +43,7 @@ module numbatmod
    integer(8), parameter :: N_P3_NODES = 10
 
    integer(8), parameter :: nnodes_0 = 6
-   integer(8), parameter :: nddl_t = 4
+   integer(8), parameter :: N_DDL_T = 4
 
    integer(8), parameter :: nddl_0_em = 14
    integer(8), parameter :: nddl_0_ac = 6

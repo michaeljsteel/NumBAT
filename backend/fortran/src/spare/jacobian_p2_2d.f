@@ -1,11 +1,11 @@
 c
 c
-c      x=[x0,y0] = coordinatate in the reference tetrahedron
-c      x_g = Corresponding coordinatate in the actual tetrahedron
+c      x=[x0,y0] = coordinatate in the reference triangle
+c      x_g = Corresponding coordinatate in the actual triangle
 c
-c    Matrix B: Compute the Affine mappings from the current Tetrahedron to the
-c     reference unit Tetrahedron N. Integration will be performed on that
-c     Tetrahedron by Gaussian quadrature.
+c    Matrix B: Compute the Affine mappings from the current triangle to the
+c     reference unit triangle N. Integration will be performed on that
+c     triangle by Gaussian quadrature.
 c
 c    X_g = B X + (x_0, y_0)^t
 c
