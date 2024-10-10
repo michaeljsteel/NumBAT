@@ -26,9 +26,9 @@ subroutine jacobian_p1_2d (x_ref, x_el, nnodes, x_act, det_jacobian, &
    integer(4) INFO_32, LDB_32, LDT_32
    integer(4) IPIV_32(2), NRHS_32, N_32
 
-   ! Compute the Affine mappings from the current Tetrahedron to the
-   !  reference unit Tetrahedron N. Integration will be performed on that
-   !  Tetrahedron by Gaussian quadrature.
+   ! Compute the Affine mappings from the current triangle to the
+   !  reference unit triangle N. Integration will be performed on that
+   !  triangle by Gaussian quadrature.
 
    ! x_act = B X + (x_0, y_0, z_0)^t
 

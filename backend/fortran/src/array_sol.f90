@@ -61,7 +61,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
 
    double precision mode_comp(4)
-   integer(8) nod_el_p(nnodes_0), basis_list(4,3,nddl_t)
+   integer(8) nod_el_p(nnodes_0), basis_list(4,3,N_DDL_T)
    double precision xn(dim_32,nnodes_0), el_xy(dim_32,nnodes_0)
    complex(8) sol_el(3,nnodes_0+7)
 
@@ -144,7 +144,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             enddo
          endif  !  BCS_PERIODIC
 
-         call basis_ls (nod_el_p, basis_list)  !  get P2 basis function
+         call make_phi_vector_map (nod_el_p, basis_list)  !  get P2 basis function
 
          !call is_curved_elem_tri (nnodes, el_xy, is_curved, r_tmp1)  !  determine if current element has curved face.
          !Can this ever happen?
@@ -193,7 +193,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             call DGEMM('Transpose','N', dim_32, 10, dim_32, D_ONE, mat_T, dim_32, grad3_mat0, dim_32, D_ZERO, grad3_mat, dim_32)
 
             !  Contribution to the transverse component
-            do jtest=1,nddl_t
+            do jtest=1,N_DDL_T
                do j_eq=1,3
                   jp = NEF_props%table_nod(jtest,iel)
                   ind_jp = ineq(j_eq,jp)
@@ -205,7 +205,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                         !  The contribution is nonzero only when m=inod.
                         !  Determine the basis vector
 
-                        call basis_vec (j_eq, jtest, basis_list, phi2_list, grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
+                        call make_phi_vector_basis(j_eq, jtest, basis_list, phi2_list, grad1_mat, grad2_mat, vec_phi_j, curl_phi_j)
                         z_tmp1 = sol_0(ind_jp, i_mode2)* val_exp(jtest)
 
 
@@ -231,14 +231,14 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             !  Contribution to the longitudinal component
             !  The initial P3 value of Ez isinterpolated over P2 nodes
-            do jtest=nddl_t+1,nddl_0
+            do jtest=N_DDL_T+1,nddl_0
 
                do j_eq=1,1
                   jp = NEF_props%table_nod(jtest,iel)
                   ind_jp = ineq(j_eq,jp)
                   if (ind_jp > 0) then
                      !z_tmp1 = sol_0(ind_jp, i_mode2)
-                     m  = jtest-nddl_t
+                     m  = jtest-N_DDL_T
                      phi_z_j = phi3_list(m)
                      !!z_tmp1 = z_tmp1 * val_exp(jtest)
                      !z_tmp2 = z_tmp1 * phi_z_j
@@ -270,7 +270,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             !enddo
             sol_el(1:3,inod) = D_ZERO
 
-            jtest = nddl_t+inod-nnodes+3
+            jtest = N_DDL_T+inod-nnodes+3
             j_eq = 1
             jp = NEF_props%table_nod(jtest,iel)
             ind_jp = ineq(j_eq,jp)
@@ -303,7 +303,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
       !  Total energy and normalization
       z_tmp2 = mode_pol(1,i_mode) + mode_pol(2,i_mode) + mode_pol(3,i_mode)
-      if (abs(z_tmp2) < 1.0d-10) then
+      !if (abs(z_tmp2) < 1.0d-10) then
+      if (abs(z_tmp2) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
          write(*,*) "array_sol: the total energy ",        "is too small : ", z_tmp2
          write(*,*) "array_sol: i_mode i_mode2 = ", i_mode, i_mode2
          write(*,*) "array_sol: zero eigenvector; aborting..."
@@ -313,7 +314,8 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
       mode_pol(:,i_mode) = mode_pol(:,i_mode) / z_tmp2
 
       !  Check if the eigenvector is nonzero
-      if (abs(z_sol_max) < 1.0d-10) then
+      !if (abs(z_sol_max) < 1.0d-10) then
+      if (abs(z_sol_max) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
          z_sol_max = z_tmp2
          write(*,*) "array_sol: z_sol_max is too small"
          write(*,*) "array_sol: z_sol_max = ", z_sol_max

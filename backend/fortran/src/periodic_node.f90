@@ -140,7 +140,7 @@ subroutine periodic_node (nel, npt, nnodes, type_nod, x,&
    !
    !     some check ...
    !
-   !     Endpoints of the 6 edges (mid-point) of the reference tetrahedron
+   !     Endpoints of the 6 edges (mid-point) of the reference triangle
    !
    i = 1
    list_end(1,i) = 1

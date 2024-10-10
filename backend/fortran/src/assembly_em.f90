@@ -185,24 +185,24 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
       endif
 
       call make_phi_vector_map(nod_el_p, phi_vec_map)
-      if (iel .eq. 1) then
-         write(*,*) 'phimap 1 1', (phi_vec_map(k,1, 1), k=1,4)
-         write(*,*) 'phimap 1 2', (phi_vec_map(k,1, 2), k=1,4)
-         write(*,*) 'phimap 1 3', (phi_vec_map(k,1, 3), k=1,4)
-         write(*,*) 'phimap 1 4', (phi_vec_map(k,1, 4), k=1,4)
+   !    if (iel .eq. 1) then
+   !       write(*,*) 'phimap 1 1', (phi_vec_map(k,1, 1), k=1,4)
+   !       write(*,*) 'phimap 1 2', (phi_vec_map(k,1, 2), k=1,4)
+   !       write(*,*) 'phimap 1 3', (phi_vec_map(k,1, 3), k=1,4)
+   !       write(*,*) 'phimap 1 4', (phi_vec_map(k,1, 4), k=1,4)
 
-         write(*,*) 'phimap 2 1', (phi_vec_map(k,2, 1), k=1,4)
-         write(*,*) 'phimap 2 2', (phi_vec_map(k,2, 2), k=1,4)
-         write(*,*) 'phimap 2 3', (phi_vec_map(k,2, 3), k=1,4)
-         write(*,*) 'phimap 2 4', (phi_vec_map(k,2, 4), k=1,4)
+   !       write(*,*) 'phimap 2 1', (phi_vec_map(k,2, 1), k=1,4)
+   !       write(*,*) 'phimap 2 2', (phi_vec_map(k,2, 2), k=1,4)
+   !       write(*,*) 'phimap 2 3', (phi_vec_map(k,2, 3), k=1,4)
+   !       write(*,*) 'phimap 2 4', (phi_vec_map(k,2, 4), k=1,4)
 
-         write(*,*) 'phimap 2 1', (phi_vec_map(k,3, 1), k=1,4)
-         write(*,*) 'phimap 2 2', (phi_vec_map(k,3, 2), k=1,4)
-         write(*,*) 'phimap 2 3', (phi_vec_map(k,3, 3), k=1,4)
-         write(*,*) 'phimap 2 4', (phi_vec_map(k,3, 4), k=1,4)
+   !       write(*,*) 'phimap 2 1', (phi_vec_map(k,3, 1), k=1,4)
+   !       write(*,*) 'phimap 2 2', (phi_vec_map(k,3, 2), k=1,4)
+   !       write(*,*) 'phimap 2 3', (phi_vec_map(k,3, 3), k=1,4)
+   !       write(*,*) 'phimap 2 4', (phi_vec_map(k,3, 4), k=1,4)
 
 
-   endif
+   ! endif
 
       val_exp = C_ONE
 

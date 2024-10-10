@@ -8,7 +8,7 @@
  ! !  V = number of vertices
  ! !  E = number of edges
  ! !  F = number of faces
- ! !  C = number of cells (3D, tetrahedron)
+ ! !  C = number of cells (3D, triangle)
  ! !
  ! !  From Euler's theorem on 3D graphs: V-E+F-C = 1 - (number of holes)
  ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;

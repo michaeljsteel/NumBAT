@@ -1,14 +1,8 @@
-!
-!!!!!!!!!!!!!!!!
-!
-!      Compute the integral: m_ij = Integrate[P(i) * P(j), over a triangle]
-!
-!!!!!!!!!!!!!!!!
+
+!  For P2 functions,
+!  Compute the integral: m_ij = Integrate[P(i) * P(j), over the unit reference triangle
 !
 subroutine mat_p2_p2 (mat, det_b)
-!
-!!!!!!!!!!!!!!!!
-!
    implicit none
    double precision mat(6,6), det_b
    double precision dt, factor, factor2
@@ -55,12 +49,14 @@ subroutine mat_p2_p2 (mat, det_b)
 
    factor = 360
    factor2 = dt / factor
-   do j=1,6
-      do i=1,6
-         mat(i,j) = mat(i,j) * factor2
-      enddo
-   enddo
-!
-   return
+   mat = mat * factor2
+
+!    do j=1,6
+!       do i=1,6
+!          mat(i,j) = mat(i,j) * factor2
+!       enddo
+!    enddo
+! !
+!    return
 end
 

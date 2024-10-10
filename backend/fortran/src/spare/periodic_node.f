@@ -140,7 +140,7 @@ c
 c
 c     some check ...
 c
-c     Endpoints of the 6 edges (mid-point) of the reference tetrahedron
+c     Endpoints of the 6 edges (mid-point) of the reference triangle
 c
       i = 1
       list_end(1,i) = 1
