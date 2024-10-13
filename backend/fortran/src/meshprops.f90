@@ -77,22 +77,18 @@ module class_MeshRaw
 
    type, public  :: MeshEntities
 
+      integer(8) n_faces       ! num faces
+      integer(8) n_edges       ! num physically distinct edges
+      integer(8) n_msh_pts_p3  ! num physically distinct P3 points
+      integer(8) n_ddl         ! total num of physically distinct things (sum of last 3)
 
       ! v_tags[i, j] 14 x n_msh_el
       !  tn[1, j] = j  ! index of element
       !    -
       !  Each element has 1 face, 3 edges and 10 P3 nodes
       !  so v_tags has dimensions 14 x n_msh_el
-
-      integer(8) n_faces       ! num faces
-      integer(8) n_edges       ! num physically distinct edges
-      integer(8) n_msh_pts_p3  ! num physically distinct P3 points
-      integer(8) n_ddl         ! total num of physically distinct things (sum of last 3)
-
-
-
-      !  [14 x n_msh_el]
       integer(8), dimension(:,:), allocatable :: v_tags
+
 
       ! Positions indexed by tag
       ! [2 x n_ddl]
@@ -101,7 +97,6 @@ module class_MeshRaw
       ! [:, 5..7] - P3 vertex positions cloned from MeshRaw%v_nd_xy
       ! [:, 8..13] - P3 edge positions built from MeshRaw%v_nd_xy at 1/3, 2/3 intervals
       ! [:, 14] - P3 interior at barycentre
-
       double precision, dimension(:,:), allocatable :: v_xy
 
 
@@ -113,7 +108,7 @@ module class_MeshRaw
       !   [1, :]  for P3 interior point:  0
 
       !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
-      integer(8), dimension(:,:), allocatable :: v_phys_i
+      integer(8), dimension(:,:), allocatable :: v_dof_props
 
       ! Maps P2 edge nodes to surrounding vertices
       integer(8) edge_ends(2,3)
@@ -131,18 +126,12 @@ module class_MeshRaw
 
    end type MeshEntities
 
-   ! ---------------------------------------
+
 contains
 
 #include "meshprops_impl.f90"
 
 #include "meshentities_impl.f90"
-
-
-
-
-
-
 
 
 end module class_MeshRaw

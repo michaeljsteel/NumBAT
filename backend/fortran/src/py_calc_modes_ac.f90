@@ -229,7 +229,7 @@ contains
          endif
       endif
 
-      call lattice_vec (n_msh_pts, v_nd_xy, lat_vecs, debug)
+      call periodic_lattice_vec (n_msh_pts, v_nd_xy, lat_vecs, debug)
 
       !  if (debug .eq. 1) then
       !  open (unit=64, file="msh_check.txt",

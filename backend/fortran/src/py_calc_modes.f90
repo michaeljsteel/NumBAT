@@ -1,11 +1,6 @@
 #include "numbat_decl.h"
 
-
-
-
-
-
- !  Solves the electromagnetic FEM problem defined in
+!  Solves the electromagnetic FEM problem defined in
  !  Dossou & Fontaine, Comp Meth. App. Mech. Eng, 194, 837 (2005).
 
  !  The weak formulation of Maxwell wave equation is in Eqs 14, 15.
@@ -24,7 +19,7 @@
  !  E = E_{t,h} \vecphi_h + \unitz hE_{z,h} \psi_h = [E_{t,h} \vecphi_h, hE_{z,h} \psi_h ]
  !  F = F_{t,h} \vecphi_h + \unitz F_{z,h} \psi_h   (note F, not hF)
 
- !  Then  inner product (L_1 E, L_2 F) is evaluted:
+ !  Then  inner product (L_1 E, L_2 F) is evaluated:
  !  (E,F) = \int dx dy   (L_2 F)^* \cdot (L_1 E)
  !  = \int dx dy   ((L_2 F)_t)^* \cdot ((L_1 E)_t)
  !  +  ((L_2 F)_z)^* . ((L_1 E)_z)
@@ -66,6 +61,7 @@ module calc_em_impl
 
    use class_stopwatch
    use class_MeshRaw
+   use class_SparseCSR
 
 
    use nbinterfaces
@@ -114,6 +110,8 @@ contains
 
       type(MeshRaw) :: mesh_raw
       type(MeshEntities) :: entities
+      type(MeshEntities) :: csrmat
+
 
 
       integer(8), dimension(:,:), allocatable :: m_eqs
@@ -185,8 +183,6 @@ contains
       call entities%allocate(n_msh_el, errco, emsg)
       RETONERROR(errco)
 
-      call integer_alloc_2d(m_eqs, 3_8, entities%n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
-
       call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
@@ -210,18 +206,21 @@ contains
       errco, emsg)
       RETONERROR(errco)
 
-      ! Builds the m_eqs table which maps element DOFs to the equation handling them.
-      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, entities%n_ddl,  &
-         mesh_raw, entities, neq, m_eqs, debug, &
-         iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
+      call integer_alloc_2d(m_eqs, 3_8, entities%n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
 
+      ! Builds the m_eqs table which maps element DOFs to the equation handling them.
+      ! None of the periodic variables matter for us
+      call set_boundary_conditions(bdy_cdn,  &
+      mesh_raw, entities, neq, m_eqs, debug, &
+      iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg)
+      RETONERROR(errco)
 
       !Now we know neq
+      nonz=0
 
       ! Build sparse matrix index arrays
-      call make_csr_arrays(n_msh_el, entities%n_ddl, neq, &
-         entities%v_tags, &
-         m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
+      call make_csr_arrays(mesh_raw, entities, neq, &
+      m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
       RETONERROR(errco)
 
       !  ----------------------------------------------------------------

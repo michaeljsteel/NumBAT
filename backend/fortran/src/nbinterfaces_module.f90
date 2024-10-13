@@ -2,15 +2,20 @@
 module nbinterfaces
 
     interface
-        subroutine make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
-                m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
+        subroutine make_csr_arrays(mesh_raw, entities,  neq,&
+            m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
 
             use numbatmod
             use alloc
+            use class_MeshRaw
 
-            integer(8) n_msh_el, n_ddl, neq, nonz
-            integer(8) table_N_E_F(14,n_msh_el)
-            integer(8) m_eqs(3,n_ddl)
+            type(MeshRaw) :: mesh_raw
+            type(MeshEntities) :: entities
+
+            integer(8) neq, nonz
+            integer(8) m_eqs(3, entities%n_ddl)
+            !integer(8) m_eqs(:,:)
+
 
             integer(8), dimension(:), allocatable, intent(inout) :: v_row_ind
             integer(8), dimension(:), allocatable, intent(inout) :: v_col_ptr
