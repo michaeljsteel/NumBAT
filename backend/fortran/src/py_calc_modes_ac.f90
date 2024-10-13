@@ -222,7 +222,7 @@ contains
       call clock_main%reset()
 
       if (supplied_geo_flag .eq. 0) then
-         call construct_fem_node_tables (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
+         call construct_fem_node_tables_ac (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
             nodes_per_el, n_elt_mats, xy_nodes, type_nod, type_el, table_nod, errco, emsg)
          if (errco .ne. 0) then
             return

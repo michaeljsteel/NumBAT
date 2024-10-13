@@ -14,8 +14,8 @@ subroutine find_basis_derivatives(idof, ifunc, phi_vec_map, phi_P2_ref, phi_P3_r
 
    integer(8) idof, ifunc
    integer(8) phi_vec_map(4,3,N_DDL_T)
-   double precision phi_P2_ref(N_P2_NODES), phi_P3_ref(N_P3_NODES)
-   double precision gradt_P1_act(2,N_P1_NODES), gradt_P2_act(2,N_P2_NODES), gradt_P3_act(2,N_P3_NODES)
+   double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
+   double precision gradt_P1_act(2,P1_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
 
    double precision vec_phi_i(2), curlt_phi_i
    double precision gradt_i(2)
@@ -40,7 +40,7 @@ end subroutine
 
 subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, perm_pp, perm_qq, &
-   mesh_props, NEF_props, &
+   mesh_raw, entities, &
    m_eqs, ip_period_N, ip_period_E_F, &
    nonz, row_ind, col_ptr, &
    mOp_stiff, mOp_mass, errco, emsg)
@@ -49,10 +49,10 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
    use numbatmod
    use alloc
-   use class_MeshProps
+   use class_MeshRaw
 
-   type(MeshProps) :: mesh_props
-   type(N_E_F_Props) :: NEF_props
+   type(MeshRaw) :: mesh_raw
+   type(MeshEntities) :: entities
 
 
    integer(8) bdy_cdn, i_base,  nb_typ_el, nonz
@@ -103,19 +103,19 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
    integer(8), parameter :: nddl_0 = 14
 
 
-   integer(8) nod_el_p(N_P2_NODES)
+   integer(8) nod_el_p(P2_NODES_PER_EL)
    integer(8) phi_vec_map(4,3,N_DDL_T)
-   double precision el_xy(2, N_P2_NODES)
+   double precision el_xy(2, P2_NODES_PER_EL)
 
    ! values of basis functions and gradients at given point in reference and actual triangles
-   double precision phi1_ref(N_P1_NODES)
-   double precision gradt_P1_ref(2,N_P1_NODES), gradt_P1_act(2,N_P1_NODES)
+   double precision phi1_ref(P1_NODES_PER_EL)
+   double precision gradt_P1_ref(2,P1_NODES_PER_EL), gradt_P1_act(2,P1_NODES_PER_EL)
 
-   double precision phi_P2_ref(N_P2_NODES)
-   double precision gradt_P2_ref(2,N_P2_NODES), gradt_P2_act(2,N_P2_NODES)
+   double precision phi_P2_ref(P2_NODES_PER_EL)
+   double precision gradt_P2_ref(2,P2_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL)
 
-   double precision phi_P3_ref(N_P3_NODES)
-   double precision gradt_P3_ref(2,N_P3_NODES), gradt_P3_act(2,N_P3_NODES)
+   double precision phi_P3_ref(P3_NODES_PER_EL)
+   double precision gradt_P3_ref(2,P3_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
 
    double precision vec_phi_i(2), curlt_phi_i
    double precision vec_phi_j(2), curlt_phi_j
@@ -160,15 +160,15 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
    n_curved = 0
 
    do iel=1,n_msh_el                     ! For each element
-      typ_e = mesh_props%type_el(iel)       ! Find the material
+      typ_e = mesh_raw%el_material(iel)       ! Find the material
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
 
       do j=1,nnodes                              ! For each of the 6 P2 nodes
-         j_mshpt = mesh_props%table_nod(j,iel)        !    find the index of the mesh point
+         j_mshpt = mesh_raw%table_nod(j,iel)        !    find the index of the mesh point
          nod_el_p(j) = j_mshpt                        !    store the mesh point indices for this element
-         el_xy(:,j) = mesh_props%xy_nodes(:,j_mshpt)  !    find their physical positions
+         el_xy(:,j) = mesh_raw%xy_nodes(:,j_mshpt)  !    find their physical positions
       enddo
 
       is_curved = log_is_curved_elem_tri (nnodes, el_xy)
@@ -210,10 +210,10 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
          !  val_exp: Bloch mod ephase factor between the origin point and destination point
          !  For a pair of periodic points, one is chosen as origin and the other is the destination
          do j=1,nddl_0
-            ip = NEF_props%table_nod(j,iel)
+            ip = entities%v_tags(j,iel)
             j_mshpt = ip_period_E_F(ip)
             if (j_mshpt .ne. 0) then
-               delta_xx(:) = NEF_props%xy_nodes(:,ip) - NEF_props%xy_nodes(:,j_mshpt)
+               delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,j_mshpt)
                r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
                val_exp(j) = exp(C_IM_ONE*r_tmp1)
             endif
@@ -260,10 +260,10 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
          ! nddl_0 is number of field dof per elt, each associated with one mesh point
          ! N_DDL_T is number of transverse ones
          do jcol=1,nddl_0
-            jp = NEF_props%table_nod(jcol,iel)
+            jp = entities%v_tags(jcol,iel)
 
             do j_eq=1,3
-               !  jp = NEF_props%table_nod(jcol,iel)
+               !  jp = entities%v_tags(jcol,iel)
                ind_jp = m_eqs(j_eq,jp)
                if (ind_jp .gt. 0) then
                   col_start = col_ptr(ind_jp) + i_base2
@@ -292,7 +292,7 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
                   do irow=1,nddl_0
                      z_phase_fact = val_exp(jcol) * conjg(val_exp(irow))
-                     ip = NEF_props%table_nod(irow,iel)
+                     ip = entities%v_tags(irow,iel)
                      do i_eq=1,3
                         ind_ip = m_eqs(i_eq,ip)
                         if (ind_ip .gt. 0) then

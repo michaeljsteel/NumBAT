@@ -684,7 +684,7 @@ class Structure:
 
         with open(Path(self.msh_location_in, 'geo2png.scr'), 'r') as fin:
             conv_tmp = fin.read()
-        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_geom')
+        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-entities')
 
         fn_scr = Path(self.msh_location_out, self.msh_name + '_geo2png.scr')
 
@@ -715,7 +715,7 @@ class Structure:
             tcmd = ' '.join(cmd)
             reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
-        plottools.join_figs([tmpoutpref+'-mesh_geom.png',
+        plottools.join_figs([tmpoutpref+'-entities.png',
                           tmpoutpref+'-mesh_nodes.png',],
                           str(outprefix)+'-mesh.png',
                           clip=(60,50,60,50))
