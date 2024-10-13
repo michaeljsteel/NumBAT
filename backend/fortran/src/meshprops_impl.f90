@@ -12,11 +12,11 @@ subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, &
 
       call integer_alloc_1d(this%el_material, n_msh_el, 'el_material', errco, emsg); RETONERROR(errco)
 
-      call double_alloc_2d(this%xy_nodes, 2_8, n_msh_pts, 'xy_nodes', errco, emsg); RETONERROR(errco)
+      call double_alloc_2d(this%v_nd_xy, 2_8, n_msh_pts, 'v_nd_xy', errco, emsg); RETONERROR(errco)
 
       call integer_alloc_1d(this%node_phys_i, n_msh_pts, 'node_phys_i', errco, emsg); RETONERROR(errco)
 
-      call integer_alloc_2d(this%table_nod, P2_NODES_PER_EL, n_msh_el, 'table_nod', errco, emsg);
+      call integer_alloc_2d(this%elnd_to_mesh, P2_NODES_PER_EL, n_msh_el, 'elnd_to_mesh', errco, emsg);
       RETONERROR(errco)
 
    end subroutine
@@ -27,19 +27,19 @@ subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, &
    ! end subroutine
 
    subroutine MeshRaw_fill_python_arrays(this, &
-      el_material, node_phys_i, table_nod, xy_nodes)
+      el_material, node_phys_i, elnd_to_mesh, v_nd_xy)
 
       class(MeshRaw) :: this
 
       integer(8), intent(out) :: el_material(:)
       integer(8), intent(out) :: node_phys_i(:)
-      integer(8), intent(out) :: table_nod(:, :)
-      double precision, intent(out) :: xy_nodes(:,:)
+      integer(8), intent(out) :: elnd_to_mesh(:, :)
+      double precision, intent(out) :: v_nd_xy(:,:)
 
       el_material = this%el_material
       node_phys_i = this%node_phys_i
-      table_nod = this%table_nod
-      xy_nodes = this%xy_nodes
+      elnd_to_mesh = this%elnd_to_mesh
+      v_nd_xy = this%v_nd_xy
 
    end subroutine
 
@@ -54,14 +54,14 @@ subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, &
    pure logical function MeshRaw_is_boundary_node_2(this, i_nd, i_el) result(res)
       class(MeshRaw), intent(in) :: this
       integer(8), intent(in)  :: i_nd, i_el
-      res = this%node_phys_i(this%table_nod(i_nd, i_el)) .ne. 0
+      res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el)) .ne. 0
    end function
 
    ! get node type by indirection through node table
    integer(8) function  MeshRaw_node_phys_index_by_ref(this, i_nd, i_el) result(res)
       class(MeshRaw) :: this
       integer(8) :: i_nd, i_el
-      res = this%node_phys_i(this%table_nod(i_nd, i_el))
+      res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el))
    end function
 
 
@@ -75,11 +75,11 @@ subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, &
 !  node_phys_i != 0 => boundary point specifying which physical line, physindex
 
 !  Reads .mail file to find
-!  - x,y coords of mesh points  (xy_nodes)
-!  - mesh points associated with each element (table_nod)
+!  - x,y coords of mesh points  (v_nd_xy)
+!  - mesh points associated with each element (elnd_to_mesh)
 !  - whether number of material types read matches expected value n_elt_mats
 
-!  -  Fills:  xy_nodes, node_phys_i, el_material, table_nod
+!  -  Fills:  v_nd_xy, node_phys_i, el_material, elnd_to_mesh
 
 subroutine MeshRaw_construct_node_tables(this, mesh_file, dimscale_in_m, errco, emsg)
 
@@ -128,7 +128,7 @@ subroutine MeshRaw_construct_node_tables(this, mesh_file, dimscale_in_m, errco, 
 !  Read coordinates of the FEM mesh points
    do i=1,this%n_msh_pts
       read(ui,*) k, (xx(j),j=1,2), this%node_phys_i(i)
-      this%xy_nodes(:,i) = xx *dimscale_in_m
+      this%v_nd_xy(:,i) = xx *dimscale_in_m
    enddo
 
 !  Connectivity table
@@ -136,7 +136,7 @@ subroutine MeshRaw_construct_node_tables(this, mesh_file, dimscale_in_m, errco, 
 
    do i=1,this%n_msh_el
 
-      read(ui,*) k, (this%table_nod(j,i),j=1,P2_NODES_PER_EL), this%el_material(i)
+      read(ui,*) k, (this%elnd_to_mesh(j,i),j=1,P2_NODES_PER_EL), this%el_material(i)
 
       j = this%el_material(i)
 

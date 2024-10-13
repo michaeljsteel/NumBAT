@@ -33,19 +33,20 @@ module class_MeshRaw
       integer(8) :: n_msh_el
       integer(8) :: n_elt_mats
 
-      !integer(8) :: nodes_per_el
-
       ! what kind of mesh point [n_msh_pts]
       ! basically the Gmsh physindex.  Nonzero = boundary node
       integer(8), dimension(:), allocatable :: node_phys_i
-      double precision, dimension(:,:), allocatable :: xy_nodes  ! rename to
+
+      double precision, dimension(:,:), allocatable :: v_nd_xy
 
       ! material of each elt [n_msh_el]
       integer(8), dimension(:), allocatable :: el_material
 
-      ! mapping of elt,node to mesh point, [6 x n_msh_el]
-      integer(8), dimension(:,:), allocatable :: table_nod       ! .mail elt data, but transposed: tn[i,j] = ith node of elt j
+      ! mapping of elt,node to index of mesh point, [6 x n_msh_el]
+      ! .mail elt data, but transposed: tn[i,j] = ith node of elt j
       !  tn[1..3,j] = vertex nodes, [4..6, j] edge nodes
+
+      integer(8), dimension(:,:), allocatable :: elnd_to_mesh
 
    contains
 
@@ -83,36 +84,36 @@ module class_MeshRaw
       !  Each element has 1 face, 3 edges and 10 P3 nodes
       !  so v_tags has dimensions 14 x n_msh_el
 
-   integer(8) n_faces       ! num faces
-   integer(8) n_edges       ! num physically distinct edges
-   integer(8) n_msh_pts_p3  ! num physically distinct P3 points
-   integer(8) n_ddl         ! total num of physically distinct things (sum of last 3)
+      integer(8) n_faces       ! num faces
+      integer(8) n_edges       ! num physically distinct edges
+      integer(8) n_msh_pts_p3  ! num physically distinct P3 points
+      integer(8) n_ddl         ! total num of physically distinct things (sum of last 3)
 
 
 
-   !  [14 x n_msh_el]
-   integer(8), dimension(:,:), allocatable :: v_tags
+      !  [14 x n_msh_el]
+      integer(8), dimension(:,:), allocatable :: v_tags
 
-   ! Positions indexed by tag
-   ! [2 x n_ddl]
-   ! [:, 1] - barycentre of the face
-   ! [:, 2..4] - P2 edge positions cloned from MeshRaw%xy_nodes
-   ! [:, 5..7] - P3 vertex positions cloned from MeshRaw%xy_nodes
-   ! [:, 8..13] - P3 edge positions built from MeshRaw%xy_nodes at 1/3, 2/3 intervals
-   ! [:, 14] - P3 interior at barycentre
+      ! Positions indexed by tag
+      ! [2 x n_ddl]
+      ! [:, 1] - barycentre of the face
+      ! [:, 2..4] - P2 edge positions cloned from MeshRaw%v_nd_xy
+      ! [:, 5..7] - P3 vertex positions cloned from MeshRaw%v_nd_xy
+      ! [:, 8..13] - P3 edge positions built from MeshRaw%v_nd_xy at 1/3, 2/3 intervals
+      ! [:, 14] - P3 interior at barycentre
 
-   double precision, dimension(:,:), allocatable :: v_xy
+      double precision, dimension(:,:), allocatable :: v_xy
 
 
-   !   [2 x n_ddl]
-   !   [1, :]  for face: interior (0)
-   !   [1, :]  for edge: take from MeshRaw%node_phys_i
-   !   [1, :]  for P3 vertex: take from MeshRaw%node_phys_i
-   !   [1, :]  for P3 edges: take from P2 edge in MeshRaw%node_phys_i
-   !   [1, :]  for P3 interior point:  0
+      !   [2 x n_ddl]
+      !   [1, :]  for face: interior (0)
+      !   [1, :]  for edge: take from MeshRaw%node_phys_i
+      !   [1, :]  for P3 vertex: take from MeshRaw%node_phys_i
+      !   [1, :]  for P3 edges: take from P2 edge in MeshRaw%node_phys_i
+      !   [1, :]  for P3 interior point:  0
 
-   !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
-   integer(8), dimension(:,:), allocatable :: v_phys_i
+      !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
+      integer(8), dimension(:,:), allocatable :: v_phys_i
 
       ! Maps P2 edge nodes to surrounding vertices
       integer(8) edge_ends(2,3)

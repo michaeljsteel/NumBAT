@@ -2,12 +2,12 @@ C Calculate the energy (not power) overlap integral of an EM mode with itself us
 C numerical quadrature.
 C
       subroutine EM_mode_E_energy_int (nval, nel, npt,
-     *  nnodes, table_nod, type_el, nb_typ_el, n_lst,
+     *  nnodes, elnd_to_mesh, type_el, nb_typ_el, n_lst,
      *  x, soln_EM, overlap)
 C
       use numbatmod
       integer(8) nval, nel, npt, nnodes
-      integer(8) table_nod(nnodes,nel), nb_typ_el
+      integer(8) elnd_to_mesh(nnodes,nel), nb_typ_el
       integer(8) type_el(nel)
       double precision x(2,npt)
       complex(8) soln_EM(3,nnodes+7,nval,nel)
@@ -41,10 +41,10 @@ c     NQUAD: The number of quadrature points used in each element.
 C
 C
 Cf2py intent(in) nval, nel, npt
-Cf2py intent(in) nnodes, table_nod, type_el, nb_typ_el
+Cf2py intent(in) nnodes, elnd_to_mesh, type_el, nb_typ_el
 Cf2py intent(in) x, soln_EM, n_lst
 C
-Cf2py depend(table_nod) nnodes, nel
+Cf2py depend(elnd_to_mesh) nnodes, nel
 Cf2py depend(x) npt
 Cf2py depend(soln_EM) nnodes, nval, nel
 Cf2py depend(n_lst) nb_typ_el
@@ -85,7 +85,7 @@ c      n_curved = 0
       do iel=1,nel
         typ_e = type_el(iel)
         do j=1,nnodes
-          j1 = table_nod(j,iel)
+          j1 = elnd_to_mesh(j,iel)
           nod_el_p(j) = j1
           xel(1,j) = x(1,j1)
           xel(2,j) = x(2,j1)

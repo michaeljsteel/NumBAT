@@ -2,7 +2,7 @@ C Calculate the overlap integral of an AC mode with itself using
 C numerical quadrature.
 C
       subroutine AC_mode_power_int (nval,
-     *  nel, npt, nnodes, table_nod, type_el, x,
+     *  nel, npt, nnodes, elnd_to_mesh, type_el, x,
      *  nb_typ_el, c_tensor_z, beta_AC, Omega_AC, soln_AC,
      *  debug, overlap)
 c
@@ -10,7 +10,7 @@ c
       integer(8) nval, ival
       integer(8) nel, npt, nnodes, nb_typ_el
       integer(8) type_el(nel), debug
-      integer(8) table_nod(nnodes,nel)
+      integer(8) elnd_to_mesh(nnodes,nel)
       double precision x(2,npt)
 c      complex(8) x(2,npt)
       complex(8) soln_AC(3,nnodes,nval,nel)
@@ -47,11 +47,11 @@ c     NQUAD: The number of quadrature points used in each element.
       double precision grad2_mat(2,6)
 C
 C
-Cf2py intent(in) nval, nel, npt, nnodes, table_nod
+Cf2py intent(in) nval, nel, npt, nnodes, elnd_to_mesh
 Cf2py intent(in) type_el, x, nb_typ_el, c_tensor_z, beta_AC
 Cf2py intent(in) soln_AC, debug, Omega_AC
 C
-Cf2py depend(table_nod) nnodes, nel
+Cf2py depend(elnd_to_mesh) nnodes, nel
 Cf2py depend(type_el) npt
 Cf2py depend(x) npt
 Cf2py depend(soln_AC) nnodes, nval, nel
@@ -88,7 +88,7 @@ cccccccccccc
       do iel=1,nel
         typ_e = type_el(iel)
         do j=1,nnodes
-          j1 = table_nod(j,iel)
+          j1 = elnd_to_mesh(j,iel)
           nod_el_p(j) = j1
           xel(1,j) = x(1,j1)
           xel(2,j) = x(2,j1)

@@ -10,14 +10,14 @@
 
 
 subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
-   ival_s, ival_ac, n_msh_el, n_msh_pts, nodes_per_el, table_nod, type_el, x, &
+   ival_s, ival_ac, n_msh_el, n_msh_pts, nodes_per_el, elnd_to_mesh, type_el, x, &
    nb_typ_el, typ_select_in, typ_select_out, &
    soln_EM_p, soln_EM_S, soln_AC, eps_lst, debug, Q_MB)
 
    use numbatmod
    integer(8) n_msh_el, n_msh_pts, nodes_per_el, nb_typ_el
    integer(8) type_el(n_msh_el)
-   integer(8) table_nod(6,n_msh_el)
+   integer(8) elnd_to_mesh(6,n_msh_el)
    double precision x(2,n_msh_pts)
    integer(8) nval_EM_p, nval_EM_S, nval_AC
    integer(8) ival_p, ival_s, ival_ac
@@ -61,11 +61,11 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
    !f2py intent(in) nval_EM_p, nval_EM_S, nval_AC
    !f2py intent(in) ival_p, ival_s, ival_ac, nb_typ_el
-   !f2py intent(in) n_msh_el, n_msh_pts, nodes_per_el, table_nod, debug
+   !f2py intent(in) n_msh_el, n_msh_pts, nodes_per_el, elnd_to_mesh, debug
    !f2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC
    !f2py intent(in) typ_select_in, typ_select_out, eps_lst, debug
 
-   !f2py depend(table_nod) nodes_per_el, n_msh_el
+   !f2py depend(elnd_to_mesh) nodes_per_el, n_msh_el
    !f2py depend(type_el) n_msh_pts
    !f2py depend(x) n_msh_pts
    !f2py depend(soln_EM_p) nodes_per_el, nval_EM_p, n_msh_el
@@ -122,7 +122,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
       if(typ_e == typ_select_in) then
          !   Scan the edges
          do inod=4,6
-            j = table_nod(inod,iel)
+            j = elnd_to_mesh(inod,iel)
             !   Will indicate the number of
             nb_visited(j) = nb_visited(j) + 1
          enddo
@@ -158,19 +158,19 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
       !   Scan the edges
       do inod=4,6
-         j = table_nod(inod,iel)
+         j = elnd_to_mesh(inod,iel)
          if (nb_visited(j) .ne. 1) then ! not an active edge
             cycle
          endif
 
          inod_1 = edge_endpoints(1,inod-3)
          inod_2 = edge_endpoints(2,inod-3)
-         ls_edge_endpoint(1,j) = table_nod(inod_1,iel)
-         ls_edge_endpoint(2,j) = table_nod(inod_2,iel)
-         xy_1(1) = x(1,table_nod(inod_1,iel))
-         xy_1(2) = x(2,table_nod(inod_1,iel))
-         xy_2(1) = x(1,table_nod(inod_2,iel))
-         xy_2(2) = x(2,table_nod(inod_2,iel))
+         ls_edge_endpoint(1,j) = elnd_to_mesh(inod_1,iel)
+         ls_edge_endpoint(2,j) = elnd_to_mesh(inod_2,iel)
+         xy_1(1) = x(1,elnd_to_mesh(inod_1,iel))
+         xy_1(2) = x(2,elnd_to_mesh(inod_1,iel))
+         xy_2(1) = x(1,elnd_to_mesh(inod_2,iel))
+         xy_2(2) = x(2,elnd_to_mesh(inod_2,iel))
          ! edge_vec: vector parallel to the edge
          edge_vec(1) = xy_2(1) - xy_1(1)
          edge_vec(2) = xy_2(2) - xy_1(2)
@@ -183,8 +183,8 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
          edge_perp(2) = -edge_vec(1)
          ! Node opposite to the edge inod
          inod_3 = opposite_node(inod-3)
-         xy_3(1) = x(1,table_nod(inod_3,iel))
-         xy_3(2) = x(2,table_nod(inod_3,iel))
+         xy_3(1) = x(1,elnd_to_mesh(inod_3,iel))
+         xy_3(2) = x(2,elnd_to_mesh(inod_3,iel))
          vec_0(1) = xy_3(1) - xy_1(1)
          vec_0(2) = xy_3(2) - xy_1(2)
          ! Scalar product of edge_perp and vec_0:
@@ -224,7 +224,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
       !   Scan the edges
        do inod=4,6
-          j = table_nod(inod,iel)
+          j = elnd_to_mesh(inod,iel)
 
           if (ls_edge_endpoint(1,j) .eq. 0) then ! Not an edge
              cycle

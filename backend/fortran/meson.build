@@ -54,13 +54,22 @@ endif
 lib_arpack = ccomp.find_library('arpack', dirs: dir_usrlocal_lib)
 lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
+if ccomp.get_id() == 'intel-llvm'
+  if host_machine.system() == 'windows'
+    add_global_arguments(['-warn declarations'], language: 'fortran',)
+  else
+    add_global_arguments(['-implicitnone'], language: 'fortran',)
+  endif
+else
+    add_global_arguments(['-fimplicit-none'], language: 'fortran',)
+endif
+
 if host_machine.system() == 'windows'
-  add_global_arguments(['-fpp', '-warn declarations'], language: 'fortran',)
+  add_global_arguments(['-fpp'], language: 'fortran',)
   add_global_arguments(['-D UPPERCASE_FORTRAN','-D NO_APPEND_FORTRAN', '-D __INTEL_COMPILER'], language: 'c')
   add_global_arguments(['-D __INTEL_COMPILER'], language: 'cpp')
-
 else
-  add_global_arguments(['-cpp', '-fimplicit-none'], language: 'fortran',)
+  add_global_arguments(['-cpp'], language: 'fortran',)
 endif
 
 add_global_arguments(

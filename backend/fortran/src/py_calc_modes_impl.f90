@@ -28,10 +28,10 @@ subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  d_nodes_per_el
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 
-      call lattice_vec (n_msh_pts, mesh_raw%xy_nodes, lat_vecs, debug)
+      call lattice_vec (n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
 
-      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, mesh_raw%node_phys_i, mesh_raw%xy_nodes, iperiod_N, &
-         inperiod_N, mesh_raw%table_nod, lat_vecs)
+      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, mesh_raw%node_phys_i, mesh_raw%v_nd_xy, iperiod_N, &
+         inperiod_N, mesh_raw%elnd_to_mesh, lat_vecs)
 
       if (debug .eq. 1) then
          write(*,*) "set_boundary_conditions: ###### periodic_N_E_F"
