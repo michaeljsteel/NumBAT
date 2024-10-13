@@ -1,15 +1,20 @@
 #include "numbat_decl.h"
 
-subroutine make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
+subroutine make_csr_arrays(mesh_raw, entities,  neq, &
    m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
 
    use numbatmod
    use alloc
    use nbinterfacesb
 
-   integer(8) n_msh_el, n_ddl, neq, nonz
-   integer(8) table_N_E_F(14,n_msh_el)
-   integer(8) m_eqs(3,n_ddl)
+   use class_MeshRaw
+
+   type(MeshRaw) :: mesh_raw
+   type(MeshEntities) :: entities
+
+   integer(8) nonz, neq
+
+   integer(8) m_eqs(3,entities%n_ddl)
 
    integer(8), dimension(:), allocatable, intent(inout) :: v_row_ind
    integer(8), dimension(:), allocatable, intent(inout) :: v_col_ptr
@@ -26,21 +31,19 @@ subroutine make_csr_arrays(n_msh_el, n_ddl, neq, table_N_E_F, &
 
    ! ------------------------------------------
 
-
-
    call integer_alloc_1d(v_col_ptr, neq+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
 
-   call csr_max_length (n_msh_el, n_ddl, neq, table_N_E_F, &
+   call csr_max_length (mesh_raw%n_msh_el, entities%n_ddl, neq, entities%v_tags, &
       m_eqs, v_col_ptr, nonz_max)
 
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
    ! length of v_row_ind is determined inside csr_length and so allocated there
-   call csr_length (n_msh_el, n_ddl, neq,  table_N_E_F, m_eqs, &
+   call csr_length (mesh_raw%n_msh_el, entities%n_ddl, neq,  entities%v_tags, m_eqs, &
       v_row_ind, v_col_ptr, nonz_max, nonz, max_row_len, debug, errco, emsg)
    RETONERROR(errco)
 
-   call integer_alloc_1d(iwork, 3*n_ddl, 'iwork', errco, emsg);
+   call integer_alloc_1d(iwork, 3*entities%n_ddl, 'iwork', errco, emsg);
    RETONERROR(errco)
 
    call sort_csr (neq, nonz, max_row_len, v_row_ind, v_col_ptr,  iwork)
@@ -52,7 +55,7 @@ end subroutine
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
 subroutine csr_length (n_msh_el, n_ddl, neq,  &
-   table_N_E_F, m_eqs, &
+   v_tags, m_eqs, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
    nonz_max, nonz, max_row_len, debug, errco, emsg)
 
@@ -60,7 +63,7 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  &
    use alloc
 
    integer(8) n_msh_el, n_ddl, neq
-   integer(8) table_N_E_F(14,n_msh_el)
+   integer(8) v_tags(14,n_msh_el)
    integer(8) m_eqs(3,n_ddl)
 
 
@@ -96,7 +99,7 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  &
    nonz = 0
    do iel=1,n_msh_el
       do i=1,nddl_0_em
-         ip = table_N_E_F(i,iel)
+         ip = v_tags(i,iel)
          do i_ddl=1,3
             ind_ip = m_eqs(i_ddl,ip)
 
@@ -104,7 +107,7 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  &
                row_start = row_ptr(ind_ip)
                row_end = row_ptr(ind_ip+1) - 1
                do j=1,nddl_0_em
-                  jp = table_N_E_F(j,iel)
+                  jp = v_tags(j,iel)
                   do j_ddl=1,3
                      ind_jp = m_eqs(j_ddl,jp)
 

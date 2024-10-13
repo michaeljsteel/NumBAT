@@ -1,7 +1,7 @@
 c
 c***********************************************************************
 c
-      subroutine lattice_vec (npt, x, lat_vecs, debug)
+      subroutine periodic_lattice_vec (npt, x, lat_vecs, debug)
 c
 c***********************************************************************
 c

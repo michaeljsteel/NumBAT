@@ -14,8 +14,9 @@ win:
 
 
 gccdebug:
+	- rm -rf build_gccdebug
 	CC=gcc meson setup --buildtype=debugoptimized build_gccdebug
-	meson configure build_gccdebug
+	#meson configure build_gccdebug
 	meson compile -C build_gccdebug
 	cp build_gccdebug/nb_fortran.so .
 

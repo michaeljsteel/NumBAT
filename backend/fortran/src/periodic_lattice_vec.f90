@@ -1,11 +1,6 @@
- !
- !***********************************************************************
- !
-subroutine lattice_vec (npt, x, lat_vecs, debug)
-   !
-   !***********************************************************************
-   !
-   implicit none
+
+subroutine periodic_lattice_vec (npt, x, lat_vecs, debug)
+
    integer(8) npt
    double precision x(2,npt)
    double precision lat_vecs(2,2)

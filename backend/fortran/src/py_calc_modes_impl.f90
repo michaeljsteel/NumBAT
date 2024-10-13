@@ -1,50 +1,49 @@
 #include "numbat_decl.h"
 
 
-subroutine set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  d_nodes_per_el, n_ddl, &
+subroutine set_boundary_conditions(bdy_cdn,  &
    mesh_raw,  entities, neq, m_eqs, debug, &
-   iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F )
+   iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg )
 
    use numbatmod
    use class_MeshRaw
 
-   integer(8) :: bdy_cdn, neq, n_msh_pts, n_msh_el, n_ddl, d_nodes_per_el
+   integer(8) :: bdy_cdn, neq
    integer(8) :: debug
 
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
 
 
-   integer(8) m_eqs(3, n_ddl)
+   integer(8) m_eqs(3, entities%n_ddl)
 
-   integer(8) :: iperiod_N(n_msh_pts), iperiod_N_E_F(n_ddl)
-   integer(8) :: inperiod_N(n_msh_pts), inperiod_N_E_F(n_ddl)
+   integer(8) :: iperiod_N(mesh_raw%n_msh_pts), iperiod_N_E_F(entities%n_ddl)
+   integer(8) :: inperiod_N(mesh_raw%n_msh_pts), inperiod_N_E_F(entities%n_ddl)
+   integer(8),  intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
+
+   !locals
    double precision, dimension(2,2) :: lat_vecs
 
    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
-      call bound_cond ( bdy_cdn, n_ddl, entities%v_phys_i, neq, m_eqs)
+      call bound_cond_em (bdy_cdn, entities%n_ddl, entities%v_dof_props, neq, m_eqs, errco, emsg)
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 
-      call lattice_vec (n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
+      call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
 
-      call periodic_node(n_msh_el, n_msh_pts, d_nodes_per_el, mesh_raw%node_phys_i, mesh_raw%v_nd_xy, iperiod_N, &
+      call periodic_node(mesh_raw%n_msh_el, mesh_raw%n_msh_pts, &
+      P2_NODES_PER_EL, mesh_raw%node_phys_i, mesh_raw%v_nd_xy, iperiod_N, &
          inperiod_N, mesh_raw%elnd_to_mesh, lat_vecs)
 
-      if (debug .eq. 1) then
-         write(*,*) "set_boundary_conditions: ###### periodic_N_E_F"
-      endif
-
-      call periodic_N_E_F (n_ddl, entities%v_phys_i, entities%v_xy, iperiod_N_E_F, &
+      call periodic_N_E_F (entities%n_ddl, entities%v_dof_props, entities%v_xy, iperiod_N_E_F, &
          inperiod_N_E_F, lat_vecs)
 
-      call periodic_cond ( bdy_cdn, n_ddl, neq, entities%v_phys_i, &
+      call periodic_cond ( bdy_cdn, entities%n_ddl, neq, entities%v_dof_props, &
          iperiod_N_E_F, m_eqs, debug)
 
    endif
 
-end subroutine set_boundary_conditions
-
-!end module nbinterfaces
+end subroutine
