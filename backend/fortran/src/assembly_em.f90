@@ -166,9 +166,9 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
 
       do j=1,nnodes                              ! For each of the 6 P2 nodes
-         j_mshpt = mesh_raw%table_nod(j,iel)        !    find the index of the mesh point
+         j_mshpt = mesh_raw%elnd_to_mesh(j,iel)        !    find the index of the mesh point
          nod_el_p(j) = j_mshpt                        !    store the mesh point indices for this element
-         el_xy(:,j) = mesh_raw%xy_nodes(:,j_mshpt)  !    find their physical positions
+         el_xy(:,j) = mesh_raw%v_nd_xy(:,j_mshpt)  !    find their physical positions
       enddo
 
       is_curved = log_is_curved_elem_tri (nnodes, el_xy)

@@ -1,13 +1,13 @@
 
 subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
-   table_nod, ineq, lb, nonz)
+   elnd_to_mesh, ineq, lb, nonz)
 
    use numbatmod
 
    implicit none
    integer(8),  intent(in) :: nnodes
    integer(8), intent(in) :: nel, neq, npt
-   integer(8), intent(in) ::  table_nod (nnodes,nel)
+   integer(8), intent(in) ::  elnd_to_mesh (nnodes,nel)
    integer(8), intent(in) :: ineq(3,npt)
    integer(8), intent(out) :: lb(neq+1)
    integer(8), intent(out) :: nonz
@@ -35,7 +35,7 @@ subroutine csr_max_length_AC (nel, npt, neq, nnodes, &
 
    do iel=1,nel
       do i=1,nddl_0
-         ip = table_nod(i,iel)
+         ip = elnd_to_mesh(i,iel)
          do k=1,3
             ind_ip = ineq(k,ip)
             if (ind_ip .ne. 0) lb(ind_ip) = lb(ind_ip)+1

@@ -52,11 +52,11 @@
  !  v_evals_beta  - array of eigenvalues kz
  !  m_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
  !  mode_pol  - unknown - never used in python
- !  table_nod - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
+ !  elnd_to_mesh - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
  !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
  !  type_el   - n_msh_el array: material index for each element
  !  type_nod  - is boundary node?
- !  xy_nodes  - (2 , n_msh_pts)  x,y coords?
+ !  v_nd_xy  - (2 , n_msh_pts)  x,y coords?
  !  ls_material  - (1, nodes_per_el+7, n_msh_el)
 
 module calc_em_impl
@@ -76,7 +76,7 @@ contains
 
    subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
-      v_evals_beta, m_evecs, mode_pol, table_nod, type_el, type_nod, xy_nodes, ls_material, errco, emsg)
+      v_evals_beta, m_evecs, mode_pol, elnd_to_mesh, type_el, type_nod, v_nd_xy, ls_material, errco, emsg)
 
       implicit none
 
@@ -99,8 +99,8 @@ contains
 
       integer(8), intent(out) :: type_el(n_msh_el)
       integer(8), intent(out) :: type_nod(n_msh_pts)
-      integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
-      double precision, intent(out) :: xy_nodes(2,n_msh_pts)
+      integer(8), intent(out) :: elnd_to_mesh(nodes_per_el, n_msh_el)
+      double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
 
       complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
 
@@ -200,7 +200,7 @@ contains
       call clock_main%reset()
 
 
-      !  Fills:  MeshRaw: xy_nodes, type_nod, type_el, table_nod
+      !  Fills:  MeshRaw: v_nd_xy, type_nod, type_el, elnd_to_mesh
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
       call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, errco, emsg)
       RETONERROR(errco)
@@ -335,8 +335,8 @@ contains
 
 
       !  Doubtful that this check is of any value: delete?
-      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-      !  type_el, xy_nodes, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
+      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
+      !  type_el, v_nd_xy, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
       !  overlap_L, overlap_file, debug, ui_out, &
       !  pair_warning, vacwavenum_k0, errco, emsg)
       !  RETONERROR(errco)
@@ -369,15 +369,15 @@ contains
       !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
       !  overlap_file = "Orthogonal_n.txt"
       !  call get_clocks( systime1_J, time1_J)
-      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-      !  type_el, xy_nodes, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
+      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
+      !  type_el, v_nd_xy, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
       !  pair_warning, vacwavenum_k0)
       !  call get_clocks( systime2_J, time2_J)
       !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
       !  endif
       !
 
-      call mesh_raw%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
+      call mesh_raw%fill_python_arrays(type_el, type_nod, elnd_to_mesh, v_nd_xy)
 
       deallocate(v_eig_index, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
@@ -476,8 +476,8 @@ contains
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, &
-      n_elt_mats, pp, table_nod, &
-      type_el, xy_nodes, v_evals_beta, m_evecs, &
+      n_elt_mats, pp, elnd_to_mesh, &
+      type_el, v_nd_xy, v_evals_beta, m_evecs, &
    !v_evals_beta_pri, m_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
@@ -488,9 +488,9 @@ contains
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
       complex(8) pp(n_elt_mats)
 
-      integer(8), intent(out) :: table_nod(nodes_per_el, n_msh_el)
+      integer(8), intent(out) :: elnd_to_mesh(nodes_per_el, n_msh_el)
       integer(8), intent(out) :: type_el(n_msh_el)
-      double precision, intent(out) :: xy_nodes(2,n_msh_pts)
+      double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
@@ -516,8 +516,8 @@ contains
 
       overlap_file = "Orthogonal.txt"
 
-      call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, table_nod, &
-         type_el, xy_nodes, v_evals_beta, m_evecs, &
+      call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
+         type_el, v_nd_xy, v_evals_beta, m_evecs, &
       !v_evals_beta_pri, m_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 

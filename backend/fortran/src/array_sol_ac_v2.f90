@@ -8,7 +8,7 @@
 
 
 subroutine array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq,&
-nnodes, iindex, table_nod, type_el, ineq,&
+nnodes, iindex, elnd_to_mesh, type_el, ineq,&
 x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
 
@@ -19,7 +19,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 !  TODO: n_core seems to be never initialised. Is that code ever called?
    integer(8) n_core(2), type_el(n_msh_el)
    integer(8) ineq(3,n_msh_pts), iindex(*)
-   integer(8) table_nod(nnodes,n_msh_el)
+   integer(8) elnd_to_mesh(nnodes,n_msh_el)
    complex(8) sol_0(neq,num_modes)
    double precision x(2,n_msh_pts)
 !  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
@@ -156,13 +156,13 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
             mode_comp(j) = 0.0d0
          enddo
          do inod=1,nnodes
-            j = table_nod(inod,iel)
+            j = elnd_to_mesh(inod,iel)
             nod_el_p(inod) = j
             xel(1,inod) = x(1,j)
             xel(2,inod) = x(2,j)
          enddo
          do inod=1,nnodes
-            jp = table_nod(inod,iel)
+            jp = elnd_to_mesh(inod,iel)
             do j_eq=1,3
                ind_jp = ineq(j_eq,jp)
                if (ind_jp .gt. 0) then
@@ -182,7 +182,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
                   z_sol_max = z_tmp2
 !  We want to normalise such the the z-component is purely imaginary complex number
                   if (j == 3) z_sol_max = - C_IM_ONE* z_sol_max
-                  i_sol_max = table_nod(inod,iel)
+                  i_sol_max = elnd_to_mesh(inod,iel)
                   i_component = j
                endif
             enddo
@@ -247,12 +247,12 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 !  Normalization so that the maximum field component is 1
       do iel=1,n_msh_el
          do inod=1,nnodes
-            i1 = table_nod(inod,iel)
+            i1 = elnd_to_mesh(inod,iel)
             do j=1,3
                z_tmp1 = sol(j,inod,ival,iel)/z_sol_max
                sol(j,inod,ival,iel) = z_tmp1
             enddo
-            i1 = table_nod(inod,iel)
+            i1 = elnd_to_mesh(inod,iel)
             if (i1 .eq. i_sol_max_tmp .and. debug .eq. 1) then
                write(*,*) "array_sol (B):"
                write(*,*) "ival, i1, iel = ", ival, i1, iel

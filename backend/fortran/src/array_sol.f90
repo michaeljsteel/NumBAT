@@ -106,16 +106,16 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
          mode_comp =  D_ZERO
 
          do inod=1,nnodes
-            j = mesh_raw%table_nod(inod,iel)
+            j = mesh_raw%elnd_to_mesh(inod,iel)
             nod_el_p(inod) = j
-            el_xy(:,inod) = mesh_raw%xy_nodes(:,j)
+            el_xy(:,inod) = mesh_raw%v_nd_xy(:,j)
          enddo
 
          val_exp =  D_ONE
 
          if (bdy_cdn == BCS_PERIODIC) then
             do inod=1,nnodes
-               j = mesh_raw%table_nod(inod,iel)
+               j = mesh_raw%elnd_to_mesh(inod,iel)
                k = ip_period_N(j)
                if (k /= 0) j=k
                nod_el_p(inod) = j
@@ -128,7 +128,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                j1 = ip_period_N_E_F(jp)
                if (j1 /= 0) then
                   !do k=1,dim_32
-                  !  delta_xx(k) = entities.xy_nodes(k,jp) - entities.xy_nodes(k,j1)
+                  !  delta_xx(k) = entities.v_nd_xy(k,jp) - entities.v_nd_xy(k,j1)
                   !enddo
                   delta_xx = entities%v_xy(:,jp) - entities%v_xy(:,j1)
                   r_tmp1 = ddot(dim_32, bloch_vec, 1, delta_xx, 1)
@@ -247,7 +247,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
                sol(j,inod,i_mode,iel) = z_tmp2
                if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max (by component not total?)
                   z_sol_max = z_tmp2
-                  i_sol_max = mesh_raw%table_nod(inod,iel)
+                  i_sol_max = mesh_raw%elnd_to_mesh(inod,iel)
                endif
             enddo
 
@@ -320,7 +320,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
       !  Normalization so that the maximum field component is 1
       do iel=1,n_msh_el
          do inod=1,nnodes
-            i1 = mesh_raw%table_nod(inod,iel)
+            i1 = mesh_raw%elnd_to_mesh(inod,iel)
 
             !do j=1,3
             !!  z_tmp1 = sol(j,inod,i_mode,iel)/z_sol_max
@@ -329,13 +329,13 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
             sol(1:3,inod,i_mode,iel) = sol(1:3,inod,i_mode,iel)/z_sol_max
 
-            i1 = mesh_raw%table_nod(inod,iel)
+            i1 = mesh_raw%elnd_to_mesh(inod,iel)
             if (i1 == i_sol_max .and. debug == 1) then
                write(*,*) "array_sol:"
                write(*,*) "i_mode, i1, iel = ", i_mode, i1, iel
                write(*,*) "array_sol: Field normalisaion point:"
-               write(*,*) "x = ", dble(mesh_raw%xy_nodes(1,i1))
-               write(*,*) "y = ", dble(mesh_raw%xy_nodes(2,i1))
+               write(*,*) "x = ", dble(mesh_raw%v_nd_xy(1,i1))
+               write(*,*) "y = ", dble(mesh_raw%v_nd_xy(2,i1))
                write(*,*) "i_sol_max = ", i_sol_max
                write(*,*) i_mode, i1, iel, (dble(sol(j,inod,i_mode,iel)),j=1,3)
                write(*,*) i_mode, i1, iel, (imag(sol(j,inod,i_mode,iel)),j=1,3)

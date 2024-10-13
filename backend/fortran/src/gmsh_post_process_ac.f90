@@ -4,14 +4,14 @@
  !
 
 subroutine gmsh_post_process_AC (plot_val, nval,&
-   nel, npt, nnodes, table_nod, type_el,&
+   nel, npt, nnodes, elnd_to_mesh, type_el,&
    x, val_cmplx, sol, sol_avg, visited,&
    gmsh_file_pos, dir_name, d_in_nm, debug)
 
    use numbatmod
 
    integer(8) nval, nel, npt, nnodes, plot_val
-   integer(8) table_nod(nnodes,nel), type_el(nel)
+   integer(8) elnd_to_mesh(nnodes,nel), type_el(nel)
    integer(8) visited(npt)
    double precision x(2,npt)
    complex(8) sol(3,nnodes,nval,nel)
@@ -86,7 +86,7 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
       enddo
       do iel=1,nel
          do i=1,nnodes
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             visited(i1) = visited(i1) + 1
             do j=1,3
                sol_avg(j,i1) = sol_avg(j,i1) +&
@@ -249,7 +249,7 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
          r_index = typ_e
          zz = 0.0d0
          do i=1,nnodes
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
@@ -259,7 +259,7 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
             !            ls_abs_index(i) = abs_index
          enddo
          do i=1,3
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             xel_p1(1,i) = x(1,i1)
             xel_p1(2,i) = x(2,i1)
             xel_p1(3,i) = zz
@@ -269,7 +269,7 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
             sol_el_abs2_eE(i) = 0.0
             !            sol_el_abs2_iD(i) = 0.0
             if (q_average .eq. 1) then
-               i1 = table_nod(i,iel)
+               i1 = elnd_to_mesh(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1
@@ -366,20 +366,20 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
          typ_e = type_el(iel)
          zz = 0.0d0
          do i=1,nnodes
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
          enddo
          do i=1,3
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             xel_p1(1,i) = x(1,i1)
             xel_p1(2,i) = x(2,i1)
             xel_p1(3,i) = zz
          enddo
          do i=1,nnodes
             if (q_average .eq. 1) then
-               i1 = table_nod(i,iel)
+               i1 = elnd_to_mesh(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1
@@ -445,14 +445,14 @@ subroutine gmsh_post_process_AC (plot_val, nval,&
          typ_e = type_el(iel)
          zz = 0.0d0
          do i=1,nnodes
-            i1 = table_nod(i,iel)
+            i1 = elnd_to_mesh(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
          enddo
          do i=1,nnodes
             if (q_average .eq. 1) then
-               i1 = table_nod(i,iel)
+               i1 = elnd_to_mesh(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1

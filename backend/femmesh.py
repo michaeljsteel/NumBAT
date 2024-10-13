@@ -98,9 +98,9 @@ class FemMesh:
         # Belongs in ElasticProperties, not FemMesh
 
         # made by fortran
-        self.table_nod = None  # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
+        self.elnd_to_mesh = None  # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
         self.node_physindex = None  # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
-        self.xy_nodes = None  # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
+        self.v_nd_xy = None  # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
 
         self.n_nodes = 6  # Nodes per each element (is always 6)
         self.ac_mesh_from_em = True  # Always True
@@ -108,7 +108,7 @@ class FemMesh:
         self.el_convert_tbl = None  # Dict map of elastically active mesh elements into original em mesh elements.
         #    Length: n_msh_el(ac).   Values in [1..n_msh_el(em)]
 
-        self.extents = None  # measured from nbgmsh to have them early before we know xy_nodes
+        self.extents = None  # measured from nbgmsh to have them early before we know v_nd_xy
 
         # Seems never used
         # self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
@@ -133,16 +133,16 @@ class FemMesh:
         self.n_msh_el = mesh.n_msh_elts
 
 
-        self.table_nod = mesh.v_elts[:,:6].T
-        self.xy_nodes = np.zeros([2, self.n_msh_pts])
+        self.elnd_to_mesh = mesh.v_elts[:,:6].T
+        self.v_nd_xy = np.zeros([2, self.n_msh_pts])
 
         # Messy: Mail file does not include the domain scaling which is in nm, not microns
-        self.xy_nodes[0,:] = mesh.v_x * struc.domain_x*0.001
-        self.xy_nodes[1,:] = mesh.v_y * struc.domain_x*0.001  # Everything including yvalues is scaled by domain_x, not domain_y
+        self.v_nd_xy[0,:] = mesh.v_x * struc.domain_x*0.001
+        self.v_nd_xy[1,:] = mesh.v_y * struc.domain_x*0.001  # Everything including yvalues is scaled by domain_x, not domain_y
 
 
-        self.extents = [np.min(self.xy_nodes[0,:]), np.max(self.xy_nodes[0,:]),
-                        np.min(self.xy_nodes[1,:]), np.max(self.xy_nodes[1,:])]
+        self.extents = [np.min(self.v_nd_xy[0,:]), np.max(self.v_nd_xy[0,:]),
+                        np.min(self.v_nd_xy[1,:]), np.max(self.v_nd_xy[1,:])]
 
 
         # TODO: this is just reporting.  Move elsewhere?
@@ -160,25 +160,25 @@ class FemMesh:
                 f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.'
             )  # +1 because materials are reported by their Fortran index
 
-    def store_em_mode_outputs(self, type_el, node_physindex, table_nod, xy_nodes):
+    def store_em_mode_outputs(self, type_el, node_physindex, elnd_to_mesh, v_nd_xy):
         print('storing em')
         self.v_el_2_mat_idx = type_el
-        self.table_nod = table_nod
-        self.xy_nodes = xy_nodes
+        self.elnd_to_mesh = elnd_to_mesh
+        self.v_nd_xy = v_nd_xy
         self.node_physindex = node_physindex
 
         #print("EM mesh properties:")
         #print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
-        #print("  elt2nodes index map", self.table_nod, self.table_nod.shape)
+        #print("  elt2nodes index map", self.elnd_to_mesh, self.elnd_to_mesh.shape)
         #print( #    "  node_physindex index map", self.node_physindex, self.node_physindex.shape)
 
-    def store_ac_mode_outputs(self, type_el, table_nod, xy_nodes):
+    def store_ac_mode_outputs(self, type_el, elnd_to_mesh, v_nd_xy):
         self.v_el_2_mat_idx = type_el
-        self.table_nod = table_nod
-        self.xy_nodes = xy_nodes
+        self.elnd_to_mesh = elnd_to_mesh
+        self.v_nd_xy = v_nd_xy
         #print("AC after sim mesh properties:")
         #print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
-        #print("  elt2nodes index map", self.table_nod)
+        #print("  elt2nodes index map", self.elnd_to_mesh)
 
     def ac_build_from_em(self, structure, em_fem):
 
@@ -203,12 +203,12 @@ class FemMesh:
 
         n_msh_el = em_fem.n_msh_el
         # type_el = em_fem.v_el_2_mat_idx       # material index of each element into list self.v_refindexn (unit-based)
-        table_nod = em_fem.table_nod
-        xy_nodes = em_fem.xy_nodes
+        elnd_to_mesh = em_fem.elnd_to_mesh
+        v_nd_xy = em_fem.v_nd_xy
 
         type_el_AC = []  # material index for each element (length = n_msh_el)
-        table_nod_AC_tmp = np.zeros(
-            np.shape(table_nod), dtype=np.int64
+        elnd_to_mesh_AC_tmp = np.zeros(
+            np.shape(elnd_to_mesh), dtype=np.int64
         )  #  fortran ordered table
         el_convert_tbl = {}
 
@@ -224,7 +224,7 @@ class FemMesh:
                 )  # could do this and if test with try/catch
 
                 el_convert_tbl[n_msh_el_AC] = el
-                table_nod_AC_tmp[:, n_msh_el_AC] = table_nod[:, el]
+                elnd_to_mesh_AC_tmp[:, n_msh_el_AC] = elnd_to_mesh[:, el]
                 n_msh_el_AC += 1
 
         # inverse mapping using map and reversed.  Relies on map being a bijection
@@ -236,8 +236,8 @@ class FemMesh:
         nodes_AC_mul = []  # Find every elastic node allowing multiple entries
         for el in range(n_msh_el_AC):  # for each elastic element
             # for i in range(6):        # add the absolute indices of its 6 nodes
-            #    node_lst_tmp.append(table_nod_AC_tmp[i][el])
-            nodes_AC_mul.extend(table_nod_AC_tmp[:6, el])
+            #    node_lst_tmp.append(elnd_to_mesh_AC_tmp[i][el])
+            nodes_AC_mul.extend(elnd_to_mesh_AC_tmp[:6, el])
 
         # Now remove the multiple nodes
         nodes_AC = list(set(nodes_AC_mul))
@@ -249,24 +249,24 @@ class FemMesh:
         for i in range(n_msh_pts_AC):
             d_nodes_2_acnodes[nodes_AC[i]] = i
 
-        # Creating finalised table_nod.
+        # Creating finalised elnd_to_mesh.
         # TODO: Would be nice to do this with slicing, but d_nodes_2_acnodes is a dict not a numpy array so tricky
         # but can be done by making another array long enough to hold all the unique_nodes counting from zero?
-        table_nod_AC = []
+        elnd_to_mesh_AC = []
         for i in range(6):
             el_tbl = []
             for el in range(n_msh_el_AC):
-                el_tbl.append(d_nodes_2_acnodes[table_nod_AC_tmp[i][el]])
-            table_nod_AC.append(el_tbl)
+                el_tbl.append(d_nodes_2_acnodes[elnd_to_mesh_AC_tmp[i][el]])
+            elnd_to_mesh_AC.append(el_tbl)
 
-        table_nod_AC = (
-            np.array(table_nod_AC) + 1
+        elnd_to_mesh_AC = (
+            np.array(elnd_to_mesh_AC) + 1
         )  # list to np array and adjust to fortran indexing
 
         # Find the physical x-y coordinates of the chosen AC nodes.
-        xy_nodes_AC = np.zeros((2, n_msh_pts_AC))
+        v_nd_xy_AC = np.zeros((2, n_msh_pts_AC))
         for node in nodes_AC:
-            xy_nodes_AC[:, d_nodes_2_acnodes[node]] = xy_nodes[:, node - 1]
+            v_nd_xy_AC[:, d_nodes_2_acnodes[node]] = v_nd_xy[:, node - 1]
 
         # AC FEM uses Neumann B.C.s so node_physindex is totally irrelevant!
         # # Find nodes on boundaries of materials
@@ -274,7 +274,7 @@ class FemMesh:
         # interface_nodes = []
         # for el in range(n_msh_el):
         #     for i in range(6):
-        #         node = table_nod[i][el]
+        #         node = elnd_to_mesh[i][el]
         #         # Check if first time seen this node
         #         if node_array[node - 1] == -1: # adjust to python indexing
         #             node_array[node - 1] = type_el[el]
@@ -291,9 +291,9 @@ class FemMesh:
 
         self.n_msh_pts = n_msh_pts_AC
         self.n_msh_el = n_msh_el_AC
-        self.table_nod = table_nod_AC
+        self.elnd_to_mesh = elnd_to_mesh_AC
         self.v_el_2_mat_idx = type_el_AC
-        self.xy_nodes = xy_nodes_AC
+        self.v_nd_xy = v_nd_xy_AC
         self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
 
         print(
@@ -312,7 +312,7 @@ class FemMesh:
         #print("  type_el", self.v_el_2_mat_idx)
         #print("  typ_el_AC", el_props.typ_el_AC)
         #print("  el_convert_tbl", self.el_convert_tbl)
-        #print("  elt2nodes index map", self.table_nod)
+        #print("  elt2nodes index map", self.elnd_to_mesh)
 
     def get_fullmesh_nodes_xy(self):
         '''Returns vectors of x and y physical positions from the 6 nodes of each element
@@ -324,7 +324,7 @@ class FemMesh:
         v_x6p = np.zeros(6*self.n_msh_el)
         v_y6p = np.zeros(6*self.n_msh_el)
 
-        tabnod_py = self.table_nod.T - 1  # shift fortran to python indexing
+        tabnod_py = self.elnd_to_mesh.T - 1  # shift fortran to python indexing
 
 
         i = 0
@@ -332,15 +332,15 @@ class FemMesh:
             for i_node in range(6):
 
                 i_ex = tabnod_py[i_el, i_node]
-                #v_x6p[i] = self.xy_nodes[0, i_ex]
-                #v_y6p[i] = self.xy_nodes[1, i_ex]
-                v_x6p[i], v_y6p[i] = self.xy_nodes[:, i_ex]
+                #v_x6p[i] = self.v_nd_xy[0, i_ex]
+                #v_y6p[i] = self.v_nd_xy[1, i_ex]
+                v_x6p[i], v_y6p[i] = self.v_nd_xy[:, i_ex]
                 i += 1
 
         return v_x6p, v_y6p
 
     def make_sub_triangulation(self):
-        # In table_nod
+        # In elnd_to_mesh
         # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
         # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
         # (0 3 5), (1, 4, 3), (2, 5, 4),  (3, 4, 5)
@@ -367,10 +367,10 @@ class FemMesh:
 
         # v_triang1p maps the same triangles to the actual nodes defined by Gmsh, of which there are only n__pt
 
-        tabnod_py = self.table_nod.T - 1  # shift fortran to python indexing
+        tabnod_py = self.elnd_to_mesh.T - 1  # shift fortran to python indexing
 
         v_triang1p = []
-        # table_nod = self.table_nod
+        # elnd_to_mesh = self.elnd_to_mesh
         for i_el in np.arange(self.n_msh_el):
             triangles = [[tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
                          [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
@@ -380,13 +380,13 @@ class FemMesh:
 
         return v_triang6p, v_triang1p
 
-    def _save_triangulation_plots(self, triang1p, triang6p, xy_nodes):
+    def _save_triangulation_plots(self, triang1p, triang6p, v_nd_xy):
         fig, axs = plt.subplots(1, 1)
         axs[0].triplot(triang1p, linewidth=.5)
         # axs[1].triplot(triang6p, linewidth=.5)
         # for ax in axs:
         axs[0].set_aspect(1.0)
-        axs[0].scatter(xy_nodes[0, :], xy_nodes[1, :], s=2, c='red')
+        axs[0].scatter(v_nd_xy[0, :], v_nd_xy[1, :], s=2, c='red')
 
         axs[0].set_xlabel(r'$x$ [μm]')
         axs[0].set_ylabel(r'$y$ [μm]')
@@ -414,7 +414,7 @@ class FemMesh:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :], v_triang1p)
+            check_triangulation(self.v_nd_xy[0, :], self.v_nd_xy[1, :], v_triang1p)
 
 
         v_x6p, v_y6p = self.get_fullmesh_nodes_xy()
@@ -422,18 +422,18 @@ class FemMesh:
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
 
         # Plots show that these are equivalent meshes with different mesh point orderings
-        # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the table_nod
+        # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the elnd_to_mesh
         # triang1p: tabnod_py[i_el, i_node] ordering: straight node ordering 0, 1, 2, ..5, 6+(0, 1, 2, ..5), 12+ 0, 1, 2, ..5
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
-        tri_triang1p = matplotlib.tri.Triangulation(self.xy_nodes[0, :], self.xy_nodes[1, :], v_triang1p)
+        tri_triang1p = matplotlib.tri.Triangulation(self.v_nd_xy[0, :], self.v_nd_xy[1, :], v_triang1p)
 
         draw_triangulation = False
         if draw_triangulation:
             pl_tri_triang6p = matplotlib.tri.Triangulation(v_x6p/SI_um, v_y6p/SI_um, v_triang6p)
-            pl_tri_triang1p = matplotlib.tri.Triangulation(self.xy_nodes[0, :]/SI_um, self.xy_nodes[1, :]/SI_um, v_triang1p)
+            pl_tri_triang1p = matplotlib.tri.Triangulation(self.v_nd_xy[0, :]/SI_um, self.v_nd_xy[1, :]/SI_um, v_triang1p)
 
             self._save_triangulation_plots(pl_tri_triang1p, pl_tri_triang6p,
-                                           self.xy_nodes/SI_um)
+                                           self.v_nd_xy/SI_um)
 
         # The trifinder only works with triang1p, not triang6p.
         # The latter is apparently an 'invalid triangulation'.

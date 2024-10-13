@@ -6,9 +6,9 @@
  !  n_msh_el:   number of (triang) elements in mesh
  !  n_type_el:  number of types of material
  !  type_nod:    ??
- !  table_nod:
+ !  elnd_to_mesh:
  !  type_el:
- !  xy_nodes
+ !  v_nd_xy
  !  v_eigs_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
  !  sol1:
  !  mode_pol:
@@ -34,7 +34,7 @@ contains
       symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
       mesh_file, n_msh_pts, n_msh_el, &
       type_nod, &
-      table_nod, type_el, xy_nodes, &
+      elnd_to_mesh, type_el, v_nd_xy, &
       v_eigs_nu, sol1, mode_pol, errco, emsg)
 
       use numbatmod
@@ -61,9 +61,9 @@ contains
       integer(8), intent(in) :: type_nod(n_msh_pts)
 
       integer(8), intent(inout) :: type_el(n_msh_el)
-      integer(8), intent(inout) :: table_nod(nodes_per_el, n_msh_el)
+      integer(8), intent(inout) :: elnd_to_mesh(nodes_per_el, n_msh_el)
 
-      double precision, intent(inout) ::  xy_nodes(2,n_msh_pts)
+      double precision, intent(inout) ::  v_nd_xy(2,n_msh_pts)
 
       complex(8), intent(out), target :: v_eigs_nu(n_modes)
       complex(8), intent(out), target :: sol1(3,nodes_per_el,n_modes,n_msh_el)
@@ -223,13 +223,13 @@ contains
 
       if (supplied_geo_flag .eq. 0) then
          call construct_fem_node_tables_ac (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
-            nodes_per_el, n_elt_mats, xy_nodes, type_nod, type_el, table_nod, errco, emsg)
+            nodes_per_el, n_elt_mats, v_nd_xy, type_nod, type_el, elnd_to_mesh, errco, emsg)
          if (errco .ne. 0) then
             return
          endif
       endif
 
-      call lattice_vec (n_msh_pts, xy_nodes, lat_vecs, debug)
+      call lattice_vec (n_msh_pts, v_nd_xy, lat_vecs, debug)
 
       !  if (debug .eq. 1) then
       !  open (unit=64, file="msh_check.txt",
@@ -242,7 +242,7 @@ contains
       !  write(64,*)
       !  do i=1,n_msh_el
       !  do j=1,nodes_per_el
-      !  write(64,*) i, j, table_nod(j,i)
+      !  write(64,*) i, j, elnd_to_mesh(j,i)
       !  enddo
       !  enddo
       !  write(64,*)
@@ -271,7 +271,7 @@ contains
       ip_col_ptr = ip_eq + 3*n_msh_pts
 
       call csr_max_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
-         table_nod, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
+         elnd_to_mesh, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
 
       ip = ip_col_ptr + neq + 1
       if (ip .gt. int_max) then
@@ -286,7 +286,7 @@ contains
       ip_row = ip_col_ptr + neq + 1
 
       call csr_length_AC (n_msh_el, n_msh_pts, neq, nodes_per_el, &
-         table_nod, a_iwork(ip_eq), a_iwork(ip_row), a_iwork(ip_col_ptr), nonz_max, &
+         elnd_to_mesh, a_iwork(ip_eq), a_iwork(ip_row), a_iwork(ip_col_ptr), nonz_max, &
          nonz, max_row_len, ip, int_max, debug)
 
       ip_work = ip_row + nonz
@@ -409,8 +409,8 @@ contains
 
       call asmbly_AC (i_base, n_msh_el, n_msh_pts, neq, nodes_per_el, &
          shift_omsq, q_ac, n_elt_mats, rho, c_tensor, &
-         table_nod, type_el, a_iwork(ip_eq), &
-         xy_nodes, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
+         elnd_to_mesh, type_el, a_iwork(ip_eq), &
+         v_nd_xy, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
          c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work), &
          symmetry_flag, debug)
 
@@ -475,7 +475,7 @@ contains
          write(ui_out,*) "py_calc_modes_AC: call to array_sol"
       endif
       call array_sol_AC (n_modes, n_msh_el, n_msh_pts, neq, &
-         nodes_per_el, iindex, table_nod, type_el, a_iwork(ip_eq), xy_nodes, &
+         nodes_per_el, iindex, elnd_to_mesh, type_el, a_iwork(ip_eq), v_nd_xy, &
          v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), mode_pol, b_zwork(jp_vp), sol1)
 
       if (debug .eq. 1) then
@@ -506,8 +506,8 @@ contains
       !  open (unit=34,file=tchar)
       !  do i=1,n_modes
       !  call gmsh_post_process_AC (i, n_modes, n_msh_el,
-      !  *         n_msh_pts, nodes_per_el, table_nod, type_el,
-      !  *         xy_nodes, v_eigs_nu, sol1, b_zwork(jp_rhs), a_iwork(ip_visite),
+      !  *         n_msh_pts, nodes_per_el, elnd_to_mesh, type_el,
+      !  *         v_nd_xy, v_eigs_nu, sol1, b_zwork(jp_rhs), a_iwork(ip_visite),
       !  *         gmsh_file_pos, dir_name, dimscale_in_m, debug)
       !  enddo
       !  close (unit=34)
