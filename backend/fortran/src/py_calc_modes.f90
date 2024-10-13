@@ -65,7 +65,7 @@ module calc_em_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshProps
+   use class_MeshRaw
 
 
    use nbinterfaces
@@ -110,10 +110,10 @@ contains
       !  ----------------------------------------------
       !  workspaces
 
-      integer(8) neq,n_ddl, nonz
+      integer(8) neq, nonz
 
-      type(MeshProps) :: mesh_props
-      type(N_E_F_Props) :: NEF_props
+      type(MeshRaw) :: mesh_raw
+      type(MeshEntities) :: entities
 
 
       integer(8), dimension(:,:), allocatable :: m_eqs
@@ -158,7 +158,7 @@ contains
 
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
-      double precision vacwavenum_k0, dim_x, dim_y
+      double precision vacwavenum_k0
 
 
 
@@ -176,59 +176,53 @@ contains
 
 
       ! All reduces to this:
-      n_ddl = 9 * n_msh_el
+      !n_ddl = 9 * n_msh_el
 
 
-      call mesh_props%init(n_msh_pts, n_msh_el, n_elt_mats, errco, emsg)
+      call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, errco, emsg)
       RETONERROR(errco)
 
-      call NEF_props%init(n_msh_el, n_ddl, errco, emsg)
+      call entities%allocate(n_msh_el, errco, emsg)
       RETONERROR(errco)
 
-      call integer_alloc_2d(m_eqs, 3_8, n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
+      call integer_alloc_2d(m_eqs, 3_8, entities%n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
 
       call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
 
       call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(iperiod_N_E_F, n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(iperiod_N_E_F, entities%n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
       call integer_alloc_1d(inperiod_N, n_msh_pts, 'inperiod_N', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(inperiod_N_E_F, n_ddl, 'inperiod_N_E_F', errco, emsg); RETONERROR(errco)
+      call integer_alloc_1d(inperiod_N_E_F, entities%n_ddl, 'inperiod_N_E_F', errco, emsg); RETONERROR(errco)
 
 
 
       call clock_main%reset()
 
 
-      dim_x = dimscale_in_m
-      dim_y = dimscale_in_m
-
-      !  Fills:  MeshProps: xy_nodes, type_nod, type_el, table_nod
+      !  Fills:  MeshRaw: xy_nodes, type_nod, type_el, table_nod
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-      call construct_fem_node_tables_em (mesh_file, dim_x, dim_y, &
-         mesh_props, errco, emsg)
+      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, errco, emsg)
       RETONERROR(errco)
 
-
-      call build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-         mesh_props, NEF_props, errco, emsg)
+      ! Fills entities
+      call entities%build_mesh_tables(mesh_raw, &
+      errco, emsg)
       RETONERROR(errco)
 
       ! Builds the m_eqs table which maps element DOFs to the equation handling them.
-      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, n_ddl,  &
-         mesh_props, NEF_props, neq, m_eqs, debug, &
+      call set_boundary_conditions(bdy_cdn, n_msh_pts, n_msh_el,  nodes_per_el, entities%n_ddl,  &
+         mesh_raw, entities, neq, m_eqs, debug, &
          iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F)
 
-      ! We no longer need type_N_E_F, could deallocate
 
       !Now we know neq
 
       ! Build sparse matrix index arrays
-      call make_csr_arrays(n_msh_el, n_ddl, neq, &
-         NEF_props%table_nod, &
+      call make_csr_arrays(n_msh_el, entities%n_ddl, neq, &
+         entities%v_tags, &
          m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg);
       RETONERROR(errco)
-
 
       !  ----------------------------------------------------------------
       !  convert from 1-based to 0-based
@@ -271,9 +265,9 @@ contains
 
       !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
-      call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
+      call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, entities%n_ddl, neq, nodes_per_el, &
          shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
-         mesh_props, NEF_props,  &
+         mesh_raw, entities,  &
          m_eqs, iperiod_N, iperiod_N_E_F, &
          nonz,  v_row_ind, v_col_ptr, &
          mOp_stiff, mOp_mass, errco, emsg )
@@ -323,9 +317,9 @@ contains
       !  The eigenvectors will be stored in the array sol
       !  The eigenvalues and eigenvectors are renumbered
       !  using the permutation vector v_eig_index
-      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, n_ddl, neq, nodes_per_el, &
-         n_core, bloch_vec, v_eig_index, mesh_props, &
-         NEF_props, &
+      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, entities%n_ddl, neq, nodes_per_el, &
+         n_core, bloch_vec, v_eig_index, mesh_raw, &
+         entities, &
          m_eqs, iperiod_N, iperiod_N_E_F, &
          v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
@@ -335,7 +329,7 @@ contains
 
       !  Calculate energy in each medium (typ_el)
       call mode_energy (n_modes, n_msh_el, nodes_per_el, n_core, &
-         mesh_props, &
+         mesh_raw, &
          n_elt_mats, eps_eff,&
          m_evecs, v_evals_beta, mode_pol)
 
@@ -360,7 +354,7 @@ contains
       enddo
 
 
-      call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_props%type_el, ls_material)
+      call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
 
       !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
       !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
@@ -383,7 +377,7 @@ contains
       !  endif
       !
 
-      call mesh_props%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
+      call mesh_raw%fill_python_arrays(type_el, type_nod, table_nod, xy_nodes)
 
       deallocate(v_eig_index, overlap_L, arp_evecs)
       deallocate(mOp_stiff, mOp_mass)
