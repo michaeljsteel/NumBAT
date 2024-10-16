@@ -211,12 +211,8 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, entities%n_entities, cscmat%n_dof, nodes_per_el, &
-      shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
-      mesh_raw, entities,  &
-      cscmat%m_eqs, pbcs%iperiod_N, pbcs%iperiod_N_E_F, &
-      cscmat%n_nonz,  cscmat%v_row_ind, cscmat%v_col_ptr, &
-      cscmat%mOp_stiff, cscmat%mOp_mass, errco, emsg )
+      call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
+         mesh_raw, entities, cscmat, pbcs, errco, emsg )
       RETONERROR(errco)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -247,10 +243,7 @@ contains
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
       call complex_alloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
 
-      call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, &
-      cscmat, &
-      !cscmat%n_dof,    cscmat%n_nonz, &
-      !   cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_stiff, cscmat%mOp_mass, &
+      call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
          v_evals_beta, arp_evecs, errco, emsg)
       RETONERROR(errco)
 
