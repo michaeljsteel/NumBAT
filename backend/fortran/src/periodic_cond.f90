@@ -4,8 +4,8 @@
  !
  !***********************************************************************
  !
-subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,&
-&ip_period_E_F, ineq, debug)
+subroutine periodic_cond (bdy_cdn, n_ddl, n_dof, type_N_E_F,&
+&ip_period_E_F, in_dof, debug)
 
    !
    !***********************************************************************
@@ -18,9 +18,9 @@ subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,&
    !***********************************************************************
    !
    use numbatmod
-   integer(8) bdy_cdn, n_ddl, neq
+   integer(8) bdy_cdn, n_ddl, n_dof
    integer(8) ip_period_E_F(n_ddl), type_N_E_F(2,n_ddl)
-   integer(8) ineq(3,n_ddl), debug
+   integer(8) in_dof(3,n_ddl), debug
 
    integer(8) i, j, k, i_boundary, i_dim
    !
@@ -82,29 +82,29 @@ subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,&
    !
    if(bdy_cdn .eq. 2) then
       !       Periodic boundary condition: all points have a degree of freedom
-      neq = 0
+      n_dof = 0
       do i=1,n_ddl
          i_boundary = type_N_E_F(1,i)
          i_dim = type_N_E_F(2,i)
          if (i_boundary .eq. 0) then
             !             !  each element is associated to 3 interior Degrees Of Freedom (DOF)
             if (i_dim .eq. 2) then
-               ineq(1,i) = neq + 1
-               ineq(2,i) = neq + 2
-               ineq(3,i) = neq + 3
-               neq = neq + 3
+               in_dof(1,i) = n_dof + 1
+               in_dof(2,i) = n_dof + 2
+               in_dof(3,i) = n_dof + 3
+               n_dof = n_dof + 3
                !             !  each edge is associated to 3 Degrees Of Freedom (DOF)
             elseif (i_dim .eq. 1) then
-               ineq(1,i) = neq + 1
-               ineq(2,i) = neq + 2
-               ineq(3,i) = neq + 3
-               neq = neq + 3
+               in_dof(1,i) = n_dof + 1
+               in_dof(2,i) = n_dof + 2
+               in_dof(3,i) = n_dof + 3
+               n_dof = n_dof + 3
                !             !  each nodee is associated to 1 Degree Of Freedom (DOF)
             elseif (i_dim .eq. 0) then
-               ineq(1,i) = neq + 1
-               ineq(2,i) = 0
-               ineq(3,i) = 0
-               neq = neq + 1
+               in_dof(1,i) = n_dof + 1
+               in_dof(2,i) = 0
+               in_dof(3,i) = 0
+               n_dof = n_dof + 1
             else
                write(*,*) "bound_cond: i_dim has invalid value : ", i_dim
                write(*,*) "bound_cond: bdy_cdn = ", bdy_cdn
@@ -122,22 +122,22 @@ subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,&
             if(j .eq. i) then
                !               !  each element is associated to 3 interior Degrees Of Freedom (DOF)
                if (i_dim .eq. 2) then
-                  ineq(1,i) = neq + 1
-                  ineq(2,i) = neq + 2
-                  ineq(3,i) = neq + 3
-                  neq = neq + 3
+                  in_dof(1,i) = n_dof + 1
+                  in_dof(2,i) = n_dof + 2
+                  in_dof(3,i) = n_dof + 3
+                  n_dof = n_dof + 3
                   !               !  each edge is associated to 3 Degrees Of Freedom (DOF)
                elseif (i_dim .eq. 1) then
-                  ineq(1,i) = neq + 1
-                  ineq(2,i) = neq + 2
-                  ineq(3,i) = neq + 3
-                  neq = neq + 3
+                  in_dof(1,i) = n_dof + 1
+                  in_dof(2,i) = n_dof + 2
+                  in_dof(3,i) = n_dof + 3
+                  n_dof = n_dof + 3
                   !               !  each nodee is associated to 1 Degree Of Freedom (DOF)
                elseif (i_dim .eq. 0) then
-                  ineq(1,i) = neq + 1
-                  ineq(2,i) = 0
-                  ineq(3,i) = 0
-                  neq = neq + 1
+                  in_dof(1,i) = n_dof + 1
+                  in_dof(2,i) = 0
+                  in_dof(3,i) = 0
+                  n_dof = n_dof + 1
                else
                   write(*,*) "bound_cond: i_dim has invalid value : ",&
                   &i_dim
@@ -156,14 +156,14 @@ subroutine periodic_cond (bdy_cdn, n_ddl, neq, type_N_E_F,&
          i_dim = type_N_E_F(2,i)
          if(i_boundary .ne. 0 .and. j .ne. i) then
             do k=1,3
-               ineq(k,i) = ineq(k,j)
+               in_dof(k,i) = in_dof(k,j)
                if(i_dim .eq. 1 .or. i_dim .eq. 2) then
-                  if(ineq(k,j) .le. 0 .or. j .le. 0) then
+                  if(in_dof(k,j) .le. 0 .or. j .le. 0) then
                      write(*,*)
                      write(*,*) "  ???"
-                     write(*,*) "period_cond: ineq(j)  <= 0 or j <=0 : "
-                     write(*,*) "period_cond: i, j, k, neq(k,j) = ",&
-                     &i, j, k, ineq(k,j)
+                     write(*,*) "period_cond: in_dof(j)  <= 0 or j <=0 : "
+                     write(*,*) "period_cond: i, j, k, n_dof(k,j) = ",&
+                     &i, j, k, in_dof(k,j)
                      write(*,*) "period_cond: Aborting..."
                      stop
                   endif

@@ -2,10 +2,11 @@ fortmodc_h = files('myhead.h')
 
 nb_module_fsrcs = files(
     'alloc_module.f90',
-    'nbinterfaces_module.f90',
     'numbatmod_module.f90',
     'stopwatch_module.f90',
     'conv_gmsh_interfaces.f90',
+
+    #'nbinterfaces_module.f90',
 )
 
 nb_pyinterface_fsrcs = files(
@@ -33,21 +34,15 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
-    #'array_size.f90',
     'array_sol.f90',
     'array_sol_ac_v2.f90',
     'assembly_ac.f90',
     'assembly_em.f90',
     'bound_cond_ac.f90',
-    'bound_cond_em.f90',
-    #'build_mesh_tables.f90',
     'construct_fem_tables.f90',
-    #'conv_gmsh.f90',
     'conv_gmsh_subroutines_mod.f90',
-    #'conv_gmsh_symmetry.f90',
     'csr_length_AC.f',
-    'csr_make_arrays.f90',
-    'csr_max_length.f90',
+
     'csr_max_length_ac.f90',
     'get_H_field_p3.f90',
     'get_coord_p3.f90',
@@ -58,9 +53,6 @@ nb_impl_fsrcs = files(
     'is_curved_elem_tri.f90',
     'jacobian_p1_2d.f90',
     'jacobian_p2_2d.f90',
-    #'label_edges.f90',
-    #'label_faces.f90',
-    #'label_nodes_P3.f90',
     'mat_el.f90',
     'mat_el_energy.f90',
     'mat_el_energy_rho.f90',
@@ -94,19 +86,31 @@ nb_impl_fsrcs = files(
     'phi_vector_basis.f90',
     'py_calc_modes.f90',
     'py_calc_modes_ac.f90',
-    'py_calc_modes_impl.f90',
+    'periodicbcs_class.f90',
     'quad_triangle.f90',
     'sparse_csr_class.f90',
     'sort_csr.f90',
     'sort_int.f90',
     'sort_n.f90',
-    #'type_node_edge_face.f90',
     'utils.f90',
     'valpr_umf_64.f90',
     'valpr_umf_64_ac.f90',
     'z_indexx.f90',
     'z_indexx_AC.f90',
     'z_mxv_csc_64.f90',
+
+    #'array_size.f90',
+    #'bound_cond_em.f90',
+    #'build_mesh_tables.f90',
+    #'conv_gmsh.f90',
+    #'conv_gmsh_symmetry.f90',
+    #'csr_make_arrays.f90',
+    #'csr_loose.f90',
+    #'label_edges.f90',
+    #'label_faces.f90',
+    #'label_nodes_P3.f90',
+    #'py_calc_modes_impl.f90',
+    #'type_node_edge_face.f90',
 )
 
 

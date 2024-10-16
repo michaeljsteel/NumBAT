@@ -61,10 +61,11 @@ module calc_em_impl
 
    use class_stopwatch
    use class_MeshRaw
-   use class_SparseCSR
+   use class_SparseCSC
+   use class_PeriodicBCs
 
 
-   use nbinterfaces
+   !use nbinterfaces
 !   use nbinterfacesb
 
 
@@ -103,38 +104,20 @@ contains
       integer(8),  intent(out) :: errco
       character(len=EMSG_LENGTH), intent(out) :: emsg
 
-      !  ----------------------------------------------
-      !  workspaces
-
-      integer(8) neq, nonz
+      ! locals
 
       type(MeshRaw) :: mesh_raw
       type(MeshEntities) :: entities
-      type(MeshEntities) :: csrmat
-
-
-
-      integer(8), dimension(:,:), allocatable :: m_eqs
+      type(SparseCSC) :: cscmat
+      type(PeriodicBCs) :: pbcs
 
       integer(8), dimension(:), allocatable :: v_eig_index
       complex(8), dimension(:,:), allocatable :: overlap_L
 
       complex(8), dimension(:,:), allocatable :: arp_evecs
 
-      complex(8), dimension(:), allocatable :: mOp_stiff
-      complex(8), dimension(:), allocatable :: mOp_mass
-
-      integer(8), dimension(:), allocatable :: v_row_ind
-      integer(8), dimension(:), allocatable :: v_col_ptr
-
-      !integer(8), dimension(:), allocatable :: visited
-
-      ! Currenly, periodic is not active
-
-      integer(8), dimension(:), allocatable :: iperiod_N
-      integer(8), dimension(:), allocatable :: iperiod_N_E_F
-      integer(8), dimension(:), allocatable :: inperiod_N
-      integer(8), dimension(:), allocatable :: inperiod_N_E_F
+      !complex(8), dimension(:), allocatable :: cscmat%mOp_stiff
+      !complex(8), dimension(:), allocatable :: cscmat%mOp_mass
 
 
       ! Should these be dynamic?
@@ -168,14 +151,15 @@ contains
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
-      ! call array_size(n_msh_pts, n_msh_el, n_modes, &
-      ! int_max, cmplx_max, real_max, n_ddl, errco, emsg) !Only useful number out of here is n_ddl
-      ! RETONERROR(errco)
+      call clock_main%reset()
 
+      !TODO: move pp,qq to elsewhere. SparseCSC?
+      vacwavenum_k0 = 2.0d0*D_PI/lambda
+      call  check_materials_and_fem_formulation(E_H_field, n_elt_mats, &
+         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
+      RETONERROR(errco)
 
-      ! All reduces to this:
-      !n_ddl = 9 * n_msh_el
-
+      !  ----------------------------------------------------------------
 
       call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, errco, emsg)
       RETONERROR(errco)
@@ -183,68 +167,33 @@ contains
       call entities%allocate(n_msh_el, errco, emsg)
       RETONERROR(errco)
 
-      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
-      call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
-
-      call integer_alloc_1d(iperiod_N, n_msh_pts, 'iperiod_N', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(iperiod_N_E_F, entities%n_ddl, 'iperiod_N_E_F', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(inperiod_N, n_msh_pts, 'inperiod_N', errco, emsg); RETONERROR(errco)
-      call integer_alloc_1d(inperiod_N_E_F, entities%n_ddl, 'inperiod_N_E_F', errco, emsg); RETONERROR(errco)
 
 
-
-      call clock_main%reset()
-
+      ! These are never actually used for now so could disable
+      call pbcs%allocate(mesh_raw, entities, errco, emsg); RETONERROR(errco)
 
       !  Fills:  MeshRaw: v_nd_xy, type_nod, type_el, elnd_to_mesh
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, errco, emsg)
-      RETONERROR(errco)
+      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, errco, emsg); RETONERROR(errco)
 
       ! Fills entities
-      call entities%build_mesh_tables(mesh_raw, &
-      errco, emsg)
-      RETONERROR(errco)
+      call entities%build_mesh_tables(mesh_raw, errco, emsg); RETONERROR(errco)
 
-      call integer_alloc_2d(m_eqs, 3_8, entities%n_ddl, 'm_eqs', errco, emsg); RETONERROR(errco)
+      ! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
+      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, errco, emsg); RETONERROR(errco)
 
-      ! Builds the m_eqs table which maps element DOFs to the equation handling them.
-      ! None of the periodic variables matter for us
-      call set_boundary_conditions(bdy_cdn,  &
-      mesh_raw, entities, neq, m_eqs, debug, &
-      iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg)
-      RETONERROR(errco)
-
-      !Now we know neq
-      nonz=0
 
       ! Build sparse matrix index arrays
-      call make_csr_arrays(mesh_raw, entities, neq, &
-      m_eqs, nonz, v_row_ind, v_col_ptr, debug, errco, emsg)
+      call cscmat%make_csc_arrays(mesh_raw, entities, errco, emsg)
       RETONERROR(errco)
 
-      !  ----------------------------------------------------------------
-      !  convert from 1-based to 0-based
-      !  ----------------------------------------------------------------
-      !  The CSC indexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC indexing to 0-based indexing)
-      v_row_ind = v_row_ind - 1
-      v_col_ptr = v_col_ptr - 1
+
 
       i_base = 0
 
 
       write(ui_out,*)
       write(ui_out,*) "-----------------------------------------------"
-
-
-      vacwavenum_k0 = 2.0d0*D_PI/lambda
-
-
-      call  check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
-         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
-      RETONERROR(errco)
-
 
       !  Main eigensolver
       write(ui_out,*) "EM FEM: "
@@ -256,20 +205,18 @@ contains
       call clock_spare%reset()
 
 
-      ! These had to wait till we knew nonz
-      call complex_alloc_1d(mOp_stiff, nonz, 'mOp_stiff', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(mOp_mass, nonz, 'mOp_mass', errco, emsg); RETONERROR(errco)
 
 
 
-      !  Build the actual matrices A (mOp_stiff) and M(mOp_mass) for the arpack solving.
 
-      call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, entities%n_ddl, neq, nodes_per_el, &
-         shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
-         mesh_raw, entities,  &
-         m_eqs, iperiod_N, iperiod_N_E_F, &
-         nonz,  v_row_ind, v_col_ptr, &
-         mOp_stiff, mOp_mass, errco, emsg )
+      !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
+
+      call assembly (bdy_cdn, i_base, n_msh_el, n_msh_pts, entities%n_entities, cscmat%n_dof, nodes_per_el, &
+      shift_ksqr, bloch_vec, n_elt_mats, pp, qq, &
+      mesh_raw, entities,  &
+      cscmat%m_eqs, pbcs%iperiod_N, pbcs%iperiod_N_E_F, &
+      cscmat%n_nonz,  cscmat%v_row_ind, cscmat%v_col_ptr, &
+      cscmat%mOp_stiff, cscmat%mOp_mass, errco, emsg )
       RETONERROR(errco)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -277,10 +224,10 @@ contains
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
-      write(ui_out,'(A,i9,A)') '      ', neq, ' linear equations'
-      write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
-      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*neq*neq)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', neq*(dim_krylov+6)*16/2**20, ' MB est. working memory '
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations (cscmat%n_dof)'
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_nonz, ' nonzero elements  (cscmat%n_nonz)'
+      write(ui_out,'(A,f9.3,A)') '      ', cscmat%n_nonz/(1.d0*cscmat%n_dof*cscmat%n_dof)*100.d0, ' % sparsity'
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof*(dim_krylov+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
@@ -295,11 +242,16 @@ contains
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
-      call complex_alloc_2d(arp_evecs, neq, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
 
-      call valpr_64( i_base, dim_krylov, n_modes, neq, itermax,  arp_tol, nonz, &
-         errco, emsg, &
-         v_row_ind, v_col_ptr, mOp_stiff, mOp_mass, v_evals_beta, arp_evecs)
+      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
+      call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
+      call complex_alloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
+
+      call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, &
+      cscmat, &
+      !cscmat%n_dof,    cscmat%n_nonz, &
+      !   cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_stiff, cscmat%mOp_mass, &
+         v_evals_beta, arp_evecs, errco, emsg)
       RETONERROR(errco)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -316,10 +268,10 @@ contains
       !  The eigenvectors will be stored in the array sol
       !  The eigenvalues and eigenvectors are renumbered
       !  using the permutation vector v_eig_index
-      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, entities%n_ddl, neq, nodes_per_el, &
+      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, entities%n_entities, cscmat%n_dof, nodes_per_el, &
          n_core, bloch_vec, v_eig_index, mesh_raw, &
          entities, &
-         m_eqs, iperiod_N, iperiod_N_E_F, &
+         cscmat%m_eqs, pbcs%iperiod_N, pbcs%iperiod_N_E_F, &
          v_evals_beta, mode_pol, arp_evecs, &
          m_evecs, errco, emsg)
       RETONERROR(errco)
@@ -355,32 +307,12 @@ contains
 
       call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
 
-      !  Normalisation. Can't use this if we don't do check_ortho.  Not needed
-      !  call normalise_fields(n_modes, n_msh_el, nodes_per_el, m_evecs, overlap_L)
-
-
-      !if (debug .eq. 1) then
-      !  write(ui_out,*) "py_calc_modes.f: CPU time for normalisation :", (time2_J-time1_J)
-      !endif
-      !
-      !  Orthonormal integral
-      !  if (debug .eq. 1) then
-      !  write(ui_out,*) "py_calc_modes.f: Product of normalised field"
-      !  overlap_file = "Orthogonal_n.txt"
-      !  call get_clocks( systime1_J, time1_J)
-      !  call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
-      !  type_el, v_nd_xy, v_evals_beta, v_evals_beta_pri, m_evecs, m_evecs_pri, overlap_L, overlap_file, debug, &
-      !  pair_warning, vacwavenum_k0)
-      !  call get_clocks( systime2_J, time2_J)
-      !  write(ui_out,*) "py_calc_modes.f: CPU time for orthogonal :", (time2_J-time1_J)
-      !  endif
-      !
 
       call mesh_raw%fill_python_arrays(type_el, type_nod, elnd_to_mesh, v_nd_xy)
 
       deallocate(v_eig_index, overlap_L, arp_evecs)
-      deallocate(mOp_stiff, mOp_mass)
-      deallocate(v_row_ind, v_col_ptr)
+      !deallocate(cscmat%mOp_stiff, cscmat%mOp_mass)
+      !deallocate(v_row_ind, v_col_ptr)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -392,7 +324,7 @@ contains
       !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
       !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
       !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !  n_elt_mats, neq, dim_krylov, &
+      !  n_elt_mats, n_dof, dim_krylov, &
       !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -533,7 +465,7 @@ contains
       time1, time2, time_fact, time_arpack, time1_postp, &
       lambda, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      n_elt_mats, neq, dim_krylov, &
+      n_elt_mats, n_dof, dim_krylov, &
       shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
 
 
@@ -544,7 +476,7 @@ contains
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
       double precision bloch_vec(2), lambda
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
-      integer(8) n_conv, n_modes, n_elt_mats, nonz,  n_core(2), neq, dim_krylov
+      integer(8) n_conv, n_modes, n_elt_mats, nonz,  n_core(2), n_dof, dim_krylov
       character(len=FNAME_LENGTH)  log_file
       complex(8), intent(in) :: shift_ksqr
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
@@ -588,7 +520,7 @@ contains
          write(26,*)
          write(26,*) "lambda  = ", lambda
          write(26,*) "n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
-         write(26,*) "neq, bdy_cdn = ", neq, bdy_cdn
+         write(26,*) "n_dof, bdy_cdn = ", n_dof, bdy_cdn
          if ( E_H_field .eq. FEM_FORMULATION_E) then
             write(26,*) "E_H_field   = ", E_H_field, " (E-Field formulation)"
          elseif ( E_H_field .eq. FEM_FORMULATION_H) then

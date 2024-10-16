@@ -1,26 +1,26 @@
 !  Difference from array_sol_AC.f is that the u_z field is multiplied by i
 !  which gives you the correct physical displacement field.
 
-!  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that ineq(i) != 0
+!  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that in_dof(i) != 0
 !  sol(i) : contains solution for all points
 !  The dimension of the geometric domain is : dim_32 = 2
 !  The dimension of the vector field is : dim2 = 3
 
 
-subroutine array_sol_AC (num_modes, n_msh_el, n_msh_pts, neq,&
-nnodes, iindex, elnd_to_mesh, type_el, ineq,&
+subroutine array_sol_AC (num_modes, n_msh_el, n_msh_pts, n_dof,&
+nnodes, iindex, elnd_to_mesh, type_el, in_dof,&
 x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
 
    use numbatmod
 
    integer(8) nnodes
-   integer(8) num_modes, n_msh_el, n_msh_pts, neq
+   integer(8) num_modes, n_msh_el, n_msh_pts, n_dof
 !  TODO: n_core seems to be never initialised. Is that code ever called?
    integer(8) n_core(2), type_el(n_msh_el)
-   integer(8) ineq(3,n_msh_pts), iindex(*)
+   integer(8) in_dof(3,n_msh_pts), iindex(*)
    integer(8) elnd_to_mesh(nnodes,n_msh_el)
-   complex(8) sol_0(neq,num_modes)
+   complex(8) sol_0(n_dof,num_modes)
    double precision x(2,n_msh_pts)
 !  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
    complex(8) sol(3,nnodes,num_modes,n_msh_el)
@@ -164,7 +164,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
          do inod=1,nnodes
             jp = elnd_to_mesh(inod,iel)
             do j_eq=1,3
-               ind_jp = ineq(j_eq,jp)
+               ind_jp = in_dof(j_eq,jp)
                if (ind_jp .gt. 0) then
                   z_tmp1 = sol_0(ind_jp, ival2)
                   sol_el(j_eq,inod) = z_tmp1
@@ -270,7 +270,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
             endif
          enddo
       enddo
-      do j=1,neq
+      do j=1,n_dof
          z_tmp1 = sol_0(j,ival2)/z_sol_max
          sol_0(j,ival2) = z_tmp1
       enddo
