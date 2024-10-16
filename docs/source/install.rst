@@ -133,8 +133,7 @@ Building |NUMBAT| itself
     $ git clone https://github.com/michaeljsteel/NumBAT.git
     $ cd NumBAT
 
-#. **New method**
-    To build with the new ``meson`` system, move to the ``backend\fortran`` directory.  Alternatively skip to step XX.
+#.  Move to the ``backend\fortran`` directory.
 
     #. To build with the ``gcc`` compilers, run::
 
@@ -144,14 +143,6 @@ Building |NUMBAT| itself
 
         $ make intel
 
-
-
-#. **Old method**
-    Open the file ``<NumBAT>/backend/fortran/Makefile.old`` in a text editor and check the settings associated with the variables ``PLAT`` that control the preferred math library. The default setting is to use the Intel OneAPI library which is the recommended configuration.
-
-    #. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
-
-        $ make -f Makefile.old build
 
 #. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
 
