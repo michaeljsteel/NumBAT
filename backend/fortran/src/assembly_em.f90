@@ -38,7 +38,7 @@ subroutine find_basis_derivatives(idof, ifunc, phi_vec_map, phi_P2_ref, phi_P3_r
 end subroutine
 
 
-subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
+subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, n_dof, nnodes, &
    shift_ksqr, bloch_vec, nb_typ_el, perm_pp, perm_qq, &
    mesh_raw, entities, &
    m_eqs, ip_period_N, ip_period_E_F, &
@@ -56,7 +56,7 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
 
    integer(8) bdy_cdn, i_base,  nb_typ_el, nonz
-   integer(8) n_msh_el, n_msh_pts, n_ddl, neq, nnodes
+   integer(8) n_msh_el, n_msh_pts, n_ddl, n_dof, nnodes
 
    !if(E_H_field .eq. FEM_FORMULATION_E) then
    !   perm_qq = eps_eff*vacwavenum_k0**2
@@ -74,7 +74,7 @@ subroutine assembly  (bdy_cdn, i_base, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, 
 
    integer(8) m_eqs(3,n_ddl)
 
-   integer(8) row_ind(nonz), col_ptr(neq+1)
+   integer(8) row_ind(nonz), col_ptr(n_dof+1)
 
    complex(8), intent(out) :: mOp_stiff(nonz), mOp_mass(nonz)
 

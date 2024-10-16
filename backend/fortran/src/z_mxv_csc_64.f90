@@ -7,17 +7,17 @@
 
 !TODO: Is there not a stnadard library function in SparseSuite for this?
 
-subroutine z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat)
+subroutine z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind, col_ptr, mat)
 
    use numbatmod
-   integer(8) neq, nonz
-   integer(8) row_ind(nonz), col_ptr(neq+1)
+   integer(8) n_dof, nonz
+   integer(8) row_ind(nonz), col_ptr(n_dof+1)
    complex(8) mat(nonz)
-   complex(8) vect1(neq), vect2(neq)
+   complex(8) vect1(n_dof), vect2(n_dof)
 
    integer(8) i, j, k, col_start, col_end, i_base
 
-   !  do i=1,neq
+   !  do i=1,n_dof
    !  vect2(i) = 0.d0
    !  enddo
    vect2 = C_ZERO
@@ -27,7 +27,7 @@ subroutine z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat)
    i_base = 1
 
 
-   do i=1,neq  !  Column index
+   do i=1,n_dof  !  Column index
       col_start = col_ptr(i) + i_base
       col_end = col_ptr(i+1) - 1 + i_base
       do j=col_start,col_end

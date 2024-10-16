@@ -420,7 +420,7 @@ end subroutine
 
  !  Here's a breakdown of the key components of the function:
 
- !  - `neqns`: Input parameter representing the number of equations (nodes) in the graph.
+ !  - `n_eqns`: Input parameter representing the number of equations (nodes) in the graph.
  !  - `xadj`: Cumulative sum of the degrees of nodes in the graph.
  !  - `adjncy`: Adjacency list representation of the graph.
  !  - `perm`: Output parameter representing the RCM ordering of the nodes.
@@ -428,7 +428,7 @@ end subroutine
  !  - `xls`: An array storing the cumulative sum of nodes at each level in the level structure.
 
  !  The subroutine initializes a mask array where all nodes are marked as not visited (`mask(i) = 1`).
- !  It then iterates over the nodes (`neqns`) to find the RCM ordering. For each unvisited node, it
+ !  It then iterates over the nodes (`n_eqns`) to find the RCM ordering. For each unvisited node, it
  !  invokes the `fnroot` subroutine to generate a level structure (`xls`) using the breadth-first search (BFS)
  !  approach and updates the mask accordingly.
  !  Subsequently, the `rcm` subroutine is called to perform the Reverse Cuthill-McKee ordering starting from the
@@ -441,17 +441,17 @@ end subroutine
  !  that minimizes the bandwidth of the graph represented by the adjacency list.
  !  The `xls` array is used to store the level structure, and the `mask` array keeps track of visited nodes during the process.
 
-subroutine  genrcm (neqns, xadj, adjncy, perm, mask, xls)
+subroutine  genrcm (n_eqns, xadj, adjncy, perm, mask, xls)
 
    integer(8) adjncy(*), mask(*), perm(*), xls(*)
-   integer(8) xadj(*), ccsize, i, neqns, nlvl, num, root
+   integer(8) xadj(*), ccsize, i, n_eqns, nlvl, num, root
 
-   do i = 1, neqns
+   do i = 1, n_eqns
       mask(i) = 1
    enddo
 
    num = 1
-   do i = 1, neqns
+   do i = 1, n_eqns
       if (mask(i).eq.0) continue
 
       root = i
@@ -459,7 +459,7 @@ subroutine  genrcm (neqns, xadj, adjncy, perm, mask, xls)
       call rcm (root,xadj,adjncy,mask,perm(num),ccsize,xls)
 
       num = num + ccsize
-      if (num.gt.neqns) return
+      if (num.gt.n_eqns) return
 
    enddo
 end

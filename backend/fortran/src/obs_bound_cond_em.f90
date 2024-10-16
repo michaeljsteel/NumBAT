@@ -34,7 +34,7 @@
 
 !  Output Parameters:
 
-!    neq: Total number of equations (DOFs).
+!    n_dof: Total number of equations (DOFs).
 !    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
 
 !  Local Variables:
@@ -61,11 +61,11 @@
 
 !  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
 
-subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, neq, m_eqs, errco, emsg)
+subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, n_dof, m_eqs, errco, emsg)
 
    use numbatmod
 
-   integer(8) bdy_cdn, n_ddl, neq
+   integer(8) bdy_cdn, n_ddl, n_dof
    integer(8) m_eqs(3,n_ddl), dof_props(2,n_ddl)
    integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
@@ -74,23 +74,23 @@ subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, neq, m_eqs, errco, emsg)
 
    if (bdy_cdn .eq. BCS_DIRICHLET) then  !  all points have a degree of freedom
 
-      neq = 0
+      n_dof = 0
       do i=1,n_ddl
          is_boundary = dof_props(1,i)
          i_dim = dof_props(2,i)
 
          if (i_dim .eq. 2) then !  each element is associated with 3 interior Degrees Of Freedom (DOF)
-            m_eqs(1,i) = neq + 1
-            m_eqs(2,i) = neq + 2
-            m_eqs(3,i) = neq + 3
-            neq = neq + 3
+            m_eqs(1,i) = n_dof + 1
+            m_eqs(2,i) = n_dof + 2
+            m_eqs(3,i) = n_dof + 3
+            n_dof = n_dof + 3
 
          elseif (i_dim .eq. 1) then  !  each edge is associated with 3 Degrees Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               m_eqs(1,i) = neq + 1
-               m_eqs(2,i) = neq + 2
-               m_eqs(3,i) = neq + 3
-               neq = neq + 3
+               m_eqs(1,i) = n_dof + 1
+               m_eqs(2,i) = n_dof + 2
+               m_eqs(3,i) = n_dof + 3
+               n_dof = n_dof + 3
             else                     !  fixed by boundary so no dof
                m_eqs(1,i) = 0
                m_eqs(2,i) = 0
@@ -99,10 +99,10 @@ subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, neq, m_eqs, errco, emsg)
 
          elseif (i_dim .eq. 0) then   !  each node is associated with 1 Degree Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               m_eqs(1,i) = neq + 1
+               m_eqs(1,i) = n_dof + 1
                m_eqs(2,i) = 0
                m_eqs(3,i) = 0
-               neq = neq + 1
+               n_dof = n_dof + 1
             else
                m_eqs(1,i) = 0
                m_eqs(2,i) = 0
@@ -117,19 +117,19 @@ subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, neq, m_eqs, errco, emsg)
 
       elseif(bdy_cdn .eq. BCS_NEUMANN) then !all points have a degree of freedom
 
-      neq = 0
+      n_dof = 0
       do i=1,n_ddl
          i_dim = dof_props(2,i)
          if (i_dim .eq. 2 .or. i_dim .eq. 1) then !  Each element or edge is associated with 3 Degrees Of Freedom (DOF)
-            m_eqs(1,i) = neq + 1
-            m_eqs(2,i) = neq + 2
-            m_eqs(3,i) = neq + 3
-            neq = neq + 3
+            m_eqs(1,i) = n_dof + 1
+            m_eqs(2,i) = n_dof + 2
+            m_eqs(3,i) = n_dof + 3
+            n_dof = n_dof + 3
          elseif (i_dim .eq. 0) then
-            m_eqs(1,i) = neq + 1
+            m_eqs(1,i) = n_dof + 1
             m_eqs(2,i) = 0
             m_eqs(3,i) = 0
-            neq = neq + 1
+            n_dof = n_dof + 1
          else
             write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
              "bdy_cdn = ", bdy_cdn, "i = ", i

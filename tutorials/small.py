@@ -23,13 +23,14 @@ import materials
 # Geometric Parameters - all in nm.
 lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.
 
-# Waveguide widths.
-inc_a_x = 300.0
-inc_a_y = 280.0
-
 # Unit cell must be large to ensure fields are near-zero at boundary.
 domain_x = 2000.0
 domain_y = domain_x
+
+# Waveguide widths.
+inc_a_x = 500.0
+inc_a_y = 600.0
+
 
 
 inc_shape = 'rectangular'
@@ -41,13 +42,8 @@ EM_ival_pump = 0
 EM_ival_Stokes = 0
 AC_ival = 'All'
 
-# choose between faster or more accurate calculation
-if len(sys.argv) > 1 and sys.argv[1] == 'fast=1':
-    prefix = 'ftut_02'
-    refine_fac = 1
-else:
-    prefix = 'tut_02'
-    refine_fac = 5
+prefix = 'tt_small'
+refine_fac = 1
 
 print('\nCommencing NumBAT tutorial 2\n')
 
@@ -57,10 +53,11 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
-                           lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                           lc_bkg=.5, lc_refine_1=1.0*refine_fac, lc_refine_2=1.0*refine_fac)
 
+#wguide.plot_mesh(prefix)
+#wguide.plot_mail_mesh(prefix)
 
-# wguide.check_mesh()
 
 # Estimate expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1

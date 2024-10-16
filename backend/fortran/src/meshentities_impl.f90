@@ -5,13 +5,13 @@ subroutine MeshEntities_allocate(this, n_msh_el, errco, emsg)
    integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
-   ! upper bound for this%n_ddl
+   ! upper bound for this%n_entities
    n_ddl_ub = 9 * n_msh_el
 
-   this%n_ddl = n_ddl_ub  ! provisional value for some memory allocs
+   this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
 
    call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', errco, emsg); RETONERROR(errco)
-   call integer_alloc_2d(this%v_dof_props, 2_8, n_ddl_ub, 'type_N_E_F', errco, emsg); RETONERROR(errco)
+   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', errco, emsg); RETONERROR(errco)
    call integer_alloc_2d(this%v_tags, 14_8, n_msh_el, 'table_N_E_F', errco, emsg);
    RETONERROR(errco)
 
@@ -66,7 +66,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, errco, emsg)
 
    ui_out = stdout
 
-   call integer_alloc_1d(visited, this%n_ddl, 'visited', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(visited, this%n_entities, 'visited', errco, emsg); RETONERROR(errco)
 
    ! Each element has 1 face, 3 edges and 10 P3 nodes
    ! We fill the different rows of v_tags in stages
@@ -84,7 +84,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, errco, emsg)
    RETONERROR(errco)
 
    ! Total number of labelled objects
-   this%n_ddl = this%n_edges + this%n_faces + this%n_msh_pts_p3
+   this%n_entities = this%n_edges + this%n_faces + this%n_msh_pts_p3
 
    !  Fills: entities%node_phys_i(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    call this%analyse_face_and_edges (mesh_raw, visited )
@@ -395,7 +395,7 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
    integer(8) type_n(10)
    double precision el_xy(2,6)
 
-   this%v_dof_props = 0
+   this%v_ety_props = 0
    visited= 0
 
 
@@ -413,8 +413,8 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
       ! Position is the barycentre
       this%v_xy(:,tag) = (el_xy(:,1) + el_xy(:,2) + el_xy(:,3)) * one_third
 
-      this%v_dof_props(1,tag) = 0  !  Topologically, a face is an interior domain
-      this%v_dof_props(2,tag) = 2  !  Face => dimension two
+      this%v_ety_props(1,tag) = 0  !  Topologically, a face is an interior domain
+      this%v_ety_props(2,tag) = 2  !  Face => dimension two
 
 
       !  scan the 3 element edges
@@ -425,10 +425,10 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
 
          if (visited(tag) .eq. 0) then  ! only do each tag once
             visited(tag) = 1
-            this%v_dof_props(1,tag) = type_n(j+3)
+            this%v_ety_props(1,tag) = type_n(j+3)
 
             !  Edge => dimension one
-            this%v_dof_props(2,tag) = 1
+            this%v_ety_props(2,tag) = 1
          endif
 
       enddo
@@ -448,7 +448,7 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
    integer(8)  k1, n, ind, ip(2,3), nd, tag
    integer(8) iel, inod,  inod2, row_off
-   integer(8) el_nodes(6), p3_tags(NDDL_0_EM)
+   integer(8) el_nodes(6), p3_tags(N_ENTITY_PER_EL)
 
    double precision xx1, xx2, xx3, yy1, yy2, yy3
    double precision dx1, dy1
@@ -496,10 +496,10 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
             tag = p3_tags(inod)
             this%v_xy(1, tag) = mesh_raw%v_nd_xy(1, nd)
             this%v_xy(2, tag) = mesh_raw%v_nd_xy(2, nd)
-            this%v_dof_props(1, tag) = mesh_raw%node_phys_i(nd)
+            this%v_ety_props(1, tag) = mesh_raw%node_phys_i(nd)
 
             !  Vertex => dimension zero
-            this%v_dof_props(2, tag) = 0
+            this%v_ety_props(2, tag) = 0
          endif
       enddo
 
@@ -532,10 +532,10 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
                k1 = p3_tags(inod2+2*(inod-4)+3)
                this%v_xy(1,k1) = xx1 + inod2*dx1
                this%v_xy(2,k1) = yy1 + inod2*dy1
-               this%v_dof_props(1,k1) = ind
+               this%v_ety_props(1,k1) = ind
 
                !  Node => dimension zero
-               this%v_dof_props(2,k1) = 0
+               this%v_ety_props(2,k1) = 0
             enddo
          endif
       enddo
@@ -563,10 +563,10 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
       this%v_xy(2,k1) = (yy1+yy2+yy3)*one_third
 
       !  interior node
-      this%v_dof_props(1,k1) = 0
+      this%v_ety_props(1,k1) = 0
 
       !  Node => dimension zero
-      this%v_dof_props(2,k1) = 0
+      this%v_ety_props(2,k1) = 0
 
    enddo
 

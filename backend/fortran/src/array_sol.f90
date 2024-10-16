@@ -2,7 +2,7 @@
  !  On entry, sol_0 is the raw eigenvectors from the arpack soln
 
  !  On exit:
- !  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that ineq(i) /= 0
+ !  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that in_dof(i) /= 0
  !  sol(i) : contains solution for all points
 
  !  This is 2D 3-vector component FEM:
@@ -14,25 +14,25 @@
 
 #include "numbat_decl.h"
 
-subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnodes, &
+subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, n_dof, nnodes, &
    n_core, bloch_vec, iindex, &
     mesh_raw, &
     entities, &
-   ineq, ip_period_N, ip_period_N_E_F, &
+   in_dof, ip_period_N, ip_period_N_E_F, &
    v_eigs_beta, mode_pol, sol_0, sol, errco, emsg)
 
    use numbatmod
    use class_MeshRaw
 
    integer(8) bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl
-   integer(8) neq, nnodes
+   integer(8) n_dof, nnodes
    integer(8) n_core(2)
-   integer(8) ineq(3,n_ddl)   !  bc info
+   integer(8) in_dof(3,n_ddl)   !  bc info
    integer(8) iindex(*)
    integer(8) ip_period_N(n_msh_pts), ip_period_N_E_F(n_ddl)
    double precision bloch_vec(2)
 
-   complex(8) sol_0(neq,num_modes)
+   complex(8) sol_0(n_dof,num_modes)
 
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
@@ -189,7 +189,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             do jtest=1,N_DDL_T
                do j_eq=1,3
                   jp = entities%v_tags(jtest,iel)
-                  ind_jp = ineq(j_eq,jp)
+                  ind_jp = in_dof(j_eq,jp)
                   if (ind_jp > 0) then
                      m  = basis_list(2, j_eq, jtest)
                      if (m == inod) then
@@ -228,7 +228,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
 
                do j_eq=1,1
                   jp = entities%v_tags(jtest,iel)
-                  ind_jp = ineq(j_eq,jp)
+                  ind_jp = in_dof(j_eq,jp)
                   if (ind_jp > 0) then
                      !z_tmp1 = sol_0(ind_jp, i_mode2)
                      m  = jtest-N_DDL_T
@@ -266,7 +266,7 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
             jtest = N_DDL_T+inod-nnodes+3
             j_eq = 1
             jp = entities%v_tags(jtest,iel)
-            ind_jp = ineq(j_eq,jp)
+            ind_jp = in_dof(j_eq,jp)
 
             if (ind_jp > 0) then
                !z_tmp1 = sol_0(ind_jp, i_mode2)
@@ -354,12 +354,12 @@ subroutine array_sol (bdy_cdn, num_modes, n_msh_el, n_msh_pts, n_ddl, neq, nnode
          !ccccccccc
       enddo
 
-      !do j=1,neq
+      !do j=1,n_dof
       !  z_tmp1 = sol_0(j,i_mode2)/z_sol_max
       !  sol_0(j,i_mode2) = z_tmp1
       !enddo
 
-      sol_0(1:neq,i_mode2) = sol_0(1:neq,i_mode2)/z_sol_max
+      sol_0(1:n_dof,i_mode2) = sol_0(1:n_dof,i_mode2)/z_sol_max
    enddo
 
    return

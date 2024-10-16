@@ -22,8 +22,8 @@ module numbatmod
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: N_DDL_T = 4
 
-   integer(8), parameter :: NDDL_0_EM = 14
-   integer(8), parameter :: nddl_0_ac = 6
+   integer(8), parameter :: N_ENTITY_PER_EL = 14
+   integer(8), parameter :: NDDL_0_AC = 6
 
 
    integer(8),  parameter :: EMSG_LENGTH = 2048

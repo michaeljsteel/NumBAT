@@ -33,9 +33,9 @@ module class_ValprVecs
 
 contains
 
-   subroutine ValprVecs_init(this, n_modes, dim_krylov, neq, errco, emsg)
+   subroutine ValprVecs_init(this, n_modes, dim_krylov, n_dof, errco, emsg)
       class(ValprVecs) :: this
-      integer(8) :: n_modes, dim_krylov, neq
+      integer(8) :: n_modes, dim_krylov, n_dof
       integer(8) errco
       character(len=EMSG_LENGTH) emsg
 
@@ -43,12 +43,12 @@ contains
 
       this%lworkl = 3 * dim_krylov**2 + 5 * dim_krylov
 
-      call complex_alloc_2d(this%v_schur, neq, dim_krylov, 'v_schur', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%vect1, neq, 'vect1', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%vect2, neq, 'vect2', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%workd, 3*neq, 'workd', errco, emsg); RETONERROR(errco)
+      call complex_alloc_2d(this%v_schur, n_dof, dim_krylov, 'v_schur', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(this%vect1, n_dof, 'vect1', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(this%vect2, n_dof, 'vect2', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(this%workd, 3*n_dof, 'workd', errco, emsg); RETONERROR(errco)
       call complex_alloc_1d(this%workl, this%lworkl, 'workl', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%resid, neq, 'resid', errco, emsg); RETONERROR(errco)
+      call complex_alloc_1d(this%resid, n_dof, 'resid', errco, emsg); RETONERROR(errco)
       call complex_alloc_1d(this%eval_ritz, n_modes+1, 'eval_ritz', errco, emsg); RETONERROR(errco)
       call complex_alloc_1d(this%workev, 3*dim_krylov, 'workl', errco, emsg); RETONERROR(errco)
       call double_alloc_1d(this%rwork, dim_krylov, 'rwork', errco, emsg); RETONERROR(errco)
@@ -129,18 +129,18 @@ end module
 
 
 
-subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect2, &
+subroutine apply_arpack_OPx(n_dof, x, y, n_nonz, row_ind, col_ptr, mat2, vect1, vect2, &
    lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
    use numbatmod
    use alloc
 
-   integer(8) neq
-   complex(8) :: x(neq), y(neq)
-   integer(8) nonz
-   integer(8) row_ind(neq), col_ptr(neq)
-   complex(8) mat2(nonz), vect1(neq), vect2(neq)
-   double precision lhs_re(neq), lhs_im(neq)
+   integer(8) n_dof
+   complex(8) :: x(n_dof), y(n_dof)
+   integer(8) n_nonz
+   integer(8) row_ind(n_dof), col_ptr(n_dof)
+   complex(8) mat2(n_nonz), vect1(n_dof), vect2(n_dof)
+   double precision lhs_re(n_dof), lhs_im(n_dof)
    integer(8) umf_numeric
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
@@ -150,19 +150,19 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
 
    ! --------------------------------------------
    double precision, dimension(:), allocatable :: rhs_re, rhs_im
-   integer(4) neq_32
+   integer(4) n_dof_32
 
    !TODO: probably faster to have these arrays declared one subroutine up
    ! and passed in rather than repeatedly requested many times
 
-   call double_alloc_1d(rhs_re, neq, 'rhs_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_im, neq, 'rhs_im', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_re, n_dof, 'rhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_im, n_dof, 'rhs_im', errco, emsg); RETONERROR(errco)
 
 
-   neq_32 = int(neq, 4)
+   n_dof_32 = int(n_dof, 4)
 
-   call zcopy(neq_32, x, 1, vect1, 1)                !  LAPACK routine
-   call z_mxv_csc (neq, vect1, vect2, nonz, row_ind, col_ptr, mat2)   !  Local routine: vec2 = mat2.vect1
+   call zcopy(n_dof_32, x, 1, vect1, 1)                !  LAPACK routine
+   call z_mxv_csc (n_dof, vect1, vect2, n_nonz, row_ind, col_ptr, mat2)   !  Local routine: vec2 = mat2.vect1
 
    !rhs_re = realpart(vect2)
    !rhs_im = imagpart(vect2)
@@ -183,7 +183,7 @@ subroutine apply_arpack_OPx(neq, x, y, nonz, row_ind, col_ptr, mat2, vect1, vect
 
    vect2 = lhs_re + C_IM_ONE * lhs_im
 
-   call zcopy(neq_32, vect2, 1, y, 1)
+   call zcopy(n_dof_32, vect2, 1, y, 1)
 
 end subroutine
 
@@ -205,18 +205,18 @@ end subroutine
 
 !  dim_krylov (I)              : dimension of the Krylov space
 !  n_modes (I)            : number of desired eigenvalues
-!  neq (I)                : number of equations
+!  n_dof (I)                : number of equations
 !  workd (DP)             : working matrix for dnaupd,
-!  size 3 * neq
+!  size 3 * n_dof
 !  resid (DP)             : working vector for dnaupd,
-!  size neq
+!  size n_dof
 !  v (DP)                 : matrix of Schur vectors,
-!  size neq * dim_krylov
+!  size n_dof * dim_krylov
 !  asup, ainf, adiag (DP) : storage of the tangent matrix
 !  msup, minf, mdiag (DP) : storage of the mass matrix
 !  kld (I)                : vector of column start locations
 !  vect1, vect2, vect3 (DP) : working vectors,
-!  size neq
+!  size n_dof
 !  long (I)               : length of super-vectors for
 !  the matrices
 !  ddot (DP)              : function called to compute
@@ -240,31 +240,30 @@ end subroutine
 ! del_vect1, del_vect2, del_workl, &
 ! ext_workd, ext_resid, ext_lworkl, &
 
-subroutine valpr_64 (&
-   i_base, dim_krylov, n_modes, neq, itermax, &
-   arp_tol, nonz, &
-   errco, emsg, &
-   row_ind, col_ptr, &
-   mat1, mat2, &
-   v_evals, v_evecs )
+subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
+   cscmat, v_evals, v_evecs ,errco, emsg)
 
-   !  mat1 is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
+   !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
    !  mat2 is the identity and hopefully never used ?
 
    use numbatmod
    use class_ValprVecs
    use alloc
 
-   integer(8), intent(in) :: itermax, dim_krylov
-   integer(8) neq, nonz, i_base, n_modes
-   integer(8) row_ind(nonz), col_ptr(neq+1)
+   use class_SparseCSC
+   type(SparseCSC) :: cscmat
 
-   complex(8), intent(in) :: mat1(nonz)
-   complex(8), intent(in) :: mat2(nonz)
+
+   integer(8), intent(in) :: itermax, dim_krylov
+   integer(8) n_dof, n_nonz, i_base, n_modes
+
+   !integer(8) row_ind(n_nonz), col_ptr(n_dof+1)
+   !complex(8), intent(in) :: cscmat%mOp_stiff(n_nonz)
+   !complex(8), intent(in) :: mat2(n_nonz)
 
    complex(8), intent(out) :: v_evals(n_modes)
 
-   complex(8), intent(out) :: v_evecs(neq, n_modes)
+   complex(8), intent(out) :: v_evecs(cscmat%n_dof, n_modes)
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
@@ -272,7 +271,7 @@ subroutine valpr_64 (&
    ! ----------------------------------------------------------
 
    ! UMFPACK requires complex arrays as pairs of doubles
-   double precision, allocatable, dimension(:) :: mat1_re, mat1_im
+   double precision, allocatable, dimension(:) :: mOp_stiff_re, mOp_stiff_im
    double precision, allocatable, dimension(:) :: lhx_re, lhx_im
    double precision, allocatable, dimension(:) :: rhs_re, rhs_im
 
@@ -287,7 +286,7 @@ subroutine valpr_64 (&
    integer(8) :: lworkl, n_conv
 
    !  32-bit integers for ARPACK
-   integer(4) neq_32, n_modes_32, dim_krylov_32
+   integer(4) n_dof_32, n_modes_32, dim_krylov_32
    integer(4) arp_ido, arp_info, arp_iparam(11)
    integer(8),  parameter :: ARP_IPNTR_DIM = 14
    integer(4) ipntr_32(ARP_IPNTR_DIM), lworkl_32
@@ -302,6 +301,9 @@ subroutine valpr_64 (&
    integer(8) ui
 
 
+   n_nonz = cscmat%n_nonz
+   n_dof = cscmat%n_dof
+
    ui = stdout
    errco = 0
    emsg = ""
@@ -314,7 +316,7 @@ subroutine valpr_64 (&
 
    endif
 
-   call vecs%init(n_modes, dim_krylov, neq, errco, emsg)
+   call vecs%init(n_modes, dim_krylov, n_dof, errco, emsg)
    RETONERROR(errco)
 
    lworkl = 3 * dim_krylov**2 + 5 * dim_krylov   ! length specified in znaupd.f source file
@@ -340,35 +342,35 @@ subroutine valpr_64 (&
 
 
    !  Pre-order and symbolic analysis
-   !  factors neq x neq matrix  in CSR format with col and row arrays col_ptr, row_ind
-   !  complex entries are in mat1_re and mat1_im
+   !  factors n_dof x n_dof matrix  in CSR format with col and row arrays col_ptr, row_ind
+   !  complex entries are in mOp_stiff_re and mOp_stiff_im
 
-   call double_alloc_1d(mat1_re, nonz, 'mat1_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(mat1_im, nonz, 'mat1_im', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', errco, emsg); RETONERROR(errco)
 
-   call double_alloc_1d(lhx_re, neq, 'lhx_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(lhx_im, neq, 'lhx_im', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_re, neq, 'rhs_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_im, neq, 'rhs_im', errco, emsg); RETONERROR(errco)
-
-
-
-
-   mat1_re = dble(mat1)
-   mat1_im = dimag(mat1)
+   call double_alloc_1d(lhx_re, n_dof, 'lhx_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(lhx_im, n_dof, 'lhx_im', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_re, n_dof, 'rhs_re', errco, emsg); RETONERROR(errco)
+   call double_alloc_1d(rhs_im, n_dof, 'rhs_im', errco, emsg); RETONERROR(errco)
 
 
 
-   ! do jj=1,neq+1
+
+   mOp_stiff_re = dble(cscmat%mOp_stiff)
+   mOp_stiff_im = dimag(cscmat%mOp_stiff)
+
+
+
+   ! do jj=1,n_dof+1
    !    write(*,*) jj, col_ptr(jj)
    ! end do
 
-   ! do jj=1,nonz
-   !    write(*,*) jj, row_ind(jj), mat1_re(jj), mat1_im(jj)
+   ! do jj=1,n_nonz
+   !    write(*,*) jj, row_ind(jj), mOp_stiff_re(jj), mOp_stiff_im(jj)
    ! end do
 
    umf_info(1) = 0
-    call umf4zsym (neq, neq, col_ptr, row_ind, mat1_re, mat1_im, &
+   call umf4zsym (n_dof, n_dof, cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, &
       umf_symbolic, umf_control, umf_info)
 
 
@@ -380,7 +382,7 @@ subroutine valpr_64 (&
 
 
    !  Complete the umf_numeric factorization
-   call umf4znum (col_ptr, row_ind, mat1_re, mat1_im, umf_symbolic, &
+   call umf4znum (cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, umf_symbolic, &
       umf_numeric, umf_control, umf_info)
 
    if (umf_info (1) .lt. 0) then
@@ -401,7 +403,7 @@ subroutine valpr_64 (&
 
 
    !Not sure that casting of these scalar vairables to int4 is really required
-   neq_32 = int(neq, 4)
+   n_dof_32 = int(n_dof, 4)
    n_modes_32 = int(n_modes, 4)
    dim_krylov_32 = int(dim_krylov, 4)
    lworkl_32 = int(lworkl, 4)
@@ -426,12 +428,12 @@ subroutine valpr_64 (&
 
 
    do while (arp_active)
-      !call znaupd (arp_ido, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
-      !   resid, dim_krylov_32, v_schur, neq_32, arp_iparam,&
+      !call znaupd (arp_ido, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
+      !   resid, dim_krylov_32, v_schur, n_dof_32, arp_iparam,&
       !   ipntr_32, workd, workl, lworkl_32, rwork, arp_info)
 
-      call znaupd (arp_ido, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
-         vecs%resid, dim_krylov_32, vecs%v_schur, neq_32, arp_iparam,&
+      call znaupd (arp_ido, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
+         vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam,&
          ipntr_32, vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
 
 
@@ -443,8 +445,8 @@ subroutine valpr_64 (&
          !  and place the result at  y = workd(ipntr_32(2))           |
          !------------------------------------------------------
 
-         call apply_arpack_OPx(neq, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
-            nonz, row_ind, col_ptr, mat2, vecs%vect1, vecs%vect2, &
+         call apply_arpack_OPx(n_dof, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
+            n_nonz, cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_mass, vecs%vect1, vecs%vect2, &
             lhx_re, lhx_im,  umf_numeric, umf_control, umf_info, errco, emsg)
 
 
@@ -458,8 +460,8 @@ subroutine valpr_64 (&
          !  x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2))
          !----------------------------------------------
 
-         call zcopy(neq_32, vecs%workd(ipntr_32(1)), 1, vecs%vect1, 1)
-         call z_mxv_csc (neq, vecs%vect1, vecs%vect2, nonz, row_ind, col_ptr, mat2)
+         call zcopy(n_dof_32, vecs%workd(ipntr_32(1)), 1, vecs%vect1, 1)
+         call z_mxv_csc (n_dof, vecs%vect1, vecs%vect2, n_nonz, cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_mass)
 
          rhs_re = dble(vecs%vect2)
          rhs_im = dimag(vecs%vect2)
@@ -474,7 +476,7 @@ subroutine valpr_64 (&
 
          vecs%vect2 = lhx_re + C_IM_ONE * lhx_im
 
-         call zcopy(neq_32, vecs%vect2, 1, vecs%workd(ipntr_32(2)), 1)
+         call zcopy(n_dof_32, vecs%vect2, 1, vecs%workd(ipntr_32(2)), 1)
 
       else !  we are done, for better or worse
          arp_active = .false.
@@ -535,9 +537,9 @@ subroutine valpr_64 (&
 
    call zneupd (arp_rvec, 'A', vecs%arp_select, vecs%eval_ritz, &
       v_evecs, &
-      neq_32, arp_shift, &
-      vecs%workev, arp_bmat, neq_32, arp_which, n_modes_32, arp_tol, &
-      vecs%resid, dim_krylov_32, vecs%v_schur, neq_32, arp_iparam, ipntr_32, &
+      n_dof_32, arp_shift, &
+      vecs%workev, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
+      vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam, ipntr_32, &
       vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
 
 
@@ -558,7 +560,7 @@ subroutine valpr_64 (&
 
 
    call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
-   deallocate(mat1_re, mat1_im)
+   deallocate(mOp_stiff_re, mOp_stiff_im)
    deallocate(lhx_re, lhx_im)
 
    return

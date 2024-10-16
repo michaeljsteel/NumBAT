@@ -80,7 +80,7 @@ module class_MeshRaw
       integer(8) n_faces       ! num faces
       integer(8) n_edges       ! num physically distinct edges
       integer(8) n_msh_pts_p3  ! num physically distinct P3 points
-      integer(8) n_ddl         ! total num of physically distinct things (sum of last 3)
+      integer(8) n_entities         ! total num of physically distinct things (sum of last 3)
 
       ! v_tags[i, j] 14 x n_msh_el
       !  tn[1, j] = j  ! index of element
@@ -108,7 +108,7 @@ module class_MeshRaw
       !   [1, :]  for P3 interior point:  0
 
       !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
-      integer(8), dimension(:,:), allocatable :: v_dof_props
+      integer(8), dimension(:,:), allocatable :: v_ety_props
 
       ! Maps P2 edge nodes to surrounding vertices
       integer(8) edge_ends(2,3)
