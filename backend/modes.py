@@ -153,8 +153,8 @@ class ModePlotHelper:
 
         fm = self.sim_result.fem_mesh
 
-        x_min, x_max = np_min_max(fm.xy_nodes[0, :])
-        y_min, y_max = np_min_max(fm.xy_nodes[1, :])
+        x_min, x_max = np_min_max(fm.v_nd_xy[0, :])
+        y_min, y_max = np_min_max(fm.v_nd_xy[1, :])
 
         area = abs((x_max-x_min)*(y_max-y_min))
         n_pts_x = int(n_pts*abs(x_max-x_min)/np.sqrt(area))

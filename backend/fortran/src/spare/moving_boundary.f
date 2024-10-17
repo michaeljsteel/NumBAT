@@ -2,7 +2,7 @@ c
 
 c
       subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival1,
-     *    ival2, ival3, nel, npt, nnodes, table_nod, type_el, x,
+     *    ival2, ival3, nel, npt, nnodes, elnd_to_mesh, type_el, x,
      *    nb_typ_el, typ_select_in, typ_select_out,
      *    soln_EM_p, soln_EM_S,
      *    soln_AC, eps_lst, debug, overlap)
@@ -10,7 +10,7 @@ c
       use numbatmod
       integer(8) nel, npt, nnodes, nb_typ_el
       integer(8) type_el(nel)
-      integer(8) table_nod(6,nel)
+      integer(8) elnd_to_mesh(6,nel)
       double precision x(2,npt)
       integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
       integer(8) ival3s, ival2s, ival1s
@@ -44,11 +44,11 @@ C
 C
 Cf2py intent(in) nval_EM_p, nval_EM_S, nval_AC
 Cf2py intent(in) ival1, ival2, ival3, nb_typ_el
-Cf2py intent(in) nel, npt, nnodes, table_nod, debug
+Cf2py intent(in) nel, npt, nnodes, elnd_to_mesh, debug
 Cf2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC
 Cf2py intent(in) typ_select_in, typ_select_out, eps_lst, debug
 C
-Cf2py depend(table_nod) nnodes, nel
+Cf2py depend(elnd_to_mesh) nnodes, nel
 Cf2py depend(type_el) npt
 Cf2py depend(x) npt
 Cf2py depend(soln_EM_p) nnodes, nval_EM_p, nel
@@ -107,7 +107,7 @@ C
         if(typ_e == typ_select_in) then
 C           !  Scan the edges
           do inod=4,6
-            j = table_nod(inod,iel)
+            j = elnd_to_mesh(inod,iel)
 C             !  Will indicate the number of
             nb_visited(j) = nb_visited(j) + 1
           enddo
@@ -135,16 +135,16 @@ c     Outward pointing normal vector to the interface edges
         if(typ_e == typ_select_in) then
 C           !  Scan the edges
           do inod=4,6
-            j = table_nod(inod,iel)
+            j = elnd_to_mesh(inod,iel)
             if (nb_visited(j) == 1) then
               inod_1 = edge_endpoints(1,inod-3)
               inod_2 = edge_endpoints(2,inod-3)
-              ls_edge_endpoint(1,j) = table_nod(inod_1,iel)
-              ls_edge_endpoint(2,j) = table_nod(inod_2,iel)
-              xy_1(1) = x(1,table_nod(inod_1,iel))
-              xy_1(2) = x(2,table_nod(inod_1,iel))
-              xy_2(1) = x(1,table_nod(inod_2,iel))
-              xy_2(2) = x(2,table_nod(inod_2,iel))
+              ls_edge_endpoint(1,j) = elnd_to_mesh(inod_1,iel)
+              ls_edge_endpoint(2,j) = elnd_to_mesh(inod_2,iel)
+              xy_1(1) = x(1,elnd_to_mesh(inod_1,iel))
+              xy_1(2) = x(2,elnd_to_mesh(inod_1,iel))
+              xy_2(1) = x(1,elnd_to_mesh(inod_2,iel))
+              xy_2(2) = x(2,elnd_to_mesh(inod_2,iel))
 c             edge_vec: vector parallel to the edge
               edge_vec(1) = xy_2(1) - xy_1(1)
               edge_vec(2) = xy_2(2) - xy_1(2)
@@ -157,8 +157,8 @@ c             edge_vec: vector perpendicular to the edge (rotation of edge_vec b
               edge_perp(2) = -edge_vec(1)
 c             Node opposite to the edge inod
               inod_3 = opposite_node(inod-3)
-              xy_3(1) = x(1,table_nod(inod_3,iel))
-              xy_3(2) = x(2,table_nod(inod_3,iel))
+              xy_3(1) = x(1,elnd_to_mesh(inod_3,iel))
+              xy_3(2) = x(2,elnd_to_mesh(inod_3,iel))
               vec_0(1) = xy_3(1) - xy_1(1)
               vec_0(2) = xy_3(2) - xy_1(2)
 c             Scalar product of edge_perp and vec_0:
@@ -193,7 +193,7 @@ c     Numerical integration
           endif
 C           !  Scan the edges
           do inod=4,6
-            j = table_nod(inod,iel)
+            j = elnd_to_mesh(inod,iel)
             xy_3(1) = x(1,j)
             xy_3(2) = x(2,j)
             if (ls_edge_endpoint(1,j) .ne. 0) then

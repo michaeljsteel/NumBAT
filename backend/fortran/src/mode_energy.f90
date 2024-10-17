@@ -10,10 +10,10 @@
 !                           typ_e=n_core(1) or typ_e=n_core(2)
 !
 subroutine mode_energy (nval, nel, nnodes, n_core, &
-   mesh_props, nb_typ_el, &
+   mesh_raw, nb_typ_el, &
    eps_eff,  sol, beta1, mode_pol)
 
-   use class_MeshProps
+   use class_MeshRaw
 
 
    integer(8) nval, nel, nnodes
@@ -22,7 +22,7 @@ subroutine mode_energy (nval, nel, nnodes, n_core, &
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)
    complex(8) beta1(nval)
 
-   type(MeshProps) :: mesh_props
+   type(MeshRaw) :: mesh_raw
 
 !
 !  variables for quadrature interpolation
@@ -70,12 +70,12 @@ subroutine mode_energy (nval, nel, nnodes, n_core, &
 !	 loop over all elements
 
    do iel=1,nel
-      typ_e = mesh_props%type_el(iel)
+      typ_e = mesh_raw%el_material(iel)
       do inode=1,nnodes
-         global = mesh_props%table_nod(inode,iel)
+         global = mesh_raw%elnd_to_mesh(inode,iel)
          nod_el_p(inode) = global
-         xel(1,inode) = mesh_props%xy_nodes(1,global)
-         xel(2,inode) = mesh_props%xy_nodes(2,global)
+         xel(1,inode) = mesh_raw%v_nd_xy(1,global)
+         xel(2,inode) = mesh_raw%v_nd_xy(2,global)
       enddo
 
       do iq=1,nquad

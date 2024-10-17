@@ -2,14 +2,14 @@ C Calculate the overlap integral of an EM mode with itself using
 C analytic expressions for basis function overlaps on linear elements.
 C
       subroutine EM_mode_energy_int_v2 (k_0, nval, nel, npt,
-     *  nnodes_P2, table_nod,
+     *  nnodes_P2, elnd_to_mesh,
      *  x, betas, soln_k1, overlap)
 c
 C     k_0 = 2 pi / lambda, where lambda in meters.
 C
       use numbatmod
       integer(8) nval, nel, npt, nnodes_P2
-      integer(8) table_nod(nnodes_P2,nel)
+      integer(8) elnd_to_mesh(nnodes_P2,nel)
       double precision x(2,npt)
       complex(8) soln_k1(3,nnodes_P2+7,nval,nel)
       complex(8) beta1, overlap1
@@ -39,10 +39,10 @@ C       !  P3 Ez-field
 C
 C
 Cf2py intent(in) k_0, nval, nel, npt
-Cf2py intent(in) nnodes_P2, table_nod
+Cf2py intent(in) nnodes_P2, elnd_to_mesh
 Cf2py intent(in) x, betas, soln_k1
 C
-Cf2py depend(table_nod) nnodes_P2, nel
+Cf2py depend(elnd_to_mesh) nnodes_P2, nel
 Cf2py depend(x) npt
 Cf2py depend(betas) nval
 Cf2py depend(soln_k1) nnodes_P2, nval, nel
@@ -67,7 +67,7 @@ C
       beta1 = betas(ival)
       do iel=1,nel
         do j=1,nnodes_P2
-          j1 = table_nod(j,iel)
+          j1 = elnd_to_mesh(j,iel)
           nod_el_p(j) = j1
           xel(1,j) = x(1,j1)
           xel(2,j) = x(2,j1)

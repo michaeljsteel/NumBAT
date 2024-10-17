@@ -9,12 +9,22 @@ module numbatmod
 #endif
 
    use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
-      stdout=>output_unit, &
-      stderr=>error_unit
+   stdout=>output_unit, &
+   stderr=>error_unit
 
    implicit none
 
-    integer(8), parameter :: P_NODES_PER_EL = 6
+   integer(8), parameter :: P1_NODES_PER_EL = 3
+   integer(8), parameter :: P2_NODES_PER_EL = 6
+   integer(8), parameter :: P3_NODES_PER_EL = 10
+
+
+   integer(8), parameter :: nnodes_0 = 6
+   integer(8), parameter :: N_DDL_T = 4
+
+   integer(8), parameter :: N_ENTITY_PER_EL = 14
+   integer(8), parameter :: NDDL_0_AC = 6
+
 
    integer(8),  parameter :: EMSG_LENGTH = 2048
    integer(8),  parameter :: FNAME_LENGTH = 1024
@@ -38,15 +48,6 @@ module numbatmod
    double precision, parameter :: SI_MU_0 = 1.25663706127d-6
 
 
-   integer(8), parameter :: N_P1_NODES = 3
-   integer(8), parameter :: N_P2_NODES = 6
-   integer(8), parameter :: N_P3_NODES = 10
-
-   integer(8), parameter :: nnodes_0 = 6
-   integer(8), parameter :: N_DDL_T = 4
-
-   integer(8), parameter :: nddl_0_em = 14
-   integer(8), parameter :: nddl_0_ac = 6
 
 
    integer(8), parameter :: BCS_DIRICHLET = 0  !  (E-field: electric wall)
@@ -66,6 +67,11 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_JACOBIAN        = -55
    integer(8), parameter :: NBERR_BAD_DETERMINANT     = -56
    integer(8), parameter :: NBERR_BAD_ASSEMBLY        = -57
+   integer(8), parameter :: NBERR_BAD_MESH_EDGES      = -58
+   integer(8), parameter :: NBERR_BAD_MESH_VERTICES   = -59
+   integer(8), parameter :: NBERR_BAD_BOUNDARY_CONDITION   = -60
+
+
 
 
    !  UMFPACK Solve codes
@@ -302,28 +308,28 @@ contains
    end function
 
    complex(8) function v2_dot_v3(dveca, cvecb)
-   double precision dveca(2)
+      double precision dveca(2)
       complex (8) cvecb(3)
-    v2_dot_v3 = dveca(1) * cvecb(1) +  dveca(2) * cvecb(2)
+      v2_dot_v3 = dveca(1) * cvecb(1) +  dveca(2) * cvecb(2)
    end function
 
    complex(8) function cv3_dot_cv3(cveca, cvecb)
       complex (8) cveca(3), cvecb(3)
-    cv3_dot_cv3 = cveca(1) * cvecb(1) + cveca(2) * cvecb(2) + cveca(3) * cvecb(3)
+      cv3_dot_cv3 = cveca(1) * cvecb(1) + cveca(2) * cvecb(2) + cveca(3) * cvecb(3)
    end function
 
 
 
-subroutine v2_cross_v3(dveca, cvecb, vres)
-complex(8) vres(3)
-   double precision dveca(2)
+   subroutine v2_cross_v3(dveca, cvecb, vres)
+      complex(8) vres(3)
+      double precision dveca(2)
       complex (8) cvecb(3)
 
 
-   vres(1) = dveca(2) * cvecb(3)   ! fx = gy hz - gz hy = gy hz
-   vres(2) = -dveca(1) * cvecb(3)  ! fy = gz hx - gx hz = -gx hz
-   vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
-end subroutine
+      vres(1) = dveca(2) * cvecb(3)   ! fx = gy hz - gz hy = gy hz
+      vres(2) = -dveca(1) * cvecb(3)  ! fy = gz hx - gx hz = -gx hz
+      vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
+   end subroutine
 
 
 
