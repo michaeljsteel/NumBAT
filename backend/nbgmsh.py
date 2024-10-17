@@ -22,7 +22,7 @@ class MailData:
         with open(mesh_mail_fname) as f:
             lines= f.readlines()
 
-        # positions of each mesh point.  This is in gmsh coords.  Sim.xy_nodes includes scaling by d_in_m
+        # positions of each mesh point.  This is in gmsh coords.  Sim.v_nd_xy includes scaling by d_in_m
         # length self.n_msh_pts
 
         self.v_x = None

@@ -370,8 +370,8 @@ class EMSimResult(SimResult):
             fm.n_msh_el,
             fm.n_msh_pts,
             fm.n_nodes,
-            fm.table_nod,
-            fm.xy_nodes,
+            fm.elnd_to_mesh,
+            fm.v_nd_xy,
             self.eigs_kz,
             self.fem_evecs,
         )
@@ -776,10 +776,10 @@ class EMSimulation(Simulation):
             self.eigs_kz,
             self.fem_evecs,
             self.mode_pol,
-            table_nod,
+            elnd_to_mesh,
             type_el,
             node_physindex,
-            xy_nodes,
+            v_nd_xy,
             self.ls_material,
         ) = process_fortran_return(resm, "solving for electromagnetic modes")
 
@@ -789,7 +789,7 @@ class EMSimulation(Simulation):
         #print("modepol", self.mode_pol)
         #print("ls material: n", self.ls_material, self.ls_material.shape)
 
-        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, table_nod, xy_nodes)
+        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, elnd_to_mesh, v_nd_xy)
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
@@ -801,8 +801,8 @@ class EMSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 fm.n_nodes,
-                fm.table_nod,
-                fm.xy_nodes,
+                fm.elnd_to_mesh,
+                fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -819,8 +819,8 @@ class EMSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 fm.n_nodes,
-                fm.table_nod,
-                fm.xy_nodes,
+                fm.elnd_to_mesh,
+                fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -839,11 +839,11 @@ class EMSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.table_nod,
+                    fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
                     opt_props.n_mats_em,
                     opt_props.v_refindexn,
-                    fm.xy_nodes,
+                    fm.v_nd_xy,
                     self.fem_evecs,
                 )
             else:
@@ -867,8 +867,8 @@ class EMSimulation(Simulation):
         # x_tmp = []
         # y_tmp = []
         # for i in np.arange(self.n_msh_pts):
-        #     x_tmp.append(self.xy_nodes[0,i])
-        #     y_tmp.append(self.xy_nodes[1,i])
+        #     x_tmp.append(self.v_nd_xy[0,i])
+        #     y_tmp.append(self.v_nd_xy[1,i])
         # x_min = np.min(x_tmp); x_max=np.max(x_tmp)
         # y_min = np.min(y_tmp); y_max=np.max(y_tmp)
         # area = abs((x_max-x_min)*(y_max-y_min))
@@ -987,21 +987,21 @@ class ACSimulation(Simulation):
             #fm.n_msh_pts,
             #fm.n_msh_el,
             fm.node_physindex,  # => fort: type_nod
-            fm.table_nod,       # => fort: table_nod
+            fm.elnd_to_mesh,       # => fort: elnd_to_mesh
             fm.v_el_2_mat_idx,  # => fort: type_el
-            fm.xy_nodes,         # => fort: xy_nodes
+            fm.v_nd_xy,         # => fort: v_nd_xy
         )
 
         (
-            table_nod_out,
+            elnd_to_mesh_out,
             type_el_out,
-            xy_nodes_out,
+            v_nd_xy_out,
             self.eigs_nu,
             self.fem_evecs,
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
-        self.fem_mesh.store_ac_mode_outputs(type_el_out, table_nod_out, xy_nodes_out)
+        self.fem_mesh.store_ac_mode_outputs(type_el_out, elnd_to_mesh_out, v_nd_xy_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME
@@ -1031,9 +1031,9 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.table_nod,
+                    fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
-                    fm.xy_nodes,
+                    fm.v_nd_xy,
                     elastic_props.n_mats_ac,
                     elastic_props.c_IJ,
                     self.q_AC,
@@ -1052,9 +1052,9 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.table_nod,
+                    fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
-                    fm.xy_nodes,
+                    fm.v_nd_xy,
                     elastic_props.n_mats_ac,
                     elastic_props.acten_cijkz,
                     self.q_AC,
@@ -1073,9 +1073,9 @@ class ACSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 fm.n_nodes,
-                fm.table_nod,
+                fm.elnd_to_mesh,
                 fm.v_el_2_mat_idx,
-                fm.xy_nodes,
+                fm.v_nd_xy,
                 elastic_props.n_mats_ac,
                 elastic_props.rho,
                 Omega_AC,
@@ -1093,9 +1093,9 @@ class ACSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 fm.n_nodes,
-                fm.table_nod,
+                fm.elnd_to_mesh,
                 fm.v_el_2_mat_idx,
-                fm.xy_nodes,
+                fm.v_nd_xy,
                 elastic_props.n_mats_ac,
                 elastic_props.rho,
                 Omega_AC,
@@ -1153,9 +1153,9 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.table_nod,
+                    fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
-                    fm.xy_nodes,
+                    fm.v_nd_xy,
                     elastic_props.n_mats_ac,
                     elastic_props.eta_ijkl,
                     self.q_AC,
@@ -1178,9 +1178,9 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.table_nod,
+                    fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
-                    fm.xy_nodes,
+                    fm.v_nd_xy,
                     elastic_props.n_mats_ac,
                     elastic_props.eta_ijkl,
                     self.q_AC,
@@ -1214,9 +1214,9 @@ class ACSimulation(Simulation):
         # alpha/(2 * 2pi)  since alpha is a power decay rate
 
 
-        #TODO: this Sim/SimResult ownership is a mess. 
+        #TODO: this Sim/SimResult ownership is a mess.
         # find a cleaner way to deal with the call of this function from gain_calculation
-        if self.sim_result is not None:  
+        if self.sim_result is not None:
             self.sim_result.ac_alpha_t = self.ac_alpha_t
             self.sim_result.ac_Qmech = self.ac_Qmech
             self.sim_result.ac_linewidth = self.ac_linewidth
@@ -1270,7 +1270,7 @@ def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
     #     with open(structure.mesh_file) as f:
     #         self.n_msh_pts, self.n_msh_el = [
     #             int(i) for i in f.readline().split()]
-    #     table_nod_AC = np.zeros((6, self.n_msh_el))
+    #     elnd_to_mesh_AC = np.zeros((6, self.n_msh_el))
     #     type_el_AC = np.zeros(self.n_msh_el)
-    #     xy_nodes_AC = np.zeros((2, self.n_msh_pts))
+    #     v_nd_xy_AC = np.zeros((2, self.n_msh_pts))
     #     node_physindex_AC = np.zeros(self.n_msh_pts)

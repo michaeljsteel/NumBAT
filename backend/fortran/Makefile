@@ -1,24 +1,37 @@
+UNAME_S := $(shell uname -s)
+
+
+
+
 win:
-	meson setup --reconfigure --buildtype=release mbuild_win --native-file nb-win-native-file.ini
-	meson compile -C mbuild_win
-	copy mbuild_win\nb_fortran.dll nb_fortran.pyd
+#ifneq ($(UNAME_S), Windows)  # TODO: make this a make function?
+#	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
+#endif
+	meson setup --reconfigure --buildtype=release build_win --native-file nb-win-native-file.ini
+	meson compile -C build_win
+	copy build_win\nb_fortran.dll nb_fortran.pyd
 
 
 
 gccdebug:
-	CC=gcc meson setup --buildtype=debugoptimized mbuild_gccdebug
-	meson configure mbuild_gccdebug
-	meson compile -C mbuild_gccdebug
+	- rm -rf build_gccdebug
+	CC=gcc meson setup --buildtype=debugoptimized build_gccdebug
+	#meson configure build_gccdebug
+	meson compile -C build_gccdebug
 	cp build_gccdebug/nb_fortran.so .
 
 inteldebug:
-	CC=icx meson setup --buildtype=debugoptimized mbuild_inteldebug
-	meson compile -C mbuild_inteldebug
+	CC=icx meson setup --buildtype=debugoptimized build_inteldebug
+	meson compile -C build_inteldebug
 
 gcc:
+ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
+	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
+endif
 	- rm -rf build_gcc
 	meson setup --reconfigure --buildtype=release build_gcc 
-	meson compile -v -C build_gcc
+	#meson compile -v -C build_gcc --jobs 1
+	meson compile -v -C build_gcc 
 	cp build_gcc/nb_fortran.so .
 
 intel:
@@ -30,6 +43,9 @@ intel:
 	cp build_intel/nb_fortran.so .
 
 mac: 
+ifneq ($(UNAME_S), Darwin)  # TODO: make this a make function?
+	$(error 'We do not seem to be building on Mac. Check you are choosing the right target')
+endif
 	- rm -rf build_mac
 	meson setup --reconfigure --buildtype=release build_mac \
 		--native-file nb-darwin-native-file.ini 

@@ -167,6 +167,7 @@ SBS_gain_MB = gain.gain_MB_all()
 threshold = -1e-3
 masked_PE = np.ma.masked_inside(SBS_gain_PE[:comsol_ivals], 0, threshold)
 masked_MB = np.ma.masked_inside(SBS_gain_MB[:comsol_ivals], 0, threshold)
+np.set_printoptions(precision=4)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 print("SBS_gain [1/(Wm)] MB NumBAT default (Fortran)\n", masked_MB)
 

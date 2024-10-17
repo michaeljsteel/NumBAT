@@ -6,7 +6,7 @@
 
 !  ------------------------------------------------------------------
 
-subroutine valpr_64_AC (i_base, nvect, n_modes, neq, itermax,&
+subroutine valpr_64_AC (i_base, nvect, n_modes, n_dof, itermax,&
 ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,&
 vect1, vect2, workd, resid, vschur, nu_out, trav, vp,&
 rhs_re, rhs_im, lhs_re, lhs_im, n_conv,&
@@ -17,21 +17,21 @@ debug, show_mem_est, errno, emsg)
    use numbatmod
 
    integer(8) :: n_modes
-   integer(8) neq, nonz, n_conv, i_base, nvect, ltrav
-   integer(8) row_ind(nonz), col_ptr(neq+1)
+   integer(8) n_dof, nonz, n_conv, i_base, nvect, ltrav
+   integer(8) row_ind(nonz), col_ptr(n_dof+1)
 
    integer(8) errno
    character(len=EMSG_LENGTH) emsg
 
 
    double precision mat1_re(nonz), mat1_im(nonz)
-   double precision rhs_re(neq), rhs_im(neq)
-   double precision lhs_re(neq), lhs_im(neq)
+   double precision rhs_re(n_dof), rhs_im(n_dof)
+   double precision lhs_re(n_dof), lhs_im(n_dof)
 
    complex(8) mat2(nonz)
-   complex(8) resid(neq), vschur(neq,nvect), workd(3*neq)
-   complex(8) vect1(neq), vect2(neq), trav(ltrav)
-   complex(8) nu_out(n_modes+1), shift2, vp(neq,n_modes)
+   complex(8) resid(n_dof), vschur(n_dof,nvect), workd(3*n_dof)
+   complex(8) vect1(n_dof), vect2(n_dof), trav(ltrav)
+   complex(8) nu_out(n_modes+1), shift2, vp(n_dof,n_modes)
 
    double precision time1_fact, time2_fact
 
@@ -54,7 +54,7 @@ debug, show_mem_est, errno, emsg)
 
 !  Local variables
 !  32-bit integers for ARPACK
-   integer(4) neq_32, n_modes_32, nvect_32
+   integer(4) n_dof_32, n_modes_32, nvect_32
    integer(4) ido_32, info_32, ierr_32, iparam_32(11)
    integer(4) ipntr_32(14), ltrav_32
 
@@ -98,7 +98,7 @@ debug, show_mem_est, errno, emsg)
    call umf4zpcon (control)
 
 !  pre-order and symbolic analysis
-   call umf4zsym (neq, neq, col_ptr, row_ind,&
+   call umf4zsym (n_dof, n_dof, col_ptr, row_ind,&
    &mat1_re, mat1_im, symbolic, control, info_umf)
 
 !  print statistics computed so far
@@ -224,7 +224,7 @@ debug, show_mem_est, errno, emsg)
 !  | "which".                                                   |
 !  ------------------------------------------------------------
 
-   neq_32 = int(neq, 4)
+   n_dof_32 = int(n_dof, 4)
    n_modes_32 = int(n_modes, 4)
    nvect_32 = int(nvect, 4)
    ltrav_32 = int(ltrav, 4)
@@ -247,10 +247,10 @@ debug, show_mem_est, errno, emsg)
 20 continue
 
 !  Test for dimesnion conditions in znaupd (err code = -3)
-!  Test for N=neq_32, NEV=n_modes_32, NCV=nvect_32
-!  Need 0<n_modes_32<neq_32-1, 1<= nvect_32-n_modes_32, nvect_32<=neq_32
-   if ((neq_32-1 .le. n_modes_32) .or. (nvect_32-n_modes_32 .lt. 1)&
-   &.or.  nvect_32 > neq_32) then
+!  Test for N=n_dof_32, NEV=n_modes_32, NCV=nvect_32
+!  Need 0<n_modes_32<n_dof_32-1, 1<= nvect_32-n_modes_32, nvect_32<=n_dof_32
+   if ((n_dof_32-1 .le. n_modes_32) .or. (nvect_32-n_modes_32 .lt. 1)&
+   &.or.  nvect_32 > n_dof_32) then
       write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//&
       &' conditions failed (would generate ARPACK znaupd error ' //&
       &'code of -3).' // NEW_LINE('A'),&
@@ -259,8 +259,8 @@ debug, show_mem_est, errno, emsg)
       return
    endif
 
-   call znaupd (ido_32, bmat, neq_32, which, n_modes_32, tol,&
-   &resid, nvect_32, vschur, neq_32, iparam_32,&
+   call znaupd (ido_32, bmat, n_dof_32, which, n_modes_32, tol,&
+   &resid, nvect_32, vschur, n_dof_32, iparam_32,&
    &ipntr_32, workd, trav, ltrav_32, rwork, info_32)
 
    compteur = compteur + 1
@@ -274,11 +274,11 @@ debug, show_mem_est, errno, emsg)
 !  | x = workd(ipntr_32(1)) et y = workd(ipntr_32(2))           |
 !  ------------------------------------------------------
 
-      call zcopy(neq_32, workd(ipntr_32(1)), 1,vect1, 1)
-      call z_mxv_csc (neq, vect1, vect2, nonz, row_ind,&
+      call zcopy(n_dof_32, workd(ipntr_32(1)), 1,vect1, 1)
+      call z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind,&
       &col_ptr, mat2)
 
-      do i=1,neq
+      do i=1,n_dof
          rhs_re(i) = dble(vect2(i))
          rhs_im(i) = imag(vect2(i))
       enddo
@@ -293,11 +293,11 @@ debug, show_mem_est, errno, emsg)
          errno = -107
          return
       endif
-      do i=1,neq
+      do i=1,n_dof
          vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
       enddo
 
-      call zcopy(neq_32, vect2, 1, workd(ipntr_32(2)), 1)
+      call zcopy(n_dof_32, vect2, 1, workd(ipntr_32(2)), 1)
       go to 20
 
    else if (ido_32.eq.2) then
@@ -310,11 +310,11 @@ debug, show_mem_est, errno, emsg)
 !  | x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2)) |
 !  ----------------------------------------------
 
-      call zcopy(neq_32, workd(ipntr_32(1)), 1, vect1, 1)
-      call z_mxv_csc (neq, vect1, vect2, nonz, row_ind,&
+      call zcopy(n_dof_32, workd(ipntr_32(1)), 1, vect1, 1)
+      call z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind,&
       &col_ptr, mat2)
 
-      do i=1,neq
+      do i=1,n_dof
          rhs_re(i) = dble(vect2(i))
          rhs_im(i) = imag(vect2(i))
       enddo
@@ -329,10 +329,10 @@ debug, show_mem_est, errno, emsg)
          errno = -108
          return
       endif
-      do i=1,neq
+      do i=1,n_dof
          vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
       enddo
-      call zcopy(neq_32, vect2,1, workd(ipntr_32(2)), 1)
+      call zcopy(n_dof_32, vect2,1, workd(ipntr_32(2)), 1)
       go to 20
 
    end if
@@ -407,9 +407,9 @@ debug, show_mem_est, errno, emsg)
       rvec = .true.
       shift2 = (0.0d0,0.0d0)
 
-      call zneupd (rvec, 'A', selecto, nu_out, vschur, neq_32, shift2,&
-      &workev, bmat, neq_32, which, n_modes_32, tol,&
-      &resid, nvect_32, vschur, neq_32, iparam_32, ipntr_32,&
+      call zneupd (rvec, 'A', selecto, nu_out, vschur, n_dof_32, shift2,&
+      &workev, bmat, n_dof_32, which, n_modes_32, tol,&
+      &resid, nvect_32, vschur, n_dof_32, iparam_32, ipntr_32,&
       &workd, trav, ltrav_32, rwork, ierr_32)
 !  ------------------------------------------------------------
 !  | La partie reelle d'une valeur propre se trouve dans la     |
@@ -430,7 +430,7 @@ debug, show_mem_est, errno, emsg)
 
       else
          do i = 1, n_modes
-            do j = 1, neq
+            do j = 1, n_dof
                vp(j,i) = vschur(j,i)
             enddo
          enddo

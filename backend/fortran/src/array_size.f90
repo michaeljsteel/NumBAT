@@ -23,12 +23,12 @@
       integer(8) nnodes, npt, npt_p3
       integer(8) nvect, ordre_ls
       integer(8) nonz, nonz_max, max_row_len
-      integer(8) neq, neq_PW
+      integer(8) n_dof, n_dof_PW
       integer(8) n_edge, n_ddl_max
       integer(8) ltrav
 
 !  Declare the pointers of the integer(8) super-vector
-      integer(8) ip_type_nod, ip_type_el, ip_table_nod
+      integer(8) ip_type_nod, ip_type_el, ip_elnd_to_mesh
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
       integer(8) ip_period_N, ip_nperiod_N
@@ -81,12 +81,12 @@
 
       n_ddl = n_edge + n_msh_el + npt_p3         !  = 9 n_msh_el
       n_ddl_max = npt + n_msh_el                 !  = 4 n_msh_el
-      neq = 3 * (n_edge + n_msh_el) + npt_p3     !  = 9 n_msh_el
-      neq_PW = (2*ordre_ls+1)**2                 !  = 1
+      n_dof = 3 * (n_edge + n_msh_el) + npt_p3     !  = 9 n_msh_el
+      n_dof_PW = (2*ordre_ls+1)**2                 !  = 1
 
 !  For most of the FEM meshes I have used, I have observed that:
-!  nonz = 34.25 * neq
-      nonz = 40 * neq                            != 360 n_msh_el
+!  nonz = 34.25 * n_dof
+      nonz = 40 * n_dof                            != 360 n_msh_el
       nonz_max = nonz                            !TODO: remove nonz and just use nonz_max in this file
 
 !  I have observed that: max_row_len < 200
@@ -98,7 +98,7 @@
       !  off =1
       !  ip_type_nod    = off;   off = off + npt
       !  ip_type_el     = off;   off = off + n_msh_el
-      !  ip_table_nod   = off;   off = off + nnodes * n_msh_el
+      !  ip_elnd_to_mesh   = off;   off = off + nnodes * n_msh_el
       !  ip_table_N_E_F = off;   off = off + 14 * n_msh_el
       !  ...
 
@@ -111,8 +111,8 @@
       ip_type_el  = ip_type_nod + npt
 
       !  pointer to FEM connectivity table
-      ip_table_nod   = ip_type_el       + n_msh_el
-      ip_table_N_E_F = ip_table_nod     + nnodes*n_msh_el
+      ip_elnd_to_mesh   = ip_type_el       + n_msh_el
+      ip_table_N_E_F = ip_elnd_to_mesh     + nnodes*n_msh_el
 
       ip_visited     =  ip_table_N_E_F  + 14*n_msh_el
       ip_table_E     = ip_visited       + n_ddl_max
@@ -127,8 +127,8 @@
       ip_eq            = ip_nperiod_N_E_F + n_ddl
 
       ip_index_pw_inv  = ip_eq            + 3*n_ddl
-      ip_col_ptr       = ip_index_pw_inv  + neq_PW
-      ip_row           = ip_col_ptr       + neq + 1
+      ip_col_ptr       = ip_index_pw_inv  + n_dof_PW
+      ip_row           = ip_col_ptr       + n_dof + 1
 
       ip_work          = ip_row           + nonz
       ip_work_sort     = ip_work          + 3*n_ddl
@@ -142,14 +142,14 @@
 
       jp_rhs     = jp_x_N_E_F + 3*n_ddl
 !  jp_rhs will also be used (in gmsh_post_process) to store a solution
-      jp_mat2    = jp_rhs + max(neq, 3*npt)
+      jp_mat2    = jp_rhs + max(n_dof, 3*npt)
 
       jp_vect1   = jp_mat2 + nonz
-      jp_vect2   = jp_vect1 + neq
-      jp_workd   = jp_vect2 + neq
-      jp_resid   = jp_workd + 3*neq
+      jp_vect2   = jp_vect1 + n_dof
+      jp_workd   = jp_vect2 + n_dof
+      jp_resid   = jp_workd + 3*n_dof
 
-      jp_sol1    = jp_resid + neq
+      jp_sol1    = jp_resid + n_dof
       jp_sol1b   = jp_sol1 + 3*(nnodes+7)*n_modes*n_msh_el
       jp_sol2    = jp_sol1b + 3*(nnodes+7)*n_modes*n_msh_el
       jp_sol1_H  = jp_sol2 + 3*(nnodes+7)*n_modes*n_msh_el
@@ -159,49 +159,49 @@
 
       !  Eigenvectors
       jp_vschur      = jp_eigen_modes2 + n_modes + 1
-      jp_eigen_modes = jp_vschur + neq*nvect
+      jp_eigen_modes = jp_vschur + n_dof*nvect
       jp_eigen_pol   = jp_eigen_modes + n_modes + 1
       jp_eigen_modes_tmp = jp_eigen_pol + n_modes*4
       jp_trav        = jp_eigen_modes_tmp + n_modes + 1
 
       ltrav = 3*nvect*(nvect+2)
       jp_vp = jp_trav + ltrav
-      jp_overlap_L = jp_vp + neq*n_modes
+      jp_overlap_L = jp_vp + n_dof*n_modes
       jp_flux = jp_overlap_L + n_modes*n_modes
       jp_overlap_J = jp_flux + n_modes
-      jp_overlap_J_dagger = jp_overlap_J + 2*neq_PW*n_modes
-      jp_overlap_K = jp_overlap_J_dagger + 2*neq_PW*n_modes
-      jp_X_mat = jp_overlap_K + 2*neq_PW*n_modes
-      jp_T12 = jp_X_mat + 2*neq_PW*2*neq_PW
-      jp_T21 = jp_T12 + 2*neq_PW*n_modes
-      jp_R12 = jp_T21 + 2*neq_PW*n_modes
-      jp_R21 = jp_R12 + 4*neq_PW*neq_PW
+      jp_overlap_J_dagger = jp_overlap_J + 2*n_dof_PW*n_modes
+      jp_overlap_K = jp_overlap_J_dagger + 2*n_dof_PW*n_modes
+      jp_X_mat = jp_overlap_K + 2*n_dof_PW*n_modes
+      jp_T12 = jp_X_mat + 2*n_dof_PW*2*n_dof_PW
+      jp_T21 = jp_T12 + 2*n_dof_PW*n_modes
+      jp_R12 = jp_T21 + 2*n_dof_PW*n_modes
+      jp_R21 = jp_R12 + 4*n_dof_PW*n_dof_PW
       jp_T = jp_R21 + n_modes*n_modes
-      jp_R = jp_T + 2*neq_PW*2*neq_PW
-      jp_T_Lambda = jp_R + 2*neq_PW*2*neq_PW
-      jp_R_Lambda = jp_T_Lambda + 2*neq_PW*2*neq_PW
+      jp_R = jp_T + 2*n_dof_PW*2*n_dof_PW
+      jp_T_Lambda = jp_R + 2*n_dof_PW*2*n_dof_PW
+      jp_R_Lambda = jp_T_Lambda + 2*n_dof_PW*2*n_dof_PW
 
 !c      if (substrate .eq. 1) then
-      jp_X_mat_b = jp_R_Lambda + 2*neq_PW*2*neq_PW
-      cmplx_size = jp_X_mat_b + 2*neq_PW*2*neq_PW
+      jp_X_mat_b = jp_R_Lambda + 2*n_dof_PW*2*n_dof_PW
+      cmplx_size = jp_X_mat_b + 2*n_dof_PW*2*n_dof_PW
 !c      else
-!c        cmplx_size = jp_R_Lambda + 2*neq_PW*2*neq_PW
+!c        cmplx_size = jp_R_Lambda + 2*n_dof_PW*2*n_dof_PW
 !c      endif
 
 !ccccc
 
       kp_rhs_re  = 1
-      kp_rhs_im  = kp_rhs_re + neq
-      kp_lhs_re  = kp_rhs_im + neq
-      kp_lhs_im  = kp_lhs_re + neq
-      kp_mat1_re = kp_lhs_im + neq
+      kp_rhs_im  = kp_rhs_re + n_dof
+      kp_lhs_re  = kp_rhs_im + n_dof
+      kp_lhs_im  = kp_lhs_re + n_dof
+      kp_mat1_re = kp_lhs_im + n_dof
       kp_mat1_im = kp_mat1_re + nonz
       real_size  = kp_mat1_im + nonz
 
 !  cccccc
 !  c     SOME 32 bit integers for UMFPACK AND ARPACK
 !  ip_col_ptr_32 = 1
-!  ip_row_32 = ip_col_ptr_32 + neq + 1
+!  ip_row_32 = ip_col_ptr_32 + n_dof + 1
 !  int_size_32 = ip_row_32 + nonz
 
 !  cccccc
@@ -226,8 +226,8 @@
 !  write(26,*) "n_edge = ", n_edge
 !  write(26,*) "npt_p3 = ", npt_p3
 !  write(26,*) "n_ddl = ", n_ddl
-!  write(26,*) "neq = ", neq
-!  write(26,*) "neq_PW = ", neq_PW
+!  write(26,*) "n_dof = ", n_dof
+!  write(26,*) "n_dof_PW = ", n_dof_PW
 !  write(26,*) "nonz_max = ", nonz_max
 !  write(26,*) "nonz = ", nonz
 !  write(26,*) "max_row_len = ", max_row_len

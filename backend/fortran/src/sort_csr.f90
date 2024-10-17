@@ -2,13 +2,13 @@
 !       remove from elastic call and then drop them
 
 
-subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, indx)
+subroutine sort_csr (n_dof, nonz, max_row_len, col_ind, row_ptr, indx)
 
    use numbatmod
    use alloc
 
-   integer(8) neq, nonz, max_row_len
-   integer(8) row_ptr(neq+1), col_ind(nonz)
+   integer(8) n_dof, nonz, max_row_len
+   integer(8) row_ptr(n_dof+1), col_ind(nonz)
    integer(8) indx(max_row_len)
 
    integer(8)  :: errco  ! TODO: hook up to function call
@@ -27,7 +27,7 @@ subroutine sort_csr (neq, nonz, max_row_len, col_ind, row_ptr, indx)
    call integer_alloc_1d(istack, max_row_len, 'arr', errco, emsg)
 
 
-   do i=1,neq
+   do i=1,n_dof
       row_start = row_ptr(i)
       row_end = row_ptr(i+1) - 1
       row_len = row_end - row_start + 1

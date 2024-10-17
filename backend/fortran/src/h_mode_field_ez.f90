@@ -2,12 +2,12 @@
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
  !  The z-component of the E-field is not normalised
  !
-subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, table_nod, &
+subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, elnd_to_mesh, &
  x, betas, soln_k1, soln_H1)
 
    use numbatmod
    integer(8) nval, nel, npt, nnodes_P2
-   integer(8) table_nod(nnodes_P2,nel)
+   integer(8) elnd_to_mesh(nnodes_P2,nel)
    double precision x(2,npt)
    complex(8) soln_k1(3,nnodes_P2+7,nval,nel)
    complex(8) soln_H1(3,nnodes_P2,nval,nel)
@@ -36,10 +36,10 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, table_nod, &
    integer(8), parameter :: ZCOMP = 3
 
    !f2py intent(in) k_0, nval, nel, npt
-   !f2py intent(in) nnodes_P2, table_nod
+   !f2py intent(in) nnodes_P2, elnd_to_mesh
    !f2py intent(in) x, betas, soln_k1
    !
-   !f2py depend(table_nod) nnodes_P2, nel
+   !f2py depend(elnd_to_mesh) nnodes_P2, nel
    !f2py depend(x) npt
    !f2py depend(betas) nval
    !f2py depend(soln_k1) nnodes_P2, nval, nel
@@ -60,7 +60,7 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, table_nod, &
       beta1 = betas(ival)
       do iel=1,nel
          do j=1,nnodes_P2
-            j1 = table_nod(j,iel)
+            j1 = elnd_to_mesh(j,iel)
             nod_el_p(j) = j1
             xel(1,j) = x(1,j1)
             xel(2,j) = x(2,j1)
