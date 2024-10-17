@@ -67,6 +67,8 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    !  TODO: what is signif of this quanitty?
    n_ddl = n_edge + n_face + n_msh_pts_p3
 
+   write(*,*), 'dddls', n_ddl, n_edge , n_face , n_msh_pts_p3
+
 
    ! if (debug .eq. 1) then
    !    write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
