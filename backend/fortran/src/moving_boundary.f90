@@ -9,25 +9,27 @@
 !
 
 
-subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
-   ival_s, ival_ac, n_msh_el, n_msh_pts, nodes_per_el, elnd_to_mesh, type_el, x, &
-   nb_typ_el, typ_select_in, typ_select_out, &
-   soln_EM_p, soln_EM_S, soln_AC, eps_lst, debug, Q_MB)
+subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
+   n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, &
+   n_elt_mats, el_material, typ_select_in, typ_select_out, &
+   soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, debug, Q_MB)
 
-   use numbatmod
-   integer(8) n_msh_el, n_msh_pts, nodes_per_el, nb_typ_el
-   integer(8) type_el(n_msh_el)
-   integer(8) elnd_to_mesh(6,n_msh_el)
-   double precision x(2,n_msh_pts)
-   integer(8) nval_EM_p, nval_EM_S, nval_AC
-   integer(8) ival_p, ival_s, ival_ac
+   ! use numbatmod
+   integer(8) n_msh_el, n_msh_pts,n_elt_mats
+   integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
+
+   integer(8) el_material(n_msh_el)
+   integer(8) elnd_to_mesh(P2_NODES_PER_EL, n_msh_el)
+   double precision v_nd_xy(2, n_msh_pts)
 
    integer(8) typ_select_in, typ_select_out
-   complex(8) soln_EM_p(3,nodes_per_el,nval_EM_p,n_msh_el)
-   complex(8) soln_EM_S(3,nodes_per_el,nval_EM_S,n_msh_el)
-   complex(8) soln_AC(3,nodes_per_el,nval_AC,n_msh_el)
-   complex(8) eps_lst(nb_typ_el)
-   complex(8) Q_MB(nval_EM_S, nval_EM_p, nval_AC)
+
+   complex(8) soln_em_p(3, P2_NODES_PER_EL, nval_em_p, n_msh_el)
+   complex(8) soln_em_s(3, P2_NODES_PER_EL, nval_em_s, n_msh_el)
+   complex(8) soln_ac_u(3, P2_NODES_PER_EL, nval_ac, n_msh_el)
+
+   complex(8) v_eps_rel(n_elt_mats)
+   complex(8) Q_MB(nval_em_s, nval_em_p, nval_ac)
 
    !     Local variables
    integer(8) debug
@@ -53,30 +55,31 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
    complex(8) eps_a, eps_b, tmp1, tmp2
    double precision p2_p2_p2_1d(3,3,3)
 
-   integer(8) v_ival_p(nval_EM_p), v_ival_s(nval_EM_s), v_ival_ac(nval_AC)
+   integer(8) v_ival_p(nval_em_p), v_ival_s(nval_em_s), v_ival_ac(nval_ac)
    integer(8) ivs, ivp, ivac, t_ival_s, t_ival_p, t_ival_ac
+
    complex(8) n_cross_ev_p(3), n_cross_ev_sc(3)
    complex(8) n_dot_ev_p, n_dot_ev_sc, n_dot_uv_ac
 
 
-   !f2py intent(in) nval_EM_p, nval_EM_S, nval_AC
-   !f2py intent(in) ival_p, ival_s, ival_ac, nb_typ_el
-   !f2py intent(in) n_msh_el, n_msh_pts, nodes_per_el, elnd_to_mesh, debug
-   !f2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC
-   !f2py intent(in) typ_select_in, typ_select_out, eps_lst, debug
+   !f2py intent(in) nval_em_p, nval_em_s, nval_ac
+   !f2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
+   !f2py intent(in) n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mesh, debug
+   !f2py intent(in) el_material, x, soln_em_p, soln_em_s, soln_ac_u
+   !f2py intent(in) typ_select_in, typ_select_out, v_eps_rel, debug
 
-   !f2py depend(elnd_to_mesh) nodes_per_el, n_msh_el
-   !f2py depend(type_el) n_msh_pts
+   !f2py depend(elnd_to_mesh) P2_NODES_PER_EL, n_msh_el
+   !f2py depend(el_material) n_msh_pts
    !f2py depend(x) n_msh_pts
-   !f2py depend(soln_EM_p) nodes_per_el, nval_EM_p, n_msh_el
-   !f2py depend(soln_EM_S) nodes_per_el, nval_EM_S, n_msh_el
-   !f2py depend(soln_AC) nodes_per_el, nval_AC, n_msh_el
-   !f2py depend(eps_lst) nb_typ_el
+   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_el
+   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_el
+   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac, n_msh_el
+   !f2py depend(v_eps_rel) n_elt_mats
    !
    !f2py intent(out) Q_MB
 
 
-   ! typ_select_in: Only the elements iel with type_el(iel)=typ_select_in will be analysed
+   ! typ_select_in: Only the elements iel with el_material(iel)=typ_select_in will be analysed
    ! When nb_visited(j) is not zero: nb_visited(j) indicates the number of element the edge j belongs
 
 
@@ -112,13 +115,13 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
 
    ! build arrays holding which modes to be calculated
-   call fill_ival_arrays(v_ival_p, nval_EM_p, ival_p)
-   call fill_ival_arrays(v_ival_s, nval_EM_s, ival_s)
+   call fill_ival_arrays(v_ival_p, nval_em_p, ival_p)
+   call fill_ival_arrays(v_ival_s, nval_em_s, ival_s)
    call fill_ival_arrays(v_ival_ac, nval_ac, ival_ac)
 
 
    do iel=1,n_msh_el
-      typ_e = type_el(iel)
+      typ_e = el_material(iel)
       if(typ_e == typ_select_in) then
          !   Scan the edges
          do inod=4,6
@@ -151,7 +154,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
    ! Outward pointing normal vector to the interface edges
    do iel=1,n_msh_el
-      typ_e = type_el(iel)
+      typ_e = el_material(iel)
       if(typ_e .ne. typ_select_in) then
          cycle
       endif
@@ -167,26 +170,32 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
          inod_2 = edge_endpoints(2,inod-3)
          ls_edge_endpoint(1,j) = elnd_to_mesh(inod_1,iel)
          ls_edge_endpoint(2,j) = elnd_to_mesh(inod_2,iel)
-         xy_1(1) = x(1,elnd_to_mesh(inod_1,iel))
-         xy_1(2) = x(2,elnd_to_mesh(inod_1,iel))
-         xy_2(1) = x(1,elnd_to_mesh(inod_2,iel))
-         xy_2(2) = x(2,elnd_to_mesh(inod_2,iel))
+
+         xy_1 = v_nd_xy(:, elnd_to_mesh(inod_1,iel))
+         !xy_1(2) = v_nd_xy(2,elnd_to_mesh(inod_1,iel))
+         xy_2 = v_nd_xy(:, elnd_to_mesh(inod_2,iel))
+         !xy_2(2) = v_nd_xy(2,elnd_to_mesh(inod_2,iel))
+
          ! edge_vec: vector parallel to the edge
-         edge_vec(1) = xy_2(1) - xy_1(1)
-         edge_vec(2) = xy_2(2) - xy_1(2)
+         edge_vec = xy_2 - xy_1
+         !edge_vec(2) = xy_2(2) - xy_1(2)
+
          ! Normalisation of edge_vec
          r_tmp = sqrt(edge_vec(1)**2+edge_vec(2)**2)
-         edge_vec(1) = edge_vec(1) / r_tmp
-         edge_vec(2) = edge_vec(2) / r_tmp
+         edge_vec = edge_vec / r_tmp
+         !edge_vec(2) = edge_vec(2) / r_tmp
+
          ! edge_vec: vector perpendicular to the edge (rotation of edge_vec by -pi/2)
          edge_perp(1) = edge_vec(2)
          edge_perp(2) = -edge_vec(1)
+
          ! Node opposite to the edge inod
          inod_3 = opposite_node(inod-3)
-         xy_3(1) = x(1,elnd_to_mesh(inod_3,iel))
-         xy_3(2) = x(2,elnd_to_mesh(inod_3,iel))
-         vec_0(1) = xy_3(1) - xy_1(1)
-         vec_0(2) = xy_3(2) - xy_1(2)
+         xy_3(1) = v_nd_xy(1,elnd_to_mesh(inod_3,iel))
+         xy_3(2) = v_nd_xy(2,elnd_to_mesh(inod_3,iel))
+         vec_0 = xy_3 - xy_1
+         !vec_0(2) = xy_3(2) - xy_1(2)
+
          ! Scalar product of edge_perp and vec_0:
          r_tmp = edge_perp(1)*vec_0(1)+edge_perp(2)*vec_0(2)
          ! if r_tmp < 0: then edge_perp is oriented in the outward direction
@@ -210,16 +219,16 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
    ! Numerical integration
    do iel=1,n_msh_el
 
-      typ_e = type_el(iel)
+      typ_e = el_material(iel)
       if(typ_e .ne. typ_select_in) then
          cycle
       endif
 
-      eps_a = eps_lst(typ_e)
+      eps_a = v_eps_rel(typ_e)
       if (typ_select_out .eq. -1) then
          eps_b = 1.0d0
       else
-         eps_b = eps_lst(typ_select_out)
+         eps_b = v_eps_rel(typ_select_out)
       endif
 
       !   Scan the edges
@@ -232,28 +241,28 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
          inod_1 = ls_edge_endpoint(1,j)
          inod_2 = ls_edge_endpoint(2,j)
-         xy_1(1) = x(1,inod_1)
-         xy_1(2) = x(2,inod_1)
-         xy_2(1) = x(1,inod_2)
-         xy_2(2) = x(2,inod_2)
-         xy_3(1) = x(1,j)
-         xy_3(2) = x(2,j)
+         xy_1(:) = v_nd_xy(:, inod_1)
+         !xy_1(2) = v_nd_xy(2,inod_1)
+         xy_2(:) = v_nd_xy(:, inod_2)
+         !xy_2(2) = v_nd_xy(2,inod_2)
+         xy_3(:) = v_nd_xy(:, j)
+         !xy_3(2) = v_nd_xy(2,j)
 
          ! List of the nodes coordinates
-         ls_xy(1,1) = xy_1(1)  ! x-coord. of node 1
-         ls_xy(2,1) = xy_1(2)  ! y-coord. of node 1
-         ls_xy(1,2) = xy_2(1)  !             node 2
-         ls_xy(2,2) = xy_2(2)
-         ls_xy(1,3) = xy_3(1)  !             node 3
-         ls_xy(2,3) = xy_3(2)
+         ls_xy(:,1) = xy_1  ! x-coord. of node 1
+         !ls_xy(2,1) = xy_1(2)  ! y-coord. of node 1
+         ls_xy(:,2) = xy_2  !             node 2
+         !ls_xy(2,2) = xy_2(2)
+         ls_xy(:,3) = xy_3  !             node 3
+         !ls_xy(2,3) = xy_3(2)
 
-         edge_vec(1) = ls_xy(1,2) - ls_xy(1,1)
-         edge_vec(2) = ls_xy(2,2) - ls_xy(2,1)
+         edge_vec(:) = ls_xy(:,2) - ls_xy(:,1)
+         !edge_vec(2) = ls_xy(2,2) - ls_xy(2,1)
 
          ! Normalisation of edge_vec
          r_tmp = sqrt(edge_vec(1)**2+edge_vec(2)**2)
-         edge_vec(1) = -1*edge_direction(j)*edge_vec(1) / r_tmp
-         edge_vec(2) = -1*edge_direction(j)*edge_vec(2) / r_tmp
+         edge_vec = -1*edge_direction(j)*edge_vec / r_tmp
+         !edge_vec(2) = -1*edge_direction(j)*edge_vec(2) / r_tmp
 
          ! edge_vec: vector perpendicular to the edge (rotation of edge_vec by -pi/2)
          edge_perp(1) = -1*edge_vec(2)
@@ -281,7 +290,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
          ! !  [   eps0  (eps_a - eps_b)     (\hatn \cross \vecEs)^* \dot (\hatn \cross \vecEp)
          ! !   - 1/eps0 (1/eps_a - 1/epsb)  (\hatn \dot \vecDs)^*   \dot (\hatn \dot \vecdp)  ]
 
-          do ivs = 1,nval_EM_s
+          do ivs = 1,nval_em_s
             t_ival_s = v_ival_s(ivs)
             if (t_ival_s .eq. 0) then
                exit
@@ -291,9 +300,9 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
             ! Nodes of the edge
             do j_1=1,3
                ! (x,y,z)-components of the electric field
-               evec_sc(1) = conjg(soln_EM_S(1,ls_inod(j_1),t_ival_s,iel))
-               evec_sc(2) = conjg(soln_EM_S(2,ls_inod(j_1),t_ival_s,iel))
-               evec_sc(3) = conjg(soln_EM_S(3,ls_inod(j_1),t_ival_s,iel))
+               evec_sc(1) = conjg(soln_em_s(1,ls_inod(j_1),t_ival_s,iel))
+               evec_sc(2) = conjg(soln_em_s(2,ls_inod(j_1),t_ival_s,iel))
+               evec_sc(3) = conjg(soln_em_s(3,ls_inod(j_1),t_ival_s,iel))
                ! ls_n_dot(1): Normal component of vec(:,1)
                ! ls_n_dot(1) = evec_sc(1) * edge_perp(1) + evec_sc(2) * edge_perp(2)
                ! ls_n_dot(1) = v2_dot_v3(edge_perp, evec_sc)
@@ -305,7 +314,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                call v2_cross_v3(edge_perp, evec_sc, n_cross_ev_sc)
 
 
-               do ivp = 1,nval_EM_p
+               do ivp = 1,nval_em_p
                   t_ival_p = v_ival_p(ivp)
                   if (t_ival_p .eq. 0) then
                      exit
@@ -313,9 +322,9 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
                   do j_2=1,3
                      ! (x,y,z)-components of the electric field
-                     evec_p(1)=soln_EM_p(1,ls_inod(j_2),t_ival_p,iel)
-                     evec_p(2)=soln_EM_p(2,ls_inod(j_2),t_ival_p,iel)
-                     evec_p(3)=soln_EM_p(3,ls_inod(j_2),t_ival_p,iel)
+                     evec_p(1)=soln_em_p(1,ls_inod(j_2),t_ival_p,iel)
+                     evec_p(2)=soln_em_p(2,ls_inod(j_2),t_ival_p,iel)
+                     evec_p(3)=soln_em_p(3,ls_inod(j_2),t_ival_p,iel)
                      ! ls_n_dot(2): Normal component of vec(:,2)
                      ! ls_n_dot(2) = v2_dot_v3(edge_perp, evec_p)
                      ! ls_n_cross(1,2) = evec_p(3) * edge_perp(2)
@@ -326,7 +335,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
                      call v2_cross_v3(edge_perp, evec_p, n_cross_ev_p)
 
 
-                     do ivac = 1,nval_AC
+                     do ivac = 1,nval_ac
                         t_ival_ac = v_ival_ac(ivac)
                         if (t_ival_ac .eq. 0) then
                            exit
@@ -334,9 +343,9 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival_p, &
 
                         do j_3=1,3
                            ! (x,y,z)-components of the acoustic field
-                           uvec_ac(1) = soln_AC(1,ls_inod(j_3),t_ival_ac,iel)
-                           uvec_ac(2) = soln_AC(2,ls_inod(j_3),t_ival_ac,iel)
-                           uvec_ac(3) = soln_AC(3,ls_inod(j_3),t_ival_ac,iel)
+                           uvec_ac(1) = soln_ac_u(1,ls_inod(j_3),t_ival_ac,iel)
+                           uvec_ac(2) = soln_ac_u(2,ls_inod(j_3),t_ival_ac,iel)
+                           uvec_ac(3) = soln_ac_u(3,ls_inod(j_3),t_ival_ac,iel)
 
                            ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp
                            !ls_n_dot(3) = uvec_ac(1) * edge_perp(1) + uvec_ac(2) * edge_perp(2)
