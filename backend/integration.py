@@ -484,11 +484,11 @@ def gain_and_qs(
 
     sim_AC.fem_evecs[2,:,:,:]  = 0
 
-    print("\n Photoelastic calc")
     if struc.using_linear_elements():
+        print("\n Photoelastic calc: linear elements")
 
 
-        resm = nb_fortran.photoelastic_int_v2(
+        resm = nb_fortran.photoelastic_int_linear_elts(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -497,7 +497,7 @@ def gain_and_qs(
             AC_ival_fortran,
             fem_ac.n_msh_el,
             fem_ac.n_msh_pts,
-            nnodes,
+            #nnodes,
             fem_ac.elnd_to_mesh,
             fem_ac.v_el_2_mat_idx,
             fem_ac.v_nd_xy,
@@ -513,13 +513,15 @@ def gain_and_qs(
 
         (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
     else:
+        print("\n Photoelastic calc: curvilinear elements")
 
         if not struc.using_curvilinear_elements():
             print(
                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
                 "\n using slow quadrature integration by default.\n\n",
             )
-        resm = nb_fortran.photoelastic_int(
+        #resm = nb_fortran.photoelastic_int_curvilinear_elts(
+        resm = nb_fortran.photoelastic_int_curvilinear_elts_old(
             sim_EM_pump.n_modes,
             sim_EM_Stokes.n_modes,
             sim_AC.n_modes,
@@ -528,18 +530,16 @@ def gain_and_qs(
             AC_ival_fortran,
             fem_ac.n_msh_el,
             fem_ac.n_msh_pts,
-            nnodes,
             fem_ac.elnd_to_mesh,
-            fem_ac.v_el_2_mat_idx,
             fem_ac.v_nd_xy,
             elastic_props.n_mats_ac,
+            fem_ac.v_el_2_mat_idx,
             elastic_props.p_ijkl,
             q_AC,
             trimmed_EM_pump_field,
             trimmed_EM_Stokes_field,
             sim_AC.fem_evecs,
             relevant_eps_effs,
-            Fortran_debug,
         )
 
         (Q_PE, ) = process_fortran_return(resm, "finding curvilinear element photoelastic couplings")
@@ -561,11 +561,11 @@ def gain_and_qs(
         AC_ival_fortran,
         fem_ac.n_msh_el,
         fem_ac.n_msh_pts,
-        nnodes,
+        #nnodes,
         fem_ac.elnd_to_mesh,
-        fem_ac.v_el_2_mat_idx,
         fem_ac.v_nd_xy,
         elastic_props.n_mats_ac,
+        fem_ac.v_el_2_mat_idx,
         typ_select_in,
         typ_select_out,
         trimmed_EM_pump_field,

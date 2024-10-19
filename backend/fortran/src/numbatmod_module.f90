@@ -9,8 +9,8 @@ module numbatmod
 #endif
 
    use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
-   stdout=>output_unit, &
-   stderr=>error_unit
+      stdout=>output_unit, &
+      stderr=>error_unit
 
    implicit none
 
@@ -70,6 +70,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_MESH_EDGES      = -58
    integer(8), parameter :: NBERR_BAD_MESH_VERTICES   = -59
    integer(8), parameter :: NBERR_BAD_BOUNDARY_CONDITION   = -60
+   integer(8), parameter :: NBERR_BAD_QUAD_INT  = -61
 
 
 
@@ -101,7 +102,35 @@ module numbatmod
 
 
 
+   type, public :: NBError
+
+   integer errco
+   character(len=EMSG_LENGTH) :: emsg
 contains
+
+   procedure :: ok => NBError_ok
+   procedure :: set => NBError_set
+
+end type NBError
+
+
+contains
+
+function NBError_ok (this) result(is_ok)
+   class(NBError) this
+   logical is_ok
+   is_ok = (this%errco .eq. 0)
+end function
+
+subroutine NBError_set (this, ec, msg)
+   class(NBError) this
+   integer ec
+   character(len=*) :: msg
+   this%errco = ec
+   write(*, this%emsg) msg
+
+end subroutine
+
 
    subroutine log_me(fname, msg, newfile)
       character(len=*) :: fname, msg
@@ -330,6 +359,7 @@ contains
       vres(2) = -dveca(1) * cvecb(3)  ! fy = gz hx - gx hz = -gx hz
       vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
    end subroutine
+
 
 
 

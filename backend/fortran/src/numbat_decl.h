@@ -4,6 +4,7 @@
 
 #define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
 
+#define RET_ON_NBERR(nberr) if (nberr%errco .ne. 0) then ; return ; endif
 
 #define NBERROR_101 101
 #define NBERROR_102 102

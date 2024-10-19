@@ -82,11 +82,11 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    integer(8) i_base2
 
-   integer(8), parameter :: nquad_max = 25
+   integer(8), parameter :: NQUAD_MAX = 25
    integer(8) nquad
 
-   double precision wq(nquad_max)
-   double precision xq(nquad_max), yq(nquad_max)
+   double precision wt_quad(NQUAD_MAX)
+   double precision x_quad(NQUAD_MAX), y_quad(NQUAD_MAX)
    double precision x_act(2), x_ref(2), ww, det
    double precision mat_B(2,2), mat_T(2,2)
    double precision gradt_i(2), gradt_j(2)
@@ -142,7 +142,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    endif
 
    ! Determine quadrature weights for triangle integrations at 16 points (seets nquad)
-   call quad_triangle (nquad, nquad_max, wq, xq, yq)
+   call quad_triangle (nquad, NQUAD_MAX, wt_quad, x_quad, y_quad)
 
    ! These are the K and M matrices in Kokou's paper expressed in CSC format
    cscmat%mOp_stiff = C_ZERO
@@ -213,9 +213,9 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
       endif
 
       do iq=1,nquad         ! for each quadrature point in reference triangle
-         x_ref(1) = xq(iq)     !    find local points and weighting
-         x_ref(2) = yq(iq)
-         ww = wq(iq)
+         x_ref(1) = x_quad(iq)     !    find local points and weighting
+         x_ref(2) = y_quad(iq)
+         ww = wt_quad(iq)
          !  xx   = coordinate on the reference triangle
          !  xx_g = coordinate on the actual triangle
 
