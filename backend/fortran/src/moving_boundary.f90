@@ -1,3 +1,5 @@
+#include "numbat_decl.h"
+
 ! Calculates moving boundary coupling Q_MB
 !
 ! \nhat is the surface normal vector from material a into material b
@@ -14,7 +16,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    n_elt_mats, el_material, typ_select_in, typ_select_out, &
    soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, debug, Q_MB)
 
-   ! use numbatmod
+   use numbatmod
    integer(8) n_msh_el, n_msh_pts,n_elt_mats
    integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
 

@@ -3,7 +3,7 @@
 
 subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
    ival_p, ival_s, ival_ac, &
-   n_msh_el, n_msh_pts, elnd_to_mesh,  v_nd_xy, &
+   n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, &
    n_elt_mats, el_material, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac_u, &
    v_eps_rel, Q_PE, errco, emsg)
 
@@ -109,8 +109,6 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
    call fill_ival_arrays(v_ival_u, nval_ac_u, ival_ac)
 
 
-   !call quad_triangle (nquad, NQUAD_MAX, wt_quad, x_quad, y_quad)
-
    call quadint%setup_reference_quadratures()
 
    !call complex_alloc_4d(basovrlp_old, 3*P2_NODES_PER_EL, 3*P2_NODES_PER_EL, &
@@ -121,8 +119,6 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
 
    Q_PE = D_ZERO
 
-
-   ! Loop over elements - start
 
    do i_el=1,n_msh_el
       typ_e = el_material(i_el)
@@ -307,11 +303,12 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
 
                                  Ustar_l = conjg(soln_ac_u(xyz_l,nd_l,t_ival_u,i_el))
                                  zt1 = E_s_i_star * E_p_j * Ustar_l
+
                                  do xyz_k=1,3
-                                    !zt1 = zt1 * basis_overlap(ind_ip,ind_jp,xyz_k,ind_lp)
-                                    Q_PE(t_ival_s,t_ival_p,t_ival_u) = + Q_PE(t_ival_s,t_ival_p,t_ival_u) &
+                                    Q_PE(t_ival_s,t_ival_p,t_ival_u) = Q_PE(t_ival_s,t_ival_p,t_ival_u) &
                                        + zt1 * basis_overlap(ind_ip,ind_jp,xyz_k,ind_lp)
                                  enddo
+
                               enddo
                            enddo
                         enddo

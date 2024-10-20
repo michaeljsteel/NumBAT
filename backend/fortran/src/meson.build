@@ -26,8 +26,9 @@ nb_pyinterface_fsrcs = files(
     'em_mode_energy_int_v2_ez.f',
     'h_mode_field_ez.f90',
     'moving_boundary.f90',
-    'photoelastic_int_linear.f90',
-    'photoelastic_int_curvilinear.f90',
+    'photoelastic_int_common.f90',
+    #'photoelastic_int_linear_new.f90',
+    #'photoelastic_int_curvilinear.f90',
     #'photoelastic_int_curvilinear_old.f90',
     'py_entry_cm.f90',
     'pyinterfaces.f90'
@@ -85,7 +86,10 @@ nb_impl_fsrcs = files(
     'phi3_grad_p2.f90',
     'phi_vector_map.f90',
     'phi_vector_basis.f90',
-    'photoelastic_int_curvilinear_impl.f90',
+#'photoelastic_int_curvilinear_impl.f90',
+#    'photoelastic_int_linear_impl.f90',
+    'photoelastic_int_common.f90',
+
     'py_calc_modes.f90',
     'py_calc_modes_ac.f90',
     'periodicbcs_class.f90',
