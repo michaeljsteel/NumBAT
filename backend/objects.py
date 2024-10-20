@@ -587,10 +587,10 @@ class Structure:
         self.curvilinear_element_shapes = []
 
         if wg_geom is not None:
-            if wg_geom.is_curvilinear():  #TODO backwards!
-                self.linear_element_shapes.append(wg_geom.geom_name())
-            else:
+            if wg_geom.is_curvilinear():  
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
+            else:
+                self.linear_element_shapes.append(wg_geom.geom_name())
 
         wg_geom.check_parameters(params)
         wg_geom.check_dimensions()

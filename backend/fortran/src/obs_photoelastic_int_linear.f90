@@ -4,7 +4,7 @@
 subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
     nel, npt, elnd_to_mesh, type_el, x,&
     &nb_typ_el, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac,&
-    &eps_lst, debug, overlap, errco, emsg)
+    &eps_lst, overlap, errco, emsg)
 
        use numbatmod
        use alloc
@@ -57,6 +57,7 @@ subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, 
        double precision p2_p2_p2x(6,6,6), p2_p2_p2y(6,6,6)
 
 
+       debug = 0
        !fo2py intent(in) nval_em_p, nval_em_s, nval_ac
        !fo2py intent(in) ival_p, ival_s, ival_ac, nb_typ_el
        !fo2py intent(in) nel, npt, P2_NODES_PER_EL, elnd_to_mesh, p_tensor, beta_ac, debug

@@ -484,66 +484,56 @@ def gain_and_qs(
 
     sim_AC.fem_evecs[2,:,:,:]  = 0
 
+    
+    is_curvi=False
     if struc.using_linear_elements():
         print("\n Photoelastic calc: linear elements")
-
-
-        resm = nb_fortran.photoelastic_int_linear_elts(
-            sim_EM_pump.n_modes,
-            sim_EM_Stokes.n_modes,
-            sim_AC.n_modes,
-            EM_ival_pump_fortran,
-            EM_ival_Stokes_fortran,
-            AC_ival_fortran,
-            fem_ac.n_msh_el,
-            fem_ac.n_msh_pts,
-            #nnodes,
-            fem_ac.elnd_to_mesh,
-            fem_ac.v_el_2_mat_idx,
-            fem_ac.v_nd_xy,
-            elastic_props.n_mats_ac,
-            elastic_props.p_ijkl,
-            q_AC,
-            trimmed_EM_pump_field,
-            trimmed_EM_Stokes_field,
-            sim_AC.fem_evecs,
-            relevant_eps_effs,
-            Fortran_debug,
-        )
-
-        (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
     else:
         print("\n Photoelastic calc: curvilinear elements")
+        is_curvi=True
 
-        if not struc.using_curvilinear_elements():
-            print(
-                "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
-                "\n using slow quadrature integration by default.\n\n",
-            )
-        #resm = nb_fortran.photoelastic_int_curvilinear_elts(
-        resm = nb_fortran.photoelastic_int_curvilinear_elts_old(
-            sim_EM_pump.n_modes,
-            sim_EM_Stokes.n_modes,
-            sim_AC.n_modes,
-            EM_ival_pump_fortran,
-            EM_ival_Stokes_fortran,
-            AC_ival_fortran,
-            fem_ac.n_msh_el,
-            fem_ac.n_msh_pts,
-            fem_ac.elnd_to_mesh,
-            fem_ac.v_nd_xy,
-            elastic_props.n_mats_ac,
-            fem_ac.v_el_2_mat_idx,
-            elastic_props.p_ijkl,
-            q_AC,
-            trimmed_EM_pump_field,
-            trimmed_EM_Stokes_field,
-            sim_AC.fem_evecs,
-            relevant_eps_effs,
-        )
+    resm = nb_fortran.photoelastic_int_common(is_curvi,
+        sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes,
+        EM_ival_pump_fortran, EM_ival_Stokes_fortran, AC_ival_fortran,
+        fem_ac.n_msh_el, fem_ac.n_msh_pts, fem_ac.elnd_to_mesh, fem_ac.v_nd_xy, 
+        elastic_props.n_mats_ac, fem_ac.v_el_2_mat_idx, 
+        elastic_props.p_ijkl, q_AC,
+        trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
+        relevant_eps_effs,
+    )
 
-        (Q_PE, ) = process_fortran_return(resm, "finding curvilinear element photoelastic couplings")
-
+    (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
+#     else:
+#         print("\n Photoelastic calc: curvilinear elements")
+# 
+#         if not struc.using_curvilinear_elements():
+#             print(
+#                 "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
+#                 "\n using slow quadrature integration by default.\n\n",
+#             )
+#         resm = nb_fortran.photoelastic_int_curvilinear_elts(
+#             sim_EM_pump.n_modes,
+#             sim_EM_Stokes.n_modes,
+#             sim_AC.n_modes,
+#             EM_ival_pump_fortran,
+#             EM_ival_Stokes_fortran,
+#             AC_ival_fortran,
+#             fem_ac.n_msh_el,
+#             fem_ac.n_msh_pts,
+#             fem_ac.elnd_to_mesh,
+#             fem_ac.v_nd_xy,
+#             elastic_props.n_mats_ac,
+#             fem_ac.v_el_2_mat_idx,
+#             elastic_props.p_ijkl,
+#             q_AC,
+#             trimmed_EM_pump_field,
+#             trimmed_EM_Stokes_field,
+#             sim_AC.fem_evecs,
+#             relevant_eps_effs,
+#         )
+# 
+#         (Q_PE, ) = process_fortran_return(resm, "finding curvilinear element photoelastic couplings")
+# 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
     if len(relevant_eps_effs) == 2:
