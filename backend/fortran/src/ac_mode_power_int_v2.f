@@ -106,9 +106,9 @@ c	mat_T_tr = Tanspose(mat_T)
       mat_T_tr(2,1) = mat_T(1,2)
       mat_T_tr(2,2) = mat_T(2,2)
 
-      call mat_p2_p2(p2_p2, det_b)
-      call mat_p2_p2x (p2_p2x, mat_T_tr, det_b)
-      call mat_p2_p2y (p2_p2y, mat_T_tr, det_b)
+      call find_overlaps_p2_p2(p2_p2, det_b)
+      call find_overlaps_p2_p2x (p2_p2x, mat_T_tr, det_b)
+      call find_overlaps_p2_p2y (p2_p2y, mat_T_tr, det_b)
       do itrial=1,nnodes_0
         do i_eq=1,3
           ind_ip = i_eq + 3*(itrial-1)

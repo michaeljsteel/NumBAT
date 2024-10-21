@@ -793,19 +793,22 @@ class EMSimulation(Simulation):
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
+
         if tstruc.using_linear_elements():
+            print('using linear elements')
             # Integration using analytically evaluated basis function integrals. Fast.
-            self.EM_mode_power = nb_fortran.em_mode_energy_int_v2_ez(
+            #self.EM_mode_power = nb_fortran.em_mode_energy_int_v2_ez(
+            resm = nb_fortran.em_mode_power_sz_analytic(
                 self.k_0,
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.n_nodes,
                 fm.elnd_to_mesh,
                 fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
             )
+            (self.EM_mode_power, ) = process_fortran_return(resm, "finding linear element EM mode power")
         else:
             if not tstruc.using_curvilinear_elements():
                 print(
@@ -813,17 +816,19 @@ class EMSimulation(Simulation):
                     "\n using slow quadrature integration by default.\n\n",
                 )
             # Integration by quadrature. Slowest.
-            self.EM_mode_power = nb_fortran.em_mode_energy_int_ez(
+            print('using curvilinear elements')
+            resm = nb_fortran.em_mode_power_sz_quadrature(
                 self.k_0,
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.n_nodes,
                 fm.elnd_to_mesh,
                 fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
             )
+            (self.EM_mode_power, ) = process_fortran_return(resm, "finding curvilinear element EM mode power")
+
         # Bring Kokou's def into line with CW formulation.
         self.EM_mode_power = 2.0 * self.EM_mode_power
 
@@ -834,11 +839,10 @@ class EMSimulation(Simulation):
             if tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
-                self.EM_mode_energy = nb_fortran.em_mode_e_energy_int(
+                self.EM_mode_energy = nb_fortran.em_mode_act_energy_int(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.n_nodes,
                     fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
                     opt_props.n_mats_em,

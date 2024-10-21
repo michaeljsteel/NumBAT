@@ -2,7 +2,7 @@
 !      Compute the integral: m_ijk = Integrate[P(i) * P(j) * P(k), over an interval]
 !
 
-subroutine mat_p2_p2_p2_1d (mat, det_b)
+subroutine find_overlaps_p2_p2_p2_1d (mat, det_b)
 
 
    implicit none

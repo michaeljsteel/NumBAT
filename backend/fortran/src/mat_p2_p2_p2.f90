@@ -2,7 +2,7 @@
 !  Compute the integral: m_ijk = Integrate[P(i) * P(j) * P(k), over the unit triangle
 !
 !
-subroutine mat_p2_p2_p2 (mat, det_b)
+subroutine find_overlaps_p2_p2_p2 (mat, det_b)
    implicit none
    double precision mat(6,6,6), det_b
 

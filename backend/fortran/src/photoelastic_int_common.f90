@@ -15,7 +15,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    use numbatmod
    use alloc
-   use class_QuadIntegrator
+   use class_TriangleIntegrators
 
    integer(8) is_curvilinear
    integer(8) nval_em_p, nval_em_s, nval_ac_u, ival_p, ival_s, ival_ac
@@ -43,17 +43,12 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
 
    complex(8) E_s_i_star, E_p_j, Ustar_l
-   integer(8) i, j, k, j1, typ_e
-   integer(8) nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
-   integer(8) i_el, ind_ip, i_eq
-   integer(8) jtest, ind_jp, j_eq, k_eq
-   integer(8) ltest, ind_lp, l_eq
-   integer(8) itrial, ui, ival_ps, ival_ss, ival_acs
+   integer(8) j, typ_e
+   integer(8) i_el, nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
+   integer(8) ind_ip, ind_jp, ind_lp
+   integer(8) ui
    complex(8) v_eps_rel(n_elt_mats), eps
    complex(8) zt1
-!    double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
-!    double precision det_b
-
 
    integer(8) v_ival_p(nval_em_p), v_ival_s(nval_EM_s), v_ival_u(nval_ac_u)
    integer(8) ivs, ivp, ivu, t_ival_s, t_ival_p, t_ival_u
@@ -63,6 +58,9 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    type(QuadIntegrator) quadint
 
    debug = 0
+   errco = 0
+   emsg = ""
+
    !fo2py intent(in) nval_em_p, nval_em_s, nval_ac_u
    !fo2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
    !fo2py intent(in) n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mesh, p_tensor, beta_ac, debug
@@ -123,8 +121,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
       else
 
          call make_P2_overlaps_i_j_dk_l_analytic(i_el, beta_ac, typ_e, &
-            eps, p_tensor, n_elt_mats, nds_xy, basis_overlap, errco, emsg)
-         RETONERROR(errco)
+            eps, p_tensor, n_elt_mats, nds_xy, basis_overlap)
       endif
 
       do nd_i=1,P2_NODES_PER_EL          ! nodes and components of the Stokes field

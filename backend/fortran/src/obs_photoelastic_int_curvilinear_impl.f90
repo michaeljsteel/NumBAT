@@ -17,7 +17,7 @@ subroutine make_P2_overlaps_i_j_dk_l(i_el, beta_ac, typ_e, is_curved, &
    eps, p_tensor, n_elt_mats, nds_xy, quadint, bas_ovrlp, errco, emsg)
 
    use numbatmod
-   use class_QuadIntegrator
+   use class_TriangleIntegrators
    type(QuadIntegrator) quadint
 
    complex(8) beta_ac, eps

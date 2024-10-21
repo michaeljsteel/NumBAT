@@ -8,13 +8,13 @@ subroutine QuadIntegrator_setup_reference_quadratures(this)
 end subroutine
 
 subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
-   is_curved, errco, emsg)
+   is_curved, do_P3, errco, emsg)
 
    class(QuadIntegrator) this
 
    integer(8) qi  ! quad_index
    double precision nds_xy(2,P2_NODES_PER_EL)  ! positions of nodes of the element
-   logical is_curved
+   logical is_curved, do_P3
 
    double precision xy_ref(2), xy_act(2), ww, det
    integer(8), intent(out) :: errco
@@ -32,6 +32,10 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
    !  phi_P2_ref = values of Lagrange polynomials (1-6) at each local node.
    !  gradt_P2_ref = gradient on the reference triangle (P2 element)
    call phi2_2d_mat(xy_ref, this%phi_P2_ref, this%gradt_P2_ref)
+
+   if (do_P3) then
+      call phi3_2d_mat(xy_ref, this%phi_P3_ref, this%gradt_P3_ref)
+   endif
 
    if (.not. is_curved) then ! Rectilinear element
       call jacobian_p1_2d(xy_ref, nds_xy, P2_NODES_PER_EL, xy_act, &
@@ -55,5 +59,8 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
    call DGEMM('Transpose','N', 2, 6, 2, D_ONE, this%mat_T, 2, &
       this%gradt_P2_ref, 2, D_ZERO, this%gradt_P2_act, 2)
 
+   if (do_P3) then
+      call DGEMM('Transpose','N', 2, 10, 2, D_ONE, this%mat_T, 2,this%gradt_P3_ref, 2, D_ZERO, this%gradt_P3_act, 2)
+   endif
 
 end subroutine

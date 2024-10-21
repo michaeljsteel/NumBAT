@@ -231,7 +231,7 @@ subroutine moving_boundary (nval_EM_p, nval_EM_S, nval_AC, ival1,&
                 r_tmp = (ls_xy(1,2) - ls_xy(1,1))**2&
                 &+ (ls_xy(2,2) - ls_xy(2,1))**2
                 edge_length = sqrt(r_tmp)
-                call mat_p2_p2_p2_1d (p2_p2_p2_1d, edge_length)
+                call find_overlaps_p2_p2_p2_1d (p2_p2_p2_1d, edge_length)
                 !             Identification number of the two end-points and mid-edge point
                 ls_inod(1) = edge_endpoints(1,inod-3)
                 ls_inod(2) = edge_endpoints(2,inod-3)
