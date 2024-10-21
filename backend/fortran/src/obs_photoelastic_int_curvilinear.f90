@@ -10,7 +10,7 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
    use numbatmod
    use alloc
 
-   use class_QuadIntegrator
+   use class_TriangleIntegrators
 
    integer(8) n_msh_el, n_msh_pts,  n_elt_mats
    integer(8) nval_em_p, nval_em_s, nval_ac_u, ival_p, ival_s, ival_ac

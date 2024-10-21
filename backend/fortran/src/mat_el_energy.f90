@@ -58,9 +58,9 @@ subroutine mat_el_energy (xel, beta, c_tensor_el, mat_P)
    mat_T_tr(2,1) = mat_T(1,2)
    mat_T_tr(2,2) = mat_T(2,2)
 
-   call mat_p2_p2(p2_p2, det_b)
-   call mat_p2_p2x (p2_p2x, mat_T_tr, det_b)
-   call mat_p2_p2y (p2_p2y, mat_T_tr, det_b)
+   call find_overlaps_p2_p2(p2_p2, det_b)
+   call find_overlaps_p2_p2x (p2_p2x, mat_T_tr, det_b)
+   call find_overlaps_p2_p2y (p2_p2y, mat_T_tr, det_b)
    !
    do i=1,18
       do j=1,18

@@ -71,6 +71,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_MESH_VERTICES   = -59
    integer(8), parameter :: NBERR_BAD_BOUNDARY_CONDITION   = -60
    integer(8), parameter :: NBERR_BAD_QUAD_INT  = -61
+   integer(8), parameter :: NBERR_BAD_MB_EDGES  = -62
 
 
 

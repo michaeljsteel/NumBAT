@@ -1,32 +1,31 @@
- !
+#include "numbat_decl.h"
+
+
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
  !  The z-component of the E-field is not normalised
- !
-subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, elnd_to_mesh, &
- x, betas, soln_k1, soln_H1)
+
+subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_to_mesh, &
+ x, v_beta, soln_k1, soln_H1)
 
    use numbatmod
-   integer(8) nval, nel, npt, nnodes_P2
-   integer(8) elnd_to_mesh(nnodes_P2,nel)
-   double precision x(2,npt)
-   complex(8) soln_k1(3,nnodes_P2+7,nval,nel)
-   complex(8) soln_H1(3,nnodes_P2,nval,nel)
+   integer(8) n_modes, n_msh_el, n_msh_pts, nnodes_P2
+   integer(8) elnd_to_mesh(nnodes_P2,n_msh_el)
+   double precision x(2,n_msh_pts)
+   complex(8) soln_k1(3,nnodes_P2+7,n_modes,n_msh_el)
+   complex(8) soln_H1(3,nnodes_P2,n_modes,n_msh_el)
    complex(8) beta1
-   complex(8) betas(nval)
+   complex(8) v_beta(n_modes)
    double precision k_0
 
    !     Local variables
 
-   integer(8), parameter :: nnodes_P2_0 = 6
-   integer(8), parameter :: nnodes_P3_0 = 10
-
-   integer(8) nod_el_p(nnodes_P2_0)
-   double precision xel(2,nnodes_P2_0)
-   complex(8) E_field_el(3,nnodes_P2_0)
-   complex(8) H_field_el(3,nnodes_P2_0)
+   integer(8) nod_el_p(P2_NODES_PER_EL)
+   double precision xel(2,P2_NODES_PER_EL)
+   complex(8) E_field_el(3,P2_NODES_PER_EL)
+   complex(8) H_field_el(3,P2_NODES_PER_EL)
 
    !   P3 Ez-field
-   complex(8) Ez_field_el_P3(nnodes_P3_0)
+   complex(8) Ez_field_el_P3(P3_NODES_PER_EL)
    integer(8) i, j, j1
    integer(8) iel, ival, inod
    integer(8) ui
@@ -35,14 +34,14 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, elnd_to_mesh, &
    double precision mat_B(2,2), mat_T(2,2), det_b
    integer(8), parameter :: ZCOMP = 3
 
-   !f2py intent(in) k_0, nval, nel, npt
+   !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
    !f2py intent(in) nnodes_P2, elnd_to_mesh
-   !f2py intent(in) x, betas, soln_k1
+   !f2py intent(in) x, v_beta, soln_k1
    !
-   !f2py depend(elnd_to_mesh) nnodes_P2, nel
-   !f2py depend(x) npt
-   !f2py depend(betas) nval
-   !f2py depend(soln_k1) nnodes_P2, nval, nel
+   !f2py depend(elnd_to_mesh) nnodes_P2, n_msh_el
+   !f2py depend(x) n_msh_pts
+   !f2py depend(v_beta) n_modes
+   !f2py depend(soln_k1) nnodes_P2, n_modes, n_msh_el
    !
    !f2py intent(out) soln_H1
 
@@ -56,9 +55,9 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, elnd_to_mesh, &
       stop
    endif
 
-   do ival=1,nval
-      beta1 = betas(ival)
-      do iel=1,nel
+   do ival=1,n_modes
+      beta1 = v_beta(ival)
+      do iel=1,n_msh_el
          do j=1,nnodes_P2
             j1 = elnd_to_mesh(j,iel)
             nod_el_p(j) = j1
@@ -114,25 +113,22 @@ subroutine H_mode_field_Ez (k_0, nval, nel, npt, nnodes_P2, elnd_to_mesh, &
             Ez_field_el_P3(inod) = soln_k1(ZCOMP,inod,ival,iel)
          enddo
 
-         do inod=4,nnodes_P3_0
+         do inod=4,P3_NODES_PER_EL
             !           The longitudinal component at the edge nodes and interior node (P3 elements)
             !j=3
 
             Ez_field_el_P3(inod) = soln_k1(ZCOMP,inod+nnodes_P2-3,ival,iel)
          enddo
 
-         call get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T,&
+         call get_H_field_p3(k_0, beta1, mat_T,&
           E_field_el, Ez_field_el_P3, H_field_el)
 
-         do inod=1,nnodes_P2_0
+         do inod=1,P2_NODES_PER_EL
             do j=1,3
                soln_H1(j,inod,ival,iel) = H_field_el(j,inod)
             enddo
          enddo
       enddo
    enddo
-   !
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   !
-   !
+
 end subroutine H_mode_field_Ez

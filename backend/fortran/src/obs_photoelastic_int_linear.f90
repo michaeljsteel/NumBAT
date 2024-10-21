@@ -153,9 +153,9 @@ subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, 
           mat_T_tr(1,2) = mat_T(2,1)
           mat_T_tr(2,1) = mat_T(1,2)
 
-          call mat_p2_p2_p2 (p2_p2_p2, det_b)
-          call mat_p2_p2_p2x (p2_p2_p2x, mat_T_tr, det_b)
-          call mat_p2_p2_p2y (p2_p2_p2y, mat_T_tr, det_b)
+          call find_overlaps_p2_p2_p2 (p2_p2_p2, det_b)
+          call find_overlaps_p2_p2_p2x (p2_p2_p2x, mat_T_tr, det_b)
+          call find_overlaps_p2_p2_p2y (p2_p2_p2y, mat_T_tr, det_b)
 
           ! do i=1,3*P2_NODES_PER_EL
           !    do j=1,3*P2_NODES_PER_EL

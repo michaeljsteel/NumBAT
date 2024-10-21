@@ -2,7 +2,7 @@
 !  For P2 functions,
 !  Compute the integral: m_ij = Integrate[P(i) * P(j), over the unit reference triangle
 !
-subroutine mat_p2_p2 (mat, det_b)
+subroutine find_overlaps_p2_p2 (mat, det_b)
    implicit none
    double precision mat(6,6), det_b
    double precision dt, factor, factor2

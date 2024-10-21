@@ -5,7 +5,7 @@
 !
 !!!!!!!!!!!!!!!!
 !
-subroutine mat_p2_p2y (mat, b_inv_t, det_b)
+subroutine find_overlaps_p2_p2y (mat, b_inv_t, det_b)
 !
 !!!!!!!!!!!!!!!!
 !
