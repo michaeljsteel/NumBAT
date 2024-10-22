@@ -9,8 +9,8 @@ module numbatmod
 #endif
 
    use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
-   stdout=>output_unit, &
-   stderr=>error_unit
+      stdout=>output_unit, &
+      stderr=>error_unit
 
    implicit none
 
@@ -70,6 +70,8 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_MESH_EDGES      = -58
    integer(8), parameter :: NBERR_BAD_MESH_VERTICES   = -59
    integer(8), parameter :: NBERR_BAD_BOUNDARY_CONDITION   = -60
+   integer(8), parameter :: NBERR_BAD_QUAD_INT  = -61
+   integer(8), parameter :: NBERR_BAD_MB_EDGES  = -62
 
 
 
@@ -101,7 +103,56 @@ module numbatmod
 
 
 
+   type, public :: NBError
+
+      integer(8) errco
+      character(len=EMSG_LENGTH) :: emsg
+   contains
+
+      procedure :: reset => NBError_reset
+      procedure :: ok => NBError_ok
+      procedure :: set => NBError_set
+      procedure :: to_py => NBError_to_py
+
+   end type NBError
+
+
 contains
+
+   function NBError_ok (this) result(is_ok)
+      class(NBError) this
+      logical is_ok
+      is_ok = (this%errco .eq. 0)
+   end function
+
+   subroutine NBError_reset (this)
+      class(NBError) this
+      this%errco = 0
+      this%emsg = ""
+   end subroutine
+
+
+   subroutine NBError_set (this, ec, msg)
+      class(NBError) this
+      integer(8) ec
+      character(len=*) :: msg
+      this%errco = ec
+      write(this%emsg, '(A)') msg
+
+   end subroutine
+
+   subroutine NBError_to_py(this, ec, msg)
+      class(NBError) this
+      integer(8), intent(out) :: ec
+      character(len=EMSG_LENGTH), intent(out) :: msg
+
+      write(*,*) 'topying:', this%errco, this%emsg
+      ec = this%errco
+      write(msg, '(A)') this%emsg
+
+   end subroutine
+
+
 
    subroutine log_me(fname, msg, newfile)
       character(len=*) :: fname, msg
@@ -141,16 +192,16 @@ contains
       character(len=*) :: msg
       integer(8) :: ui
 
-! #ifdef __GNUC__
-!       integer(8) :: ret
-! #endif
+      ! #ifdef __GNUC__
+      !       integer(8) :: ret
+      ! #endif
 
       write(ui, '(A,A)') '>>>> ', msg
       flush(ui)
 
-! #ifdef __GNUC__
-!             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
-! #endif
+      ! #ifdef __GNUC__
+      !             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
+      ! #endif
 
    end subroutine
 
@@ -231,7 +282,7 @@ contains
       str = trim(buffer)
    end function int_2_str
 
-   !  TODO: fix with just one call
+!  TODO: fix with just one call
    function int4_2_str(val, fmt) result(str)
       integer(4), intent(in) :: val
       character(len=*), intent(in), optional :: fmt
@@ -291,7 +342,7 @@ contains
 
 
 
-   !TODO: move somewhere leass general
+!TODO: move somewhere leass general
    logical function log_is_curved_elem_tri (nnodes, xel) result(is_curved)
 
       implicit none
@@ -330,6 +381,7 @@ contains
       vres(2) = -dveca(1) * cvecb(3)  ! fy = gz hx - gx hz = -gx hz
       vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
    end subroutine
+
 
 
 

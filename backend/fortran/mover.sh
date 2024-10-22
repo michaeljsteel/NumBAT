@@ -1,4 +1,4 @@
-for fb in ac_alpha_int_v2.f ac_alpha_int.f
+for fb in em_mode_act_energy_int.f
 do
     fn=`basename $fb .f`
 

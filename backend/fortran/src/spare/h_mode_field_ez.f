@@ -122,7 +122,7 @@ c           The longitudinal component at the edge nodes and interior node (P3 e
             Ez_field_el_P3(inod) = z_tmp1
           enddo
 c
-          call get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T,
+          call get_H_field_p3(k_0, beta1, mat_T,
      *      E_field_el, Ez_field_el_P3, H_field_el)
 c
           do inod=1,nnodes_P2_0

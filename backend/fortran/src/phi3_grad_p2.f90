@@ -25,8 +25,8 @@ subroutine phi3_grad_p2(inode, nnodes_P3, mat_jac, vec_grad)
 
    double precision, dimension(2,nnodes_P2_0) :: xel_0 = &
       reshape( (/ 0.d0, 1.d0, 0.d0, 0.5d0, 0.5d0, 0.d0, &
-                  0.d0, 0.d0, 1.d0, 0.0d0, 0.5d0, 0.5d0 /), &
-                  shape(xel_0), order=(/2,1/))
+      0.d0, 0.d0, 1.d0, 0.0d0, 0.5d0, 0.5d0 /), &
+      shape(xel_0), order=(/2,1/))
 
    double precision phi_xi, phi_yi
    double precision phi0_xi, phi0_yi

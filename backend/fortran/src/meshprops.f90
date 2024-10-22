@@ -7,22 +7,6 @@ module class_MeshRaw
 
    private
 
-   ! ---------------------------------------
-
-   ! type, public  :: MeshCounts
-
-
-   !    character(FNAME_LENGTH) :: mesh_file
-   !    integer(8) :: n_msh_pts
-   !    integer(8) :: n_msh_el
-   !    integer(8) :: n_elt_mats
-   !    integer(8) :: n_ddl  ! = 9 * n_msh_el
-
-
-   ! end type MeshCounts
-
-   ! ---------------------------------------
-
    ! A class for holding the various mesh and node properties together.
    ! Also for exchanging mesh info between fortran and python
    type, public  :: MeshRaw
@@ -37,6 +21,7 @@ module class_MeshRaw
       ! basically the Gmsh physindex.  Nonzero = boundary node
       integer(8), dimension(:), allocatable :: node_phys_i
 
+      ! absolute coordinates of each node in the mesh  [2, n_msh_pts]
       double precision, dimension(:,:), allocatable :: v_nd_xy
 
       ! material of each elt [n_msh_el]

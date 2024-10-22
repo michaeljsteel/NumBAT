@@ -23,11 +23,6 @@ from scipy import interpolate
 import matplotlib
 
 
-# matplotlib.use('pdf')
-# import matplotlib.pyplot as plt
-# import matplotlib.gridspec as gridspec
-# from mpl_toolkits.axes_grid1 import make_axes_locatable
-
 from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max, process_fortran_return
 import reporting
@@ -484,65 +479,26 @@ def gain_and_qs(
 
     sim_AC.fem_evecs[2,:,:,:]  = 0
 
-    print("\n Photoelastic calc")
+    
+    is_curvi=False
     if struc.using_linear_elements():
-
-
-        resm = nb_fortran.photoelastic_int_v2(
-            sim_EM_pump.n_modes,
-            sim_EM_Stokes.n_modes,
-            sim_AC.n_modes,
-            EM_ival_pump_fortran,
-            EM_ival_Stokes_fortran,
-            AC_ival_fortran,
-            fem_ac.n_msh_el,
-            fem_ac.n_msh_pts,
-            nnodes,
-            fem_ac.elnd_to_mesh,
-            fem_ac.v_el_2_mat_idx,
-            fem_ac.v_nd_xy,
-            elastic_props.n_mats_ac,
-            elastic_props.p_ijkl,
-            q_AC,
-            trimmed_EM_pump_field,
-            trimmed_EM_Stokes_field,
-            sim_AC.fem_evecs,
-            relevant_eps_effs,
-            Fortran_debug,
-        )
-
-        (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
+        print("\n Photoelastic calc: linear elements")
     else:
+        print("\n Photoelastic calc: curvilinear elements")
+        is_curvi=True
 
-        if not struc.using_curvilinear_elements():
-            print(
-                "Warning: photoelastic_int - not sure if mesh contains curvi-linear elements",
-                "\n using slow quadrature integration by default.\n\n",
-            )
-        resm = nb_fortran.photoelastic_int(
-            sim_EM_pump.n_modes,
-            sim_EM_Stokes.n_modes,
-            sim_AC.n_modes,
-            EM_ival_pump_fortran,
-            EM_ival_Stokes_fortran,
-            AC_ival_fortran,
-            fem_ac.n_msh_el,
-            fem_ac.n_msh_pts,
-            nnodes,
-            fem_ac.elnd_to_mesh,
-            fem_ac.v_el_2_mat_idx,
-            fem_ac.v_nd_xy,
-            elastic_props.n_mats_ac,
-            elastic_props.p_ijkl,
-            q_AC,
-            trimmed_EM_pump_field,
-            trimmed_EM_Stokes_field,
-            sim_AC.fem_evecs,
-            relevant_eps_effs,
-            Fortran_debug,
-        )
+    resm = nb_fortran.photoelastic_int_common(is_curvi,
+        sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes,
+        EM_ival_pump_fortran, EM_ival_Stokes_fortran, AC_ival_fortran,
+        fem_ac.n_msh_el, fem_ac.n_msh_pts, fem_ac.elnd_to_mesh, fem_ac.v_nd_xy, 
+        elastic_props.n_mats_ac, fem_ac.v_el_2_mat_idx, 
+        elastic_props.p_ijkl, q_AC,
+        trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
+        relevant_eps_effs,
+    )
 
-        (Q_PE, ) = process_fortran_return(resm, "finding curvilinear element photoelastic couplings")
+    (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
+
 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
@@ -552,7 +508,7 @@ def gain_and_qs(
         typ_select_out = -1
     print("\n Moving boundary calc")
 
-    Q_MB = nb_fortran.moving_boundary(
+    resm = nb_fortran.moving_boundary(
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
         sim_AC.n_modes,
@@ -561,24 +517,30 @@ def gain_and_qs(
         AC_ival_fortran,
         fem_ac.n_msh_el,
         fem_ac.n_msh_pts,
-        nnodes,
         fem_ac.elnd_to_mesh,
-        fem_ac.v_el_2_mat_idx,
         fem_ac.v_nd_xy,
         elastic_props.n_mats_ac,
+        fem_ac.v_el_2_mat_idx,
         typ_select_in,
         typ_select_out,
         trimmed_EM_pump_field,
         trimmed_EM_Stokes_field,
         sim_AC.fem_evecs,
         relevant_eps_effs,
-        Fortran_debug,
     )
+
+    (Q_MB, ) = process_fortran_return(resm, "finding moving boundary coupling")
+
+
     Q = Q_PE + Q_MB  # TODO: the Q couplings come out as non trivially complex. Why?
 
-    gain = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q * np.conj(Q))
-    gain_PE = (2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE * np.conj(Q_PE)))
-    gain_MB = (2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_MB * np.conj(Q_MB)))
+    omEM = simres_EM_pump.omega_EM
+    OmAC = simres_AC.Omega_AC
+
+    # first find the numerators of gain. Sturmberg Eq (12)
+    gain    = 2 * omEM * OmAC * np.real(Q * np.conj(Q))
+    gain_PE = 2 * omEM * OmAC * np.real(Q_PE * np.conj(Q_PE))
+    gain_MB = 2 * omEM * OmAC * np.real(Q_MB * np.conj(Q_MB))
 
     normal_fact = np.zeros((n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex)
     for i in range(n_modes_EM_Stokes):  # TODO: express this as some one line outer product?
@@ -590,6 +552,7 @@ def gain_and_qs(
                 P3 = simres_AC.AC_mode_energy[k]
                 normal_fact[i, j, k] = P1 * P2 * P3 * alpha[k]
 
+    # now normalise to find the final gain. Sturmberg Eq (12)
     SBS_gain = np.real(gain / normal_fact)
     SBS_gain_PE = np.real(gain_PE / normal_fact)
     SBS_gain_MB = np.real(gain_MB / normal_fact)
