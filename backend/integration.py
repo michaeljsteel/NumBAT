@@ -534,9 +534,13 @@ def gain_and_qs(
 
     Q = Q_PE + Q_MB  # TODO: the Q couplings come out as non trivially complex. Why?
 
-    gain = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q * np.conj(Q))
-    gain_PE = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_PE * np.conj(Q_PE))
-    gain_MB = 2 * simres_EM_pump.omega_EM * simres_AC.Omega_AC * np.real(Q_MB * np.conj(Q_MB))
+    omEM = simres_EM_pump.omega_EM
+    OmAC = simres_AC.Omega_AC
+
+    # first find the numerators of gain. Sturmberg Eq (12)
+    gain    = 2 * omEM * OmAC * np.real(Q * np.conj(Q))
+    gain_PE = 2 * omEM * OmAC * np.real(Q_PE * np.conj(Q_PE))
+    gain_MB = 2 * omEM * OmAC * np.real(Q_MB * np.conj(Q_MB))
 
     normal_fact = np.zeros((n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex)
     for i in range(n_modes_EM_Stokes):  # TODO: express this as some one line outer product?
@@ -548,6 +552,7 @@ def gain_and_qs(
                 P3 = simres_AC.AC_mode_energy[k]
                 normal_fact[i, j, k] = P1 * P2 * P3 * alpha[k]
 
+    # now normalise to find the final gain. Sturmberg Eq (12)
     SBS_gain = np.real(gain / normal_fact)
     SBS_gain_PE = np.real(gain_PE / normal_fact)
     SBS_gain_MB = np.real(gain_MB / normal_fact)

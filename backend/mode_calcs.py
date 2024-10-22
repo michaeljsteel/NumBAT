@@ -844,10 +844,11 @@ class EMSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.elnd_to_mesh,
+                    fm.v_nd_xy,
+
                     fm.v_el_2_mat_idx,
                     opt_props.n_mats_em,
                     opt_props.v_refindexn,
-                    fm.v_nd_xy,
                     self.fem_evecs,
                 )
             else:

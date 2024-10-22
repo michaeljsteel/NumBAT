@@ -10,8 +10,7 @@
 subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    elnd_to_mesh, v_nd_xy, v_beta, soln_em_e, m_power, errco, emsg)
 
-
-!     k_0 = 2 pi / lambda, where lambda in meters.
+   ! k_0 = 2 pi / lambda, where lambda in meters.
 
    use numbatmod
    use class_TriangleIntegrators
@@ -29,12 +28,12 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) ::  emsg
 
-!     Local variables
+   ! Local variables
    integer(8) nod_el_p(P2_NODES_PER_EL)
    complex(8) sol_el_1(2*P2_NODES_PER_EL+10), sol_el_2(2*P2_NODES_PER_EL)
    complex(8) vec_1(2*P2_NODES_PER_EL)
 
-   complex(8) bas_ovrlp(2*P2_NODES_PER_EL,2*P2_NODES_PER_EL+10)
+   complex(8) bas_ovrlp(2*P2_NODES_PER_EL, 2*P2_NODES_PER_EL+10)
 
    integer(8) i, j, iq
    integer(8) i_el, ival

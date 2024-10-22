@@ -7,7 +7,7 @@
 !         (\vec u^* \dot \hatn)
 !           \cross
 !  [   eps0  (eps_a - eps_b)     (\hatn \cross \vecEs)^* \dot (\hatn \cross \vecEp)
-!   - 1/eps0 (1/eps_a - 1/epsb)  (\hatn \dot \vecDs)^*   \dot (\hatn \dot \vecdp)  ]
+!   - 1/eps0 (1/eps_a - 1/epsb)  (\hatn \dot \vecDs)^*   \dot (\hatn \dot \vecDp)  ]
 !
 
 
