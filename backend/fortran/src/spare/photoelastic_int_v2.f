@@ -133,9 +133,9 @@ c       mat_T_tr = Transpose(mat_T)
         mat_T_tr(1,2) = mat_T(2,1)
         mat_T_tr(2,1) = mat_T(1,2)
 C
-        call mat_p2_p2_p2 (p2_p2_p2, det_b)
-        call mat_p2_p2_p2x (p2_p2_p2x, mat_T_tr, det_b)
-        call mat_p2_p2_p2y (p2_p2_p2y, mat_T_tr, det_b)
+        call find_overlaps_p2_p2_p2 (p2_p2_p2, det_b)
+        call find_overlaps_p2_p2_p2x (p2_p2_p2x, mat_T_tr, det_b)
+        call find_overlaps_p2_p2_p2y (p2_p2_p2y, mat_T_tr, det_b)
 C
 cccccccccc
         do i=1,3*nnodes
