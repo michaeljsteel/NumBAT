@@ -29,7 +29,6 @@ subroutine make_phi_vector_basis(i_eq, i_ddl, phi_vec_map, p2_list,&
    integer(8) k, m, n1, n2
    double precision grad_p1(dimm), grad_p2(dimm), phi
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
    k  = phi_vec_map(1, i_eq, i_ddl)
    m  = phi_vec_map(2, i_eq, i_ddl)
