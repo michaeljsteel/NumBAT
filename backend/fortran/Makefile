@@ -1,4 +1,4 @@
-UNAME_S := $(shell uname -s)
+#UNAME_S := $(shell uname -s)
 
 
 
@@ -25,33 +25,33 @@ inteldebug:
 	meson compile -C build_inteldebug
 
 gcc:
-ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
-	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
-endif
+#ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
+#	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
+#endif
 	- rm -rf build_gcc
-	meson setup --reconfigure --buildtype=release build_gcc 
+	meson setup --reconfigure --buildtype=release build_gcc
 	#meson compile -v -C build_gcc --jobs 1
-	meson compile -v -C build_gcc 
+	meson compile -v -C build_gcc
 	cp build_gcc/nb_fortran.so .
 
 intel:
 	- rm -rf build_intel
 	meson setup --reconfigure --buildtype=release build_intel \
-		--native-file nb-linuxintel-native-file.ini 
+		--native-file nb-linuxintel-native-file.ini
 
 	meson compile -C build_intel
 	cp build_intel/nb_fortran.so .
 
-mac: 
+mac:
 ifneq ($(UNAME_S), Darwin)  # TODO: make this a make function?
 	$(error 'We do not seem to be building on Mac. Check you are choosing the right target')
 endif
 	- rm -rf build_mac
 	meson setup --reconfigure --buildtype=release build_mac \
-		--native-file nb-darwin-native-file.ini 
+		--native-file nb-darwin-native-file.ini
 
 	meson compile -C build_mac
-	cp build_mac/nb_fortran.dylib nb_fortran.so 
+	cp build_mac/nb_fortran.dylib nb_fortran.so
 
 clean:
 	-rm -rf build_*
