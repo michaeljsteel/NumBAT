@@ -10,6 +10,9 @@ fcomp = meson.get_compiler('fortran')
 message('@0@'.format(ccomp.get_id()))
 message('@0@'.format(fcomp.get_id()))
 
+message('compid', ccomp.get_id())
+message('host:', host_machine.system())
+
 
 libs_extra = []
 
@@ -19,9 +22,10 @@ dir_usrlocal = get_option(plat_pref + 'dir_nb_usrlocal')
 dir_usrlocal_lib = dir_usrlocal / 'lib'
 
 dir_usrlocal_inc = dir_usrlocal / 'include'
+
 if host_machine.system() == 'linux'
-dir_oneapi = get_option(plat_pref + 'dir_oneapi')
-dir_mkl = dir_oneapi / 'mkl/latest/lib'
+  dir_oneapi = get_option(plat_pref + 'dir_oneapi')
+  dir_mkl = dir_oneapi / 'mkl/latest/lib'
 
   inc_nblocal = include_directories([dir_usrlocal_inc,])
   lib_blas = ccomp.find_library('mkl_rt',
@@ -37,12 +41,12 @@ elif host_machine.system() == 'darwin'
 
 else # Windows
 
-dir_oneapi = get_option(plat_pref + 'dir_oneapi')
-dir_mkl = dir_oneapi / 'mkl/latest/lib'
+  dir_oneapi = get_option(plat_pref + 'dir_oneapi')
+  dir_mkl = dir_oneapi / 'mkl/latest/lib'
   inc_nblocal = include_directories([dir_usrlocal_inc])
   lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
   header_include_directories:inc_nblocal)
-  endif
+endif
 
 if ccomp.get_id() == 'intel-llvm'
   lib_oneapi = ccomp.find_library('ifport',
@@ -54,13 +58,12 @@ endif
 lib_arpack = ccomp.find_library('arpack', dirs: dir_usrlocal_lib)
 lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
-if ccomp.get_id() == 'intel-llvm'
-  if host_machine.system() == 'windows'
-    add_global_arguments(['-warn declarations'], language: 'fortran',)
-  else
+# enforce implicit none
+if host_machine.system() == 'windows'
+    add_global_arguments(['/warn:declarations'], language: 'fortran',)
+elif ccomp.get_id() == 'intel-llvm'   # intel on linux
     add_global_arguments(['-implicitnone'], language: 'fortran',)
-  endif
-else
+else  # gcc on linux and mac
     add_global_arguments(['-fimplicit-none'], language: 'fortran',)
 endif
 
