@@ -16,21 +16,18 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
    double precision nds_xy(2,P2_NODES_PER_EL)  ! positions of nodes of the element
    logical is_curved, do_P3
 
-   double precision xy_ref(2), xy_act(2), ww, det
+   double precision xy_ref(2), xy_act(2)
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
-
-   ! locals
    xy_ref(1) = this%x_quad(qi)
    xy_ref(2) = this%y_quad(qi)
-   ww = this%wt_quad(qi)
 
    !  xy_ref   = coordinate on the reference triangle
    !  xy_act = coordinate on the actual triangle
 
-   !  phi_P2_ref = values of Lagrange polynomials (1-6) at each local node.
-   !  gradt_P2_ref = gradient on the reference triangle (P2 element)
+   !  phi_P2_ref = values of the P2 polynomials (1-6) at a given point in the reference triangle.
+   !  gradt_P2_ref = gradients of the P2s at that point
    call phi2_2d_mat(xy_ref, this%phi_P2_ref, this%gradt_P2_ref)
 
    if (do_P3) then
@@ -47,7 +44,7 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
 
 
    if(abs(this%det) .lt. 1.0d-20) then
-      write(emsg,*) 'quadrature integration: det too small: ',  det
+      write(emsg,*) 'quadrature integration: det too small: ',  this%det
       errco = NBERR_BAD_QUAD_INT
       return
    endif
@@ -63,4 +60,15 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
       call DGEMM('Transpose','N', 2, 10, 2, D_ONE, this%mat_T, 2,this%gradt_P3_ref, 2, D_ZERO, this%gradt_P3_act, 2)
    endif
 
+   this%quadweight = this%wt_quad(qi) * this%det
 end subroutine
+
+function QuadIntegrator_get_current_quadweight(this) result(res)
+   class(QuadIntegrator) this
+
+   double precision res        ! transformation determinant
+
+   res = this%quadweight
+end function
+
+

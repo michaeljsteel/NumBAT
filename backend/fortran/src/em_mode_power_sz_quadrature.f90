@@ -29,7 +29,9 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    character(len=EMSG_LENGTH), intent(out) ::  emsg
 
    ! Local variables
-   integer(8) nod_el_p(P2_NODES_PER_EL)
+   type(NBError) nberr
+
+   !integer(8) nod_el_p(P2_NODES_PER_EL)
    complex(8) sol_el_1(2*P2_NODES_PER_EL+10), sol_el_2(2*P2_NODES_PER_EL)
    complex(8) vec_1(2*P2_NODES_PER_EL)
 
@@ -62,14 +64,9 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
 !f2py intent(out) m_power
 !
 
-
-
-   ui = stdout
-
-   debug = 0
-
    errco = 0
    emsg = ""
+   call nberr%reset()
 
    call quadint%setup_reference_quadratures()
 
