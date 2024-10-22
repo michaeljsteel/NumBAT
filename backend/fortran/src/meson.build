@@ -22,6 +22,7 @@ nb_pyinterface_fsrcs = files(
     'array_size.f90',
     'conv_gmsh.f90',
     'em_mode_energy_int.f90',
+    'em_mode_act_energy_int.f90',
     'em_mode_power_sz_quadrature.f90',
     #'em_mode_energy_int_v2_ez.f90',
     'em_mode_power_sz_analytic.f90',

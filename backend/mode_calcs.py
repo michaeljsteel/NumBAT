@@ -673,7 +673,8 @@ class EMSimulation(Simulation):
         wl_nm=1550,
         n_eff_target=None,
         Stokes=False,
-        calc_EM_mode_energy=False,
+        #calc_EM_mode_energy=False,
+        calc_EM_mode_energy=True,
         debug=False,
     ):
 
@@ -839,18 +840,19 @@ class EMSimulation(Simulation):
             if tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
-                self.EM_mode_energy = nb_fortran.em_mode_act_energy_int(
+                resm = nb_fortran.em_mode_act_energy_int(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.elnd_to_mesh,
                     fm.v_nd_xy,
-
-                    fm.v_el_2_mat_idx,
                     opt_props.n_mats_em,
+                    fm.v_el_2_mat_idx,
                     opt_props.v_refindexn,
                     self.fem_evecs,
                 )
+                (self.EM_mode_energy, ) = process_fortran_return(resm, 
+                     "finding curvilinear element EM mode energy")
             else:
                 print(
                     "\n\n FEM routine em_mode_e_energy_int is not implemented for this structure. Can't find group index. \n\n"

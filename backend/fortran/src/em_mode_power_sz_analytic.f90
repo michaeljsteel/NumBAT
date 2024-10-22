@@ -48,6 +48,9 @@ subroutine em_mode_power_sz_analytic (k_0, n_modes, n_msh_el, n_msh_pts, &
    type(AnalyticIntegrator) integrator
    type(PyFrontEnd) frontend
    integer(8) ilo, ihi
+
+   type(NBError) nberr
+
 !
 !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
 !f2py intent(in) P2_NODES_PER_EL, elnd_to_mesh
@@ -64,8 +67,8 @@ subroutine em_mode_power_sz_analytic (k_0, n_modes, n_msh_el, n_msh_pts, &
    ui = stdout
 
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, errco, emsg)
-   RETONERROR(errco)
+   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, nberr)
+   RET_ON_NBERR_UNFOLD(nberr)
 
    do ival=1,n_modes
       t_power = D_ZERO

@@ -105,32 +105,53 @@ module numbatmod
 
    type, public :: NBError
 
-   integer errco
-   character(len=EMSG_LENGTH) :: emsg
+      integer(8) errco
+      character(len=EMSG_LENGTH) :: emsg
+   contains
+
+      procedure :: reset => NBError_reset
+      procedure :: ok => NBError_ok
+      procedure :: set => NBError_set
+      procedure :: to_py => NBError_to_py
+
+   end type NBError
+
+
 contains
 
-   procedure :: ok => NBError_ok
-   procedure :: set => NBError_set
+   function NBError_ok (this) result(is_ok)
+      class(NBError) this
+      logical is_ok
+      is_ok = (this%errco .eq. 0)
+   end function
 
-end type NBError
+   subroutine NBError_reset (this)
+      class(NBError) this
+      this%errco = 0
+      this%emsg = ""
+   end subroutine
 
 
-contains
+   subroutine NBError_set (this, ec, msg)
+      class(NBError) this
+      integer(8) ec
+      character(len=*) :: msg
+      this%errco = ec
+      write(this%emsg, '(A)') msg
 
-function NBError_ok (this) result(is_ok)
-   class(NBError) this
-   logical is_ok
-   is_ok = (this%errco .eq. 0)
-end function
+   end subroutine
 
-subroutine NBError_set (this, ec, msg)
-   class(NBError) this
-   integer ec
-   character(len=*) :: msg
-   this%errco = ec
-   write(*, this%emsg) msg
+   subroutine NBError_to_py(this, ec, msg)
+      class(NBError) this
+      integer(8), intent(out) :: ec
+      character(len=EMSG_LENGTH), intent(out) :: msg
 
-end subroutine
+      write(*,*) 'topying:', this%errco, this%emsg
+      ec = this%errco
+      write(msg, '(A)') this%emsg
+
+   end subroutine
+
 
 
    subroutine log_me(fname, msg, newfile)
@@ -171,16 +192,16 @@ end subroutine
       character(len=*) :: msg
       integer(8) :: ui
 
-! #ifdef __GNUC__
-!       integer(8) :: ret
-! #endif
+      ! #ifdef __GNUC__
+      !       integer(8) :: ret
+      ! #endif
 
       write(ui, '(A,A)') '>>>> ', msg
       flush(ui)
 
-! #ifdef __GNUC__
-!             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
-! #endif
+      ! #ifdef __GNUC__
+      !             ret = fsync(fnum(ui))   ! actually sync to fs on GCC
+      ! #endif
 
    end subroutine
 
@@ -261,7 +282,7 @@ end subroutine
       str = trim(buffer)
    end function int_2_str
 
-   !  TODO: fix with just one call
+!  TODO: fix with just one call
    function int4_2_str(val, fmt) result(str)
       integer(4), intent(in) :: val
       character(len=*), intent(in), optional :: fmt
@@ -321,7 +342,7 @@ end subroutine
 
 
 
-   !TODO: move somewhere leass general
+!TODO: move somewhere leass general
    logical function log_is_curved_elem_tri (nnodes, xel) result(is_curved)
 
       implicit none

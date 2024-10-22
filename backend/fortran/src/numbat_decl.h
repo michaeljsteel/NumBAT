@@ -5,6 +5,7 @@
 #define RETONERROR(ec) if (ec .ne. 0) then ; return ; endif
 
 #define RET_ON_NBERR(nberr) if (nberr%errco .ne. 0) then ; return ; endif
+#define RET_ON_NBERR_UNFOLD(nberr) if (nberr%errco .ne. 0) then ; call nberr%to_py(errco, emsg); return ; endif
 
 #define NBERROR_101 101
 #define NBERROR_102 102

@@ -31,7 +31,7 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
    integer(8) i_el, ival
    integer(8) nd_j, ind_j, xy_j
    integer(8) nd_i, ind_i, xy_i
-   integer(8) n_curved, debug, ui
+   integer(8) n_curved
    logical is_curved
 
    double precision nds_xy(2,P2_NODES_PER_EL)
@@ -44,6 +44,7 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
    logical do_P3
    double precision t_quadwt
 
+   type(NBError) :: nberr
 
 
    !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
@@ -58,17 +59,14 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
    !f2py intent(out) m_energy
 
 
-   ui = stdout
-
-   debug = 0
-
+   call nberr%reset()
    errco = 0
    emsg = ""
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, errco, emsg)
-   RETONERROR(errco)
+   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, nberr)
+   RET_ON_NBERR_UNFOLD(nberr)
 
 
    n_curved = 0
