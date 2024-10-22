@@ -3,7 +3,7 @@
 ! Calculate the unnormalised Q_PE integral of two EM modes and an AC mode using
 ! either analytic expressions (linear elements) or quadrature integration (curvilinear elements)
 
-! Q_PE_unnorm = -eps_0  \int dx dy  eps_r  p_ijkl (E_s^*)_i (E_p)_j \partial k u_l
+! Q_PE_unnorm = -eps_0  \int dx dy  eps_r^2  p_ijkl (E_s^*)_i (E_p)_j \partial k (u_l)^*
 
 
 
