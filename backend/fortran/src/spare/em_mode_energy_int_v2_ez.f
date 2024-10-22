@@ -125,11 +125,11 @@ c         The longitudinal component at the edge nodes and interior node (P3 ele
           Ez_field_el_P3(i) = z_tmp1
         enddo
 c
-        call get_H_field_p3 (nnodes_P2, k_0, beta1, mat_T,
+        call get_H_field_p3(k_0, beta1, mat_T,
      *    E_field_el, Ez_field_el_P3, H_field_el)
 c
 c       The matrix p2_p2 contains the overlap integrals between the P2-polynomial basis functions
-        call mat_p2_p2(p2_p2, det_b)
+        call find_overlaps_p2_p2(p2_p2, det_b)
         do itrial=1,nnodes_P2_0
           do i=1,3
             z_tmp1 = E_field_el(i,itrial)
