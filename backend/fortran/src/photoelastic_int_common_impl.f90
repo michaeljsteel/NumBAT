@@ -19,9 +19,9 @@ subroutine make_P2_overlaps_i_j_dk_l_analytic(i_el, beta_ac, typ_e,  &
    use numbatmod
 
    complex(8) beta_ac, eps
+   integer(8) n_elt_mats, typ_e
    double precision nds_xy(2,P2_NODES_PER_EL)
    complex(8) p_tensor(3,3,3,3,n_elt_mats)
-   integer(8) n_elt_mats, typ_e
 
    ! Contains phi2_i phi2_j \partial_k phi2_l for each basis function
    ! Slots i,j, ,l are indexed phi_1x, phi_1y, phi_1z, phi_2x, phi_2y, ...
