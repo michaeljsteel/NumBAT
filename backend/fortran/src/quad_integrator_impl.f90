@@ -7,8 +7,7 @@ subroutine QuadIntegrator_setup_reference_quadratures(this)
 
 end subroutine
 
-subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
-   is_curved, do_P3, errco, emsg)
+subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, is_curved, do_P3, nberr)
 
    class(QuadIntegrator) this
 
@@ -17,8 +16,12 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
    logical is_curved, do_P3
 
    double precision xy_ref(2), xy_act(2)
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError) nberr
+
+   integer(8)  :: errco
+   character(len=EMSG_LENGTH) :: emsg
+
+   errco = 0
 
    xy_ref(1) = this%x_quad(qi)
    xy_ref(2) = this%y_quad(qi)
@@ -42,13 +45,14 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
          this%det, this%mat_B, this%mat_T, errco, emsg)
    endif
 
+   call nberr%set(errco, emsg)
+   RET_ON_NBERR_UNFOLD(nberr)
 
    if(abs(this%det) .lt. 1.0d-20) then
       write(emsg,*) 'quadrature integration: det too small: ',  this%det
-      errco = NBERR_BAD_QUAD_INT
+      call nberr%set(NBERR_BAD_QUAD_INT, emsg)
       return
    endif
-
 
    ! gradt_P2_act  = gradient on the actual triangle
    ! gradt_P2_act  = Transpose(mat_T)*gradt_P2_ref
@@ -60,7 +64,8 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, &
       call DGEMM('Transpose','N', 2, 10, 2, D_ONE, this%mat_T, 2,this%gradt_P3_ref, 2, D_ZERO, this%gradt_P3_act, 2)
    endif
 
-   this%quadweight = this%wt_quad(qi) * this%det
+   this%quadweight = this%wt_quad(qi) * abs(this%det)
+
 end subroutine
 
 function QuadIntegrator_get_current_quadweight(this) result(res)

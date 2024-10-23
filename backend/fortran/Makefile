@@ -1,6 +1,9 @@
 #UNAME_S := $(shell uname -s)
 
 
+def:
+	$(error 'Specify a target that is one of win, gcc, gccdebug, intel, inteldebug')
+
 
 
 win:

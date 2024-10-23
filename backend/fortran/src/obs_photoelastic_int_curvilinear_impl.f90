@@ -46,8 +46,8 @@ subroutine make_P2_overlaps_i_j_dk_l(i_el, beta_ac, typ_e, is_curved, &
    ! For each quadrature point evaluate Q_PE of Lagrange polynomials
    ! or derivative of Lagrange polynomials
    do iq=1,quadint%n_quad
-      call quadint%build_transforms_at(iq, nds_xy, is_curved, errco, emsg)
-      RETONERROR(errco)
+      call quadint%build_transforms_at(iq, nds_xy, is_curved, nberr)
+      RET_ON_NBERR_UNFOLD(nberr)
 
       ! transformed weighting of this quadrature point including triangle area transform
       t_quadwt = quadint%wt_quad(iq) * abs(quadint%det)

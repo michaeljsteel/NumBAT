@@ -1,12 +1,13 @@
 #include "numbat_decl.h"
 
-subroutine AnalyticIntegrator_build_transforms_at(this, nds_xy, errco, emsg)
+subroutine AnalyticIntegrator_build_transforms_at(this, nds_xy, nberr)
 
    class(AnalyticIntegrator) this
 
    double precision nds_xy(2,P2_NODES_PER_EL)
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError), intent(out) :: nberr
+
+   character(len=EMSG_LENGTH) :: emsg
 
    ! The geometric transformation (x,y) -> (x_g,y_g) = mat_B*(x,y)^t + (x_0, y_0, z_0)^t
    ! maps the current triangle to the reference triangle.
@@ -16,9 +17,9 @@ subroutine AnalyticIntegrator_build_transforms_at(this, nds_xy, errco, emsg)
 
    this%det = this%mat_B(1,1) * this%mat_B(2,2) - this%mat_B(1,2) * this%mat_B(2,1)
 
-   if (abs(this%det) .le. 1.0d-22) then
+   if (abs(this%det) .le. 1.0d-20) then
       write(emsg,*) 'analytic integrator: Determinant = 0 :', this%det, "nds_xy = ", nds_xy
-      errco = NBERR_BAD_DETERMINANT
+      call nberr%set(NBERR_BAD_DETERMINANT, emsg)
       return
    endif
 

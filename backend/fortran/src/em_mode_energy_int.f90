@@ -87,8 +87,8 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
 
       do iq=1,quadint%n_quad
 
-         call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, errco, emsg)
-         RETONERROR(errco)
+         call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
+         RET_ON_NBERR_UNFOLD(nberr)
 
 
          ! transformed weighting of this quadrature point including triangle area transform
