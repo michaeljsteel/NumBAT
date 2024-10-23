@@ -18,6 +18,13 @@ module numbatmod
    integer(8), parameter :: P2_NODES_PER_EL = 6
    integer(8), parameter :: P3_NODES_PER_EL = 10
 
+   integer(8), parameter :: P3_VERT_1 = 1
+   integer(8), parameter :: P3_VERT_2 = 2
+   integer(8), parameter :: P3_VERT_3 = 3
+   integer(8), parameter :: P3_EDGE_LO = 4
+   integer(8), parameter :: P3_EDGE_HI = 9
+   integer(8), parameter :: P3_INTERIOR = 10
+
 
    integer(8), parameter :: nnodes_0 = 6
    integer(8), parameter :: N_DDL_T = 4
@@ -146,7 +153,6 @@ contains
       integer(8), intent(out) :: ec
       character(len=EMSG_LENGTH), intent(out) :: msg
 
-      write(*,*) 'topying:', this%errco, this%emsg
       ec = this%errco
       write(msg, '(A)') this%emsg
 

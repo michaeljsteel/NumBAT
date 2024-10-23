@@ -272,6 +272,9 @@ contains
 
 
       !  Calculate energy in each medium (typ_el)
+
+      !TODO: move this after the i\beta Ez correction (adjusting for Ez terms inside its defintion)
+
       call mode_energy (n_modes, n_msh_el, nodes_per_el, n_core, &
          mesh_raw, &
          n_elt_mats, eps_eff,&
@@ -293,6 +296,7 @@ contains
       !  get the physical, un-normalised z-component
       !  (see Eq. (25) of the JOSAA 2012 paper)
       !  TODO: is this really supposed to be x i beta , or just x beta  ?
+      ! TODO: pull this back to array_sol
       do i_md=1,n_modes
          m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
       enddo

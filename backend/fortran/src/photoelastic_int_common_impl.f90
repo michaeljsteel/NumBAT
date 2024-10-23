@@ -158,7 +158,7 @@ subroutine make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved,
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
    !locals
-
+   type(NBError) nberr
    double precision t_quadwt
    integer(8) iq, nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
    integer(8) i_el, ind_i, ind_j, ind_l
@@ -170,10 +170,11 @@ subroutine make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved,
    ! For each quadrature point evaluate Q_PE of Lagrange polynomials
    ! or derivative of Lagrange polynomials
    do_P3 = .false.
+   call nberr%reset()
 
    do iq=1,quadint%n_quad
-      call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, errco, emsg)
-      RETONERROR(errco)
+      call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
+      RET_ON_NBERR_UNFOLD(nberr)
 
       ! transformed weighting of this quadrature point including triangle area transform
       t_quadwt = quadint%wt_quad(iq) * abs(quadint%det)
