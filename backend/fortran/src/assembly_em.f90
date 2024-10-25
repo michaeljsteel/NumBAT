@@ -2,10 +2,6 @@
  !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
  !  for the main linear equations
 
-!call find_basis_derivatives(j_eq, jcol, phi_vec_map, phi_P2_ref, phi_P3_ref, &
-!                     gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_j, curlt_phi_j, gradt_j, phi_z_j)
-
-
 
 subroutine find_basis_derivatives(idof, ifunc, phi_vec_map, phi_P2_ref, phi_P3_ref, &
    gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
@@ -100,7 +96,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    double precision el_xy(2, P2_NODES_PER_EL)
 
    ! values of basis functions and gradients at given point in reference and actual triangles
-   double precision phi1_ref(P1_NODES_PER_EL)
+   double precision phi_P1_ref(P1_NODES_PER_EL)
    double precision gradt_P1_ref(2,P1_NODES_PER_EL), gradt_P1_act(2,P1_NODES_PER_EL)
 
    double precision phi_P2_ref(P2_NODES_PER_EL)
@@ -221,7 +217,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
          ! Evaluate the basis functions and gradients at the quadrature point
 
-         call phi1_2d_mat(x_ref, phi1_ref, gradt_P1_ref)  ! P1 elements
+         call phi1_2d_mat(x_ref, phi_P1_ref, gradt_P1_ref)  ! P1 elements
          call phi2_2d_mat(x_ref, phi_P2_ref, gradt_P2_ref)  ! P2 elements
          call phi3_2d_mat(x_ref, phi_P3_ref, gradt_P3_ref)  ! P3 elements
 
@@ -250,7 +246,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, gradt_P3_ref, 2, D_ZERO, gradt_P3_act, 2)
 
          ! N_ENTITY_PER_EL is number of field dof per elt, each associated with one mesh point
-         ! N_DDL_T is number of transverse ones
+         ! N_DDL_T is number of transverse ones (face and 3 edges)
          do jcol=1,N_ENTITY_PER_EL
             jp = entities%v_tags(jcol,iel)
 

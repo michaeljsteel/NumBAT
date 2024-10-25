@@ -38,7 +38,7 @@ subroutine em_mode_power_sz_analytic (k_0, n_modes, n_msh_el, n_msh_pts, &
    !  P3 Ez-field
    double precision m_int_p2_p2(P2_NODES_PER_EL, P2_NODES_PER_EL)
    integer(8) i_el, ival
-   integer(8) nd_i, nd_j, ui
+   integer(8) nd_i, nd_j
    complex(8) vec_Es(3), vec_H(3)
    complex(8) t_Pz
 

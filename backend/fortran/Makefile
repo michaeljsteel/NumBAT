@@ -28,13 +28,17 @@ inteldebug:
 	meson compile -C build_inteldebug
 
 gcc:
-#ifneq ($(UNAME_S), Linux)  # TODO: make this a make function?
-#	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
-#endif
 	- rm -rf build_gcc
 	meson setup --reconfigure --buildtype=release build_gcc
 	#meson compile -v -C build_gcc --jobs 1
 	meson compile -v -C build_gcc
+	cp build_gcc/nb_fortran.so .
+
+gcc1:
+	- rm -rf build_gcc
+	meson setup --reconfigure --buildtype=release build_gcc
+	meson compile -v -C build_gcc --jobs 1
+	#meson compile -v -C build_gcc
 	cp build_gcc/nb_fortran.so .
 
 intel:

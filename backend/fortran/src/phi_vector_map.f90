@@ -15,9 +15,7 @@ subroutine make_phi_vector_map (nod_el, phi_vec_map)
 
    use numbatmod
 
-   integer(8), parameter :: nnodes = 6
-
-   integer(8) nod_el(nnodes), phi_vec_map(4,3,N_DDL_T)
+   integer(8) nod_el(P2_NODES_PER_EL), phi_vec_map(4,3,N_DDL_T)
 
    integer i, j
    integer(8) list_end(2,3), j2
@@ -85,16 +83,6 @@ subroutine make_phi_vector_map (nod_el, phi_vec_map)
          elo=2
          ehi=1
       endif
-
-      !ls_n(3) = 0
-      !j3 = 2
-      !call sort_n(j3, ls_n, ls_n_sorted)
-      !write (*,*) 'ls_n', ls_n(1), ls_n(2), ls_n_sorted(1), ls_n_sorted(2)
-!      j1 = ls_n_sorted(1)
-!      j1 = list_end(j1,i-1)
-!      j2 = ls_n_sorted(2)
-!      j2 = list_end(j2,i-1)
-
 
       elo = list_end(elo,iedge)
       ehi = list_end(ehi,iedge)

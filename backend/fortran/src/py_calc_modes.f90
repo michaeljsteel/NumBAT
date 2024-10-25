@@ -106,6 +106,8 @@ contains
 
       ! locals
 
+      type(NBError) nberr
+
       type(MeshRaw) :: mesh_raw
       type(MeshEntities) :: entities
       type(SparseCSC) :: cscmat
@@ -128,8 +130,7 @@ contains
       !  ----------------------------------------------
 
 
-      integer(8) ui_out
-      integer(8) :: i_md
+      integer(8) ui_out, i_md
 
       !  Variable used by valpr
       integer(8) dim_krylov
@@ -151,7 +152,9 @@ contains
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
+      call nberr%reset()
       call clock_main%reset()
+
 
       !TODO: move pp,qq to elsewhere. SparseCSC?
       vacwavenum_k0 = 2.0d0*D_PI/lambda
@@ -254,77 +257,29 @@ contains
       write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 
-      ! identifies correct ordering but doesn't apply it
-      call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
+
+      !  The eigenvectors will be stored in the array m_evecs
+      !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
+      call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
+         entities, cscmat, pbcs, n_core, bloch_vec, v_evals_beta, arp_evecs, &
+         m_evecs, mode_pol, nberr)
+      RET_ON_NBERR_UNFOLD(nberr)
 
 
-      !  The eigenvectors will be stored in the array sol
-      !  The eigenvalues and eigenvectors are renumbered
-      !  using the permutation vector v_eig_index
-      call array_sol ( bdy_cdn, n_modes, n_msh_el, n_msh_pts, entities%n_entities, cscmat%n_dof, nodes_per_el, &
-         n_core, bloch_vec, v_eig_index, mesh_raw, &
-         entities, &
-         cscmat%m_eqs, pbcs%iperiod_N, pbcs%iperiod_N_E_F, &
-         v_evals_beta, mode_pol, arp_evecs, &
-         m_evecs, errco, emsg)
-      RETONERROR(errco)
+      call mode_energy (n_modes, n_msh_el, n_core, mesh_raw, &
+         n_elt_mats, eps_eff, m_evecs, mode_pol)
 
 
 
-      !  Calculate energy in each medium (typ_el)
-
-      !TODO: move this after the i\beta Ez correction (adjusting for Ez terms inside its defintion)
-
-      call mode_energy (n_modes, n_msh_el, nodes_per_el, n_core, &
-         mesh_raw, &
-         n_elt_mats, eps_eff,&
-         m_evecs, v_evals_beta, mode_pol)
-
-
-      !  Doubtful that this check is of any value: delete?
-      !  call check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
-      !  type_el, v_nd_xy, v_evals_beta, m_evecs, &!v_evals_beta_pri, m_evecs_pri,
-      !  overlap_L, overlap_file, debug, ui_out, &
-      !  pair_warning, vacwavenum_k0, errco, emsg)
-      !  RETONERROR(errco)
-
-
-      !  Should this happen _before_ check_ortho?
-
-
-      !  The z-component must be multiplied by -ii*beta in order to
-      !  get the physical, un-normalised z-component
-      !  (see Eq. (25) of the JOSAA 2012 paper)
-      !  TODO: is this really supposed to be x i beta , or just x beta  ?
-      ! TODO: pull this back to array_sol
-      do i_md=1,n_modes
-         m_evecs(3,:,i_md,:) = C_IM_ONE * v_evals_beta(i_md) * m_evecs(3,:,i_md,:)
-      enddo
-
-
+      ! prepare to return data to python end
       call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
-
-
       call mesh_raw%fill_python_arrays(type_el, type_nod, elnd_to_mesh, v_nd_xy)
 
-      deallocate(v_eig_index, overlap_L, arp_evecs)
-      !deallocate(cscmat%mOp_stiff, cscmat%mOp_mass)
-      !deallocate(v_row_ind, v_col_ptr)
 
+      deallocate(v_eig_index, overlap_L, arp_evecs)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
-
       write(ui_out,*) "-----------------------------------------------"
-
-      !  call report_results_em(debug, ui_out, &
-      !  n_msh_pts, n_msh_el, &
-      !  time1, time2, time_fact, time_arpack,  time1_postp, time2_postp, &
-      !  lambda, e_h_field, bloch_vec, bdy_cdn,  &
-      !  int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
-      !  n_elt_mats, n_dof, dim_krylov, &
-      !  shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
-
-
 
    end subroutine calc_em_modes_impl
 
@@ -565,43 +520,6 @@ contains
 
 
 
-
-   subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
-
-      integer(8), intent(in) :: n_modes
-      complex(8), intent(in) :: shift_ksqr
-      complex(8) :: v_evals_beta(:)
-      integer(8), dimension(:), allocatable :: v_eig_index
-
-      integer(8) i
-
-      complex(8) z_beta
-
-      !TODO: make a function. Turn beta^2 raw eig into actual beta
-      do i=1,n_modes
-         !  z_tmp0 = v_evals_beta(i)
-         !  z_tmp = 1.0d0/z_tmp0+shift_ksqr
-         !  z_beta = sqrt(z_tmp)
-
-         z_beta = sqrt(1.0d0/v_evals_beta(i)+shift_ksqr )
-
-         !  Mode classification - we want the forward propagating mode
-         if (abs(imag(z_beta)/z_beta) .lt. 1.0d-8) then
-            !  re(z_beta) > 0 for forward propagating mode
-            if (dble(z_beta) .lt. 0) z_beta = -z_beta
-         else
-            !  im(z_beta) > 0 for forward decaying evanescent mode  !rarely relevant for us
-            if (imag(z_beta) .lt. 0) z_beta = -z_beta
-         endif
-
-         v_evals_beta(i) = z_beta
-      enddo
-
-
-
-      !  order v_evals_beta by magnitudes and store in v_eig_index
-      call z_indexx (n_modes, v_evals_beta, v_eig_index)
-   end subroutine
 
 
 

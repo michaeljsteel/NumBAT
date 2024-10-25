@@ -1,14 +1,16 @@
 
-    !
-    !     P2 Lagrange Interpolation nodes for the unit triangle
-    !
-    !     unit triangle =  triangle whose vertices are:
-    !                         (0,0,0), (1,0,0), (0,1,0).
-    !
-subroutine interp_nod_2d (nnodes, xn)
+!
+!     P2 Lagrange Interpolation nodes for the unit triangle
+!
+!     unit triangle =  triangle whose vertices are:
+!                         (0,0,0), (1,0,0), (0,1,0).
+!
+
+subroutine get_P2_node_locations (nnodes, xn)
+    use numbatmod
 
    integer(8) nnodes
-   double precision xn(2,nnodes)
+   double precision xn(2,P2_NODES_PER_EL)
    integer(8) i
 
 
@@ -35,6 +37,5 @@ subroutine interp_nod_2d (nnodes, xn)
    i = 6
    xn(1,i) = 0
    xn(2,i) = 0.5
-    !
-   return
+
 end

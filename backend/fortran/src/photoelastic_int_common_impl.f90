@@ -145,8 +145,8 @@ subroutine make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved,
 
    complex(8) beta_ac, eps
    double precision nds_xy(2,P2_NODES_PER_EL)
-   complex(8) p_tensor(3,3,3,3,n_elt_mats)
    integer(8) n_elt_mats, typ_e
+   complex(8) p_tensor(3,3,3,3,n_elt_mats)
    logical is_curved
 
    ! Contains phi2_i phi2_j \partial_k phi2_l for each basis function
