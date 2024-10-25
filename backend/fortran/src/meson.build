@@ -38,10 +38,13 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
-    'array_sol.f90',
+  'construct_solution_fields_em.f90',
+  #'array_sol.f90',
+
     'array_sol_ac_v2.f90',
     'assembly_ac.f90',
     'assembly_em.f90',
+    'basis_functions.f90',
     'bound_cond_ac.f90',
     'construct_fem_tables.f90',
     'conv_gmsh_subroutines_mod.f90',
