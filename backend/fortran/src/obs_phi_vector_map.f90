@@ -11,11 +11,11 @@
 !  The basis functions are stored in the 3rd index i as : centre, edges 1(4), 2(5), 3(6)
 !                                 in the 2nd index j as 3 functions on each edge (for i=1), and along each edge (for i=2..4)
 
-subroutine build_vector_elt_map (nod_el, vector_elt_map)
+subroutine build_vector_elt_map (el_nds, vector_elt_map)
 
    use numbatmod
 
-   integer(8) nod_el(P2_NODES_PER_EL), vector_elt_map(4,3,N_ETY_TRANSVERSE)
+   integer(8) el_nds(P2_NODES_PER_EL), vector_elt_map(4,3,N_ETY_TRANSVERSE)
 
    integer ety, bf, j
    integer(8) list_end(2,3), j2
@@ -69,10 +69,10 @@ subroutine build_vector_elt_map (nod_el, vector_elt_map)
       iedge = ety-1
 
       ! Find the indices corresponding to the nodes at the ends of the current edge
-      ! They need to be sorted by the absolute value of the nodes in the overal mesh table (via nod_el)
+      ! They need to be sorted by the absolute value of the nodes in the overal mesh table (via el_nds)
       do j=1,2
          edge_end = list_end(j,iedge)
-         ls_n(j) = nod_el(edge_end)
+         ls_n(j) = el_nds(edge_end)
       enddo
 
       elo=1

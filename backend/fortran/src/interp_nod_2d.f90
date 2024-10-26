@@ -6,10 +6,9 @@
 !                         (0,0,0), (1,0,0), (0,1,0).
 !
 
-subroutine get_P2_node_locations (nnodes, xn)
+subroutine get_P2_node_locations (xn)
     use numbatmod
 
-   integer(8) nnodes
    double precision xn(2,P2_NODES_PER_EL)
    integer(8) i
 
