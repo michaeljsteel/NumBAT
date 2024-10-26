@@ -81,17 +81,18 @@ subroutine  BasisFunctions_evaluate_at_position(this, i_el, t_xy, is_curved, el_
 
 end subroutine
 
-
-subroutine  BasisFunctions_make_vector_elt_basis(this, bf_j, ety_j, vec_phi_j, curl_phi_j)
+! Evaluates the vector element and its transverse curl
+! of basis function bf_j (1..3) of transverse entity ety_j (1..4)
+! at the current position previously set by evaluate_at_position
+subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_j, vec_phi, curlt_phi)
    use numbatmod
 
    class(BasisFunctions) this
    integer(8) bf_j, ety_j
-   double precision vec_phi_j(2)  ! gradient of a P
-   double precision curl_phi_j    ! \zhat \dot (\nabla_t \cross E_t)
-   double precision phi_z_j
+   double precision vec_phi(2)  ! gradient of a P
+   double precision curlt_phi    ! \zhat \dot (\nabla_t \cross E_t)
 
-   call make_vector_elt_basis(bf_j, ety_j, this%vector_elt_map, this%phi_P2_ref, &
-   this%gradt_P1_act, this%gradt_P2_act, vec_phi_j, curl_phi_j)
+   call evaluate_vector_elts(bf_j, ety_j, this%vector_elt_map, this%phi_P2_ref, &
+      this%gradt_P1_act, this%gradt_P2_act, vec_phi, curlt_phi)
 
 end subroutine

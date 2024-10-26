@@ -58,7 +58,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    complex(8) sol_el(3,N_DOF_PER_EL) ! solution for this mode and elt
 
 
-   double precision vec_phi_j(2), curl_phi_j, phi_z_j
+   double precision vec_phi_x(2), curlt_phi_x, phi_P3_x
 
    double precision xy_ref(2)
    complex(8) val_exp(N_ENTITY_PER_EL)
@@ -66,7 +66,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    logical is_curved
    integer(8)   m, nd_i, typ_e, xyz_i
    integer(8) debug, i_sol_max
-   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eqs, dof_j
+   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eq, n_eqs, dof_j
 
    complex(8) z_tmp2, z_sol_max
    integer(8) nd_lab
@@ -118,12 +118,14 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
 
          sol_el = D_ZERO
 
+         ! fill sol_el(1:3, 1..P2_NODES)
          do nd_i=1,P2_NODES_PER_EL
             xy_ref = xy_nds_P2(:, nd_i)
 
             call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
             RET_ON_NBERR_UNFOLD(nberr)
 
+            ! transverse part:  sol_el(1:2, 1..P2_NODES)
             do ety_j=1,N_ETY_TRANSVERSE  ! for the transverse field entities on this elt
                ety_id = entities%v_tags(ety_j,i_el)    ! find the global ety id
 
@@ -131,44 +133,46 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
                   n_eqs = cscmat%m_eqs(dof_j,ety_id)   ! how many eqs is this dof involved in
 
                   if (n_eqs > 0) then
+
+                     ! The vector elements are built from P2 scalar functions which are nonzero
+                     !  at a P2 node, only for the function corresponding to that node
+                     ! So we should only evaluate basis functions which are made
+                     !  from that function (there are two)
+                     !TODO: create a basfuncs%get_scalar_index_of_vector_elt function
                      m  = basfuncs%vector_elt_map(2, dof_j, ety_j)
 
                      if (m == nd_i) then
 
-                        !  nd_i correspond to a P2 interpolation node
-                        !  The contribution is nonzero only when m=nd_i.
-                        !  Determine the basis vector
-
-                        call basfuncs%make_vector_elt_basis(dof_j, ety_j, vec_phi_j, curl_phi_j)
+                        call basfuncs%evaluate_vector_elts(dof_j, ety_j, vec_phi_x, curlt_phi_x)
 
                         ! pbc version
-                        !sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_j(:)* val_exp(ety_j)
-                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_j(:)
+                        !sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x* val_exp(ety_j)
+                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x
 
                      endif
                   endif
                enddo
             enddo
 
+            !  Longtiudinal part:  sol_el(3, 1..P2_NODES)
             !  Contribution to the longitudinal component
             !  The initial P3 value of Ez isinterpolated over P2 nodes
             do ety_j=N_ETY_TRANSVERSE+1,N_ENTITY_PER_EL
 
-               do dof_j=1,1
-                  ety_id = entities%v_tags(ety_j,i_el)
-                  n_eqs = cscmat%m_eqs(dof_j,ety_id)
-                  if (n_eqs > 0) then
+               dof_j=1                                ! There is only 1 DOF for each of the P3 nodes
+               ety_id = entities%v_tags(ety_j,i_el)
+               n_eq = cscmat%m_eqs(dof_j,ety_id)     ! Find the index of this dof at this entity
+               if (n_eq > 0) then
 
-                     m  = ety_j-N_ETY_TRANSVERSE
-                     phi_z_j = basfuncs%phi_P3_ref(m)
+                  m  = ety_j-N_ETY_TRANSVERSE
+                  phi_P3_x = basfuncs%phi_P3_ref(m)
 
-                     !pbc version
-                     !sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eqs, md_i2) * phi_z_j * val_exp(ety_j)
+                  !pbc version
+                  !sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x * val_exp(ety_j)
 
-                     sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eqs, md_i2) * phi_z_j
+                  sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x
 
-                  endif
-               enddo
+               endif
             enddo
 
 
@@ -190,18 +194,21 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          mode_comp(1:3) = mode_comp(1:3) * abs(basfuncs%det)/dble(P2_NODES_PER_EL)
 
 
+         !  Longtiudinal part:  sol_el(3, P3_NODES...)
+         !   x and comps of the P3_NODES are left empty
          !  Saving the P3 values of Ez at: the 6 edge nodes and the interior node
          do nd_i=P2_NODES_PER_EL+1,N_DOF_PER_EL
 
-            sol_el(1:3,nd_i) = D_ZERO
+            !sol_el(1:3,nd_i) = D_ZERO
 
-            ety_j = N_ETY_TRANSVERSE+nd_i-P2_NODES_PER_EL+3
+            !ety_j = N_ETY_TRANSVERSE+nd_i-P2_NODES_PER_EL+3
+            ety_j = nd_i + 1  ! make space for the face element
             dof_j = 1
             ety_id = entities%v_tags(ety_j,i_el)
-            n_eqs = cscmat%m_eqs(dof_j,ety_id)
+            n_eq = cscmat%m_eqs(dof_j,ety_id)
 
-            if (n_eqs > 0) then
-               sol_el(3,nd_i) = evecs_raw(n_eqs, md_i2)* val_exp(ety_j)
+            if (n_eq > 0) then
+               sol_el(3,nd_i) = evecs_raw(n_eq, md_i2)* val_exp(ety_j)
             endif
 
 
@@ -212,6 +219,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          mode_poln_fracs(1:3, md_i) = mode_poln_fracs(1:3, md_i) + mode_comp(1:3)
 
 
+         ! Copy this element into the main solution array
          sol(:,:,md_i,i_el) =  sol_el
 
       enddo  ! end of current element
@@ -237,12 +245,10 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          return
       endif
 
-      !  Normalization so that the maximum field component has magnitude 1
-
+      !  Normalization for this mode so that the maximum field component has magnitude 1
       sol(:,:,md_i,:) = sol(:,:,md_i,:)/z_sol_max
-
-
       evecs_raw(1:cscmat%n_dof,md_i2) = evecs_raw(1:cscmat%n_dof,md_i2)/z_sol_max
+
    enddo
 
 
