@@ -90,7 +90,7 @@ nb_impl_fsrcs = files(
     'phi3_2d_mat.f90',
     'phi3_grad_p2.f90',
     'phi_vector_map.f90',
-    'phi_vector_basis.f90',
+   # 'phi_vector_basis.f90',
 #'photoelastic_int_curvilinear_impl.f90',
 #    'photoelastic_int_linear_impl.f90',
     'photoelastic_int_common_impl.f90',

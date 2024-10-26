@@ -1,7 +1,7 @@
 !  P2 vector basis functions over the reference unit triangle
 
 !  Compute:
-!  a quadratic vector basis function (vec_phi = P2 * Grad P1) and its transverse curl (curl_t_phi)
+!  a quadratic vector basis function (vec_phi = P2 * Grad P1) and its transverse curl (curlt_phi)
 
 ! vector_elt_map indexes the pieces of the basis function
 !  vector_elt_map(1,j,i) = k : number of gradients needed: if k=3 only one gradient will be used; k=4 => 2 gradients
@@ -10,7 +10,7 @@
 !  vector_elt_map(4,j,i)     : gradient of the second P1 polynomial eta_n2 if needed
 
 
-! Generate the vector basis function for the dof DOF of transverse entity ety_trans and its transverse curl (purely z-component)
+! Generate the vector basis function for the bf_j bf_j of transverse entity ety_trans and its transverse curl (purely z-component)
 ! in terms of the P1 and P2 scalar functions
 
 ! formulas
@@ -35,24 +35,21 @@
 !       j=2, : phi_1 Grad phi_3
 !       j=3, : phi_6 (Grad phi_1-Grad phi_3)
 
-subroutine evaluate_vector_elts(dof, ety_trans, vector_elt_map, p2_list,&
-   grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
+subroutine evaluate_vector_elts(bf_j, ety_trans, vector_elt_map, phi_P2_ref,&
+   gradt_P1_act, gradt_P2_act, vec_phi, curlt_phi)
 
    use numbatmod
 
-   integer(8), parameter :: nnodes = 6
-   integer(8), parameter :: dimm=2
-
-   integer(8) dof, ety_trans
+   integer(8) bf_j, ety_trans
    integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
-   double precision p2_list(nnodes)
-   double precision grad_p1_mat(dimm,3), grad_p2_mat(dimm,nnodes)
-   double precision vec_phi(dimm), curl_t_phi
+   double precision phi_P2_ref(P2_NODES_PER_EL)
+   double precision gradt_P1_act(2,3), gradt_P2_act(2,P2_NODES_PER_EL)
+   double precision vec_phi(2), curlt_phi
 
    integer debug
    !  Local variables
    integer(8) k, m, n1, n2
-   double precision grad_p1(dimm), grad_p2(dimm), phi
+   double precision grad_p1(2), grad_p2(2), phi
 
 
    debug = 0
@@ -67,32 +64,32 @@ subroutine evaluate_vector_elts(dof, ety_trans, vector_elt_map, p2_list,&
       endif
    endif
 
-   k  = vector_elt_map(1, dof, ety_trans)
-   m  = vector_elt_map(2, dof, ety_trans)
-   n1 = vector_elt_map(3, dof, ety_trans)
-   n2 = vector_elt_map(4, dof, ety_trans)
+   k  = vector_elt_map(1, bf_j, ety_trans)
+   m  = vector_elt_map(2, bf_j, ety_trans)
+   n1 = vector_elt_map(3, bf_j, ety_trans)
+   n2 = vector_elt_map(4, bf_j, ety_trans)
 
 
 
    if (k .eq. 3) then
 
-      phi = p2_list(m)
-      grad_p2 = grad_p2_mat(:,m)
-      grad_p1 = grad_p1_mat(:,n1)
+      phi = phi_P2_ref(m)
+      grad_p2 = gradt_P2_act(:,m)
+      grad_p1 = gradt_P1_act(:,n1)
       vec_phi = phi * grad_p1
 
 
    elseif (k .eq. 4) then
 
-      phi = p2_list(m)
-      grad_p2 = grad_p2_mat(:,m)
-      grad_p1 = grad_p1_mat(:,n1) - grad_p1_mat(:,n2)
+      phi = phi_P2_ref(m)
+      grad_p2 = gradt_P2_act(:,m)
+      grad_p1 = gradt_P1_act(:,n1) - gradt_P1_act(:,n2)
       vec_phi = phi * grad_p1
 
 
    endif
 
    !  Curl_t E = Det( grad_p2,  grad_p1)
-   curl_t_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
+   curlt_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
 
 end
