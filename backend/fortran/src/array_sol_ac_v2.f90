@@ -32,9 +32,9 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 !  Local variables
 
    double precision mode_comp(4)
-   integer(8) nod_el_p(nnodes_0)
-   double precision xel(2,nnodes_0)
-   complex(8) sol_el(3,nnodes_0)
+   integer(8) nod_el_p(P2_NODES_PER_EL)
+   double precision xel(2,P2_NODES_PER_EL)
+   complex(8) sol_el(3,P2_NODES_PER_EL)
 
 
    integer(8) j, i1, j1, inod, typ_e, debug

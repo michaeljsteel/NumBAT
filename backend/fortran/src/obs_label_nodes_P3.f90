@@ -20,7 +20,7 @@
  !  visited: An array used to mark visitedd nodes.
  !  Internal Variables:
 
- !  nnodes_0: Number of vertices in a triangular element.
+ !  P2_NODES_PER_EL: Number of vertices in a triangular element.
  !  nod_el_p: Array to store local node numbers for the current element.
  !  vert_1, vert_2: Arrays to store vertices of edges for comparison.
  !  mm, mm2, nn: Counters and offsets for node numbering.
@@ -73,9 +73,9 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
    integer(8) elnd_to_mesh(nnodes,nel), table_N_E_F(14,nel)
 
    !  Local variables
-   integer(8) nnodes_0
-   parameter (nnodes_0 = 6)
-   integer(8) nod_el_p(nnodes_0)
+   integer(8) P2_NODES_PER_EL
+   parameter (P2_NODES_PER_EL = 6)
+   integer(8) nod_el_p(P2_NODES_PER_EL)
    integer(8) j, k, j1, m1, m2
    integer(8) iel, inod, iel2, inod2, n_face
    integer(8) mm, nn, mm2

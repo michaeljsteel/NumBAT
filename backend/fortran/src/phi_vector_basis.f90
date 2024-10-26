@@ -1,17 +1,41 @@
-!  P2 basis function over the reference unit triangle
+!  P2 vector basis functions over the reference unit triangle
 
 !  Compute:
-!  a quadradic basis function (vec_phi = P2 * Grad P1) and
-!  and its transverse curl (curl_t_phi)
+!  a quadratic vector basis function (vec_phi = P2 * Grad P1) and its transverse curl (curl_t_phi)
 
-!  phi_vec_map(1,j,i) = k : number on data to be stored: if k=3 only one gradient will be used; k=4 => 2 gradients
-!  phi_vec_map(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
-!  phi_vec_map(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial phi_n
-!  phi_vec_map(4,j,i)     : it will be used only if k=4
+! vector_elt_map indexes the pieces of the basis function
+!  vector_elt_map(1,j,i) = k : number of gradients needed: if k=3 only one gradient will be used; k=4 => 2 gradients
+!  vector_elt_map(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
+!  vector_elt_map(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial eta_n
+!  vector_elt_map(4,j,i)     : gradient of the second P1 polynomial eta_n2 if needed
 
 
-! generate the vector function i_ddl and its curl in terms of the P1 and P2 functions
-subroutine make_phi_vector_basis(i_eq, i_ddl, phi_vec_map, p2_list,&
+! Generate the vector basis function for the dof DOF of transverse entity ety_trans and its transverse curl (purely z-component)
+! in terms of the P1 and P2 scalar functions
+
+! formulas
+! ety_trans=1, face element
+!    3 edge functions at P2 nodes 4, 5, 6
+!       j=1, node 4: phi_4 Grad eta_3
+!       j=2, node 5: phi_5 Grad eta_1
+!       j=3, node 6: phi_6 Grad eta_2
+
+! ety_trans=2, edge 1, end nodes 1&2
+!       j=1, : phi_1 Grad phi_2
+!       j=2, : phi_2 Grad phi_1
+!       j=3, : phi_4 (Grad phi_1-Grad phi_2)
+
+! ety_trans=3, edge 2, end nodes 2&3
+!       j=1, : phi_2 Grad phi_3
+!       j=2, : phi_3 Grad phi_2
+!       j=3, : phi_5 (Grad phi_2-Grad phi_3)
+
+! ety_trans=4, edge 3, end nodes 3&1
+!       j=1, : phi_3 Grad phi_1
+!       j=2, : phi_1 Grad phi_3
+!       j=3, : phi_6 (Grad phi_1-Grad phi_3)
+
+subroutine make_vector_elt_basis(dof, ety_trans, vector_elt_map, p2_list,&
    grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
 
    use numbatmod
@@ -19,21 +43,36 @@ subroutine make_phi_vector_basis(i_eq, i_ddl, phi_vec_map, p2_list,&
    integer(8), parameter :: nnodes = 6
    integer(8), parameter :: dimm=2
 
-   integer(8) i_eq, i_ddl
-   integer(8) phi_vec_map(4,3,N_DDL_T)
+   integer(8) dof, ety_trans
+   integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
    double precision p2_list(nnodes)
    double precision grad_p1_mat(dimm,3), grad_p2_mat(dimm,nnodes)
    double precision vec_phi(dimm), curl_t_phi
 
+   integer debug
    !  Local variables
    integer(8) k, m, n1, n2
    double precision grad_p1(dimm), grad_p2(dimm), phi
 
 
-   k  = phi_vec_map(1, i_eq, i_ddl)
-   m  = phi_vec_map(2, i_eq, i_ddl)
-   n1 = phi_vec_map(3, i_eq, i_ddl)
-   n2 = phi_vec_map(4, i_eq, i_ddl)
+   debug = 0
+
+   if (debug .gt. 0) then
+      if (k .eq. 4 .and. n2 .lt. 1) then
+         write(*,*) "basis_vec: problem n2 < 1 for k = 4 "
+         write(*,*) "basis_vec: n2 should >= 1 for k=4 !"
+         write(*,*) "basis_vec: k, m, n1, n2 = ", k, m, n1, n2
+         write(*,*) "basis_vec: Aborting..."
+         stop
+      endif
+   endif
+
+   k  = vector_elt_map(1, dof, ety_trans)
+   m  = vector_elt_map(2, dof, ety_trans)
+   n1 = vector_elt_map(3, dof, ety_trans)
+   n2 = vector_elt_map(4, dof, ety_trans)
+
+
 
    if (k .eq. 3) then
 
@@ -45,25 +84,12 @@ subroutine make_phi_vector_basis(i_eq, i_ddl, phi_vec_map, p2_list,&
 
    elseif (k .eq. 4) then
 
-      if (n2 .lt. 1) then
-         write(*,*) "basis_vec: problem n2 < 1 for k = 4 "
-         write(*,*) "basis_vec: n2 should >= 1 for k=4 !"
-         write(*,*) "basis_vec: k, m, n1, n2 = ", k, m, n1, n2
-         write(*,*) "basis_vec: Aborting..."
-         stop
-      endif
-
       phi = p2_list(m)
       grad_p2 = grad_p2_mat(:,m)
       grad_p1 = grad_p1_mat(:,n1) - grad_p1_mat(:,n2)
       vec_phi = phi * grad_p1
 
 
-   else
-      write(*,*) "basis_vec: no action is defined when k = ", k
-      write(*,*) "basis_vec: k should be equal to 3 or 4"
-      write(*,*) "basis_vec: Aborting..."
-      stop
    endif
 
    !  Curl_t E = Det( grad_p2,  grad_p1)

@@ -27,14 +27,12 @@ module numbatmod
    integer(8), parameter :: P3_INTERIOR = 10
 
 
-   integer(8), parameter :: nnodes_0 = 6
-   integer(8), parameter :: N_DDL_T = 4           ! Number of transverse dof
+   integer(8), parameter :: N_ETY_TRANSVERSE = 4   ! Number of transverse dof
+   integer(8), parameter :: N_ENTITY_PER_EL = 14   ! 1 Face + 6 P2 nodes + 7 additional P3 nodes
+   integer(8), parameter :: N_DOF_PER_EL = 13      ! 6 P2 nodes + 7 additional P3 nodes
+
+
    integer(8), parameter :: NDDL_0_AC = 6
-
-
-   integer(8), parameter :: N_ENTITY_PER_EL = 14  ! 1 Face + 6 P2 nodes + 7 additional P3 nodes
-   integer(8), parameter :: N_DOF_PER_EL = 13     ! 6 P2 nodes + 7 additional P3 nodes
-
 
    integer(8),  parameter :: EMSG_LENGTH = 2048
    integer(8),  parameter :: FNAME_LENGTH = 1024
@@ -82,6 +80,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_BOUNDARY_CONDITION   = -60
    integer(8), parameter :: NBERR_BAD_QUAD_INT  = -61
    integer(8), parameter :: NBERR_BAD_MB_EDGES  = -62
+   integer(8), parameter :: NBERR_BAD_ELT_ENERGY  = -63
 
 
 

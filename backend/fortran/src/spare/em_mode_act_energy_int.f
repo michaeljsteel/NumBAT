@@ -10,7 +10,7 @@ C
       integer(8) elnd_to_mesh(P2_NODES_PER_EL,nel), nb_typ_el
       integer(8) type_el(nel)
       double precision x(2,npt)
-      complex(8) soln_EM(3,P2_NODES_PER_EL+7,nval,nel)
+      complex(8) soln_EM(3,N_DOF_PER_EL,nval,nel)
       complex(8) n_lst(nb_typ_el), eps_lst(nb_typ_el)
       complex(8), dimension(nval) :: overlap
       integer(8) errco

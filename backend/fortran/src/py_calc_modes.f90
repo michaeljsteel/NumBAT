@@ -130,7 +130,7 @@ contains
       !  ----------------------------------------------
 
 
-      integer(8) ui_out, i_md
+      integer(8) ui_out
 
       !  Variable used by valpr
       integer(8) dim_krylov
@@ -261,7 +261,7 @@ contains
       !  The eigenvectors will be stored in the array m_evecs
       !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
       call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
-         entities, cscmat, pbcs, n_core, bloch_vec, v_evals_beta, arp_evecs, &
+         entities, cscmat, pbcs, bloch_vec, v_evals_beta, arp_evecs, &
          m_evecs, mode_pol, nberr)
       RET_ON_NBERR_UNFOLD(nberr)
 

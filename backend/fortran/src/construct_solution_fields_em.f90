@@ -13,8 +13,8 @@
 
 #include "numbat_decl.h"
 
-subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw, entities, cscmat, pbcs, &
-   n_core, bloch_vec, v_evals_beta, evecs_raw, sol, mode_poln_fracs, nberr)
+subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw, entities, &
+   cscmat, pbcs, bloch_vec, v_evals_beta, evecs_raw, sol, mode_poln_fracs, nberr)
 
    use numbatmod
    use class_MeshRaw
@@ -29,7 +29,6 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    type(BasisFunctions) :: basfuncs
 
    integer(8) bdy_cdn, n_modes
-   integer(8) n_core(2)
    complex(8) shift_ksqr
    double precision bloch_vec(2)
 
@@ -39,8 +38,8 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
 
 
    !  sol(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-   !  sol(3, P2_NODES_PER_EL+1..P2_NODES_PER_EL+7,n_modes, mesh_raw%n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
-   complex(8) sol(3,P2_NODES_PER_EL+7,n_modes,mesh_raw%n_msh_el)
+   !  sol(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+   complex(8) sol(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_el)
    complex(8) v_evals_beta(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -53,40 +52,30 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    integer(8) v_eig_index(n_modes)
 
    double precision mode_comp(4)
-   integer(8) el_nds_i(P2_NODES_PER_EL), phi_vec_map(4,3,N_DDL_T)
+   integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision xy_nds_P2(2,P2_NODES_PER_EL), el_nds_xy(2,P2_NODES_PER_EL)
-   complex(8) sol_el(3,P2_NODES_PER_EL+7)
 
-   double precision phi_P1_ref(P1_NODES_PER_EL)
-   double precision gradt_P1_ref(2,P1_NODES_PER_EL), gradt_P1_act(2,P1_NODES_PER_EL)
+   complex(8) sol_el(3,N_DOF_PER_EL) ! solution for this mode and elt
 
-   double precision phi_P2_ref(P2_NODES_PER_EL)
-   double precision gradt_P2_ref(2,P2_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL)
-
-   double precision phi_P3_ref(P3_NODES_PER_EL)
-   double precision gradt_P3_ref(2,P3_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
 
    double precision vec_phi_j(2), curl_phi_j, phi_z_j
 
-   double precision xy_ref(2), xy_act(2)
-   double precision mat_B(2,2)
-   double precision mat_T(2,2)
-
+   double precision xy_ref(2)
    complex(8) val_exp(N_ENTITY_PER_EL)
 
    logical is_curved
-   integer(8) j, k, i1, m, nd_i, typ_e
+   integer(8)   m, nd_i, typ_e, xyz_i
    integer(8) debug, i_sol_max
-   integer(8) i_el, md_i, md_i2, jtest, jp, ind_jp, j_eq
-   double precision det
-   complex(8) z_tmp1, z_tmp2, z_sol_max
+   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eqs, dof_j
+
+   complex(8) z_tmp2, z_sol_max
    integer(8) nd_lab
 
 
    call nberr%reset()
    errco = 0
+   emsg="bad construdct"
    debug = 0
-
 
    ! Adjust evals to unshifted values and determine reordering
    call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
@@ -122,89 +111,39 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          endif
 
 
-         call basfuncs%make_phi_vector_map(el_nds_i)
+         call basfuncs%make_vector_elt_map(el_nds_i)
 
-         call make_phi_vector_map (el_nds_i, phi_vec_map)  !  get P2 basis function
-
-         !call is_curved_elem_tri (P2_NODES_PER_EL, el_nds_xy, is_curved, r_tmp1)  !  determine if current element has curved face.
-         !Can this ever happen?
 
          is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, el_nds_xy)
 
          sol_el = D_ZERO
 
          do nd_i=1,P2_NODES_PER_EL
-
             xy_ref = xy_nds_P2(:, nd_i)
 
-            !call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
-            !RET_ON_NBERR_UNFOLD(nberr)
+            call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
+            RET_ON_NBERR_UNFOLD(nberr)
 
-            !  Elements and gradients for the P1, P2, P3 basis functions
-            call phi1_2d_mat (xy_ref, phi_P1_ref, gradt_P1_ref)
-            call phi2_2d_mat (xy_ref, phi_P2_ref, gradt_P2_ref)
-            call phi3_2d_mat (xy_ref, phi_P3_ref, gradt_P3_ref)
+            do ety_j=1,N_ETY_TRANSVERSE  ! for the transverse field entities on this elt
+               ety_id = entities%v_tags(ety_j,i_el)    ! find the global ety id
 
-            if (.not. is_curved ) then
-               !  Rectilinear element
-               call jacobian_p1_2d (xy_ref, el_nds_xy, P2_NODES_PER_EL, xy_act, det, mat_B, mat_T, errco, emsg)
-               RETONERROR(errco)
+               do dof_j=1,3                            ! the entity can have up to 3 dof
+                  n_eqs = cscmat%m_eqs(dof_j,ety_id)   ! how many eqs is this dof involved in
 
-               if (det <= 0 .and. debug == 1) then
-                  write(*,*) "   !!!"
-                  write(*,*) "array_sol: det <= 0: i_el, det ", i_el, det
-               endif
+                  if (n_eqs > 0) then
+                     m  = basfuncs%vector_elt_map(2, dof_j, ety_j)
 
-            else
-               !  Isoparametric element, 2024-06-14 fix
-               call jacobian_p2_2d (el_nds_xy, P2_NODES_PER_EL, phi_P2_ref, gradt_P2_ref, &
-                  xy_act, det, mat_B, mat_T, errco, emsg)
-               RETONERROR(errco)
-            endif
-
-
-            !  grad_i  = gradient on the actual triangle
-            !  grad_i  = Transpose(mat_T)*grad_i0
-            !  Calculation of the matrix-matrix product:
-            call DGEMM('Transpose','N', 2, 3,  2, D_ONE, mat_T, 2, &
-               gradt_P1_ref, 2, D_ZERO, gradt_P1_act, 2)
-            call DGEMM('Transpose','N', 2, 6,  2, D_ONE, mat_T, 2, &
-               gradt_P2_ref, 2, D_ZERO, gradt_P2_act, 2)
-            call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, &
-               gradt_P3_ref, 2, D_ZERO, gradt_P3_act, 2)
-
-            !  Contribution to the transverse component
-            do jtest=1,N_DDL_T
-               do j_eq=1,3
-                  jp = entities%v_tags(jtest,i_el)
-                  ind_jp = cscmat%m_eqs(j_eq,jp)
-                  if (ind_jp > 0) then
-                     m  = phi_vec_map(2, j_eq, jtest)
                      if (m == nd_i) then
 
                         !  nd_i correspond to a P2 interpolation node
                         !  The contribution is nonzero only when m=nd_i.
                         !  Determine the basis vector
 
-                        call make_phi_vector_basis(j_eq, jtest, phi_vec_map, phi_P2_ref, &
-                           gradt_P1_act, gradt_P2_act, vec_phi_j, curl_phi_j)
-                        z_tmp1 = evecs_raw(ind_jp, md_i2)* val_exp(jtest)
+                        call basfuncs%make_vector_elt_basis(dof_j, ety_j, vec_phi_j, curl_phi_j)
 
-
-                        do j=1,2
-                           z_tmp2 = z_tmp1 * vec_phi_j(j)
-                           sol_el(j,nd_i) = sol_el(j,nd_i) + z_tmp2
-
-                           if (m /= nd_i .and. abs(z_tmp2) > 1.0d-7) then
-                              write(*,*)
-                              write(*,*) i_el, nd_i, m, abs(z_tmp2)
-                              write(*,*) "vec_phi_j = ", vec_phi_j
-                              write(*,*) "xy_ref = ", xy_ref
-                              write(*,*) "xy_nds_P2 = ", (xy_nds_P2(k,nd_i),k=1,2)
-                              write(*,*) "phi_P2_ref = ", phi_P2_ref
-                           endif
-
-                        enddo
+                        ! pbc version
+                        !sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_j(:)* val_exp(ety_j)
+                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_j(:)
 
                      endif
                   endif
@@ -213,118 +152,94 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
 
             !  Contribution to the longitudinal component
             !  The initial P3 value of Ez isinterpolated over P2 nodes
-            do jtest=N_DDL_T+1,N_ENTITY_PER_EL
+            do ety_j=N_ETY_TRANSVERSE+1,N_ENTITY_PER_EL
 
-               do j_eq=1,1
-                  jp = entities%v_tags(jtest,i_el)
-                  ind_jp = cscmat%m_eqs(j_eq,jp)
-                  if (ind_jp > 0) then
+               do dof_j=1,1
+                  ety_id = entities%v_tags(ety_j,i_el)
+                  n_eqs = cscmat%m_eqs(dof_j,ety_id)
+                  if (n_eqs > 0) then
 
-                     m  = jtest-N_DDL_T
-                     phi_z_j = phi_P3_ref(m)
+                     m  = ety_j-N_ETY_TRANSVERSE
+                     phi_z_j = basfuncs%phi_P3_ref(m)
 
+                     !pbc version
+                     !sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eqs, md_i2) * phi_z_j * val_exp(ety_j)
 
-                     z_tmp2 = evecs_raw(ind_jp, md_i2) * val_exp(jtest) * phi_z_j
-                     sol_el(3,nd_i) = sol_el(3,nd_i) + z_tmp2
+                     sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eqs, md_i2) * phi_z_j
+
                   endif
                enddo
             enddo
 
-            do j=1,3
-               z_tmp2 = sol_el(j,nd_i)
-               sol(j,nd_i,md_i,i_el) = z_tmp2
-               if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max (by component not total?)
+
+            ! check if we have a new maximum sized component
+            do xyz_i=1,3
+               z_tmp2 = sol_el(xyz_i,nd_i)
+               if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max
                   z_sol_max = z_tmp2
-                  i_sol_max = mesh_raw%elnd_to_mesh(nd_i,i_el)
+                  ! i_sol_max = mesh_raw%elnd_to_mesh(nd_i,i_el)
                endif
             enddo
 
             !  Contribution of the element i_el to the mode component
             mode_comp(1:3) = mode_comp(1:3) + abs(sol_el(1:3,nd_i))**2
 
-         enddo
+         enddo  ! end of current P2 node
+
+         !  Average values
+         mode_comp(1:3) = mode_comp(1:3) * abs(basfuncs%det)/dble(P2_NODES_PER_EL)
+
 
          !  Saving the P3 values of Ez at: the 6 edge nodes and the interior node
-         do nd_i=P2_NODES_PER_EL+1,P2_NODES_PER_EL+7
+         do nd_i=P2_NODES_PER_EL+1,N_DOF_PER_EL
 
             sol_el(1:3,nd_i) = D_ZERO
 
-            jtest = N_DDL_T+nd_i-P2_NODES_PER_EL+3
-            j_eq = 1
-            jp = entities%v_tags(jtest,i_el)
-            ind_jp = cscmat%m_eqs(j_eq,jp)
+            ety_j = N_ETY_TRANSVERSE+nd_i-P2_NODES_PER_EL+3
+            dof_j = 1
+            ety_id = entities%v_tags(ety_j,i_el)
+            n_eqs = cscmat%m_eqs(dof_j,ety_id)
 
-            if (ind_jp > 0) then
-               sol_el(3,nd_i) = evecs_raw(ind_jp, md_i2)* val_exp(jtest)
+            if (n_eqs > 0) then
+               sol_el(3,nd_i) = evecs_raw(n_eqs, md_i2)* val_exp(ety_j)
             endif
 
-            sol(1:3,nd_i,md_i,i_el) =  sol_el(1:3,nd_i)
 
          enddo
 
-         !  Avarage values
-
-         mode_comp(1:3) = mode_comp(1:3) * abs(det)/dble(P2_NODES_PER_EL)
 
          !  Add the contribution of the element i_el to the mode component
          mode_poln_fracs(1:3, md_i) = mode_poln_fracs(1:3, md_i) + mode_comp(1:3)
 
-         if (typ_e == n_core(1) .or. typ_e == n_core(2)) then
-            mode_poln_fracs(4,md_i) = mode_poln_fracs(4,md_i) + mode_comp(1) + mode_comp(2) + mode_comp(3)
-         endif
 
-      enddo
+         sol(:,:,md_i,i_el) =  sol_el
+
+      enddo  ! end of current element
+
+
+
 
       !  Total energy and normalization
       z_tmp2 = mode_poln_fracs(1,md_i) + mode_poln_fracs(2,md_i) + mode_poln_fracs(3,md_i)
-      !if (abs(z_tmp2) < 1.0d-10) then
       if (abs(z_tmp2) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
-         write(*,*) "array_sol: the total energy ",        "is too small : ", z_tmp2
-         write(*,*) "array_sol: md_i md_i2 = ", md_i, md_i2
-         write(*,*) "array_sol: zero eigenvector; aborting..."
-         stop
+
+         write(emsg,*) "The total energy for mode ", md_i, "is too small : ", z_tmp2
+         call nberr%set(NBERR_BAD_ELT_ENERGY, emsg)
+         return
       endif
 
       mode_poln_fracs(:,md_i) = mode_poln_fracs(:,md_i) / z_tmp2
 
       !  Check if the eigenvector is nonzero
-      !if (abs(z_sol_max) < 1.0d-10) then
       if (abs(z_sol_max) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
-         z_sol_max = z_tmp2
-         write(*,*) "array_sol: z_sol_max is too small"
-         write(*,*) "array_sol: z_sol_max = ", z_sol_max
-         write(*,*) "md_i, md_i2, n_modes = ", md_i, md_i2, n_modes
-         write(*,*) "array_sol: zero eigenvector; aborting..."
-         stop
+         write(emsg,*) "The largest node value for mode ", md_i, "is too small : ", z_sol_max
+         call nberr%set(NBERR_BAD_ELT_ENERGY, emsg)
+         return
       endif
 
-      !  Normalization so that the maximum fi_eld component is 1
-      do i_el=1,mesh_raw%n_msh_el
-         do nd_i=1,P2_NODES_PER_EL
-            i1 = mesh_raw%elnd_to_mesh(nd_i,i_el)
+      !  Normalization so that the maximum field component has magnitude 1
 
-            sol(1:3,nd_i,md_i,i_el) = sol(1:3,nd_i,md_i,i_el)/z_sol_max
-
-            i1 = mesh_raw%elnd_to_mesh(nd_i,i_el)
-            if (i1 == i_sol_max .and. debug == 1) then
-               write(*,*) "array_sol:"
-               write(*,*) "md_i, i1, i_el = ", md_i, i1, i_el
-               write(*,*) "array_sol: Fi_eld normalisaion point:"
-               write(*,*) "x = ", dble(mesh_raw%v_nd_xy(1,i1))
-               write(*,*) "y = ", dble(mesh_raw%v_nd_xy(2,i1))
-               write(*,*) "i_sol_max = ", i_sol_max
-               write(*,*) md_i, i1, i_el, (dble(sol(j,nd_i,md_i,i_el)),j=1,3)
-               write(*,*) md_i, i1, i_el, (imag(sol(j,nd_i,md_i,i_el)),j=1,3)
-            endif
-         enddo
-
-
-         do nd_i=P2_NODES_PER_EL+1,P2_NODES_PER_EL+7
-            sol(1:3,nd_i,md_i,i_el) = sol(1:3,nd_i,md_i,i_el)/z_sol_max
-         enddo
-
-      enddo
-
+      sol(:,:,md_i,:) = sol(:,:,md_i,:)/z_sol_max
 
 
       evecs_raw(1:cscmat%n_dof,md_i2) = evecs_raw(1:cscmat%n_dof,md_i2)/z_sol_max
@@ -336,7 +251,6 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    do md_i=1,n_modes
       sol(3,:,md_i,:) = C_IM_ONE * v_evals_beta(md_i) * sol(3,:,md_i,:)
    enddo
-
 
 end
 
@@ -415,7 +329,7 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
 
    complex(8) val_exp(N_ENTITY_PER_EL)
 
-   integer(8) i_el, nd_i, nd_lab, j1, jp, j, k
+   integer(8) i_el, nd_i, nd_lab, j1, ety_id, j, k
 
    integer(8) el_nds_i(P2_NODES_PER_EL)
 
@@ -437,13 +351,13 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
    !  val_exp: Bloch mod ephase factor between the origin point and destination point
    !  For a pair of periodic points, one is chosen as origin and the other is the destination
    do j=1,N_ENTITY_PER_EL
-      jp = entities%v_tags(j,i_el)
-      j1 = pbcs%iperiod_N_E_F(jp)
+      ety_id = entities%v_tags(j,i_el)
+      j1 = pbcs%iperiod_N_E_F(ety_id)
       if (j1 /= 0) then
          !do k=1,dim_32
-         !  delta_xy_ref(k) = entities.v_nd_xy(k,jp) - entities.v_nd_xy(k,j1)
+         !  delta_xy_ref(k) = entities.v_nd_xy(k,ety_id) - entities.v_nd_xy(k,j1)
          !enddo
-         delta_xy_ref = entities%v_xy(:,jp) - entities%v_xy(:,j1)
+         delta_xy_ref = entities%v_xy(:,ety_id) - entities%v_xy(:,j1)
          r_tmp1 = ddot(2, bloch_vec, 1, delta_xy_ref, 1)
          val_exp(j) = exp(C_IM_ONE * r_tmp1)
       endif

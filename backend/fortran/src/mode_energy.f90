@@ -17,7 +17,7 @@ subroutine mode_energy (nval, nel,  n_core, &
 
    integer(8) nval, nel
    integer(8) nb_typ_el, n_core(2)
-   complex(8) sol(3,P2_NODES_PER_EL+7,nval,nel)
+   complex(8) sol(3,N_DOF_PER_EL,nval,nel)
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)
 
    type(MeshRaw) :: mesh_raw

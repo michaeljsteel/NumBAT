@@ -30,17 +30,17 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    double precision k_0
    !  Local variables
 
-   integer(8) nod_el_p(nnodes_0)
-   complex(8) sol_el_1(2*nnodes_0+10) , sol_el_2(2*nnodes_0)
-   complex(8) vec_1(2*nnodes_0)
-   complex(8) mat_scal(2*nnodes_0,2*nnodes_0+10)
+   integer(8) nod_el_p(P2_NODES_PER_EL)
+   complex(8) sol_el_1(2*P2_NODES_PER_EL+10) , sol_el_2(2*P2_NODES_PER_EL)
+   complex(8) vec_1(2*P2_NODES_PER_EL)
+   complex(8) mat_scal(2*P2_NODES_PER_EL,2*P2_NODES_PER_EL+10)
    integer(8) i, j, j1, typ_e
    integer(8) iel, ival, jval
    integer(8) jtest, ind_jp, j_eq
    integer(8) itrial, ind_ip, i_eq
    integer(8) n_curved, debug, ui
    logical is_curved
-   double precision xel(2,nnodes_0)
+   double precision xel(2,P2_NODES_PER_EL)
    double precision phi2_list(6), grad2_mat0(2,6)
    double precision grad2_mat(2,6)
    double precision phi3_list(10), grad3_mat0(2,10)
@@ -152,7 +152,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, &
             grad3_mat0, 2, D_ZERO, grad3_mat, 2)
          coeff_1 = ww * abs(det) * pp(typ_e)
-         do itrial=1,nnodes_0
+         do itrial=1,P2_NODES_PER_EL
             do i_eq=1,2
                ind_ip = i_eq + 2*(itrial-1)
                !  Determine the basis vector
@@ -160,7 +160,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
                   vec_phi_i(i) = 0.0d0
                enddo
                vec_phi_i(i_eq) = phi2_list(itrial)
-               do jtest=1,nnodes_0
+               do jtest=1,P2_NODES_PER_EL
                   do j_eq=1,2
                      ind_jp = j_eq + 2*(jtest-1)
                      !  Determine the basis vector
@@ -177,7 +177,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
                enddo
                do jtest=1,10
                   j_eq = 3
-                  ind_jp = jtest + 2*nnodes_0
+                  ind_jp = jtest + 2*P2_NODES_PER_EL
                   !  Determine the basis vector
                   do i=1,2
                      vec_phi_j(i) = -grad3_mat(i,jtest)

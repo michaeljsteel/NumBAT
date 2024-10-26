@@ -8,9 +8,9 @@ module class_BasisFunctions
    type, public :: BasisFunctions
 
 
-      ! phi_P1_ref = values of the P2 polynomials (1-6) at a given point in the reference triangle.
-      ! gradt_P1_ref = gradients of the P2s at that point
-      ! gradt_P1_act = gradients of the P2s in the actual triangle
+      ! phi_P1_ref = values of the P1 polynomials (1-3) at a given point in the reference triangle.
+      ! gradt_P1_ref = gradients of the P1s at that point
+      ! gradt_P1_act = gradients of the P1s in the actual triangle
       double precision phi_P1_ref(P1_NODES_PER_EL)
       double precision gradt_P1_ref(2, P1_NODES_PER_EL)
       double precision gradt_P1_act(2, P1_NODES_PER_EL)
@@ -34,13 +34,16 @@ module class_BasisFunctions
       double precision mat_T(2,2)    ! inverse transform T=B^-1
       double precision det           ! transformation determinant
 
-      integer(8) phi_vec_map(4,3,N_DDL_T)
+      ! rules for constructing vector elements on the face and 3 edges
+      integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
 
 
    contains
 
-   procedure :: make_phi_vector_map => BasisFunctions_make_phi_vector_map
+   procedure :: make_vector_elt_map => BasisFunctions_make_vector_elt_map
    procedure :: evaluate_at_position => BasisFunctions_evaluate_at_position
+   procedure :: make_vector_elt_basis => BasisFunctions_make_vector_elt_basis
+
    end type BasisFunctions
 
    contains

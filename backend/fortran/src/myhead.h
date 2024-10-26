@@ -6,3 +6,4 @@ const int emsg_length = 2048;
 const int max_n_pts = 250000;
 const int max_n_elts = 120000;
 const int p2_nodes_per_el = 6;
+const int n_dof_per_el = 13;

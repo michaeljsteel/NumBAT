@@ -21,8 +21,8 @@ subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, r
    double precision mat1_re(nonz), mat1_im(nonz)
 
 
-   integer(8) nod_el(nnodes_0)
-   double precision xel(2,nnodes_0)
+   integer(8) nod_el(P2_NODES_PER_EL)
+   double precision xel(2,P2_NODES_PER_EL)
 
    integer(8) i_base2, debug, typ_e
    integer(8) i, j, k, iel, j1

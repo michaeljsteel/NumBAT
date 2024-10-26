@@ -19,7 +19,7 @@ subroutine em_mode_act_energy_int (n_modes, n_msh_el, n_msh_pts, &
    integer(8) n_elt_mats
    integer(8) el_material(n_msh_el)
    complex(8) v_refindex(n_elt_mats)
-   complex(8) soln_em_e(3,P2_NODES_PER_EL+7,n_modes,n_msh_el)
+   complex(8) soln_em_e(3,N_DOF_PER_EL,n_modes,n_msh_el)
    complex(8), dimension(n_modes), intent(out) :: m_energy
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg

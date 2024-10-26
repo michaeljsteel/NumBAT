@@ -21,9 +21,9 @@ c      complex(8) x(2,npt)
 
 c     Local variables
 
-      integer(8) nod_el_p(nnodes_0)
-      double precision xel(2,nnodes_0)
-      complex(8) basis_overlap(3*nnodes_0,3,3*nnodes_0)
+      integer(8) nod_el_p(P2_NODES_PER_EL)
+      double precision xel(2,P2_NODES_PER_EL)
+      complex(8) basis_overlap(3*P2_NODES_PER_EL,3,3*P2_NODES_PER_EL)
       complex(8) U, Ustar
       integer(8) i, j, j1, typ_e
       integer(8) iel, ind_ip, i_eq, k_eq
@@ -109,12 +109,12 @@ c	mat_T_tr = Tanspose(mat_T)
       call find_overlaps_p2_p2(p2_p2, det_b)
       call find_overlaps_p2_p2x (p2_p2x, mat_T_tr, det_b)
       call find_overlaps_p2_p2y (p2_p2y, mat_T_tr, det_b)
-      do itrial=1,nnodes_0
+      do itrial=1,P2_NODES_PER_EL
         do i_eq=1,3
           ind_ip = i_eq + 3*(itrial-1)
 C         Gradient of transverse components of basis function
           do k_eq=1,3
-            do ltest=1,nnodes_0
+            do ltest=1,P2_NODES_PER_EL
               do l_eq=1,3
                 ind_lp = l_eq + 3*(ltest-1)
                 if(k_eq == 1) then
@@ -141,11 +141,11 @@ cccccccccc
 C Having calculated overlap of basis functions on element
 C now multiply by specific field values for modes of interest.
         do ival=1,nval
-          do itrial=1,nnodes_0
+          do itrial=1,P2_NODES_PER_EL
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               Ustar = conjg(soln_AC(i_eq,itrial,ival,iel))
-              do ltest=1,nnodes_0
+              do ltest=1,P2_NODES_PER_EL
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   U = soln_AC(l_eq,ltest,ival,iel)

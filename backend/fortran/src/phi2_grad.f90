@@ -20,11 +20,11 @@ subroutine phi2_grad(inode, nnodes, mat_jac, vec_grad)
 
 !  Local variables
    double precision c(2,2)
-   integer(8), parameter :: nnodes_0 = 6
+   integer(8), parameter :: P2_NODES_PER_EL = 6
 
-   !double precision xel_0(2,nnodes_0)  ! TODO: define values as initialisation
+   !double precision xel_0(2,P2_NODES_PER_EL)  ! TODO: define values as initialisation
 
-   double precision, dimension(2,nnodes_0) :: xel_0 = &
+   double precision, dimension(2,P2_NODES_PER_EL) :: xel_0 = &
    reshape( (/ 0.d0, 1.d0, 0.d0, 0.5d0, 0.5d0, 0.d0, &
                0.d0, 0.d0, 1.d0, 0.0d0, 0.5d0, 0.5d0 /), &
                shape(xel_0), order=(/2,1/))
