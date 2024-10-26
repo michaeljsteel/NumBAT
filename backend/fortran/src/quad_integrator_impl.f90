@@ -46,7 +46,7 @@ subroutine QuadIntegrator_build_transforms_at(this, qi, nds_xy, is_curved, do_P3
    endif
 
    call nberr%set(errco, emsg)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
    if(abs(this%det) .lt. 1.0d-20) then
       write(emsg,*) 'quadrature integration: det too small: ',  this%det
@@ -75,5 +75,17 @@ function QuadIntegrator_get_current_quadweight(this) result(res)
 
    res = this%quadweight
 end function
+
+subroutine QuadIntegrator_get_quad_point(this, iq, xy_ref, wt)
+   class(QuadIntegrator) this
+   integer(8) iq
+   double precision xy_ref(2)
+   double precision wt
+
+   xy_ref(1) = this%x_quad(iq)
+   xy_ref(2) = this%y_quad(iq)
+   wt = this%wt_quad(iq)
+end subroutine
+
 
 

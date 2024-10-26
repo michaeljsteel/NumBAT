@@ -1,68 +1,68 @@
 subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, &
-      errco, emsg)
+   errco, emsg)
 
-      class(MeshRaw) :: this
-      integer(8) :: n_msh_el, n_msh_pts, n_elt_mats
-      integer(8),  intent(out) :: errco
-      character(len=EMSG_LENGTH), intent(out) :: emsg
+   class(MeshRaw) :: this
+   integer(8) :: n_msh_el, n_msh_pts, n_elt_mats
+   integer(8),  intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
-      this%n_msh_pts = n_msh_pts
-      this%n_msh_el = n_msh_el
-      this%n_elt_mats = n_elt_mats
+   this%n_msh_pts = n_msh_pts
+   this%n_msh_el = n_msh_el
+   this%n_elt_mats = n_elt_mats
 
-      call integer_alloc_1d(this%el_material, n_msh_el, 'el_material', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(this%el_material, n_msh_el, 'el_material', errco, emsg); RETONERROR(errco)
 
-      call double_alloc_2d(this%v_nd_xy, 2_8, n_msh_pts, 'v_nd_xy', errco, emsg); RETONERROR(errco)
+   call double_alloc_2d(this%v_nd_xy, 2_8, n_msh_pts, 'v_nd_xy', errco, emsg); RETONERROR(errco)
 
-      call integer_alloc_1d(this%node_phys_i, n_msh_pts, 'node_phys_i', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(this%node_phys_i, n_msh_pts, 'node_phys_i', errco, emsg); RETONERROR(errco)
 
-      call integer_alloc_2d(this%elnd_to_mesh, P2_NODES_PER_EL, n_msh_el, 'elnd_to_mesh', errco, emsg);
-      RETONERROR(errco)
+   call integer_alloc_2d(this%elnd_to_mesh, P2_NODES_PER_EL, n_msh_el, 'elnd_to_mesh', errco, emsg);
+   RETONERROR(errco)
 
-   end subroutine
+end subroutine
 
-   ! subroutine MeshRaw_destructor(this)
-   !    type(MeshRaw) :: this
+ ! subroutine MeshRaw_destructor(this)
+ !    type(MeshRaw) :: this
 
-   ! end subroutine
+ ! end subroutine
 
-   subroutine MeshRaw_fill_python_arrays(this, &
-      el_material, node_phys_i, elnd_to_mesh, v_nd_xy)
+subroutine MeshRaw_fill_python_arrays(this, &
+   el_material, node_phys_i, elnd_to_mesh, v_nd_xy)
 
-      class(MeshRaw) :: this
+   class(MeshRaw) :: this
 
-      integer(8), intent(out) :: el_material(:)
-      integer(8), intent(out) :: node_phys_i(:)
-      integer(8), intent(out) :: elnd_to_mesh(:, :)
-      double precision, intent(out) :: v_nd_xy(:,:)
+   integer(8), intent(out) :: el_material(:)
+   integer(8), intent(out) :: node_phys_i(:)
+   integer(8), intent(out) :: elnd_to_mesh(:, :)
+   double precision, intent(out) :: v_nd_xy(:,:)
 
-      el_material = this%el_material
-      node_phys_i = this%node_phys_i
-      elnd_to_mesh = this%elnd_to_mesh
-      v_nd_xy = this%v_nd_xy
+   el_material = this%el_material
+   node_phys_i = this%node_phys_i
+   elnd_to_mesh = this%elnd_to_mesh
+   v_nd_xy = this%v_nd_xy
 
-   end subroutine
+end subroutine
 
-   ! boundary nodes have non zero GMsh physindex codes
-   pure logical function  MeshRaw_is_boundary_node(this, nd) result(res)
-      class(MeshRaw), intent(in) :: this
-      integer(8), intent(in)  :: nd
+ ! boundary nodes have non zero GMsh physindex codes
+pure logical function  MeshRaw_is_boundary_node(this, nd) result(res)
+   class(MeshRaw), intent(in) :: this
+   integer(8), intent(in)  :: nd
 
-      res = this%node_phys_i(nd) .ne. 0
-   end function
+   res = this%node_phys_i(nd) .ne. 0
+end function
 
-   pure logical function MeshRaw_is_boundary_node_2(this, i_nd, i_el) result(res)
-      class(MeshRaw), intent(in) :: this
-      integer(8), intent(in)  :: i_nd, i_el
-      res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el)) .ne. 0
-   end function
+pure logical function MeshRaw_is_boundary_node_2(this, i_nd, i_el) result(res)
+   class(MeshRaw), intent(in) :: this
+   integer(8), intent(in)  :: i_nd, i_el
+   res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el)) .ne. 0
+end function
 
-   ! get node type by indirection through node table
-   integer(8) function  MeshRaw_node_phys_index_by_ref(this, i_nd, i_el) result(res)
-      class(MeshRaw) :: this
-      integer(8) :: i_nd, i_el
-      res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el))
-   end function
+ ! get node type by indirection through node table
+integer(8) function  MeshRaw_node_phys_index_by_ref(this, i_nd, i_el) result(res)
+   class(MeshRaw) :: this
+   integer(8) :: i_nd, i_el
+   res = this%node_phys_i(this%elnd_to_mesh(i_nd, i_el))
+end function
 
 
 
@@ -156,3 +156,23 @@ end
 
 
 
+subroutine MeshRaw_find_nodes_for_elt(this, i_el, &
+   el_nds_i, el_nds_xy, is_curved)
+
+   class(MeshRaw) :: this
+   integer(8) i_el
+   integer(8) el_nds_i(P2_NODES_PER_EL)
+   double precision el_nds_xy(2,P2_NODES_PER_EL)
+   logical is_curved
+
+   integer(8) nd_i, mesh_pt
+
+   do nd_i=1,P2_NODES_PER_EL                    ! For each of the 6 P2 nodes
+      mesh_pt = this%elnd_to_mesh(nd_i,i_el)    !    find the index of the mesh point
+      el_nds_i(nd_i) = mesh_pt                      !    store the mesh point indices for this element
+      el_nds_xy(:,nd_i) = this%v_nd_xy(:,mesh_pt)  !    find their physical positions
+   enddo
+
+   is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, el_nds_xy)
+
+end subroutine

@@ -11,7 +11,7 @@ subroutine array_material_AC (nel, nb_typ_el, type_el, rho, c_tensor, p_tensor, 
 
    !     Locals
    integer(8) k_typ
-   integer(8) i, iel, inod
+   integer(8) iel, inod
    complex(8) rho_el, c_11, c_12, c_44
    complex(8) p_11, p_12, p_44, eta_11, eta_12, eta_44
 

@@ -38,6 +38,7 @@ module class_MeshRaw
       procedure :: allocate => MeshRaw_allocate
       !final :: MeshRaw_destructor
 
+      procedure :: find_nodes_for_elt => MeshRaw_find_nodes_for_elt
       procedure :: fill_python_arrays => MeshRaw_fill_python_arrays
       procedure :: is_boundary_node => MeshRaw_is_boundary_node
       procedure :: is_boundary_node_2 => MeshRaw_is_boundary_node_2

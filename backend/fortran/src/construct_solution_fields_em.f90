@@ -64,18 +64,12 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    complex(8) val_exp(N_ENTITY_PER_EL)
 
    logical is_curved
-   integer(8)   m, nd_i, typ_e, xyz_i
-   integer(8) debug, i_sol_max
-   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eq, n_eqs, dof_j
+   integer(8) m, nd_i, typ_e, xyz_i
+   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eq, dof_j
 
    complex(8) z_tmp2, z_sol_max
-   integer(8) nd_lab
 
-
-   call nberr%reset()
    errco = 0
-   emsg="bad construdct"
-   debug = 0
 
    ! Adjust evals to unshifted values and determine reordering
    call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
@@ -89,50 +83,43 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
       md_i2 = v_eig_index(md_i)   !  index of the mode in eigenvalue sorted sequence
 
 
-      z_sol_max =  D_ZERO         !  value and loc of max field modulus
-      i_sol_max = 0
+      z_sol_max = D_ZERO   !  value and loc of max field modulus
+      !i_sol_max = 0
 
       do i_el=1,mesh_raw%n_msh_el
          typ_e = mesh_raw%el_material(i_el)
 
+         mode_comp = D_ZERO
+         val_exp = D_ONE
+         sol_el = D_ZERO
 
-         mode_comp =  D_ZERO
 
-         do nd_i=1,P2_NODES_PER_EL
-            nd_lab = mesh_raw%elnd_to_mesh(nd_i,i_el)           ! Global label of this node on this elt
-            el_nds_i(nd_i) = nd_lab
-            el_nds_xy(:,nd_i) = mesh_raw%v_nd_xy(:,nd_lab)      ! xy coords of this node
-         enddo
+         call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
 
-         val_exp =  D_ONE
 
          if (bdy_cdn == BCS_PERIODIC) then
             call make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_exp)
          endif
 
 
-         call basfuncs%make_vector_elt_map(el_nds_i)
+         call basfuncs%build_vector_elt_map(el_nds_i)
 
-
-         is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, el_nds_xy)
-
-         sol_el = D_ZERO
 
          ! fill sol_el(1:3, 1..P2_NODES)
          do nd_i=1,P2_NODES_PER_EL
             xy_ref = xy_nds_P2(:, nd_i)
 
             call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
-            RET_ON_NBERR_UNFOLD(nberr)
+            RET_ON_NBERR(nberr)
 
             ! transverse part:  sol_el(1:2, 1..P2_NODES)
             do ety_j=1,N_ETY_TRANSVERSE  ! for the transverse field entities on this elt
                ety_id = entities%v_tags(ety_j,i_el)    ! find the global ety id
 
                do dof_j=1,3                            ! the entity can have up to 3 dof
-                  n_eqs = cscmat%m_eqs(dof_j,ety_id)   ! how many eqs is this dof involved in
+                  n_eq = cscmat%m_eqs(dof_j,ety_id)   ! eq num for this dof
 
-                  if (n_eqs > 0) then
+                  if (n_eq > 0) then
 
                      ! The vector elements are built from P2 scalar functions which are nonzero
                      !  at a P2 node, only for the function corresponding to that node
@@ -147,7 +134,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
 
                         ! pbc version
                         !sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x* val_exp(ety_j)
-                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x
+                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eq, md_i2) * vec_phi_x
 
                      endif
                   endif
@@ -335,7 +322,7 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
 
    complex(8) val_exp(N_ENTITY_PER_EL)
 
-   integer(8) i_el, nd_i, nd_lab, j1, ety_id, j, k
+   integer(8) i_el, nd_i, mesh_pt, j1, ety_id, j, k
 
    integer(8) el_nds_i(P2_NODES_PER_EL)
 
@@ -348,10 +335,10 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
    val_exp = D_ONE
 
    do nd_i=1,P2_NODES_PER_EL
-      nd_lab = mesh_raw%elnd_to_mesh(nd_i,i_el)
-      k = pbcs%iperiod_N(nd_lab)
-      if (k /= 0) nd_lab=k
-      el_nds_i(nd_i) = nd_lab
+      mesh_pt = mesh_raw%elnd_to_mesh(nd_i,i_el)
+      k = pbcs%iperiod_N(mesh_pt)
+      if (k /= 0) mesh_pt=k
+      el_nds_i(nd_i) = mesh_pt
    enddo
 
    !  val_exp: Bloch mod ephase factor between the origin point and destination point

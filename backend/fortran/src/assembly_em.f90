@@ -3,62 +3,62 @@
  !  for the main linear equations
 
 
-subroutine find_basis_derivatives(idof, ifunc, vector_elt_map, phi_P2_ref, phi_P3_ref, &
-   gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
+! subroutine find_basis_derivatives(idof, ifunc, vector_elt_map, phi_P2_ref, phi_P3_ref, &
+!    gradt_phi3_P1_act, gradt_phi3_P2_act, gradt_phi3_P3_act, vec_phi2_i, curlt_phi2_i, gradt_phi3_i, phi3_z_i)
 
-   use numbatmod
+!    use numbatmod
 
-   integer(8) idof, ifunc
-   integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
-   double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
-   double precision gradt_P1_act(2,P1_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
+!    integer(8) idof, ifunc
+!    integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
+!    double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
+!    double precision gradt_phi3_P1_act(2,P1_NODES_PER_EL), gradt_phi3_P2_act(2,P2_NODES_PER_EL), gradt_phi3_P3_act(2,P3_NODES_PER_EL)
 
-   double precision vec_phi_i(2), curlt_phi_i
-   double precision gradt_i(2)
-   double precision phi_z_i
+!    double precision vec_phi2_i(2), curlt_phi2_i
+!    double precision gradt_phi3_i(2)
+!    double precision phi3_z_i
 
-   if (ifunc .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
-      ! Uses P2 vector elements so determine the basis vector
-      call evaluate_vector_elts(idof, ifunc, vector_elt_map, phi_P2_ref, &
-         gradt_P1_act, gradt_P2_act, vec_phi_i, curlt_phi_i)
-      gradt_i = D_ZERO
-      phi_z_i = D_ZERO
-   else   ! a longitudinal dof, use P3 scalar element
-      vec_phi_i = D_ZERO
-      curlt_phi_i = D_ZERO
-      gradt_i(:) = gradt_P3_act(:,ifunc-N_ETY_TRANSVERSE)
-      phi_z_i = phi_P3_ref(ifunc-N_ETY_TRANSVERSE)
-   endif
+!    if (ifunc .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
+!       ! Uses P2 vector elements so determine the basis vector
+!       call evaluate_vector_elts(idof, ifunc, vector_elt_map, phi_P2_ref, &
+!          gradt_phi3_P1_act, gradt_phi3_P2_act, vec_phi2_i, curlt_phi2_i)
+!       gradt_phi3_i = D_ZERO
+!       phi3_z_i = D_ZERO
+!    else   ! a longitudinal dof, use P3 scalar element
+!       vec_phi2_i = D_ZERO
+!       curlt_phi2_i = D_ZERO
+!       gradt_phi3_i(:) = gradt_phi3_P3_act(:,ifunc-N_ETY_TRANSVERSE)
+!       phi3_z_i = phi_P3_ref(ifunc-N_ETY_TRANSVERSE)
+!    endif
 
 
-end subroutine
+! end subroutine
 
 
 subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
-   perm_pp, perm_qq, &
-   mesh_raw, entities, &
-   cscmat, &
-   pbcs, errco, emsg)
+   perm_pp, perm_qq, mesh_raw, entities, cscmat, pbcs, nberr)
 
-   !  NQUAD: The number of quadrature points used in each element.
 
    use numbatmod
    use alloc
    use class_MeshRaw
    use class_PeriodicBCs
    use class_SparseCSC
+   use class_BasisFunctions
+   use class_TriangleIntegrators
 
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
    type(SparseCSC) :: cscmat
+   type(NBError) :: nberr
+
 
    integer(8) bdy_cdn, i_base
 
-   !if(E_H_field .eq. FEM_FORMULATION_E) then
+   !if(E_H_fi_eld .eq. FEM_FORMULATION_E) then
    !   perm_qq = eps_eff*vacwavenum_k0**2
    !   pp = 1.0d0
-   !elseif(E_H_field .eq. FEM_FORMULATION_H) then
+   !elseif(E_H_fi_eld .eq. FEM_FORMULATION_H) then
    !   perm_qq = vacwavenum_k0**2
    !   pp = 1.0d0/eps_eff
    !endif
@@ -68,52 +68,37 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    double precision bloch_vec(2)
 
 
+   ! -----------------
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
-   ! -----------------
+   type(QuadIntegrator) :: quadint
+   type(BasisFunctions) :: basfuncs
+
    integer(8), dimension(:), allocatable :: i_work
 
 
 
    integer(8) i_base2
 
-   integer(8), parameter :: NQUAD_MAX = 25
-   integer(8) nquad
-
-   double precision wt_quad(NQUAD_MAX)
-   double precision x_quad(NQUAD_MAX), y_quad(NQUAD_MAX)
-   double precision x_act(2), x_ref(2), ww, det
-   double precision mat_B(2,2), mat_T(2,2)
-   double precision gradt_i(2), gradt_j(2)
-   double precision phi_z_i, phi_z_j
-
-   integer(8)   ui_stdout
+   double precision xy_ref(2), ww
+   double precision gradt_phi3_i(2), gradt_phi3_j(2)
+   double precision phi3_z_i, phi3_z_j
 
 
-   integer(8) nod_el_p(P2_NODES_PER_EL)
-   integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
-   double precision el_xy(2, P2_NODES_PER_EL)
+   integer(8) el_nds_i(P2_NODES_PER_EL)
+   double precision el_nds_xy(2, P2_NODES_PER_EL)
+   integer(8) n_curved
 
-   ! values of basis functions and gradients at given point in reference and actual triangles
-   double precision phi_P1_ref(P1_NODES_PER_EL)
-   double precision gradt_P1_ref(2,P1_NODES_PER_EL), gradt_P1_act(2,P1_NODES_PER_EL)
-
-   double precision phi_P2_ref(P2_NODES_PER_EL)
-   double precision gradt_P2_ref(2,P2_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL)
-
-   double precision phi_P3_ref(P3_NODES_PER_EL)
-   double precision gradt_P3_ref(2,P3_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
-
-   double precision vec_phi_i(2), curlt_phi_i
-   double precision vec_phi_j(2), curlt_phi_j
+   double precision vec_phi2_i(2), curlt_phi2_i
+   double precision vec_phi2_j(2), curlt_phi2_j
 
    complex(8) val_exp(N_ENTITY_PER_EL), z_phase_fact
 
-   integer(8) i, j, k, j_mshpt, iel, iq, typ_e
-   integer(8) jcol, jp, ind_jp, j_eq
-   integer(8) irow, ip, ind_ip, i_eq
-   integer(8) n_curved, debug, col_start, col_end
+   integer(8) i, j, k, mesh_pt, i_el, iq, typ_e
+   integer(8) ety_j, msh_pt_j, eqn_j, dof_j
+   integer(8) ety_i, msh_pt_i, ip, eqn_i, dof_i
+   integer(8) col_start, col_end
    complex(8) K_elt, M_elt
    logical is_curved
 
@@ -124,10 +109,11 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    complex(8) tperm_pp, tperm_qq
 
 
-   ui_stdout = stdout
-   debug = 0
+   errco=0
 
-   call integer_alloc_1d(i_work, 3*entities%n_entities, 'i_work', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(i_work, 3*entities%n_entities, 'i_work', errco, emsg);
+   call nberr%set(errco, emsg)
+   RET_ON_NBERR(nberr)
 
    !  The CSC indexing, i.e., col_ptr, is 1-based
    !  But valpr.f may have changed the CSC indexing to 0-based indexing)
@@ -137,8 +123,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
       i_base2 = 0
    endif
 
-   ! Determine quadrature weights for triangle integrations at 16 points (seets nquad)
-   call quad_triangle (nquad, NQUAD_MAX, wt_quad, x_quad, y_quad)
+   call quadint%setup_reference_quadratures()
 
    ! These are the K and M matrices in Kokou's paper expressed in CSC format
    cscmat%mOp_stiff = C_ZERO
@@ -146,20 +131,15 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
 
    n_curved = 0
+   z_phase_fact = 1.0
 
-   do iel=1,mesh_raw%n_msh_el                     ! For each element
-      typ_e = mesh_raw%el_material(iel)       ! Find the material
+   do i_el=1,mesh_raw%n_msh_el                     ! For each element
+      typ_e = mesh_raw%el_material(i_el)       ! Find the material
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
 
-      do j=1,P2_NODES_PER_EL                              ! For each of the 6 P2 nodes
-         j_mshpt = mesh_raw%elnd_to_mesh(j,iel)        !    find the index of the mesh point
-         nod_el_p(j) = j_mshpt                        !    store the mesh point indices for this element
-         el_xy(:,j) = mesh_raw%v_nd_xy(:,j_mshpt)  !    find their physical positions
-      enddo
-
-      is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, el_xy)
+      call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
 
       if (is_curved) then
          n_curved = n_curved + 1
@@ -167,144 +147,76 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
       if (bdy_cdn .eq. BCS_PERIODIC) then
          do j=1,P2_NODES_PER_EL
-            j_mshpt = pbcs%iperiod_N(nod_el_p(j))
-            if (j_mshpt .ne. 0) nod_el_p(j) = j_mshpt
+            mesh_pt = pbcs%iperiod_N(el_nds_i(j))
+            if (mesh_pt .ne. 0) el_nds_i(j) = mesh_pt
          enddo
       endif
 
-      call make_vector_elt_map(nod_el_p, vector_elt_map)
-      !    if (iel .eq. 1) then
-      !       write(*,*) 'phimap 1 1', (vector_elt_map(k,1, 1), k=1,4)
-      !       write(*,*) 'phimap 1 2', (vector_elt_map(k,1, 2), k=1,4)
-      !       write(*,*) 'phimap 1 3', (vector_elt_map(k,1, 3), k=1,4)
-      !       write(*,*) 'phimap 1 4', (vector_elt_map(k,1, 4), k=1,4)
-
-      !       write(*,*) 'phimap 2 1', (vector_elt_map(k,2, 1), k=1,4)
-      !       write(*,*) 'phimap 2 2', (vector_elt_map(k,2, 2), k=1,4)
-      !       write(*,*) 'phimap 2 3', (vector_elt_map(k,2, 3), k=1,4)
-      !       write(*,*) 'phimap 2 4', (vector_elt_map(k,2, 4), k=1,4)
-
-      !       write(*,*) 'phimap 2 1', (vector_elt_map(k,3, 1), k=1,4)
-      !       write(*,*) 'phimap 2 2', (vector_elt_map(k,3, 2), k=1,4)
-      !       write(*,*) 'phimap 2 3', (vector_elt_map(k,3, 3), k=1,4)
-      !       write(*,*) 'phimap 2 4', (vector_elt_map(k,3, 4), k=1,4)
-
-
-      ! endif
+      call basfuncs%build_vector_elt_map(el_nds_i)
 
       val_exp = C_ONE
 
+      ! TODO:  move to function
       if (bdy_cdn .eq. BCS_PERIODIC) then
          !  val_exp: Bloch mod ephase factor between the origin point and destination point
          !  For a pair of periodic points, one is chosen as origin and the other is the destination
          do j=1,N_ENTITY_PER_EL
-            ip = entities%v_tags(j,iel)
-            j_mshpt = pbcs%iperiod_N_E_F(ip)
-            if (j_mshpt .ne. 0) then
-               delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,j_mshpt)
+            ip = entities%v_tags(j,i_el)
+            mesh_pt = pbcs%iperiod_N_E_F(ip)
+            if (mesh_pt .ne. 0) then
+               delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,mesh_pt)
                r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
                val_exp(j) = exp(C_IM_ONE*r_tmp1)
             endif
          enddo
       endif
 
-      do iq=1,nquad         ! for each quadrature point in reference triangle
-         x_ref(1) = x_quad(iq)     !    find local points and weighting
-         x_ref(2) = y_quad(iq)
-         ww = wt_quad(iq)
-         !  xx   = coordinate on the reference triangle
-         !  xx_g = coordinate on the actual triangle
+      do iq=1,quadint%n_quad ! for each quadrature point in reference triangle
+
+         ! find quad point in reference triangle
+         call quadint%get_quad_point(iq, xy_ref, ww)
 
          ! Evaluate the basis functions and gradients at the quadrature point
+         ! Gradients are evaluated in the actual triangle
+         call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
+         RET_ON_NBERR(nberr)
 
-         call phi1_2d_mat(x_ref, phi_P1_ref, gradt_P1_ref)  ! P1 elements
-         call phi2_2d_mat(x_ref, phi_P2_ref, gradt_P2_ref)  ! P2 elements
-         call phi3_2d_mat(x_ref, phi_P3_ref, gradt_P3_ref)  ! P3 elements
 
-         if (.not. is_curved ) then
-            !  Rectilinear element
-            call jacobian_p1_2d(x_ref, el_xy, P2_NODES_PER_EL, x_act, det, mat_B, mat_T, errco, emsg)
+         ! N_ENTITY_PER_EL is number of field sites per elt, each associated with one P2 or P3 node
+         ! N_ETY_TRANSVERSE is number of transverse ones (face and 3 P2 edges)
 
-            if (det .le. 0 .and. debug .eq. 1 .and. iq .eq. 1) then
-               write(ui_stdout,*) "   !!!"
-               write(ui_stdout,*) "asmbly: det <= 0: iel, det ", iel, det
-               write(ui_stdout,*) "x : ", (nod_el_p(j),j=1,P2_NODES_PER_EL)
-               write(ui_stdout,*) "x : ", (el_xy(1,j),j=1,3)
-               write(ui_stdout,*) "y : ", (el_xy(2,j),j=1,3)
-               write(ui_stdout,*)
-            endif
+         ! iterating columns
+         do ety_j=1,N_ENTITY_PER_EL
+            msh_pt_j = entities%v_tags(ety_j, i_el) ! global name for the corresopnding mesh point
 
-         else !  Isoparametric element, 2024-06 fix
-            call jacobian_p2_2d(el_xy, P2_NODES_PER_EL, phi_P2_ref, gradt_P2_ref, x_act, det, mat_B, mat_T)
-         endif
+            do dof_j=1,3  ! max of 3 basis functions associated with any node
+               eqn_j = cscmat%m_eqs(dof_j,msh_pt_j)
 
-         !  gradt_i_mat  = gradtient on the actual triangle
-         !  gradt_i_act  = Transpose(mat_T)*gradt_i_ref
-
-         call DGEMM('Transpose','N', 2, 3, 2,  D_ONE, mat_T, 2, gradt_P1_ref, 2, D_ZERO, gradt_P1_act, 2)
-         call DGEMM('Transpose','N', 2, 6, 2,  D_ONE, mat_T, 2, gradt_P2_ref, 2, D_ZERO, gradt_P2_act, 2)
-         call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, gradt_P3_ref, 2, D_ZERO, gradt_P3_act, 2)
-
-         ! N_ENTITY_PER_EL is number of field dof per elt, each associated with one mesh point
-         ! N_ETY_TRANSVERSE is number of transverse ones (face and 3 edges)
-         do jcol=1,N_ENTITY_PER_EL
-            jp = entities%v_tags(jcol,iel)
-
-            do j_eq=1,3
-               ind_jp = cscmat%m_eqs(j_eq,jp)
-               if (ind_jp .gt. 0) then
-                  col_start = cscmat%v_col_ptr(ind_jp) + i_base2
-                  col_end = cscmat%v_col_ptr(ind_jp+1) - 1 + i_base2
+               if (eqn_j .gt. 0) then
+                  col_start = cscmat%v_col_ptr(eqn_j) + i_base2
+                  col_end = cscmat%v_col_ptr(eqn_j+1) - 1 + i_base2
                   !  unpack row into i_work
                   do i=col_start,col_end
                      i_work(cscmat%v_row_ind(i) + i_base2) = i
                   enddo
 
+                  ! evaluate this entity's P2 and P3 functions and derivatives
+                  ! at the current quad point
+                  call basfuncs%find_derivatives(dof_j, ety_j, vec_phi2_j, curlt_phi2_j, phi3_z_j, gradt_phi3_j)
 
-                  call find_basis_derivatives(j_eq, jcol, vector_elt_map, phi_P2_ref, phi_P3_ref, &
-                     gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_j, curlt_phi_j, gradt_j, phi_z_j)
 
-                  ! if (jcol .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
-                  !    ! Uses P2 vector elements so determine the basis vector
-                  !    call evaluate_vector_elts(j_eq, jcol, vector_elt_map, phi_P2_ref, &
-                  !       gradt_P1_act, gradt_P2_act, vec_phi_j, curlt_phi_j)
-                  !    gradt_j = D_ZERO
-                  !    phi_z_j = D_ZERO
-                  ! else   ! a longitudinal dof, use P3 scalar element
-                  !    vec_phi_j = D_ZERO
-                  !    curlt_phi_j = D_ZERO
-                  !    gradt_j(:) = gradt_P3_act(:,jcol-N_ETY_TRANSVERSE)
-                  !    phi_z_j = phi_P3_ref(jcol-N_ETY_TRANSVERSE)
-                  ! endif
+                  ! iterating rows
+                  do ety_i=1,N_ENTITY_PER_EL
+                     !z_phase_fact = val_exp(ety_j) * conjg(val_exp(ety_i))
+                     msh_pt_i = entities%v_tags(ety_i,i_el)
 
-                  do irow=1,N_ENTITY_PER_EL
-                     z_phase_fact = val_exp(jcol) * conjg(val_exp(irow))
-                     ip = entities%v_tags(irow,iel)
-                     do i_eq=1,3
-                        ind_ip = cscmat%m_eqs(i_eq,ip)
-                        if (ind_ip .gt. 0) then
+                     do dof_i=1,3
+                        eqn_i = cscmat%m_eqs(dof_i,msh_pt_i)
 
-                           !if (ind_jp .eq. ind_ip .and. &
-                           !   abs(imag(z_phase_fact)) .gt. 1.0d-15) then
-                           !   write(ui_stdout,*) "phase_fact: ", ind_jp, ind_ip, &
-                           !      z_phase_fact, val_exp(jcol), val_exp(irow)
-                           !endif
+                        if (eqn_i .gt. 0) then
 
-                           call find_basis_derivatives(i_eq, irow, vector_elt_map, phi_P2_ref, phi_P3_ref, &
-                              gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
+                           call basfuncs%find_derivatives(dof_i, ety_i, vec_phi2_i, curlt_phi2_i, phi3_z_i, gradt_phi3_i)
 
-                           ! if (irow .le. N_ETY_TRANSVERSE) then  !  edge or face element
-                           !    call evaluate_vector_elts(i_eq, irow, vector_elt_map, &
-                           !       phi_P2_ref, gradt_P1_act, gradt_P2_act, vec_phi_i, &
-                           !       curlt_phi_i)
-                           !    gradt_i = D_ZERO
-                           !    phi_z_i = D_ZERO
-                           ! else
-                           !    vec_phi_i = D_ZERO
-                           !    curlt_phi_i = D_ZERO
-                           !    gradt_i(:) = gradt_P3_act(:,irow-N_ETY_TRANSVERSE)
-                           !    phi_z_i = phi_P3_ref(irow-N_ETY_TRANSVERSE)
-                           ! endif
 
                            !!!!!!!!!!!!!!!!!!!!!!!!!!
                            !  Reference; see Eq. (40) of the FEM paper:
@@ -318,39 +230,39 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            !        lower    e,f for hatted longitudinal part
                            ! F_i, f_i are the test functions indexed by rows
                            ! E_i, e_i are the soln functions indexed by cols
-                           if (irow .le. N_ETY_TRANSVERSE .and. jcol .le. N_ETY_TRANSVERSE) then    ! [tt] part
-                              ! K_tt =   (curl E_j).(curl F_i)-k^2 eps (E_j, F_i)
+                           if (ety_i .le. N_ETY_TRANSVERSE .and. ety_j .le. N_ETY_TRANSVERSE) then    ! [tt] part
+                              ! K_tt =   (curlt E_j).(curlt F_i)-k^2 eps (E_j, F_i)
                               ! M_tt = - (E_j, F_i)
-                              r_tmp1 = curlt_phi_j * curlt_phi_i
-                              r_tmp2 = ddot(2, vec_phi_j, 1, vec_phi_i, 1)
+                              r_tmp1 = curlt_phi2_j * curlt_phi2_i
+                              r_tmp2 = ddot(2, vec_phi2_j, 1, vec_phi2_i, 1)
                               K_tt = r_tmp1 * tperm_pp - r_tmp2 * tperm_qq
                               M_tt = - r_tmp2 * tperm_pp
                               K_elt = K_tt
                               M_elt = M_tt
 
-                           elseif (irow .le. N_ETY_TRANSVERSE .and. jcol .gt. N_ETY_TRANSVERSE) then  ! [tz] part
+                           elseif (ety_i .le. N_ETY_TRANSVERSE .and. ety_j .gt. N_ETY_TRANSVERSE) then  ! [tz] part
                               ! K_tz =  0
                               ! M_tz = (gradt e_j, F_i)
-                              r_tmp1 = ddot(2, gradt_j, 1, vec_phi_i, 1)
+                              r_tmp1 = ddot(2, gradt_phi3_j, 1, vec_phi2_i, 1)
                               K_tz = 0.0d0
                               M_tz = r_tmp1 * tperm_pp
                               K_elt = K_tz
                               M_elt = M_tz
 
-                           elseif (irow .gt. N_ETY_TRANSVERSE .and. jcol .le. N_ETY_TRANSVERSE) then ! [zt] part
+                           elseif (ety_i .gt. N_ETY_TRANSVERSE .and. ety_j .le. N_ETY_TRANSVERSE) then ! [zt] part
                               ! K_tz =  (E_j, gradt f_i)
                               ! M_tz =  0
-                              r_tmp1 = ddot(2, vec_phi_j, 1, gradt_i, 1)
+                              r_tmp1 = ddot(2, vec_phi2_j, 1, gradt_phi3_i, 1)
                               K_zt = r_tmp1 * tperm_pp
                               M_zt = 0.0d0
                               K_elt = K_zt
                               M_elt = M_zt
 
-                           elseif (irow .gt. N_ETY_TRANSVERSE .and. jcol .gt. N_ETY_TRANSVERSE) then ! [zz] part
+                           elseif (ety_i .gt. N_ETY_TRANSVERSE .and. ety_j .gt. N_ETY_TRANSVERSE) then ! [zz] part
                               ! K_zz =  - (gradt e_j, gradt f_i) + eps_r k^2 (e_j, f_i )
                               ! M_zz =  0
-                              r_tmp1 = ddot(2, gradt_j, 1, gradt_i, 1)
-                              r_tmp2 = phi_z_j * phi_z_i
+                              r_tmp1 = ddot(2, gradt_phi3_j, 1, gradt_phi3_i, 1)
+                              r_tmp2 = phi3_z_j * phi3_z_i
                               K_zz = - r_tmp1 * tperm_pp + r_tmp2 * tperm_qq
                               M_zz = 0.0d0
                               K_elt = K_zz
@@ -358,15 +270,15 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
                            else
                               errco = NBERR_BAD_ASSEMBLY
-                              write(emsg,*) "irow or jcol has an ", "invalid value",  &
-                                 "irow jcol, = ", irow, jcol
+                              write(emsg,*) "ety_i or ety_j has an ", "invalid value",  &
+                                 "ety_i ety_j, = ", ety_i, ety_j
                               return
                            endif
 
                            ! without periodic bcs, z_phase_fact = 0 always
                            ! add term to sum weighted by quadrature factor and area det
-                           K_elt = K_elt * ww * abs(det) * z_phase_fact
-                           M_elt = M_elt * ww * abs(det) * z_phase_fact
+                           K_elt = K_elt * ww * abs(basfuncs%det) * z_phase_fact
+                           M_elt = M_elt * ww * abs(basfuncs%det) * z_phase_fact
 
                            ! TODO:
                            !  This is an arpack solver thing.
@@ -376,7 +288,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            !
                            K_elt = K_elt - shift_ksqr*M_elt
 
-                           k = i_work(ind_ip)
+                           k = i_work(eqn_i)
                            if (k .gt. 0 .and. k .le. cscmat%n_nonz) then   !is this test necessary?
                               cscmat%mOp_stiff(k) = cscmat%mOp_stiff(k) + K_elt
                               cscmat%mOp_mass(k) = cscmat%mOp_mass(k) + M_elt
@@ -396,22 +308,4 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
       enddo
    enddo
 
-   if (debug .eq. 1) then
-      write(ui_stdout,*) "asmbly: shift_ksqr = ", shift_ksqr
-      write(ui_stdout,*) "asmbly: number of curved elements = ", n_curved
-      write(ui_stdout,*) "asmbly: n_msh_el, (n_msh_el-n_curved) = ", mesh_raw%n_msh_el, &
-         (mesh_raw%n_msh_el-n_curved)
-   endif
-
-   if (debug .eq. 1) then
-      write(ui_stdout,*)
-      write(ui_stdout,*) "  Re perm_pp = ", dble(perm_pp)
-      write(ui_stdout,*) "imag perm_pp = ", imag(perm_pp)
-      write(ui_stdout,*)
-      write(ui_stdout,*) "  Re perm_qq = ", dble(perm_qq)
-      write(ui_stdout,*) "imag perm_qq = ", imag(perm_qq)
-   endif
-
-
-   return
 end

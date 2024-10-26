@@ -215,8 +215,8 @@ contains
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
       call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
-         mesh_raw, entities, cscmat, pbcs, errco, emsg )
-      RETONERROR(errco)
+         mesh_raw, entities, cscmat, pbcs, nberr)
+      RET_ON_NBERR_UNFOLD(nberr)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
 
