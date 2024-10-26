@@ -84,16 +84,49 @@ end subroutine
 ! Evaluates the vector element and its transverse curl
 ! of basis function bf_j (1..3) of transverse entity ety_j (1..4)
 ! at the current position previously set by evaluate_at_position
-subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_j, vec_phi, curlt_phi)
+subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_trans, vec_phi, curlt_phi)
    use numbatmod
 
    class(BasisFunctions) this
-   integer(8) bf_j, ety_j
+   integer(8) bf_j, ety_trans
    double precision vec_phi(2)  ! gradient of a P
    double precision curlt_phi    ! \zhat \dot (\nabla_t \cross E_t)
 
-   call evaluate_vector_elts(bf_j, ety_j, this%vector_elt_map, this%phi_P2_ref, &
-      this%gradt_P1_act, this%gradt_P2_act, vec_phi, curlt_phi)
+   double precision grad_p1(2), grad_p2(2), phi
+   integer(8) k, m, n1, n2
+
+   ! call evaluate_vector_elts(bf_j, ety_j, this%vector_elt_map, this%phi_P2_ref, &
+   !    this%gradt_P1_act, this%gradt_P2_act, vec_phi, curlt_phi)
+
+
+      k  = this%vector_elt_map(1, bf_j, ety_trans)
+      m  = this%vector_elt_map(2, bf_j, ety_trans)
+      n1 = this%vector_elt_map(3, bf_j, ety_trans)
+      n2 = this%vector_elt_map(4, bf_j, ety_trans)
+
+
+
+      if (k .eq. 3) then
+
+         phi = this%phi_P2_ref(m)
+         grad_p2 = this%gradt_P2_act(:,m)
+         grad_p1 = this%gradt_P1_act(:,n1)
+         vec_phi = phi * grad_p1
+
+
+      elseif (k .eq. 4) then
+
+         phi = this%phi_P2_ref(m)
+         grad_p2 = this%gradt_P2_act(:,m)
+         grad_p1 = this%gradt_P1_act(:,n1) - this%gradt_P1_act(:,n2)
+         vec_phi = phi * grad_p1
+
+
+      endif
+
+      !  Curl_t E = Det( grad_p2,  grad_p1)
+      curlt_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
+
 
 end subroutine
 
@@ -104,13 +137,10 @@ subroutine BasisFunctions_find_derivatives(this, idof, ety, &
    class(BasisFunctions) this
 
    integer(8) idof, ety
-   ! integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
-   ! double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
-   ! double precision gradt_P1_act(2,P1_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
 
    double precision vec_phi_x(2), curlt_phi_x
-   double precision gradt_P3_x(2)
    double precision phi_P3_x
+   double precision gradt_P3_x(2)
 
    if (ety .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
       ! Uses P2 vector elements so determine the basis vector

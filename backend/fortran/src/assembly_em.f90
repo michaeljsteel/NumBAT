@@ -2,39 +2,7 @@
  !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
  !  for the main linear equations
 
-
-! subroutine find_basis_derivatives(idof, ifunc, vector_elt_map, phi_P2_ref, phi_P3_ref, &
-!    gradt_phi3_P1_act, gradt_phi3_P2_act, gradt_phi3_P3_act, vec_phi2_i, curlt_phi2_i, gradt_phi3_i, phi3_z_i)
-
-!    use numbatmod
-
-!    integer(8) idof, ifunc
-!    integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
-!    double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
-!    double precision gradt_phi3_P1_act(2,P1_NODES_PER_EL), gradt_phi3_P2_act(2,P2_NODES_PER_EL), gradt_phi3_P3_act(2,P3_NODES_PER_EL)
-
-!    double precision vec_phi2_i(2), curlt_phi2_i
-!    double precision gradt_phi3_i(2)
-!    double precision phi3_z_i
-
-!    if (ifunc .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
-!       ! Uses P2 vector elements so determine the basis vector
-!       call evaluate_vector_elts(idof, ifunc, vector_elt_map, phi_P2_ref, &
-!          gradt_phi3_P1_act, gradt_phi3_P2_act, vec_phi2_i, curlt_phi2_i)
-!       gradt_phi3_i = D_ZERO
-!       phi3_z_i = D_ZERO
-!    else   ! a longitudinal dof, use P3 scalar element
-!       vec_phi2_i = D_ZERO
-!       curlt_phi2_i = D_ZERO
-!       gradt_phi3_i(:) = gradt_phi3_P3_act(:,ifunc-N_ETY_TRANSVERSE)
-!       phi3_z_i = phi_P3_ref(ifunc-N_ETY_TRANSVERSE)
-!    endif
-
-
-! end subroutine
-
-
-subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
+subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    perm_pp, perm_qq, mesh_raw, entities, cscmat, pbcs, nberr)
 
 
@@ -81,32 +49,32 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    integer(8) i_base2
 
-   double precision xy_ref(2), ww
-   double precision gradt_phi3_i(2), gradt_phi3_j(2)
-   double precision phi3_z_i, phi3_z_j
-
+   double precision xy_ref(2), wt
 
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision el_nds_xy(2, P2_NODES_PER_EL)
    integer(8) n_curved
+   logical is_curved
 
    double precision vec_phi2_i(2), curlt_phi2_i
    double precision vec_phi2_j(2), curlt_phi2_j
+   double precision phi3_z_i, gradt_phi3_i(2)
+   double precision phi3_z_j, gradt_phi3_j(2)
 
-   complex(8) val_exp(N_ENTITY_PER_EL), z_phase_fact
 
-   integer(8) i, j, k, mesh_pt, i_el, iq, typ_e
+   integer(8) i, j, k, mesh_pt, i_el, iq, typ_e, ip
+   integer(8) ety_i, msh_pt_i, eqn_i, dof_i
    integer(8) ety_j, msh_pt_j, eqn_j, dof_j
-   integer(8) ety_i, msh_pt_i, ip, eqn_i, dof_i
    integer(8) col_start, col_end
-   complex(8) K_elt, M_elt
-   logical is_curved
 
-   double precision delta_xx(2)
    double precision ddot, r_tmp1, r_tmp2
    complex(8) M_tt, M_zz, M_tz, M_zt
    complex(8) K_tt, K_zz, K_tz, K_zt
    complex(8) tperm_pp, tperm_qq
+   complex(8) K_elt, M_elt
+
+   complex(8) val_exp(N_ENTITY_PER_EL), z_phase_fact
+   double precision delta_xx(2)
 
 
    errco=0
@@ -174,7 +142,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
       do iq=1,quadint%n_quad ! for each quadrature point in reference triangle
 
          ! find quad point in reference triangle
-         call quadint%get_quad_point(iq, xy_ref, ww)
+         call quadint%get_quad_point(iq, xy_ref, wt)
 
          ! Evaluate the basis functions and gradients at the quadrature point
          ! Gradients are evaluated in the actual triangle
@@ -277,8 +245,8 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
                            ! without periodic bcs, z_phase_fact = 0 always
                            ! add term to sum weighted by quadrature factor and area det
-                           K_elt = K_elt * ww * abs(basfuncs%det) * z_phase_fact
-                           M_elt = M_elt * ww * abs(basfuncs%det) * z_phase_fact
+                           K_elt = K_elt * wt * abs(basfuncs%det) * z_phase_fact
+                           M_elt = M_elt * wt * abs(basfuncs%det) * z_phase_fact
 
                            ! TODO:
                            !  This is an arpack solver thing.
