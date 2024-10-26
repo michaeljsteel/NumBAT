@@ -3,13 +3,13 @@
  !  for the main linear equations
 
 
-subroutine find_basis_derivatives(idof, ifunc, phi_vec_map, phi_P2_ref, phi_P3_ref, &
+subroutine find_basis_derivatives(idof, ifunc, vector_elt_map, phi_P2_ref, phi_P3_ref, &
    gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
 
    use numbatmod
 
    integer(8) idof, ifunc
-   integer(8) phi_vec_map(4,3,N_DDL_T)
+   integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
    double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
    double precision gradt_P1_act(2,P1_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
 
@@ -17,17 +17,17 @@ subroutine find_basis_derivatives(idof, ifunc, phi_vec_map, phi_P2_ref, phi_P3_r
    double precision gradt_i(2)
    double precision phi_z_i
 
-   if (ifunc .le. N_DDL_T) then ! A transverse dof (edge or face)
+   if (ifunc .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
       ! Uses P2 vector elements so determine the basis vector
-      call make_phi_vector_basis(idof, ifunc, phi_vec_map, phi_P2_ref, &
+      call make_vector_elt_basis(idof, ifunc, vector_elt_map, phi_P2_ref, &
          gradt_P1_act, gradt_P2_act, vec_phi_i, curlt_phi_i)
       gradt_i = D_ZERO
       phi_z_i = D_ZERO
    else   ! a longitudinal dof, use P3 scalar element
       vec_phi_i = D_ZERO
       curlt_phi_i = D_ZERO
-      gradt_i(:) = gradt_P3_act(:,ifunc-N_DDL_T)
-      phi_z_i = phi_P3_ref(ifunc-N_DDL_T)
+      gradt_i(:) = gradt_P3_act(:,ifunc-N_ETY_TRANSVERSE)
+      phi_z_i = phi_P3_ref(ifunc-N_ETY_TRANSVERSE)
    endif
 
 
@@ -92,7 +92,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
 
    integer(8) nod_el_p(P2_NODES_PER_EL)
-   integer(8) phi_vec_map(4,3,N_DDL_T)
+   integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
    double precision el_xy(2, P2_NODES_PER_EL)
 
    ! values of basis functions and gradients at given point in reference and actual triangles
@@ -172,22 +172,22 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
          enddo
       endif
 
-      call make_phi_vector_map(nod_el_p, phi_vec_map)
+      call make_vector_elt_map(nod_el_p, vector_elt_map)
       !    if (iel .eq. 1) then
-      !       write(*,*) 'phimap 1 1', (phi_vec_map(k,1, 1), k=1,4)
-      !       write(*,*) 'phimap 1 2', (phi_vec_map(k,1, 2), k=1,4)
-      !       write(*,*) 'phimap 1 3', (phi_vec_map(k,1, 3), k=1,4)
-      !       write(*,*) 'phimap 1 4', (phi_vec_map(k,1, 4), k=1,4)
+      !       write(*,*) 'phimap 1 1', (vector_elt_map(k,1, 1), k=1,4)
+      !       write(*,*) 'phimap 1 2', (vector_elt_map(k,1, 2), k=1,4)
+      !       write(*,*) 'phimap 1 3', (vector_elt_map(k,1, 3), k=1,4)
+      !       write(*,*) 'phimap 1 4', (vector_elt_map(k,1, 4), k=1,4)
 
-      !       write(*,*) 'phimap 2 1', (phi_vec_map(k,2, 1), k=1,4)
-      !       write(*,*) 'phimap 2 2', (phi_vec_map(k,2, 2), k=1,4)
-      !       write(*,*) 'phimap 2 3', (phi_vec_map(k,2, 3), k=1,4)
-      !       write(*,*) 'phimap 2 4', (phi_vec_map(k,2, 4), k=1,4)
+      !       write(*,*) 'phimap 2 1', (vector_elt_map(k,2, 1), k=1,4)
+      !       write(*,*) 'phimap 2 2', (vector_elt_map(k,2, 2), k=1,4)
+      !       write(*,*) 'phimap 2 3', (vector_elt_map(k,2, 3), k=1,4)
+      !       write(*,*) 'phimap 2 4', (vector_elt_map(k,2, 4), k=1,4)
 
-      !       write(*,*) 'phimap 2 1', (phi_vec_map(k,3, 1), k=1,4)
-      !       write(*,*) 'phimap 2 2', (phi_vec_map(k,3, 2), k=1,4)
-      !       write(*,*) 'phimap 2 3', (phi_vec_map(k,3, 3), k=1,4)
-      !       write(*,*) 'phimap 2 4', (phi_vec_map(k,3, 4), k=1,4)
+      !       write(*,*) 'phimap 2 1', (vector_elt_map(k,3, 1), k=1,4)
+      !       write(*,*) 'phimap 2 2', (vector_elt_map(k,3, 2), k=1,4)
+      !       write(*,*) 'phimap 2 3', (vector_elt_map(k,3, 3), k=1,4)
+      !       write(*,*) 'phimap 2 4', (vector_elt_map(k,3, 4), k=1,4)
 
 
       ! endif
@@ -246,7 +246,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
          call DGEMM('Transpose','N', 2, 10, 2, D_ONE, mat_T, 2, gradt_P3_ref, 2, D_ZERO, gradt_P3_act, 2)
 
          ! N_ENTITY_PER_EL is number of field dof per elt, each associated with one mesh point
-         ! N_DDL_T is number of transverse ones (face and 3 edges)
+         ! N_ETY_TRANSVERSE is number of transverse ones (face and 3 edges)
          do jcol=1,N_ENTITY_PER_EL
             jp = entities%v_tags(jcol,iel)
 
@@ -261,20 +261,20 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                   enddo
 
 
-                  call find_basis_derivatives(j_eq, jcol, phi_vec_map, phi_P2_ref, phi_P3_ref, &
+                  call find_basis_derivatives(j_eq, jcol, vector_elt_map, phi_P2_ref, phi_P3_ref, &
                      gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_j, curlt_phi_j, gradt_j, phi_z_j)
 
-                  ! if (jcol .le. N_DDL_T) then ! A transverse dof (edge or face)
+                  ! if (jcol .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
                   !    ! Uses P2 vector elements so determine the basis vector
-                  !    call make_phi_vector_basis(j_eq, jcol, phi_vec_map, phi_P2_ref, &
+                  !    call make_vector_elt_basis(j_eq, jcol, vector_elt_map, phi_P2_ref, &
                   !       gradt_P1_act, gradt_P2_act, vec_phi_j, curlt_phi_j)
                   !    gradt_j = D_ZERO
                   !    phi_z_j = D_ZERO
                   ! else   ! a longitudinal dof, use P3 scalar element
                   !    vec_phi_j = D_ZERO
                   !    curlt_phi_j = D_ZERO
-                  !    gradt_j(:) = gradt_P3_act(:,jcol-N_DDL_T)
-                  !    phi_z_j = phi_P3_ref(jcol-N_DDL_T)
+                  !    gradt_j(:) = gradt_P3_act(:,jcol-N_ETY_TRANSVERSE)
+                  !    phi_z_j = phi_P3_ref(jcol-N_ETY_TRANSVERSE)
                   ! endif
 
                   do irow=1,N_ENTITY_PER_EL
@@ -290,11 +290,11 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            !      z_phase_fact, val_exp(jcol), val_exp(irow)
                            !endif
 
-                           call find_basis_derivatives(i_eq, irow, phi_vec_map, phi_P2_ref, phi_P3_ref, &
+                           call find_basis_derivatives(i_eq, irow, vector_elt_map, phi_P2_ref, phi_P3_ref, &
                               gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
 
-                           ! if (irow .le. N_DDL_T) then  !  edge or face element
-                           !    call make_phi_vector_basis(i_eq, irow, phi_vec_map, &
+                           ! if (irow .le. N_ETY_TRANSVERSE) then  !  edge or face element
+                           !    call make_vector_elt_basis(i_eq, irow, vector_elt_map, &
                            !       phi_P2_ref, gradt_P1_act, gradt_P2_act, vec_phi_i, &
                            !       curlt_phi_i)
                            !    gradt_i = D_ZERO
@@ -302,8 +302,8 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            ! else
                            !    vec_phi_i = D_ZERO
                            !    curlt_phi_i = D_ZERO
-                           !    gradt_i(:) = gradt_P3_act(:,irow-N_DDL_T)
-                           !    phi_z_i = phi_P3_ref(irow-N_DDL_T)
+                           !    gradt_i(:) = gradt_P3_act(:,irow-N_ETY_TRANSVERSE)
+                           !    phi_z_i = phi_P3_ref(irow-N_ETY_TRANSVERSE)
                            ! endif
 
                            !!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -318,7 +318,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            !        lower    e,f for hatted longitudinal part
                            ! F_i, f_i are the test functions indexed by rows
                            ! E_i, e_i are the soln functions indexed by cols
-                           if (irow .le. N_DDL_T .and. jcol .le. N_DDL_T) then    ! [tt] part
+                           if (irow .le. N_ETY_TRANSVERSE .and. jcol .le. N_ETY_TRANSVERSE) then    ! [tt] part
                               ! K_tt =   (curl E_j).(curl F_i)-k^2 eps (E_j, F_i)
                               ! M_tt = - (E_j, F_i)
                               r_tmp1 = curlt_phi_j * curlt_phi_i
@@ -328,7 +328,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               K_elt = K_tt
                               M_elt = M_tt
 
-                           elseif (irow .le. N_DDL_T .and. jcol .gt. N_DDL_T) then  ! [tz] part
+                           elseif (irow .le. N_ETY_TRANSVERSE .and. jcol .gt. N_ETY_TRANSVERSE) then  ! [tz] part
                               ! K_tz =  0
                               ! M_tz = (gradt e_j, F_i)
                               r_tmp1 = ddot(2, gradt_j, 1, vec_phi_i, 1)
@@ -337,7 +337,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               K_elt = K_tz
                               M_elt = M_tz
 
-                           elseif (irow .gt. N_DDL_T .and. jcol .le. N_DDL_T) then ! [zt] part
+                           elseif (irow .gt. N_ETY_TRANSVERSE .and. jcol .le. N_ETY_TRANSVERSE) then ! [zt] part
                               ! K_tz =  (E_j, gradt f_i)
                               ! M_tz =  0
                               r_tmp1 = ddot(2, vec_phi_j, 1, gradt_i, 1)
@@ -346,7 +346,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               K_elt = K_zt
                               M_elt = M_zt
 
-                           elseif (irow .gt. N_DDL_T .and. jcol .gt. N_DDL_T) then ! [zz] part
+                           elseif (irow .gt. N_ETY_TRANSVERSE .and. jcol .gt. N_ETY_TRANSVERSE) then ! [zz] part
                               ! K_zz =  - (gradt e_j, gradt f_i) + eps_r k^2 (e_j, f_i )
                               ! M_zz =  0
                               r_tmp1 = ddot(2, gradt_j, 1, gradt_i, 1)

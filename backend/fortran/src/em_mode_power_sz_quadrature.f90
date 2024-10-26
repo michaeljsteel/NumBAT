@@ -18,7 +18,7 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    integer(8) n_modes, n_msh_el, n_msh_pts
    integer(8) elnd_to_mesh(P2_NODES_PER_EL, n_msh_el)
    double precision v_nd_xy(2, n_msh_pts)
-   complex(8) soln_em_e(3, P2_NODES_PER_EL+7, n_modes, n_msh_el)
+   complex(8) soln_em_e(3, N_DOF_PER_EL, n_modes, n_msh_el)
    complex(8) beta
    complex(8) v_beta(n_modes)
    complex(8), dimension(n_modes) :: m_power

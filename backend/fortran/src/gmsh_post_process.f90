@@ -23,14 +23,14 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
    complex(8) val_cmplx(nval)
 
 
-   double precision xel(3,nnodes_0), xel_p1(3,3)
-   complex(8) sol_el(3,nnodes_0), sol_max(4)
-   double precision sol_el_abs2(nnodes_0)
-   double precision sol_el_abs2_eE(nnodes_0)
-   !      double precision sol_el_abs2_iD(nnodes_0)
-   double precision ls_index(nnodes_0), r_index, zz
-   !      double precision ls_im_index(nnodes_0), im_index
-   !      double precision ls_abs_index(nnodes_0), abs_index
+   double precision xel(3,P2_NODES_PER_EL), xel_p1(3,3)
+   complex(8) sol_el(3,P2_NODES_PER_EL), sol_max(4)
+   double precision sol_el_abs2(P2_NODES_PER_EL)
+   double precision sol_el_abs2_eE(P2_NODES_PER_EL)
+   !      double precision sol_el_abs2_iD(P2_NODES_PER_EL)
+   double precision ls_index(P2_NODES_PER_EL), r_index, zz
+   !      double precision ls_im_index(P2_NODES_PER_EL), im_index
+   !      double precision ls_abs_index(P2_NODES_PER_EL), abs_index
    double precision v_im, v_re
 
    integer(8) i, j, i1, iel, namelen, namelen2, typ_e

@@ -2,14 +2,14 @@
      *  rho, c_tensor, p_tensor, eta_tensor, ls_material)
 
       implicit none
-      integer(8) nnodes_0
-      parameter (nnodes_0 = 6)
+      integer(8) P2_NODES_PER_EL
+      parameter (P2_NODES_PER_EL = 6)
       integer(8) nel, nb_typ_el
       integer(8) type_el(nel)
       complex(8) rho(nb_typ_el), c_tensor(6,6,nb_typ_el)
       complex(8) p_tensor(3,3,3,3,nb_typ_el)
       complex(8) eta_tensor(3,3,3,3,nb_typ_el)
-      complex(8) ls_material(10,nnodes_0,nel)
+      complex(8) ls_material(10,P2_NODES_PER_EL,nel)
 
 c     Local variables
       integer(8) debug, k_typ
@@ -47,7 +47,7 @@ C
         eta_11 = eta_tensor(1,1,1,1,k_typ)
         eta_12 = eta_tensor(1,1,2,2,k_typ)
         eta_44 = eta_tensor(2,3,2,3,k_typ)
-        do inod=1,nnodes_0
+        do inod=1,P2_NODES_PER_EL
           ls_material(1,inod,iel) = rho_el
           ls_material(2,inod,iel) = c_11
           ls_material(3,inod,iel) = c_12
@@ -68,7 +68,7 @@ C
       open (unit=63, file="Output/ls_material.txt",
      *         status="unknown")
         do iel=1,nel
-          do inod=1,nnodes_0
+          do inod=1,P2_NODES_PER_EL
             write(63,*) iel, inod,
      *         (ls_material(i,inod,iel),i=1,4)
           enddo
