@@ -75,7 +75,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    call rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
 
    !  Coordinates of the P2 Lagrange interpolation nodes for the unit triangle
-   call get_P2_node_locations(P2_NODES_PER_EL, xy_nds_P2)
+   call get_P2_node_locations(xy_nds_P2)
 
    mode_poln_fracs  =  D_ZERO
 

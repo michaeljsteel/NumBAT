@@ -13,10 +13,100 @@
 
 
 subroutine BasisFunctions_build_vector_elt_map(this, el_nds)
+   use numbatmod
+
    class(BasisFunctions) this
+
    integer(8) el_nds(P2_NODES_PER_EL)     ! global indices of the P2 nodes at current element
 
-   call build_vector_elt_map(el_nds, this%vector_elt_map)
+
+   integer ety, bf, j
+   integer(8) list_end(2,3), j2
+   integer(8) ls_n(3)
+   integer(8) edge_end, elo, ehi, iedge
+
+
+!  Endpoints of the 6 edges (mid-point) of the reference triangle
+
+   iedge = 1
+   list_end(1,iedge) = 1
+   list_end(2,iedge) = 2
+
+   iedge = 2
+   list_end(1,iedge) = 2
+   list_end(2,iedge) = 3
+
+   iedge = 3
+   list_end(1,iedge) = 1
+   list_end(2,iedge) = 3
+
+
+   !  scan the element face
+   ety=1
+
+   !  The mid-edge nodes of the face
+   !  scan the mid-edge nodes of the face
+
+   do bf=1,3
+
+      this%vector_elt_map(1,bf,ety) = 3        !  number on data to be stored
+
+      this%vector_elt_map(2,bf,ety) = bf+3      !  the mid-edge number
+
+      !  give the node opposite to the mid-edge node (j+3)
+      j2 = modulo(bf+2,3)
+      if( j2 .eq. 0 ) j2 = 3
+
+      this%vector_elt_map(3,bf,ety) = j2
+      ! second gradient not needed for this function
+      this%vector_elt_map(4,bf,ety) = 0
+   enddo
+
+   !  scan the 3 element edges
+   do ety=2,4
+      !  2 end-point basis vectors are attached to the edge i
+      !  scan the end nodes of the edge
+
+      iedge = ety-1
+
+      ! Find the indices corresponding to the nodes at the ends of the current edge
+      ! They need to be sorted by the absolute value of the nodes in the overal mesh table (via el_nds)
+      do j=1,2
+         edge_end = list_end(j,iedge)
+         ls_n(j) = el_nds(edge_end)
+      enddo
+
+      elo=1
+      ehi=2
+      ! swap if absolute node ordering is reversed
+      if (ls_n(1) .gt. ls_n(2)) then
+         elo=2
+         ehi=1
+      endif
+
+      elo = list_end(elo,iedge)
+      ehi = list_end(ehi,iedge)
+
+      bf = 1
+      this%vector_elt_map(1,bf,ety) = 3
+      this%vector_elt_map(2,bf,ety) = elo
+      this%vector_elt_map(3,bf,ety) = ehi
+      this%vector_elt_map(4,bf,ety) = 0
+
+      bf = 2
+      this%vector_elt_map(1,bf,ety) = 3
+      this%vector_elt_map(2,bf,ety) = ehi
+      this%vector_elt_map(3,bf,ety) = elo
+      this%vector_elt_map(4,bf,ety) = 0
+
+      bf = 3
+      this%vector_elt_map(1,bf,ety) = 4
+      this%vector_elt_map(2,bf,ety) = iedge+3   !  add 3 to get the correct edge number
+      this%vector_elt_map(3,bf,ety) = elo
+      this%vector_elt_map(4,bf,ety) = ehi
+
+   enddo
+
 end subroutine
 
 ! Evaluates scalar P1, P2 and P3 functions and gradients
@@ -84,6 +174,44 @@ end subroutine
 ! Evaluates the vector element and its transverse curl
 ! of basis function bf_j (1..3) of transverse entity ety_j (1..4)
 ! at the current position previously set by evaluate_at_position
+
+!  P2 vector basis functions over the reference unit triangle
+
+!  Compute:
+!  a quadratic vector basis function (vec_phi = P2 * Grad P1) and its transverse curl (curlt_phi)
+
+! vector_elt_map indexes the pieces of the basis function
+!  vector_elt_map(1,j,i) = k : number of gradients needed: if k=3 only one gradient will be used; k=4 => 2 gradients
+!  vector_elt_map(2,j,i) = m : corresponds to the P2 Lagrange polynomial phi_m
+!  vector_elt_map(3,j,i) = n : corresponds to the gradient of the P1 Lagrange polynomial eta_n
+!  vector_elt_map(4,j,i)     : gradient of the second P1 polynomial eta_n2 if needed
+
+
+! Generate the vector basis function for the bf_j bf_j of transverse entity ety_trans and its transverse curl (purely z-component)
+! in terms of the P1 and P2 scalar functions
+
+! formulas
+! ety_trans=1, face element
+!    3 edge functions at P2 nodes 4, 5, 6
+!       j=1, node 4: phi_4 Grad eta_3
+!       j=2, node 5: phi_5 Grad eta_1
+!       j=3, node 6: phi_6 Grad eta_2
+
+! ety_trans=2, edge 1, end nodes 1&2
+!       j=1, : phi_1 Grad phi_2
+!       j=2, : phi_2 Grad phi_1
+!       j=3, : phi_4 (Grad phi_1-Grad phi_2)
+
+! ety_trans=3, edge 2, end nodes 2&3
+!       j=1, : phi_2 Grad phi_3
+!       j=2, : phi_3 Grad phi_2
+!       j=3, : phi_5 (Grad phi_2-Grad phi_3)
+
+! ety_trans=4, edge 3, end nodes 3&1
+!       j=1, : phi_3 Grad phi_1
+!       j=2, : phi_1 Grad phi_3
+!       j=3, : phi_6 (Grad phi_1-Grad phi_3)
+
 subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_trans, vec_phi, curlt_phi)
    use numbatmod
 
@@ -114,7 +242,8 @@ subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_trans, vec_phi, 
          vec_phi = phi * grad_p1
 
 
-      elseif (k .eq. 4) then
+      !elseif (k .eq. 4) then
+      else ! k==4
 
          phi = this%phi_P2_ref(m)
          grad_p2 = this%gradt_P2_act(:,m)
