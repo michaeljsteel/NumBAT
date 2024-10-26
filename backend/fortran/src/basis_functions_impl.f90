@@ -12,11 +12,11 @@
 !                                 in the 2nd index j as 3 functions on each edge (for i=1), and along each edge (for i=2..4)
 
 
-subroutine BasisFunctions_make_vector_elt_map(this, el_nds)
+subroutine BasisFunctions_build_vector_elt_map(this, el_nds)
    class(BasisFunctions) this
    integer(8) el_nds(P2_NODES_PER_EL)     ! global indices of the P2 nodes at current element
 
-   call make_vector_elt_map(el_nds, this%vector_elt_map)
+   call build_vector_elt_map(el_nds, this%vector_elt_map)
 end subroutine
 
 ! Evaluates scalar P1, P2 and P3 functions and gradients
@@ -51,7 +51,7 @@ subroutine  BasisFunctions_evaluate_at_position(this, i_el, t_xy, is_curved, el_
       !  Rectilinear element
       call jacobian_p1_2d (t_xy, el_nds_xy, P2_NODES_PER_EL, xy_act, this%det, this%mat_B, this%mat_T, errco, emsg)
       call nberr%set(errco, emsg)
-      RET_ON_NBERR_UNFOLD(nberr)
+      RET_ON_NBERR(nberr)
 
       if (this%det <= 0 .and. debug == 1) then
          write(*,*) "   !!!"
@@ -63,7 +63,7 @@ subroutine  BasisFunctions_evaluate_at_position(this, i_el, t_xy, is_curved, el_
       call jacobian_p2_2d (el_nds_xy, P2_NODES_PER_EL, this%phi_P2_ref, &
          this%gradt_P2_ref, xy_act, this%det, this%mat_B, this%mat_T, errco, emsg)
       call nberr%set(errco, emsg)
-      RET_ON_NBERR_UNFOLD(nberr)
+      RET_ON_NBERR(nberr)
 
    endif
 
@@ -94,5 +94,36 @@ subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_j, vec_phi, curl
 
    call evaluate_vector_elts(bf_j, ety_j, this%vector_elt_map, this%phi_P2_ref, &
       this%gradt_P1_act, this%gradt_P2_act, vec_phi, curlt_phi)
+
+end subroutine
+
+subroutine BasisFunctions_find_derivatives(this, idof, ety, &
+   vec_phi_x, curlt_phi_x, phi_P3_x, gradt_P3_x)
+
+   use numbatmod
+   class(BasisFunctions) this
+
+   integer(8) idof, ety
+   ! integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
+   ! double precision phi_P2_ref(P2_NODES_PER_EL), phi_P3_ref(P3_NODES_PER_EL)
+   ! double precision gradt_P1_act(2,P1_NODES_PER_EL), gradt_P2_act(2,P2_NODES_PER_EL), gradt_P3_act(2,P3_NODES_PER_EL)
+
+   double precision vec_phi_x(2), curlt_phi_x
+   double precision gradt_P3_x(2)
+   double precision phi_P3_x
+
+   if (ety .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
+      ! Uses P2 vector elements so determine the basis vector
+      call this%evaluate_vector_elts(idof, ety, vec_phi_x, curlt_phi_x)
+
+      phi_P3_x = D_ZERO
+      gradt_P3_x = D_ZERO
+   else   ! a longitudinal dof, use P3 scalar element
+      vec_phi_x = D_ZERO
+      curlt_phi_x = D_ZERO
+
+      phi_P3_x = this%phi_P3_ref(ety-N_ETY_TRANSVERSE)
+      gradt_P3_x(:) = this%gradt_P3_act(:,ety-N_ETY_TRANSVERSE)
+   endif
 
 end subroutine

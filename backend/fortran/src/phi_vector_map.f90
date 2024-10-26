@@ -11,13 +11,13 @@
 !  The basis functions are stored in the 3rd index i as : centre, edges 1(4), 2(5), 3(6)
 !                                 in the 2nd index j as 3 functions on each edge (for i=1), and along each edge (for i=2..4)
 
-subroutine make_vector_elt_map (nod_el, vector_elt_map)
+subroutine build_vector_elt_map (nod_el, vector_elt_map)
 
    use numbatmod
 
    integer(8) nod_el(P2_NODES_PER_EL), vector_elt_map(4,3,N_ETY_TRANSVERSE)
 
-   integer ety, bf, dof, j
+   integer ety, bf, j
    integer(8) list_end(2,3), j2
    integer(8) ls_n(3) !, ls_n_sorted(3)
 

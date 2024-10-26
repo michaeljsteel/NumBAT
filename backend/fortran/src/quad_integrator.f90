@@ -46,6 +46,8 @@ module class_TriangleIntegrators
 
       procedure :: get_current_quadweight => QuadIntegrator_get_current_quadweight
 
+      procedure :: get_quad_point => QuadIntegrator_get_quad_point
+
 
 
    end type QuadIntegrator
