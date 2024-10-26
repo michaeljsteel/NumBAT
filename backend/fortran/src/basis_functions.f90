@@ -42,7 +42,7 @@ module class_BasisFunctions
 
    procedure :: make_vector_elt_map => BasisFunctions_make_vector_elt_map
    procedure :: evaluate_at_position => BasisFunctions_evaluate_at_position
-   procedure :: make_vector_elt_basis => BasisFunctions_make_vector_elt_basis
+   procedure :: evaluate_vector_elts => BasisFunctions_evaluate_vector_elts
 
    end type BasisFunctions
 

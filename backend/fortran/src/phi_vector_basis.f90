@@ -35,7 +35,7 @@
 !       j=2, : phi_1 Grad phi_3
 !       j=3, : phi_6 (Grad phi_1-Grad phi_3)
 
-subroutine make_vector_elt_basis(dof, ety_trans, vector_elt_map, p2_list,&
+subroutine evaluate_vector_elts(dof, ety_trans, vector_elt_map, p2_list,&
    grad_p1_mat, grad_p2_mat, vec_phi, curl_t_phi)
 
    use numbatmod

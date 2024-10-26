@@ -19,7 +19,7 @@ subroutine find_basis_derivatives(idof, ifunc, vector_elt_map, phi_P2_ref, phi_P
 
    if (ifunc .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
       ! Uses P2 vector elements so determine the basis vector
-      call make_vector_elt_basis(idof, ifunc, vector_elt_map, phi_P2_ref, &
+      call evaluate_vector_elts(idof, ifunc, vector_elt_map, phi_P2_ref, &
          gradt_P1_act, gradt_P2_act, vec_phi_i, curlt_phi_i)
       gradt_i = D_ZERO
       phi_z_i = D_ZERO
@@ -266,7 +266,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
                   ! if (jcol .le. N_ETY_TRANSVERSE) then ! A transverse dof (edge or face)
                   !    ! Uses P2 vector elements so determine the basis vector
-                  !    call make_vector_elt_basis(j_eq, jcol, vector_elt_map, phi_P2_ref, &
+                  !    call evaluate_vector_elts(j_eq, jcol, vector_elt_map, phi_P2_ref, &
                   !       gradt_P1_act, gradt_P2_act, vec_phi_j, curlt_phi_j)
                   !    gradt_j = D_ZERO
                   !    phi_z_j = D_ZERO
@@ -294,7 +294,7 @@ subroutine assembly_em  (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               gradt_P1_act, gradt_P2_act, gradt_P3_act, vec_phi_i, curlt_phi_i, gradt_i, phi_z_i)
 
                            ! if (irow .le. N_ETY_TRANSVERSE) then  !  edge or face element
-                           !    call make_vector_elt_basis(i_eq, irow, vector_elt_map, &
+                           !    call evaluate_vector_elts(i_eq, irow, vector_elt_map, &
                            !       phi_P2_ref, gradt_P1_act, gradt_P2_act, vec_phi_i, &
                            !       curlt_phi_i)
                            !    gradt_i = D_ZERO
