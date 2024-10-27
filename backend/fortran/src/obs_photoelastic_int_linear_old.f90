@@ -2,7 +2,7 @@
  ! analytic expressions for basis function overlaps on linear elements.
  !
 subroutine photoelastic_int_linear_elts (nval_EM_p, nval_EM_S, nval_AC,&
-&ival1, ival2, ival3, nel, npt, nnodes, elnd_to_mesh, type_el, x,&
+&ival1, ival2, ival3, nel, npt, nnodes, elnd_to_mshpt, type_el, x,&
 &nb_typ_el, p_tensor, beta_AC, soln_EM_p, soln_EM_S, soln_AC,&
 &eps_lst, debug, overlap, errco, emsg)
 
@@ -11,7 +11,7 @@ subroutine photoelastic_int_linear_elts (nval_EM_p, nval_EM_S, nval_AC,&
    integer(8) nval_EM_p, nval_EM_S, nval_AC, ival1, ival2, ival3
    integer(8) nel, npt, nnodes, nb_typ_el
    integer(8) type_el(nel), debug
-   integer(8) elnd_to_mesh(nnodes,nel)
+   integer(8) elnd_to_mshpt(nnodes,nel)
    double precision x(2,npt)
    complex(8) soln_EM_p(3,nnodes,nval_EM_p,nel)
    complex(8) soln_EM_S(3,nnodes,nval_EM_S,nel)
@@ -60,11 +60,11 @@ subroutine photoelastic_int_linear_elts (nval_EM_p, nval_EM_S, nval_AC,&
 
    !fo2py intent(in) nval_EM_p, nval_EM_S, nval_AC
    !fo2py intent(in) ival1, ival2, ival3, nb_typ_el
-   !fo2py intent(in) nel, npt, nnodes, elnd_to_mesh, p_tensor, beta_AC, debug
+   !fo2py intent(in) nel, npt, nnodes, elnd_to_mshpt, p_tensor, beta_AC, debug
    !fo2py intent(in) type_el, x, soln_EM_p, soln_EM_S, soln_AC, eps_lst
    !
    ! Need these dependencies to get f2py calling to work
-   !f2py depend(elnd_to_mesh) nnodes, nel
+   !f2py depend(elnd_to_mshpt) nnodes, nel
    !f2py depend(type_el) npt
    !f2py depend(x) npt
    !f2py depend(soln_EM_p) nnodes, nval_EM_p, nel
@@ -115,7 +115,7 @@ subroutine photoelastic_int_linear_elts (nval_EM_p, nval_EM_S, nval_AC,&
    do iel=1,nel
       typ_e = type_el(iel)
       do j=1,nnodes
-         j1 = elnd_to_mesh(j,iel)
+         j1 = elnd_to_mshpt(j,iel)
          xel(1,j) = x(1,j1)
          xel(2,j) = x(2,j1)
       enddo

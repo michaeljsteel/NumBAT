@@ -1,13 +1,13 @@
 
 subroutine csr_make_col_ptr_loose_AC (nel, npt, n_dof, nnodes, &
-   elnd_to_mesh, in_dof, lb, nonz)
+   elnd_to_mshpt, in_dof, lb, nonz)
 
    use numbatmod
 
    implicit none
    integer(8),  intent(in) :: nnodes
    integer(8), intent(in) :: nel, n_dof, npt
-   integer(8), intent(in) ::  elnd_to_mesh (nnodes,nel)
+   integer(8), intent(in) ::  elnd_to_mshpt (nnodes,nel)
    integer(8), intent(in) :: in_dof(3,npt)
    integer(8), intent(out) :: lb(n_dof+1)
    integer(8), intent(out) :: nonz
@@ -35,7 +35,7 @@ subroutine csr_make_col_ptr_loose_AC (nel, npt, n_dof, nnodes, &
 
    do iel=1,nel
       do i=1,nddl_0
-         ip = elnd_to_mesh(i,iel)
+         ip = elnd_to_mshpt(i,iel)
          do k=1,3
             ind_ip = in_dof(k,ip)
             if (ind_ip .ne. 0) lb(ind_ip) = lb(ind_ip)+1

@@ -2,7 +2,7 @@
  !***********************************************************************
  !
 subroutine periodic_node (nel, npt, nnodes, type_nod, x,&
-&ip_period, n_period, elnd_to_mesh, lat_vecs)
+&ip_period, n_period, elnd_to_mshpt, lat_vecs)
    !
    !***********************************************************************
    !
@@ -15,7 +15,7 @@ subroutine periodic_node (nel, npt, nnodes, type_nod, x,&
    integer(8) nel, npt, nnodes
    integer(8) type_nod(npt), ip_period(npt)
    integer(8) n_period(npt)
-   integer(8) elnd_to_mesh(nnodes,nel)
+   integer(8) elnd_to_mshpt(nnodes,nel)
    double precision lat_vecs(2,2)
    double precision x(2,npt)
    integer(8) i, j, i1, j1, i_not_periodic
@@ -157,18 +157,18 @@ subroutine periodic_node (nel, npt, nnodes, type_nod, x,&
       do j=4,nnodes
          j1 = list_end(1,j-3)
          j2 = list_end(2,j-3)
-         if(ip_period(elnd_to_mesh(j,i)) .ne. 0) then
-            if (ip_period(elnd_to_mesh(j1,i)) .eq. 0 .or.&
-            &ip_period(elnd_to_mesh(j2,i)) .eq. 0) then
-               write(*,*) "periodic_node: elnd_to_mesh = ",&
-               &type_nod(elnd_to_mesh(j1,i)), type_nod(elnd_to_mesh(j2,i)),&
-               &type_nod(elnd_to_mesh(j,i))
-               write(*,*) "periodic_node: elnd_to_mesh(k,i): ",&
-               &(elnd_to_mesh(k,i),k=1,6)
-               write(*,*) "periodic_node: ip_period(elnd_to_mesh(k,i)): ",&
-               &(ip_period(elnd_to_mesh(k,i)),k=1,6)
-               write(*,*) "periodic_node: type_nod(elnd_to_mesh(k,i)): ",&
-               &(type_nod(elnd_to_mesh(k,i)),k=1,6)
+         if(ip_period(elnd_to_mshpt(j,i)) .ne. 0) then
+            if (ip_period(elnd_to_mshpt(j1,i)) .eq. 0 .or.&
+            &ip_period(elnd_to_mshpt(j2,i)) .eq. 0) then
+               write(*,*) "periodic_node: elnd_to_mshpt = ",&
+               &type_nod(elnd_to_mshpt(j1,i)), type_nod(elnd_to_mshpt(j2,i)),&
+               &type_nod(elnd_to_mshpt(j,i))
+               write(*,*) "periodic_node: elnd_to_mshpt(k,i): ",&
+               &(elnd_to_mshpt(k,i),k=1,6)
+               write(*,*) "periodic_node: ip_period(elnd_to_mshpt(k,i)): ",&
+               &(ip_period(elnd_to_mshpt(k,i)),k=1,6)
+               write(*,*) "periodic_node: type_nod(elnd_to_mshpt(k,i)): ",&
+               &(type_nod(elnd_to_mshpt(k,i)),k=1,6)
                write(*,*) "periodic_node: Aborting..."
                stop
             endif

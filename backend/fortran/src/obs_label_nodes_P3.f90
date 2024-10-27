@@ -62,7 +62,7 @@
 
 
 subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
-   npt_p3, elnd_to_mesh, table_N_E_F, visited)
+   npt_p3, elnd_to_mshpt, table_N_E_F, visited)
 
 
    implicit none
@@ -70,7 +70,7 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
    integer(8) n_edge, npt_p3
    integer(8) visited(npt)
 
-   integer(8) elnd_to_mesh(nnodes,nel), table_N_E_F(14,nel)
+   integer(8) elnd_to_mshpt(nnodes,nel), table_N_E_F(14,nel)
 
    !  Local variables
    integer(8) P2_NODES_PER_EL
@@ -98,7 +98,7 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
    do iel=1,nel
 
       do inod=1,nnodes
-         k = elnd_to_mesh(inod,iel)
+         k = elnd_to_mshpt(inod,iel)
          nod_el_p(inod) = k
       enddo
 
@@ -113,7 +113,7 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
             iel2 = visited(k)
             inod2 = 0
             do j=1,3
-               j1 = elnd_to_mesh(j,iel2)
+               j1 = elnd_to_mshpt(j,iel2)
                if (k .eq. j1) inod2 = j
             enddo
 
@@ -132,10 +132,10 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
          k = nod_el_p(inod)
          !  Vertices of the edge
          j1 = inod - 3
-         vert_1(1) = elnd_to_mesh(j1,iel)
+         vert_1(1) = elnd_to_mshpt(j1,iel)
          j1 = inod - 2
          if (j1 .gt. 3) j1 = j1 - 3
-         vert_1(2) = elnd_to_mesh(j1,iel)
+         vert_1(2) = elnd_to_mshpt(j1,iel)
 
          if(visited(k) .eq. 0) then
             visited(k) = iel
@@ -150,16 +150,16 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
             inod2 = 0
 
             do j=4,6
-               j1=elnd_to_mesh(j,iel2)
+               j1=elnd_to_mshpt(j,iel2)
 
                if (k .eq. j1) then
                   inod2 = j
                   !  Vertices of the edge
                   j1 = inod2 - 3
-                  vert_2(1) = elnd_to_mesh(j1,iel2)
+                  vert_2(1) = elnd_to_mshpt(j1,iel2)
                   j1 = inod2 - 2
                   if (j1 .gt. 3) j1 = j1 - 3
-                  vert_2(2) = elnd_to_mesh(j1,iel2)
+                  vert_2(2) = elnd_to_mshpt(j1,iel2)
                endif
 
             enddo
@@ -187,10 +187,10 @@ subroutine label_nodes_P3 (nel, npt, nnodes, n_edge,&
                else
                   write(*,*) "list_node_P3: problems: ", &
                      "Check the edge endpoints"
-                  write(*,*) "inod, elnd_to_mesh(inod,iel) = ", inod, &
-                     elnd_to_mesh(inod,iel)
-                  write(*,*) "inod2, elnd_to_mesh(inod2,iel2) = ", inod2, &
-                     elnd_to_mesh(inod2,iel2)
+                  write(*,*) "inod, elnd_to_mshpt(inod,iel) = ", inod, &
+                     elnd_to_mshpt(inod,iel)
+                  write(*,*) "inod2, elnd_to_mshpt(inod2,iel2) = ", inod2, &
+                     elnd_to_mshpt(inod2,iel2)
                   write(*,*) "iel, iel2 = ", iel, iel2
                   write(*,*) "vert_1 = ", vert_1
                   write(*,*) "vert_2 = ", vert_2

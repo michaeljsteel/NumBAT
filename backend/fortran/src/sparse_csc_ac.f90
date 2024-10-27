@@ -43,7 +43,7 @@
 
 
 
-module class_SparseCSC
+module class_SparseCSC_AC
 
    use numbatmod
    use alloc
@@ -52,7 +52,7 @@ module class_SparseCSC
 
    private
 
-   type, public :: SparseCSC
+   type, public :: SparseCSC_AC
 
    integer(8) n_dof
    integer(8) n_nonz
@@ -67,22 +67,22 @@ module class_SparseCSC
 
    contains
 
-   procedure :: set_boundary_conditions => SparseCSC_set_boundary_conditions
-   procedure :: bound_cond_em => SparseCSC_bound_cond_em
+   !procedure :: set_boundary_conditions => SparseCSC_AC_set_boundary_conditions
+   procedure :: set_bound_cond => SparseCSC_AC_set_bound_cond
 
-   procedure :: make_csc_arrays => SparseCSC_make_csc_arrays
+   procedure :: make_csc_arrays => SparseCSC_AC_make_csc_arrays
 
-   procedure :: make_col_ptr_provisional => SparseCSC_make_col_ptr_provisional
+   procedure :: make_col_ptr_provisional => SparseCSC_AC_make_col_ptr_provisional
    procedure :: make_arrays_final => SparseSC_make_arrays_final
 
 
-   procedure :: cscmat_contains_elt_row_col => SparseCSC_cscmat_contains_elt_row_col
-   procedure :: dump_csc_arrays => SparseCSC_dump_csc_arrays
+   procedure :: cscmat_contains_elt_row_col => SparseCSC_AC_cscmat_contains_elt_row_col
+   procedure :: dump_csc_arrays => SparseCSC_AC_dump_csc_arrays
 
-   end type SparseCSC
+   end type SparseCSC_AC
 
    contains
 
-#include "sparse_csr_impl.f90"
+#include "sparse_csc_ac_impl.f90"
 
-end module class_SparseCSC
+end module class_SparseCSC_AC

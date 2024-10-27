@@ -1,6 +1,6 @@
 
 subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, rho, c_tensor, &
-   elnd_to_mesh, type_el, in_dof, x, nonz, row_ind, col_ptr, &
+   elnd_to_mshpt, type_el, in_dof, x, nonz, row_ind, col_ptr, &
    mat1_re, mat1_im, mat2, i_work, symmetry_flag, debug)
 
 
@@ -11,7 +11,7 @@ subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, r
    integer(8) i_base, nb_typ_el, nonz
    integer(8) row_ind(nonz), col_ptr(n_dof+1)
    integer(8) type_el(nel)
-   integer(8) elnd_to_mesh(nnodes,nel), in_dof(3,npt)
+   integer(8) elnd_to_mshpt(nnodes,nel), in_dof(3,npt)
    integer(8) i_work(3*npt), symmetry_flag
    complex(8) shift, beta
    double precision x(2,npt)
@@ -61,7 +61,7 @@ subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, r
 
       typ_e = type_el(iel)
       do j=1,nnodes
-         j1 = elnd_to_mesh(j,iel)
+         j1 = elnd_to_mshpt(j,iel)
          nod_el(j) = j1
          xel(:,j) = x(:,j1)
       enddo
@@ -90,7 +90,7 @@ subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, r
       endif
 
       do jtest=1,nnodes
-         jp = elnd_to_mesh(jtest,iel)
+         jp = elnd_to_mshpt(jtest,iel)
          do j_eq=1,3
             ind_jp = in_dof(j_eq,jp)
             if (ind_jp .gt. 0) then
@@ -104,7 +104,7 @@ subroutine asmbly_AC (i_base, nel, npt, n_dof, nnodes, shift, beta, nb_typ_el, r
 
                do itrial=1,nnodes
                   do i_eq=1,3
-                     ip = elnd_to_mesh(itrial,iel)
+                     ip = elnd_to_mshpt(itrial,iel)
                      ind_ip = in_dof(i_eq,ip)
                      if (ind_ip .gt. 0) then
                         z_tmp1 = mat_K(3*(itrial-1) + i_eq, 3*(jtest-1) + j_eq)

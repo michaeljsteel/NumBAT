@@ -4,7 +4,7 @@
  ! numerical quadrature.
  !
 subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
-   elnd_to_mesh, v_nd_xy, v_beta, soln_em_e, m_energy, errco, emsg)
+   elnd_to_mshpt, v_nd_xy, v_beta, soln_em_e, m_energy, errco, emsg)
    !
    !     k_0 = 2 pi / lambda, where lambda in meters.
    !
@@ -12,7 +12,7 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
    use class_TriangleIntegrators
 
    integer(8) n_modes, n_msh_el, n_msh_pts
-   integer(8) elnd_to_mesh(P2_NODES_PER_EL,n_msh_el)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
    double precision v_nd_xy(2,n_msh_pts)
    complex(8) soln_em_e(3,N_DOF_PER_EL,n_modes,n_msh_el)
    complex(8) beta1
@@ -48,10 +48,10 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
 
 
    !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
-   !f2py intent(in) P2_NODES_PER_EL, elnd_to_mesh
+   !f2py intent(in) P2_NODES_PER_EL, elnd_to_mshpt
    !f2py intent(in) x, v_beta, soln_em_e
    !
-   !f2py depend(elnd_to_mesh) P2_NODES_PER_EL, n_msh_el
+   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
    !f2py depend(x) n_msh_pts
    !f2py depend(v_beta) n_modes
    !f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_el
@@ -65,7 +65,7 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_el, n_msh_pts,&
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, nberr)
+   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
 

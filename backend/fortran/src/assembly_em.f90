@@ -143,7 +143,6 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
          ! find quad point in reference triangle
          call quadint%get_quad_point(iq, xy_ref, wt)
-
          ! Evaluate the basis functions and gradients at the quadrature point
          ! Gradients are evaluated in the actual triangle
          call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)

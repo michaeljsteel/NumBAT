@@ -766,7 +766,7 @@ class EMSimulation(Simulation):
             fm.mesh_mail_fname,
             fm.n_msh_pts,
             fm.n_msh_el,
-            #opt_props.n_mats_em,   # out to work nicely with gcc + intel f2py
+            #opt_props.n_mats_em,   # f2py figures this out from v_refindex, probably because not using f2py(depends)
             opt_props.v_refindexn,
         )
 
@@ -851,7 +851,7 @@ class EMSimulation(Simulation):
                     opt_props.v_refindexn,
                     self.fem_evecs,
                 )
-                (self.EM_mode_energy, ) = process_fortran_return(resm, 
+                (self.EM_mode_energy, ) = process_fortran_return(resm,
                      "finding curvilinear element EM mode energy")
             else:
                 print(
@@ -986,13 +986,13 @@ class ACSimulation(Simulation):
             AC_FEM_debug,
             show_mem_est,
             tstruc.symmetry_flag,
-            #elastic_props.n_mats_ac,  # => fort: n_elt_mats
+            #elastic_props.n_mats_ac,  # => fort: n_elt_mats, #f2py figures out from arrays
             elastic_props.c_IJ,
             elastic_props.rho,
             fm.ac_mesh_from_em,
             fm.mesh_mail_fname,
-            #fm.n_msh_pts,
-            #fm.n_msh_el,
+            #fm.n_msh_pts,           #f2py figures out from arrays
+            #fm.n_msh_el,            #f2py figures out from arrays
             fm.node_physindex,  # => fort: type_nod
             fm.elnd_to_mesh,       # => fort: elnd_to_mesh
             fm.v_el_2_mat_idx,  # => fort: type_el
