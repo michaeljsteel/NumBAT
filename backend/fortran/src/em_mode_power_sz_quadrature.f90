@@ -8,7 +8,7 @@
 !       = 2/(\mu_0\omega) Re[E_t^* \dot (\beta E_t + i \nabla_t E_z) ]
 
 subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
-   elnd_to_mesh, v_nd_xy, v_beta, soln_em_e, m_power, errco, emsg)
+   elnd_to_mshpt, v_nd_xy, v_beta, soln_em_e, m_power, errco, emsg)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -16,7 +16,7 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    double precision k_0  ! k_0 = 2 pi / lambda, where lambda in meters.
 
    integer(8) n_modes, n_msh_el, n_msh_pts
-   integer(8) elnd_to_mesh(P2_NODES_PER_EL, n_msh_el)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
    double precision v_nd_xy(2, n_msh_pts)
    complex(8) soln_em_e(3, N_DOF_PER_EL, n_modes, n_msh_el)
    complex(8) beta
@@ -58,10 +58,10 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
    double precision t_quadwt
 
 !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
-!f2py intent(in) P2_NODES_PER_EL, elnd_to_mesh
+!f2py intent(in) P2_NODES_PER_EL, elnd_to_mshpt
 !f2py intent(in) x, v_beta, soln_em_e
 !
-!f2py depend(elnd_to_mesh) P2_NODES_PER_EL, n_msh_el
+!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
 !f2py depend(x) n_msh_pts
 !f2py depend(v_beta) n_modes
 !f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_el
@@ -75,7 +75,7 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_el, n_msh_pts, &
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mesh, v_nd_xy, nberr)
+   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    m_power = D_ZERO

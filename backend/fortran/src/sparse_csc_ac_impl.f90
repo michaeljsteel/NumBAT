@@ -3,203 +3,167 @@
 !#include "numbat_decl.h"
 
 
-subroutine SparseCSC_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, errco, emsg )
+! subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, nberr)
 
 
-   class(SparseCSC) :: this
-   type(PeriodicBCs) :: pbcs
+!    class(SparseCSC_AC) :: this
+!    type(PeriodicBCs) :: pbcs
 
-   integer(8) :: bdy_cdn !, n_dof
-   integer(8) :: debug
+!    integer(8) :: bdy_cdn !, n_dof
+!    integer(8) :: debug
 
-   type(MeshRaw) :: mesh_raw
-   type(MeshEntities) :: entities
+!    type(MeshRaw) :: mesh_raw
+!    type(MeshEntities) :: entities
 
-   integer(8),  intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
-
-
-   !locals
-   double precision, dimension(2,2) :: lat_vecs
-
-   if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
-
-      call this%bound_cond_em (bdy_cdn, entities, errco, emsg)
-
-   elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
-      debug=0
-      call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
-
-      call periodic_node(mesh_raw%n_msh_el, mesh_raw%n_msh_pts, &
-         P2_NODES_PER_EL, mesh_raw%node_phys_i, mesh_raw%v_nd_xy, pbcs%iperiod_N, &
-         pbcs%inperiod_N, mesh_raw%elnd_to_mesh, lat_vecs)
-
-      call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, pbcs%iperiod_N_E_F, &
-         pbcs%inperiod_N_E_F, lat_vecs)
-
-      call periodic_cond ( bdy_cdn, entities%n_entities, this%n_dof, entities%v_ety_props, &
-         pbcs%iperiod_N_E_F, this%m_eqs, debug)
-
-   endif
-
-end subroutine
+!    type(NBError) nberr
 
 
+!    !locals
+!    double precision, dimension(2,2) :: lat_vecs
 
-!  dof_props = 0  => interiour ddl (ddl = Degree Of Freedom)
-!  dof_props != 0 => boundary ddl
+!    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
-!  bdy_cdn = 0 => Dirichlet boundary condition (E-field: electric wall condition)
-!  bdy_cdn = 1 => Neumann boundary condition (E-field: magnetic wall condition)
-!  bdy_cdn = 2 => Periodic boundary condition
+!       call this%bound_cond_em (bdy_cdn, entities, nberr)
+
+!    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
+!       debug=0
+!       call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
+
+!       call periodic_node(mesh_raw%n_msh_el, mesh_raw%n_msh_pts, &
+!          P2_NODES_PER_EL, mesh_raw%v_nd_physindex, mesh_raw%v_nd_xy, pbcs%iperiod_N, &
+!          pbcs%inperiod_N, mesh_raw%elnd_to_mshpt, lat_vecs)
+
+!       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, pbcs%iperiod_N_E_F, &
+!          pbcs%inperiod_N_E_F, lat_vecs)
+
+!       call periodic_cond ( bdy_cdn, entities%n_entities, this%n_dof, entities%v_ety_props, &
+!          pbcs%iperiod_N_E_F, this%m_eqs, debug)
+
+!    endif
+
+! end subroutine
 
 
 
-!  This subroutine set the boundary condition parameters
+ !  dof_props = 0  => interiour ddl (ddl = Degree Of Freedom)
+ !  dof_props != 0 => boundary ddl
+
+ !  bdy_cdn = 0 => Dirichlet boundary condition (E-field: electric wall condition)
+ !  bdy_cdn = 1 => Neumann boundary condition (E-field: magnetic wall condition)
+ !  bdy_cdn = 2 => Periodic boundary condition
 
 
-!  The provided Fortran subroutine bound_cond sets boundary condition parameters for a finite element mesh, depending on the specified boundary condition type. Here's a detailed step-by-step explanation of the code:
 
-!  Purpose:
-!  The subroutine assigns the degrees of freedom (DOFs) for nodes, edges, and elements in a finite element mesh based on specified boundary conditions (Dirichlet or Neumann).
+ !  This subroutine set the boundary condition parameters
 
-!  Parameters:
-!  Input Parameters:
 
-!    bdy_cdn: Specifies the type of boundary condition.
-!      0 for Dirichlet boundary condition (electric wall condition).
-!      1 for Neumann boundary condition (magnetic wall condition).
-!      2 for Periodic boundary condition.
-!
-!  n_ddl: Total number of entities.
+ !  The provided Fortran subroutine bound_cond sets boundary condition parameters for a finite element mesh, depending on the specified boundary condition type. Here's a detailed step-by-step explanation of the code:
 
-!
-!  dof_props: An array where:
-!  The first row indicates if a DOF is an interior or boundary DOF.
-!  The second row indicates the dimensional type (0 for nodes, 1 for edges, 2 for elements).
+ !  Purpose:
+ !  The subroutine assigns the degrees of freedom (DOFs) for nodes, edges, and elements in a finite element mesh based on specified boundary conditions (Dirichlet or Neumann).
 
-!  Output Parameters:
+ !  Parameters:
+ !  Input Parameters:
 
-!    n_dof: Total number of equations (DOFs).
-!    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
+ !    bdy_cdn: Specifies the type of boundary condition.
+ !      0 for Dirichlet boundary condition (electric wall condition).
+ !      1 for Neumann boundary condition (magnetic wall condition).
+ !      2 for Periodic boundary condition.
+ !
+ !  n_ddl: Total number of entities.
 
-!  Local Variables:
-!  i: Loop index.
-!  i_boundary: Indicates if the current DOF is on the boundary.
-!  i_dim: Dimensional type of the current DOF (node, edge, or element).
-!
-!  Description:
-!    Dirichlet Boundary Condition (bdy_cdn = 0):
-!      All points (nodes, edges, elements) have degrees of freedom unless they are boundary points.
-!      For elements (i_dim = 2): Each element has 3 interior DOFs.
-!      For edges (i_dim = 1): Each edge has 3 DOFs unless it is on the boundary.
-!      For nodes (i_dim = 0): Each node has 1 DOF unless it is on the boundary.
-!
-!  Neumann Boundary Condition (bdy_cdn = 1):
-!     All points (nodes, edges, elements) have degrees of freedom.
-!     For elements (i_dim = 2) and edges (i_dim = 1): Each has 3 DOFs.
-!     For nodes (i_dim = 0): Each node has 1 DOF.
+ !
+ !  dof_props: An array where:
+ !  The first row indicates if a DOF is an interior or boundary DOF.
+ !  The second row indicates the dimensional type (0 for nodes, 1 for edges, 2 for elements).
 
-!  matrix m_eqs is built up based on properties of the entities established
-!    in MeshEntities
-!
-! dof_props holds the is_boundary and dimensionality of each entity
+ !  Output Parameters:
 
-!  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
+ !    n_dof: Total number of equations (DOFs).
+ !    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
 
-subroutine SparseCSC_bound_cond_em (this, bdy_cdn, entities, errco, emsg)
+ !  Local Variables:
+ !  i: Loop index.
+ !  i_boundary: Indicates if the current DOF is on the boundary.
+ !  i_dim: Dimensional type of the current DOF (node, edge, or element).
+ !
+ !  Description:
+ !    Dirichlet Boundary Condition (bdy_cdn = 0):
+ !      All points (nodes, edges, elements) have degrees of freedom unless they are boundary points.
+ !      For elements (i_dim = 2): Each element has 3 interior DOFs.
+ !      For edges (i_dim = 1): Each edge has 3 DOFs unless it is on the boundary.
+ !      For nodes (i_dim = 0): Each node has 1 DOF unless it is on the boundary.
+ !
+ !  Neumann Boundary Condition (bdy_cdn = 1):
+ !     All points (nodes, edges, elements) have degrees of freedom.
+ !     For elements (i_dim = 2) and edges (i_dim = 1): Each has 3 DOFs.
+ !     For nodes (i_dim = 0): Each node has 1 DOF.
 
-   class(SparseCSC) :: this
-   type(MeshEntities) :: entities
+ !  matrix m_eqs is built up based on properties of the entities established
+ !    in MeshEntities
+ !
+ ! dof_props holds the is_boundary and dimensionality of each entity
 
-   integer(8) bdy_cdn, n_dof
-   integer(8),  intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+ !  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
 
-   integer(8) i, is_boundary, i_dim
+subroutine SparseCSC_AC_set_bound_cond(this, bdy_cdn, mesh_raw, nberr)
 
-   call integer_alloc_2d(this%m_eqs, 3_8, entities%n_entities, 'm_eqs', errco, emsg); RETONERROR(errco)
+   use numbatmod
+   use class_MeshRaw
+
+   class(SparseCSC_AC) :: this
+   integer(8) bdy_cdn
+   type(MeshRawAC) mesh_raw
+type(NBError) nberr
+
+   ! locals
+
+   integer(8) i, n_dof
+   logical is_interior
+
+   call integer_nalloc_2d(this%m_eqs, 3_8, mesh_raw%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
+   if(bdy_cdn .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
 
-   if (bdy_cdn .eq. BCS_DIRICHLET) then  !  all points have a degree of freedom
+      do i=1,mesh_raw%n_msh_pts
+         is_interior = mesh_raw%v_nd_physindex(i) == 0
 
-      do i=1,entities%n_entities
-         is_boundary = entities%v_ety_props(1,i)
-         i_dim = entities%v_ety_props(2,i)
-
-         if (i_dim .eq. 2) then !  each element is associated with 3 interior Degrees Of Freedom (DOF)
+         if (is_interior ) then !  each element is associated to 3 interior DOF
             this%m_eqs(1,i) = n_dof + 1
             this%m_eqs(2,i) = n_dof + 2
             this%m_eqs(3,i) = n_dof + 3
             n_dof = n_dof + 3
-
-         elseif (i_dim .eq. 1) then  !  each edge is associated with 3 Degrees Of Freedom (DOF)
-            if (is_boundary .eq. 0) then
-               this%m_eqs(1,i) = n_dof + 1
-               this%m_eqs(2,i) = n_dof + 2
-               this%m_eqs(3,i) = n_dof + 3
-               n_dof = n_dof + 3
-            else                     !  fixed by boundary so no dof
-               this%m_eqs(1,i) = 0
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
-            endif
-
-         elseif (i_dim .eq. 0) then   !  each node is associated with 1 Degree Of Freedom (DOF)
-            if (is_boundary .eq. 0) then
-               this%m_eqs(1,i) = n_dof + 1
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
-               n_dof = n_dof + 1
-            else
-               this%m_eqs(1,i) = 0
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
-            endif
          else
-            write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
-               "bdy_cdn = ", bdy_cdn, "i = ", i
-            errco = NBERR_BAD_BOUNDARY_CONDITION
-         endif
-      enddo
-
-   elseif(bdy_cdn .eq. BCS_NEUMANN) then !all points have a degree of freedom
-
-      do i=1,entities%n_entities
-         i_dim = entities%v_ety_props(2,i)
-         if (i_dim .eq. 2 .or. i_dim .eq. 1) then !  Each element or edge is associated with 3 Degrees Of Freedom (DOF)
-            this%m_eqs(1,i) = n_dof + 1
-            this%m_eqs(2,i) = n_dof + 2
-            this%m_eqs(3,i) = n_dof + 3
-            n_dof = n_dof + 3
-         elseif (i_dim .eq. 0) then
-            this%m_eqs(1,i) = n_dof + 1
+            this%m_eqs(1,i) = 0
             this%m_eqs(2,i) = 0
             this%m_eqs(3,i) = 0
-            n_dof = n_dof + 1
-         else
-            write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
-               "bdy_cdn = ", bdy_cdn, "i = ", i
-            errco = NBERR_BAD_BOUNDARY_CONDITION
          endif
       enddo
+
+   elseif(bdy_cdn .eq. BCS_NEUMANN) then !  all points have a degree of freedom
+
+      do i=1,mesh_raw%n_msh_pts
+         this%m_eqs(1,i) = n_dof + 1
+         this%m_eqs(2,i) = n_dof + 2
+         this%m_eqs(3,i) = n_dof + 3
+         n_dof = n_dof + 3
+      enddo
+
    endif
 
    this%n_dof = n_dof
-
 end
 
 
 
-subroutine SparseCSC_make_csc_arrays(this, mesh_raw, entities, errco, emsg)
+subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, entities, nberr)
 
-   class(SparseCSC) :: this
+   class(SparseCSC_AC) :: this
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
 
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
+   type(NBError) nberr
 
    ! ------------------------------------------
 
@@ -211,15 +175,15 @@ subroutine SparseCSC_make_csc_arrays(this, mesh_raw, entities, errco, emsg)
 
    this%n_nonz=0
 
-   call integer_alloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
+   call integer_nalloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', nberr); RET_ON_NBERR(nberr)
 
    call this%make_col_ptr_provisional (mesh_raw, entities, n_nonz_max)
 
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
-   RETONERROR(errco)
+   call this%make_arrays_final (mesh_raw, entities, n_nonz_max, max_row_len, nberr);
+   RET_ON_NBERR(nberr)
 
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
@@ -254,19 +218,16 @@ subroutine SparseCSC_make_csc_arrays(this, mesh_raw, entities, errco, emsg)
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call integer_alloc_1d(iwork, 3*entities%n_entities, 'iwork', errco, emsg);
-   RETONERROR(errco)
+   call integer_nalloc_1d(iwork, 3*entities%n_entities, 'iwork', nberr); RET_ON_NBERR(nberr)
 
    call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr,  iwork)
 
    !call this%dump_csc_arrays()
 
    ! Now we know how big the data arrays are
-   call complex_alloc_1d(this%mOp_stiff, this%n_nonz, 'cscmat%mOp_stiff', errco, emsg);
-   RETONERROR(errco)
+   call complex_nalloc_1d(this%mOp_stiff, this%n_nonz, 'cscmat%mOp_stiff', nberr); RET_ON_NBERR(nberr)
 
-   call complex_alloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', errco, emsg);
-   RETONERROR(errco)
+   call complex_nalloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', nberr); RET_ON_NBERR(nberr)
 
 
    !  convert from 1-based to 0-based
@@ -284,9 +245,9 @@ end subroutine
 
 
 
-subroutine SparseCSC_cscmat_contains_elt_row_col(this, row, col, found, val)
+subroutine SparseCSC_AC_cscmat_contains_elt_row_col(this, row, col, found, val)
 
-   class(SparseCSC) :: this
+   class(SparseCSC_AC) :: this
    integer(8) row, col
    integer(8) found
 
@@ -310,8 +271,8 @@ subroutine SparseCSC_cscmat_contains_elt_row_col(this, row, col, found, val)
 end subroutine
 
 
-subroutine SparseCSC_dump_csc_arrays(this)
-   class(SparseCSC) :: this
+subroutine SparseCSC_AC_dump_csc_arrays(this)
+   class(SparseCSC_AC) :: this
    integer(8) i
 
 
@@ -331,10 +292,10 @@ end subroutine
 
 
 
-subroutine SparseCSC_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_max)
+subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_max)
 
 
-   class(SparseCSC) :: this
+   class(SparseCSC_AC) :: this
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
 
@@ -403,46 +364,45 @@ subroutine SparseCSC_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_
 end subroutine
 
 
-! subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
+ ! subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
 
 
-!    class(SparseCSC) :: this
-!    type(MeshRaw) :: mesh_raw
-!    type(MeshEntities) :: entities
+ !    class(SparseCSC_AC) :: this
+ !    type(MeshRaw) :: mesh_raw
+ !    type(MeshEntities) :: entities
 
-!    integer(8) n_nonz_max, max_row_len
-!    integer(8) errco
-!    character(len=EMSG_LENGTH) emsg
+ !    integer(8) n_nonz_max, max_row_len
+ !    integer(8) errco
+ !    character(len=EMSG_LENGTH) emsg
 
-!    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
-!    ! length of v_row_ind is determined inside csr_length and so allocated there
+ !    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
+ !    ! length of v_row_ind is determined inside csr_length and so allocated there
 
-!    write(*,*) 'maf 1'
+ !    write(*,*) 'maf 1'
 
-!    call csr_length (mesh_raw%n_msh_el, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
-!       this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_row_len, errco, emsg)
-!    RETONERROR(errco)
-
-
-
-!end subroutine
+ !    call csr_length (mesh_raw%n_msh_el, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
+ !       this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_row_len, errco, emsg)
+ !    RETONERROR(errco)
 
 
 
-! This one is written in CSR format
-! row/col names seem backward
-! this seems to be a row-like csr converted to a column-like csr with no name changes?
-
-subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
+ !end subroutine
 
 
-   class(SparseCSC) :: this
+
+ ! This one is written in CSR format
+ ! row/col names seem backward
+ ! this seems to be a row-like csr converted to a column-like csr with no name changes?
+
+subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, nberr)
+
+
+   class(SparseCSC_AC) :: this
    type(MeshRaw) :: mesh_raw
    type(MeshEntities) :: entities
 
    integer(8) n_nonz_max, max_row_len
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
+   type(NBError) nberr
 
 
    ! --------------------------------------------
@@ -459,7 +419,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
    ui = stdout
 
 
-   call integer_alloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', errco, emsg); RETONERROR(errco)
+   call integer_nalloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', nberr); RET_ON_NBERR(nberr)
 
    row_ind_tmp = 0
 
@@ -514,8 +474,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
                   enddo
 
                   if (stored .eq. 0) then ! shouldn't have got here
-                     emsg = "csr_length: There is a problem with row/col indexing!"
-                     errco = NBERROR_118
+                     call nberr%set(NBERROR_118,  "csr_length: There is a problem with row/col indexing!")
                      return
                   endif
 
@@ -591,13 +550,13 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
 
 
    ! Now we know n_nonz
-   call integer_alloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', errco, emsg); RETONERROR(errco)
+   call integer_nalloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
 
 
    this%v_row_ind(1:n_nonz) = row_ind_tmp(1:n_nonz)
 
 
-!   deallocate(row_ind_tmp)
+   !   deallocate(row_ind_tmp)
 
    this%n_nonz = n_nonz
 

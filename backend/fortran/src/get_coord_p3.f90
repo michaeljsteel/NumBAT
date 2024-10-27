@@ -7,13 +7,13 @@
 !!!!!!!!!!!!!!!!
 
 subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
-   elnd_to_mesh, type_nod, table_N_E_F, &
+   elnd_to_mshpt, type_nod, table_N_E_F, &
    type_N_E_F, v_nd_xy, x_N_E_F, visited)
 
 
    implicit none
    integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
-   integer(8) elnd_to_mesh(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) elnd_to_mshpt(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
    integer(8) type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
    integer(8) visited(n_ddl)
 
@@ -57,7 +57,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    do iel=1,n_msh_el
 
       do inod=1,nodes_per_el
-         nut0(inod) = elnd_to_mesh(inod,iel)
+         nut0(inod) = elnd_to_mshpt(inod,iel)
       enddo
 
       !  the 10 node of a P3 element

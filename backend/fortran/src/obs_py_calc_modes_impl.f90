@@ -36,7 +36,7 @@ subroutine set_boundary_conditions(bdy_cdn,  &
 
       call periodic_node(mesh_raw%n_msh_el, mesh_raw%n_msh_pts, &
       P2_NODES_PER_EL, mesh_raw%node_phys_i, mesh_raw%v_nd_xy, iperiod_N, &
-         inperiod_N, mesh_raw%elnd_to_mesh, lat_vecs)
+         inperiod_N, mesh_raw%elnd_to_mshpt, lat_vecs)
 
       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, iperiod_N_E_F, &
          inperiod_N_E_F, lat_vecs)

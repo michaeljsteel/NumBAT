@@ -45,14 +45,14 @@
  !  shift_ksqr   - k_est^2 = n^2 vacwavenum_k0^2  : estimate of eigenvalue k^2
  !  bnd_cnd_i - bnd conditions (Dirichlet = 0, Neumann = 1, Periodic = 2)
  !  v_evals_beta  - array of eigenvalues kz
- !  m_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
- !  mode_pol  - unknown - never used in python
- !  elnd_to_mesh - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
- !  Points where type_el[mp] is not the same for all 6 nodes must be interface points
- !  type_el   - n_msh_el array: material index for each element
- !  type_nod  - is boundary node?
+ !  femsol_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
+ !  poln_fracs  - unknown - never used in python
+ !  elnd_to_mshpt - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
+ !  Points where v_el_material[mp] is not the same for all 6 nodes must be interface points
+ !  v_el_material   - n_msh_el array: material index for each element
+ !  v_nd_physindex  - is boundary node?
  !  v_nd_xy  - (2 , n_msh_pts)  x,y coords?
- !  ls_material  - (1, nodes_per_el+7, n_msh_el)
+ !  ls_material  - (1, N_DOF_PER_EL, n_msh_el)
 
 module calc_em_impl
 
@@ -65,19 +65,14 @@ module calc_em_impl
    use class_PeriodicBCs
 
 
-   !use nbinterfaces
-!   use nbinterfacesb
-
 
 contains
 
-   subroutine calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-      E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
-      v_evals_beta, m_evecs, mode_pol, elnd_to_mesh, type_el, type_nod, v_nd_xy, ls_material, errco, emsg)
-
-      implicit none
-
-      integer(8), parameter :: nodes_per_el = 6
+   subroutine calc_em_modes_impl(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
+      E_H_field, bdy_cdn, itermax, debug, &
+      mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
+      v_evals_beta, femsol_evecs, poln_fracs, &
+      elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
 
       integer(8), intent(in) :: n_modes
       double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
@@ -90,23 +85,19 @@ contains
       complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
-      complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_el)
 
-      complex(8), intent(out) :: mode_pol(4,n_modes)
+      complex(8), intent(out) :: poln_fracs(4,n_modes)
 
-      integer(8), intent(out) :: type_el(n_msh_el)
-      integer(8), intent(out) :: type_nod(n_msh_pts)
-      integer(8), intent(out) :: elnd_to_mesh(nodes_per_el, n_msh_el)
+      integer(8), intent(out) :: v_el_material(n_msh_el)
+      integer(8), intent(out) :: v_nd_physindex(n_msh_pts)
+      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
       double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
 
-      complex(8), intent(out) :: ls_material(1,nodes_per_el+7,n_msh_el)
-
-      integer(8),  intent(out) :: errco
-      character(len=EMSG_LENGTH), intent(out) :: emsg
+      complex(8), intent(out) :: ls_material(1,N_DOF_PER_EL,n_msh_el)
+      type(NBError) nberr
 
       ! locals
-
-      type(NBError) nberr
 
       type(MeshRaw) :: mesh_raw
       type(MeshEntities) :: entities
@@ -118,17 +109,9 @@ contains
 
       complex(8), dimension(:,:), allocatable :: arp_evecs
 
-      !complex(8), dimension(:), allocatable :: cscmat%mOp_stiff
-      !complex(8), dimension(:), allocatable :: cscmat%mOp_mass
-
-
       ! Should these be dynamic?
       complex(8) pp(n_elt_mats), qq(n_elt_mats)
       complex(8) eps_eff(n_elt_mats)
-
-
-      !  ----------------------------------------------
-
 
       integer(8) ui_out
 
@@ -137,60 +120,53 @@ contains
       integer(8) i_base
       double precision arp_tol
 
-
-
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       double precision vacwavenum_k0
 
-
-
       type(Stopwatch) :: clock_main, clock_spare
-
 
 
       ui_out = stdout
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
-      call nberr%reset()
       call clock_main%reset()
-
 
       !TODO: move pp,qq to elsewhere. SparseCSC?
       vacwavenum_k0 = 2.0d0*D_PI/lambda
       call  check_materials_and_fem_formulation(E_H_field, n_elt_mats, &
-         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
-      RETONERROR(errco)
+         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
+      RET_ON_NBERR(nberr)
 
       !  ----------------------------------------------------------------
 
-      call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, errco, emsg)
-      RETONERROR(errco)
+      call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
+      RET_ON_NBERR(nberr)
 
-      call entities%allocate(n_msh_el, errco, emsg)
-      RETONERROR(errco)
-
+      call entities%allocate(n_msh_el, nberr)
+      RET_ON_NBERR(nberr)
 
 
       ! These are never actually used for now so could disable
-      call pbcs%allocate(mesh_raw, entities, errco, emsg); RETONERROR(errco)
+      call pbcs%allocate(mesh_raw, entities, nberr);
+      RET_ON_NBERR(nberr)
 
-      !  Fills:  MeshRaw: v_nd_xy, type_nod, type_el, elnd_to_mesh
+      !  Fills:  MeshRaw: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, errco, emsg); RETONERROR(errco)
+      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, nberr);
+      RET_ON_NBERR(nberr)
 
       ! Fills entities
-      call entities%build_mesh_tables(mesh_raw, errco, emsg); RETONERROR(errco)
+      call entities%build_mesh_tables(mesh_raw, nberr);
+      RET_ON_NBERR(nberr)
 
       ! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
-      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, errco, emsg); RETONERROR(errco)
+      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
+      RET_ON_NBERR(nberr)
 
 
       ! Build sparse matrix index arrays
-      call cscmat%make_csc_arrays(mesh_raw, entities, errco, emsg)
-      RETONERROR(errco)
-
-
+      call cscmat%make_csc_arrays(mesh_raw, entities, nberr); RET_ON_NBERR(nberr)
 
       i_base = 0
 
@@ -216,7 +192,7 @@ contains
 
       call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
          mesh_raw, entities, cscmat, pbcs, nberr)
-      RET_ON_NBERR_UNFOLD(nberr)
+      RET_ON_NBERR(nberr)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
 
@@ -242,13 +218,14 @@ contains
       call clock_spare%reset()
 
 
-      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', errco, emsg); RETONERROR(errco)
-      call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', errco, emsg); RETONERROR(errco)
-      call complex_alloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', errco, emsg); RETONERROR(errco)
+      call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
+
+      call complex_nalloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
+
+      call complex_nalloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', nberr); RET_ON_NBERR(nberr)
 
       call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
-         v_evals_beta, arp_evecs, errco, emsg)
-      RETONERROR(errco)
+         v_evals_beta, arp_evecs, nberr); RET_ON_NBERR(nberr)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
@@ -258,22 +235,22 @@ contains
       call clock_spare%reset()
 
 
-      !  The eigenvectors will be stored in the array m_evecs
+      !  The eigenvectors will be stored in the array femsol_evecs
       !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
       call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
          entities, cscmat, pbcs, bloch_vec, v_evals_beta, arp_evecs, &
-         m_evecs, mode_pol, nberr)
-      RET_ON_NBERR_UNFOLD(nberr)
+         femsol_evecs, poln_fracs, nberr)
+      RET_ON_NBERR(nberr)
 
 
       call mode_energy (n_modes, n_msh_el, n_core, mesh_raw, &
-         n_elt_mats, eps_eff, m_evecs, mode_pol)
+         n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
 
 
 
       ! prepare to return data to python end
       call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
-      call mesh_raw%fill_python_arrays(type_el, type_nod, elnd_to_mesh, v_nd_xy)
+      call mesh_raw%fill_python_arrays(v_el_material, v_nd_physindex, elnd_to_mshpt, v_nd_xy)
 
 
       deallocate(v_eig_index, overlap_L, arp_evecs)
@@ -291,7 +268,7 @@ contains
 
 
    subroutine check_materials_and_fem_formulation(E_H_field,n_elt_mats, &
-      vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, errco, emsg)
+      vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
 
       integer(8), intent(in) :: E_H_field, debug
       integer(8), intent(in) :: n_elt_mats, ui_out
@@ -301,8 +278,8 @@ contains
 
       integer(8), intent(out) :: n_core(2)
       complex(8), intent(out) :: pp(n_elt_mats), qq(n_elt_mats)
-      integer(8),  intent(out) :: errco
-      character(len=EMSG_LENGTH), intent(out) :: emsg
+
+      type(NBError) nberr
 
       integer(8) i
       logical is_homogeneous
@@ -330,8 +307,8 @@ contains
       enddo
 
       if (is_homogeneous) then
-         emsg = "py_calc_modes.f: FEM routine cannot adjacent identical layers. Define layer as object.ThinFilm."
-         errco = -17
+         call nberr%set(-17_8, &
+            "py_calc_modes.f: FEM routine cannot adjacent identical layers. Define layer as object.ThinFilm.")
          return
       endif
 
@@ -358,26 +335,26 @@ contains
 
    end subroutine
 
-   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, nodes_per_el, &
-      n_elt_mats, pp, elnd_to_mesh, &
-      type_el, v_nd_xy, v_evals_beta, m_evecs, &
-   !v_evals_beta_pri, m_evecs_pri, &
+   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, &
+      n_elt_mats, pp, elnd_to_mshpt, &
+      v_el_material, v_nd_xy, v_evals_beta, femsol_evecs, &
+   !v_evals_beta_pri, femsol_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
       use numbatmod
       logical pair_warning
 
-      integer(8), intent(in) :: n_modes, debug, ui_out, nodes_per_el
+      integer(8), intent(in) :: n_modes, debug, ui_out
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
       complex(8) pp(n_elt_mats)
 
-      integer(8), intent(out) :: elnd_to_mesh(nodes_per_el, n_msh_el)
-      integer(8), intent(out) :: type_el(n_msh_el)
+      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
+      integer(8), intent(out) :: v_el_material(n_msh_el)
       double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
-      complex(8), target, intent(out) :: m_evecs(3,nodes_per_el+7,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_el)
 
       complex(8), dimension(:,:) :: overlap_L
 
@@ -388,7 +365,7 @@ contains
       character(len=FNAME_LENGTH)  overlap_file
 
       !complex(8)  :: v_evals_beta_pri(n_modes)
-      !complex(8)  :: m_evecs_pri(3,nodes_per_el+7,n_modes,n_msh_el)
+      !complex(8)  :: femsol_evecs_pri(3,N_DOF_PER_EL,n_modes,n_msh_el)
 
       !  Orthogonal integral
       pair_warning = .false.
@@ -399,9 +376,9 @@ contains
 
       overlap_file = "Orthogonal.txt"
 
-      call orthogonal (n_modes, n_msh_el, n_msh_pts, nodes_per_el, n_elt_mats, pp, elnd_to_mesh, &
-         type_el, v_nd_xy, v_evals_beta, m_evecs, &
-      !v_evals_beta_pri, m_evecs_pri,
+      call orthogonal (n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, n_elt_mats, pp, elnd_to_mshpt, &
+         v_el_material, v_nd_xy, v_evals_beta, femsol_evecs, &
+      !v_evals_beta_pri, femsol_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
       if (pair_warning .and. n_modes .le. 20) then

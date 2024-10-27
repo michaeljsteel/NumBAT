@@ -1,96 +1,108 @@
 
-subroutine calc_em_modes( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    !  inputs
-        E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, &
-        v_refindex_n, & !  inputs
-        v_eigs_beta, sol1, mode_pol, elnd_to_mesh, type_el, type_nod, &
-        v_nd_xy, ls_material, errco, emsg)
+subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    !  inputs
+   E_H_field, bdy_cdn, itermax, debug, &
+   mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, & !  inputs
+   v_evals_beta, femsol_em, poln_fracs, &
+   elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, &
+   ls_material, errco, emsg)
 
-    use numbatmod
-    use calc_em_impl
+   use numbatmod
+   use calc_em_impl
 
 
-    integer(8), parameter  :: d_nodes_per_el = 6
-    integer(8), intent(in) :: n_modes
-    double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
-    complex(8), intent(in) :: shift_ksqr
+   integer(8), intent(in) :: n_modes
+   double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
+   complex(8), intent(in) :: shift_ksqr
 
-    integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
-    character(len=*), intent(in) :: mesh_file
-    integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
+   integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
+   character(len=*), intent(in) :: mesh_file
+   integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
 
-    complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
+   complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
 
-    complex(8), intent(out) :: v_eigs_beta(n_modes)
-    complex(8), intent(out) :: sol1(3,d_nodes_per_el+7,n_modes,n_msh_el)
+   complex(8), intent(out) :: v_evals_beta(n_modes)
+   complex(8), intent(out) :: femsol_em(3,P2_NODES_PER_EL+7,n_modes,n_msh_el)
 
-    complex(8), intent(out) :: mode_pol(4,n_modes)
-    integer(8), intent(out) :: elnd_to_mesh(d_nodes_per_el, n_msh_el)
-    integer(8), intent(out) :: type_el(n_msh_el), type_nod(n_msh_pts)
-    double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
-    complex(8), intent(out) :: ls_material(1,d_nodes_per_el+7,n_msh_el)
+   complex(8), intent(out) :: poln_fracs(4,n_modes)
+   integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
+   integer(8), intent(out) :: v_el_material(n_msh_el), v_nd_physindex(n_msh_pts)
+   double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
+   complex(8), intent(out) :: ls_material(1,P2_NODES_PER_EL+7,n_msh_el)
 
-    integer(8),  intent(out) :: errco
-    character(len=EMSG_LENGTH), intent(out) :: emsg
+   integer(8),  intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError) nberr
 
-    call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-        E_H_field, bdy_cdn, itermax, debug, mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
-        v_eigs_beta, sol1, mode_pol, elnd_to_mesh, type_el, type_nod, v_nd_xy, ls_material, errco, emsg)
+   call nberr%reset()
+
+   write(*,*) 'ementry', n_msh_el, n_elt_mats, v_refindex_n(1), v_refindex_n(2)
+   call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
+      E_H_field, bdy_cdn, itermax, debug, mesh_file,&
+      n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
+      v_evals_beta, femsol_em, poln_fracs, elnd_to_mshpt, &
+      v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
+
+   call nberr%to_py(errco, emsg)
 
 end subroutine
 
 subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
-        i_bnd_cdns, itermax, tol, debug, show_mem_est, &
-        symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
-        mesh_file, n_msh_pts, n_msh_el, &
-        type_nod, &
-        elnd_to_mesh, type_el, v_nd_xy, &
-        v_eigs_nu, sol1, mode_pol, errco, emsg)
+   bdy_cdn, itermax, tol, debug, show_mem_est, &
+   symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
+   mesh_file, n_msh_pts, n_msh_el, &
+   v_nd_physindex, &
+   elnd_to_mshpt, v_el_material, v_nd_xy, &
+   v_eigs_nu, femsol_ac, poln_fracs, errco, emsg)
 
-    use numbatmod
-    use calc_ac_impl
+   use numbatmod
+   use calc_ac_impl
 
-    integer(8),  parameter :: d_nodes_per_el = 6
+   integer(8), intent(in) :: n_modes
 
-    integer(8), intent(in) :: n_modes
+   complex(8), intent(in) :: q_ac
+   double precision, intent(in) :: dimscale_in_m
+   complex(8), intent(in) :: shift_nu
+   integer(8), intent(in) :: bdy_cdn, itermax, debug, show_mem_est
+   double precision, intent(in) :: tol
+   integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
+   integer(8), intent(in) :: n_elt_mats
 
-    complex(8), intent(in) :: q_ac
-    double precision, intent(in) :: dimscale_in_m
-    complex(8), intent(in) :: shift_nu
-    integer(8), intent(in) :: i_bnd_cdns, itermax, debug, show_mem_est
-    double precision, intent(in) :: tol
-    integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
-    integer(8), intent(in) :: n_elt_mats
+   complex(8), intent(in) :: c_tensor(6,6,n_elt_mats)
+   complex(8), intent(in) :: rho(n_elt_mats)
 
-    complex(8), intent(in) :: c_tensor(6,6,n_elt_mats)
-    complex(8), intent(in) :: rho(n_elt_mats)
+   character(len=FNAME_LENGTH), intent(in)  :: mesh_file
+   integer(8), intent(in) :: n_msh_pts, n_msh_el
 
-    character(len=FNAME_LENGTH), intent(in)  :: mesh_file
-    integer(8), intent(in) :: n_msh_pts, n_msh_el
+   integer(8), intent(in) :: v_nd_physindex(n_msh_pts)
 
-    integer(8), intent(in) :: type_nod(n_msh_pts)
+   integer(8) :: v_el_material(n_msh_el)
+   integer(8) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
 
-    integer(8) :: type_el(n_msh_el)
-    integer(8) :: elnd_to_mesh(d_nodes_per_el, n_msh_el)
+   double precision ::  v_nd_xy(2,n_msh_pts)
 
-    double precision ::  v_nd_xy(2,n_msh_pts)
+   complex(8), intent(out) :: v_eigs_nu(n_modes)
+   complex(8), intent(out) :: femsol_ac(3,P2_NODES_PER_EL,n_modes,n_msh_el)
 
-    complex(8), intent(out) :: v_eigs_nu(n_modes)
-    complex(8), intent(out) :: sol1(3,d_nodes_per_el,n_modes,n_msh_el)
+   complex(8), intent(out) :: poln_fracs(4,n_modes)
 
-    complex(8), intent(out) :: mode_pol(4,n_modes)
+   integer(8),  intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
 
-    integer(8),  intent(out) :: errco
-    character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError) nberr
 
-    !f2py intent(in) elnd_to_mesh, type_el, v_nd_xy
-    !f2py intent(out) elnd_to_mesh, type_el, v_nd_xy
+   call nberr%reset()
 
-    call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
-        i_bnd_cdns, itermax, tol, debug, show_mem_est, &
-        symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
-        mesh_file, n_msh_pts, n_msh_el, &
-        type_nod, &
-        elnd_to_mesh, type_el, v_nd_xy, &
-        v_eigs_nu, sol1, mode_pol, errco, emsg)
+   !f2py intent(in) elnd_to_mshpt, v_el_material, v_nd_xy
+   !f2py intent(out) elnd_to_mshpt, v_el_material, v_nd_xy
+
+   call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
+      bdy_cdn, itermax, tol, debug, show_mem_est, &
+      symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
+      mesh_file, n_msh_pts, n_msh_el, &
+      v_nd_physindex, &
+      elnd_to_mshpt, v_el_material, v_nd_xy, &
+      v_eigs_nu, femsol_ac, poln_fracs, nberr)
+
+   call nberr%to_py(errco, emsg)
 
 end subroutine

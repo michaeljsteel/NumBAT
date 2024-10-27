@@ -2,14 +2,14 @@
 ! analytic expressions for basis function overlaps on linear elements.
 !
 subroutine EM_mode_energy_int_v2_wg (k_0, nval, nel, npt,&
-&nnodes_P2, elnd_to_mesh,&
+&nnodes_P2, elnd_to_mshpt,&
 &x, betas, soln_k1, type_el, overlap)
 !
 !     k_0 = 2 pi / lambda, where lambda in meters.
 !
    use numbatmod
    integer(8) nval, nel, npt, nnodes_P2
-   integer(8) elnd_to_mesh(nnodes_P2,nel)
+   integer(8) elnd_to_mshpt(nnodes_P2,nel)
    double precision x(2,npt)
 !      complex(8) x(2,npt)
    complex(8) soln_k1(3,nnodes_P2+7,nval,nel)
@@ -40,10 +40,10 @@ subroutine EM_mode_energy_int_v2_wg (k_0, nval, nel, npt,&
 !
 !
 !f2py intent(in) k_0, nval, nel, npt
-!f2py intent(in) nnodes_P2, elnd_to_mesh
+!f2py intent(in) nnodes_P2, elnd_to_mshpt
 !f2py intent(in) x, betas, soln_k1, type_el
 !
-!f2py depend(elnd_to_mesh) nnodes_P2, nel
+!f2py depend(elnd_to_mshpt) nnodes_P2, nel
 !f2py depend(x) npt
 !f2py depend(betas) nval
 !f2py depend(soln_k1) nnodes_P2, nval, nel
@@ -71,7 +71,7 @@ subroutine EM_mode_energy_int_v2_wg (k_0, nval, nel, npt,&
          typ_e = type_el(iel)
          if (typ_e .gt. 1) then
             do j=1,nnodes_P2
-               j1 = elnd_to_mesh(j,iel)
+               j1 = elnd_to_mshpt(j,iel)
                nod_el_p(j) = j1
                xel(1,j) = x(1,j1)
                xel(2,j) = x(2,j1)

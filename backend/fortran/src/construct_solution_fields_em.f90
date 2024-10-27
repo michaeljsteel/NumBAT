@@ -168,7 +168,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
                z_tmp2 = sol_el(xyz_i,nd_i)
                if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max
                   z_sol_max = z_tmp2
-                  ! i_sol_max = mesh_raw%elnd_to_mesh(nd_i,i_el)
+                  ! i_sol_max = mesh_raw%elnd_to_mshpt(nd_i,i_el)
                endif
             enddo
 
@@ -335,7 +335,7 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
    val_exp = D_ONE
 
    do nd_i=1,P2_NODES_PER_EL
-      mesh_pt = mesh_raw%elnd_to_mesh(nd_i,i_el)
+      mesh_pt = mesh_raw%elnd_to_mshpt(nd_i,i_el)
       k = pbcs%iperiod_N(mesh_pt)
       if (k /= 0) mesh_pt=k
       el_nds_i(nd_i) = mesh_pt

@@ -33,26 +33,23 @@ module class_ValprVecs
 
 contains
 
-   subroutine ValprVecs_init(this, n_modes, dim_krylov, n_dof, errco, emsg)
+   subroutine ValprVecs_init(this, n_modes, dim_krylov, n_dof, nberr)
       class(ValprVecs) :: this
       integer(8) :: n_modes, dim_krylov, n_dof
-      integer(8) errco
-      character(len=EMSG_LENGTH) emsg
-
-      errco = 0
+      type(NBError) nberr
 
       this%lworkl = 3 * dim_krylov**2 + 5 * dim_krylov
 
-      call complex_alloc_2d(this%v_schur, n_dof, dim_krylov, 'v_schur', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%vect1, n_dof, 'vect1', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%vect2, n_dof, 'vect2', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%workd, 3*n_dof, 'workd', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%workl, this%lworkl, 'workl', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%resid, n_dof, 'resid', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%eval_ritz, n_modes+1, 'eval_ritz', errco, emsg); RETONERROR(errco)
-      call complex_alloc_1d(this%workev, 3*dim_krylov, 'workl', errco, emsg); RETONERROR(errco)
-      call double_alloc_1d(this%rwork, dim_krylov, 'rwork', errco, emsg); RETONERROR(errco)
-      call logical_alloc_1d(this%arp_select, dim_krylov, 'arp_select', errco, emsg); RETONERROR(errco)
+      call complex_nalloc_2d(this%v_schur, n_dof, dim_krylov, 'v_schur', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%vect1, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%vect2, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%workd, 3*n_dof, 'workd', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%workl, this%lworkl, 'workl', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%resid, n_dof, 'resid', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%eval_ritz, n_modes+1, 'eval_ritz', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_1d(this%workev, 3*dim_krylov, 'workl', nberr); RET_ON_NBERR(nberr)
+      call double_nalloc_1d(this%rwork, dim_krylov, 'rwork', nberr); RET_ON_NBERR(nberr)
+      call logical_nalloc_1d(this%arp_select, dim_krylov, 'arp_select', nberr); RET_ON_NBERR(nberr)
 
 
 
@@ -130,7 +127,7 @@ end module
 
 
 subroutine apply_arpack_OPx(n_dof, x, y, n_nonz, row_ind, col_ptr, mat2, vect1, vect2, &
-   lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, errco, emsg)
+   lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, nberr)
 
    use numbatmod
    use alloc
@@ -144,19 +141,21 @@ subroutine apply_arpack_OPx(n_dof, x, y, n_nonz, row_ind, col_ptr, mat2, vect1, 
    integer(8) umf_numeric
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
+   type(NBerror) nberr
+
 
 
    ! --------------------------------------------
-   double precision, dimension(:), allocatable :: rhs_re, rhs_im
+
+   character(len=EMSG_LENGTH) emsg
+      double precision, dimension(:), allocatable :: rhs_re, rhs_im
    integer(4) n_dof_32
 
    !TODO: probably faster to have these arrays declared one subroutine up
    ! and passed in rather than repeatedly requested many times
 
-   call double_alloc_1d(rhs_re, n_dof, 'rhs_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_im, n_dof, 'rhs_im', errco, emsg); RETONERROR(errco)
+   call double_nalloc_1d(rhs_re, n_dof, 'rhs_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(rhs_im, n_dof, 'rhs_im', nberr); RET_ON_NBERR(nberr)
 
 
    n_dof_32 = int(n_dof, 4)
@@ -177,7 +176,7 @@ subroutine apply_arpack_OPx(n_dof, x, y, n_nonz, row_ind, col_ptr, mat2, vect1, 
 
    if (umf_info (1) .lt. 0) then
       write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
-      errco = NBERROR_106
+      call nberr%set(NBERROR_106, emsg)
       return
    endif
 
@@ -241,7 +240,7 @@ end subroutine
 ! ext_workd, ext_resid, ext_lworkl, &
 
 subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
-   cscmat, v_evals, v_evecs ,errco, emsg)
+   cscmat, v_evals, v_evecs, nberr)
 
    !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
    !  mat2 is the identity and hopefully never used ?
@@ -264,6 +263,8 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    complex(8), intent(out) :: v_evals(n_modes)
 
    complex(8), intent(out) :: v_evecs(cscmat%n_dof, n_modes)
+
+   type(NBError) nberr
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
@@ -311,13 +312,12 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    if (i_base .ne. 0) then
       write(emsg,*) "valpr_64: i_base != 0 : ", i_base, &
          "valpr_64: UMFPACK requires 0-based indexing"
-      errco = NBERROR_103
+      call nberr%set(NBERROR_103, emsg)
       return
 
    endif
 
-   call vecs%init(n_modes, dim_krylov, n_dof, errco, emsg)
-   RETONERROR(errco)
+   call vecs%init(n_modes, dim_krylov, n_dof, nberr); RET_ON_NBERR(nberr)
 
    lworkl = 3 * dim_krylov**2 + 5 * dim_krylov   ! length specified in znaupd.f source file
 
@@ -345,13 +345,13 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    !  factors n_dof x n_dof matrix  in CSR format with col and row arrays col_ptr, row_ind
    !  complex entries are in mOp_stiff_re and mOp_stiff_im
 
-   call double_alloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', errco, emsg); RETONERROR(errco)
+   call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
 
-   call double_alloc_1d(lhx_re, n_dof, 'lhx_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(lhx_im, n_dof, 'lhx_im', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_re, n_dof, 'rhs_re', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(rhs_im, n_dof, 'rhs_im', errco, emsg); RETONERROR(errco)
+   call double_nalloc_1d(lhx_re, n_dof, 'lhx_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(lhx_im, n_dof, 'lhx_im', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(rhs_re, n_dof, 'rhs_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(rhs_im, n_dof, 'rhs_im', nberr); RET_ON_NBERR(nberr)
 
 
 
@@ -376,7 +376,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    if (umf_info (1) .lt. 0) then
       write(emsg,'(A,i4)') 'Error occurred in sparse matrix symbolic factorization umf4zsym:', int(umf_info (1))
-      errco = NBERROR_104
+      call nberr%set(NBERROR_104, emsg)
       return
    endif
 
@@ -387,7 +387,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    if (umf_info (1) .lt. 0) then
       write(emsg,*) 'Error occurred in sparse matrix umf_numeric factorization umf4znum: ', umf_info (1)
-      errco = NBERROR_105
+      call nberr%set(NBERROR_105, emsg)
       return
    endif
 
@@ -447,7 +447,8 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
          call apply_arpack_OPx(n_dof, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
             n_nonz, cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_mass, vecs%vect1, vecs%vect2, &
-            lhx_re, lhx_im,  umf_numeric, umf_control, umf_info, errco, emsg)
+            lhx_re, lhx_im,  umf_numeric, umf_control, umf_info, nberr);
+            RET_ON_NBERR(nberr)
 
 
       else if (arp_ido .eq. 2) then  !  Request for y = M*x    !TODO:  IO don't think this ever happens for bmat=I, ie M=I
@@ -470,7 +471,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
          call umf4zsol (UMFPACK_A, lhx_re, lhx_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
          if (umf_info (1) .lt. 0) then
             write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
-            errco = NBERROR_107
+            call nberr%set(NBERROR_107, emsg)
             return
          endif
 
@@ -519,14 +520,14 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
          "VALPR_64: The znaupd error flag has the value ", &
          "arp_info=", arp_info
 
-      errco = NBERROR_108
+      call nberr%set(NBERROR_108, emsg)
       return
    endif
 
    if (n_conv .ne. n_modes) then
       write(emsg,*) "Convergence problem in valpr_64: n_conv != n_modes : ", &
          n_conv, n_modes ,"You should probably increase resolution of mesh!"
-      errco = -19
+      call nberr%set(-19_8, emsg)
       return
    endif
 
@@ -552,7 +553,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    if (arp_info .ne. 0) then
       write(emsg,*) 'VALPR_64: Error with _neupd, arp_info = ', arp_info
-      errco = NBERROR_109
+      call nberr%set(NBERROR_109, emsg)
    else
       v_evals = vecs%eval_ritz(1:n_modes) ! eval_ritz is one longer due to zneupd requirements
    endif

@@ -72,7 +72,7 @@ module class_TriangleIntegrators
 
       integer(8) n_msh_el
       integer(8) n_msh_pts
-      integer(8), dimension(:,:), allocatable :: elnd_to_mesh
+      integer(8), dimension(:,:), allocatable :: elnd_to_mshpt
       double precision, dimension(:,:), allocatable :: v_nd_xy
 
       integer(8) cur_elt

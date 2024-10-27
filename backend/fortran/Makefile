@@ -23,9 +23,6 @@ gccdebug:
 	meson compile -C build_gccdebug
 	cp build_gccdebug/nb_fortran.so .
 
-inteldebug:
-	CC=icx meson setup --buildtype=debugoptimized build_inteldebug
-	meson compile -C build_inteldebug
 
 gcc:
 	- rm -rf build_gcc
@@ -41,12 +38,21 @@ gcc1:
 	#meson compile -v -C build_gcc
 	cp build_gcc/nb_fortran.so .
 
+inteldebug:
+	- rm -rf build_inteldebug
+	#CC=icx meson setup --buildtype=debugoptimized build_inteldebug
+	#meson compile -C build_inteldebug
+	meson setup --reconfigure --buildtype=debug build_inteldebug \
+		--native-file nb-linuxintel-native-file.ini
+	meson compile -v -C build_inteldebug
+	cp build_inteldebug/nb_fortran.so .
+
 intel:
 	- rm -rf build_intel
 	meson setup --reconfigure --buildtype=release build_intel \
 		--native-file nb-linuxintel-native-file.ini
 
-	meson compile -C build_intel
+	meson compile -v -C build_intel
 	cp build_intel/nb_fortran.so .
 
 mac:

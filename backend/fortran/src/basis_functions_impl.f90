@@ -128,9 +128,10 @@ subroutine  BasisFunctions_evaluate_at_position(this, i_el, t_xy, is_curved, el_
 
    integer(8)  :: errco
    character(len=EMSG_LENGTH)  :: emsg
-   errco=0
 
+   errco=0
    debug =0
+
    !  Elements and gradients for the P1, P2, P3 basis functions
    call phi1_2d_mat (t_xy, this%phi_P1_ref, this%gradt_P1_ref)
    call phi2_2d_mat (t_xy, this%phi_P2_ref, this%gradt_P2_ref)
