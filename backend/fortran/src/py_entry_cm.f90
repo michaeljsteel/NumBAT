@@ -35,7 +35,6 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
 
    call nberr%reset()
 
-   write(*,*) 'ementry', n_msh_el, n_elt_mats, v_refindex_n(1), v_refindex_n(2)
    call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file,&
       n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
