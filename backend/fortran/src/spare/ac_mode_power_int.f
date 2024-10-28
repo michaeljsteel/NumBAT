@@ -18,12 +18,14 @@ c      complex(8) x(2,npt)
       complex(8) beta_AC
       complex(8), dimension(nval) :: overlap
       complex(8) c_tensor_z(3,3,3,nb_typ_el)
+      integer(8) errco
+      character(len=EMSG_LENGTH) emsg
 
 c     Local variables
 
-      integer(8) nod_el_p(nnodes_0)
-      double precision xel(2,nnodes_0)
-      complex(8) basis_overlap(3*nnodes_0,3,3*nnodes_0)
+      integer(8) nod_el_p(P2_NODES_PER_EL)
+      double precision xel(2,P2_NODES_PER_EL)
+      complex(8) basis_overlap(3*P2_NODES_PER_EL,3,3*P2_NODES_PER_EL)
       complex(8) U, Ustar
       integer(8) i, j, k, l, j1, typ_e
       integer(8) iel, ind_ip, i_eq, k_eq
@@ -119,11 +121,11 @@ c
           if (.not. is_curved ) then
 c           Rectilinear element
             call jacobian_p1_2d(xx, xel, nnodes,
-     *               xx_g, det, mat_B, mat_T)
+     *               xx_g, det, mat_B, mat_T, errco, emsg)
           else
 c           Isoparametric element, 2024-06-13 fixed version
             call jacobian_p2_2d(xel, nnodes, phi2_list,
-     *               grad2_mat0, xx_g, det, mat_B, mat_T)
+     *               grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
           endif
            if(abs(det) .lt. 1.0d-20) then
              write(*,*)
@@ -140,12 +142,12 @@ c          Calculation of the matrix-matrix product:
           coeff_1 = ww * abs(det)
 C Calculate overlap of basis functions at quadrature point,
 C which is a superposition of P2 polynomials for each function (field).
-          do itrial=1,nnodes_0
+          do itrial=1,P2_NODES_PER_EL
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
 C             Gradient of transverse components of basis function
               do k_eq=1,2
-                do ltest=1,nnodes_0
+                do ltest=1,P2_NODES_PER_EL
                   do l_eq=1,3
                     ind_lp = l_eq + 3*(ltest-1)
                     z_tmp1 = phi2_list(itrial) * grad2_mat(k_eq,ltest)
@@ -160,7 +162,7 @@ C             Gradient of longitudinal components of basis function,
 C             which is i*beta*phi because field is assumed to be of
 C             form e^{i*beta*z} phi.
               k_eq=3
-              do ltest=1,nnodes_0
+              do ltest=1,P2_NODES_PER_EL
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   z_tmp1 = phi2_list(itrial)
@@ -178,11 +180,11 @@ cccccccccc
 C Having calculated overlap of basis functions on element
 C now multiply by specific field values for modes of interest.
         do ival=1,nval
-          do itrial=1,nnodes_0
+          do itrial=1,P2_NODES_PER_EL
             do i_eq=1,3
               ind_ip = i_eq + 3*(itrial-1)
               Ustar = conjg(soln_AC(i_eq,itrial,ival,iel))
-              do ltest=1,nnodes_0
+              do ltest=1,P2_NODES_PER_EL
                 do l_eq=1,3
                   ind_lp = l_eq + 3*(ltest-1)
                   U = soln_AC(l_eq,ltest,ival,iel)

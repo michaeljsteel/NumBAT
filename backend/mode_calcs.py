@@ -1063,7 +1063,7 @@ class ACSimulation(Simulation):
                     fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
                     elastic_props.n_mats_ac,
-                    elastic_props.acten_cijkz,
+                    elastic_props.c_IJ,
                     self.q_AC,
                     Omega_AC,
                     self.fem_evecs,
