@@ -1,4 +1,4 @@
-for fb in ac_mode_power_int.f ac_mode_power_int_v2.f ac_mode_power_int_v4.f
+for fb in ac_mode_elastic_energy_int.f ac_mode_elastic_energy_int_v4.f
 do
     fn=`basename $fb .f`
 

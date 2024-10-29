@@ -32,7 +32,7 @@ gcc:
 	cp build_gcc/nb_fortran.so .
 
 gcc1:
-	- rm -rf build_gcc
+	#- rm -rf build_gcc
 	meson setup --reconfigure --buildtype=release build_gcc
 	meson compile -v -C build_gcc --jobs 1
 	#meson compile -v -C build_gcc

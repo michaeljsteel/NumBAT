@@ -109,6 +109,47 @@ subroutine BasisFunctions_build_vector_elt_map(this, el_nds)
 
 end subroutine
 
+subroutine BasisFunctions_set_affine_for_elt(this, el_nds_xy, nberr)
+   use numbatmod
+
+   class(BasisFunctions) this
+   double precision el_nds_xy(2,P2_NODES_PER_EL)
+   type(NBError) nberr
+
+   !double precision t_xy(2), xy_act
+   character(len=EMSG_LENGTH) :: emsg
+
+
+   this%mat_B(:,1) = el_nds_xy(:,2) - el_nds_xy(:,1)
+   this%mat_B(:,2) = el_nds_xy(:,3) - el_nds_xy(:,1)
+
+   this%det = this%mat_B(1,1) * this%mat_B(2,2) &
+      - this%mat_B(1,2) * this%mat_B(2,1)
+
+
+   if (abs(this%det) .le. 1.0d-22) then
+      write(emsg,*) 'Bad jacobian in set_affine_for_elt'
+      call nberr%set(NBERR_BAD_JACOBIAN, emsg)
+      return
+
+   endif
+
+   !   mat_T = Inverse of mat_B
+   this%mat_T(1,1) =  this%mat_B(2,2) / this%det
+   this%mat_T(2,2) =  this%mat_B(1,1) / this%det
+   this%mat_T(1,2) = -this%mat_B(1,2) / this%det
+   this%mat_T(2,1) = -this%mat_B(2,1) / this%det
+
+   ! !	mat_T_tr = Tanspose(mat_T)
+   ! this%mat_T_tr(1,1) = this%mat_T(1,1)
+   ! this%mat_T_tr(1,2) = this%mat_T(2,1)
+   ! this%mat_T_tr(2,1) = this%mat_T(1,2)
+   ! this%mat_T_tr(2,2) = this%mat_T(2,2)
+
+end subroutine
+
+
+
 ! Evaluates scalar P1, P2 and P3 functions and gradients
 ! at position t_xy in the reference triangle for an element
 ! with P2 nodes at el_nds_xy
@@ -228,34 +269,34 @@ subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_trans, vec_phi, 
    !    this%gradt_P1_act, this%gradt_P2_act, vec_phi, curlt_phi)
 
 
-      k  = this%vector_elt_map(1, bf_j, ety_trans)
-      m  = this%vector_elt_map(2, bf_j, ety_trans)
-      n1 = this%vector_elt_map(3, bf_j, ety_trans)
-      n2 = this%vector_elt_map(4, bf_j, ety_trans)
+   k  = this%vector_elt_map(1, bf_j, ety_trans)
+   m  = this%vector_elt_map(2, bf_j, ety_trans)
+   n1 = this%vector_elt_map(3, bf_j, ety_trans)
+   n2 = this%vector_elt_map(4, bf_j, ety_trans)
 
 
 
-      if (k .eq. 3) then
+   if (k .eq. 3) then
 
-         phi = this%phi_P2_ref(m)
-         grad_p2 = this%gradt_P2_act(:,m)
-         grad_p1 = this%gradt_P1_act(:,n1)
-         vec_phi = phi * grad_p1
+      phi = this%phi_P2_ref(m)
+      grad_p2 = this%gradt_P2_act(:,m)
+      grad_p1 = this%gradt_P1_act(:,n1)
+      vec_phi = phi * grad_p1
 
 
       !elseif (k .eq. 4) then
-      else ! k==4
+   else ! k==4
 
-         phi = this%phi_P2_ref(m)
-         grad_p2 = this%gradt_P2_act(:,m)
-         grad_p1 = this%gradt_P1_act(:,n1) - this%gradt_P1_act(:,n2)
-         vec_phi = phi * grad_p1
+      phi = this%phi_P2_ref(m)
+      grad_p2 = this%gradt_P2_act(:,m)
+      grad_p1 = this%gradt_P1_act(:,n1) - this%gradt_P1_act(:,n2)
+      vec_phi = phi * grad_p1
 
 
-      endif
+   endif
 
-      !  Curl_t E = Det( grad_p2,  grad_p1)
-      curlt_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
+   !  Curl_t E = Det( grad_p2,  grad_p1)
+   curlt_phi = grad_p2(1)*grad_p1(2) - grad_p2(2)*grad_p1(1)
 
 
 end subroutine
@@ -285,5 +326,16 @@ subroutine BasisFunctions_find_derivatives(this, idof, ety, &
       phi_P3_x = this%phi_P3_ref(ety-N_ETY_TRANSVERSE)
       gradt_P3_x(:) = this%gradt_P3_act(:,ety-N_ETY_TRANSVERSE)
    endif
+
+end subroutine
+
+
+
+subroutine BasisFunctions_get_triint_p2_p2(this, m_p2_p2)
+
+   class(BasisFunctions) this
+   double precision m_p2_p2(P2_NODES_PER_EL, P2_NODES_PER_EL)
+
+   call find_overlaps_p2_p2(m_p2_p2, this%det)
 
 end subroutine

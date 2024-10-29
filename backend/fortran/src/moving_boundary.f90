@@ -273,7 +273,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
             ! Nodes of the edge
             do j_1=1,3
-               ! (x,y,z)-components of the electric fi_eld
+               ! (x,y,z)-components of the electric field
                evec_sc = conjg(soln_em_s(:, ls_inod(j_1), t_ival_s, i_el))
                ! ls_n_dot(1): Normal component of vec(:,1)
                ! ls_n_dot(1) = evec_sc(1) * edge_perp(1) + evec_sc(2) * edge_perp(2)
@@ -291,7 +291,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
                   if (t_ival_p .eq. 0) exit
 
                   do j_2=1,3
-                     ! (x,y,z)-components of the electric fi_eld
+                     ! (x,y,z)-components of the electric field
                      evec_p = soln_em_p(:, ls_inod(j_2), t_ival_p, i_el)
                      ! ls_n_dot(2): Normal component of vec(:,2)
                      ! ls_n_dot(2) = v2_dot_v3(edge_perp, evec_p)
@@ -308,7 +308,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
                         if (t_ival_ac .eq. 0) exit
 
                         do j_3=1,3
-                           ! (x,y,z)-components of the acoustic fi_eld
+                           ! (x,y,z)-components of the acoustic field
                            uvec_ac = soln_ac_u(:,ls_inod(j_3),t_ival_ac,i_el)
 
                            ! ls_n_dot(3): scalar product of vec(:,3) and normal vector edge_perp

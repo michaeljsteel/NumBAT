@@ -840,7 +840,7 @@ class EMSimulation(Simulation):
             if tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
-                resm = nb_fortran.em_mode_act_energy_int(
+                resm = nb_fortran.em_mode_act_energy_quadrature(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1033,15 +1033,15 @@ class ACSimulation(Simulation):
             print("doing AC mode power")
             if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
-                self.AC_mode_power = nb_fortran.ac_mode_power_int_v4(
+                self.AC_mode_power = nb_fortran.ac_mode_power_analytic(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.n_nodes,
-                    fm.elnd_to_mesh,
-                    fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
+                    fm.elnd_to_mesh,
+                    #fm.n_nodes,
                     elastic_props.n_mats_ac,
+                    fm.v_el_2_mat_idx,
                     elastic_props.c_IJ,
                     self.q_AC,
                     Omega_AC,
@@ -1054,16 +1054,17 @@ class ACSimulation(Simulation):
                         "\n using slow quadrature integration by default.\n\n",
                     )
                 # Integration by quadrature. Slowest.
-                self.AC_mode_power = nb_fortran.ac_mode_power_int(
+                self.AC_mode_power = nb_fortran.ac_mode_power_quadrature(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.n_nodes,
+                    #fm.n_nodes,
                     fm.elnd_to_mesh,
                     fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
                     elastic_props.n_mats_ac,
-                    elastic_props.c_IJ,
+                    #elastic_props.c_IJ,
+                    elastic_props.c_ijkz,
                     self.q_AC,
                     Omega_AC,
                     self.fem_evecs,
@@ -1075,19 +1076,23 @@ class ACSimulation(Simulation):
 
         if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
-            self.AC_mode_energy = nb_fortran.ac_mode_elastic_energy_int_v4(
+            resm = nb_fortran.ac_mode_energy_analytic(
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.n_nodes,
+                #fm.n_nodes,
                 fm.elnd_to_mesh,
-                fm.v_el_2_mat_idx,
                 fm.v_nd_xy,
                 elastic_props.n_mats_ac,
+                fm.v_el_2_mat_idx,
                 elastic_props.rho,
                 Omega_AC,
                 self.fem_evecs,
             )
+
+            (self.AC_mode_energy,
+             ) = process_fortran_return(resm, "finding ac mode energy analytic")
+
         else:
             if not tstruc.using_curvilinear_elements():
                 print(
@@ -1095,15 +1100,15 @@ class ACSimulation(Simulation):
                     "\n using slow quadrature integration by default.\n\n",
                 )
             # Integration by quadrature. Slowest.
-            self.AC_mode_energy = nb_fortran.ac_mode_elastic_energy_int(
+            self.AC_mode_energy = nb_fortran.ac_mode_energy_quadrature(
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.n_nodes,
-                fm.elnd_to_mesh,
-                fm.v_el_2_mat_idx,
                 fm.v_nd_xy,
+                #fm.n_nodes,
+                fm.elnd_to_mesh,
                 elastic_props.n_mats_ac,
+                fm.v_el_2_mat_idx,
                 elastic_props.rho,
                 Omega_AC,
                 self.fem_evecs,

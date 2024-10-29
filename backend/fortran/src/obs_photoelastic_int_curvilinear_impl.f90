@@ -54,7 +54,7 @@ subroutine make_P2_overlaps_i_j_dk_l(i_el, beta_ac, typ_e, is_curved, &
 
 
       ! Calculate Q_PE of basis functions at quadrature point,
-      ! which is a superposition of P2 polynomials for each function (fi_eld).
+      ! which is a superposition of P2 polynomials for each function (field).
       do nd_i=1,P2_NODES_PER_EL
          phi2_i = quadint%phi_P2_ref(nd_i)
          do xyz_i=1,3                        ! x/y/z component

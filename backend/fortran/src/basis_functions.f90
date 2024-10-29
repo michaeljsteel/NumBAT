@@ -40,10 +40,18 @@ module class_BasisFunctions
 
    contains
 
-   procedure :: build_vector_elt_map => BasisFunctions_build_vector_elt_map
+   procedure :: set_affine_for_elt => BasisFunctions_set_affine_for_elt
+
+   procedure :: get_triint_p2_p2 => BasisFunctions_get_triint_p2_p2
+
+
    procedure :: evaluate_at_position => BasisFunctions_evaluate_at_position
+
+   procedure :: build_vector_elt_map => BasisFunctions_build_vector_elt_map
+
    procedure :: evaluate_vector_elts => BasisFunctions_evaluate_vector_elts
-    procedure :: find_derivatives => BasisFunctions_find_derivatives
+
+   procedure :: find_derivatives => BasisFunctions_find_derivatives
    end type BasisFunctions
 
    contains
