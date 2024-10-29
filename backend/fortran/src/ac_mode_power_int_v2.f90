@@ -1,25 +1,25 @@
 ! Calculate the overlap integral of an AC mode with itself using
 ! analytic expressions for basis function overlaps on linear elements.
 !
-subroutine AC_mode_power_int_v2 (nval,&
-&nel, npt, nnodes, elnd_to_mesh, type_el, x,&
-&nb_typ_el, c_tensor_z, beta_AC, Omega_AC, soln_AC,&
-&overlap)
-!
-   use numbatmod
-   integer(8) nval, ival
-   integer(8) nel, npt, nnodes, nb_typ_el
-   integer(8) type_el(nel)
-   integer(8) elnd_to_mesh(nnodes,nel)
-   double precision x(2,npt)
-!      complex(8) x(2,npt)
-   complex(8) soln_AC(3,nnodes,nval,nel)
-   complex(8) Omega_AC(nval)
-   complex(8) beta_AC
-   complex(8), dimension(nval) :: overlap
-   complex(8) c_tensor_z(3,3,3,nb_typ_el)
 
-!     Local variables
+! P_z = Re \int_A \dxdy (-2 i \Omega) c_zjkl u_j^* d_k u_l
+subroutine AC_mode_power_int_v2 (n_modes, n_msh_el, n_msh_pts, &
+   elnd_to_mesh, v_el_material, v_nd_xy, n_elt_mats, &
+   stiffC_zjkl, beta_AC, Omega_AC, soln_ac_u, overlap)
+
+   use numbatmod
+   integer(8) n_modes, ival
+   integer(8) n_msh_el, n_msh_pts, n_elt_mats
+   integer(8) v_el_material(n_msh_el)
+   integer(8) elnd_to_mesh(P2_NODES_PER_EL,n_msh_el)
+   double precision v_nd_xy(2,n_msh_pts)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   complex(8) Omega_AC(n_modes)
+   complex(8) beta_AC
+   complex(8), dimension(n_modes) :: overlap
+   complex(8) stiffC_zjkl(3,3,3,n_elt_mats)
+
+   ! Locals
 
    integer(8) nod_el_p(P2_NODES_PER_EL)
    double precision xel(2,P2_NODES_PER_EL)
@@ -38,16 +38,16 @@ subroutine AC_mode_power_int_v2 (nval,&
 
 !
 !
-!f2py intent(in) nval, nel, npt, nnodes, elnd_to_mesh
-!f2py intent(in) type_el, x, nb_typ_el, c_tensor_z, beta_AC
-!f2py intent(in) soln_AC, debug, Omega_AC
+!f2py intent(in) n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mesh
+!f2py intent(in) v_el_material, x, n_elt_mats, stiffC_zjkl, beta_AC
+!f2py intent(in) soln_ac_u, debug, Omega_AC
 !
-!f2py depend(elnd_to_mesh) nnodes, nel
-!f2py depend(type_el) npt
-!f2py depend(x) npt
-!f2py depend(soln_AC) nnodes, nval, nel
-!f2py depend(c_tensor_z) nb_typ_el
-!f2py depend(Omega_AC) nval
+!f2py depend(elnd_to_mesh) P2_NODES_PER_EL, n_msh_el
+!f2py depend(v_el_material) n_msh_pts
+!f2py depend(v_nd_xy) n_msh_pts
+!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_el
+!f2py depend(stiffC_zjkl) n_elt_mats
+!f2py depend(Omega_AC) n_modes
 !
 !f2py intent(out) overlap
 !
@@ -56,28 +56,28 @@ subroutine AC_mode_power_int_v2 (nval,&
 !
    ui = stdout
 !
-   if ( nnodes .ne. 6 ) then
-      write(ui,*) "AC_mode_power_int_v2: problem nnodes = ",&
-      &nnodes
-      write(ui,*) " --------- nnodes should be equal to 6 !"
+   if ( P2_NODES_PER_EL .ne. 6 ) then
+      write(ui,*) "AC_mode_power_int_v2: problem P2_NODES_PER_EL = ",&
+      &P2_NODES_PER_EL
+      write(ui,*) " --------- P2_NODES_PER_EL should be equal to 6 !"
       write(ui,*) "AC_mode_power_int_v2: Aborting..."
       stop
    endif
 !
-   do i=1,nval
+   do i=1,n_modes
       overlap(i) = 0.0d0
    enddo
 !
 !ccccccccccc
 ! Loop over elements - start
 !ccccccccccc
-   do iel=1,nel
-      typ_e = type_el(iel)
-      do j=1,nnodes
+   do iel=1,n_msh_el
+      typ_e = v_el_material(iel)
+      do j=1,P2_NODES_PER_EL
          j1 = elnd_to_mesh(j,iel)
          nod_el_p(j) = j1
-         xel(1,j) = x(1,j1)
-         xel(2,j) = x(2,j1)
+         xel(1,j) = v_nd_xy(1,j1)
+         xel(2,j) = v_nd_xy(2,j1)
       enddo
       do i=1,2
          do j=1,2
@@ -124,12 +124,12 @@ subroutine AC_mode_power_int_v2 (nval,&
                      elseif(k_eq == 3) then
                         z_tmp1 = p2_p2(itrial,ltest) * C_IM_ONE* beta_AC
                      else
-                        write(ui,*) "AC_mode_power_int_v2: invalid value "
+                        write(ui,*) "AC_mode_power_int_v2: in_modesid value "
                         write(ui,*) "AC_mode_power_int_v2: k_eq = ", k_eq
                         write(ui,*) "AC_mode_power_int_v2: Aborting..."
                         stop
                      endif
-                     coeff = c_tensor_z(i_eq,k_eq,l_eq,typ_e)
+                     coeff = stiffC_zjkl(i_eq,k_eq,l_eq,typ_e)
                      z_tmp1 = coeff * z_tmp1
                      basis_overlap(ind_ip,k_eq,ind_lp) = z_tmp1
                   enddo
@@ -140,15 +140,15 @@ subroutine AC_mode_power_int_v2 (nval,&
 !ccccccccc
 ! Having calculated overlap of basis functions on element
 ! now multiply by specific field values for modes of interest.
-      do ival=1,nval
+      do ival=1,n_modes
          do itrial=1,P2_NODES_PER_EL
             do i_eq=1,3
                ind_ip = i_eq + 3*(itrial-1)
-               Ustar = conjg(soln_AC(i_eq,itrial,ival,iel))
+               Ustar = conjg(soln_ac_u(i_eq,itrial,ival,iel))
                do ltest=1,P2_NODES_PER_EL
                   do l_eq=1,3
                      ind_lp = l_eq + 3*(ltest-1)
-                     U = soln_AC(l_eq,ltest,ival,iel)
+                     U = soln_ac_u(l_eq,ltest,ival,iel)
                      do k_eq=1,3
                         z_tmp1 = basis_overlap(ind_ip,k_eq,ind_lp)
                         overlap(ival) = overlap(ival) + Ustar * U * z_tmp1
@@ -163,12 +163,12 @@ subroutine AC_mode_power_int_v2 (nval,&
 !ccccccccccc
    enddo
 ! Multiply through prefactor
-   do i=1,nval
+   do i=1,n_modes
       overlap(i) = -2.0 * C_IM_ONE* Omega_AC(i) * overlap(i)
    enddo
 
 !       open (unit=26,file="Output/overlap.txt")
-!       do i=1,nval
+!       do i=1,n_modes
 !         write(26,*) i, Omega_AC(i), abs(overlap(i)),
 !      *              overlap(i)
 !       enddo

@@ -6,7 +6,7 @@
 !  E_em = \int eps/2 |E|^2 dV + \int mu/2 |H|^2 dV
 !       = 2 eps_0 \int dV eps_r |E|^2
 
-subroutine em_mode_act_energy_int (n_modes, n_msh_el, n_msh_pts, &
+subroutine em_mode_act_energy_quadrature (n_modes, n_msh_el, n_msh_pts, &
    elnd_to_mshpt, v_nd_xy, n_elt_mats, el_material, &
    v_refindex, soln_em_e, m_energy, errco, emsg)
 
@@ -57,6 +57,7 @@ subroutine em_mode_act_energy_int (n_modes, n_msh_el, n_msh_pts, &
    m_energy = D_ZERO
    n_curved = 0
 
+   errco=0
    call nberr%reset()
 
    call quadint%setup_reference_quadratures()
@@ -107,4 +108,4 @@ subroutine em_mode_act_energy_int (n_modes, n_msh_el, n_msh_pts, &
 
    m_energy = 2.0 * SI_EPS_0 * m_energy
 
-end subroutine em_mode_act_energy_int
+end subroutine em_mode_act_energy_quadrature

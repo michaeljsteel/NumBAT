@@ -23,10 +23,10 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    integer(8) bdy_cdn, i_base
 
-   !if(E_H_fi_eld .eq. FEM_FORMULATION_E) then
+   !if(E_H_field .eq. FEM_FORMULATION_E) then
    !   perm_qq = eps_eff*vacwavenum_k0**2
    !   pp = 1.0d0
-   !elseif(E_H_fi_eld .eq. FEM_FORMULATION_H) then
+   !elseif(E_H_field .eq. FEM_FORMULATION_H) then
    !   perm_qq = vacwavenum_k0**2
    !   pp = 1.0d0/eps_eff
    !endif

@@ -178,7 +178,7 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
 
 
       !    ! Calculate Q_PE of basis functions at quadrature point,
-      !    ! which is a superposition of P2 polynomials for each function (fi_eld).
+      !    ! which is a superposition of P2 polynomials for each function (field).
       !    do nd_i=1,P2_NODES_PER_EL
       !       do xyz_i=1,3                        ! x/y/z component
       !          ind_ip = xyz_i + 3*(nd_i-1)
