@@ -8,7 +8,7 @@
 subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
    v_nd_xy, elnd_to_mshpt,  &
    n_elt_mats, v_el_material, stiffC_zjkl, &
-   q_AC, Omega_AC, soln_ac_u, v_power_Sz_r)
+   q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, errco, emsg)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -19,14 +19,15 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
    integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
    integer(8) n_elt_mats, v_el_material(n_msh_el)
 
-   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
-   complex(8) Omega_AC(n_modes)
-   complex(8) q_AC
-   double precision, dimension(n_modes) :: v_power_Sz_r
-
    complex(8) stiffC_zjkl(3,3,3,n_elt_mats)
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
+   complex(8) q_AC
+   complex(8) Omega_AC(n_modes)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   double precision, dimension(n_modes) :: v_power_Sz_r
+   integer(8), intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) ::  emsg
+
+
 
    ! Locals
    type(NBError) nberr
@@ -35,7 +36,7 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3,3*P2_NODES_PER_EL)
    complex(8) U, Ustar, v_pow, z_tmp1
-   integer(8) typ_e, i_el, 
+   integer(8) typ_e, i_el
    integer(8) bf_j, ind_j, xyz_j, xyz_k
    integer(8) bf_l, ind_l, xyz_l
 
