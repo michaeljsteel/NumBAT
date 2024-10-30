@@ -41,7 +41,6 @@ subroutine mat_el_powerflow (q_AC, stiff_C_IJ, basfuncs, mat_P)
 
     complex(8) z_tmp1
     integer(8) i, j, i_p, j_p, i_xyz,  j_xyz
-    integer(8) debug
 
     !    Compute the Affine mappings from the current triangle to the
     !     reference unit triangle.

@@ -12,7 +12,6 @@ use numbatmod
    double precision p2_p2(6,6)
    double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
    double precision det_b
-   complex(8)  z_tmp1
    integer(8) i, j
    integer(8) debug
 

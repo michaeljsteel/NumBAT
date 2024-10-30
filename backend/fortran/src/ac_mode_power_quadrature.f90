@@ -32,29 +32,18 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
    type(NBError) nberr
    complex(8), dimension(n_modes) :: v_power_Sz
    double precision el_nds_xy(2,P2_NODES_PER_EL)
-   integer(8) nod_el_p(P2_NODES_PER_EL)
-   double precision xel(2,P2_NODES_PER_EL)
+
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3,3*P2_NODES_PER_EL)
-   complex(8) U, Ustar
-   complex(8) v_pow
-   integer(8) i, j, j1, typ_e,k
-   integer(8) i_el, ind_j, xyz_j, xyz_k
+   complex(8) U, Ustar, v_pow, z_tmp1
+   integer(8) typ_e, i_el, 
+   integer(8) bf_j, ind_j, xyz_j, xyz_k
    integer(8) bf_l, ind_l, xyz_l
-   integer(8) bf_j, ui
-   complex(8) z_tmp1
-   double precision mat_B(2,2), mat_T(2,2)
-!
-!   NQUAD: The number of quadrature points used in each element.
-   integer(8) nquad, nquad_max, iq, md_i
-   parameter (nquad_max = 25)
-   double precision wq(nquad_max)
-   double precision xq(nquad_max), yq(nquad_max)
-   double precision xx(2), xx_g(2), ww, det, t_xy(2)
+
+   integer(8)  iq, md_i
+   double precision t_xy(2)
    integer(8)  n_curved
    logical is_curved
-   complex(8) qwt
-   double precision phi2_list(6), grad2_mat0(2,6)
-   double precision grad2_mat(2,6)
+   double precision qwt
 
    type(QuadIntegrator) quadint
    type(PyFrontEnd) frontend
@@ -75,16 +64,6 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
 !f2py intent(out) v_power_Sz_r
 
-
-   do i=1,3
-      do j=1,3
-         write(*,*) 'cij 1:', i, j, (stiffC_zjkl(i,j,j1,1),j1=1,3)
-      enddo
-   enddo
-
-
-
-   call quad_triangle (nquad, nquad_max, wq, xq, yq)
 
 
    errco=0
@@ -109,67 +88,19 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
       is_curved = frontend%elt_is_curved()
       if (is_curved) n_curved = n_curved + 1
 
-      do j=1,P2_NODES_PER_EL
-         j1 = elnd_to_mshpt(j,i_el)
-         nod_el_p(j) = j1
-         xel(:,j) = v_nd_xy(:,j1)
-      enddo
 
-      ! is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, xel)
-      ! if (is_curved) then
-      !    n_curved = n_curved + 1
-      ! endif
-
-      bas_ovrlp = 0.0d0
+      bas_ovrlp = D_ZERO
 
 
       ! For each quadrature point evaluate v_power_Sz of Lagrange polynomials
       ! or derivative of Lagrange polynomials
-      do iq=1,nquad
-         !call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
-         !t_quadwt = quadint%get_current_quadweight()
+      do iq=1,quadint%n_quad
 
          call quadint%get_quad_point(iq, t_xy, t_quadwt)
          RET_ON_NBERR_UNFOLD(nberr)
 
          call basfuncs%evaluate_at_position(i_el, t_xy, is_curved, el_nds_xy, nberr)
          RET_ON_NBERR(nberr)
-
-
-!          xx(1) = xq(iq)
-!          xx(2) = yq(iq)
-!          ww = wq(iq)
-
-!          !  xx   = coordinate on the reference triangle
-!          !  xx_g = coordinate on the actual triangle
-!          !  phi2_list = values of Lagrange polynomials (1-6) at each local node.
-!          !  grad2_mat0 = gradient on the reference triangle (P2 element)
-!          call phi2_2d_mat(xx, phi2_list, grad2_mat0)
-
-!          if (.not. is_curved ) then
-!             !   Rectilinear element
-!             call jacobian_p1_2d(xx, xel, P2_NODES_PER_EL,&
-!             &xx_g, det, mat_B, mat_T, errco, emsg)
-!          else
-!             !   Isoparametric element, 2024-06-13 fixed version
-!             call jacobian_p2_2d(xel, P2_NODES_PER_EL, phi2_list,&
-!             &grad2_mat0, xx_g, det, mat_B, mat_T, errco, emsg)
-!          endif
-
-!          if(abs(det) .lt. 1.0d-20) then
-!             write(*,*)
-!             write(*,*) "   ???"
-!             write(*,*) "AC_m_en_int: det = 0 : i_el, det = ", i_el, det
-!             write(*,*) "AC_m_en_int: Aborting..."
-!             stop
-!          endif
-
-! !  grad_i  = gradient on the actual triangle
-! !  grad_i  = Transpose(mat_T)*grad_i0
-! !  Calculation of the matrix-matrix product:
-!          call DGEMM('Transpose','N', 2, 6, 2, D_ONE, mat_T, 2,&
-!          &grad2_mat0, 2, D_ZERO, grad2_mat, 2)
-!          qwt = ww * abs(det)
 
          ! Calculate v_power_Sz of basis functions at quadrature point,
          ! which is a superposition of P2 polynomials for each function (fi_eld).
@@ -189,7 +120,6 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
                         ind_l = xyz_l + 3*(bf_l-1)
 
                         z_tmp1 = basfuncs%phi_P2_ref(bf_j) * basfuncs%gradt_P2_act(xyz_k,bf_l)
-                        !z_tmp1 = phi2_list(bf_j) * grad2_mat(xyz_k,bf_l)
                         bas_ovrlp(ind_j,xyz_k,ind_l) = bas_ovrlp(ind_j,xyz_k,ind_l) &
                            + qwt * stiffC_zjkl(xyz_j, xyz_k, xyz_l, typ_e) * z_tmp1
                      enddo
@@ -210,7 +140,6 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
                      ind_l = xyz_l + 3*(bf_l-1)
 
                      z_tmp1 = basfuncs%phi_P2_ref(bf_j) * basfuncs%phi_P2_ref(bf_l) * C_IM_ONE* q_AC
-                     !z_tmp1 = phi2_list(bf_j) * phi2_list(bf_l) * C_IM_ONE* q_AC
 
                      bas_ovrlp(ind_j,xyz_k,ind_l) = bas_ovrlp(ind_j,xyz_k,ind_l) &
                         + qwt *  stiffC_zjkl(xyz_j,xyz_k,xyz_l,typ_e) * z_tmp1
@@ -221,11 +150,6 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
          enddo
       enddo
 
-      if (i_el .eq. 1) then
-         write(*,*) 'acpower quad', (bas_ovrlp(1,1,k), k=1,6)
-         write(*,*) 'acpower quadb', (bas_ovrlp(1,2,k), k=1,6)
-         write(*,*) 'acpower quadc', (bas_ovrlp(1,3,k), k=1,6)
-      endif
 
       ! Having calculated v_power_Sz of basis functions on element
       ! now multiply by specific fi_eld values for modes of interest.
