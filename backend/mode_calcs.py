@@ -1045,14 +1045,14 @@ class ACSimulation(Simulation):
 
         # Calc unnormalised power in each AC mode - PRA Eq. 18.
         # This quantity is of order 10^12
-        # P = -2i Omega |c_ijkl| |u|^2/w_x A
+        # P ~= -2i Omega |c_ijkl| |u|^2/w_x A
         #   with Omega=1e10, |c_ijkl|=1e9 u=1, w_x=1e-6 A=1e-12
 
         if True or self.calc_AC_mode_power:
             print("doing AC mode power")
             if False and tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
-                self.AC_mode_power = nb_fortran.ac_mode_power_analytic(
+                resm = nb_fortran.ac_mode_power_analytic(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1065,7 +1065,8 @@ class ACSimulation(Simulation):
                     Omega_AC,
                     self.fem_evecs,
                 )
-                print("AC mode powers analytic", self.AC_mode_power)
+                (self.AC_mode_power,) = process_fortran_return(resm, "finding ac mode power analytic")
+                #print("AC mode powers analytic", self.AC_mode_power)
             else:
                 if not tstruc.using_curvilinear_elements():
                     print(
@@ -1073,7 +1074,7 @@ class ACSimulation(Simulation):
                         "\n using slow quadrature integration by default.\n\n",
                     )
                 # Integration by quadrature. Slowest.
-                self.AC_mode_power = nb_fortran.ac_mode_power_quadrature(
+                resm = nb_fortran.ac_mode_power_quadrature(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1089,7 +1090,9 @@ class ACSimulation(Simulation):
                     self.fem_evecs,
                 )
 
-                print("AC mode powers quadrature", self.AC_mode_power)
+                (self.AC_mode_power,) = process_fortran_return(resm, "finding ac mode power quadrature")
+                #print("AC mode powers quadrature", self.AC_mode_power)
+
         # Calc unnormalised elastic energy in each AC mode - PRA Eq. 16.
         print("doing AC mode energy")
 
@@ -1110,8 +1113,7 @@ class ACSimulation(Simulation):
                 self.fem_evecs,
             )
 
-            (self.AC_mode_energy,
-             ) = process_fortran_return(resm, "finding ac mode energy analytic")
+            (self.AC_mode_energy,) = process_fortran_return(resm, "finding ac mode energy analytic")
 
         else:
             if not tstruc.using_curvilinear_elements():
