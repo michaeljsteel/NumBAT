@@ -38,12 +38,10 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
    character(len=EMSG_LENGTH) emsg
    double precision nds_xy(2, P2_NODES_PER_EL)
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3*P2_NODES_PER_EL)
-   complex(8) U, Ustar
-   integer(8) typ_e, md_i
-   integer(8) i_el, ind_i, xyz_i, k!, j,k,j1
+   complex(8) U, Ustar, v_pow
+   integer(8) typ_e, md_i 
+   integer(8) i_el, bf_i, ind_i, xyz_i
    integer(8) bf_j, ind_j, xyz_j
-   integer(8) bf_i
-   complex(8) v_pow
 
    complex(8) stiff_C_IJ(6,6)
 
@@ -67,15 +65,6 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
 
    errco = 0
    call nberr%reset()
-
-
-!    do j=1,6
-
-!       write(*,*) 'cij 1', j, (stiffC_IJ_el(j,j1,1),j1=1,6)
-! enddo
-
-
-
 
 
    call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)

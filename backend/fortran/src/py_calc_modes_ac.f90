@@ -114,7 +114,7 @@ contains
       integer(8) ui_out,  namelength
 
 
-      double precision lat_vecs(2,2)
+      !double precision lat_vecs(2,2)
       double precision dim_x, dim_y
 
       complex(8) shift_omsq
