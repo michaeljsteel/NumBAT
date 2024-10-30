@@ -370,7 +370,7 @@ class EMSimResult(SimResult):
             fm.n_msh_el,
             fm.n_msh_pts,
             fm.n_nodes,
-            fm.elnd_to_mesh,
+            fm.elnd_to_mshpt,
             fm.v_nd_xy,
             self.eigs_kz,
             self.fem_evecs,
@@ -777,7 +777,7 @@ class EMSimulation(Simulation):
             self.eigs_kz,
             self.fem_evecs,
             self.mode_pol,
-            elnd_to_mesh,
+            elnd_to_mshpt,
             type_el,
             node_physindex,
             v_nd_xy,
@@ -790,11 +790,15 @@ class EMSimulation(Simulation):
         #print("modepol", self.mode_pol)
         #print("ls material: n", self.ls_material, self.ls_material.shape)
 
-        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, elnd_to_mesh, v_nd_xy)
+        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, elnd_to_mshpt, v_nd_xy)
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
 
+        # These quantities are of order 10^-16 W:
+        #   Efield ~ .25/m, P= (\epsilon c /2) n |E|^2 A, with A~ 1 um^2
+        #   If we moved to microns as unit of length, with E~0.25 V/um, c=3e14 and A~1 um^2,
+        #    we would have powers of order 1 W
         if tstruc.using_linear_elements():
             print('using linear elements')
             # Integration using analytically evaluated basis function integrals. Fast.
@@ -804,7 +808,7 @@ class EMSimulation(Simulation):
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.elnd_to_mesh,
+                fm.elnd_to_mshpt,
                 fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
@@ -823,7 +827,7 @@ class EMSimulation(Simulation):
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.elnd_to_mesh,
+                fm.elnd_to_mshpt,
                 fm.v_nd_xy,
                 self.eigs_kz,
                 self.fem_evecs,
@@ -833,7 +837,18 @@ class EMSimulation(Simulation):
         # Bring Kokou's def into line with CW formulation.
         self.EM_mode_power = 2.0 * self.EM_mode_power
 
-        # Calc energy (not power) in each EM mode - PRA Eq. 6.
+        print('EM mode powers', self.EM_mode_power)
+
+
+
+        # Calc linear energy density (not power) in each EM mode - PRA Eq. 6.
+
+        # These quantities are of order 10^-24 J/m:
+        #   Efield ~ .25/m, W= \epsilon n^2 |E|^2 A, with A~ 1e-12 m^2
+        #   If we moved to microns as unit of length, with E~0.25 V/um, and A~1 um^2,
+        #    we would have densities of order 1e-12 J/m
+
+
         if self.calc_EM_mode_energy:
             print("Calculating EM mode energies...")
 
@@ -844,7 +859,7 @@ class EMSimulation(Simulation):
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.elnd_to_mesh,
+                    fm.elnd_to_mshpt,
                     fm.v_nd_xy,
                     opt_props.n_mats_em,
                     fm.v_el_2_mat_idx,
@@ -994,13 +1009,13 @@ class ACSimulation(Simulation):
             #fm.n_msh_pts,           #f2py figures out from arrays
             #fm.n_msh_el,            #f2py figures out from arrays
             fm.node_physindex,  # => fort: type_nod
-            fm.elnd_to_mesh,       # => fort: elnd_to_mesh
+            fm.elnd_to_mshpt,       # => fort: elnd_to_mshpt
             fm.v_el_2_mat_idx,  # => fort: type_el
             fm.v_nd_xy,         # => fort: v_nd_xy
         )
 
         (
-            elnd_to_mesh_out,
+            elnd_to_mshpt_out,
             type_el_out,
             v_nd_xy_out,
             self.eigs_nu,
@@ -1008,7 +1023,7 @@ class ACSimulation(Simulation):
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
-        self.fem_mesh.store_ac_mode_outputs(type_el_out, elnd_to_mesh_out, v_nd_xy_out)
+        self.fem_mesh.store_ac_mode_outputs(type_el_out, elnd_to_mshpt_out, v_nd_xy_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME
@@ -1029,17 +1044,20 @@ class ACSimulation(Simulation):
         # doesn't seem very useful. May as well turn off.
 
         # Calc unnormalised power in each AC mode - PRA Eq. 18.
-        if self.calc_AC_mode_power:
+        # This quantity is of order 10^12
+        # P = -2i Omega |c_ijkl| |u|^2/w_x A
+        #   with Omega=1e10, |c_ijkl|=1e9 u=1, w_x=1e-6 A=1e-12
+
+        if True or self.calc_AC_mode_power:
             print("doing AC mode power")
-            if tstruc.using_linear_elements():
+            if False and tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                 self.AC_mode_power = nb_fortran.ac_mode_power_analytic(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.v_nd_xy,
-                    fm.elnd_to_mesh,
-                    #fm.n_nodes,
+                    fm.elnd_to_mshpt,
                     elastic_props.n_mats_ac,
                     fm.v_el_2_mat_idx,
                     elastic_props.c_IJ,
@@ -1047,6 +1065,7 @@ class ACSimulation(Simulation):
                     Omega_AC,
                     self.fem_evecs,
                 )
+                print("AC mode powers analytic", self.AC_mode_power)
             else:
                 if not tstruc.using_curvilinear_elements():
                     print(
@@ -1058,22 +1077,23 @@ class ACSimulation(Simulation):
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    #fm.n_nodes,
-                    fm.elnd_to_mesh,
-                    fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
+                    fm.elnd_to_mshpt,
                     elastic_props.n_mats_ac,
+                    fm.v_el_2_mat_idx,
                     #elastic_props.c_IJ,
-                    elastic_props.c_ijkz,
+                    #elastic_props.c_ijkz,
+                    elastic_props.c_zjkl,
                     self.q_AC,
                     Omega_AC,
                     self.fem_evecs,
-                    AC_FEM_debug,
                 )
 
+                print("AC mode powers quadrature", self.AC_mode_power)
         # Calc unnormalised elastic energy in each AC mode - PRA Eq. 16.
         print("doing AC mode energy")
 
+        # This quantity is of order 10^12 since the integration units of (microns)^2 are not accounted for
         if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
             resm = nb_fortran.ac_mode_energy_analytic(
@@ -1081,7 +1101,7 @@ class ACSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 #fm.n_nodes,
-                fm.elnd_to_mesh,
+                fm.elnd_to_mshpt,
                 fm.v_nd_xy,
                 elastic_props.n_mats_ac,
                 fm.v_el_2_mat_idx,
@@ -1106,7 +1126,7 @@ class ACSimulation(Simulation):
                 fm.n_msh_pts,
                 fm.v_nd_xy,
                 #fm.n_nodes,
-                fm.elnd_to_mesh,
+                fm.elnd_to_mshpt,
                 elastic_props.n_mats_ac,
                 fm.v_el_2_mat_idx,
                 elastic_props.rho,
@@ -1114,6 +1134,8 @@ class ACSimulation(Simulation):
                 self.fem_evecs,
                 AC_FEM_debug,
             )
+
+        print("AC mode energies", self.AC_mode_energy)
 
         self.calc_acoustic_losses()
 
@@ -1165,7 +1187,7 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.elnd_to_mesh,
+                    fm.elnd_to_mshpt,
                     fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
                     elastic_props.n_mats_ac,
@@ -1190,7 +1212,7 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.n_nodes,
-                    fm.elnd_to_mesh,
+                    fm.elnd_to_mshpt,
                     fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
                     elastic_props.n_mats_ac,
@@ -1282,7 +1304,7 @@ def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
     #     with open(structure.mesh_file) as f:
     #         self.n_msh_pts, self.n_msh_el = [
     #             int(i) for i in f.readline().split()]
-    #     elnd_to_mesh_AC = np.zeros((6, self.n_msh_el))
+    #     elnd_to_mshpt_AC = np.zeros((6, self.n_msh_el))
     #     type_el_AC = np.zeros(self.n_msh_el)
     #     v_nd_xy_AC = np.zeros((2, self.n_msh_pts))
     #     node_physindex_AC = np.zeros(self.n_msh_pts)
