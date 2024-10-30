@@ -435,7 +435,7 @@ def gain_and_qs(
     #            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
     #                alpha = nb_fortran.ac_alpha_int_v2(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.elnd_to_mesh, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
+    #                    sim_AC.elnd_to_mshpt, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
     #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
     #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
@@ -446,7 +446,7 @@ def gain_and_qs(
     #                        "\n using slow quadrature integration by default.\n\n")
     #                alpha = nb_fortran.ac_alpha_int(sim_AC.n_modes,
     #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.elnd_to_mesh, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
+    #                    sim_AC.elnd_to_mshpt, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
     #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
     #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
     #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
@@ -479,7 +479,7 @@ def gain_and_qs(
 
     sim_AC.fem_evecs[2,:,:,:]  = 0
 
-    
+
     is_curvi=False
     if struc.using_linear_elements():
         print("\n Photoelastic calc: linear elements")
@@ -490,8 +490,8 @@ def gain_and_qs(
     resm = nb_fortran.photoelastic_int_common(is_curvi,
         sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes,
         EM_ival_pump_fortran, EM_ival_Stokes_fortran, AC_ival_fortran,
-        fem_ac.n_msh_el, fem_ac.n_msh_pts, fem_ac.elnd_to_mesh, fem_ac.v_nd_xy, 
-        elastic_props.n_mats_ac, fem_ac.v_el_2_mat_idx, 
+        fem_ac.n_msh_el, fem_ac.n_msh_pts, fem_ac.elnd_to_mshpt, fem_ac.v_nd_xy,
+        elastic_props.n_mats_ac, fem_ac.v_el_2_mat_idx,
         elastic_props.p_ijkl, q_AC,
         trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
         relevant_eps_effs,
@@ -517,7 +517,7 @@ def gain_and_qs(
         AC_ival_fortran,
         fem_ac.n_msh_el,
         fem_ac.n_msh_pts,
-        fem_ac.elnd_to_mesh,
+        fem_ac.elnd_to_mshpt,
         fem_ac.v_nd_xy,
         elastic_props.n_mats_ac,
         fem_ac.v_el_2_mat_idx,
@@ -605,7 +605,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
     v_y = np.array(v_y)
 
     # unrolling data for the interpolators
-    elnd_to_mesh = simres.elnd_to_mesh.T
+    elnd_to_mshpt = simres.elnd_to_mshpt.T
     v_nd_xy = simres.v_nd_xy.T
 
     sym_list = []
@@ -632,7 +632,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
 
             for i_node in np.arange(6):
                 # index for the coordinates
-                i_ex = elnd_to_mesh[i_el, i_node] - 1
+                i_ex = elnd_to_mshpt[i_el, i_node] - 1
                 # values
                 v_x6p[i] = v_nd_xy[i_ex, 0]
                 v_y6p[i] = v_nd_xy[i_ex, 1]
@@ -646,24 +646,24 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
             # triangles
             triangles = [
                 [
-                    elnd_to_mesh[i_el, 0] - 1,
-                    elnd_to_mesh[i_el, 3] - 1,
-                    elnd_to_mesh[i_el, 5] - 1,
+                    elnd_to_mshpt[i_el, 0] - 1,
+                    elnd_to_mshpt[i_el, 3] - 1,
+                    elnd_to_mshpt[i_el, 5] - 1,
                 ],
                 [
-                    elnd_to_mesh[i_el, 1] - 1,
-                    elnd_to_mesh[i_el, 4] - 1,
-                    elnd_to_mesh[i_el, 3] - 1,
+                    elnd_to_mshpt[i_el, 1] - 1,
+                    elnd_to_mshpt[i_el, 4] - 1,
+                    elnd_to_mshpt[i_el, 3] - 1,
                 ],
                 [
-                    elnd_to_mesh[i_el, 2] - 1,
-                    elnd_to_mesh[i_el, 5] - 1,
-                    elnd_to_mesh[i_el, 4] - 1,
+                    elnd_to_mshpt[i_el, 2] - 1,
+                    elnd_to_mshpt[i_el, 5] - 1,
+                    elnd_to_mshpt[i_el, 4] - 1,
                 ],
                 [
-                    elnd_to_mesh[i_el, 3] - 1,
-                    elnd_to_mesh[i_el, 4] - 1,
-                    elnd_to_mesh[i_el, 5] - 1,
+                    elnd_to_mshpt[i_el, 3] - 1,
+                    elnd_to_mshpt[i_el, 4] - 1,
+                    elnd_to_mshpt[i_el, 5] - 1,
                 ],
             ]
             v_triang1p.extend(triangles)
@@ -950,7 +950,7 @@ def interp_py_fields(
     v_y = np.array(v_y)
 
     # unrolling data for the interpolators
-    elnd_to_mesh = sim_AC.elnd_to_mesh.T
+    elnd_to_mshpt = sim_AC.elnd_to_mshpt.T
     v_nd_xy = sim_AC.v_nd_xy.T
 
     # dense triangulation with multiple points
@@ -972,7 +972,7 @@ def interp_py_fields(
     for i_el in np.arange(sim_AC.n_msh_el):
         for i_node in np.arange(6):
             # index for the coordinates
-            i_ex = elnd_to_mesh[i_el, i_node] - 1
+            i_ex = elnd_to_mshpt[i_el, i_node] - 1
             # values
             v_x6p[i] = v_nd_xy[i_ex, 0]
             v_y6p[i] = v_nd_xy[i_ex, 1]

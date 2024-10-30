@@ -137,8 +137,11 @@ class ElasticProps:
         # stiffness tensor in 6x6 Voigt notation [3 x 3  x  n_mats_ac]
         self.c_IJ = np.zeros((6, 6, self.n_mats_ac))
 
-        # stiffness tensor as rank 4 ijkz tensor [3x3x3x1  x  n_mats_ac]
+        # stiffness tensor as rank 4 ijkz tensor [3x3x3  x  n_mats_ac]
         self.c_ijkz = np.zeros((3, 3, 3, self.n_mats_ac))
+
+        # stiffness tensor as rank 4 zjkl tensor [3x3x3  x  n_mats_ac]
+        self.c_zjkl = np.zeros((3, 3, 3, self.n_mats_ac))
 
         # photelastic tensor as rank 4 ijkl tensor  # [3x3x3x3  x  n_mats_ac]
         self.p_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
@@ -217,6 +220,15 @@ class ElasticProps:
                     self.c_ijkz[0, 0, 2, k_typ] = t_ac_c_IJ[4, 4]
                     self.c_ijkz[0, 2, 0, k_typ] = t_ac_c_IJ[4, 4]
 
+                    self.c_zjkl[2, 2, 2, k_typ] = t_ac_c_IJ[1, 1]
+                    self.c_zjkl[2, 0, 0, k_typ] = t_ac_c_IJ[2, 1]
+                    self.c_zjkl[2, 1, 1, k_typ] = t_ac_c_IJ[2, 1]
+                    self.c_zjkl[1, 1, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_zjkl[1, 2, 1, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_zjkl[0, 0, 2, k_typ] = t_ac_c_IJ[4, 4]
+                    self.c_zjkl[0, 2, 0, k_typ] = t_ac_c_IJ[4, 4]
+
+
                     self.p_ijkl[0, 0, 0, 0, k_typ] = t_ac_p_IJ[1, 1]
                     self.p_ijkl[1, 1, 1, 1, k_typ] = t_ac_p_IJ[1, 1]
                     self.p_ijkl[2, 2, 2, 2, k_typ] = t_ac_p_IJ[1, 1]
@@ -272,6 +284,8 @@ class ElasticProps:
                             for k in [0, 1, 2]:
                                 Jz = voigt_map[(k, 2)]
                                 self.c_ijkz[i, j, k, k_typ] = t_ac_c_IJ[I, Jz]
+                                self.c_zjkl[k, i, j, k_typ] = t_ac_c_IJ[Jz, I]
+
                                 for l in [0, 1, 2]:
                                     J = voigt_map[(k, l)]
                                     self.p_ijkl[i, j, k, l, k_typ] = t_ac_p_IJ[I, J]
@@ -587,7 +601,7 @@ class Structure:
         self.curvilinear_element_shapes = []
 
         if wg_geom is not None:
-            if wg_geom.is_curvilinear():  
+            if wg_geom.is_curvilinear():
                 self.curvilinear_element_shapes.append(wg_geom.geom_name())
             else:
                 self.linear_element_shapes.append(wg_geom.geom_name())

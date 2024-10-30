@@ -4,7 +4,7 @@
  !	(integral of the z-component of the acoustic Poynting vector)
  !
 
-subroutine mat_el_energy (xel, beta, c_tensor_el, mat_P)
+subroutine mat_el_powerflow_old (xel, beta, c_tensor_el, mat_P)
 
    use numbatmod
    double precision xel(2,6)

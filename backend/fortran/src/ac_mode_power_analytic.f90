@@ -6,38 +6,41 @@
 ! P_z = Re (-2 i \Omega) \int_A \dxdy  c_zjkl u_j^* d_k u_l
 
 
-subroutine AC_mode_power_analytic_new (n_modes, n_msh_el, n_msh_pts,  &
+subroutine ac_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
    v_nd_xy, elnd_to_mshpt, &
-   n_elt_mats, v_el_material, stiffC_zjkl, &
-   q_AC, Omega_AC, soln_ac_u, v_power_Sz)
+   n_elt_mats, v_el_material, stiffC_IJ_el, &
+   q_AC, Omega_AC, soln_ac_u, v_power_Sz_r)
 
    use numbatmod
    use numbatmod
    use class_TriangleIntegrators
    use class_BasisFunctions
 
-   integer(8) n_modes, md_i
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) v_el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
+   integer(8) n_modes, n_msh_el, n_msh_pts
    double precision v_nd_xy(2,n_msh_pts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
 
-   complex(8) stiffC_zjkl(6,6,n_elt_mats)
+   integer(8) n_elt_mats
+   integer(8) v_el_material(n_msh_el)
+
+   complex(8) stiffC_IJ_el(6,6,n_elt_mats)
 
    complex(8) q_AC
    complex(8) Omega_AC(n_modes)
    complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
-   complex(8), dimension(n_modes), intent(out) :: v_power_Sz
+   double precision, dimension(n_modes), intent(out) :: v_power_Sz_r
+
 
    ! Locals
 
+   complex(8), dimension(n_modes):: v_power_Sz
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
    double precision nds_xy(2, P2_NODES_PER_EL)
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3*P2_NODES_PER_EL)
    complex(8) U, Ustar
-   integer(8) typ_e
-   integer(8) i_el, ind_i, xyz_i
+   integer(8) typ_e, md_i
+   integer(8) i_el, ind_i, xyz_i, k!, j,k,j1
    integer(8) bf_j, ind_j, xyz_j
    integer(8) bf_i
    complex(8) v_pow
@@ -65,6 +68,16 @@ subroutine AC_mode_power_analytic_new (n_modes, n_msh_el, n_msh_pts,  &
    errco = 0
    call nberr%reset()
 
+
+!    do j=1,6
+
+!       write(*,*) 'cij 1', j, (stiffC_IJ_el(j,j1,1),j1=1,6)
+! enddo
+
+
+
+
+
    call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
@@ -72,7 +85,7 @@ subroutine AC_mode_power_analytic_new (n_modes, n_msh_el, n_msh_pts,  &
 
    do i_el=1,n_msh_el
       typ_e = v_el_material(i_el)
-      stiff_C_IJ = stiffC_zjkl(:,:,typ_e)
+      stiff_C_IJ = stiffC_IJ_el(:,:,typ_e)
 
       call frontend%nodes_at_el(i_el, nds_xy)
 
@@ -81,6 +94,7 @@ subroutine AC_mode_power_analytic_new (n_modes, n_msh_el, n_msh_pts,  &
 
 
       call mat_el_powerflow (q_AC, stiff_C_IJ, basfuncs, bas_ovrlp)
+
 
       ! Having calculated v_power_Sz of basis functions on element
       ! now multiply by specific field values for modes of interest.
@@ -103,32 +117,34 @@ subroutine AC_mode_power_analytic_new (n_modes, n_msh_el, n_msh_pts,  &
 
             enddo
          enddo
-         v_power_Sz(md_i) = v_pow
+         v_power_Sz(md_i) = v_power_Sz(md_i) + v_pow
       enddo
    enddo
 
 
-   v_power_Sz = - 2.0d0 * C_IM_ONE* Omega_AC * v_power_Sz
-
-end subroutine AC_mode_power_analytic_new
+   v_power_Sz_r = real(- 2.0d0 * C_IM_ONE* Omega_AC * v_power_Sz)
 
 
-
+end subroutine ac_mode_power_analytic
 
 
 
-subroutine AC_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
+
+
+
+
+subroutine AC_mode_power_analytic_old (n_modes, n_msh_el, n_msh_pts,  &
    v_nd_xy, elnd_to_mshpt, &
    n_elt_mats, v_el_material, stiffC_zjkl, &
    q_AC, Omega_AC, soln_ac_u, v_power_Sz)
 
    use numbatmod
 
-   integer(8) n_modes, md_i
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) v_el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
+   integer(8) n_modes, n_msh_el, n_msh_pts
    double precision v_nd_xy(2,n_msh_pts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
+   integer(8) n_elt_mats
+   integer(8) v_el_material(n_msh_el)
 
    complex(8) stiffC_zjkl(6,6,n_elt_mats)
 
@@ -146,7 +162,7 @@ subroutine AC_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
    integer(8) j, j1, typ_e
    integer(8) i_el, ind_i, xyz_i
    integer(8) bf_j, ind_j, xyz_j
-   integer(8) bf_i
+   integer(8) bf_i, md_i
 
    complex(8) z_tmp1, stiff_C_IJ(6,6)
 
@@ -167,6 +183,7 @@ subroutine AC_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
 
 
 
+
    v_power_Sz = 0.0d0
 
    do i_el=1,n_msh_el
@@ -179,7 +196,8 @@ subroutine AC_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
 
       stiff_C_IJ = stiffC_zjkl(:,:,typ_e)
 
-      call mat_el_energy (xel, q_AC, stiff_C_IJ, bas_ovrlp)
+      call mat_el_powerflow_old (xel, q_AC, stiff_C_IJ, bas_ovrlp)
+
 
       ! Having calculated v_power_Sz of basis functions on element
       ! now multiply by specific field values for modes of interest.
@@ -204,4 +222,4 @@ subroutine AC_mode_power_analytic (n_modes, n_msh_el, n_msh_pts,  &
 
    v_power_Sz = 2.0d0 * C_IM_ONE* Omega_AC * v_power_Sz
 
-end subroutine AC_mode_power_analytic
+end subroutine AC_mode_power_analytic_old

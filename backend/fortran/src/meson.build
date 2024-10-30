@@ -62,7 +62,7 @@ nb_impl_fsrcs = files(
     'jacobian_p1_2d.f90',
     'jacobian_p2_2d.f90',
     'mat_el.f90',
-    'mat_el_energy.f90',
+    'mat_el_powerflow_old.f90',
     'mat_el_energy_rho.f90',
     'mat_el_v2.f90',
     'mat_el_v3.f90',
