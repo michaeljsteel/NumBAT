@@ -1,7 +1,9 @@
 #include "numbat_decl.h"
 ! Calculate the v_alpha integral of an AC mode with itself using
 ! Direct integration
+
 ! \alpha = \Omega^2/Energy_aC \int  eta_ijkl d_i u_j^* d_k u_l
+
 subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
    elnd_to_mshpt, v_nd_xy, n_elt_mats, v_el_material,  &
     eta_ijkl, q_AC, Omega_AC, soln_ac_u, &
