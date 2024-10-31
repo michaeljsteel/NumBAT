@@ -1094,10 +1094,10 @@ class ACSimulation(Simulation):
                 #print("AC mode powers quadrature", self.AC_mode_power)
 
         # Calc unnormalised elastic energy in each AC mode - PRA Eq. 16.
-        print("doing AC mode energy")
+        print("Doing AC mode energy")
 
         # This quantity is of order 10^12 since the integration units of (microns)^2 are not accounted for
-        if tstruc.using_linear_elements():
+        if True and tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
             resm = nb_fortran.ac_mode_energy_analytic(
                 self.n_modes,
@@ -1121,8 +1121,9 @@ class ACSimulation(Simulation):
                     "Warning: ac_mode_elastic_energy_int - not sure if mesh contains curvi-linear elements",
                     "\n using slow quadrature integration by default.\n\n",
                 )
+            print('quad energies')
             # Integration by quadrature. Slowest.
-            self.AC_mode_energy = nb_fortran.ac_mode_energy_quadrature(
+            resm = nb_fortran.ac_mode_energy_quadrature(
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
@@ -1134,8 +1135,8 @@ class ACSimulation(Simulation):
                 elastic_props.rho,
                 Omega_AC,
                 self.fem_evecs,
-                AC_FEM_debug,
             )
+            (self.AC_mode_energy,) = process_fortran_return(resm, "finding ac mode energy quadrature")
 
         print("AC mode energies", self.AC_mode_energy)
 
@@ -1184,15 +1185,14 @@ class ACSimulation(Simulation):
             print("Acoustic loss calc")
 
             if tstruc.using_linear_elements():
-                alpha = nb_fortran.ac_alpha_int_v2(
+                alpha = nb_fortran.ac_alpha_analytic(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.n_nodes,
                     fm.elnd_to_mshpt,
-                    fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
                     elastic_props.n_mats_ac,
+                    fm.v_el_2_mat_idx,
                     elastic_props.eta_ijkl,
                     self.q_AC,
                     Omega_AC,
@@ -1209,15 +1209,14 @@ class ACSimulation(Simulation):
                 Fortran_debug = 0
                 # not sure why this is needed by ac_alpha_int
                 # overlap = np.zeros(self.n_modes, dtype=complex)
-                alpha = nb_fortran.ac_alpha_int(
+                alpha = nb_fortran.ac_alpha_quadrature(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.n_nodes,
-                    fm.elnd_to_mshpt,
-                    fm.v_el_2_mat_idx,
                     fm.v_nd_xy,
+                    fm.elnd_to_mshpt,
                     elastic_props.n_mats_ac,
+                    fm.v_el_2_mat_idx,
                     elastic_props.eta_ijkl,
                     self.q_AC,
                     Omega_AC,

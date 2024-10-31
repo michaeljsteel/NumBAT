@@ -118,7 +118,7 @@ end subroutine ac_mode_energy_analytic_old
 
 subroutine ac_mode_energy_analytic (n_modes, n_msh_el, n_msh_pts, &
    elnd_to_mshpt, v_nd_xy, n_elt_mats, v_el_material,  &
-   rho, Omega_AC, soln_ac_u, v_energy, errco, emsg)
+   rho, Omega_AC, soln_ac_u, v_energy_r, errco, emsg)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -134,11 +134,13 @@ subroutine ac_mode_energy_analytic (n_modes, n_msh_el, n_msh_pts, &
    complex(8) Omega_AC(n_modes)
    complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
 
-   complex(8), dimension(n_modes), intent(out) :: v_energy
+   double precision, dimension(n_modes), intent(out) :: v_energy_r
+
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
    ! Locals
+   complex(8), dimension(n_modes)  :: v_energy
    double precision nds_xy(2,P2_NODES_PER_EL)
    double precision m_int_p2p2(P2_NODES_PER_EL,P2_NODES_PER_EL)
    complex(8) ac_U, ac_Ustar
@@ -205,6 +207,7 @@ subroutine ac_mode_energy_analytic (n_modes, n_msh_el, n_msh_pts, &
       enddo
    enddo
 
-   v_energy = 2.0 * Omega_AC**2 * v_energy
+   !v_energy = 2.0 * Omega_AC**2 * v_energy
+   v_energy_r = real(2.0 * Omega_AC**2 * v_energy)
 
 end subroutine ac_mode_energy_analytic

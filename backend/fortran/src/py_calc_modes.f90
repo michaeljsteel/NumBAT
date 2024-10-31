@@ -243,6 +243,7 @@ contains
       RET_ON_NBERR(nberr)
 
 
+      !TODO: does this serve any purpose any more? Just poln_fracs?
       call mode_energy (n_modes, n_msh_el, n_core, mesh_raw, &
          n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
 
