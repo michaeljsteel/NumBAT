@@ -122,12 +122,12 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
       mat_T_tr(2,1) = mat_T(1,2)
       mat_T_tr(2,2) = mat_T(2,2)
 !
-      call find_v_alphas_p2_p2(p2_p2, det_b)
-      call find_v_alphas_p2_p2x (p2_p2x, mat_T_tr, det_b)
-      call find_v_alphas_p2_p2y (p2_p2y, mat_T_tr, det_b)
-      call find_v_alphas_p2x_p2x (p2x_p2x, mat_T_tr, det_b)
-      call find_v_alphas_p2x_p2y (p2x_p2y, mat_T_tr, det_b)
-      call find_v_alphas_p2y_p2y (p2y_p2y, mat_T_tr, det_b)
+      call find_overlaps_p2_p2(p2_p2, det_b)
+      call find_overlaps_p2_p2x (p2_p2x, mat_T_tr, det_b)
+      call find_overlaps_p2_p2y (p2_p2y, mat_T_tr, det_b)
+      call find_overlaps_p2x_p2x (p2x_p2x, mat_T_tr, det_b)
+      call find_overlaps_p2x_p2y (p2x_p2y, mat_T_tr, det_b)
+      call find_overlaps_p2y_p2y (p2y_p2y, mat_T_tr, det_b)
 
 
 ! Calculate v_alpha of basis functions
@@ -168,8 +168,7 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
                            z_tmp1 = z_tmp1 *  q_AC**2
                         endif
                         t_eta = eta_ijkl(xyz_i,xyz_j,xyz_k,xyz_l,typ_e)
-                        basis_v_alpha(ind_i,xyz_j,xyz_k,ind_l) =&
-                        &t_eta * z_tmp1
+                        basis_v_alpha(ind_i,xyz_j,xyz_k,ind_l) = t_eta * z_tmp1
                      enddo
                   enddo
                enddo
