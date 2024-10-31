@@ -1184,8 +1184,9 @@ class ACSimulation(Simulation):
             # Calc alpha (loss) Eq. 45
             print("Acoustic loss calc")
 
-            if tstruc.using_linear_elements():
-                alpha = nb_fortran.ac_alpha_analytic(
+            if False and tstruc.using_linear_elements():
+                print('analy loss')
+                resm = nb_fortran.ac_alpha_analytic(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1200,7 +1201,9 @@ class ACSimulation(Simulation):
                     # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
                     self.AC_mode_energy,
                 )  # appropriate for alpha in [1/s]
+                (alpha,) = process_fortran_return(resm, "finding ac alpha analytic")
             else:
+                print('quad loss')
                 if not tstruc.using_curvilinear_elements():
                     print(
                         "Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
@@ -1209,7 +1212,7 @@ class ACSimulation(Simulation):
                 Fortran_debug = 0
                 # not sure why this is needed by ac_alpha_int
                 # overlap = np.zeros(self.n_modes, dtype=complex)
-                alpha = nb_fortran.ac_alpha_quadrature(
+                resm = nb_fortran.ac_alpha_quadrature(
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
@@ -1225,13 +1228,15 @@ class ACSimulation(Simulation):
                     self.AC_mode_energy,
                     Fortran_debug,
                 )  # appropriate for alpha in [1/s]
+                (alpha,) = process_fortran_return(resm, "finding ac alpha quadrature")
+            print('alpha loss', alpha)
 
             self.ac_alpha_t = np.real(alpha)
             # Q_factors = 0.5*(q_AC/alpha)*np.ones(n_modes) # appropriate for alpha in [1/m]
             # appropriate for alpha in [1/s]
-            self.ac_Qmech = (
-                0.5 * (np.real(Omega_AC) / self.ac_alpha_t) * np.ones(self.n_modes)
-            )
+
+            self.ac_Qmech =  0.5 * (np.real(Omega_AC) / self.ac_alpha_t) * np.ones(self.n_modes)
+
         else:
             self.Q_method = QAcMethod.Fixed
             # factor of a 1/2 because alpha is for power!

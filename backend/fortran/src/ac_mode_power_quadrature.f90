@@ -104,7 +104,7 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
          RET_ON_NBERR(nberr)
 
          ! Calculate v_power_Sz of basis functions at quadrature point,
-         ! which is a superposition of P2 polynomials for each function (fi_eld).
+         ! which is a superposition of P2 polynomials for each function ().
 
          qwt = t_quadwt * abs(basfuncs%det)
 
@@ -129,7 +129,7 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
                enddo
 
                !   Gradient of longitudinal components of basis function,
-               !   which is i*beta*phi because fi_eld is assumed to be of
+               !   which is i*beta*phi because  is assumed to be of
                !   form e^{i*beta*z} phi.
 
                !   c_zizl u_i d_z u_l = i q c_zizl u_i u_l
@@ -153,7 +153,7 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
 
       ! Having calculated v_power_Sz of basis functions on element
-      ! now multiply by specific fi_eld values for modes of interest.
+      ! now multiply by specific  values for modes of interest.
       do md_i=1,n_modes
          v_pow = D_ZERO
 

@@ -32,6 +32,7 @@ module class_BasisFunctions
 
       double precision mat_B(2,2)    ! transform ref to act triangle
       double precision mat_T(2,2)    ! inverse transform T=B^-1
+      double precision mat_T_tr(2,2) ! transpose of inverse transform Ttr=Tr(B^-1)
       double precision det           ! transformation determinant
 
       ! rules for constructing vector elements on the face and 3 edges

@@ -141,10 +141,10 @@ subroutine BasisFunctions_set_affine_for_elt(this, el_nds_xy, nberr)
    this%mat_T(2,1) = -this%mat_B(2,1) / this%det
 
    ! !	mat_T_tr = Tanspose(mat_T)
-   ! this%mat_T_tr(1,1) = this%mat_T(1,1)
-   ! this%mat_T_tr(1,2) = this%mat_T(2,1)
-   ! this%mat_T_tr(2,1) = this%mat_T(1,2)
-   ! this%mat_T_tr(2,2) = this%mat_T(2,2)
+   this%mat_T_tr(1,1) = this%mat_T(1,1)
+   this%mat_T_tr(1,2) = this%mat_T(2,1)
+   this%mat_T_tr(2,1) = this%mat_T(1,2)
+   this%mat_T_tr(2,2) = this%mat_T(2,2)
 
 end subroutine
 
