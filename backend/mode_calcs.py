@@ -1121,7 +1121,6 @@ class ACSimulation(Simulation):
                     "Warning: ac_mode_elastic_energy_int - not sure if mesh contains curvi-linear elements",
                     "\n using slow quadrature integration by default.\n\n",
                 )
-            print('quad energies')
             # Integration by quadrature. Slowest.
             resm = nb_fortran.ac_mode_energy_quadrature(
                 self.n_modes,
@@ -1137,8 +1136,6 @@ class ACSimulation(Simulation):
                 self.fem_evecs,
             )
             (self.AC_mode_energy,) = process_fortran_return(resm, "finding ac mode energy quadrature")
-
-        print("AC mode energies", self.AC_mode_energy)
 
         self.calc_acoustic_losses()
 
@@ -1185,7 +1182,6 @@ class ACSimulation(Simulation):
             print("Acoustic loss calc")
 
             if False and tstruc.using_linear_elements():
-                print('analy loss')
                 resm = nb_fortran.ac_alpha_analytic(
                     self.n_modes,
                     fm.n_msh_el,
@@ -1203,7 +1199,6 @@ class ACSimulation(Simulation):
                 )  # appropriate for alpha in [1/s]
                 (alpha,) = process_fortran_return(resm, "finding ac alpha analytic")
             else:
-                print('quad loss')
                 if not tstruc.using_curvilinear_elements():
                     print(
                         "Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
@@ -1229,7 +1224,6 @@ class ACSimulation(Simulation):
                     Fortran_debug,
                 )  # appropriate for alpha in [1/s]
                 (alpha,) = process_fortran_return(resm, "finding ac alpha quadrature")
-            print('alpha loss', alpha)
 
             self.ac_alpha_t = np.real(alpha)
             # Q_factors = 0.5*(q_AC/alpha)*np.ones(n_modes) # appropriate for alpha in [1/m]
