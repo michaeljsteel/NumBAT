@@ -10,13 +10,13 @@ nb_module_fsrcs = files(
 )
 
 nb_pyinterface_fsrcs = files(
-    'ac_alpha_int.f90',
-    'ac_alpha_int_v2.f90',
+    'ac_alpha_analytic.f90',
+    'ac_alpha_quadrature.f90',
     'ac_mode_energy_analytic.f90',
     'ac_mode_energy_quadrature.f90',
     'ac_mode_power_analytic.f90',
     'ac_mode_power_quadrature.f90',
-    'ac_mode_power_int_v2.f90',
+    #'ac_mode_power_int_v2.f90',
     'array_material_em.f90',
     'array_material_ac.f90',
     'array_size.f90',
