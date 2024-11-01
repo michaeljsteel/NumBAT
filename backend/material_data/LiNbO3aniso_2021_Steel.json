@@ -48,8 +48,8 @@
  "_eta_55":  0.1765e-3,  // Acoustic loss tensor component [Pa s]
  "_eta_56": -0.0687e-3,  // Acoustic loss tensor component [Pa s]
  
- "orientation_x-cut": "ident",
+ "orientation_x-cut": "0,0,1,90",
  "orientation_y-cut": "ident",
- "orientation_z-cut": "1,0,0,90"
+ "orientation_z-cut": "1,0,0,-90"
 
 }
