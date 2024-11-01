@@ -9,7 +9,7 @@
 subroutine ac_alpha_quadrature (n_modes, n_msh_el, n_msh_pts, &
    v_nd_xy, elnd_to_mshpt, n_elt_mats, v_el_material, eta_ijkl, &
    q_AC, Omega_AC, soln_ac_u, &
-   v_ac_mode_energy, debug, v_alpha_r, errco, emsg)
+   v_ac_mode_energy, v_alpha_r, errco, emsg)
 
 
    use numbatmod
@@ -18,7 +18,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
    integer(8) n_modes, ival
    integer(8) n_msh_el, n_msh_pts,  n_elt_mats
-   integer(8) v_el_material(n_msh_el), debug
+   integer(8) v_el_material(n_msh_el)
    integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
    double precision v_nd_xy(2,n_msh_pts)
 
@@ -33,25 +33,21 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
    ! Locals
    complex(8), dimension(n_modes) :: v_alpha
-   integer(8) nod_el_p(P2_NODES_PER_EL)
-   double precision xel(2,P2_NODES_PER_EL)
    double precision el_nds_xy(2,P2_NODES_PER_EL)
 
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3,3,3*P2_NODES_PER_EL)
    complex(8) U, Ustar
-   integer(8) j, j1, typ_e
+   integer(8) j, typ_e
    integer(8) i_el, ind_i, xyz_i, xyz_k
    integer(8) bf_l, ind_l, xyz_l, xyz_j
    integer(8) bf_i, iq
    complex(8) z_tmp1
-   double precision det, t_xy(2)
+   double precision t_xy(2)
 
 !     NQUAD: The number of quadrature points used in each element.
    integer(8)  n_curved
    logical is_curved
    complex(8) t_eta
-   double precision phi2_list(6), grad2_mat0(2,6)
-   double precision grad2_mat(2,6)
 
    type(NBError) nberr
    type(QuadIntegrator) quadint
