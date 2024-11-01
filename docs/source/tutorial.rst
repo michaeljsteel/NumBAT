@@ -125,6 +125,8 @@ The next set of tutorials begin to explore some more advanced features.
 
    notebooks/jup_09a_bulk_anisotropy
 
+   notebooks/jup_09b_linb_crystal_props
+
 .. raw:: latex
 
     \clearpage

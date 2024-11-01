@@ -32,9 +32,7 @@ def power_flux_christoffel(kapv, v_p, evec, c_stiff):
     Pcomp = -0.5 * 1j * np.matmul(np.conj(evec), T_ij)
 
     # u_s = 1/2  k^2 S_I c_IJ SJ  # Auld, 5.35
-    u_s = 0.5 * np.matmul(
-        np.matmul(S_I, c_stiff.value()), S_I
-    )  # real vs complex fields?
+    u_s = 0.5 * np.matmul( np.matmul(S_I, c_stiff.value()), S_I)  # real vs complex fields?
 
     # vg = Pcomp/u_s ->  Pcomp/us   (omega k)/(k^2) = v_p Pcomp/us
     v_g = -np.real(v_p * Pcomp / u_s)

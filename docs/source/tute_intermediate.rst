@@ -1,9 +1,9 @@
 
 .. include:: numbatdefs.txt
 
-Tutorial 9 -- Anisotropic Elastic Materials
+Tutorial 9a -- Anisotropic Elastic Materials
 --------------------------------------------
-This tutorial, contained in ``sim-tut_09-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
+This tutorial, contained in ``sim-tut_09a-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
 
 The data below compares the gain spectrum compared to that found with the simpler
 isotropic stiffness model used in Tutorial 2.

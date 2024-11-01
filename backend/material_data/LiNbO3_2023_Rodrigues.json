@@ -1,0 +1,55 @@
+{
+    "format": "NumBATMaterial-fmt-2.0",
+    "material_name": "LiNbO3_2023_Rodrigues",  // Name of this file, will be used as identifier
+ "chemical": "LiNbO3",  // Chemical composition
+ "author": "Rodrigues",  // Author of data
+ "date": "2023",  // Year of data publication/creation
+ "institution": "University of Campinas, Brazil",  // Source institution
+ "doi": "dx.doi.org/10.1364/JOSAB.482656",  // doi or, failing that, the http address
+ "Re_n": 2.21,  // Real part of refractive index (n_o) []
+ "_Re_no": 2.21,  // Real part of refractive index (n_e) []
+ "_Re_ne": 2.13,  // Real part of refractive index (n_e) []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 4650,  // Density [kg/m3]
+ "crystal_class": "Trigonal",
+ "c_11": 198.83e9,  // Stiffness tensor component [Pa]
+ "c_12": 54.64e9,  // Stiffness tensor component [Pa]
+ "c_13": 68.23e9,  // Stiffness tensor component [Pa]
+ "c_14": 7.83e9,  // Stiffness tensor component [Pa]
+ "c_33": 235.71e9,  // Stiffness tensor component [Pa]
+ "c_44": 59.86e9,  // Stiffness tensor component [Pa]
+ "c_66": 72.095,  // Stiffness tensor component [Pa]
+
+ "p_11": -0.026,  // Photoelastic tensor component []
+ "p_12": 0.088,  // Photoelastic tensor component []
+ "p_13": 0.134,  // Photoelastic tensor component []
+ "p_14": -0.083,  // Photoelastic tensor component []
+ "p_31": 0.177,  // Photoelastic tensor component []
+ "p_33": 0.07,  // Photoelastic tensor component []
+ "p_41": -0.151,  // Photoelastic tensor component []
+ "p_44": 0.145,  // Photoelastic tensor component []
+
+ "eta_11": 0.6547e-3,  // Acoustic loss tensor component [Pa s] taken from Bajak et al 1981, doi.org/10.1121/1.385588
+ "eta_12": 0.2275e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_13": 0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_14":-0.0687e-3,  // Acoustic loss tensor component [Pa s]
+
+
+ "eta_31": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_33": 0.3377e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_41": 0.1765e-3,  // Acoustic loss tensor component [Pa s]
+
+ "eta_66": 0.2136e-3,  // Acoustic loss tensor component [Pa s]
+
+ "_eta_22":  0.6547e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_23":  0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_24":  0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_55":  0.1765e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_56": -0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ 
+ "orientation_x-cut": "0,0,1,90",
+ "orientation_y-cut": "ident",
+ "orientation_z-cut": "1,0,0,-90"
+
+}
