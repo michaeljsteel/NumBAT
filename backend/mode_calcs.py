@@ -1221,7 +1221,6 @@ class ACSimulation(Simulation):
                     self.fem_evecs,
                     # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
                     self.AC_mode_energy,
-                    Fortran_debug,
                 )  # appropriate for alpha in [1/s]
                 (alpha,) = process_fortran_return(resm, "finding ac alpha quadrature")
 

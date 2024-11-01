@@ -72,6 +72,7 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
    RET_ON_NBERR_UNFOLD(nberr)
 
    v_alpha = D_ZERO
+   z_tmp1 = C_ZERO
 
    do i_el=1,n_msh_el
       typ_e = v_el_material(i_el)
