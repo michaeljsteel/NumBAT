@@ -1,5 +1,6 @@
 import math
 from enum import Enum
+import sys
 
 import matplotlib.pyplot as plt
 
@@ -12,6 +13,7 @@ import reporting
 
 twopi = 2*math.pi
 #cvac = nbtypes.SI_speed_c
+from math import sqrt, atan
 
 
 class EMPoln(Enum):
@@ -458,3 +460,473 @@ class ElasticRod(object):
 
         return chareq_elastic_rod(np.pi*2*nu, m, q,
                                   self._rho, self._c11, self._c12, self._c44, self._arad)  # m is azimuthal order
+
+
+
+
+def emslab_chareq_TE(V, gamma, m, b):
+    '''Dispersion relation for TE slab optical waveguide in normalised units.'''
+    return V * sqrt(1-b) - m*np.pi - atan(sqrt(b/(1-b))) - atan(sqrt((b+gamma)/(1-b)))
+
+def emslab_chareq_TM(V, gamma, ns, nf, nc, m, b):
+    '''Dispersion relation for TE slab optical waveguide in normalised units.'''
+    tmfac1 = (nf/ns)**2
+    tmfac2 = (nf/nc)**2
+    return V * sqrt(1-b) - m*np.pi - atan(tmfac1*sqrt(b/(1-b))) - atan(tmfac2*sqrt((b+gamma)/(1-b)))
+
+
+class EMSlab:
+    '''EM slab waveguide  solver.
+
+       All units are in microns.
+    '''
+
+    def __init__(self, ns, nf, nc, wid):
+        # Allows incoming complex value refractive indices but makes them real
+
+        self._ns = ns.real  # substrate index
+        self._nf = nf.real  # film index
+        self._nc = nc.real  # cover index
+        self._wid = wid.real   # width
+
+        if not self._nc <= self._ns < self._nf:
+            raise ValueError('Indices do not specify a guiding structure.')
+        self._gamma = (self._ns**2-self._nc**2)/(self._nf**2-self._ns**2)
+
+        self._tmfac_s = (self._nf/self._ns)**2
+        self._tmfac_c = (self._nf/self._nc)**2
+
+    def lambda_to_V(self, lam):
+        return 2*np.pi/lam * self._wid * sqrt(self._nf**2-self._ns**2)
+
+    def V_to_lambda(self, V):
+        return 2*np.pi/V * self._wid * sqrt(self._nf**2-self._ns**2)
+
+
+    def b_to_neff(self, b):
+        return sqrt(self._ns**2 + (self._nf**2 - self._ns**2) * b)
+
+    def cutoff_V(self, m, poln):
+        match poln:
+            case EMPoln.TE:
+                return m*np.pi + atan(sqrt(self._gamma))
+
+            case EMPoln.TM:
+                return m*np.pi + atan(self._tmfac_c * sqrt(self._gamma))
+
+    def num_modes(self, V, poln):
+        match poln:
+
+            case EMPoln.TE:
+                Vcorr = V - atan(sqrt(self._gamma))
+                return math.floor(Vcorr/np.pi) + 1
+
+            case EMPoln.TM:
+                tmfac =  (self._nf/self._nc)**2
+                Vcorr = V - atan(tmfac * sqrt(self._gamma))
+                return math.floor(Vcorr/np.pi) + 1
+
+    def find_b_for_V(self, V, m, poln):
+        '''Assumes that cutoffs have been checked and there is a solution.'''
+
+        match poln:
+
+            case EMPoln.TE:
+                bfunc = lambda b: emslab_chareq_TE(V, self._gamma, m, b)
+
+            case EMPoln.TM:
+                bfunc = lambda b: emslab_chareq_TM(V, self._gamma, self._ns, self._nf, self._nc, m, b)
+
+        tol = 1e-10
+        b_sol = sciopt.root_scalar(bfunc, bracket=[tol,1-tol])
+
+        if not b_sol.converged:
+            raise ValueError(b_sol.flag)
+        else:
+            return b_sol.root
+
+
+    def find_dispersion_for_band_m(self, v_V, m, poln):
+        v_b = np.zeros(v_V.shape)
+
+        for iv, V in enumerate(v_V):
+            if V > self.cutoff_V(m, poln):
+                v_b[iv] = self.find_b_for_V(V, m, poln)
+        return v_b
+
+    def find_dispersion_for_bands(self, v_V, num_bands, poln):
+        m_b = np.zeros([len(v_V), num_bands])
+
+        for m in range(num_bands):
+            m_b[:, m] = self.find_dispersion_for_band_m(v_V, m, poln)
+
+        return m_b
+
+
+def elasticfreeslab_Lamb_chareq_even(Omega, Vs, Vl, wid, q):
+    '''Dispersion relation for TE slab optical waveguide in normalised units.'''
+
+    'Dispersion relation makes sense if both kappas are real or both imaginary but there seem to be no solutions'
+    ONE = 1.0+0.0j
+    kappa_s = np.sqrt(ONE*(Omega/Vs)**2 - q**2)
+    kappa_l = np.sqrt(ONE*(Omega/Vl)**2 - q**2)
+
+    #lhs = np.tan(kappa_l * wid/2)/np.tan(kappa_s * wid/2)
+    #rhs = - (q**2-kappa_s**2)**2/(4 *q**2 *  kappa_l * kappa_s)
+
+    lhs = np.tan(kappa_l * wid/2)*(4 *q**2 *  kappa_l * kappa_s)
+    rhs = - (q**2-kappa_s**2)**2 * np.tan(kappa_s * wid/2)
+
+
+    eq = wid**4 * (lhs - rhs)
+    if abs(np.imag(eq)) > abs(np.real(eq)):
+        return np.imag(eq)
+    else:
+        return np.real(eq)
+
+def elasticfreeslab_Lamb_chareq_odd(Omega, Vs, Vl, wid, q):
+    '''Dispersion relation for TE slab optical waveguide in normalised units.'''
+    ONE = 1.0+0.0j
+    kappa_s = np.sqrt(ONE*(Omega/Vs)**2 - q**2)
+    kappa_l = np.sqrt(ONE*(Omega/Vl)**2 - q**2)
+
+    #lhs = np.tan(kappa_s * wid/2)/np.tan(kappa_l * wid/2)
+    #rhs = - (q**2-kappa_s**2)**2/(4 *q**2 * kappa_l * kappa_s)
+    lhs = np.tan(kappa_s * wid/2)*(4 *q**2 * kappa_l * kappa_s)
+    rhs = - (q**2-kappa_s**2)**2 * np.tan(kappa_l * wid/2)
+
+    eq = wid**4  * (lhs - rhs)
+    if abs(np.imag(eq)) > abs(np.real(eq)):
+        return np.imag(eq)
+    else:
+        return np.real(eq)
+
+
+
+class ElasticFreeSlab:
+    '''Elastic slab waveguide solver for isotropic materials.
+       Finds the dispersion of the Lamb modes of isolated flat plate
+       All units are in microns.
+
+       Dispersion relation has even and odd parts
+
+       Even:
+         tan(kappa_l w/2)/tan(kappa_s w/2) = - (q^2-kappa_s^2)/(4 q^2 kappa_l kappa_s)
+
+       Odd:
+         tan(kappa_s w/2)/tan(kappa_l w/2) = - (q^2-kappa_s^2)/(4 q^2 kappa_l kappa_s)
+
+       where kappa_s^2 = (Omega/V_s)^2 - q^2
+       where kappa_l^2 = (Omega/V_l)^2 - q^2
+
+       The two sides switch from real and imag at the same time so all makes sense at all values of q
+    '''
+
+    def __init__(self, mat_s, wid):
+        self._mats = mat_s  # slab material
+        self._Vs = mat_s.Vac_shear()
+
+        #self._Vl = mat_s.Vac_longitudinal()
+        self._Vl = self._Vs*1.9056
+        self._wid = wid
+
+
+    def _find_Lamb_q_brackets_smart(self, Omega, drfunc):
+        # attempts to predict the crossings but doesn't get them all, becuse not all are about tan blowups
+
+        qlo = 1e-9
+        qhi=Omega/self._Vs * 2
+        # need to avoid blowsups of tan functions
+        # kappa_s w/2 = (2n+1) pi/2
+        # kappa_l w/2 = (2n+1) pi/2
+        hi_ns = np.ceil(self._wid*Omega/(2*np.pi*self._Vs)-.5)
+        hi_nl = np.ceil(self._wid*Omega/(2*np.pi*self._Vl)-.5)
+
+        bad_qs = ((Omega/self._Vs)**2 - ( (np.arange(0,hi_ns) + .5)*2*np.pi/self._wid)**2)**0.5
+        bad_ql = ((Omega/self._Vl)**2 - ((
+            np.arange(0,hi_nl)+.5)*2*np.pi/self._wid)**2)**0.5
+
+        #print(' hins', Omega, self._Vs,hi_ns, hi_nl, self._wid*Omega/(2*np.pi*self._Vl)-.5, bad_qs, bad_ql)
+
+        bad_q = np.append(bad_qs, bad_ql)
+        bad_q = np.sort(bad_q)
+        qbraks=[]
+        tollo = 1-1e-7
+        tolhi = 1+1e-7
+
+
+        # print('Doing Omega', Omega)
+        # qsteps=2000
+        # qlo = 1e-9
+        # qhi=Omega/self._Vs * 2
+        # v_q = np.linspace(qlo, qhi,  qsteps)
+        # v_disprel = list(map(drfunc, v_q))
+        # fig,axs=plt.subplots()
+        # axs.plot(v_q*1e-6, v_disprel)
+        # axs.plot(v_q*1e-6,0*v_q,':')
+        # axs.set_ylim(-1000,1000)
+        # #axs.set_xlim(0,20)
+
+        # # carve out the bad points
+        # for bq in bad_q:
+        #     qbraks.append([qlo, bq*tollo])
+        #     qlo = bq*tolhi
+        #     axs.plot(qlo*self._wid,0,'x')
+        # qbraks.append([qlo, qhi])
+
+
+
+        # fig.savefig('qscan.png')
+        # sys.exit(0)
+
+        return qbraks
+
+
+    def at_tan_resonance_om(self, ombrak, q):
+        if (ombrak[0]/self._Vs)**2-q**2 >0:
+            sarg0 =  np.sqrt((ombrak[0]/self._Vs)**2-q**2)*self._wid/2/(np.pi/2)
+            sarg1 =  np.sqrt((ombrak[1]/self._Vs)**2-q**2)*self._wid/2/(np.pi/2)
+            if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0)%2 ==1:  # an odd multiple of pi/2
+                return True
+
+        if (ombrak[0]/self._Vl)**2-q**2 >0:
+            larg0 = np.sqrt((ombrak[0]/self._Vl)**2-q**2)*self._wid/2/(np.pi/2)
+            larg1 =  np.sqrt((ombrak[1]/self._Vl)**2-q**2)*self._wid/2/(np.pi/2)
+            if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0)%2 ==1:  # an odd multiple of pi/2
+                return True
+        return False
+
+    def at_tan_resonance(self, Omega, qbrak):
+        if (Omega/self._Vs)**2-qbrak[1]**2 >0:
+            sarg0 =  np.sqrt((Omega/self._Vs)**2-qbrak[0]**2)*self._wid/2/(np.pi/2)
+            sarg1 =  np.sqrt((Omega/self._Vs)**2-qbrak[1]**2)*self._wid/2/(np.pi/2)
+            if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0)%2 ==1:  # an odd multiple of pi/2
+                return True
+
+        if (Omega/self._Vl)**2-qbrak[1]**2 >0:
+            larg0 = np.sqrt((Omega/self._Vl)**2-qbrak[0]**2)*self._wid/2/(np.pi/2)
+            larg1 =  np.sqrt((Omega/self._Vl)**2-qbrak[1]**2)*self._wid/2/(np.pi/2)
+            if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0)%2 ==1:  # an odd multiple of pi/2
+                return True
+        return False
+
+    def _find_Lamb_q_brackets(self, Omega, drfunc):
+        # brute force bracketing
+        qsteps=1000
+
+        qlo = 1e-9
+        qhi=Omega/self._Vs * 2
+        v_q = np.linspace(qlo, qhi,  qsteps)
+
+
+        v_disprel = np.array(list(map(drfunc, v_q)))
+
+
+        qbraks = []
+
+        is_small = 0.1*max(abs(v_disprel))
+        fim1 = v_disprel[0]
+        for i in range(1,len(v_disprel)-1):
+            fi = v_disprel[i]
+            if fi * fim1 < 0 :  # a possible crossing?
+                if abs(fi) < is_small and abs(fim1) < is_small: # legit
+                    qbrak = [v_q[i-1], v_q[i]]
+                    # remove erroneous  brackets due to tan functions
+                    if not self.at_tan_resonance(Omega, qbrak):
+                        qbraks.append(qbrak)
+                #else: # a tan function infinity, update but don't keep
+                #    pass
+            fim1 = fi
+        # print(qbraks)
+        # fig,axs=plt.subplots()
+        # axs.plot(v_q*1e-6, v_disprel)
+        # axs.plot(v_q*1e-6,0*v_q,':')
+        # axs.set_ylim(-1e6,1e6)
+        # #axs.set_xlim(0,20)
+        # for qb in qbraks:
+        #     axs.plot(qb[0]*self._wid,0,'x', ms=20)
+        # fig.savefig('qscan.png')
+        # sys.exit(0)
+
+        return qbraks
+
+    def _find_Lamb_om_brackets(self, q, drfunc):
+        # brute force bracketing
+        omsteps=5000
+
+        omlo = 1e-9
+        omhi=100e9
+        v_om = np.linspace(omlo, omhi,  omsteps)
+
+
+        v_disprel = np.array(list(map(drfunc, v_om)))
+
+
+        ombraks = []
+        removeds =[]
+
+        is_small = 0.1*max(abs(v_disprel))
+        fim1 = v_disprel[0]
+        for i in range(1,len(v_disprel)-1):
+            fi = v_disprel[i]
+            if fi * fim1 < 0 :  # a possible crossing?
+                if abs(fi) < is_small and abs(fim1) < is_small: # legit
+                    ombrak = [v_om[i-1], v_om[i]]
+                    if not self.at_tan_resonance_om(ombrak, q):
+                        ombraks.append(ombrak)
+                    else:
+                        removeds.append(ombrak)
+                #else: # a tan function infinity, update but don't keep
+                #    pass
+            fim1 = fi
+        #plotscan=True
+        plotscan=False
+        if plotscan:
+            print(ombraks)
+            fig,axs=plt.subplots()
+            v_omnorm = v_om*self._wid/self._Vs/np.pi
+            #axs.plot(v_omnorm, np.log10(abs(v_disprel)))
+            axs.plot(v_omnorm,  v_disprel)
+
+            axs.plot(v_omnorm,0*v_om,':')
+            #axs.set_ylim(-1*is_small, 1*is_small)
+            axs.set_ylim(-1e3,1e3)
+            axs.set_xlim(1.3,1.5)
+            for ob in ombraks:
+                obnorm = ob[0] * self._wid/self._Vs/np.pi
+                axs.plot(obnorm,0,'x', ms=20)
+            for ob in removeds:
+                obnorm = ob[0] * self._wid/self._Vs/np.pi
+                axs.plot(obnorm,0,'o',mfc='none', ms=20)
+
+
+            fig.savefig('omscan.png')
+            sys.exit(0)
+
+        return ombraks
+
+
+    def find_Lamb_Oms_for_q(self, q, max_modes, even_modes=True):
+        # q must be smaller than Omega/V_l
+
+        if even_modes:
+            drfunc = lambda om: elasticfreeslab_Lamb_chareq_even(om, self._Vs, self._Vl, self._wid, q)
+        else:
+            drfunc = lambda om: elasticfreeslab_Lamb_chareq_odd(om, self._Vs, self._Vl, self._wid, q)
+
+        omsols = []
+
+        #qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
+        ombraks = self._find_Lamb_om_brackets(q, drfunc)
+
+        #print('got braks', qbraks)
+        for ombrak in ombraks:
+            if drfunc(ombrak[0]) * drfunc(ombrak[1])>0:
+                print('False bracket', ombrak, drfunc(ombrak[0]), drfunc(ombrak[1]))
+                continue
+
+            om_sol = sciopt.root_scalar(drfunc, bracket=ombrak)
+            if not om_sol.converged:
+                raise ValueError(om_sol.flag)
+            else:
+                omsols.append(om_sol.root)
+
+            if len(omsols) == max_modes: break
+
+        return omsols
+
+    def find_Lamb_qs_for_Omega(self, Omega, max_modes, even_modes=True):
+        # q must be smaller than Omega/V_l
+
+        if even_modes:
+            drfunc = lambda q: elasticfreeslab_Lamb_chareq_even(Omega, self._Vs, self._Vl, self._wid, q)
+        else:
+            drfunc = lambda q: elasticfreeslab_Lamb_chareq_odd(Omega, self._Vs, self._Vl, self._wid, q)
+
+        qsols = []
+
+        #qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
+        qbraks = self._find_Lamb_q_brackets(Omega, drfunc)
+
+        #print('got braks', qbraks)
+        for qbrak in qbraks:
+         #   print('doing brak ', Omega, qbrak)
+            if drfunc(qbrak[0]) * drfunc(qbrak[1])>0:
+                print('False bracket', qbrak, drfunc(qbrak[0]), drfunc(qbrak[1]))
+                continue
+
+            q_sol = sciopt.root_scalar(drfunc, bracket=qbrak)
+            if not q_sol.converged:
+                raise ValueError(q_sol.flag)
+            else:
+                qsols.append(q_sol.root)
+
+            if len(qsols) == max_modes: break
+
+        return qsols
+
+    def find_Lamb_dispersion_for_bands(self, v_Omega, max_modes, even_modes=True):
+        m_qs = np.zeros([len(v_Omega), max_modes])
+
+        for iOm, Om in enumerate(v_Omega):
+            qsols = self.find_Lamb_qs_for_Omega(Om, max_modes, even_modes)
+
+            for iq, q in enumerate(qsols):
+                m_qs[iOm, iq] = q
+
+        return m_qs
+
+    def find_Lamb_dispersion_for_bands_of_q(self, v_q, max_modes, even_modes=True):
+        m_Om = np.zeros([len(v_q), max_modes])
+
+        for iq, q in enumerate(v_q):
+            omsols = self.find_Lamb_Oms_for_q(q, max_modes, even_modes)
+
+            for iom, om in enumerate(omsols):
+                m_Om[iq, iom] = om
+
+        return m_Om
+
+    def disprel_rayleigh(self,  vR):
+        vl = self._Vl/self._Vs
+
+        return vR**6 - 8 * vR**4 + vR**2*(24-16/vl**2 )+16*(1/vl**2-1)
+
+    def find_Rayleigh_dispersion(self, v_Omega):
+        # find v_q of Rayleigh mode for v_Omega
+        m_qs = np.zeros(len(v_Omega))
+
+
+        dr_rayleigh = lambda v: self.disprel_rayleigh(v)
+
+        # Calculation works in units of self._Vs
+        vRlo = 0.001
+        vRhi = 1
+
+        vv = np.linspace(vRlo, vRhi,100)
+
+
+        vres = sciopt.root_scalar(dr_rayleigh, bracket=(vRlo, vRhi))
+        if not vres.converged:
+                raise ValueError(vres.flag)
+        else:
+            vR = vres.root
+
+
+        # put back units of self._Vs
+        return v_Omega/(vR* self._Vs)
+
+
+class ElasticSlab:
+    '''Elastic slab waveguide solver for isotropic materials.
+       Finds the dispersion of the Lamb modes of isolated flat plate
+       All units are in microns.
+    '''
+
+    def __init__(self, mat_s, mat_f, mat_c, wid):
+        self._mats = mats  # substrate material
+        self._matf = matf  # film material
+        self._matc = matc  # cover material
+        self._wid = wid    # width
+
+
