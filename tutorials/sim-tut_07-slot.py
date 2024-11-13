@@ -153,11 +153,9 @@ gain_box = integration.get_gains_and_qs(
 )
 
 print("\nContributions to SBS gain [1/(WM)]")
-print("AC Mode number | Photoelastic (PE) | Moving boundary(MB) | Total")
+print("AC Mode number |    Total    | Photoelastic (PE) | Moving boundary(MB) ")
 for m, nu in enumerate(v_nu):
-    print(
-        f"{m:7d}    {np.real(nu)/SI_GHz:9.4e} {gain_box.gain_total(m):13.3e} {gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} "
-    )
+    print( f"{m:7d}    {np.real(nu)/SI_GHz:9.4e} {gain_box.gain_total(m):13.3e} {gain_box.gain_PE(m):13.3e} {gain_box.gain_MB(m):13.3e} ")
 
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
