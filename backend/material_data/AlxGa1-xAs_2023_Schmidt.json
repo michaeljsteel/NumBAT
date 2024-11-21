@@ -1,0 +1,23 @@
+{
+ "_comment:": "assuming x=0.5 for the stiffness; x=1 (GaAs) for p_11 and x=0.5 for p_12", 
+ "__comment:": "data on density from www.ioffe.ru/SVA/NSM/Semicond/AlGaAs/basic.html for x=0.5",
+ "___comment:": "data on dielectric function from doi.org/10.1063/5.0039631 for x=0.45 at 1.5 um",
+ "file_name": "AlxGa1-xAs_2023_Schmidt",  // Name of this file, will be used as identifier
+ "chemical": "AlxGa1-xAs",  // Chemical composition
+ "author": "Schmidt",  // Author of data
+ "date": "2023",  // Year of data publication/creation
+ "institution": "xxx. of xxxx",  // Source institution
+ "doi": "dx.doi.org/10.1063/1.336070",  // doi or, failing that, the http address
+ "Re_n": 3.15,  // Real part of refractive index []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 4540,  // Density [kg/m3]
+ "c_11": 119.5e9,  // Stiffness tensor component [Pa]
+ "c_12": 55.4e9,  // Stiffness tensor component [Pa]
+ "c_44": 59.15e9,  // Stiffness tensor component [Pa]
+ "p_11": -0.165,  // Photoelastic tensor component []
+ "p_12": -0.125,  // Photoelastic tensor component []
+ "p_44": -0.05,  // Photoelastic tensor component []
+ "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.62e-3 // Acoustic loss tensor component [Pa s]
+}
