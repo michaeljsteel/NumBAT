@@ -198,6 +198,96 @@ class TwoIncl(UserGeometryBase):
             ax.add_patch(mplpatches.Rectangle( (sep/2-widr/2, yoff-hgtr/2), widr, hgtr,
                 facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
+class TwoInclVert(UserGeometryBase):
+
+    def init_geometry(self):
+        #gmshfile, nelts = _process_one_and_two_incls(self._d_params)
+        desc = '''A NumBAT geometry template for a rectangular double inclusion waveguide arranged vertically.'''
+        self.set_properties('twoinclvert', 3, True, desc)
+
+        self.set_required_parameters(['inc_a_w', 'inc_a_h', 'inc_b_w', 'inc_b_h',
+            'inc_sep_x', 'inc_sep_y'],  num_mats=3)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2'],  num_allowed_mats=3)
+
+    def apply_parameters(self):
+
+        subs = [('dx_in_nm = 100.0;',    'dx_in_nm = %f;',       self.get_param('domain_x')),
+                ('dy_in_nm = 50.0;',    'dy_in_nm = %f;',       self.get_param('domain_y')),
+                ('inc_a_w = 20.0;',      'inc_a_w = %f;',        self.get_param('inc_a_w')),
+                ('inc_a_h = 10.0;',      'inc_a_h = %f;',        self.get_param('inc_a_h')),
+                ('inc_b_w = 20.0;',      'inc_b_w = %f;',        self.get_param('inc_b_w')),
+                ('inc_b_h = 10.0;',      'inc_b_h = %f;',        self.get_param('inc_b_h')),
+                ('inc_sep_x = 5.0;',     'inc_sep_x = %f;',      self.get_param('inc_sep_x')),
+                ('inc_sep_y = 15.0;',    'inc_sep_y = %f;',      self.get_param('inc_sep_y')),
+                ('lc_bkg = 0.05;',        'lc_bkg = %f;',             self.get_param('lc_bkg')),
+                ('lc_refine_1 = lc/2.0;', 'lc_refine_1 = lc/%f;', self.get_param('lc_refine_1')),
+                ('lc_refine_2 = lc/2.0;', 'lc_refine_2 = lc/%f;', self.get_param('lc_refine_2'))
+                ]
+
+
+        return subs
+
+    def check_dimensions(self):
+        '''The first box must be higher. Which means yoff must be positive.'''
+
+        dom_x = self.get_param('domain_x')
+        dom_y = self.get_param('domain_y')
+        inc_a_w = self.get_param('inc_a_w')
+        inc_a_h = self.get_param('inc_a_h')
+        inc_b_w = self.get_param('inc_b_w')
+        inc_b_h = self.get_param('inc_b_h')
+        inc_sep_x = self.get_param('inc_sep_x')
+        inc_sep_y = self.get_param('inc_sep_y')
+
+        # waveguides can't touch so either they are fully separated in y, or in x
+        # either way the upper one must be higher
+
+        msg= ''
+
+        if (inc_a_w + inc_sep_x)/2 > dom_x/2 or (-inc_a_w + inc_sep_x)/2 < -dom_x/2:
+            msg+='Waveguide 1 is falling outside the x-domain (Check parameters: inc_a_w, inc_sep_x, domain_x). \n'
+        if (inc_a_h + inc_sep_y)/2 > dom_y/2 or (-inc_a_h + inc_sep_y)/2 < -dom_y/2:
+            msg+='Waveguide 1 is falling outside the x-domain (Check parameters: inc_a_h, inc_sep_y, domain_y). \n'
+
+        if (inc_b_w + inc_sep_x)/2 > dom_x/2 or (-inc_b_w + inc_sep_x)/2 < -dom_x/2:
+            msg+='Waveguide 1 is falling outside the x-domain (Check parameters: inc_b_w, inc_sep_x, domain_x). \n'
+        if (inc_b_h + inc_sep_y)/2 > dom_y/2 or (-inc_b_h + inc_sep_y)/2 < -dom_y/2:
+            msg+='Waveguide 1 is falling outside the x-domain (Check parameters: inc_b_h, inc_sep_y, domain_y). \n'
+
+
+        yoverlap = inc_sep_y - (inc_a_h+inc_b_h)/2
+        minysep = inc_sep_y - max(inc_a_h,inc_b_h)/2
+
+        xoverlap = abs(inc_sep_x) - (inc_a_w+inc_b_w)/2
+        if inc_sep_y <= 0 or minysep<=0: msg += 'Vertical separation of the two guides must be positive (Check parameter: inc_sep_y) \n'
+
+        if yoverlap <= 0 and xoverlap <=0:
+            msg+= 'The two waveguides are overlapping (Check parameters: inc_a_w, inc_a_h, inc_b_w, inc_b_h, inc_sep_x, inc_sep_y). \n'
+
+        dims_ok = not len(msg)
+
+        return dims_ok, msg
+
+    def draw_mpl_frame(self, ax):
+
+        widu = self.get_param('inc_a_w') * nmtoum
+        hgtu = self.get_param('inc_a_h') * nmtoum
+        widl = self.get_param('inc_b_w') * nmtoum
+        hgtl = self.get_param('inc_b_h') * nmtoum
+        xsep  = self.get_param('inc_sep_x') * nmtoum
+        ysep  = self.get_param('inc_sep_y') * nmtoum
+
+        xu = -xsep/2 -widu/2
+        yu = ysep/2-hgtu/2
+        xl = xsep/2-widl/2
+        yl = -ysep/2-hgtu/2
+
+        ax.add_patch(mplpatches.Rectangle( (xu,yu), widu, hgtu,
+            facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
+        ax.add_patch(mplpatches.Rectangle( (xl,yl), widl, hgtl,
+            facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
+
 
 class Triangular(UserGeometryBase):
 
@@ -235,12 +325,12 @@ class Triangular(UserGeometryBase):
         base_wid = self.get_param('base_width')
         peak_xoff = self.get_param('peak_xoff')
         peak_height = self.get_param('peak_height')
-        
+
         peak_locx = -base_wid/2 + peak_xoff
 
         msg= ''
 
-        if base_wid < dom_x: msg += 'Waveguide base width (base_width) is larger than the domain width (domain_x).\n'
+        if base_wid >= dom_x: msg += 'Waveguide base width (base_width) is larger than the domain width (domain_x).\n'
 
         if peak_locx < -dom_x/2 or peak_locx > dom_x/2: msg += 'Waveguide peak is outside the x-domain (domain_x).\n'
         if peak_height > dom_y/2 or peak_height< -dom_y/2: msg += 'Waveguide height (peak_height) is too large for the domain height (domain_y).\n'
@@ -682,7 +772,7 @@ class RibCoated(UserGeometryBase):
 
         self.set_properties('rib_coated', 4, False, desc)
 
-        nt=4 
+        nt=4
         self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'coat_w', 'coat_h'],  num_mats=nt)
         self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],  num_allowed_mats=nt)
         self.set_parameter_help(
@@ -724,10 +814,10 @@ class RibDoubleCoated(UserGeometryBase):
         desc = '''A NumBAT geometry template for a double coated rib waveguide.  '''
         self.set_properties('rib_double_coated', 6, False, desc)
 
-        nt=5 
-        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 
+        nt=5
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h',
                                       'coat_w', 'coat_h', 'coat2_w', 'coat2_h' ],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3', 
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3',
                                      'lc_refine_4', 'lc_refine_5' ],  num_allowed_mats=nt)
         self.set_parameter_help(
                 {
@@ -856,7 +946,7 @@ class SlotCoated(UserGeometryBase):
 
         nt=5
         self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w', 'coat_t' ],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],  
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],
                                     num_allowed_mats=nt)
         self.set_parameter_help(
                 {

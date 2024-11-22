@@ -20,6 +20,12 @@
             "inc_shape": "twoincl",
             "active": 1
         },
+        {
+            "wg_impl": "builtin_meshes.py",
+            "wg_class": "TwoInclVert",
+            "inc_shape": "twoinclvert",
+            "active": 1
+        },
 
         {
             "wg_impl": "builtin_meshes.py",
