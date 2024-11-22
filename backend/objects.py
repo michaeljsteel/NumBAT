@@ -472,7 +472,6 @@ class Structure:
         if 'inc_shape' in self.all_params: del self.all_params['inc_shape']
         self.inc_shape = largs[0] if len(largs)>0 else kwargs['inc_shape']
 
-
         # Support old calling convention
         if 'domain_x' not in kwargs:
             self.all_params['domain_x'] = largs[1] if len(largs)>1 else float(kwargs['unitcell_x'])
@@ -607,7 +606,7 @@ class Structure:
                 self.linear_element_shapes.append(wg_geom.geom_name())
 
         wg_geom.check_parameters(params)
-        wg_geom.check_dimensions()
+        wg_geom.validate_dimensions()
         self.wg_geom = wg_geom
 
 

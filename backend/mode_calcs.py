@@ -837,7 +837,7 @@ class EMSimulation(Simulation):
         # Bring Kokou's def into line with CW formulation.
         self.EM_mode_power = 2.0 * self.EM_mode_power
 
-        print('EM mode powers', self.EM_mode_power)
+        #print('EM mode powers', self.EM_mode_power)
 
 
 
@@ -852,7 +852,7 @@ class EMSimulation(Simulation):
         if self.calc_EM_mode_energy:
             print("Calculating EM mode energies...")
 
-            if tstruc.using_linear_elements():
+            if True or tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
                 resm = nb_fortran.em_mode_act_energy_quadrature(
@@ -1050,7 +1050,7 @@ class ACSimulation(Simulation):
 
         if True or self.calc_AC_mode_power:
             print("doing AC mode power")
-            if False and tstruc.using_linear_elements():
+            if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                 resm = nb_fortran.ac_mode_power_analytic(
                     self.n_modes,
@@ -1097,7 +1097,7 @@ class ACSimulation(Simulation):
         print("Doing AC mode energy")
 
         # This quantity is of order 10^12 since the integration units of (microns)^2 are not accounted for
-        if True and tstruc.using_linear_elements():
+        if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
             resm = nb_fortran.ac_mode_energy_analytic(
                 self.n_modes,
@@ -1181,7 +1181,7 @@ class ACSimulation(Simulation):
             # Calc alpha (loss) Eq. 45
             print("Acoustic loss calc")
 
-            if False and tstruc.using_linear_elements():
+            if tstruc.using_linear_elements():
                 resm = nb_fortran.ac_alpha_analytic(
                     self.n_modes,
                     fm.n_msh_el,

@@ -96,7 +96,9 @@ class UserGeometryBase():
 
     def validate_dimensions(self):
         '''Checks that the combination of user parameters defines a well-defined consistent geometry.'''
+
         dims_ok, msg = self.check_dimensions()
+
         if not dims_ok: reporting.report_and_exit(f'There is a problem with the waveguide structure:\n{msg}')
 
     def set_num_type_materials(self, n):

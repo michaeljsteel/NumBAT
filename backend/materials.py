@@ -95,12 +95,13 @@ class MaterialLibrary:
                         f"JSON parsing error: {err} for file {fname}"
                     )
 
-            mat_name = json_data["material_name"]
+            try:
+                mat_name = json_data["material_name"]
+            except:
+                reporting.report_and_exit(f"Material file {fname} has no 'material_name' field.")
 
             if mat_name in self._materials:
-                reporting.report_and_exit(
-                    f"Material file {fname} has the same name as an existing material {mat_name}."
-                )
+                reporting.report_and_exit(f"Material file {fname} has the same name as an existing material {mat_name}.")
 
             try:
                 new_mat = Material(json_data, fname)

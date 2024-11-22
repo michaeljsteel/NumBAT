@@ -5,15 +5,19 @@ import sys
 import matplotlib.pyplot as plt
 
 import numpy as np
+import numpy.linalg as npla
+
 import scipy.optimize as sciopt
 import scipy.signal
 import scipy.special as sp
+
+from math import sqrt, atan
 
 import reporting
 
 twopi = 2*math.pi
 #cvac = nbtypes.SI_speed_c
-from math import sqrt, atan
+
 
 
 class EMPoln(Enum):
@@ -848,9 +852,8 @@ class ElasticFreeSlab:
         #qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
         qbraks = self._find_Lamb_q_brackets(Omega, drfunc)
 
-        #print('got braks', qbraks)
+
         for qbrak in qbraks:
-         #   print('doing brak ', Omega, qbrak)
             if drfunc(qbrak[0]) * drfunc(qbrak[1])>0:
                 print('False bracket', qbrak, drfunc(qbrak[0]), drfunc(qbrak[1]))
                 continue
@@ -866,13 +869,15 @@ class ElasticFreeSlab:
         return qsols
 
     def find_Lamb_dispersion_for_bands(self, v_Omega, max_modes, even_modes=True):
+        # Returns q(Omega) for each band
         m_qs = np.zeros([len(v_Omega), max_modes])
 
         for iOm, Om in enumerate(v_Omega):
             qsols = self.find_Lamb_qs_for_Omega(Om, max_modes, even_modes)
 
-            for iq, q in enumerate(qsols):
-                m_qs[iOm, iq] = q
+            # We might have less than max_modes, or even none
+            if len(qsols):
+                m_qs[iOm, :len(qsols)] = qsols
 
         return m_qs
 
@@ -887,25 +892,53 @@ class ElasticFreeSlab:
 
         return m_Om
 
+    def find_SH_dispersion_for_bands(self, v_Omega, max_modes, col_array=False):
+        # Returns q(Omega) for each band
+        # Bands are numbered from 0?
+        m_qs = np.zeros([len(v_Omega), max_modes])
+        m_col=None
+
+        for m in range(max_modes):
+            # Only take square root of positive numbers
+            qsq = (v_Omega/self._Vs)**2 - (m*np.pi/self._wid)**2
+            qsq = qsq * (qsq>0)
+
+            #m_qs[:,m] = np.where(qsq>0, np.sqrt(qsq), 0)
+            m_qs[:,m] = np.sqrt(qsq)
+
+
+        if col_array:  # All SH modes are purely x polarised by definition
+            m_col = np.zeros([len(v_Omega), max_modes, 3])
+            rgb = self._get_rgb_for_poln(1,0,0)
+            m_col[:,:] = rgb
+
+        return m_qs, m_col
+
+    def _get_rgb_for_poln(self, px, py, pz):
+        vp = np.array([px, py, pz])
+        pmod = npla.norm(vp)
+
+        # RGB values are in range 0-1
+        rgb = np.abs(vp)/pmod
+        return rgb
+
+
     def disprel_rayleigh(self,  vR):
         vl = self._Vl/self._Vs
 
         return vR**6 - 8 * vR**4 + vR**2*(24-16/vl**2 )+16*(1/vl**2-1)
 
-    def find_Rayleigh_dispersion(self, v_Omega):
-        # find v_q of Rayleigh mode for v_Omega
-        m_qs = np.zeros(len(v_Omega))
+    def find_Rayleigh_dispersion(self, v_Omega, col_array=False):
+        # find Rayleigh wavenumber v_q of Rayleigh mode for v_Omega
+        #m_qs = np.zeros(len(v_Omega))
+        v_col=None
 
-
-        dr_rayleigh = lambda v: self.disprel_rayleigh(v)
 
         # Calculation works in units of self._Vs
         vRlo = 0.001
         vRhi = 1
 
-        vv = np.linspace(vRlo, vRhi,100)
-
-
+        dr_rayleigh = lambda v: self.disprel_rayleigh(v)
         vres = sciopt.root_scalar(dr_rayleigh, bracket=(vRlo, vRhi))
         if not vres.converged:
                 raise ValueError(vres.flag)
@@ -913,14 +946,21 @@ class ElasticFreeSlab:
             vR = vres.root
 
 
+        if col_array:
+            # Is Rayleigh mode polarisation frequency dependent?
+            v_col = np.zeros([len(v_Omega), 3])
+            rgb = self._get_rgb_for_poln(1,0,0)
+            v_col[:] = rgb
+
         # put back units of self._Vs
-        return v_Omega/(vR* self._Vs)
+        v_qR = v_Omega/(vR* self._Vs)
+        return v_qR, v_col
 
 
 class ElasticSlab:
     '''Elastic slab waveguide solver for isotropic materials.
        Finds the dispersion of the Lamb modes of isolated flat plate
-       All units are in microns.
+       All units are in SI base.
     '''
 
     def __init__(self, mat_s, mat_f, mat_c, wid):
