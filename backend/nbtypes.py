@@ -104,17 +104,34 @@ class CrystalGroup(IntEnum):
 
 
 class component_t(object):
-    @staticmethod
-    def Ecomp(c): return component_t('E'+c)
+    '''Class for transferring between user readable and code name versions of field components.'''
+
+    #@staticmethod
+    #def Ecomp(c): return component_t('E'+c)
+#
+#    @staticmethod
+#    def Hcomp(c): return component_t('H'+c)
+#
+#    @staticmethod
+#    def ucomp(c): return component_t('u'+c)
 
     @staticmethod
-    def Hcomp(c): return component_t('H'+c)
+    def make_comp_noreim(emac, fc):
+        '''Create a component_t from the field-agnostic component Fx, Fy, Fz, Fabs, etc and the field type.
+        Set the _f_code to the default.  '''
+        if emac == FieldType.EM_E:
+            uc=f'E{fc[1]}'
+        elif emac == FieldType.EM_H:
+            uc=f'H{fc[1]}'
+        else:
+            uc=f'u{fc[1]}'
+        cc = component_t(uc)
+        return cc
 
-    @staticmethod
-    def ucomp(c): return component_t('u'+c)
 
     @staticmethod
     def make_comp(emac, fc):
+        '''Create a component_t from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.'''
         if emac == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
                   'Fzr': 'Ez', 'Fzi': 'Ez', 'Fabs': 'Eabs', 'Ft': 'Et'}[fc]
@@ -129,8 +146,11 @@ class component_t(object):
         return cc
 
     def __init__(self, uc):
-        # uc is an actual field component name:  Ex, Ey, Ez, Et, Eabs, ux, uy etc.
-        # _f_code is the field-agnostic form starting with F and in the dominant real/imag part
+        '''Make component_t knowing the actual field component Ex, Ey, Ez, Et, Eabs, ux, uy etc.
+
+           Sets  _f_code to the field-agnostic form starting with F and with the dominant real/imag part for that component.
+        '''
+
         self._user_code = uc
         self._F = uc[0]  # E, H, or u
         self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
@@ -145,6 +165,11 @@ class component_t(object):
                         }[self._user_code]
 
     def is_AC(self): return self._F == 'u'
+    def emac(self): 
+        if self.is_AC: 
+            return 'AC' 
+        else:
+            return 'EM' 
 
     def get_label(self):
         c = self._F
@@ -168,8 +193,8 @@ class component_t(object):
 
     def reim_minor(self, fi):
         try:
-            return {'Ex': 'Exi', 'Ey': 'Eyi', 'Ez': 'Ezr', 'Ea': None,
-                    'Hx': 'Hxi', 'Hy': 'Hyi', 'Hz': 'Hyr', 'Ha': None,
-                    'ux': 'uxi', 'uy': 'uyi', 'uz': 'uyr', 'ua': None}[fi]
+            return {'Ex': 'Exi', 'Ey': 'Eyi', 'Ez': 'Ezi', 'Ea': 'Ea',
+                    'Hx': 'Hxi', 'Hy': 'Hyi', 'Hz': 'Hzi', 'Ha': None,
+                    'ux': 'uxi', 'uy': 'uyi', 'uz': 'uzr', 'ua': None}[fi]
         except KeyError:
             return None

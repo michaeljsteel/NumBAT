@@ -439,10 +439,10 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     # Ignore all imaginary values. If there are significant imag values,
     # then instaneous vector plots don't make much sense anyway
-    d_quiv_kw = {'linewidths': (0.2,), 'edgecolors': ('gray'), 'pivot':'mid', 'headlength':5}
+    d_quiv_kw = {'linewidths': (0.2,), 'edgecolors': ('gray'), 'pivot':'mid', 'headlength':1}
     if do_cont:  # no colours in the quiver
         d_quiv_kw['color'] = 'gray'
-        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw)
+        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw, scale=64)
     else:
         m_arrcolour = np.sqrt(m_ReEx_q*m_ReEx_q + m_ReEy_q*m_ReEy_q)
         ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q, m_arrcolour, ** d_quiv_kw)
@@ -706,6 +706,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
         ax = axis
 
     ft = plps['EM_AC']
+    print('poc', cc._user_code, cc._f_code, ft)
     cc_scal = field_type_to_intensity_code(ft)
     cc_transvec = field_type_to_vector_code(ft)
 

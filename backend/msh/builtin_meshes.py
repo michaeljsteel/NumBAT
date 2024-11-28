@@ -763,6 +763,25 @@ class Rib(UserGeometryBase):
 
         return subs
 
+    def draw_mpl_frame(self, ax):
+        rib_w = self.get_param('rib_w')*nmtoum
+        rib_h = self.get_param('rib_h')*nmtoum
+        slab_w = self.get_param('slab_w')*nmtoum
+        slab_h = self.get_param('slab_h')*nmtoum
+
+        vertices = np.array([
+            [-slab_w/2, -slab_h],
+            [-slab_w/2, 0],
+             [-rib_w/2, 0],
+             [-rib_w/2, rib_h],
+             [rib_w/2, rib_h],
+             [rib_w/2, 0],
+             [slab_w/2, 0],
+             [slab_w/2, -slab_h],
+             [-slab_w/2, -slab_h]])
+
+        ax.add_patch(mplpatches.Polygon(vertices,
+            facecolor=None, fill=False, edgecolor='gray', linewidth=.75))
 
 class RibCoated(UserGeometryBase):
 
