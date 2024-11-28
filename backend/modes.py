@@ -1,15 +1,12 @@
 
 from math import sqrt
-
 import numpy as np
-#import matplotlib.pyplot as plt
-#import matplotlib.tri
 
-#import numbat
+import numbat
 from nbtypes import FieldType, component_t, SI_um, SI_vacuum_impedance_Z0
+import reporting
+
 from numbattools import int2d_trapz, np_min_max
-#import reporting
-#from plottools import save_and_close_figure
 import plotmodes
 import plotmoderaw
 
@@ -258,7 +255,7 @@ class Mode:
 
         self._plot_me(mh, comps, field_type, ax)
 
-        self.clear_mode_plot_data()
+        #self.clear_mode_plot_data()
 
     def plot_mode_H(self, comps):  # plot magnetic field for EM modes
         self.plot_mode(comps, field_type=FieldType.EM_H)
@@ -273,6 +270,45 @@ class Mode:
         fem_evecs = simres.fem_evecs_H if ft == FieldType.EM_H else simres.fem_evecs
         plotmoderaw.do_raw_fem_mode_plot(comps, mh,
                                          self.sim_result.fem_mesh, fem_evecs, self.mode_num)
+
+    def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
+        if comp.is_abs():  # a real valued quantity
+            fname = longpref+'.txt'
+            fld = d_fields[comp._f_code]  # eg 'Fabs'
+            header=f'# {comp._f_code}, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+        else:
+            fname = longpref+'_re.txt'
+            fld = d_fields['F'+comp._xyz+'r']  # eg 'Fxr'
+            print('the field', fld, d_fields['Fxr'])
+            header=f'# {comp._f_code}_re, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+            fname = longpref+'_im.txt'
+            fld = d_fields['F'+comp._xyz+'i']  # eg 'Fxr'
+            header=f'# {comp._f_code}__im, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+
+
+    def write_to_file(self):
+        #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
+        #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
+        ccs = ('Fx', 'Fy', 'Fz')
+        ft=self.field_type
+        mh = self.get_mode_helper()
+        #print('mhprops', self.analysed, self.d_fields)
+        v_x = mh.xy_out['v_x']
+        v_y = mh.xy_out['v_y']
+        s_xy= f'v_x: {v_x[0]:.8f}, {v_x[-1]:.8f}, {len(v_x)}, ' + f'v_y: {v_y[0]:.8f}, {v_y[-1]:.8f}, {len(v_y)}'
+
+        for cc in ccs:
+            comp = component_t.make_comp_noreim(ft, cc)
+            pref=numbat.NumBATApp().outpath_fields()
+            longpref=f'{pref}/{comp.emac()}_mode_{self.mode_num:02d}_{comp._user_code}'
+            #print('writing data file', ft,longpref, self.d_fields.keys())
+            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields)
 
     def plot_strain(self):
         if not self.sim_result.is_AC():
@@ -347,7 +383,8 @@ class Mode:
            :rtype: tuple(float, float, float, float)
         '''
         if not self.analysed:
-            print('mode has not being analysed')
+            reporting.report_and_exit('mode has not being analysed')
+
         return self.fracs
 
     def __str__(self):

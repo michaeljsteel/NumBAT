@@ -25,6 +25,13 @@ class EMPoln(Enum):
     TM = 'TM'
     HY = 'HY'
 
+def get_rgb_for_poln(px, py, pz):
+    vp = np.array([px, py, pz])
+    pmod = npla.norm(vp)
+
+    # RGB values are in range 0-1
+    rgb = np.abs(vp)/pmod
+    return rgb
 
 def plot_em_chareq_at_k(k, rcore, ncore, nclad):
     nbrack = 500
@@ -454,7 +461,7 @@ class ElasticRod(object):
         self._Vl = np.sqrt(c11/rho)
         self._Vs = np.sqrt(c44/rho)
 
-    def find_nu_for_q(self, q, nu_hi, m, nmax_modes):
+    def find_nu_at_q(self, q, nu_hi, m, nmax_modes):
         (nmodes, v_Om) = _findroots_elastic_rod_chareq(q, nu_hi, m, nmax_modes, self._Vl,
                                                        self._rho, self._c11, self._c12, self._c44,
                                                        self._arad)
@@ -558,7 +565,7 @@ class EMSlab:
                 v_b[iv] = self.find_b_for_V(V, m, poln)
         return v_b
 
-    def find_dispersion_for_bands(self, v_V, num_bands, poln):
+    def find_dispersion_for_bands_at_V(self, v_V, num_bands, poln):
         m_b = np.zeros([len(v_V), num_bands])
 
         for m in range(num_bands):
@@ -626,20 +633,27 @@ class ElasticFreeSlab:
        The two sides switch from real and imag at the same time so all makes sense at all values of q
     '''
 
-    def __init__(self, mat_s, wid):
+    def __init__(self, mat_s, wid,  max_omega=100e9, omega_bracketing_resolution=1000,
+                                        q_bracketing_resolution=1000):
         self._mats = mat_s  # slab material
         self._Vs = mat_s.Vac_shear()
 
-        #self._Vl = mat_s.Vac_longitudinal()
-        self._Vl = self._Vs*1.9056
+        self._Vl = mat_s.Vac_longitudinal()
+        #self._Vl = self._Vs*1.9056
         self._wid = wid
+
+        self._max_omega=max_omega
+        self._omega_bracketing_resolution = omega_bracketing_resolution
+        self._q_bracketing_resolution = q_bracketing_resolution
+
 
 
     def _find_Lamb_q_brackets_smart(self, Omega, drfunc):
         # attempts to predict the crossings but doesn't get them all, becuse not all are about tan blowups
 
-        qlo = 1e-9
-        qhi=Omega/self._Vs * 2
+        #qlo = 1e-9
+        #qhi=Omega/self._Vs * 2
+
         # need to avoid blowsups of tan functions
         # kappa_s w/2 = (2n+1) pi/2
         # kappa_l w/2 = (2n+1) pi/2
@@ -655,8 +669,8 @@ class ElasticFreeSlab:
         bad_q = np.append(bad_qs, bad_ql)
         bad_q = np.sort(bad_q)
         qbraks=[]
-        tollo = 1-1e-7
-        tolhi = 1+1e-7
+        #tollo = 1-1e-7
+        #tolhi = 1+1e-7
 
 
         # print('Doing Omega', Omega)
@@ -714,9 +728,9 @@ class ElasticFreeSlab:
                 return True
         return False
 
-    def _find_Lamb_q_brackets(self, Omega, drfunc):
+    def _find_Lamb_q_brackets(self, Omega, drfunc, q_bracket_steps=1000):
         # brute force bracketing
-        qsteps=1000
+        qsteps=q_bracket_steps
 
         qlo = 1e-9
         qhi=Omega/self._Vs * 2
@@ -754,12 +768,12 @@ class ElasticFreeSlab:
 
         return qbraks
 
-    def _find_Lamb_om_brackets(self, q, drfunc):
+    def _find_Lamb_om_brackets(self, q, drfunc, om_max=200e9, om_bracket_steps=1000):
         # brute force bracketing
-        omsteps=5000
+        omsteps=om_bracket_steps
 
         omlo = 1e-9
-        omhi=100e9
+        omhi=om_max
         v_om = np.linspace(omlo, omhi,  omsteps)
 
 
@@ -810,20 +824,25 @@ class ElasticFreeSlab:
         return ombraks
 
 
-    def find_Lamb_Oms_for_q(self, q, max_modes, even_modes=True):
+    def find_Lamb_Oms_at_q(self, q, max_modes, even_modes=True):
         # q must be smaller than Omega/V_l
 
+
+        def dreven(om):
+            return elasticfreeslab_Lamb_chareq_even(om, self._Vs, self._Vl, self._wid, q)
+        def drodd(om):
+            return elasticfreeslab_Lamb_chareq_odd(om, self._Vs, self._Vl, self._wid, q)
+
         if even_modes:
-            drfunc = lambda om: elasticfreeslab_Lamb_chareq_even(om, self._Vs, self._Vl, self._wid, q)
+            drfunc=dreven
         else:
-            drfunc = lambda om: elasticfreeslab_Lamb_chareq_odd(om, self._Vs, self._Vl, self._wid, q)
+            drfunc=drodd
 
         omsols = []
 
-        #qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
-        ombraks = self._find_Lamb_om_brackets(q, drfunc)
+        ombraks = self._find_Lamb_om_brackets(q, drfunc, self._max_omega,
+                                              self._omega_bracketing_resolution)
 
-        #print('got braks', qbraks)
         for ombrak in ombraks:
             if drfunc(ombrak[0]) * drfunc(ombrak[1])>0:
                 print('False bracket', ombrak, drfunc(ombrak[0]), drfunc(ombrak[1]))
@@ -839,7 +858,7 @@ class ElasticFreeSlab:
 
         return omsols
 
-    def find_Lamb_qs_for_Omega(self, Omega, max_modes, even_modes=True):
+    def find_Lamb_qs_at_Omega(self, Omega, max_modes, even_modes=True):
         # q must be smaller than Omega/V_l
 
         if even_modes:
@@ -850,7 +869,7 @@ class ElasticFreeSlab:
         qsols = []
 
         #qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
-        qbraks = self._find_Lamb_q_brackets(Omega, drfunc)
+        qbraks = self._find_Lamb_q_brackets(Omega, drfunc, self._q_bracketing_resolution)
 
 
         for qbrak in qbraks:
@@ -868,12 +887,13 @@ class ElasticFreeSlab:
 
         return qsols
 
-    def find_Lamb_dispersion_for_bands(self, v_Omega, max_modes, even_modes=True):
-        # Returns q(Omega) for each band
+    def find_Lamb_dispersion_for_bands_at_om(self, v_Omega, max_modes, even_modes=True):
+        '''Returns q(Omega) for each band'''
+
         m_qs = np.zeros([len(v_Omega), max_modes])
 
         for iOm, Om in enumerate(v_Omega):
-            qsols = self.find_Lamb_qs_for_Omega(Om, max_modes, even_modes)
+            qsols = self.find_Lamb_qs_at_Omega(Om, max_modes, even_modes)
 
             # We might have less than max_modes, or even none
             if len(qsols):
@@ -881,18 +901,21 @@ class ElasticFreeSlab:
 
         return m_qs
 
-    def find_Lamb_dispersion_for_bands_of_q(self, v_q, max_modes, even_modes=True):
+    def find_Lamb_dispersion_for_bands_at_q(self, v_q, max_modes, even_modes=True):
+        '''Returns Omega(q) for each band'''
+
         m_Om = np.zeros([len(v_q), max_modes])
 
         for iq, q in enumerate(v_q):
-            omsols = self.find_Lamb_Oms_for_q(q, max_modes, even_modes)
+            omsols = self.find_Lamb_Oms_at_q(q, max_modes, even_modes)
 
             for iom, om in enumerate(omsols):
                 m_Om[iq, iom] = om
 
         return m_Om
 
-    def find_SH_dispersion_for_bands(self, v_Omega, max_modes, col_array=False):
+
+    def find_SH_dispersion_for_bands_at_om(self, v_Omega, max_modes, col_array=False):
         # Returns q(Omega) for each band
         # Bands are numbered from 0?
         m_qs = np.zeros([len(v_Omega), max_modes])
@@ -909,18 +932,12 @@ class ElasticFreeSlab:
 
         if col_array:  # All SH modes are purely x polarised by definition
             m_col = np.zeros([len(v_Omega), max_modes, 3])
-            rgb = self._get_rgb_for_poln(1,0,0)
+            rgb = get_rgb_for_poln(1,0,0)
             m_col[:,:] = rgb
 
         return m_qs, m_col
 
-    def _get_rgb_for_poln(self, px, py, pz):
-        vp = np.array([px, py, pz])
-        pmod = npla.norm(vp)
 
-        # RGB values are in range 0-1
-        rgb = np.abs(vp)/pmod
-        return rgb
 
 
     def disprel_rayleigh(self,  vR):
