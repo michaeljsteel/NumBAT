@@ -61,6 +61,8 @@ lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
 # enforce implicit none
 if host_machine.system() == 'windows'
     add_global_arguments(['/warn:declarations'], language: 'fortran',)
+    add_global_arguments(['/warn:no-format', '/warn:no-misleading-indentation'], language: 'c',)
+
 elif ccomp.get_id() == 'intel-llvm'   # intel on linux
     add_global_arguments(['-implicitnone'], language: 'fortran',)
     add_global_arguments(['-Wno-format', '-Wno-misleading-indentation' ], language: 'c',)   # numpy f2py has bad format strings that do no harm

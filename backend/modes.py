@@ -353,9 +353,9 @@ class Mode:
 
         if len(comps):
             decorator.set_for_single()
-            # options are ['Ex', 'Hx', 'ux', 'Ey', 'Hy', 'uy', 'Ez', 'Hz', 'uz','Eabs', 'Habs', 'uabs', 'Et', 'Ht', 'ut']
-            for comp in comps:
-                cc = component_t(comp)
+            # options are ['x', 'y', 'z', 'abs', 't']
+            for comp in comps:  # change so this takes field type and just the x,y,z...
+                cc = component_t.make_comp_from_component(field_type, comp)
                 plotmodes.plot_one_component(
                     mh.xy_out, self.d_fields, mh.plot_params, self.mode_num, cc, ax)
 
