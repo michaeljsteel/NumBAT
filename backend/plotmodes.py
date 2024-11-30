@@ -290,8 +290,8 @@ def get_quiver_skip_range(npts, skip):
 
 def add_contour_plot(fig, ax, d_xy, c_field, cc_cont, plps, decorator):
 
-    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed  
-    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned 
+    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed
+    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned
 
     cont_signed = cc_cont.is_signed_field()
     cmap = cmap_signed if cont_signed else cmap_unsigned
@@ -668,23 +668,25 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     write_mode_data(ax, plps, sim_result, ival)  # mode data summary
 
     ft = plps['EM_AC']
-    cc_scal = field_type_to_intensity_code(ft)
-    cc_transvec = field_type_to_vector_code(ft)
+    cc_scal = field_type_to_intensity_code(ft) # comonent_t with arg of Eabs, Habs, uabs
+    cc_transvec = field_type_to_vector_code(ft) # comonent_t with arg of Et, Ht, ut
 
-    ax = axs[axi]; axi += 1  # the whole field
+    ax = axs[axi]; axi += 1  # the whole field (top row middle)
     if plps['hide_vector_field']:
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal)
     else:
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
 
-    ax = axs[axi]; axi += 1  # the intensity
+    ax = axs[axi]; axi += 1  # the intensity (top row right)
     plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_vector=cc_transvec)
 
-    for flab in v_plots.keys():
-        cc = component_t.make_comp(ft, flab)
+    for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
+        cc = component_t.make_comp_from_Fcode(ft, flab)
 
-        if (hide_minors and not cc.is_dominant()) or not cc.is_signed_field():
-            continue
+        if not cc.is_signed_field(): continue  # already done vector and energy plots
+
+        # don't plot what will likely be pure zero fields
+        if (hide_minors and not cc.is_dominant()): continue
 
         ax = axs[axi]; axi += 1
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
@@ -705,11 +707,13 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
     else:
         ax = axis
 
-    ft = plps['EM_AC']
-    print('poc', cc._user_code, cc._f_code, ft)
-    cc_scal = field_type_to_intensity_code(ft)
-    cc_transvec = field_type_to_vector_code(ft)
-
+    if cc.is_transverse():
+        cc_transvec = cc
+        ft = plps['EM_AC']
+        cc_scal = component_t.make_comp_from_component(ft, 'abs')
+    else:
+        cc_transvec = None
+        cc_scal = cc
 
     plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
                             cc_scalar=cc_scal, cc_vector=cc_transvec)
@@ -719,28 +723,5 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
         save_and_close_figure(fig, fig_fname)
 
 
-
-
-
-
-
-###########################################################################################################
-# deprecated spelling.
-def plt_mode_fields(sim_result, ivals=None, n_points=501, quiver_points=50,
-                    xlim_min=None, xlim_max=None, ylim_min=None, ylim_max=None,
-                    field_type='EM_E', num_ticks=None, colorbar=True, contours=False, contour_lst=None,
-                    stress_fields=False, pdf_png='png',
-                    prefix='', suffix='', ticks=True, comps=[], decorator=None,
-                    suppress_imimre=True,
-                    modal_gains_PE=None,
-                    modal_gains_MB=None,
-                    modal_gains=None):
-
-    print('Warning: "plt_mode_fields" is deprecated, use "plot_modes"')
-    sim_result.plot_modes(ivals, n_points, quiver_points,
-                     xlim_min, xlim_max, ylim_min, ylim_max,
-                     field_type, num_ticks, colorbar, contours, contour_lst, stress_fields, pdf_png,
-                     prefix, suffix, ticks, comps, decorator,
-                     suppress_imimre, modal_gains_PE, modal_gains_MB, modal_gains)
 
 

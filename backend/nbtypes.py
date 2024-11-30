@@ -102,7 +102,7 @@ class CrystalGroup(IntEnum):
     Cubic = auto()
     GeneralAnisotropic = auto()
 
-
+#TODO: change name of this class. FieldCompHandle ?
 class component_t(object):
     '''Class for transferring between user readable and code name versions of field components.'''
 
@@ -128,9 +128,21 @@ class component_t(object):
         cc = component_t(uc)
         return cc
 
+    @staticmethod
+    def make_comp_from_component(emac, cc):
+        '''Create a component_t from the field type and component suffix x, y, z, abs, t.'''
+        if emac == FieldType.EM_E:
+            uc = 'E'+cc
+        elif emac == FieldType.EM_H:
+            uc = 'H'+cc
+        else:
+            uc = 'u'+cc
+        cc = component_t(uc)
+        return cc
+
 
     @staticmethod
-    def make_comp(emac, fc):
+    def make_comp_from_Fcode(emac, fc):
         '''Create a component_t from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.'''
         if emac == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
@@ -143,6 +155,7 @@ class component_t(object):
                   'Fzr': 'uz', 'Fzi': 'uz', 'Fabs': 'uabs', 'Ft': 'ut'}[fc]
         cc = component_t(uc)
         cc._f_code = fc # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
+        #TODO: change constructor so it has option to not choose the domnant
         return cc
 
     def __init__(self, uc):
@@ -165,11 +178,11 @@ class component_t(object):
                         }[self._user_code]
 
     def is_AC(self): return self._F == 'u'
-    def emac(self): 
-        if self.is_AC: 
-            return 'AC' 
+    def emac(self):
+        if self.is_AC:
+            return 'AC'
         else:
-            return 'EM' 
+            return 'EM'
 
     def get_label(self):
         c = self._F

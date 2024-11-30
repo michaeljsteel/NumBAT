@@ -7,12 +7,9 @@ def:
 
 
 win:
-#ifneq ($(UNAME_S), Windows)  # TODO: make this a make function?
-#	$(error 'We do not seem to be building on Linux. Check you are choosing the right target')
-#endif
 	meson setup --reconfigure --buildtype=release build_win --native-file nb-win-native-file.ini
 	meson compile -C build_win
-	copy build_win\nb_fortran.dll nb_fortran.pyd
+	-copy build_win\nb_fortran.dll nb_fortran.pyd
 
 
 
