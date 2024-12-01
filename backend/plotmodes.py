@@ -410,15 +410,27 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     n_pts_x, n_pts_y = len(v_x), len(v_y)
 
 
+    # TODO: spend a day getting truly perfect spacings of grid poitns
+    #         and trying to figure out the scaling and arrow head settings once and for all
+
     # grid points to skip for each arrow
     # this could probably be chosen nicer. make equally spaced on aspect=1?
     quiver_points_x = quiver_points
     #quiver_points_y = int(quiver_points*plps['aspect'])
-    quiver_points_y = quiver_points
+    #quiver_points_y = quiver_points
+    # get y points spaced as closely as possible to x points for a square grid
+    quiver_points_y = round(quiver_points*(v_y[-1]-v_y[0])/(v_x[-1]-v_x[0]))
+
+    #TODO: i think this correction needs to take place before the previous line
+    # Define quiver_points vanilla as the number along the _visible_ x range accounting for trim
+    #  Or along the whole x range before trim? Probably the latter so trim doesn't change the spacing
+
     quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
     quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
 
-
+    #dx= v_x[1]-v_x[0]
+    #dy= v_y[1]-v_y[0]
+    #print('dxdy', dx, dy, quiver_skip_x, quiver_skip_y, quiver_skip_x*dx, quiver_skip_y*dy)
     # getting a nice symmetric pattern of points to do quivers centred around the middle
     qrange_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
     qrange_y = get_quiver_skip_range(n_pts_y, quiver_skip_y)
@@ -429,7 +441,6 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     m_x_q = (m_x.T)[qrange_x[:, np.newaxis], qrange_y]  # TODO: track down why m_x/y need .T but fields don't
     m_y_q = (m_y.T)[qrange_x[:, np.newaxis], qrange_y]
 
-
     # TODO: why no transpose on these fields?
     m_ReEx_q = v_fields['Fxr'][qrange_x[:, np.newaxis], qrange_y]
     m_ReEy_q = v_fields['Fyr'][qrange_x[:, np.newaxis], qrange_y]
@@ -439,10 +450,12 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     # Ignore all imaginary values. If there are significant imag values,
     # then instaneous vector plots don't make much sense anyway
-    d_quiv_kw = {'linewidths': (0.2,), 'edgecolors': ('gray'), 'pivot':'mid', 'headlength':1}
+    d_quiv_kw = {'linewidths': (0.2,), 'edgecolor': 'blue', 'facecolor':'blue',
+                 'pivot':'mid', #'headlength':3,
+                 'scale':16}
     if do_cont:  # no colours in the quiver
         d_quiv_kw['color'] = 'gray'
-        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw, scale=64)
+        ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw)
     else:
         m_arrcolour = np.sqrt(m_ReEx_q*m_ReEx_q + m_ReEy_q*m_ReEy_q)
         ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q, m_arrcolour, ** d_quiv_kw)
@@ -459,7 +472,8 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
 
-def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None):
+def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None,
+                            is_single_plot=False):
 
     #v_x, v_y, m_X, m_Y = list(d_xy.values())
 
@@ -513,7 +527,9 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
     ec = decorator.get_property('edgecolor')
 
     aspect = plps.get('aspect', 1.0)
-    tidy = TidyAxes(nax=6,
+
+    nax = 1 if is_single_plot else 6
+    tidy = TidyAxes(nax=nax,
                     props={'axes_color':ec, 'cb_edgecolor':ec,
                         'ax_label_xpad':3, 'ax_label_ypad':1,
                         'aspect':aspect })
@@ -716,7 +732,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
         cc_scal = cc
 
     plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
-                            cc_scalar=cc_scal, cc_vector=cc_transvec)
+                            cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename(plps, ival, cc._user_code)
