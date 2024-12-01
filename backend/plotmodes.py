@@ -17,6 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from collections.abc import Iterable
+import copy
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -78,9 +79,9 @@ class TidyAxes:
             props['ax_tickwidth'] = 1
             props['ax_linewthidth'] = 1
         else:
-            props['ax_label_fs'] =  12
+            props['ax_label_fs'] =  18
             props['ax_label_pad'] = 5
-            props['ax_ticklabel_fs'] =  10
+            props['ax_ticklabel_fs'] =  16
             props['ax_tickwidth'] =  1
             props['ax_linewidth'] =  1
 
@@ -166,7 +167,7 @@ class Decorator(object):
         sp_base_fs = 24
 
         self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .6,
-                             'title_fs': mp_base_fs-2, 'subtitle_fs': mp_base_fs-5,
+                             'base_fs': mp_base_fs, 'title_fs': mp_base_fs-2, 'subtitle_fs': mp_base_fs-5,
                              'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
                              'data_label_fs': mp_base_fs-8,
                              'cbar_tick_fs': mp_base_fs-12,
@@ -174,7 +175,8 @@ class Decorator(object):
                              'cbar_size': '5%', 'cbar_pad': '6%'}
 
         self._single_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .2,
-                              'title_fs': sp_base_fs-2,  'subtitle_fs': sp_base_fs-3,
+                              'base_fs': sp_base_fs, 'title_fs': sp_base_fs-2,
+                              'subtitle_fs': sp_base_fs-3,
                               'title_pad': 20, 'subtitle_pad': 20,
                               'ax_label_fs': 20, 'ax_label_pad': 20, 'ax_tick_fs': 20,
                               'data_label_fs': sp_base_fs-8,
@@ -182,8 +184,10 @@ class Decorator(object):
                               'linewidth': '.75', 'edgecolor': 'gray',
                               'cbar_size': '5%', 'cbar_pad': '2%'}
 
-        self._props = self._multi_props if multi else self._single_props
-        #self._is_single = True
+        #self._props = self._multi_props if multi else self._single_props
+        self._props = copy.deepcopy(self._multi_props) if multi else copy.deepcopy(
+            self._single_props)
+        self._is_single = not multi
         self._cmap_limits = {}
         self._title = ''
         self._frame_drawer = None
@@ -195,19 +199,15 @@ class Decorator(object):
         if self._frame_drawer is not None:
             self._frame_drawer.draw_mpl_frame(ax)
 
-    #def _fontsizes(self):
-    #    if self._is_single:
-    #        return self._single_fontsizes
-    ##    else:
-      #      return self._multi_fontsizes
-
     def _get_props(self):
         return self._props
 
     def set_for_single(self):
+        self._is_single = True
         self._props.update(self._single_props)
 
     def set_for_multi(self):
+        self._is_single = False
         self._props.update(self._multi_props)
 
     def set_cmap_limits(self, d):
@@ -236,6 +236,7 @@ class Decorator(object):
 
     def set_property(self, label, prop):
         '''Add or override an axes property for a single plot corresponding to the given label.'''
+        print('setting ', label, prop)
         self._props[label] = prop
 
     def set_title(self, t): self._title = t
@@ -491,7 +492,6 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
 
     # Adjustments to the visible plot domain
 
-    is_AC = (cc_scalar and cc_scalar.is_AC()) or (cc_vector and cc_vector.is_AC())
     deftrim = -.05
 
     xlmi = plps.get('xlim_min', deftrim)
@@ -499,6 +499,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
     ylmi = plps.get('ylim_min', deftrim)
     ylma = plps.get('ylim_max', deftrim)
 
+    is_AC = (cc_scalar and cc_scalar.is_AC()) or (cc_vector and cc_vector.is_AC())
     if is_AC: # By default, give a little space around elastic profiles
         if not xlmi: xlmi = deftrim
         if not xlma: xlma = deftrim
@@ -715,8 +716,6 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
 
 
 def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
-
-    #decorator = plps['decorator']
 
     if axis is None:
         fig, ax = plt.subplots(figsize=(12, 10))
