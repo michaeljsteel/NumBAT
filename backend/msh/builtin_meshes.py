@@ -718,6 +718,7 @@ class TrapezoidalRib(UserGeometryBase):
             msg = 'Slab width (slab_b_x) is wider than domain width (domain_x).\n'
 
         dims_ok = not len(msg)
+        return dims_ok, msg
 
 
 class Rib(UserGeometryBase):
