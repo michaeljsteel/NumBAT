@@ -96,8 +96,8 @@ subdir('src')
 
 pymod = import('python')
 py_installation = pymod.find_installation()
-message('pypath', py_installation.path())
-py_exe = find_program('python', py_installation.path() / 'bin')
+#py_exe = find_program('python', py_installation.path() / 'bin')
+py_exe = py_installation.full_path()
 dep_py = py_installation.dependency()
 
 # F2PY details

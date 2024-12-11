@@ -137,8 +137,9 @@ class component_t(object):
             uc = 'H'+cc
         else:
             uc = 'u'+cc
-        cc = component_t(uc)
-        return cc
+        t_cc = component_t(uc)
+        print('making ', cc, t_cc._f_code)
+        return t_cc
 
 
     @staticmethod
@@ -193,7 +194,7 @@ class component_t(object):
 
     def is_abs(self): return self._f_code == 'Fabs'
     def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
-    def is_transverse(self): return self._user_code in ('Ft', 'Ht', 'ut')
+    def is_transverse(self): return self._user_code in ('Et', 'Ht', 'ut')
     def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
 
     def reim_major(self, fi):

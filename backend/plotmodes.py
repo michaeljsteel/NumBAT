@@ -730,6 +730,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
         cc_transvec = None
         cc_scal = cc
 
+    print(cc_scal, cc_transvec)
     plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
                             cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
 
