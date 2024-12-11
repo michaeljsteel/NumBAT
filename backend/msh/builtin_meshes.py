@@ -712,6 +712,8 @@ class TrapezoidalRib(UserGeometryBase):
         dom_y = self.get_param('domain_y')
         rib_wbot = self.get_param('slab_b_x')
 
+        # TODO: more  checks
+
         msg = ''
 
         if rib_wbot >= dom_x :
