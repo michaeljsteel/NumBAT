@@ -352,36 +352,57 @@ Note that ``inc_a_x`` specifies the innermost *diameter*.
 The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thickness of each successive layer.
 
 
+
+.. figure:: images/meshes/onion2_wg-mesh-annotated.png
+   :width: 16cm
+
+.. figure:: images/meshes/onion2_wg-refractive_index.png
+   :width: 8cm
+
+   A two-layered concentric structure with background using shape ``onion2`` (template ``onion2``).
+
+.. figure:: images/meshes/onion3_wg-mesh-annotated.png
+   :width: 16cm
+
+.. figure:: images/meshes/onion3_wg-refractive_index.png
+   :width: 8cm
+
+   A three-layered concentric structure with background using shape ``onion3`` (template ``onion3``).
+
 .. figure:: images/meshes/onion_wg-mesh.png
    :width: 16cm
+
+.. figure:: images/meshes/onionN_wg-refractive_index.png
+   :width: 8cm
 
    A many-layered concentric structure using shape ``onion`` (template ``onion``).
 
 
-
-.. figure:: images/meshes/onion2_wg-mesh.png
+.. figure:: images/meshes/circ_onion2_wg-mesh-annotated.png
    :width: 16cm
 
-   A two-layered concentric structure with background using shape ``onion2`` (template ``onion2``).
-
-.. figure:: images/meshes/onion3_wg-mesh.png
-   :width: 16cm
-
-   A three-layered concentric structure with background using shape ``onion3`` (template ``onion3``).
-
-.. figure:: images/meshes/circ_onion_wg-mesh.png
-   :width: 16cm
-
-   A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
-.. figure:: images/meshes/circ_onion2_wg-mesh.png
-   :width: 16cm
+.. figure:: images/meshes/circ_onion2_wg-refractive_index.png
+   :width: 8cm
 
    A two-layered concentric structure with a circular outer boundary using shape ``circ_onion2`` (template ``circ_onion2``).
 
-.. figure:: images/meshes/circ_onion3_wg-mesh.png
+
+.. figure:: images/meshes/circ_onion3_wg-mesh-annotated.png
    :width: 16cm
 
+.. figure:: images/meshes/circ_onion3_wg-refractive_index.png
+   :width: 8cm
+
    A three-layered concentric structure with a circular outer boundary using shape ``circ_onion3`` (template ``circ_onion3``).
+
+
+.. figure:: images/meshes/circ_onionN_wg-mesh.png
+   :width: 16cm
+
+.. figure:: images/meshes/circ_onionN_wg-refractive_index.png
+   :width: 8cm
+
+   A many-layered concentric structure with a circular outer boundary using shape ``circ_onion`` (template ``circ_onion``).
 
 
 

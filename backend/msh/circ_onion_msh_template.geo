@@ -47,7 +47,7 @@ lc_refine_2 = lc/1; // cylinder1 centres
 
 //hy = dy; // Thickness: square profile => hy=d
 //hx = d;
-radb = dx_in_nm * scale;  // Outer boundary radius
+radb = dx_in_nm/2 * scale;  // Outer boundary radius
 
 // Origin coords
 x0 = 0.0;

@@ -581,8 +581,9 @@ class CircOnion2(UserGeometryBase):
 class CircOnion3(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a circular domain.'''
-        self.set_properties('circ_onion3', 4, True, desc)
 
+        nt=4
+        self.set_properties('circ_onion3', 4, True, desc)
         self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_mats=nt)
         self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
 
