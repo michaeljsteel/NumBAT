@@ -96,9 +96,14 @@ def _process_one_and_two_incls_subs(msh_template, umb):
 class Circular(UserGeometryBase):
 
     def init_geometry(self):
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a circular waveguide.'''
-        self.set_properties('circular', nelts, True, desc)
+        self.set_properties('circular', desc)
+        self.set_allowed_parameters([
+            'inc_a_y','inc_b_x','inc_b_y',
+            'lc_refine_1','lc_refine_2', ], 3)
+
+
+        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
 
 
@@ -122,9 +127,17 @@ class Circular(UserGeometryBase):
 class Rectangular(UserGeometryBase):
 
     def init_geometry(self):
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a rectangular waveguide.'''
-        self.set_properties('rectangular', nelts, False, desc)
+        self.set_properties('rectangular',  desc)
+
+        self.set_required_parameters(['inc_a_x'], 2)
+
+        self.set_allowed_parameters([
+            'inc_a_y','inc_b_x','inc_b_y',
+            'lc_refine_1','lc_refine_2', ], 3)
+
+        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
+
         self._gmsh_template_filename = gmshfile # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
 
 
@@ -164,7 +177,7 @@ class TwoIncl(UserGeometryBase):
     def init_geometry(self):
         gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a double inclusion waveguide.'''
-        self.set_properties('twoincl', nelts, True, desc)
+        self.set_properties('twoincl', desc, is_curvi=True)
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
 
     def apply_parameters(self):
@@ -203,11 +216,11 @@ class TwoInclVert(UserGeometryBase):
     def init_geometry(self):
         #gmshfile, nelts = _process_one_and_two_incls(self._d_params)
         desc = '''A NumBAT geometry template for a rectangular double inclusion waveguide arranged vertically.'''
-        self.set_properties('twoinclvert', 3, True, desc)
+        self.set_properties('twoinclvert', desc, is_curvi=True)
 
         self.set_required_parameters(['inc_a_w', 'inc_a_h', 'inc_b_w', 'inc_b_h',
-            'inc_sep_x', 'inc_sep_y'],  num_mats=3)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2'],  num_allowed_mats=3)
+            'inc_sep_x', 'inc_sep_y'],  num_req_mats=3)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2'])
 
     def apply_parameters(self):
 
@@ -293,8 +306,8 @@ class Triangular(UserGeometryBase):
 
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a triangular waveguide.'''
-        self.set_properties('triangular', 2, False, desc)
-        self.set_required_parameters(['base_width', 'peak_xoff', 'peak_height'],  num_mats=1)
+        self.set_properties('triangular',  desc)
+        self.set_required_parameters(['base_width', 'peak_xoff', 'peak_height'],  num_req_mats=1)
         self.set_allowed_parameters(['lc_bkg', 'lc_refine_1','lc_refine_2'], num_allowed_mats=2)
         self.set_parameter_help(
             {
@@ -398,8 +411,8 @@ def draw_onion_frame(ax, umb):
 class Onion(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a many-layer circular waveguide in a square domain.'''
-        self.set_properties('onion', 16, True, desc)
-        self.set_required_parameters(['inc_a_x'],  num_mats=2)
+        self.set_properties('onion', desc, is_curvi=True)
+        self.set_required_parameters(['inc_a_x'],  num_req_mats=2)
         self.set_allowed_parameters(['lc_refine_1','lc_refine_2',
                                      'inc_b_x', 'inc_c_x', 'inc_d_x', 'inc_e_x',
                                     'inc_f_x', 'inc_g_x', 'inc_h_x', 'inc_i_x', 'inc_j_x',
@@ -419,12 +432,12 @@ class Onion(UserGeometryBase):
 class Onion1(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a one-layer circular waveguide in a square domain.'''
-        nt=2
 
-        self.set_properties('onion1', nt, True, desc)
 
-        self.set_required_parameters(['inc_a_x'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+        self.set_properties('onion1', desc, is_curvi=True)
+
+        self.set_required_parameters(['inc_a_x'],  num_req_mats=2)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'])
         self.set_parameter_help(
                 { 'inc_a_x': "diameter of central cylinder",
                   'material_a': "material of central cylinder",
@@ -458,11 +471,11 @@ class Onion2(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a two-layer circular waveguide in a square domain.'''
 
-        nt = 3
-        self.set_properties('onion2', nt, True, desc)
 
-        self.set_required_parameters(['inc_a_x', 'inc_b_x'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+        self.set_properties('onion2', desc, is_curvi=True)
+
+        self.set_required_parameters(['inc_a_x', 'inc_b_x'],  num_req_mats=3)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'])
 
         self.set_parameter_help(
                 { 'inc_a_x': "diameter of central (a) cylinder",
@@ -501,11 +514,11 @@ class Onion2(UserGeometryBase):
 class Onion3(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a square domain.'''
-        nt=4
-        self.set_properties('onion3', nt, True, desc)
 
-        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+        self.set_properties('onion3', desc,is_curvi=True)
+
+        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'])
 
         self.set_parameter_help(
                 { 'inc_a_x': "diameter of central (a) cylinder",
@@ -548,7 +561,7 @@ class Onion3(UserGeometryBase):
 class CircOnion(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a many-layer circular waveguide in a circular domain.'''
-        self.set_properties('circ_onion', 16, True, desc)
+        self.set_properties('circ_onion', desc, is_curvi=True)
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
@@ -559,7 +572,7 @@ class CircOnion(UserGeometryBase):
 class CircOnion1(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a one-layer circular waveguide in a circular domain.'''
-        self.set_properties('circ_onion1', 2, True, desc)
+        self.set_properties('circ_onion1', desc, is_curvi=True)
 
     def apply_parameters(self):
         subs = make_onion_subs(self)
@@ -582,10 +595,9 @@ class CircOnion3(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a three-layer circular waveguide in a circular domain.'''
 
-        nt=4
-        self.set_properties('circ_onion3', 4, True, desc)
-        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'],  num_allowed_mats=nt)
+        self.set_properties('circ_onion3', desc, is_curvi=True)
+        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x'],  num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_2'])
 
         self.set_parameter_help(
                 { 'inc_a_x': "diameter of central (a) cylinder",
@@ -630,7 +642,7 @@ class CircOnion3(UserGeometryBase):
 class Pedestal(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a pedestal-type waveguide.'''
-        self.set_properties('pedestal', 4, False, desc)
+        self.set_properties('pedestal', desc)
 
 
 
@@ -685,7 +697,7 @@ class TrapezoidalRib(UserGeometryBase):
 
           # Adjust so that the bottom of the emerging rib takes its grid from the buried part
         '''
-        self.set_properties('trapezoidal_rib', 4, False, desc)
+        self.set_properties('trapezoidal_rib', desc)
 
 
     def apply_parameters(self):
@@ -735,10 +747,10 @@ class Rib(UserGeometryBase):
         nt=3 # including bkg
         desc = '''A NumBAT geometry template for a rib waveguide.  '''
 
-        self.set_properties('rib', nt, False, desc)
+        self.set_properties('rib', desc)
 
-        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1','lc_refine_2'],  num_allowed_mats=nt)
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h'],  num_req_mats=nt)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1','lc_refine_2'])
         self.set_parameter_help(
                 {
                 'rib_w': "width of raised rib region",
@@ -793,11 +805,10 @@ class RibCoated(UserGeometryBase):
 
         desc = '''A NumBAT geometry template for a coated rib waveguide.  '''
 
-        self.set_properties('rib_coated', 4, False, desc)
+        self.set_properties('rib_coated', desc)
 
-        nt=4
-        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'coat_w', 'coat_h'],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],  num_allowed_mats=nt)
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'coat_w', 'coat_h'],  num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ])
         self.set_parameter_help(
                 {
                 'rib_w': "width of raised rib region",
@@ -835,13 +846,12 @@ class RibDoubleCoated(UserGeometryBase):
 
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a double coated rib waveguide.  '''
-        self.set_properties('rib_double_coated', 6, False, desc)
+        self.set_properties('rib_double_coated', desc)
 
-        nt=5
         self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h',
-                                      'coat_w', 'coat_h', 'coat2_w', 'coat2_h' ],  num_mats=nt)
+                                      'coat_w', 'coat_h', 'coat2_w', 'coat2_h' ],  num_req_mats=5)
         self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3',
-                                     'lc_refine_4', 'lc_refine_5' ],  num_allowed_mats=nt)
+                                     'lc_refine_4', 'lc_refine_5' ])
         self.set_parameter_help(
                 {
                 'rib_w': "width of raised rib region",
@@ -902,11 +912,10 @@ class Slot(UserGeometryBase):
     def init_geometry(self):
 
         desc = '''A NumBAT geometry template for a slot waveguide.  '''
-        self.set_properties('slot', 4, False, desc)
+        self.set_properties('slot',  desc)
 
-        nt=4
-        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w' ],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2' ],  num_allowed_mats=nt)
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w' ],  num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2' ])
         self.set_parameter_help(
                 {
                 'rib_w': "width of raised ribs",
@@ -965,12 +974,10 @@ class SlotCoated(UserGeometryBase):
     def init_geometry(self):
 
         desc = '''A NumBAT geometry template for a slot waveguide.  '''
-        self.set_properties('slot_coated', 6, False, desc)
+        self.set_properties('slot_coated', desc)
 
-        nt=5
-        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w', 'coat_t' ],  num_mats=nt)
-        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ],
-                                    num_allowed_mats=nt)
+        self.set_required_parameters(['rib_w', 'rib_h', 'slab_w', 'slab_h', 'slot_w', 'coat_t' ],  num_req_mats=5)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2', 'lc_refine_3' ])
         self.set_parameter_help(
                 {
                 'rib_w': "width of raised ribs",
