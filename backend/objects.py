@@ -520,7 +520,6 @@ class Structure:
 
         self.symmetry_flag = int(kwargs.get('symmetry_flag', 0))
 
-
         self.optical_props = OpticalProps(list(self.d_materials.values()), n_mats_em, self.loss)
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
@@ -556,8 +555,7 @@ class Structure:
 
 
 
-    def build_waveguide_geometry(self, inc_shape, params,
-                                 d_materials):
+    def build_waveguide_geometry(self, inc_shape, params, d_materials):
         ''' Take the parameters specified in python and make a Gmsh FEM mesh.
             Creates a .geo and .msh file from the .geo template,
             then uses Fortran conv_gmsh routine
@@ -826,8 +824,6 @@ class Structure:
         fsfp.setup_scalar_properties(nm_eng, unit, nm_math, fname_suffix)
         fsfp.fill_quantity_by_material_index(v_neffeps)
 
-
-
         return fsfp
 
     def plot_refractive_index_profile(self, pref):
@@ -942,7 +938,6 @@ class Structure:
 
         #v_regindex = np.where(v_regindex==0, 1, v_regindex)
         v_regindex = np.nan_to_num(v_regindex, nan=1.0)
-        print(np.min(v_regindex))
 
         if as_epsilon:
             v_regindex = v_regindex**2
