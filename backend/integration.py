@@ -1,7 +1,7 @@
 # mode_calcs.py is a subroutine of NumBAT that contains methods to
 # calculate the EM and Acoustic modes of a structure.
 
-# Copyright (C) 2017  Bjorn Sturmberg, Kokou Dossou,
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+
 import csv
 import numpy as np
 from scipy import interpolate
 import matplotlib
-
 
 from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max, process_fortran_return
@@ -58,7 +58,9 @@ class GainProps(object):
         self._gain_MB = None
 
         self.def_m_pump = 0  # must be one of allowed_pumps_m TODO: needs to be checked
-        self.def_m_Stokes = 0 # must be one of allowed_Stokes_m TODO: needs to be checked
+
+        # must be one of allowed_Stokes_m TODO: needs to be checked
+        self.def_m_Stokes = 0
 
         self.linewidth_Hz = None
         self.alpha = None
@@ -112,7 +114,6 @@ class GainProps(object):
 
     def gain_MB_all_by_em_modes(self, m_pump, m_Stokes):
         return self._gain_MB[m_pump, m_Stokes, :]
-
 
     def alpha_all(self):
         return self.alpha
@@ -169,9 +170,10 @@ class GainProps(object):
                 if imaxg > num_AC * 0.75:
                     maxg = np.abs(t_gains[imaxg])
                     reporting.register_warning(
-                            f"""For pump and Stokes indices {mP} and {mS}, the maximum total SBS gain of {maxg:.3e} was found for acoustic mode {imaxg} which is in the upper """
-                        + r"25% of the number of acoustic modes in the calculation." +
-                        "\nYou should probably check the consistency of the calculation with a larger number of acoustic modes.")
+                        f"""For pump and Stokes indices {mP} and {mS}, the maximum total SBS gain of {maxg:.3e} was found for acoustic mode {imaxg} which is in the upper """
+                        + r"25% of the number of acoustic modes in the calculation."
+                        + "\nYou should probably check the consistency of the calculation with a larger number of acoustic modes."
+                    )
 
     def plot_spectra(
         self,
@@ -217,7 +219,7 @@ class GainProps(object):
             suffix,
             decorator,
             show_gains,
-            mark_modes_thresh,
+            mark_modes_thresh
         )
 
 
@@ -235,10 +237,16 @@ def get_gains_and_qs(
 
     # TODO: get rid of this old backend
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
-        sim_EM_pump, sim_EM_Stokes, sim_AC,
-        q_AC, EM_ival_pump, EM_ival_Stokes, AC_ival,
-        fixed_Q, typ_select_out,
-        new_call_format=True
+        sim_EM_pump,
+        sim_EM_Stokes,
+        sim_AC,
+        q_AC,
+        EM_ival_pump,
+        EM_ival_Stokes,
+        AC_ival,
+        fixed_Q,
+        typ_select_out,
+        new_call_format=True,
     )
 
     gain = GainProps()
@@ -270,7 +278,7 @@ def gain_and_qs(
     AC_ival=0,
     fixed_Q=None,
     typ_select_out=None,
-    new_call_format=False
+    new_call_format=False,
 ):
     r""" Calculate interaction integrals and SBS gain.
 
@@ -358,7 +366,9 @@ def gain_and_qs(
     # coeff numerical integration
 
     if not new_call_format:
-        print('Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()')
+        print(
+            "Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()"
+        )
 
     if EM_ival_pump == "All":
         EM_ival_pump_fortran = -1
@@ -403,9 +413,8 @@ def gain_and_qs(
     # of the full 13 FEM
     for el in range(fem_ac.n_msh_el):
         new_el = fem_ac.el_convert_tbl[el]
-        trimmed_EM_pump_field[:,:,:, el] = sim_EM_pump.fem_evecs[:,:6,:, new_el]
-        trimmed_EM_Stokes_field[:,:,:, el] = sim_EM_Stokes.fem_evecs[:,:6,:, new_el]
-
+        trimmed_EM_pump_field[:, :, :, el] = sim_EM_pump.fem_evecs[:, :6, :, new_el]
+        trimmed_EM_Stokes_field[:, :, :, el] = sim_EM_Stokes.fem_evecs[:, :6, :, new_el]
 
         # for n in range(nnodes):
         #     for x in range(ncomps):
@@ -477,28 +486,40 @@ def gain_and_qs(
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
 
-    sim_AC.fem_evecs[2,:,:,:]  = 0
+    sim_AC.fem_evecs[2, :, :, :] = 0
 
-
-    is_curvi=False
+    is_curvi = False
     if struc.using_linear_elements():
         print("\n Photoelastic calc: linear elements")
     else:
         print("\n Photoelastic calc: curvilinear elements")
-        is_curvi=True
+        is_curvi = True
 
-    resm = nb_fortran.photoelastic_int_common(is_curvi,
-        sim_EM_pump.n_modes, sim_EM_Stokes.n_modes, sim_AC.n_modes,
-        EM_ival_pump_fortran, EM_ival_Stokes_fortran, AC_ival_fortran,
-        fem_ac.n_msh_el, fem_ac.n_msh_pts, fem_ac.elnd_to_mshpt, fem_ac.v_nd_xy,
-        elastic_props.n_mats_ac, fem_ac.v_el_2_mat_idx,
-        elastic_props.p_ijkl, q_AC,
-        trimmed_EM_pump_field, trimmed_EM_Stokes_field, sim_AC.fem_evecs,
+    resm = nb_fortran.photoelastic_int_common(
+        is_curvi,
+        sim_EM_pump.n_modes,
+        sim_EM_Stokes.n_modes,
+        sim_AC.n_modes,
+        EM_ival_pump_fortran,
+        EM_ival_Stokes_fortran,
+        AC_ival_fortran,
+        fem_ac.n_msh_el,
+        fem_ac.n_msh_pts,
+        fem_ac.elnd_to_mshpt,
+        fem_ac.v_nd_xy,
+        elastic_props.n_mats_ac,
+        fem_ac.v_el_2_mat_idx,
+        elastic_props.p_ijkl,
+        q_AC,
+        trimmed_EM_pump_field,
+        trimmed_EM_Stokes_field,
+        sim_AC.fem_evecs,
         relevant_eps_effs,
     )
 
-    (Q_PE, ) = process_fortran_return(resm, "finding linear element photoelastic couplings")
-
+    (Q_PE,) = process_fortran_return(
+        resm, "finding linear element photoelastic couplings"
+    )
 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
@@ -529,8 +550,7 @@ def gain_and_qs(
         relevant_eps_effs,
     )
 
-    (Q_MB, ) = process_fortran_return(resm, "finding moving boundary coupling")
-
+    (Q_MB,) = process_fortran_return(resm, "finding moving boundary coupling")
 
     Q = Q_PE + Q_MB  # TODO: the Q couplings come out as non trivially complex. Why?
 
@@ -538,12 +558,16 @@ def gain_and_qs(
     OmAC = simres_AC.Omega_AC
 
     # first find the numerators of gain. Sturmberg Eq (12)
-    gain    = 2 * omEM * OmAC * np.real(Q * np.conj(Q))
+    gain = 2 * omEM * OmAC * np.real(Q * np.conj(Q))
     gain_PE = 2 * omEM * OmAC * np.real(Q_PE * np.conj(Q_PE))
     gain_MB = 2 * omEM * OmAC * np.real(Q_MB * np.conj(Q_MB))
 
-    normal_fact = np.zeros((n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex)
-    for i in range(n_modes_EM_Stokes):  # TODO: express this as some one line outer product?
+    normal_fact = np.zeros(
+        (n_modes_EM_Stokes, n_modes_EM_pump, n_modes_AC), dtype=complex
+    )
+    for i in range(
+        n_modes_EM_Stokes
+    ):  # TODO: express this as some one line outer product?
         P1 = sim_EM_Stokes.EM_mode_power[i]
         for j in range(n_modes_EM_pump):
             P2 = sim_EM_pump.EM_mode_power[j]

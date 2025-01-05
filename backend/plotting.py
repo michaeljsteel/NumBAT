@@ -1,7 +1,7 @@
 # plotting.py is a subroutine of NumBAT that contains numerous plotting
 # routines.
 
-# Copyright (C) 2017  Bjorn Sturmberg.
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
