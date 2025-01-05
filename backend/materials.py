@@ -97,7 +97,7 @@ class MaterialLibrary:
 
             try:
                 mat_name = json_data["material_name"]
-            except:
+            except KeyError:
                 reporting.report_and_exit(f"Material file {fname} has no 'material_name' field.")
 
             if mat_name in self._materials:
@@ -937,7 +937,7 @@ class Material(object):
             if len(s_elt) !=2:
                 reporting.report_and_exit('Bad photoelastic tensor index: {s_elt}.')
             el_IJ=(int(s_elt[0]), int(s_elt[1]))
-            if not el_IJ[0] in range(1,7) or not el_IJ[1] in range(1,7):
+            if el_IJ[0] not in range(1,7) or el_IJ[1] not in range(1,7):
                 reporting.report_and_exit('Bad photoelastic tensor index: {s_elt}.')
             d_p_vecs[s_elt] = (el_IJ, np.zeros(npts))
 

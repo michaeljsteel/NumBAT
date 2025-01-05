@@ -18,9 +18,7 @@
 import numpy as np
 import numpy.random
 import matplotlib.pyplot as plt
-import matplotlib.tri
 
-import numbat
 from nbtypes import SI_um
 import plottools
 
