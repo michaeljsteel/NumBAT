@@ -15,8 +15,8 @@ def is_real_number(x):
 class UserGeometryBase():
 
     def __init__(self, params, d_materials):
-        self._geom_name = ''
-        self._num_type_materials=0
+        self._shape_name = ''
+        self._num_materials=0
         self._is_curvilinear=False
         self._d_materials = d_materials
         self._d_params = params
@@ -25,21 +25,29 @@ class UserGeometryBase():
 
         self._req_params =[]
         self._allowed_params =[]
-        self._num_named_materials = 0
+        self._num_req_materials = 0
 
-    def set_properties(self, nm, n_materials, is_curvi, desc):
+    #def set_properties(self, nm, n_materials, is_curvi, desc):
+    def set_properties(self, nm, desc, is_curvi=False):
         self.set_name(nm)
-        self.set_num_type_materials(n_materials)
+        #self.set_num_type_materials(n_materials)
         self.set_is_curvilinear(is_curvi)
         self.set_description(desc)
 
-    def set_required_parameters(self, l_nms, num_mats):
+    def set_required_parameters(self, l_nms, num_req_mats):
         self._req_params.extend(['domain_x','domain_y', 'lc_bkg'])
         self._req_params.extend(l_nms)
-        self._num_named_materials = num_mats
+        self._num_req_materials = num_req_mats
+        self._num_materials = max(self._num_materials, num_req_mats)
 
-    def set_allowed_parameters(self, l_nms, num_allowed_mats):
+    def set_allowed_parameters(self, l_nms, num_allowed_mats=0):
+
         self._allowed_params.extend(l_nms)
+
+        num_allowed_mats = max(num_allowed_mats, self._num_req_materials)
+        self._num_materials = max(self._num_materials, num_allowed_mats)
+
+
         for im in range(num_allowed_mats): # need mat_a, mat_b, mat_c, etc
             self._allowed_params.append('material_'+'abcdefghijklmnopqrtstuvwxyz'[im])
 
@@ -53,7 +61,7 @@ class UserGeometryBase():
         print(self.get_parameter_help_string())
 
     def get_parameter_help_string(self):
-        msg = f'Waveguide parameters for shape {self._geom_name}:\n'
+        msg = f'Waveguide parameters for shape {self._shape_name}:\n'
         for k,v in self.d_param_help.items():
             msg += f'{k:>20} : {v}\n'
         return msg
@@ -65,12 +73,12 @@ class UserGeometryBase():
         reqkws = self._req_params
         reqkws.append('material_bkg')
 
-        for im in range(self._num_named_materials-1): # need mat_a, mat_b, mat_c, etc, -1 because one is mat_bkg
+        for im in range(self._num_req_materials-1): # need mat_a, mat_b, mat_c, etc, -1 because one is mat_bkg
             reqkws.append('material_'+'abcdefghijklmnopqrtstuvwxyz'[im])
 
         for key in reqkws:
             if key not in user_params:
-                msg =f"Waveguide type '{self._geom_name}' requires a value for the parameter '{key}' in the call to make_structure()."
+                msg =f"Waveguide type '{self._shape_name}' requires a value for the parameter '{key}' in the call to make_structure()."
 
                 msg+= '\n\nNote that some waveguide types have changed their required parameters to adopt more intuitive names.'
 
@@ -86,7 +94,7 @@ class UserGeometryBase():
         for key in user_params.keys():
             if key not in goodkeys:
                 reporting.report(
-                    f"Waveguide '{self._geom_name}' will ignore the parameter '{key}' in make_structure().")
+                    f"Waveguide '{self._shape_name}' will ignore the parameter '{key}' in make_structure().")
 
 
     def check_dimensions(self):  # override to implement check for each mesh design
@@ -101,14 +109,14 @@ class UserGeometryBase():
 
         if not dims_ok: reporting.report_and_exit(f'There is a problem with the waveguide structure:\n{msg}')
 
-    def set_num_type_materials(self, n):
-        self._num_type_materials = n
+    #def set_num_type_materials(self, n):
+    #    self._num_materials = n
 
     def set_is_curvilinear(self, b):
         self._is_curvilinear = b
 
     def set_name(self, nm):
-        self._geom_name = nm
+        self._shape_name = nm
 
     def set_description(self, desc):
         self._descrip = desc
@@ -117,7 +125,7 @@ class UserGeometryBase():
         return self._d_params.get(k, None)
 
     def geom_name(self):
-        return self._geom_name
+        return self._shape_name
 
     def gmsh_template_filename(self):
         if self._gmsh_template_filename:
@@ -126,7 +134,7 @@ class UserGeometryBase():
             return self.geom_name()
 
     def num_type_materials(self):
-        return self._num_type_materials
+        return self._num_materials
 
     def is_curvilinear(self):
         return self._is_curvilinear
@@ -161,7 +169,7 @@ class UserGeometryBase():
 
     def get_instance_filename(self):   # , l_dims):
         '''Make name for the concrete instantiation of a given mesh .geo template'''
-        msh_fname = self._geom_name
+        msh_fname = self._shape_name
 
         # made crazy long names, not helping
         # for v in l_dims:

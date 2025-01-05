@@ -98,6 +98,11 @@ def add_dim(im, bw, bh, lab, x1, y1, x2, y2, compass):
     d.text((tx,ty), lab, font=fnt_mat, fill=col_dim, anchor=anc)
 
 def get_sizes(im,x0,x1,y0,y1,un_x, un_y):
+    '''Controls the view into the image in pixels.
+    Open the combined grid and mesh image and find the coordinates
+    of the grid plot corners. Express x0, x1, y0, y1 as fractions of the
+    whole window.'''
+
     sz = im.size
     bl = im.size[0]*x0
     br = im.size[0]*x1
@@ -109,6 +114,7 @@ def get_sizes(im,x0,x1,y0,y1,un_x, un_y):
     scalx = bw/un_x
     scaly = bh/un_y
 
+    print(sz, bl, br, bt, bb, bw, bh)
     return (bl, br, bt, bb, bw, bh, scalx, scaly)
 
 
@@ -123,7 +129,7 @@ def do_oneincl_rect(nbapp):
     wguide.plot_mesh(frt+fn_suff_raw)
     wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
-    
+
     do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y)
 
 def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
@@ -145,7 +151,7 @@ def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
         ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
         add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
 
-        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx; 
+        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx;
         ys = y0-.53*inc_a_y*scaly; yf = ys
         add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 
@@ -189,7 +195,7 @@ def do_oneincl_circ_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
         ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
         add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
 
-        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx; 
+        xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx;
         ys = y0-.53*inc_a_y*scaly; yf = ys
         add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 
@@ -199,16 +205,16 @@ def do_oneincl_circ_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
         im.save(frt+fn_ext_anno)
 
 def do_oneincl_triang(nbapp):
-    un_x = 4000; un_y = 3000; bw = 2000; pxo = 750; ph = 600; 
+    un_x = 4000; un_y = 3000; bw = 2000; pxo = 750; ph = 600;
 
-    wguide = nbapp.make_structure('triangular', un_x, un_y, 
+    wguide = nbapp.make_structure('triangular', un_x, un_y,
                                    base_width=bw, peak_xoff = pxo, peak_height=ph,
-                                   material_bkg=mat_bkg, material_a=mat_a, 
+                                   material_bkg=mat_bkg, material_a=mat_a,
                                    lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
 
 
     frt = 'triangular'
-    wguide.plot_mesh(frt+fn_suff_raw) 
+    wguide.plot_mesh(frt+fn_suff_raw)
     wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
     do_oneincl_triang_annotate(frt, un_x, un_y, bw, pxo, ph)
@@ -263,8 +269,8 @@ def do_oneincl(nbapp):
 def do_twoincl(nbapp):
     #
     # twoincl_mesh.geo
-    # 
-    
+    #
+
     # rect inclusions
     un_x = 4000
     un_y = 3000
@@ -289,8 +295,8 @@ def do_twoincl(nbapp):
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide2.plot_mesh('twoincl_circ_wg')
     wguide2.plot_refractive_index_profile('twoincl_circ_wg')
-    
-   
+
+
 def do_rib(nbapp):
     # rib structures inclusions
     un_x = 4000
@@ -307,32 +313,32 @@ def do_rib(nbapp):
     coat2_y = 140
 
     wguide1 = nbapp.make_structure('rib',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y,
-                                slab_w=slab_a_x, slab_h=slab_a_y, 
-                            material_bkg=mat_bkg, material_a=mat_a, 
+                                slab_w=slab_a_x, slab_h=slab_a_y,
+                            material_bkg=mat_bkg, material_a=mat_a,
                                 material_b=mat_b,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide1.plot_mesh('rib_wg')
     wguide1.plot_refractive_index_profile('rib_wg')
 
-    wguide2 = nbapp.make_structure('rib_coated', un_x, un_y, rib_w=inc_a_x, rib_h=inc_a_y, 
-                                   slab_w=slab_a_x, slab_h=slab_a_y, coat_w=coat_x, coat_h=coat_y, 
-                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c, 
+    wguide2 = nbapp.make_structure('rib_coated', un_x, un_y, rib_w=inc_a_x, rib_h=inc_a_y,
+                                   slab_w=slab_a_x, slab_h=slab_a_y, coat_w=coat_x, coat_h=coat_y,
+                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c,
                                    lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide2.plot_mesh('rib_coated_wg')
     wguide2.plot_refractive_index_profile('rib_coated_wg')
 
 
-    wguide3 = nbapp.make_structure('rib_double_coated',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y, 
-                                   slab_w=slab_a_x, slab_h=slab_a_y, 
-                                   coat_w=coat_x, coat_h=coat_y, coat2_w=coat2_x, coat2_h=coat2_y, 
-                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c, 
-                                   material_d=mat_d, material_e=mat_e, 
+    wguide3 = nbapp.make_structure('rib_double_coated',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y,
+                                   slab_w=slab_a_x, slab_h=slab_a_y,
+                                   coat_w=coat_x, coat_h=coat_y, coat2_w=coat2_x, coat2_h=coat2_y,
+                                   material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c,
+                                   material_d=mat_d, material_e=mat_e,
                                    lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10, lc_refine_4=20, lc_refine_5=20)
     #wguide3.check_mesh()
     wguide3.plot_mesh('rib_double_coated_wg')
     wguide3.plot_refractive_index_profile('rib_double_coated_wg')
 
-    
+
 def do_slot(nbapp):
     # rib structures inclusions
     un_x = 4000
@@ -347,9 +353,9 @@ def do_slot(nbapp):
     coat_y = 50  # pillar coat thickness
 
     wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
+                                slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                                 inc_b_x=inc_b_x,
-                            material_bkg=mat_bkg, material_a=mat_bkg, 
+                            material_bkg=mat_bkg, material_a=mat_bkg,
                                 material_b=mat_b,
                                 material_c=mat_c,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10)
@@ -359,14 +365,14 @@ def do_slot(nbapp):
     un_y = 1000
 
     wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot_coated',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y, 
+                                slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                                 inc_b_x=inc_b_x,
                                 coat_y=coat_y,
-                            material_bkg=mat_bkg, material_a=mat_bkg, 
+                            material_bkg=mat_bkg, material_a=mat_bkg,
                                 material_b=mat_b,
                                 material_c=mat_c,
                                 material_d=mat_d,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, 
+                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10,
                                 lc_refine_3=10, lc_refine_4=20)
     wguide2.plot_mesh('slot_coated_wg')
     #wguide1.check_mesh()
@@ -377,14 +383,15 @@ def do_slot(nbapp):
 def do_onion(nbapp):
 
     # A concentric Bragg fibre
-    un_x = 1500
-    un_y = 1500
+    un_x = 1000
+    un_y = 1000
 
     # layer thicknesses
     d1=50
-    d2=75
+    d2=127/2
+    d3=50
 
-    wguide1 = nbapp.make_structure(un_x,d1,un_y,d1,'onion',
+    wguide = nbapp.make_structure('onion',un_x, un_y, d1,
                                 inc_b_x=d2, inc_c_x=d1, inc_d_x=d2, inc_e_x=d1, inc_f_x=d2,
                                 inc_g_x=d1, inc_h_x=d2, inc_i_x=d1, inc_j_x=d2, inc_k_x=d1,
                                 inc_l_x=d2, inc_m_x=d1, inc_n_x=d2, inc_o_x=d1,
@@ -393,22 +400,31 @@ def do_onion(nbapp):
                                 material_g=mat_a, material_h=mat_b, material_i=mat_a, material_j=mat_b,
                                 material_k=mat_a, material_l=mat_b, material_m=mat_a, material_n=mat_b,
                                 material_o=mat_a,
-                            lc_bkg=.1, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide1.plot_mesh('onion_wg')
+                            lc_bkg=.1, lc_refine_1=5, lc_refine_2=5)
+    frt = 'onionN'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
-    # Single mode fiber 
+    #do_onion23n_annotate(frt, un_x, un_y, d1, d2, 4)
+
+
+
+    # Single mode fiber
     un_x = 300
     un_y = 300
     # layer thicknesses
     d1=20
     d2=127/2.
 
-    wguide2 = nbapp.make_structure(un_x,d1,un_y,d1,'onion2',
-                                inc_b_x=d2, 
+    wguide = nbapp.make_structure('onion2',un_x, un_y,
+                                   inc_a_x=d1, inc_b_x=d2,
                             material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
-                            lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide2.plot_mesh('onion2_wg')
+                            lc_bkg=.05, lc_refine_2=5)
 
+    frt = 'onion2'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+    do_onion23n_annotate(frt, un_x, un_y, d1, d2, 2)
 
     # Single mode fiber with explicit cladding
     un_x = 300
@@ -416,21 +432,22 @@ def do_onion(nbapp):
     # layer thicknesses
     d1=20
     d2=127/2.
-    d3=20
+    d3=d1
 
-    wguide3 = nbapp.make_structure(un_x,d1,un_y,d1,'onion3',
-                                inc_b_x=d2, 
-                                inc_c_x=d3, 
-                            material_bkg=mat_bkg, material_a=mat_a, 
+    wguide = nbapp.make_structure('onion3',un_x,un_y,
+                                   inc_a_x=d1, inc_b_x=d2, inc_c_x=d3,
+                                    material_bkg=mat_bkg, material_a=mat_a,
                                 material_b=mat_b, material_c=mat_c,
-                            lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide3.plot_mesh('onion3_wg')
-
-
+                            lc_bkg=.05, lc_refine_2=5)
+    frt = 'onion3'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+    do_onion23n_annotate(frt, un_x, un_y, d1, d2, 3)
 
     un_x = 1500
     un_y = 1500
-    wguide1 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion',
+    wguide = nbapp.make_structure('circ_onion',un_x,un_y,
+                                   inc_a_x=d1,
                                 inc_b_x=d2, inc_c_x=d1, inc_d_x=d2, inc_e_x=d1, inc_f_x=d2,
                                 inc_g_x=d1, inc_h_x=d2, inc_i_x=d1, inc_j_x=d2, inc_k_x=d1,
                                 inc_l_x=d2, inc_m_x=d1, inc_n_x=d2, inc_o_x=d1,
@@ -439,29 +456,154 @@ def do_onion(nbapp):
                                 material_g=mat_a, material_h=mat_b, material_i=mat_a, material_j=mat_b,
                                 material_k=mat_a, material_l=mat_b, material_m=mat_a, material_n=mat_b,
                                 material_o=mat_a,
-                            lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide1.plot_mesh('circ_onion_wg')
+                            lc_bkg=.05, lc_refine_2=5)
 
-    # Single mode fiber 
+    frt = 'circ_onionN'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+    #o_circ_onionN_annotate(frt, un_x, un_y, d1, d2, d3)
+
+
+    # Single mode fiber
     un_x = 300
     un_y = 300
     # layer thicknesses
     d1=20
     d2=127/2.
+    d3=d1
 
-    wguide2 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion2',
-                                inc_b_x=d2, 
+    wguide = nbapp.make_structure('circ_onion2',un_x,un_y,
+                                   inc_a_x=d1, inc_b_x=d2,
                             material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
-                            lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide2.plot_mesh('circ_onion2_wg')
+                            lc_bkg=.05, lc_refine_2=5)
 
-    wguide3 = nbapp.make_structure(un_x,d1,un_y,d1,'circ_onion3',
-                                inc_b_x=d2, 
-                                inc_c_x=d3, 
-                            material_bkg=mat_bkg, material_a=mat_a, 
+    frt = 'circ_onion2'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+    do_circ_onion23_annotate(frt, un_x, un_y, d1, d2,2)
+
+    wguide = nbapp.make_structure('circ_onion3',un_x,un_y,
+                                   inc_a_x=d1, inc_b_x=d2, inc_c_x=d3,
+                            material_bkg=mat_bkg, material_a=mat_a,
                                 material_b=mat_b, material_c=mat_c,
-                            lc_bkg=.05, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
-    wguide3.plot_mesh('circ_onion3_wg')
+                            lc_bkg=.05, lc_refine_2=5)
+
+    frt = 'circ_onion3'
+    wguide.plot_mesh(frt+fn_suff_raw)
+    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
+    do_circ_onion23_annotate(frt, un_x, un_y, d1, d2, 3)
+
+
+
+def do_onion23n_annotate(frt, un_x, un_y, d1, d2, lev):
+    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.09116, 0.408,  0.0753, 0.9246,  un_x, un_y)
+
+    # get base coords
+    bumpx = -.0*bw
+    bumpy = +.01*bh
+
+    d1 *= scalx
+    d2 *= scalx
+
+    x0 = (bl+br)/2 + bumpx
+    y0 = (bt+bb)/2 + bumpy
+    dx = (br-bl)/20
+    dy = (bt-bb)/20   # negative value so adding dy moves curso up screen
+
+
+    add_mat_lab(im, bw, bh, 'mat_bkg', x0-4*dx, y0+7*dy)
+    add_mat_lab(im, bw, bh, 'mat_a',   x0-1.25*dx, y0+.75*dy)
+    add_mat_lab(im, bw, bh, 'mat_b',   x0+1.5*dx, y0+3*dy)
+
+
+    add_lc(im, bw, bh, 'lc_bkg', x0-bw/6, bt, 'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2, y0,  'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2-d2, y0,  'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2-d2-d1, y0,  'NW')
+
+
+    c1x1 = x0-d1/2; c1x2 = x0+d1/2
+    y1 = y0-dy; y2=y0-dy
+    add_dim(im, bw, bh, 'inc_a_x', c1x1, y1, c1x2, y2, 'S')
+
+    c2x1 = c1x2; c2x2 = c2x1+d2
+    y1 = y0+dy; y2=y0+dy
+    add_dim(im, bw, bh, 'inc_b_x', c2x1, y1, c2x2, y2, 'N')
+
+    if lev>=3:
+        c3x1 = c2x2; c3x2 = c3x1+d1
+        y1 = y0-dy/2; y2=y0-dy/2
+        add_dim(im, bw, bh, 'inc_c_x', c3x1, y1, c3x2, y2, 'S')
+        add_mat_lab(im, bw, bh, 'mat_c',   x0+1.5*dx, y0-d1-d2)
+
+    if lev>=4:
+        c4x1 = c3x2; c4x2 = c4x1+d2
+        y1 = y0+dy/2; y2=y0+dy/2
+        add_dim(im, bw, bh, 'inc_d_x', c4x1, y1, c4x2, y2, 'N')
+        add_mat_lab(im, bw, bh, 'mat_d',   x0+1.5*dx, y0-d1-d2-d1)
+
+    im.show()
+    im.save(frt+fn_ext_anno)
+
+
+
+
+def do_circ_onion23_annotate(frt, un_x, un_y, d1, d2, lev):
+    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.09116, 0.408,  0.0753, 0.9246,  un_x, un_y)
+
+    # get base coords
+    bumpx = -.0*bw
+    bumpy = +.01*bh
+
+    d1 *= scalx
+    d2 *= scalx
+
+    x0 = (bl+br)/2 + bumpx
+    y0 = (bt+bb)/2 + bumpy
+    dx = (br-bl)/20
+    dy = (bt-bb)/20   # negative value so adding dy moves curso up screen
+
+
+    add_mat_lab(im, bw, bh, 'mat_bkg', x0-4*dx, y0+7*dy)
+    add_mat_lab(im, bw, bh, 'mat_a',   x0-1.25*dx, y0+.75*dy)
+    add_mat_lab(im, bw, bh, 'mat_b',   x0+1.5*dx, y0+3*dy)
+
+
+    add_lc(im, bw, bh, 'lc_bkg', x0-bw/6, bt, 'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2, y0,  'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2-d2, y0,  'SW')
+    add_lc(im, bw, bh, 'lc_2',   x0-d1/2-d2-d1, y0,  'NW')
+
+
+    c1x1 = x0-d1/2; c1x2 = x0+d1/2
+    y1 = y0-dy; y2=y0-dy
+    add_dim(im, bw, bh, 'inc_a_x', c1x1, y1, c1x2, y2, 'S')
+
+    c2x1 = c1x2; c2x2 = c2x1+d2
+    y1 = y0+dy; y2=y0+dy
+    add_dim(im, bw, bh, 'inc_b_x', c2x1, y1, c2x2, y2, 'N')
+
+    if lev>=3:
+        c3x1 = c2x2; c3x2 = c3x1+d1
+        y1 = y0-dy/2; y2=y0-dy/2
+        add_dim(im, bw, bh, 'inc_c_x', c3x1, y1, c3x2, y2, 'S')
+        add_mat_lab(im, bw, bh, 'mat_c',   x0+1.5*dx, y0-d1-d2)
+
+    if lev>=4:
+        c4x1 = c3x2; c4x2 = c4x1+d2
+        y1 = y0+dy/2; y2=y0+dy/2
+        add_dim(im, bw, bh, 'inc_d_x', c4x1, y1, c4x2, y2, 'N')
+        add_mat_lab(im, bw, bh, 'mat_d',   x0+1.5*dx, y0-d1-d2-d1)
+
+    im.show()
+    im.save(frt+fn_ext_anno)
+
+
+
+
+
 
 def do_trapezoid(nbapp):
     un_x = 2000
@@ -474,7 +616,7 @@ def do_trapezoid(nbapp):
 
     wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'trapezoidal_rib',
                                 slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                            material_bkg=mat_bkg, material_a=mat_a, 
+                            material_bkg=mat_bkg, material_a=mat_a,
                                 material_b=mat_b,
                             lc_bkg=.05, lc_refine_1=10, lc_refine_2=10)
     wguide3.plot_mesh('trapezoidal_rib_wg')
@@ -509,9 +651,9 @@ def do_main():
 
     #do_oneincl(nbapp)
     #do_twoincl(nbapp)
-    do_rib(nbapp)
+    #do_rib(nbapp)
     #do_slot(nbapp)
-    #do_onion(nbapp)
+    do_onion(nbapp)
     #do_trapezoid(nbapp)
     #do_pedestal(nbapp)
 

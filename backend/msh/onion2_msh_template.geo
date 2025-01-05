@@ -14,6 +14,7 @@ a3 = 100;
 
 a1r = a1/2; // Radius of central rod
 scale = d/dx_in_nm;
+
 rad1 = a1r * scale;
 rad2 = (a1r+a2)*scale;
 
