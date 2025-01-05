@@ -2,7 +2,7 @@
 # these represent dispersive lossy refractive indices and possess
 # methods to interpolate n from tabulated data.
 
-# Copyright (C) 2017  Bjorn Sturmberg, Kokou Dossou.
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

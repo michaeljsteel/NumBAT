@@ -1,7 +1,7 @@
 # objects.py is a subroutine of NumBAT. It contains the Struct
 # objects that represent the structure being simulated.
 
-# Copyright (C) 2017  Bjorn Sturmberg, Kokou Dossou.
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

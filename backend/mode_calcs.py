@@ -1,7 +1,7 @@
 # mode_calcs.py is a subroutine of NumBAT that contains methods to
 # calculate the EM and Acoustic modes of a structure.
 
-# Copyright (C) 2017 Bjorn Sturmberg, Kokou Dossou.
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 
 
 import copy

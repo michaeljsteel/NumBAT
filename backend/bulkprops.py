@@ -1,3 +1,18 @@
+# Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
+
+# NumBAT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+
 import numpy as np
 import scipy.linalg
 
@@ -14,9 +29,8 @@ def power_flux_christoffel(kapv, v_p, evec, c_stiff):
     # Evaluate the S_I 6x1 vector, Auld 1.50, 1.49
     S_I = 1j * np.matmul(voigt.kvec_to_symmetric_gradient(kapv), evec)
 
-    T_I = np.matmul(
-        c_stiff.value(), S_I
-    )  # Auld 3.20   # Indices off by 1 from zero count
+    # Auld 3.20   # Indices off by 1 from zero count
+    T_I = np.matmul(c_stiff.value(), S_I)
 
     T_ij = voigt.stress_6col_to_3mat(T_I)
 
@@ -32,7 +46,8 @@ def power_flux_christoffel(kapv, v_p, evec, c_stiff):
     Pcomp = -0.5 * 1j * np.matmul(np.conj(evec), T_ij)
 
     # u_s = 1/2  k^2 S_I c_IJ SJ  # Auld, 5.35
-    u_s = 0.5 * np.matmul( np.matmul(S_I, c_stiff.value()), S_I)  # real vs complex fields?
+    # real vs complex fields?
+    u_s = 0.5 * np.matmul(np.matmul(S_I, c_stiff.value()), S_I)
 
     # vg = Pcomp/u_s ->  Pcomp/us   (omega k)/(k^2) = v_p Pcomp/us
     v_g = -np.real(v_p * Pcomp / u_s)
