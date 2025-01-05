@@ -599,8 +599,7 @@ The installer is not updated as frequently as the main source tree.
 #. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
     say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
 
-#. Use the Start Menu to open the *Acaconda prompt*.
-   This is simply a Windows terminal with some Anaconda python environment variables pre-defined.
+#. Use the Start Menu to open a Windows terminal.
 
 #. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands::
 
@@ -614,11 +613,11 @@ The installer is not updated as frequently as the main source tree.
 
    Run the installer choosing an install directory in the ``<NumBAT_BASE>\nb_releases`` folder.
 
-#. In the Anaconda terminal, change directory to the newly installed |NUMBAT| folder.
+#. In your Windows terminal, change directory to the newly installed |NUMBAT| folder.
 
 #. Activate your python environment and then move to the |NUMBAT| tutorials directory::
 
-      $ conda activate nbpy3
+      $ %HOMEPATH%\npby3\Scripts\activate
       $ cd tutorials
 
 #. You should now be able to run a |NUMBAT| calculation::
