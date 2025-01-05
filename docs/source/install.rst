@@ -361,40 +361,43 @@ methods of installing |NUMBAT| itself.
 Setting up Python on Windows
 -------------------------------------
 
-The standard Python solution for Windows is the Anaconda distribution.  Proceed as follows.
+Python installers can be downloaded from the `Python website <https://www.python.org/downloads/windows/>`_.
 
 
-  #. If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
+  #. If you do not have a current Python, download and run the installer for a recent version
+  from the `Python website <https://www.python.org/downloads/windows/>`_.
+
+  By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
+  say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
   #. Create a python virtual environment for working with |NUMBAT|.
       You can use any name and location for your environment.
 
-    **Note:** Here we show the procedure for the Anaconda system.
+    To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app)
+    from the Start Menu and  enter ::
 
-    To specify a virtual environment tree called `nbpy3`, open the *Anaconda prompt* from the Start Menu
-    and  enter ::
+        $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
-        $ conda create --name nbpy3
-
-    Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
-
-    Also curiously, the bare virtual environment does not actually contain Python so we have to install that along with some other libraries.
 
   #. Activate the new python virtual environment ::
 
-       $ conda activate nbpy3
+       $ %HOMEPATH%\npby3\Scripts\activate
 
   #. Install the necessary python tools and libraries ::
 
-     $ conda install python pip
-     $ conda install conda-forge::make
-     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
-     $ pip3 install meson==1.4.1
+     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja meson==1.4.1
 
    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
+   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet
+   supported by some other packages we use.
+
+  #. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing
+
+     $ winget install ezwinports.make
+
+    and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
 
   #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
 
@@ -633,7 +636,7 @@ If you plan to build the fortran code frequently,
 both the python and Intel oneAPI paths need to be set up in your terminal.
 Doing this manually requires typing::
 
-    $ conda activate nbpy3
+    $ %HOMEPATH%\npby3\Scripts\activate
     $ c:\Program Files (x86)\Intel\oneAPI\setvars.bat
 
 This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.

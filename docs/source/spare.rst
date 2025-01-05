@@ -102,3 +102,40 @@ The PID is found from one of two ways::
     \clearpage
 
 
+
+The standard Python solution for Windows is the Anaconda distribution.  Proceed as follows.
+
+
+  #. If you do not have a current Python, download the `Anaconda installer <https://docs.anaconda.com/free/anaconda/install/windows/>`_ and follow the instructions.
+
+
+  #. Create a python virtual environment for working with |NUMBAT|.
+      You can use any name and location for your environment.
+
+    **Note:** Here we show the procedure for the Anaconda system.
+
+    To specify a virtual environment tree called `nbpy3`, open the *Anaconda prompt* from the Start Menu
+    and  enter ::
+
+        $ conda create --name nbpy3
+
+    Note that unlike on Linux or MacOS, the virtual environment is stored within your Anaconda tree and will not be visible in your folder.
+
+    Also curiously, the bare virtual environment does not actually contain Python so we have to install that along with some other libraries.
+
+  #. Activate the new python virtual environment ::
+
+       $ conda activate nbpy3
+
+  #. Install the necessary python tools and libraries ::
+
+     $ conda install python pip
+     $ conda install conda-forge::make
+     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja
+     $ pip3 install meson==1.4.1
+
+   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+
+   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet supported by other packages we use.
+
+  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
