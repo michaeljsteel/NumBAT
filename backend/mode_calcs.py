@@ -1205,7 +1205,7 @@ class ACSimulation(Simulation):
                         "Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
                         "\n using slow quadrature integration by default.\n\n",
                     )
-                Fortran_debug = 0
+
                 # not sure why this is needed by ac_alpha_int
                 # overlap = np.zeros(self.n_modes, dtype=complex)
                 resm = nb_fortran.ac_alpha_quadrature(

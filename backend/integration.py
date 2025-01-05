@@ -388,7 +388,6 @@ def gain_and_qs(
     sim_EM_Stokes = simres_EM_Stokes._sim
     sim_AC = simres_AC._sim
 
-    Fortran_debug = 0
     ncomps = 3
 
     n_modes_EM_pump = sim_EM_pump.n_modes

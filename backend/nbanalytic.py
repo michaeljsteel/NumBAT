@@ -997,9 +997,9 @@ class ElasticSlab:
     '''
 
     def __init__(self, mat_s, mat_f, mat_c, wid):
-        self._mats = mats  # substrate material
-        self._matf = matf  # film material
-        self._matc = matc  # cover material
+        self._mats = mat_s  # substrate material
+        self._matf = mat_f  # film material
+        self._matc = mat_c  # cover material
         self._wid = wid    # width
 
 

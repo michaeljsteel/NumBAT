@@ -308,9 +308,9 @@ def launch_worker_processes_and_wait(num_workers, task_func,
     report_progress = True
     # verbose=True
 
-    # TODO: turned off access to numbat to avoid circulat import dependency
+    # TODO: turned off access to numbat to avoid circular import dependency
     #do_multiproc = numbat.NumBATApp().can_multiprocess()
-
+    do_multiproc = True
 
     # Launch processes and keep copies
 

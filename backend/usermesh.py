@@ -17,16 +17,12 @@
 import uuid
 import os
 from pathlib import Path
+import numbers
 
 import reporting
 
 def is_real_number(x):
-    #return isinstance(x, (int, float))  # need numpy.int32, int36, float64, etc
-    try:
-        xx = float(x)
-        return True
-    except Exception:
-        return False
+    return isinstance(x, numbers.Real)  # need numpy.int32, int36, float64, etc
 
 class UserGeometryBase():
 
@@ -98,7 +94,7 @@ class UserGeometryBase():
 
                 msg+= '\n\nNote that some waveguide types have changed their required parameters to adopt more intuitive names.'
 
-                msg+=f'\n\nFor this waveguide type, the following guidelines apply:\n\n'
+                msg+='\n\nFor this waveguide type, the following guidelines apply:\n\n'
 
                 msg+=self.get_parameter_help_string()
 

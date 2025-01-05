@@ -21,7 +21,6 @@ import math
 from pathlib import Path
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 #import matplotlib.colors as mplcolors
@@ -35,22 +34,6 @@ import reporting
 
 from plottools import save_and_close_figure
 from plotmodes import Decorator
-
-
-# setting this true is useful for use in jupyter style notebooks. TODO: Make a nicer interface
-keep_plots_open = False
-
-# TODO: make this some kind of global numbat setting and get it out of the startup space
-try:
-    # Location search path is at matplotlib.get_configdir()
-    # Will load from ~/.config/matplotlib/NumBATstyle.mplstyle if found
-    plt.style.use('NumBATstyle')
-except (ValueError, IOError, AttributeError) as err:
-    print("Preferred NumBAT matplotlib style file not found. Using matplotlib defaults.")
-
-mycolors = [color['color'] for color in list(plt.rcParams['axes.prop_cycle'])]
-
-
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
@@ -178,7 +161,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         v_nu_loc = np.real(sim_AC.nu_AC(m) + detuning_range)
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
         v_gain_loc = np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]) * v_Lorentz
-        lor_glob = np.interp(nu_grid, v_nu_loc, v_Lorentz)
+        #lor_glob = np.interp(nu_grid, v_nu_loc, v_Lorentz)
 
         if mode_comps:
             ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
