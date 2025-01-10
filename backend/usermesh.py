@@ -28,7 +28,8 @@ class UserGeometryBase():
 
     def __init__(self, params, d_materials):
         self._shape_name = ''
-        self._num_materials=0
+        self._num_materials=0          # actual number of materials defined
+        self._num_req_materials = 0    # number of materials required by the template
         self._is_curvilinear=False
         self._d_materials = d_materials
         self._d_params = params
@@ -37,14 +38,12 @@ class UserGeometryBase():
 
         self._req_params =[]
         self._allowed_params =[]
-        self._num_req_materials = 0
+        self.d_param_help = {}
 
-    #def set_properties(self, nm, n_materials, is_curvi, desc):
-    def set_properties(self, nm, desc, is_curvi=False):
-        self.set_name(nm)
-        #self.set_num_type_materials(n_materials)
-        self.set_is_curvilinear(is_curvi)
-        self.set_description(desc)
+    def set_properties(self, nm, is_curvi=False):
+        self._shape_name = nm
+        self._is_curvilinear = is_curvi
+        self._descrip = self.__doc__
 
     def set_required_parameters(self, l_nms, num_req_mats):
         self._req_params.extend(['domain_x','domain_y', 'lc_bkg'])
@@ -68,13 +67,13 @@ class UserGeometryBase():
             'domain_y': "length of simulation domain along y"}
         self.d_param_help.update(d_help)
 
-    def help_on_parameters(self):
-        print(self.get_parameter_help_string())
+    def get_parameter_help_summary(self):
+        head = f'Waveguide parameters for shape {self._shape_name}:\n'
+        #for k,v in self.d_param_help.items():
+        #    msg += f'{k:>20} : {v}\n'
+        body = '\n'.join([f'{k:>20} : {v}' for k,v in self.d_param_help.items()])
 
-    def get_parameter_help_string(self):
-        msg = f'Waveguide parameters for shape {self._shape_name}:\n'
-        for k,v in self.d_param_help.items():
-            msg += f'{k:>20} : {v}\n'
+        msg = head + body
         return msg
 
     def check_parameters(self, user_params):
@@ -89,13 +88,11 @@ class UserGeometryBase():
 
         for key in reqkws:
             if key not in user_params:
-                msg =f"Waveguide type '{self._shape_name}' requires a value for the parameter '{key}' in the call to make_structure()."
+                msg =(f"Waveguide type '{self._shape_name}' requires a value for the parameter '{key}' in the call to make_structure()."
+                      '\n\nNote that some waveguide types have changed their required parameters to adopt more intuitive names.'
+                      '\n\nFor this waveguide type, the following guidelines apply:\n\n')
 
-                msg+= '\n\nNote that some waveguide types have changed their required parameters to adopt more intuitive names.'
-
-                msg+='\n\nFor this waveguide type, the following guidelines apply:\n\n'
-
-                msg+=self.get_parameter_help_string()
+                msg+=self.get_parameter_help_summary()
 
                 reporting.report_and_exit(msg)
 
@@ -120,60 +117,32 @@ class UserGeometryBase():
 
         if not dims_ok: reporting.report_and_exit(f'There is a problem with the waveguide structure:\n{msg}')
 
-    #def set_num_type_materials(self, n):
-    #    self._num_materials = n
-
-    def set_is_curvilinear(self, b):
-        self._is_curvilinear = b
-
-    def set_name(self, nm):
-        self._shape_name = nm
-
-    def set_description(self, desc):
-        self._descrip = desc
-
     def get_param(self, k):
         return self._d_params.get(k, None)
-
-    def geom_name(self):
-        return self._shape_name
 
     def gmsh_template_filename(self):
         if self._gmsh_template_filename:
             return self._gmsh_template_filename
         else:
-            return self.geom_name()
-
-    def num_type_materials(self):
-        return self._num_materials
-
-    def is_curvilinear(self):
-        return self._is_curvilinear
+            return self._shape_name
 
     def __str__(self):
         return self._descrip
 
-    def apply_parameters(self):
-        print('IMPLEMENT ME', __file__, 'make_geometry')
-        return ''
-
     def make_geometry(self, p_dir_templates):
         subs = self.apply_parameters()
-
-  #$      msh_template = self.wg_geom.gmsh_template_filename()
-#$
-    #        geo = self._load_mesh_template(msh_template)
+        #if subs is None:
+        #    subs = self._param_subs
 
         geo = open(Path(p_dir_templates,
                    f'{self.gmsh_template_filename()}_msh_template.geo'), 'r').read()
 
-        for (olds, news, val) in subs:
-            if val is None:  # unset value not overridden or dropped
-                continue
-            elif is_real_number(val):
-                geo = geo.replace(olds, news % val)
-            else:
-                geo = geo.replace(olds, news)
+        for (olds, news, sval) in subs:
+            val = self.get_param(sval)
+
+            assert is_real_number(val), f'Parameter {sval} is not a number'
+
+            geo = geo.replace(olds, news % val)
 
         return geo
 
@@ -193,7 +162,21 @@ class UserGeometryBase():
 
         return msh_fname
 
-    def draw_mpl_frame(self, ax):
+
+
+    # Methods to be overridden by derived classes
+
+    def init_geometry(self):
+        print('IMPLEMENT ME', __file__, 'make_geometry')
+        raise NotImplementedError('UserGeometryBase.init_geometry() must be overriden')
+        return ''
+
+    def apply_parameters(self):
+        print('IMPLEMENT ME', __file__, 'make_geometry')
+        raise NotImplementedError('UserGeometryBase.apply_parameters() must be overriden')
+        return ''
+
+    def draw_mpl_frame(self, ax): # optional method
         '''Add elements to a matplotlib axis to draw outline of the structure'''
         pass
         # print('base class drawmplframe on ', ax)

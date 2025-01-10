@@ -362,7 +362,7 @@ class Structure:
 
                 wg_geom.init_geometry()
 
-                n_mats_em = wg_geom.num_type_materials()  # This is number of distinct materials == element types materials declared by the template
+                n_mats_em = wg_geom._num_materials  # This is number of distinct materials == element types materials declared by the template
 
                 assert n_mats_em > 0, 'No active materials defined in the waveguide geometry.'
 
@@ -377,10 +377,10 @@ class Structure:
         self.curvilinear_element_shapes = []
 
         if wg_geom is not None:
-            if wg_geom.is_curvilinear():
-                self.curvilinear_element_shapes.append(wg_geom.geom_name())
+            if wg_geom._is_curvilinear:
+                self.curvilinear_element_shapes.append(wg_geom._shape_name)
             else:
-                self.linear_element_shapes.append(wg_geom.geom_name())
+                self.linear_element_shapes.append(wg_geom._shape_name)
 
         wg_geom.check_parameters(params)
         wg_geom.validate_dimensions()
@@ -757,4 +757,4 @@ def print_waveguide_help(inc_shape):
             # Instantiate the class that defines this waveguide model
             wg_geom = wg['wg_template_cls'](None, None)
             wg_geom.init_geometry()
-            wg_geom.help_on_parameters()
+            print(wg_geom.get_parameter_help_summary())
