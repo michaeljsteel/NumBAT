@@ -53,7 +53,6 @@ class UserGeometryBase():
         self._num_materials = max(self._num_materials, num_req_mats)
 
     def set_allowed_parameters(self, l_nms, num_allowed_mats=0):
-
         self._allowed_params.extend(l_nms)
 
         num_allowed_mats = max(num_allowed_mats, self._num_req_materials)

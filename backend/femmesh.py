@@ -578,6 +578,7 @@ class FEMScalarFieldPlotter:
         mati_to_scalar is indexed from 0 with 0 being the vacuum material
         """
 
+        print('matiscal', mati_to_scalars.shape, mati_to_scalars)
         # make both scalar and vector inputs usable
         if self.dim > 1:
             mati_to_vals = mati_to_scalars

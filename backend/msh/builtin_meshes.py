@@ -644,6 +644,26 @@ class Pedestal(UserGeometryBase):
         desc = '''A NumBAT geometry template for a pedestal-type waveguide.'''
         self.set_properties('pedestal', desc)
 
+        self.set_required_parameters(['inc_a_x', 'inc_b_x', 'inc_c_x',
+                                      'slab_a_x', 'slab_b_x', 'pillar_x', 'pillar_y'], num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2'])
+
+        self.set_parameter_help(
+            {
+                'inc_a_x' : "width of the top of the rib",
+                'inc_a_y' : "height of the top of the rib",
+                'slab_a_x': "width of the middle of the rib",
+                'slab_a_y': "height of the middle of the rib",
+                'material_bkg': "material of background",
+                'material_a': "material of rib",
+                'material_b': "material of slab",
+                'material_c': "material of pillar",
+
+                'lc': "grid points arounds boundary as fraction of domain_x",
+                'lc_refine1': "refined density along upper rib",
+                'lc_refine2': "refined density along buried rib",
+                }
+            )
 
 
     def apply_parameters(self):
@@ -678,40 +698,41 @@ class TrapezoidalRib(UserGeometryBase):
     def init_geometry(self):
         desc = '''A NumBAT geometry template for a trapezoidal_rib waveguide.
 
-        Geometric parameters are:
-
-          # inc_a_x  - width of the top of the rib
-          # inc_a_y  - height of the top of the rib
-          # slab_a_x - width of the middle of the rib
-          # slab_a_y - height of the buried part of the rib
-
-        Materials are:
-          # material_bkg - background
-          # material_a   - rib
-          # material_b   - substrate
-
-        Grid parameters are:
-          # lc          - grid points arounds boundary as fraction of domain_x
-          # lc_refine1  - refined density along upper rib
-          # lc_refine2  - refined density along buried rib
-
-          # Adjust so that the bottom of the emerging rib takes its grid from the buried part
         '''
+
         self.set_properties('trapezoidal_rib', desc)
 
+        self.set_required_parameters(['rib_top_width', 'rib_height',
+                                      'rib_base_width', 'slab_width', 'slab_thickness'], num_req_mats=4)
+        self.set_allowed_parameters(['lc_bkg', 'lc_refine_1', 'lc_refine_2'])
+
+        self.set_parameter_help(
+            {
+                'rib_top_width' : "width of the top of the rib",
+                'rib_height' : "height of the top of the rib",
+                'rib_base_width': "width at base of the rib",
+                'slab_width': "width of the slab",
+                'slab_thickness': "thickness of the slab",
+                'material_bkg': "material of background",
+                'material_a': "material of elevated rib",
+                'material_b': "material of buried rib",
+                'material_c': "material of substrate",
+
+                'lc': "grid points arounds boundary as fraction of domain_x",
+                'lc_refine1': "refined density along upper rib",
+                'lc_refine2': "refined density along buried rib",
+                }
+            )
 
     def apply_parameters(self):
-        # msh_name = self.get_param('_make_mesh_name(self._mesh_name,
-        #                                 (self.get_param('domain_x, self.get_param('inc_a_x,
-        #                                  self.get_param('inc_a_y, self.get_param('slab_a_x, self.get_param('slab_a_y))
 
         subs = [    ('dx_in_nm = 4000.0;', 'dx_in_nm = %f;',  self.get_param('domain_x'))]
         subs.append(('dy_in_nm = 2000.0;', 'dy_in_nm = %f;', self.get_param('domain_y')))
-        subs.append(('top_rib_width = 600.0;',     'top_rib_width = %f;',    self.get_param('inc_a_x')))
-        subs.append(('mid_rib_width = 900.0;',     'mid_rib_width = %f;',    self.get_param('slab_a_x')))
-        subs.append(('bottom_rib_width = 1800.0;', 'bottom_rib_width = %f;', self.get_param('slab_b_x')))
-        subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('inc_a_y')))
-        subs.append(('slab_thickness = 300.0;',    'slab_thickness = %f;',   self.get_param('slab_a_y')))
+        subs.append(('rib_top_width = 600.0;',     'rib_top_width = %f;',    self.get_param('rib_top_width')))
+        subs.append(('rib_base_width = 900.0;',     'rib_base_width = %f;',    self.get_param('rib_base_width')))
+        subs.append(('rib_height = 500.0;',        'rib_height = %f;',       self.get_param('rib_height')))
+        subs.append(('slab_width = 1800.0;', 'slab_width = %f;', self.get_param('slab_width')))
+        subs.append(('slab_thickness = 300.0;',    'slab_thickness = %f;',   self.get_param('slab_thickness')))
 
         subs.append(('lc = 0.020000;',         "lc = %f;", self.get_param('lc_bkg')))
         subs.append(('lc_refine_1 = lc/10.0;', "lc_refine_1 = lc/%f;", self.get_param('lc_refine_1')))
@@ -723,7 +744,7 @@ class TrapezoidalRib(UserGeometryBase):
 
         dom_x = self.get_param('domain_x')
         dom_y = self.get_param('domain_y')
-        rib_wbot = self.get_param('slab_b_x')
+        rib_wbot = self.get_param('rib_base_width')
 
         # TODO: more  checks
 
