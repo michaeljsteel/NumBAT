@@ -384,17 +384,57 @@ def add_contour_plot(fig, ax, d_xy, c_field, cc_cont, plps, decorator):
 
     return im_co, cbar
 
-def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
-
+def _make_quiver_slices(v_x, v_y, plps, deftrim):
     quiver_points = plps.get('quiver_points', 20)
+    n_pts_x, n_pts_y = len(v_x), len(v_y)
 
-    # give a little space around elastic profiles
-    deftrim = -.05 if cc._F=='u' else 0.0
+    # grid points to skip for each arrow
+    # get y points spaced as closely as possible to x points for a square grid
+    quiver_points_x = quiver_points
+    quiver_points_y = round(quiver_points*(v_y[-1]-v_y[0])/(v_x[-1]-v_x[0]))
+
+    #Scale so they look good for any aspect ratio, by adding points on the elongated axis
+    asp = abs(plps['aspect'])
+    if asp<1:
+        quiver_points_x = round(quiver_points_x/asp)
+    if asp>1:
+        quiver_points_y = round(quiver_points_y*asp)
+
+    # To keep things safe, have at least 3 points in each direction
+    # If get_quiver_skip_range was safer, this wouldn't be necessary
+    quiver_points_x = max(3, quiver_points_x)
+    quiver_points_y = max(3, quiver_points_y)
+
+    # We could define quiver_points vanilla as the number along the _visible_ x range accounting for trim
+    #  or along the whole x range before trimming.
+    # We choose the latter so trim doesn't change the spacing
 
     xlmi = plps.get('xlim_min', deftrim)
     xlma = plps.get('xlim_max', deftrim)
     ylmi = plps.get('ylim_min', deftrim)
     ylma = plps.get('ylim_max', deftrim)
+
+    quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
+    quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
+
+    #dx= v_x[1]-v_x[0]
+    #dy= v_y[1]-v_y[0]
+    #print('domx domy dx dy', v_x[-1]-v_x[0], v_y[-1]-v_y[0], dx, dy)
+
+    #print('quivptsn, quivskipn, quivskipL', quiver_points_x, quiver_points_y,
+    #      quiver_skip_x, quiver_skip_y, quiver_skip_x*dx, quiver_skip_y*dy)
+
+    # getting a nice symmetric pattern of points to do quivers centred around the middle
+    qslice_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
+    qslice_y = get_quiver_skip_range(n_pts_y, quiver_skip_y)
+
+    return qslice_x, qslice_y
+
+def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
+
+
+    # give a little space around elastic profiles
+    deftrim = -.05 if cc._F=='u' else 0.0
 
     v_x, v_y, m_x, m_y = d_xy.values()
 
@@ -408,45 +448,24 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     #         [y1, y1, y1, ...]
     #         [y2, y2, y2, ...]
 
-    n_pts_x, n_pts_y = len(v_x), len(v_y)
 
 
     # TODO: spend a day getting truly perfect spacings of grid poitns
     #         and trying to figure out the scaling and arrow head settings once and for all
 
-    # grid points to skip for each arrow
-    # this could probably be chosen nicer. make equally spaced on aspect=1?
-    quiver_points_x = quiver_points
-    #quiver_points_y = int(quiver_points*plps['aspect'])
-    #quiver_points_y = quiver_points
-    # get y points spaced as closely as possible to x points for a square grid
-    quiver_points_y = round(quiver_points*(v_y[-1]-v_y[0])/(v_x[-1]-v_x[0]))
+    qslice_x, qslice_y = _make_quiver_slices(v_x, v_y, plps, deftrim)
 
-    #TODO: i think this correction needs to take place before the previous line
-    # Define quiver_points vanilla as the number along the _visible_ x range accounting for trim
-    #  Or along the whole x range before trim? Probably the latter so trim doesn't change the spacing
-
-    quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
-    quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
-
-    #dx= v_x[1]-v_x[0]
-    #dy= v_y[1]-v_y[0]
-    #print('dxdy', dx, dy, quiver_skip_x, quiver_skip_y, quiver_skip_x*dx, quiver_skip_y*dy)
-    # getting a nice symmetric pattern of points to do quivers centred around the middle
-    qrange_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
-    qrange_y = get_quiver_skip_range(n_pts_y, quiver_skip_y)
-
-    #print('pts', n_pts_x, n_pts_y, m_x.shape, m_y.shape, v_fields['Fxr'].shape, qrange_x, #qrange_y)
-    v_x_q = v_x[qrange_x]
-    v_y_q = v_y[qrange_y]
-    m_x_q = (m_x.T)[qrange_x[:, np.newaxis], qrange_y]  # TODO: track down why m_x/y need .T but fields don't
-    m_y_q = (m_y.T)[qrange_x[:, np.newaxis], qrange_y]
+    #print('pts', n_pts_x, n_pts_y, m_x.shape, m_y.shape, v_fields['Fxr'].shape, qslice_x, qslice_y)
+    v_x_q = v_x[qslice_x]
+    v_y_q = v_y[qslice_y]
+    m_x_q = (m_x.T)[qslice_x[:, np.newaxis], qslice_y]  # TODO: track down why m_x/y need .T but fields don't
+    m_y_q = (m_y.T)[qslice_x[:, np.newaxis], qslice_y]
 
     # TODO: why no transpose on these fields?
-    m_ReEx_q = v_fields['Fxr'][qrange_x[:, np.newaxis], qrange_y]
-    m_ReEy_q = v_fields['Fyr'][qrange_x[:, np.newaxis], qrange_y]
-    #m_ImEx_q = v_fields['Fxi'][qrange_x[:, np.newaxis], qrange_y]
-    #m_ImEy_q = v_fields['Fyi'][qrange_x[:, np.newaxis], qrange_y]
+    m_ReEx_q = v_fields['Fxr'][qslice_x[:, np.newaxis], qslice_y]
+    m_ReEy_q = v_fields['Fyr'][qslice_x[:, np.newaxis], qslice_y]
+    #m_ImEx_q = v_fields['Fxi'][qslice_x[:, np.newaxis], qslice_y]
+    #m_ImEy_q = v_fields['Fyi'][qslice_x[:, np.newaxis], qslice_y]
 
 
     # Ignore all imaginary values. If there are significant imag values,
@@ -730,7 +749,6 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
         cc_transvec = None
         cc_scal = cc
 
-    print(cc_scal, cc_transvec)
     plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
                             cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
 
