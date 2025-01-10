@@ -8,11 +8,12 @@ dx_in_nm = 4000.0; // total width
 dy_in_nm = 2000.0; // total height
 
 
-top_rib_width = 600.0;
-mid_rib_width = 900.0;
-bottom_rib_width = 1800.0;
+rib_top_width = 600.0;
+rib_base_width = 900.0;
 rib_height = 500.0;
+
 slab_thickness = 300.0;
+slab_width = 1800.0;
 
 //Scaled dimensions
 dy = dy_in_nm/dx_in_nm;  // height (fraction or width)
@@ -34,22 +35,22 @@ Point(3) = {1+x0, -dy+y0, 0, lc};
 Point(4) = {1+x0, 0+y0, 0, lc};
 
 // slab (burried part of the rib)
-Point(5) = {.5+x0-bottom_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
-Point(6) = {.5+x0+bottom_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
-Point(13) = {.5+x0-bottom_rib_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
-Point(14) = {.5+x0+bottom_rib_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
+Point(5) = {.5+x0-slab_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
+Point(6) = {.5+x0+slab_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
+Point(13) = {.5+x0-slab_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
+Point(14) = {.5+x0+slab_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
 
 // sticking out part of the rib
-Point(20) = {.5+x0-mid_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
-Point(21) = {.5+x0+mid_rib_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
-Point(22) = {.5+x0-top_rib_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
-Point(23) = {.5+x0+top_rib_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
+Point(20) = {.5+x0-rib_base_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
+Point(21) = {.5+x0+rib_base_width/dx_in_nm/2., hy2+y0, 0, lc_refine_1};
+Point(22) = {.5+x0-rib_top_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
+Point(23) = {.5+x0+rib_top_width/dx_in_nm/2., hy2+y0+rib_height/dx_in_nm, 0, lc_refine_1};
 
 Point(11) = {0+x0, hy2+y0, 0, lc};
 Point(12) = {1+x0, hy2+y0, 0, lc};
 
-Point(24) = {.5+x0+top_rib_width/dx_in_nm/2., y0, 0, lc};
-Point(25) = {.5+x0-top_rib_width/dx_in_nm/2., y0, 0, lc};
+Point(24) = {.5+x0+rib_top_width/dx_in_nm/2., y0, 0, lc};
+Point(25) = {.5+x0-rib_top_width/dx_in_nm/2., y0, 0, lc};
 
 
 Line(1) = {2, 3};
