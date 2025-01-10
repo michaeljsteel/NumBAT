@@ -681,14 +681,18 @@ class Material(object):
         plt.close(fig)
 
     def plot_bulk_dispersion(self, pref, label=None, show_poln=True):
-        """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal (x-z) plane for the crystal axes current orientation.
+        """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal
+        (x-z) plane for the crystal axes current orientation.
 
-        Solving the Christoffel equation: D C D^T u = -\rho v_p^2 u, for eigenvalue v_p and eigengector u.
+        Solving the Christoffel equation: D C D^T u = -\rho v_p^2 u, for eigenvalue v_p
+        and eigengector u.
+
         C is the Voigt form stiffness.
         D = [
         [kapx  0   0   0  kapz  kapy  ]
         [0   kapy  0   kapz 0   kapx  ]
         [0   0   kapz  kapy kapx  0]] where kap=(cos phi, 0, sin phi).
+
         """
 
         fig, axs = setup_bulk_dispersion_2D_plot()
@@ -924,40 +928,48 @@ class Material(object):
         subprocess.run(["asy", fn.name, "-o", f"{pref}-crystal"], check=False)
 
     def plot_photoelastic_IJ(self, prefix, v_comps):
-        # v_comps is a list of strings of desired elements: "11", "12", "31" etc
+        """ Plot photoelastic tensor components as a function of rotation angle about y-axis.
+
+        Args:
+            prefix (str): Prefix for output file names.
+            v_comps (list): List of strings of desired elements: "11", "12", "31" etc
+
+        """
 
         npts = 200
 
         fig, ax = plt.subplots(dpi=200, subplot_kw={'projection':'polar'}, figsize=(4,4))
-        #ax = fig.add_subplot(projection='polar')
         # fig.subplots_adjust(hspace=.35, wspace=0)
-        d_p_vecs = {}
+
+        d_p_vecs = {}  # map of "IJ" strings -> (el_IJ, np.zeros(npts))
 
         for s_elt in v_comps:
             if len(s_elt) !=2:
                 reporting.report_and_exit('Bad photoelastic tensor index: {s_elt}.')
-            el_IJ=(int(s_elt[0]), int(s_elt[1]))
-            if el_IJ[0] not in range(1,7) or el_IJ[1] not in range(1,7):
-                reporting.report_and_exit('Bad photoelastic tensor index: {s_elt}.')
-            d_p_vecs[s_elt] = (el_IJ, np.zeros(npts))
 
-        self.photoel_p_IJ
+            el_IJ=(int(s_elt[0]), int(s_elt[1]))
+
+            if set(el_IJ) <= set(range(1,7)): # all elements are in range 1-6
+            #if el_IJ[0] not in range(1,7) or el_IJ[1] not in range(1,7): #TODO express as a set operation
+                reporting.report_and_exit('Bad photoelastic tensor index: {s_elt}.')
+
+            d_p_vecs[s_elt] = (el_IJ, np.zeros(npts))
 
         mat0 = copy.deepcopy(self)
         haty=np.array([0,1,0])
 
         v_phi = np.linspace(0.0, np.pi * 2, npts)
-        for iv, phi in enumerate(v_phi):
+        for iphi, phi in enumerate(v_phi): # for all angles around the circle
             t_mat = copy.deepcopy(mat0)
             t_mat.rotate(haty, phi)
 
-            for (k,v) in d_p_vecs.items():
+            for (k,v) in d_p_vecs.items(): # extract the desired p_IJ components
                 (I,J) = v[0]
-                v[1][iv] = t_mat.photoel_p_IJ[I,J]
+                v[1][iphi] = t_mat.photoel_p_IJ[I,J]
 
         for (k,v) in d_p_vecs.items():
-            v_pIJ = v[1]
             (I,J) = v[0]
+            v_pIJ = v[1]
 
             lab = '$p_{' + f'{I},{J}' + '}$'
             plt.polar(v_phi, v_pIJ,  label=lab, lw=.5)
