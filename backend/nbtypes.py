@@ -138,7 +138,6 @@ class component_t(object):
         else:
             uc = 'u'+cc
         t_cc = component_t(uc)
-        print('making ', cc, t_cc._f_code)
         return t_cc
 
 
