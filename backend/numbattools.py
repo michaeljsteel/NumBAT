@@ -17,18 +17,17 @@
 
 import numpy as np
 import scipy.integrate as sciint
-
+import math
+import subprocess
 
 import reporting
 
 
 def almost_zero(x, tol=1e-10):
-    return abs(x) < tol
-
+    return math.isclose(x, 0, abs_tol=tol)
 
 def almost_unity(x, tol=1e-10):
-    return abs(1 - x) < tol
-
+    return math.isclose(x, 1, abs_tol=tol)
 
 def np_min_max(v):
     return np.min(v), np.max(v)
@@ -59,3 +58,27 @@ def process_fortran_return(resm, msg):
         return resm[:-2]
 
 
+
+
+def run_subprocess(cmd, proc_name, cwd='', exit_on_fail=True):
+    try:
+        comp_stat = subprocess.run(cmd, cwd=cwd)
+        if comp_stat.returncode and exit_on_fail:
+            tcmd = ' '.join(cmd)
+            reporting.report_and_exit(f'{proc_name} call failed executing: "{tcmd}".')
+    except subprocess.CalledProcessError as e:
+        reporting.report_and_exit(f"Error occurred while running {proc_name}: {e}")
+
+    return comp_stat.returncode
+
+
+def f2f_with_subs(fn_in, fn_out, d_subs):
+
+    with open(fn_in, 'r') as fin:
+        conv_tmp = fin.read()
+
+    for k, v in d_subs.items():
+        conv = conv_tmp.replace(k, v)
+
+    with open(fn_out, 'w') as fout:
+        fout.write(conv)

@@ -25,14 +25,14 @@ import objects
 from mode_calcs import Simulation
 
 
-_evar_gmsh_path = 'NUMBAT_PATH_GMSH'
-_evar_numbat_root = 'NUMBAT_ROOT_DIR'
+_envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
+_envvar_numbat_root = 'NUMBAT_ROOT_DIR'
 
-def _confirm_file_exists(nm, path, evar=''):
-    if not os.path.exists(path):
-        s=f"Can't find the {nm} executable at {path}."
-        if evar:
-            s += f'You may need to set the environment variable {evar}.'
+def _confirm_file_exists(nm, fn, envvar=''):
+    if not Path(fn).exists():
+        s=f"Can't find the {nm} executable at {fn}."
+        if envvar:
+            s += f'You may need to set the environment variable {envvar}.'
         reporting.report_and_exit(s)
 
 class _NumBATApp:
@@ -63,8 +63,8 @@ class _NumBATApp:
 
         # location of top level numbat tree containing other libraries etc. Mainly for windows
         # this seems a bit flaky depending on installations
-        self._nbrootdir =  os.environ.get(_evar_numbat_root,
-                                          Path(__file__).resolve().parents[3])
+        self._nbrootdir =  os.getenv(_envvar_numbat_root,
+                                          default=Path(__file__).resolve().parents[3])
 
         self._plot_extension = '.png'
         #self._plot_extension = '.pdf'
@@ -143,29 +143,24 @@ class _NumBATApp:
             try:
                 Path(self._outdir).mkdir()
             except OSError as ex:
-                reporting.report_and_exit(f"Can't open output directory {self._outdir}: "
-                                          +str(ex))
-
-
+                reporting.report_and_exit(f"Can't open output directory {self._outdir}: {str(ex)}")
 
         # paths to other tools
         if self.is_linux():
-            path = shutil.which('gmsh')
-            self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
+            gmpath = shutil.which('gmsh')
+            self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=gmpath))
 
         if self.is_windows():
-            path = Path(self._nbrootdir, 'usr_local/packages/gmsh/gmsh.exe')
-            self._paths['gmsh'] = os.environ.get(_evar_gmsh_path, path)
+            gmpath = Path(self._nbrootdir, 'usr_local/packages/gmsh/gmsh.exe')
+            self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=gmpath))
 
         elif self.is_macos():
-            self._paths['gmsh'] = os.environ.get(_evar_gmsh_path,
-                                                 '/Applications/Gmsh.app/Contents/MacOS/gmsh')
+            self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=
+                                            '/Applications/Gmsh.app/Contents/MacOS/gmsh'))
         else:
             pass
 
-        _confirm_file_exists('Gmsh', self._paths['gmsh'], _evar_gmsh_path)
-
-
+        _confirm_file_exists('Gmsh', self._paths['gmsh'], _envvar_gmsh_binary)
 
 
     def _check_versions(self):
@@ -187,13 +182,15 @@ def assert_numbat_object_created():
     if _NumBATApp.my_num_instances != 1:
         reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
 
-class _NumBATPlotPrefs:
 
+
+#TODO: move this to plotting.py and
+# make the NumBATPlotPrefs call return a reference to object in plotting.py
+class _NumBATPlotPrefs:
     def __init__(self):
         self.cmap_field_signed = 'seismic'
         self.cmap_field_unsigned = 'OrRd'
         self.cmap_ref_index = 'cool'
-
 
 def NumBATPlotPrefs():
     return _NumBATPlotPrefs()

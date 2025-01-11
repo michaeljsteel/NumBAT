@@ -20,7 +20,6 @@
 
 #TODO: reduce number of imports
 
-import os
 import subprocess
 import copy
 import traceback
@@ -41,10 +40,10 @@ import scipy.interpolate
 import numbat
 import reporting
 from nbtypes import SI_nm
-#from numbattools import np_min_max
+from numbattools import run_subprocess, f2f_with_subs
 
 import materials
-from mode_calcs import EMSimulation, ACSimulation
+from mode_calcs import em_mode_calculation, ac_mode_calculation
 import nbgmsh
 import plotting
 import plottools
@@ -53,39 +52,44 @@ from materialprops import OpticalProps, ElasticProps
 
 from fortran import nb_fortran
 
-def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
-    '''Loads and instantiates waveguide templates specified in .json file {p_wgtemplate_index} in directory {p_wgtemplate_dir}.
+def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
+    """Loads and instantiates waveguide templates specified in .json file {pth_wgtemplate_index} in directory {pth_wgtemplate_dir}.
 
-    Returns an index of waveguide inc_shape to class.'''
+    Returns an index of waveguide inc_shape to class."""
 
     try:
-        with open(p_wgtemplate_index) as fin:
+        with open(pth_wgtemplate_index) as fin:
             wg_index = json.load(fin)['wguides']
     except Exception as ex:
         raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
 
-    for wg in wg_index:
+    for wg in wg_index: # eg rectangular, circular, Onion, etc
+
         if not wg.get('active', 1):  # this mesh is turned off for now
             continue
 
         wgnm = wg['inc_shape']    # Name of inc_shape requested by user
         wgclsnm = wg['wg_class']  # Python class implementing this template
-        wgpy = wg['wg_impl']      # Python file definind that class
+        wgpy = wg['wg_impl']      # Python file defining that class
 
-        pth_mod = Path(p_wgtemplate_dir, wgpy)
+        # Find and load the module containing the class that implements this waveguide template
+        pth_mod = pth_wgtemplate_dir / wgpy
 
         if not pth_mod.exists():
-        #    raise Exception
-            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({p_wgtemplate_index}).'
-                            + f'\nFile was expected in directory {str(p_wgtemplate_dir)}')
+            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({pth_wgtemplate_index}).'
+                            + f'\nFile was expected in directory {str(pth_wgtemplate_dir)}')
 
-        spec = importlib.util.spec_from_file_location(wgnm, pth_mod)  # TODO: is wgnm the right name for this?
+        # wgnm is just a convenient name
+        spec = importlib.util.spec_from_file_location(wgnm, pth_mod)
+
         try:
             py_mod = spec.loader.load_module()
         except Exception as ex:
             reporting.report_and_exit(f"Python couldn't load the user module '{str(wgpy)}'."+
                                       "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+
                                       f'\n\n\n The full traceback was {traceback.format_exc()}')
+
+        # Now extract the class that implements this waveguide template
         if not hasattr(py_mod, wgclsnm):
             reporting.report_and_exit(f"Can't find waveguide template class {wgclsnm} in implementation file: {wgpy}")
         wgcls = getattr(py_mod, wgclsnm)
@@ -95,58 +99,45 @@ def _load_waveguide_templates(p_wgtemplate_dir, p_wgtemplate_index):
     return wg_index
 
 
+g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
+
+# called at startup from NumBATApp.__init__
+def initialise_waveguide_templates(nbapp):
+    global g_waveguide_templates
+    pmsh_dir = nbapp.path_mesh_templates()
+
+    pmsh_index_builtin = pmsh_dir / 'builtin_waveguides.json'
+    pmsh_index_user = pmsh_dir / 'user_waveguides.json'
+
+    if pmsh_index_builtin.exists():
+        g_waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
+    else:
+        reporting.register_warning(
+            f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
+
+    if pmsh_index_user.exists():
+        user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
+        g_waveguide_templates.extend(user_wg_templates)
+    else:
+        reporting.register_warning(
+            f"Couldn't find user waveguide template index file: {pmsh_index_user}")
+
+
 class Structure:
-    ''' Represents the geometry and  material properties (elastic and Optical) of a waveguide structure.
+    """ Represents the geometry and  material properties (elastic and optical) of a waveguide structure.
 
         Args:
             domain_x  (float):
                 The horizontal period of the unit cell in nanometers.
 
-            inc_a_x  (float):
-                The horizontal diameter of the primary inclusion in nm.
-
-        Keyword Args:
             domain_y  (float):
                 The vertical period of the unit cell in nanometers. If None, domain_y = domain_x.
-
-            inc_a_y  (float):
-                The vertical diameter of the primary inclusion in nm.
 
             inc_shape  (str):
                 Shape of inclusions that have template mesh, currently:
                  ``circular`` ``rectangular`` ``slot`` ``rib`` ``slot_coated`` ``rib_coated``
                  ``rib_double_coated`` ``pedestal`` ``onion`` ``onion2`` ``onion3``.
                  rectangular is default.
-
-            slab_a_x  (float):
-                The horizontal diameter in nm of the slab directly below the inclusion.
-
-            slab_a_y  (float):
-                The vertical diameter in nm of the slab directly below the inclusion.
-
-            slab_b_x  (float):
-                The horizontal diameter in nm of the slab separated from the inclusion by slab_a.
-
-            slab_b_y  (float):
-                The vertical diameter in nm of the slab separated from the inclusion by slab_a.
-
-            two_inc_sep  (float):
-                Separation between edges of two inclusions in nm.
-
-            incs_y_offset  (float):
-                 Vertical offset between centers of two inclusions in nm.
-
-            coat_x  (float): The width of the first coat layer around
-                the inclusion.
-
-            coat_y  (float):
-                The thickness of the first coating layer around the inclusion.
-
-            coat2_x  (float):
-                The width of the second coating layer around the inclusion.
-
-            coat2_y  (float):
-                The thickness of the second coating layer around the inclusion.
 
             symmetry_flag  (bool):
                 True if materials all have sufficient symmetry that their tensors contain only 3 unique values.
@@ -164,23 +155,6 @@ class Structure:
             loss  (bool): If False, Im(n) = 0, if True n as in
                 ``Material`` instance.
 
-            make_mesh_now  (bool): If True, program creates a FEM mesh with
-                provided :Struct: parameters. If False, must provide
-                mesh_file name of existing .mail that will be run despite
-                :Struct: parameters.
-
-            force_mesh  (bool): If True, a new mesh is created despite
-                existence of mesh with same parameter. This is used to make
-                mesh with equal period etc. but different lc refinement.
-
-            mesh_file  (str): If using a set pre-made mesh give its name
-                including .mail. It must be located in backend/fortran/msh/
-                Note: len(mesh_file) < 100.
-
-            plt_mesh  (bool): Plot a png of the geometry and mesh files.
-
-            check_mesh  (bool): Inspect the geometry and mesh files in gmsh.
-
             lc_bkg  (float): Length constant of meshing of background medium
                 (smaller = finer mesh)
 
@@ -190,49 +164,9 @@ class Structure:
             lc_refine_2-6'  (float): factor by which lc_bkg will be reduced on chosen
                 surfaces; lc_surface = lc_bkg / lc_refine_2. see relevant .geo files.
 
-            plotting_fields  (bool): Unless set to true field data deleted.
-                Also plots modes (ie. FEM solutions) in gmsh format.
-                Plots epsilon*|E|^2 & choice of real/imag/abs of
-                x,y,z components & field vectors. Fields are saved as gmsh
-                files, but can be converted by running the .geo file found in
-                Bloch_fields/PNG/
+    """
 
-            plot_real  (bool): Choose to plot real part of modal fields.
-
-            plot_imag  (bool): Choose to plot imaginary part of modal fields.
-
-            plot_abs  (bool): Choose to plot absolute value of modal fields.
-    '''
-
-
-    _waveguide_templates = {}   # class-level dictionary of waveguide template name to implementing class
-
-    # called at startup from NumBATApp.__init__
-    @classmethod
-    def initialise_waveguide_templates(cls, nbapp):
-        pmsh_dir = nbapp.path_mesh_templates()
-
-        pmsh_index_builtin = Path(pmsh_dir, 'builtin_waveguides.json')
-        pmsh_index_user = Path(pmsh_dir, 'user_waveguides.json')
-
-        if not pmsh_index_builtin.exists():
-            reporting.register_warning(
-                f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
-        else:
-            cls._waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
-
-        if not pmsh_index_user.exists():
-            reporting.register_warning(
-                f"Couldn't find user waveguide template index file: {pmsh_index_user}")
-        else:
-            user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-            cls._waveguide_templates.extend(user_wg_templates)
-
-
-    def __init__(self, *largs, **kwargs):
-
-
-        numbat.assert_numbat_object_created()
+    def _clean_and_handle_args_and_parameters(self, *largs, **kwargs):
 
         if 'plt_mesh' in kwargs:
             print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
@@ -275,27 +209,37 @@ class Structure:
         self.d_materials = {'bkg': kwargs['material_bkg']}  # this one must come first
 
         # fill up materials with vacuums
-        for letter in range(ord('a'), ord('r')):
+        for letter in range(ord('a'), ord('r')+1):
             self.d_materials[chr(letter)] = mat_vac
 
         # overwrite vacuums for those materials provided by user
         for k,v in kwargs.items():
             if k.startswith('material_') and k !='material_bkg':
-                tag = k[9:]
-                self.d_materials[tag] = v
-
-        n_mats_em = self.build_waveguide_geometry(self.inc_shape, self.all_params, self.d_materials)
-
-        # Build the whole mesh (A major step)
-        self._build_mesh()
+                self.d_materials[k[9:]] = v
 
 
+        # needed before building
+        self.symmetry_flag = int(kwargs.get('symmetry_flag', 0))
+
+        # Minor stuff
         self.shift_em_x = 0  # user requested offsets to coord-system
         self.shift_em_y = 0
         self.shift_ac_x = 0  # user requested offsets to coord-system
         self.shift_ac_y = 0
 
-        self.symmetry_flag = int(kwargs.get('symmetry_flag', 0))
+
+    def __init__(self, *largs, **kwargs):
+        """Initialise the Structure object."""
+
+        numbat.assert_numbat_object_created()
+
+        self._clean_and_handle_args_and_parameters(*largs, **kwargs)
+
+        n_mats_em = self._build_waveguide_geometry()
+
+        # Build the whole mesh (A major step involving Fortran)
+        self._build_mesh()
+
 
         self.optical_props = OpticalProps(list(self.d_materials.values()), n_mats_em, self.loss)
 
@@ -318,33 +262,36 @@ class Structure:
         self.shift_ac_x = x * SI_nm
         self.shift_ac_y = y * SI_nm
 
-    def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME
-        return True
-        msh_name='missing_mesh_name'
-        return self.force_mesh or not os.path.exists(self.msh_location_in + msh_name + '.mail')
+    def using_linear_elements(self):
+        return self.inc_shape in self.linear_element_shapes
+
+    def using_curvilinear_elements(self):
+        return self.inc_shape in self.curvilinear_element_shapes
+
+    # def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME
+    #     return True
+    #     msh_name='missing_mesh_name'
+    #     return self.force_mesh or not Path(self.msh_location_in + msh_name + '.mail').exists()
 
 
+    # def get_mail_mesh_data(self):
+    #     """Returns Object representing mesh in  .mail file"""
+    #     return self.mail_data
 
 
-    def get_mail_mesh_data(self):
-        '''Returns Object representing mesh in  .mail file'''
-        return self.mail_data
-
-
-
-    def build_waveguide_geometry(self, inc_shape, params, d_materials):
-        ''' Take the parameters specified in python and make a Gmsh FEM mesh.
+    def _build_waveguide_geometry(self):
+        """ Take the parameters specified in python and make a Gmsh FEM mesh.
             Creates a .geo and .msh file from the .geo template,
             then uses Fortran conv_gmsh routine
             to convert .msh into .mail, which is used in NumBAT FEM routine.
-        '''
+        """
 
         # full path to backend directory that this code file is in
-        this_directory = os.path.dirname(os.path.realpath(__file__))
+        this_directory = Path(__file__).resolve().parent
 
         # locations of gmsh input and output files
-        self.msh_location_in = Path(this_directory, 'msh')
-        self.msh_location_out = Path(self.msh_location_in, 'build')
+        self.msh_location_in = this_directory / 'msh'
+        self.msh_location_out = self.msh_location_in / 'build'
 
 
         if not self.msh_location_out.is_dir():
@@ -352,15 +299,13 @@ class Structure:
 
         self.wg_geom = None
 
-        #found = False
-        for wg in Structure._waveguide_templates:
-            if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
-                #found = True
+        for wg in g_waveguide_templates:
+            if self.inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
 
                 # Instantiate the class that defines this waveguide model
-                wg_geom = wg['wg_template_cls'](params, d_materials)
+                wg_geom = wg['wg_template_cls'](self.all_params, self.d_materials)
 
-                wg_geom.init_geometry()
+                wg_geom.init_geometry()   # run the user code to set up the geometry
 
                 n_mats_em = wg_geom._num_materials  # This is number of distinct materials == element types materials declared by the template
 
@@ -369,85 +314,67 @@ class Structure:
                 break
 
         else:  # didn't find required wg
-            raise NotImplementedError(f"\n Selected inc_shape = '{inc_shape}' "
+            raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
                                       'is not currently implemented. \nPlease make a mesh with gmsh and '
                                       'consider contributing this to NumBAT via github.')
+
+        wg_geom.check_parameters(self.all_params)
+        wg_geom.validate_dimensions()
+
+        self.wg_geom = wg_geom
 
         self.linear_element_shapes = []
         self.curvilinear_element_shapes = []
 
-        if wg_geom is not None:
-            if wg_geom._is_curvilinear:
-                self.curvilinear_element_shapes.append(wg_geom._shape_name)
-            else:
-                self.linear_element_shapes.append(wg_geom._shape_name)
-
-        wg_geom.check_parameters(params)
-        wg_geom.validate_dimensions()
-        self.wg_geom = wg_geom
-
-
+        if wg_geom.is_curvilinear:
+            self.curvilinear_element_shapes.append(wg_geom._shape_name)
+        else:
+            self.linear_element_shapes.append(wg_geom._shape_name)
 
         return n_mats_em
 
 
 
 
-    def using_linear_elements(self):
-        return self.inc_shape in self.linear_element_shapes
-
-    def using_curvilinear_elements(self):
-        return self.inc_shape in self.curvilinear_element_shapes
-
-
 
     def _build_mesh(self):
-        '''Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
-        to generate the NumBAT .mail file.'''
+        """Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
+        to generate the NumBAT .mail file."""
 
         print(' Calling Gmsh: ', end='')
 
-        msh_template = self.wg_geom.gmsh_template_filename()
-        msh_fname = self.wg_geom.get_instance_filename()
+        msh_template = self.wg_geom.gmsh_template_filename()  # template we're reading from
+        msh_fname = self.wg_geom.get_instance_filename()      # unique name for this instance
 
-        if self._new_mesh_required():
+        # create string in .geo format from the template file with all parameters adjusted for our design
+        geo_str = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
+        fname = Path(self.msh_location_out) / msh_fname
+        with open(str(fname) + '.geo', 'w') as fout:
+            fout.write(geo_str)
 
-            # create string in .geo format from the template file with all parameters adjusted for our design
-            geo = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
+        # Convert our Gmsh .geo file into Gmsh .msh
+        gmsh_exe =  numbat.NumBATApp().path_gmsh()
+        args =f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo'
+        cmd = [gmsh_exe]
+        cmd.extend(args.split())
+        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
+        if comp_stat.returncode:
+            tcmd = ' '.join(cmd)
+            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
 
+        # And now to NumBAT .mail format
+        assertions_on = False
+        err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
+        if err_no:
+            s = f'Terminating after Fortran error in processing .geo file "{fname}.geo".'
+            if len(err_msg):
+                s += f'\nMessage was:\n {err_msg}'
+            s += f"""
 
-            fname = Path(self.msh_location_out, msh_fname)
-
-            with open(str(fname) + '.geo', 'w') as fout:
-                fout.write(geo)
-
-            # Convert our Gmsh .geo file into Gmsh .msh and then NumBAT .mail
-
-            gmsh_exe =  numbat.NumBATApp().path_gmsh()
-            args =f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo'
-            cmd  = [gmsh_exe]
-            cmd.extend(args.split())
-
-
-            comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
-
-            if comp_stat.returncode:
-                tcmd = ' '.join(cmd)
-                reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
-
-            assertions_on = False
-            err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
-            if err_no != 0:
-
-                s = f'Terminating after Fortran error in processing .geo file "{fname}.geo".'
-                if len(err_msg):
-                    s += f'\nMessage was:\n {err_msg}'
-                s += f'''
-
-                Is the mesh template file "backend/fortran/msh/{msh_template}_msh_template.geo" designed correctly?
-                To help diagnose the problem, try viewing the generated mesh file in gmsh by running:
-                  gmsh {fname}.geo'''
-                reporting.report_and_exit(s)
+            Is the mesh template file "backend/fortran/msh/{msh_template}_msh_template.geo" designed correctly?
+            To help diagnose the problem, try viewing the generated mesh file in gmsh by running:
+                gmsh {fname}.geo"""
+            reporting.report_and_exit(s)
 
         self.mesh_mail_fname = str(fname) + '.mail'
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
@@ -456,11 +383,12 @@ class Structure:
         self.mail_data = nbgmsh.MailData(self.mesh_mail_fname)  #keep track of the Mail format
 
     def plot_mail_mesh(self, outpref):
+        """Visualise the mesh in .mail format."""
         path = numbat.NumBATApp().outpath()
         self.mail_data.plot_mesh(path)
 
     def plot_mesh(self, outpref):
-        '''Visualise mesh with gmsh and save to a file.'''
+        """Visualise mesh with gmsh and save to a file."""
 
         # Manipulate scripts in backend/fortran/build
         # Writes final png file to user directory
@@ -468,67 +396,49 @@ class Structure:
         nbapp = numbat.NumBATApp()
         gmsh_exe = nbapp.path_gmsh()
 
-
         outprefix = Path(numbat.NumBATApp().outdir(), outpref)
         tdir = tempfile.TemporaryDirectory()
         tmpoutpref = str(Path(tdir.name, outpref))
 
-        with open(Path(self.msh_location_in, 'geo2png.scr'), 'r') as fin:
-            conv_tmp = fin.read()
-        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-entities')
+        # Make the wire frame image
+        fn_in = Path(self.msh_location_in) / 'geo2png.scr'
+        fn_out = Path(self.msh_location_out) / (self.msh_name + '_geo2png.scr')
+        f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-entities'})
+        cmd = [gmsh_exe, self.msh_name + '.geo', fn_out.name]
+        run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
 
-        fn_scr = Path(self.msh_location_out, self.msh_name + '_geo2png.scr')
+        # Make the mesh image
+        fn_in = Path(self.msh_location_in) / 'msh2png.scr'
+        fn_out = Path(self.msh_location_out) / (self.msh_name + '_msh2png.scr')
+        f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-mesh_nodes'})
 
-        cmd = [gmsh_exe, self.msh_name + '.geo',
-               self.msh_name + '_geo2png.scr']
+        cmd = [gmsh_exe, self.msh_name + '.msh', fn_out.name]
+        run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
 
-        with open(fn_scr, 'w') as fout:
-            fout.write(conv)
-
-        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
-        if comp_stat.returncode:
-            tcmd = ' '.join(cmd)
-            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
-
-        with open(Path(self.msh_location_in, 'msh2png.scr'), 'r') as fin:
-            conv_tmp = fin.read()
-        conv = conv_tmp.replace('tmp', str(tmpoutpref) + '-mesh_nodes')
-
-        fn_scr = Path(self.msh_location_out, self.msh_name + '_msh2png.scr')
-
-        cmd = [gmsh_exe, self.msh_name + '.msh',
-               self.msh_name + '_msh2png.scr']
-        with open(fn_scr, 'w') as fout:
-            fout.write(conv)
-
-        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
-        if comp_stat.returncode:
-            tcmd = ' '.join(cmd)
-            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
-
+        # Join the two images
         plottools.join_figs([tmpoutpref+'-entities.png',
                           tmpoutpref+'-mesh_nodes.png',],
                           str(outprefix)+'-mesh.png',
                           clip=(60,50,60,50))
 
+
+
     def check_mesh(self):
-        '''Visualise geometry and mesh with gmsh.'''
+        """Visualise geometry and mesh with gmsh."""
 
         nbapp = numbat.NumBATApp()
         gmsh_exe = str(nbapp.path_gmsh())
 
-        gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.geo'
-        os.system(gmsh_cmd)
+        gmsh_cmd = [gmsh_exe, f'{self.msh_location_out}/{self.msh_name}.geo']
+        run_subprocess(gmsh_cmd, 'Gmsh', cwd=self.msh_location_out)
 
-        gmsh_cmd = gmsh_exe + " " + str(self.msh_location_out) + '/'+self.msh_name + '.msh'
-        os.system(gmsh_cmd)
-
-
+        gmsh_cmd = [gmsh_exe, f'{self.msh_location_out}/{self.msh_name}.msh']
+        run_subprocess(gmsh_cmd, 'Gmsh', cwd=self.msh_location_out)
 
 
     def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False,
                       **args):
-        ''' Run a simulation to find the Struct's EM modes.
+        """ Run a simulation to find the Structure's EM modes.
 
             Args:
                 num_modes  (int): Number of EM modes to solve for.
@@ -539,18 +449,13 @@ class Structure:
                     fundamental mode, will be origin of FEM search.
 
             Returns:
-                ``Simulation`` object
-        '''
-        sim = EMSimulation(self, num_modes=num_modes, wl_nm=wl_nm,
-                         n_eff_target=n_eff, Stokes=Stokes, debug=debug, **args)
-
-        sim.calc_modes()
-
-        return sim.get_sim_result()
+                ``EMSimResult`` object
+        """
+        return em_mode_calculation(self, num_modes, wl_nm, n_eff, Stokes, debug, **args)
 
     def calc_AC_modes(self, num_modes, q_AC,
                       shift_Hz=None, EM_sim=None, bcs=None, debug=False, **args):
-        ''' Run a simulation to find the Struct's acoustic modes.
+        """ Run a simulation to find the Structure's acoustic modes.
 
             Args:
                 num_modes  (int): Number of AC modes to solve for.
@@ -570,22 +475,16 @@ class Structure:
                     This is done by removing vacuum regions.
 
             Returns:
-                ``Simulation`` object
-        '''
+                ``ACSimResult`` object
+        """
 
-        sim = ACSimulation(self, num_modes=num_modes, q_AC=q_AC,
-                         shift_Hz=shift_Hz, simres_EM=EM_sim, debug=debug, **args)
-
-        sim.calc_modes(bcs)
-
-        return sim.get_sim_result()
+        return ac_mode_calculation(self, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args)
 
 
     def _make_refindex_plotter(self, as_epsilon, n_points):
 
 
         v_neffeps = self.optical_props.v_refindexn  # mapping from material index to refractive index
-        print('vneffpes', v_neffeps)
 
         if as_epsilon:
             v_neffeps = v_neffeps**2
@@ -598,7 +497,6 @@ class Structure:
             fname_suffix='refractive_index'
 
         fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
-        #fsfp.set_quantity_name(nm_math, fname_suffix)
 
         unit=''
 
@@ -608,17 +506,21 @@ class Structure:
         return fsfp
 
     def plot_refractive_index_profile(self, pref):
+        """Draw 2D plot of refractive index profile."""
         pl_ref = self.get_structure_plotter_refractive_index()
         pl_ref.make_plot_2D(pref)
 
     def get_structure_plotter_refractive_index(self, n_points=500):
+        """Make plotter for arbitrary 1D and 2D slices of the refractive index profile."""
         return self._make_refindex_plotter(False, n_points)
 
     def get_structure_plotter_epsilon(self, n_points=500):
+        """Make plotter for arbitrary 1D and 2D slices of the dielectric constant profile."""
         return self._make_refindex_plotter(True, n_points)
 
     def get_structure_plotter_stiffness(self, c_I, c_J, n_points=500):
-        if c_I <1 or c_I > 6 or c_J<1 or c_J>6:
+        """Make plotter for arbitrary 1D and 2D slices of the elastic stiffness."""
+        if c_I not in range(1,7) or c_J not in range(1,7):
             reporting.report_and_exit('Stiffness tensor indices c_I, c_J must be in the range 1..6.')
 
         v_stiff = np.zeros(5) # fill me
@@ -629,45 +531,32 @@ class Structure:
         fsfp.set_quantity_name(qname, suffname)
         fsfp.fill_scalar_by_material_index(v_stiff)
 
-    def get_structure_plotter_acoustic_velocity(self, n_points=500):
+    def get_structure_plotter_acoustic_velocity(self, vel_index=0, n_points=500):
+        """Make plotter for arbitrary 1D and 2D slices of the elastic acoustic phase speed.
+
+        Args:
+            vel_index (0,1,2): Index of the elastic mode phase speed to plot.
+
+        Currently only works for isotropic materials."""
+
         v_mats = list(self.d_materials.values())
         v_acvel = np.zeros([len(v_mats),3])
-        for i in range(len(v_mats)):
+
+        for i in range(len(v_mats)): # get all 3 phase velocities for each material
             if v_mats[i].has_elastic_properties():
                 v_acvel[i,:] = v_mats[i].Vac_phase()
 
         fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
-        fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$', [r'$v_0$', r'$v_1$', r'$v_2$'],
+        fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$',
+                                     [r'$v_0$', r'$v_1$', r'$v_2$'],
                                      'elastic_velocity', ['v0', 'v1', 'v2'])
 
         fsfp.fill_quantity_by_material_index(v_acvel)
         return fsfp
 
-    # def plot_refractive_index_profile(self, prefix, n_points = 500, as_epsilon=False,
-    #                                       aspect=1.0, with_cb=True):
-
-    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
-    #     fsfp.make_plot_2d(prefix )
-
-    # def plot_refractive_index_profile_xcut(self, prefix, y0=0, n_points = 500, as_epsilon=False):
-    #     ''' Find index profile along line y=y0'''
-    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
-    #     fsfp.make_plot_xcut(prefix, y0)
-
-
-    # def plot_refractive_index_profile_ycut(self, prefix, x0=0, n_points = 500, as_epsilon=False):
-    #     ''' Find index profile along line y=x0'''
-    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
-    #     fsfp.make_plot_ycut(prefix, x0)
-
-    # def plot_refractive_index_profile_1D(self, prefix, pt0, pt1, n_points = 500, as_epsilon=False):
-    #     ''' Find index profile along line from pt0=(x0,y0) to pt1=(x1,y1).'''
-    #     fsfp = self._make_refindex_plotter(as_epsilon, n_points)
-    #     fsfp.make_plot_1D(prefix, pt0, pt1, n_points)
-
 
     def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
-        ''' Draws refractive index profile by primitive sampling, not proper triangular mesh sampling'''
+        """ Draws refractive index profile by primitive sampling, not proper triangular mesh sampling"""
 
         print('\n\nPlotting ref index')
 
@@ -741,16 +630,10 @@ class Structure:
         plotting.save_and_close_figure(fig, prefix+'refn.png')
 
 
-    def plot_phase_velocity_z_profile(self, prefix):
-        print('plotting phasevel index')
 
-
-# called at startup from NumBATApp.__init__
-def initialise_waveguide_templates(numbatapp):
-    Structure.initialise_waveguide_templates(numbatapp)
 
 def print_waveguide_help(inc_shape):
-    for wg in Structure._waveguide_templates:
+    for wg in g_waveguide_templates:
         if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
             #found = True
 
