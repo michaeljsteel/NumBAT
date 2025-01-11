@@ -21,7 +21,6 @@
 import copy
 import json
 import math
-import os
 import pathlib
 import re
 import subprocess
@@ -62,10 +61,8 @@ class MaterialLibrary:
         self._materials = {}
 
         # identify mat data directory:  backend/material_data
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        self._material_data_path = os.path.join(
-            this_dir, "material_data", ""
-        )  # TODO: move name of path to numbat.py
+        this_dir = pathlib.Path(__file__).resolve().parent
+        self._material_data_path = this_dir / "material_data"
 
         self._load_materials()
 

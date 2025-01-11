@@ -30,7 +30,7 @@ class UserGeometryBase():
         self._shape_name = ''
         self._num_materials=0          # actual number of materials defined
         self._num_req_materials = 0    # number of materials required by the template
-        self._is_curvilinear=False
+        self.is_curvilinear=False
         self._d_materials = d_materials
         self._d_params = params
         self._descrip = 'Unimplemented user template'
@@ -42,7 +42,7 @@ class UserGeometryBase():
 
     def set_properties(self, nm, is_curvi=False):
         self._shape_name = nm
-        self._is_curvilinear = is_curvi
+        self.is_curvilinear = is_curvi
         self._descrip = self.__doc__
 
     def set_required_parameters(self, l_nms, num_req_mats):

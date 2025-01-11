@@ -1297,14 +1297,22 @@ def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
     Stokes_modes = copy.deepcopy(EM_sim)
     return Stokes_modes
 
-    # else:  # No EM mesh data supplied
 
-    #     report_and_exit('Mesh reading from file for elastic calculations is not currently supported.')
-    #     ac_mesh_from_em = 0
-    #     with open(structure.mesh_file) as f:
-    #         self.n_msh_pts, self.n_msh_el = [
-    #             int(i) for i in f.readline().split()]
-    #     elnd_to_mshpt_AC = np.zeros((6, self.n_msh_el))
-    #     type_el_AC = np.zeros(self.n_msh_el)
-    #     v_nd_xy_AC = np.zeros((2, self.n_msh_pts))
-    #     node_physindex_AC = np.zeros(self.n_msh_pts)
+
+def em_mode_calculation(wg, num_modes, wl_nm, n_eff, Stokes, debug, **args):
+
+    sim = EMSimulation(wg, num_modes=num_modes, wl_nm=wl_nm,
+                        n_eff_target=n_eff, Stokes=Stokes, debug=debug, **args)
+
+    sim.calc_modes()
+
+    return sim.get_sim_result()
+
+def ac_mode_calculation(wg, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args):
+
+    sim = ACSimulation(wg, num_modes=num_modes, q_AC=q_AC,
+                    shift_Hz=shift_Hz, simres_EM=EM_sim, debug=debug, **args)
+
+    sim.calc_modes(bcs)
+
+    return sim.get_sim_result()
