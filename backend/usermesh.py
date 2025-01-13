@@ -117,8 +117,8 @@ class UserGeometryBase():
 
         if not dims_ok: reporting.report_and_exit(f'There is a problem with the waveguide structure:\n{msg}')
 
-    def get_param(self, k):
-        return self._d_params.get(k, None)
+    def get_param(self, k, dflt=None):
+        return self._d_params.get(k, dflt)
 
     def gmsh_template_filename(self):
         if self._gmsh_template_filename:
@@ -140,9 +140,9 @@ class UserGeometryBase():
         for (olds, news, sval) in subs:
             val = self.get_param(sval)
 
-            assert is_real_number(val), f'Parameter {sval} is not a number'
-
-            geo = geo.replace(olds, news % val)
+            if val is not None:
+                assert is_real_number(val), f'Parameter {sval} is not a number'
+                geo = geo.replace(olds, news % val)
 
         return geo
 

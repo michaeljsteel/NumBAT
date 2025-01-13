@@ -25,7 +25,6 @@ explore/*
 
 
 backend/msh/*.msh
-backend/msh/*.geo
 backend/msh/*.mail
 backend/msh/build/*
 
