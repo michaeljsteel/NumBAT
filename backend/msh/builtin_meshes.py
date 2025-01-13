@@ -4,6 +4,7 @@ import matplotlib.patches as mplpatches
 import numpy as np
 
 from usermesh import UserGeometryBase
+import reporting
 
 nmtoum = 0.001  # template radii are in nm but matplotlib plots are in microns
 
@@ -934,7 +935,9 @@ class Rib(UserGeometryBase):
         self.set_required_parameters(
             ["rib_w", "rib_h", "slab_w", "slab_h"], num_req_mats=nt
         )
+
         self.set_allowed_parameters(["lc_bkg", "lc_refine_1", "lc_refine_2"])
+
         self.set_parameter_help(
             {
                 "rib_w": "width of raised rib region",
@@ -1107,6 +1110,153 @@ class RibDoubleCoated(UserGeometryBase):
         ]
 
         return subs
+
+
+# TODO: more efficient way to do this logic?!
+def _process_rib_mk_2(params):
+    slab2_active = "slab2_h" in params and "material_c" in params
+    slab3_active = "slab3_h" in params and "material_d" in params
+    slab4_active = "slab4_h" in params and "material_e" in params
+    slab5_active = "slab5_h" in params and "material_f" in params
+
+    # warn if one is set but not the other
+    slab2_incompl = ("slab2_h" in params or "material_c" in params) and not slab2_active
+    slab3_incompl = ("slab3_h" in params or "material_d" in params) and not slab3_active
+    slab4_incompl = ("slab4_h" in params or "material_e" in params) and not slab4_active
+    slab5_incompl = ("slab5_h" in params or "material_f" in params) and not slab5_active
+
+    if slab2_incompl:
+        reporting.report("Incomplete parameters for Rib MkII slab 2. Disabling this slab.")
+    if slab3_incompl:
+        reporting.report("Incomplete parameters for Rib MkII slab 3. Disabling this slab.")
+    if slab4_incompl:
+        reporting.report("Incomplete parameters for Rib MkII slab 4. Disabling this slab.")
+    if slab5_incompl:
+        reporting.report("Incomplete parameters for Rib MkII slab 5. Disabling this slab.")
+
+    if slab3_active and not slab2_active:
+        reporting.warning("Can't have slab 3 active without active slab 2. Disabling slabs 3 and higher.")
+        slab3_active=False
+
+    if slab4_active and not slab3_active:
+        reporting.warning("Can't have slab 4 active without active slabs 2 and 3. Disabling slabs 4 and higher.")
+        slab4_active=False
+
+    if slab5_active and not slab4_active:
+        reporting.warning("Can't have slab 5 active without active slab 2, 3 and 4. Disabling slabs 5.")
+        slab5_active=False
+
+    if slab5_active:
+        nslabs=5
+        nelts=7
+        #gmshfile = "ribmk2_5slab_msh_template.geo"
+    elif slab4_active:
+        nslabs=4
+        nelts=6
+        #gmshfile = "ribmk2_4slab_msh_template.geo"
+    elif slab3_active:
+        nslabs=3
+        nelts=5
+        #gmshfile = "ribmk2_3slab_msh_template.geo"
+    elif slab2_active:
+        nslabs=2
+        nelts=4
+        #gmshfile = "ribmk2_2slab_msh_template.geo"
+    else:
+        nslabs=1
+        nelts=3
+        #gmshfile = "ribmk2_1slab_msh_template.geo"
+
+
+    return nslabs, nelts
+
+class RibMkII(UserGeometryBase):
+    """NumBAT geometry template for a rib mk 2 waveguide."""
+
+    def init_geometry(self):
+        self.set_properties("ribmk2")
+
+
+        self.set_required_parameters( ["rib_w", "rib_h", "slab1_h"], num_req_mats=3)
+
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_1", "lc_refine_2",
+                                     "slab2_h", "slab3_h", "slab4_h", "slab5_h"], num_allowed_mats=7) # How specify mats_?
+
+        nslabs, nelts = _process_rib_mk_2(self._d_params)
+
+        self._d_params['nslabs'] = nslabs
+
+        self.set_parameter_help(
+            {
+                "rib_w": "width of raised rib region",
+                "rib_h": "height of raised rib region",
+                "slab1_h": "height of top slab substrate region",
+                "slab2_h": "height of second slab substrate region [optional]",
+                "slab3_h": "height of third slab substrate region [optional]",
+                "slab4_h": "height of fourth slab substrate region [optional]",
+                "material_bkg": "background material",
+                "material_a": "material of rib",
+                "material_b": "material of top slab substrate region",
+                "material_c": "material of second slab substrate region [optional]",
+                "material_d": "material of third slab substrate region [optional]",
+                "material_e": "material of fourth slab substrate region [optional]",
+            }
+        )
+
+    def apply_parameters(self):
+
+        subs = [
+            ("dx_in_nm = 1500.0;", "dx_in_nm = %f;", "domain_x"),
+            ("dy_in_nm = 1500.0;", "dy_in_nm = %f;", "domain_y"),
+            ("un_rib_w = 300.0;", "un_rib_w = %f;", "rib_w"),
+            ("un_rib_h = 200.0;", "un_rib_h = %f;", "rib_h"),
+            ("un_slab1_h = 300.0;", "un_slab1_h = %f;", "slab1_h"),
+            ("un_slab2_h = 300.0;", "un_slab2_h = %f;", "slab2_h"),
+            ("un_slab3_h = 300.0;", "un_slab3_h = %f;", "slab3_h"),
+            ("un_slab4_h = 300.0;", "un_slab4_h = %f;", "slab4_h"),
+            ("un_slab5_h = 300.0;", "un_slab5_h = %f;", "slab5_h"),
+            ("lc = 0.1;", "lc = %f;", "lc_bkg"),
+            ("lc_refine_1 = lc/1;", "lc_refine_1 = lc/%f;", "lc_refine_1"),
+            ("lc_refine_2 = lc/1;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
+            ("nslabs = 4;", "nslabs = %d;", "nslabs"),
+        ]
+
+        return subs
+
+    def draw_mpl_frame(self, ax):
+
+        rib_w = self.get_param("rib_w") * nmtoum
+        rib_h = self.get_param("rib_h") * nmtoum
+        slab1_h = self.get_param("slab_w", 0) * nmtoum
+        slab2_h = self.get_param("slab_h", 0) * nmtoum
+        slab3_h = self.get_param("slab_h", 0) * nmtoum
+        slab4_h = self.get_param("slab_h", 0) * nmtoum
+        slab5_h = self.get_param("slab_h", 0) * nmtoum
+
+        domx = self.get_param("domain_x") * nmtoum
+        domy = self.get_param("domain_x") * nmtoum
+
+
+        vertices = np.array(
+            [
+                [-domx / 2, -slab1_h],
+                [-domx / 2, 0],
+                [-rib_w / 2, 0],
+                [-rib_w / 2, rib_h],
+                [rib_w / 2, rib_h],
+                [rib_w / 2, 0],
+                [domx / 2, 0],
+                #[slab_w / 2, -slab_h],
+                #[-slab_w / 2, -slab_h],
+            ]
+        )
+
+        ax.add_patch(
+            mplpatches.Polygon(
+                vertices, facecolor=None, fill=False, edgecolor=EDGE_COLOR, linewidth=LINEWIDTH
+            )
+        )
+
 
 
 class Slot(UserGeometryBase):
