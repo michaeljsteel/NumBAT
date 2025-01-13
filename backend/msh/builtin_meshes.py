@@ -1180,7 +1180,7 @@ class RibMkII(UserGeometryBase):
         self.set_required_parameters( ["rib_w", "rib_h", "slab1_h"], num_req_mats=3)
 
         self.set_allowed_parameters(["lc_bkg", "lc_refine_1", "lc_refine_2",
-                                     "slab2_h", "slab3_h", "slab4_h", "slab5_h"], num_allowed_mats=7) # How specify mats_?
+                                     "slab2_h", "slab3_h", "slab4_h", "slab5_h", "nslabs"], num_allowed_mats=7) # How specify mats_?
 
         nslabs, nelts = _process_rib_mk_2(self._d_params)
 
@@ -1215,7 +1215,7 @@ class RibMkII(UserGeometryBase):
             ("un_slab3_h = 300.0;", "un_slab3_h = %f;", "slab3_h"),
             ("un_slab4_h = 300.0;", "un_slab4_h = %f;", "slab4_h"),
             ("un_slab5_h = 300.0;", "un_slab5_h = %f;", "slab5_h"),
-            ("lc = 0.1;", "lc = %f;", "lc_bkg"),
+            ("lc_bkg = 0.05;", "lc_bkg = %f;", "lc_bkg"),
             ("lc_refine_1 = lc/1;", "lc_refine_1 = lc/%f;", "lc_refine_1"),
             ("lc_refine_2 = lc/1;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
             ("nslabs = 4;", "nslabs = %d;", "nslabs"),
