@@ -79,15 +79,44 @@ def check_triangulation(vx, vy, triangs):
 #        nx, ny)
 
 
+# TODO: an attempt to allow matplotlib triangulation through multiprocessing
+# ProcessPoolExecutor, because neither Triangulations or nested functions are
+# pickleable
+class TriInterpWrapper:
+    def __init__(self, tri_triang6p, finder, vx_out, vy_out, nx, ny):
+        self.tri_triang6p = tri_triang6p
+        self.finder = finder
+        self.vx_out = vx_out
+        self.vy_out = vy_out
+        self.nx = nx
+        self.ny = ny
+
+    def __call__(self, femsol):
+        #print('\n\nCalling TriInterpWrapper:', type(self.tri_triang6p))
+        #print(dir(self.tri_triang6p))
+        #print(self.tri_triang6p._cpp_triangulation)
+        
+        del self.tri_triang6p._cpp_triangulation
+        self.tri_triang6p._cpp_triangulation = None
+        mptri = matplotlib.tri.LinearTriInterpolator( 
+                                                    self.tri_triang6p, femsol, trifinder=self.finder)(
+                                                            self.vx_out, self.vy_out).reshape(self.nx, self.ny)
+        #print('cleared the Tri')
+        return mptri
+
 def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
     """vx_out and vy_out are flattened 1D lists of x and y coords from a 2D grid of dimension nx x ny."""
 
-    def mif2d(femsol):
-        return matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, femsol, trifinder=finder
-        )(vx_out, vy_out).reshape(nx, ny)
+#    def mif2d(femsol):
+#        return matplotlib.tri.LinearTriInterpolator(
+#            tri_triang6p, femsol, trifinder=finder
+#        )(vx_out, vy_out).reshape(nx, ny)
+#
+#    return mif2d
 
-    return mif2d
+    return TriInterpWrapper(tri_triang6p, finder, vx_out, vy_out, nx, ny)
+
+
 
 
 def make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out):
@@ -98,6 +127,7 @@ def make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out):
             tri_triang6p, femsol, trifinder=finder
         )(vx_out, vy_out)
 
+    print('mif1d')
     return mif1d
 
 
@@ -695,7 +725,7 @@ class FEMScalarFieldPlotter:
 
     def make_plot_2D(self, pref, aspect=1.0, with_cb=True):
 
-        # full out-directory parth
+        # full out-directory path
         prefix = str(Path(numbat.NumBATApp().outdir(), pref))
 
         m_x, m_y = np.meshgrid(self.v_x, self.v_y)

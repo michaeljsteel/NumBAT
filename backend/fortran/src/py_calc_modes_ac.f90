@@ -405,6 +405,8 @@ contains
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
+      write(ui_out,'(/,A)') "      valpr a"
+
       call valpr_64_AC (i_base, nvect, n_modes, n_dof, itermax, ltrav, &
          tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), &
          c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
@@ -412,6 +414,9 @@ contains
          b_zwork(jp_vschur), v_eigs_nu, b_zwork(jp_trav), b_zwork(jp_vp), &
          c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, &
          debug, show_mem_est, errco, emsg)
+     
+      write(ui_out,'(/,A)') "      valpr b"
+
       call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
 
@@ -426,6 +431,7 @@ contains
 
       endif
 
+      write(ui_out,'(/,A)') "      valpr c"
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
