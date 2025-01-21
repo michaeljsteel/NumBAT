@@ -98,8 +98,7 @@ debug, show_mem_est, errno, emsg)
    call umf4zpcon (control)
 
 !  pre-order and symbolic analysis
-   call umf4zsym (n_dof, n_dof, col_ptr, row_ind,&
-   &mat1_re, mat1_im, symbolic, control, info_umf)
+   call umf4zsym (n_dof, n_dof, col_ptr, row_ind, mat1_re, mat1_im, symbolic, control, info_umf)
 
 !  print statistics computed so far
 !  call umf4zpinf (control, info_umf) could also be done.
@@ -113,8 +112,7 @@ debug, show_mem_est, errno, emsg)
 
 !  numeric factorization
 !  TODO: This call does not appear to be thread safe!  Breaks tutorial 3 B in thread mode
-   call umf4znum (col_ptr, row_ind, mat1_re,&
-   &mat1_im, symbolic, numeric, control, info_umf)
+   call umf4znum (col_ptr, row_ind, mat1_re, mat1_im, symbolic, numeric, control, info_umf)
 
 !  call umf4zpinf (control, info_umf) could also be done.
    call report_stats_umf4znum(debug, show_mem_est, info_umf)

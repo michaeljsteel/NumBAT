@@ -105,11 +105,22 @@ class _NumBATApp:
     def outdir(self):
         return self._outdir
 
-    def outpath(self):
-        return Path(self._outdir, self._outprefix)
+    def set_outdir(self, outdir):
+        self._outdir = outdir
+        path=Path(outdir)
 
-    def outpath_fields(self):
-        return Path(self._outdir, self._outprefix+'-fields')
+        if not path.exists():
+            os.makedirs(path)
+        elif not path.is_dir():
+            reporting.report_and_exit(f'Output path {outdir} exists and is not a directory.')
+
+    def outpath(self, prefix=''):
+        outpref = prefix if prefix else self._outprefix
+        return Path(self._outdir, outpref)
+
+    def outpath_fields(self, prefix=''):
+        outpref = prefix if prefix else self._outprefix
+        return Path(self._outdir, outpref+'-fields')
 
 
     def path_gmsh(self):

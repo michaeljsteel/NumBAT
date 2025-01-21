@@ -286,13 +286,16 @@ class SimResult:
 
         nbapp = numbat.NumBATApp()
 
-        if prefix:
-            nbapp.set_outprefix(prefix)
-        else:
-            prefix = nbapp.outprefix()
+        #if prefix:
+        #    nbapp.set_outprefix(prefix)
+        #else:
+        #    prefix = nbapp.outprefix()
+        #if not prefix: 
+        #    prefix = nbapp.outprefix()
 
-        pf = nbapp.outpath_fields()
-        if prefix and not pf.exists():
+        pf = nbapp.outpath_fields(prefix=prefix)
+
+        if not pf.exists():
             pf.mkdir()
 
 

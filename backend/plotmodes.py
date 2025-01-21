@@ -30,7 +30,7 @@ from plottools import save_and_close_figure
 
 def modeplot_filename(plps, ival, label=''):
     nbapp = numbat.NumBATApp()
-    fullpref = str(nbapp.outpath_fields())
+    fullpref = str(nbapp.outpath_fields(prefix=plps['prefix']))
 
     comp = plps['EM_AC'].name
     suf = plps['suffix']
@@ -236,7 +236,6 @@ class Decorator(object):
 
     def set_property(self, label, prop):
         '''Add or override an axes property for a single plot corresponding to the given label.'''
-        print('setting ', label, prop)
         self._props[label] = prop
 
     def set_title(self, t): self._title = t
