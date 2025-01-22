@@ -245,13 +245,16 @@ class Structure:
 
         # construct list of materials with nonzero density, ie with acoustic properties likely defined
         # Any material not given v_acoustic_mats assumed to be vacuum.
-        v_acoustic_mats = [m for m in self.d_materials.values() if m.has_elastic_properties()]
+        #v_acoustic_mats = [m for m in self.d_materials.values() if m.has_elastic_properties()]
 
-        self.elastic_props = ElasticProps(v_acoustic_mats, self.symmetry_flag)
+        self.elastic_props = ElasticProps(self, self.symmetry_flag)
 
 
     def get_material(self, k):
         return self.d_materials[k]
+
+    def get_optical_materials(self):
+        return list(self.d_materials.values())[: self.optical_props.n_mats_em]
 
     def set_xyshift_em(self, x, y):
         # Sets shift in grid from user perspective in nm
@@ -267,16 +270,6 @@ class Structure:
 
     def using_curvilinear_elements(self):
         return self.inc_shape in self.curvilinear_element_shapes
-
-    # def _new_mesh_required(self):  # TODO: msh_name ? REMOVE ME
-    #     return True
-    #     msh_name='missing_mesh_name'
-    #     return self.force_mesh or not Path(self.msh_location_in + msh_name + '.mail').exists()
-
-
-    # def get_mail_mesh_data(self):
-    #     """Returns Object representing mesh in  .mail file"""
-    #     return self.mail_data
 
 
     def _build_waveguide_geometry(self):
@@ -380,12 +373,11 @@ class Structure:
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
         self.msh_name = msh_fname
 
-        self.mail_data = nbgmsh.MailData(self.mesh_mail_fname)  #keep track of the Mail format
-
     def plot_mail_mesh(self, outpref):
         """Visualise the mesh in .mail format."""
         path = numbat.NumBATApp().outpath()
-        self.mail_data.plot_mesh(path)
+        mail_data = nbgmsh.MailData(self.mesh_mail_fname)
+        mail_data.plot_mesh(path)
 
     def plot_mesh(self, outpref):
         """Visualise mesh with gmsh and save to a file."""
@@ -496,7 +488,7 @@ class Structure:
             nm_math=r'$n(\vec x)$'
             fname_suffix='refractive_index'
 
-        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
 
         unit=''
 
@@ -525,7 +517,7 @@ class Structure:
 
         v_stiff = np.zeros(5) # fill me
 
-        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
         qname = 'Stiffness $c_{'+f'{c_I},{c_J}' +'}$'
         suffname = f'stiffness_c_{c_I}{c_J}'
         fsfp.set_quantity_name(qname, suffname)
@@ -546,7 +538,7 @@ class Structure:
             if v_mats[i].has_elastic_properties():
                 v_acvel[i,:] = v_mats[i].Vac_phase()
 
-        fsfp = femmesh.FEMScalarFieldPlotter(self.mesh_mail_fname, self, n_points)
+        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
         fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$',
                                      [r'$v_0$', r'$v_1$', r'$v_2$'],
                                      'elastic_velocity', ['v0', 'v1', 'v2'])
@@ -560,8 +552,7 @@ class Structure:
 
         print('\n\nPlotting ref index')
 
-
-        mail = self.mail_data
+        mail = nbgmsh.MailData(self.mesh_mail_fname)
         v_x, v_y = mail.v_centx, mail.v_centy
         v_elt_indices = mail.v_elts[:,-1]  # the elt number column
         v_refindex = 0*v_x

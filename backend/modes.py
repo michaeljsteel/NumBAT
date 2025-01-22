@@ -19,7 +19,7 @@ from math import sqrt
 import numpy as np
 
 import numbat
-from nbtypes import FieldType, component_t, SI_um, SI_vacuum_impedance_Z0
+from nbtypes import FieldType, FieldTag, SI_um, SI_vacuum_impedance_Z0
 import reporting
 
 from numbattools import int2d_trapz, np_min_max
@@ -73,34 +73,40 @@ class ModePlotHelper:
 
     def __init__(self, simresult):  # , field_type):
         self.sim_result = simresult
-        self.setup_for_npoints = 0
 
         self.plot_params = {}
 
+        self.setup_for_npoints = 0
         self.xy_raw = {}
         self.xy_out = {}
 
-        self.interper_f = None
+        self.interper_f_2d = None
+        self.interper_f_1d = None
+
 
         self._init_plot_params()
 
         self.zero_arrays()
 
     def zero_arrays(self):
-        self.interper_f = None
+        self.interper_f_2d = None
+        self.interper_f_1d = None
 
         self.xy_raw = {}
         self.xy_out = {}
 
     def cleanup(self):
-        del self.interper_f
+        if self.interper_f_2d is not None: del self.interper_f_2d
+        if self.interper_f_1d is not None: del self.interper_f_1d
 
-        self.xy_raw = {}
-        self.xy_out = {}
+        #self.xy_raw = {}
+        #self.xy_out = {}
 
         self.zero_arrays()
 
     def _init_plot_params(self):
+        # TODO: replaced with Named Tuple?
+
         self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
                             'aspect': 1.0,
                             'ticks': True, 'num_ticks': None,
@@ -114,7 +120,15 @@ class ModePlotHelper:
                             }
 
     def update_plot_params(self, d_params):
+        """Update parameters according to Mode.plot_mode() call."""
         self.plot_params.update(d_params)
+
+    def assign_decorator(self, decorator):  # Belongs in ModePlotHelper
+        if decorator is not None:
+            self.plot_params['decorator'] = decorator
+        elif self.plot_params['decorator'] is None:
+            self.plot_params['decorator'] = plotmodes.Decorator()
+
 
     def interpolate_mode_i(self, ival, field_type):
         # construct the meshed field from fortran solution
@@ -145,18 +159,22 @@ class ModePlotHelper:
 
         # Always need these ones.
 
-        m_ReFx = self.interper_f(v_Fx6p.real)
-        m_ReFy = self.interper_f(v_Fy6p.real)
-        m_ImFz = self.interper_f(v_Fz6p.imag)
-        m_AbsF = self.interper_f(v_F6p)
+        m_ReFx = self.interper_f_2d(v_Fx6p.real)
+        m_ReFy = self.interper_f_2d(v_Fy6p.real)
+        m_ImFz = self.interper_f_2d(v_Fz6p.imag)
+        m_AbsF = self.interper_f_2d(v_F6p)
 
         # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
-        m_ImFx = self.interper_f(v_Fx6p.imag)
-        m_ImFy = self.interper_f(v_Fy6p.imag)
-        m_ReFz = self.interper_f(v_Fz6p.real)
+        m_ImFx = self.interper_f_2d(v_Fx6p.imag)
+        m_ImFy = self.interper_f_2d(v_Fy6p.imag)
+        m_ReFz = self.interper_f_2d(v_Fz6p.real)
 
         d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx, 'Fyr': m_ReFy, 'Fyi': m_ImFy,
                     'Fzr': m_ReFz, 'Fzi': m_ImFz, 'Fabs': m_AbsF}
+
+        if field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
+            for m_F in d_fields.values():   # Do this when they are first made
+                m_F *= SI_vacuum_impedance_Z0
 
         return d_fields
 
@@ -215,123 +233,37 @@ class ModePlotHelper:
 
         nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
 
-        self.interper_f = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
+        self.interper_f_2d = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
+
+
 
 class Mode:
     '''This is a base class for both EM and AC modes.'''
 
     def __init__(self, simres, m):
-        self.mode_num = m
         self.sim_result = simres
+        self.mode_num = m
+
         self.field_type = None
+        self.d_fields = {}
+
+        self.interpolated = {FieldType.EM_E: False,
+                             FieldType.EM_H: False, FieldType.AC: False}
 
         self.fracs = []  # fx, fy, ft, fz
         self.r0 = None  # centre of mass
-        self.w2 = None  # second moment width
+
         self.r0_offset = (0.0, 0.0)
+        self.w2 = None  # second moment width
         self._width_r0_ref = None
+
         self.extra_data = {}
         self.analysed = False
-        self.interpolated = {FieldType.EM_E: False,
-                             FieldType.EM_H: False, FieldType.AC: False}
-        self.d_fields = {}
+
+        self.mode_helper = self.sim_result.get_mode_helper()
+
+
         self.clear_mode_plot_data()
-
-    def get_mode_helper(self):
-        return self.sim_result.get_mode_helper()
-
-    def prepare_mode(self, n_pts, field_type):
-
-        mh = self.get_mode_helper()
-
-        mh.setup_plot_grid(n_pts=n_pts)
-
-        if self.is_AC():
-            self.field_type = FieldType.AC
-        else:
-            self.field_type = field_type
-
-        if not self.interpolated[field_type]:
-            self.interpolate_mode(mh)
-            self.interpolated[field_type] = True
-
-    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None,
-                  n_pts=501, decorator=None):  # TODO get this random parameters hooked better into mode_helper.plot_params
-
-        self.prepare_mode(n_pts, field_type)
-
-        mh = self.get_mode_helper()
-
-        # FIX ME
-        if decorator is not None:
-            mh.plot_params['decorator'] = decorator
-        elif mh.plot_params['decorator'] is None:
-            # don't want to do this.
-            mh.plot_params['decorator'] = plotmodes.Decorator()
-
-        self._plot_me(mh, comps, field_type, ax)
-
-        #self.clear_mode_plot_data()
-
-    def plot_mode_H(self, comps):  # plot magnetic field for EM modes
-        self.plot_mode(comps, field_type=FieldType.EM_H)
-
-    def plot_mode_raw_fem(self, comps):
-        '''Plot the requested field components on the sim mesh with no interpolation.'''
-
-        simres = self.sim_result
-        ft = self.field_type
-        mh = self.get_mode_helper()
-
-        fem_evecs = simres.fem_evecs_H if ft == FieldType.EM_H else simres.fem_evecs
-        plotmoderaw.do_raw_fem_mode_plot(comps, mh,
-                                         self.sim_result.fem_mesh, fem_evecs, self.mode_num)
-
-    def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
-        if comp.is_abs():  # a real valued quantity
-            fname = longpref+'.txt'
-            fld = d_fields[comp._f_code]  # eg 'Fabs'
-            header=f'# {comp._f_code}, '  + s_xy
-            np.savetxt(fname, fld,header=header)
-
-        else:
-            fname = longpref+'_re.txt'
-            fld = d_fields['F'+comp._xyz+'r']  # eg 'Fxr'
-            print('the field', fld, d_fields['Fxr'])
-            header=f'# {comp._f_code}_re, '  + s_xy
-            np.savetxt(fname, fld,header=header)
-
-            fname = longpref+'_im.txt'
-            fld = d_fields['F'+comp._xyz+'i']  # eg 'Fxr'
-            header=f'# {comp._f_code}__im, '  + s_xy
-            np.savetxt(fname, fld,header=header)
-
-
-
-    def write_to_file(self):
-        #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
-        #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
-        ccs = ('Fx', 'Fy', 'Fz')
-        ft=self.field_type
-        mh = self.get_mode_helper()
-        #print('mhprops', self.analysed, self.d_fields)
-        v_x = mh.xy_out['v_x']
-        v_y = mh.xy_out['v_y']
-        s_xy= f'v_x: {v_x[0]:.8f}, {v_x[-1]:.8f}, {len(v_x)}, ' + f'v_y: {v_y[0]:.8f}, {v_y[-1]:.8f}, {len(v_y)}'
-
-        for cc in ccs:
-            comp = component_t.make_comp_noreim(ft, cc)
-            pref=numbat.NumBATApp().outpath_fields()
-            longpref=f'{pref}/{comp.emac()}_mode_{self.mode_num:02d}_{comp._user_code}'
-            #print('writing data file', ft,longpref, self.d_fields.keys())
-            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields)
-
-    def plot_strain(self):
-        if not self.sim_result.is_AC():
-            print("Doing strain in an EM sim.!")
-        print('doing strain')
-        mh = self.get_mode_helper()
-        mh.plot_strain_mode_i(self.mode_num)
 
     def clear_mode_plot_data(self):
         for k in self.d_fields.keys():
@@ -339,24 +271,49 @@ class Mode:
         self.interpolated = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-    def interpolate_mode(self, mode_helper):
-        mh = mode_helper
-        self.d_fields = mh.interpolate_mode_i(self.mode_num, self.field_type)
+    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None):
 
-        if self.field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
-            for m_F in self.d_fields.values():   # Do this when they are first made
-                m_F *= SI_vacuum_impedance_Z0
+        self.mode_helper.assign_decorator(decorator)
 
-    def _plot_me(self, mode_helper, comps, field_type, ax=None):
+        field_type = FieldType.AC if self.is_AC else field_type
+
+        self.prepare_mode_2d(n_pts, field_type)
+        self._plot_me_2d(n_pts, comps, field_type, ax)
+
+        #self.clear_mode_plot_data()
+
+    def plot_mode_H(self, comps, ax=None, n_pts=501, decorator=None):
+        """Plot magnetic field for EM modes."""
+        self.plot_mode(comps, field_type=FieldType.EM_H, ax=ax, n_pts=n_pts, decorator=decorator)
+
+
+
+    def plot_mode_1d(self, comps, field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None):
+        pass
+
+    def prepare_mode_2d(self, n_pts, field_type):
+        """Extracts fields from FEM grid to desired rectangular grid for either plotting or analysis."""
+
+        mh = self.mode_helper
+
+        mh.setup_plot_grid(n_pts=n_pts)
+
+        if not self.interpolated[field_type]:
+            self.d_fields = mh.interpolate_mode_i(self.mode_num, field_type)
+            self.interpolated[field_type] = True
+
+
+    def _plot_me_2d(self, n_pts, comps, field_type, ax=None):
 
         # TODO: weirdly, we only ax != None when there is one component to plot
         if ax is not None and len(comps) != 1:
-            print(
-                '\nError: when providing an axis to plot on, must specify exactly one modal component.')
-            return
+            reporting.report_and_exit('When providing an axis to plot on, must specify exactly one modal component.')
 
-        mh = mode_helper
+        mh = self.mode_helper
+
         decorator = mh.plot_params['decorator']
+
+        # All components in one plot
 
         decorator.set_for_multi()
         # TODO this is a kludgy way of doing this. send it through separately
@@ -367,13 +324,19 @@ class Mode:
             plotmodes.plot_all_components(mh.xy_out, self.d_fields,
                                           mh.plot_params, self.sim_result, self.mode_num)
 
+        # Individual component plots
+
         if len(comps):
             decorator.set_for_single()
             # options are ['x', 'y', 'z', 'abs', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = component_t.make_comp_from_component(field_type, comp)
+                cc = FieldTag.make_comp_from_component(field_type, comp)
                 plotmodes.plot_one_component(
                     mh.xy_out, self.d_fields, mh.plot_params, self.mode_num, cc, ax)
+
+
+
+
 
     def add_mode_data(self, d):
         '''Adds a dictionary of user-defined information about a mode.
@@ -525,11 +488,11 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
-        self.prepare_mode(n_pts, EM_field)
+        self.prepare_mode_2d(n_pts, EM_field)
 
         self.analysed = True
 
-        mh = self.get_mode_helper()
+        mh = self.mode_helper
 
         # Tranposed indexing to get image style ordering
         # These are 'output' domains so in microns
@@ -593,6 +556,61 @@ class Mode:
         self.w2 = np.array([w2x, w2y, w2])
 
 
+
+    def write_to_file(self):
+        #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
+        #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
+        ccs = ('Fx', 'Fy', 'Fz')
+        ft=self.field_type
+        mh = self.mode_helper
+        v_x = mh.xy_out['v_x']
+        v_y = mh.xy_out['v_y']
+        s_xy= f'v_x: {v_x[0]:.8f}, {v_x[-1]:.8f}, {len(v_x)}, ' + f'v_y: {v_y[0]:.8f}, {v_y[-1]:.8f}, {len(v_y)}'
+
+        for cc in ccs:
+            comp = FieldTag.make_comp_noreim(ft, cc)
+            pref=numbat.NumBATApp().outpath_fields()
+            longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp._user_code}'
+            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields)
+
+    def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
+        if comp.is_abs():  # a real valued quantity
+            fname = longpref+'.txt'
+            fld = d_fields[comp._f_code]  # eg 'Fabs'
+            header=f'# {comp._f_code}, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+        else:
+            fname = longpref+'_re.txt'
+            fld = d_fields['F'+comp._xyz+'r']  # eg 'Fxr'
+            print('the field', fld, d_fields['Fxr'])
+            header=f'# {comp._f_code}_re, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+            fname = longpref+'_im.txt'
+            fld = d_fields['F'+comp._xyz+'i']  # eg 'Fxr'
+            header=f'# {comp._f_code}__im, '  + s_xy
+            np.savetxt(fname, fld,header=header)
+
+
+
+    def plot_mode_raw_fem(self, comps):
+        '''Plot the requested field components on the sim mesh with no interpolation.'''
+
+        simres = self.sim_result
+        ft = self.field_type
+
+        fem_evecs = simres.fem_evecs_H if ft == FieldType.EM_H else simres.fem_evecs
+        plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_helper,
+                                         self.sim_result.fem_mesh, fem_evecs, self.mode_num)
+
+    def plot_strain(self):
+        if not self.sim_result.is_AC():
+            print("Doing strain in an EM sim.!")
+        print('doing strain')
+        self.mode_helper.plot_strain_mode_i(self.mode_num)
+
+
 class ModeEM(Mode):
     '''Class representing a single electromagnetic (EM) mode.'''
 
@@ -602,6 +620,8 @@ class ModeEM(Mode):
     def __str__(self):
         s = f'EM mode # {self.mode_num}'
         return s
+
+
 
 
 class ModeAC(Mode):

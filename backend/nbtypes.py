@@ -102,48 +102,49 @@ class CrystalGroup(IntEnum):
     Cubic = auto()
     GeneralAnisotropic = auto()
 
-#TODO: change name of this class. FieldCompHandle ?
-class component_t(object):
+
+
+
+
+class FieldTag:
     '''Class for transferring between user readable and code name versions of field components.'''
 
     #@staticmethod
-    #def Ecomp(c): return component_t('E'+c)
+    #def Ecomp(c): return FieldTag('E'+c)
 #
 #    @staticmethod
-#    def Hcomp(c): return component_t('H'+c)
+#    def Hcomp(c): return FieldTag('H'+c)
 #
 #    @staticmethod
-#    def ucomp(c): return component_t('u'+c)
+#    def ucomp(c): return FieldTag('u'+c)
 
     @staticmethod
-    def make_comp_noreim(emac, fc):
-        '''Create a component_t from the field-agnostic component Fx, Fy, Fz, Fabs, etc and the field type.
+    def make_comp_noreim(ft, fc):
+        '''Create a FieldTag from the field-agnostic component Fx, Fy, Fz, Fabs, etc and the field type.
         Set the _f_code to the default.  '''
-        if emac == FieldType.EM_E:
+        if ft == FieldType.EM_E:
             uc=f'E{fc[1]}'
-        elif emac == FieldType.EM_H:
+        elif ft == FieldType.EM_H:
             uc=f'H{fc[1]}'
         else:
             uc=f'u{fc[1]}'
-        cc = component_t(uc)
-        return cc
+        return FieldTag(uc)
 
     @staticmethod
-    def make_comp_from_component(emac, cc):
-        '''Create a component_t from the field type and component suffix x, y, z, abs, t.'''
-        if emac == FieldType.EM_E:
+    def make_comp_from_component(ft, cc):
+        '''Create a FieldTag from the field type and component suffix x, y, z, abs, t.'''
+        if ft == FieldType.EM_E:
             uc = 'E'+cc
-        elif emac == FieldType.EM_H:
+        elif ft == FieldType.EM_H:
             uc = 'H'+cc
         else:
             uc = 'u'+cc
-        t_cc = component_t(uc)
-        return t_cc
+        return FieldTag(uc)
 
 
     @staticmethod
     def make_comp_from_Fcode(emac, fc):
-        '''Create a component_t from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.'''
+        '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.'''
         if emac == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
                   'Fzr': 'Ez', 'Fzi': 'Ez', 'Fabs': 'Eabs', 'Ft': 'Et'}[fc]
@@ -153,47 +154,53 @@ class component_t(object):
         else:
             uc = {'Fxr': 'ux', 'Fxi': 'ux', 'Fyr': 'uy', 'Fyi': 'uy',
                   'Fzr': 'uz', 'Fzi': 'uz', 'Fabs': 'uabs', 'Ft': 'ut'}[fc]
-        cc = component_t(uc)
-        cc._f_code = fc # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
-        #TODO: change constructor so it has option to not choose the domnant
-        return cc
 
-    def __init__(self, uc):
-        '''Make component_t knowing the actual field component Ex, Ey, Ez, Et, Eabs, ux, uy etc.
+         # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
+        return FieldTag(uc, fc)
+
+    def __init__(self, uc, fc=''):
+        '''Make FieldTag knowing the actual field component Ex, Ey, Ez, Et, Eabs, ux, uy etc.
 
            Sets  _f_code to the field-agnostic form starting with F and with the dominant real/imag part for that component.
+
+           Args:
+              uc: str  - User-friendly field component code.
+              fc: str  - Field-agnostic symbol indicating rea/imag/abs/t part of whichever field is active.
+
+           A user code (uc) is one of Ex, Ey, Ez, Et, Eabs, Hx, Hy, Hz, Ht, Habs, ux, uy, uz, ut, uabs.
+           A field code (fc) is one of Fxr, Fxi, Fyr, Fyi, Fzr, Fzi, Fabs, Ft.
         '''
 
         self._user_code = uc
-        self._F = uc[0]  # E, H, or u
+        self._F = uc[0]    # E, H, or u
         self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
         self._xyz = uc[1]  # x, y, z, a, t
         self._Fimaj = self.reim_major(self._Fi)
         self._Fimin = self.reim_minor(self._Fi)
 
         # default real/imag given the _F value
-        self._f_code = {'Ex': 'Fxr', 'Ey': 'Fyr', 'Ez': 'Fzi', 'Eabs': 'Fabs', 'Et': 'Ft',
+        if fc:
+            self._f_code = fc
+        else:
+            self._f_code = {'Ex': 'Fxr', 'Ey': 'Fyr', 'Ez': 'Fzi', 'Eabs': 'Fabs', 'Et': 'Ft',
                         'Hx': 'Fxr', 'Hy': 'Fyr', 'Hz': 'Fzi', 'Habs': 'Fabs', 'Ht': 'Ft',
                         'ux': 'Fxr', 'uy': 'Fyr', 'uz': 'Fzi', 'uabs': 'Fabs', 'ut': 'Ft',
                         }[self._user_code]
 
-    def is_AC(self): return self._F == 'u'
-    def emac(self):
-        if self.is_AC:
-            return 'AC'
-        else:
-            return 'EM'
+    def is_user_code(self, uc):
+        return uc in ('Ex', 'Ey', 'Ez', 'Eabs', 'Et', 'Hx', 'Hy', 'Hz', 'Habs', 'Ht', 'ux', 'uy', 'uz', 'uabs', 'ut')
 
-    def get_label(self):
-        c = self._F
-        lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',
-               'Fyr': r'Re($F_y$)', 'Fzi': r'Im($F_z$)', 'Fxi': r'Im($F_x$)', 'Fyi': r'Im($F_y$)', 'Fzr': r'Re($F_z$)',
-               'Fabs': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fabs gives |F|^2
-        return lab.replace('F', c)
+    def is_field_code(self, fc):
+        return fc in ('Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs', 'Ft')
+
+    def is_AC(self): return self._F == 'u'
 
     def is_abs(self): return self._f_code == 'Fabs'
+
     def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
+
     def is_transverse(self): return self._user_code in ('Et', 'Ht', 'ut')
+
     def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
 
     def reim_major(self, fi):
@@ -211,3 +218,15 @@ class component_t(object):
                     'ux': 'uxi', 'uy': 'uyi', 'uz': 'uzr', 'ua': None}[fi]
         except KeyError:
             return None
+
+    def get_tex_plot_label(self):
+        lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',
+               'Fyr': r'Re($F_y$)', 'Fzi': r'Im($F_z$)', 'Fxi': r'Im($F_x$)', 'Fyi': r'Im($F_y$)', 'Fzr': r'Re($F_z$)',
+               'Fabs': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fabs gives |F|^2
+        return lab.replace('F', self._F)
+
+    def field_type_label(self):
+        if self.is_AC:
+            return 'AC'
+        else:
+            return 'EM'

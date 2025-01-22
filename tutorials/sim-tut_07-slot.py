@@ -76,8 +76,6 @@ pl_vac.make_plot_1D_cut(prefix, 'x', .2)
 pl_vac.make_plot_1D_cut(prefix, 'y', .1)
 pl_vac.make_plot_1D_cut(prefix, 'line', (-.3, -.2), (.3, .2))
 
-
-
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1
 
