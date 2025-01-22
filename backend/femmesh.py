@@ -20,57 +20,22 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import copy
+from numbattools import np_min_max
+from pathlib import Path
+
 
 from math import sqrt
-import nbgmsh
 
+import nbgmsh
 from nbtypes import SI_to_gmpercc, SI_um
 import numbat
 from plottools import save_and_close_figure
 import reporting
 import plotting
-from pathlib import Path
-
-from numbattools import np_min_max
 
 
-# Checks of mesh and triangles satisfy conditions for triangulation
-# Quadratic algorithm. Use on the smallest grid possible
-def check_triangulation(vx, vy, triangs):
-    # are points unique
-    print("\n\nChecking triangulation goodness")
-    npts = len(vx)
-    dsepmin = 1e6
-    dsi = 0
-    dsj = 0
-    for i in range(npts):
-        for j in range(i + 1, npts):
-            dsep = sqrt((vx[i] - vx[j]) ** 2 + (vy[i] - vy[j]) ** 2)
-            if dsep < dsepmin:
-                dsepmin = dsep
-                dsi = i
-                dsj = j
 
-    print("  Closest space of triangle points was", dsepmin)
-    if dsepmin < 1e-11:
-        msg = f"Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]})."
-        msg += "\nIt seems the mesh grid reordering has failed."
-        reporting.report_and_exit(msg)
 
-    # is list of triangles unique
-    s_vtri = set()
-    clean = True
-    for tri in triangs:
-        stri = str(tri)
-        if stri in s_vtri:
-            print("        Double triangle at", stri)
-            clean = False
-        else:
-            s_vtri.add(stri)
-    if clean:
-        print("  No doubled triangles found")
-    else:
-        print("  Found doubled triangles")
 
 
 # def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
@@ -83,25 +48,34 @@ def check_triangulation(vx, vy, triangs):
 # ProcessPoolExecutor, because neither Triangulations or nested functions are
 # pickleable
 class TriInterpWrapper:
-    def __init__(self, tri_triang6p, finder, vx_out, vy_out, nx, ny):
+    def __init__(self, tri_triang6p, finder, vx_out, vy_out, nx=0, ny=0):
         self.tri_triang6p = tri_triang6p
         self.finder = finder
         self.vx_out = vx_out
         self.vy_out = vy_out
-        self.nx = nx
-        self.ny = ny
+        self.nx = nx  # Nonzero if 2D context
+        self.ny = ny  # Nonzero if 2D context
 
     def __call__(self, femsol):
         #print('\n\nCalling TriInterpWrapper:', type(self.tri_triang6p))
         #print(dir(self.tri_triang6p))
         #print(self.tri_triang6p._cpp_triangulation)
-        
-        del self.tri_triang6p._cpp_triangulation
-        self.tri_triang6p._cpp_triangulation = None
-        mptri = matplotlib.tri.LinearTriInterpolator( 
+
+        #del self.tri_triang6p._cpp_triangulation
+        #self.tri_triang6p._cpp_triangulation = None
+
+        #mptri = matplotlib.tri.LinearTriInterpolator(
+        #                                            self.tri_triang6p, femsol, trifinder=self.finder)(
+        #                                                    self.vx_out, self.vy_out).reshape(self.nx, self.ny)
+
+        mptri = matplotlib.tri.LinearTriInterpolator(
                                                     self.tri_triang6p, femsol, trifinder=self.finder)(
-                                                            self.vx_out, self.vy_out).reshape(self.nx, self.ny)
-        #print('cleared the Tri')
+                                                            self.vx_out, self.vy_out)
+
+        if self.nx:
+            mptri = mptri.reshape(self.nx, self.ny)
+
+
         return mptri
 
 def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
@@ -118,67 +92,95 @@ def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
 
 
 
-
 def make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out):
     """vx_out and vy_out are 1D lists of x and y coords from a 1D sampling line."""
 
-    def mif1d(femsol):
-        return matplotlib.tri.LinearTriInterpolator(
-            tri_triang6p, femsol, trifinder=finder
-        )(vx_out, vy_out)
+    # def mif1d(femsol):
+    #     return matplotlib.tri.LinearTriInterpolator(
+    #         tri_triang6p, femsol, trifinder=finder
+    #     )(vx_out, vy_out)
 
-    print('mif1d')
-    return mif1d
+    # return mif1d
+    return TriInterpWrapper(tri_triang6p, finder, vx_out, vy_out)
+
+
 
 
 class FemMesh:
+    """Mirrors the FEM mesh constructed in Fortran.
+
+    Used by FEMScalarFieldPlotter to understand FEM grid to sample from
+    Simulation (EM and AC) to communicate with Fortran side.
+
+    The properties can be constructed eitehr by reading an existing .mail file or by
+    taking the properties from the Fortran side after a simulation has been run.
+    """
+
 
     def __init__(self):
-        self.mesh_mail_fname = ""  # filename of original Gmsh-derived .mail file
+        ## filename of original Gmsh-derived .mail file
+        self.mesh_mail_fname = ""
 
-        self.n_msh_pts = 0  # Number of mesh nodes (points) in the FEM calculation
+        # Number of mesh nodes (points) in the FEM calculation
         # (Different to original underlying mesh because of elt sub-triangulation)
-        self.n_msh_el = 0  # Number of elements in .msh mesh file
+        self.n_msh_pts = 0
 
-        # made by python
-        self.v_el_2_mat_idx = None  # Array[0:n_msh_el] of index of elt's material into list of active em or materials.
+        # Number of elements in .msh mesh file
+        self.n_msh_el = 0
+
+        #
+        # Quantities made by python
+        #
+
+        # Array[0:n_msh_el] of index of elt's material into list of active em or materials.
         #    Values in range:  em simulation - [1, optical_props.n_mats_em]
         #                      ac simulation - [1, elastic_props.n_mats_ac]
         # Rename to .elt_2_material_index
+        self.v_el_2_mat_idx = None
 
-        self.typ_el_AC = None  # An elastic el_conv_tbl_n  (a dictionary!), completely diff to self.type_el
+        # An elastic el_conv_tbl_n  (a dictionary!), completely diff to self.type_el
         # Rename to .active_material_index
         # Belongs in ElasticProperties, not FemMesh
+        self.typ_el_AC = None
 
-        # made by fortran
-        self.elnd_to_mshpt = None  # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
-        self.node_physindex = None  # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
-        self.v_nd_xy = None  # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
+        #
+        # Quantities made by fortran
+        #
+        # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
+        self.elnd_to_mshpt = None
 
-        self.n_nodes = 6  # Nodes per each element (is always 6)
+        # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
+        self.node_physindex = None
+
+        # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
+        self.v_nd_xy = None
+
+        # Nodes per each element (is always 6)
+        self.n_nodes = 6
+
         self.ac_mesh_from_em = True  # Always True
 
-        self.el_convert_tbl = None  # Dict map of elastically active mesh elements into original em mesh elements.
+        # Dict map of elastically active mesh elements into original em mesh elements.
         #    Length: n_msh_el(ac).   Values in [1..n_msh_el(em)]
+        self.el_convert_tbl = None
 
-        self.extents = (
-            None  # measured from nbgmsh to have them early before we know v_nd_xy
-        )
+        # measured from nbgmsh to have them early before we know v_nd_xy
+        self.extents = ( None )
 
         # Seems never used
         # self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
         # self.node_convert_tbl = None
 
-    def build_from_gmsh_mail(self, mesh_mail_fname, struc):
+    def build_from_gmsh_mail(self, wguide):
         # Takes list of all material refractive indices
         # Discards any that are zero
 
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
 
-        self.mesh_mail_fname = mesh_mail_fname
-        mesh = nbgmsh.MailData(self.mesh_mail_fname)
+        self.mesh_mail_fname = wguide.mesh_mail_fname
+        mesh = nbgmsh.MailData(wguide.mesh_mail_fname)
 
-        # mesh = struc.get_mail_mesh_data()
+        # mesh = wguide.get_mail_mesh_data()
 
         self.v_el_2_mat_idx = mesh.v_elts_mat
 
@@ -190,10 +192,9 @@ class FemMesh:
         self.v_nd_xy = np.zeros([2, self.n_msh_pts])
 
         # Messy: Mail file does not include the domain scaling which is in nm, not microns
-        self.v_nd_xy[0, :] = mesh.v_x * struc.domain_x * 0.001
-        self.v_nd_xy[1, :] = (
-            mesh.v_y * struc.domain_x * 0.001
-        )  # Everything including yvalues is scaled by domain_x, not domain_y
+        # Everything including yvalues is scaled by domain_x, not domain_y
+        self.v_nd_xy[0, :] = mesh.v_x * wguide.domain_x * 0.001
+        self.v_nd_xy[1, :] = (mesh.v_y * wguide.domain_x * 0.001)
 
         self.extents = [
             np.min(self.v_nd_xy[0, :]),
@@ -202,22 +203,27 @@ class FemMesh:
             np.max(self.v_nd_xy[1, :]),
         ]
 
-        # TODO: this is just reporting.  Move elsewhere?
-        opt_props = struc.optical_props
+        self._report_em_mesh_properties(wguide)
+
+    def _report_em_mesh_properties(self, wguide):
+        opt_props = wguide.optical_props
         print(
             f"\n The final EM sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
         )
 
-        matvals = list(struc.d_materials.values())[: opt_props.n_mats_em]
+        #matvals = list(wguide.d_materials.values())[: opt_props.n_mats_em]
+        matvals = wguide.get_optical_materials()
 
         print(" The material index table is:", opt_props.el_conv_table_n, "\n")
         print(f" There are {opt_props.n_mats_em} active materials:")
         for im, m in enumerate(matvals):
-            print(
-                f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.'
-            )  # +1 because materials are reported by their Fortran index
+            # +1 because materials are reported by their Fortran index
+            print(f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.')
 
-    def store_em_mode_outputs(self, type_el, node_physindex, elnd_to_mshpt, v_nd_xy):
+
+    def store_fortran_em_mesh_properties(self, type_el, node_physindex, elnd_to_mshpt, v_nd_xy):
+        """Called after Fortran calc_modes_em() to store its mesh properties."""
+
         print("storing em")
         self.v_el_2_mat_idx = type_el
         self.elnd_to_mshpt = elnd_to_mshpt
@@ -229,7 +235,9 @@ class FemMesh:
         # print("  elt2nodes index map", self.elnd_to_mshpt, self.elnd_to_mshpt.shape)
         # print( #    "  node_physindex index map", self.node_physindex, self.node_physindex.shape)
 
-    def store_ac_mode_outputs(self, type_el, elnd_to_mshpt, v_nd_xy):
+    def store_fortran_ac_mesh_properties(self, type_el, elnd_to_mshpt, v_nd_xy):
+        """Called after Fortran calc_modes_ac() to store its mesh properties."""
+
         self.v_el_2_mat_idx = type_el
         self.elnd_to_mshpt = elnd_to_mshpt
         self.v_nd_xy = v_nd_xy
@@ -237,7 +245,12 @@ class FemMesh:
         # print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
         # print("  elt2nodes index map", self.elnd_to_mshpt)
 
-    def ac_build_from_em(self, structure, em_fem):
+    def ac_build_from_em(self, wguide, em_fem):
+        """Builds the FemMesh for an acoustic simulation based on an existing EM mesh
+        and the known elastic properties.
+
+        Called from ACSimulation.__init__()
+        """
 
         # Build a table of materials only containing elastic properties referencing the original full list in Struct
         # Needed for restricting meshes to elastic only for example
@@ -247,12 +260,9 @@ class FemMesh:
 
         # rename  el_conv_table -> mat_conv_table
 
-        opt_props = structure.optical_props
-        el_props = structure.elastic_props
+        opt_props = wguide.optical_props
+        el_props = wguide.elastic_props
 
-        el_props.extract_elastic_mats(structure, opt_props)
-
-        # d_mats_AC = {}
 
         # Take existing msh from EM FEM and manipulate mesh to exclude vacuum areas.
         # simres_EM = self.simres_EM
@@ -264,9 +274,10 @@ class FemMesh:
         v_nd_xy = em_fem.v_nd_xy
 
         type_el_AC = []  # material index for each element (length = n_msh_el)
-        elnd_to_mshpt_AC_tmp = np.zeros(
-            np.shape(elnd_to_mshpt), dtype=np.int64
-        )  #  fortran ordered table
+
+        #  fortran ordered table
+        elnd_to_mshpt_AC_tmp = np.zeros(np.shape(elnd_to_mshpt), dtype=np.int64)
+
         el_convert_tbl = {}
 
         # Find all elements that have elastic properties (basically drop vacuum borders)
@@ -353,6 +364,10 @@ class FemMesh:
         self.v_nd_xy = v_nd_xy_AC
         self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
 
+        self._report_ac_mesh_properties(el_props)
+
+    def _report_ac_mesh_properties(self, el_props):
+
         print(
             f"\n The final elastic sim mesh has {self.n_msh_pts} nodes, {self.n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
         )
@@ -371,30 +386,6 @@ class FemMesh:
         # print("  el_convert_tbl", self.el_convert_tbl)
         # print("  elt2nodes index map", self.elnd_to_mshpt)
 
-    def get_fullmesh_nodes_xy(self):
-        """Returns vectors of x and y physical positions from the 6 nodes of each element
-        in the standard order.
-
-        Many nodes will appear multiple times because they are edges (twice) or vertex
-        nodes (>=2).
-        """
-
-        v_x6p = np.zeros(6 * self.n_msh_el)
-        v_y6p = np.zeros(6 * self.n_msh_el)
-
-        tabnod_py = self.elnd_to_mshpt.T - 1  # shift fortran to python indexing
-
-        i = 0
-        for i_el in range(self.n_msh_el):
-            for i_node in range(6):
-
-                i_ex = tabnod_py[i_el, i_node]
-                # v_x6p[i] = self.v_nd_xy[0, i_ex]
-                # v_y6p[i] = self.v_nd_xy[1, i_ex]
-                v_x6p[i], v_y6p[i] = self.v_nd_xy[:, i_ex]
-                i += 1
-
-        return v_x6p, v_y6p
 
     def make_sub_triangulation(self):
         # In elnd_to_mshpt
@@ -511,9 +502,7 @@ class FemMesh:
         # But why is the trifinder based on 1p?  Does it make a difference?
 
         if ny > 1:  # a 2D sampling, not a line cut
-            interper_f = make_interper_f_2d(
-                tri_triang6p, finder, vx_out, vy_out, nx, ny
-            )
+            interper_f = make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny)
         else:
             interper_f = make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out)
 
@@ -533,13 +522,46 @@ class FemMesh:
         return v_regx, v_regy
 
     def element_to_material_index(self, i_el):
-        return (
-            self.v_el_2_mat_idx[i_el] - 1
-        )  # -1 because FEM material indices are fortran unit-indexed
+        # -1 because FEM material indices are fortran unit-indexed
+        return (self.v_el_2_mat_idx[i_el] - 1)
+
+
+
+    def get_fullmesh_nodes_xy(self):
+        """Returns vectors of x and y physical positions from the 6 nodes of each element
+        in the standard order.
+
+        Many nodes will appear multiple times because they are edges (twice) or vertex
+        nodes (>=2).
+
+        Used only by the raw mode plotter in plotmoderaw.py.
+        """
+
+        v_x6p = np.zeros(6 * self.n_msh_el)
+        v_y6p = np.zeros(6 * self.n_msh_el)
+
+        tabnod_py = self.elnd_to_mshpt.T - 1  # shift fortran to python indexing
+
+        i = 0
+        for i_el in range(self.n_msh_el):
+            for i_node in range(6):
+
+                i_ex = tabnod_py[i_el, i_node]
+                # v_x6p[i] = self.v_nd_xy[0, i_ex]
+                # v_y6p[i] = self.v_nd_xy[1, i_ex]
+                v_x6p[i], v_y6p[i] = self.v_nd_xy[:, i_ex]
+                i += 1
+
+        return v_x6p, v_y6p
+
+
 
 
 class FEMScalarFieldPlotter:
-    def __init__(self, mesh_mail_fname, struc, n_points=500):
+    """Class to make 1D and 2D plots of a scalar quantity represented on a FEM mesh."""
+
+
+    def __init__(self, wguide, n_points=500):
         """Build objects to hold a scalar field represented on a FEM mesh.
 
         The FEM mesh is constructed from the mesh file mesh_mail_fname.
@@ -550,7 +572,7 @@ class FEMScalarFieldPlotter:
         """
 
         self.fem_mesh = FemMesh()
-        self.fem_mesh.build_from_gmsh_mail(mesh_mail_fname, struc)
+        self.fem_mesh.build_from_gmsh_mail(wguide)
 
         self.quantity_name = ""
         self.file_suffix = ""
@@ -792,3 +814,52 @@ class FEMScalarFieldPlotter:
                 cb.outline.set_color("gray")
 
             plotting.save_and_close_figure(fig, fname)
+
+
+
+
+
+
+
+
+
+
+
+
+# Checks of mesh and triangles satisfy conditions for triangulation
+# Quadratic algorithm. Use on the smallest grid possible
+def check_triangulation(vx, vy, triangs):
+    # are points unique
+    print("\n\nChecking triangulation goodness")
+    npts = len(vx)
+    dsepmin = 1e6
+    dsi = 0
+    dsj = 0
+    for i in range(npts):
+        for j in range(i + 1, npts):
+            dsep = sqrt((vx[i] - vx[j]) ** 2 + (vy[i] - vy[j]) ** 2)
+            if dsep < dsepmin:
+                dsepmin = dsep
+                dsi = i
+                dsj = j
+
+    print("  Closest space of triangle points was", dsepmin)
+    if dsepmin < 1e-11:
+        msg = f"Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]})."
+        msg += "\nIt seems the mesh grid reordering has failed."
+        reporting.report_and_exit(msg)
+
+    # is list of triangles unique
+    s_vtri = set()
+    clean = True
+    for tri in triangs:
+        stri = str(tri)
+        if stri in s_vtri:
+            print("        Double triangle at", stri)
+            clean = False
+        else:
+            s_vtri.add(stri)
+    if clean:
+        print("  No doubled triangles found")
+    else:
+        print("  Found doubled triangles")

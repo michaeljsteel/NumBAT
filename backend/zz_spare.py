@@ -12,7 +12,7 @@ def delme_plot_(ax, m_X, m_Y, l_fields, plps, cc):
     ylmi = plps.get('ylim_min', 0)
     ylma = plps.get('ylim_max', 0)
 
-    comp_label = cc.get_label()  # for plotting
+    comp_label = cc.get_tex_plot_label()  # for plotting
     signed = cc.is_signed_field()
 
     cmap = cmap_unsigned
@@ -177,7 +177,7 @@ def del_plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
 
     plot_set_ticks(ax, plps, decorator)
 
-    comp_label = cc.get_label()
+    comp_label = cc.get_tex_plot_label()
     plot_set_title(ax, comp_label, plps, decorator)
 
     plot_set_axes_style(ax, plps, decorator)

@@ -56,7 +56,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            lc_bkg=.5, lc_refine_1=1.0*refine_fac, lc_refine_2=1.0*refine_fac)
 
 #wguide.plot_mesh(prefix)
-#wguide.plot_mail_mesh(prefix)
+wguide.plot_mail_mesh(prefix)
 
 
 # Estimate expected effective index of fundamental guided mode.

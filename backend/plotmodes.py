@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
 import numbat
-from nbtypes import component_t, FieldType, SI_THz, SI_GHz, SI_um, twopi
+from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plottools import save_and_close_figure
 
 
@@ -41,12 +41,12 @@ def modeplot_filename(plps, ival, label=''):
     return filestart + nbapp.plotfile_ext()
 
 def field_type_to_intensity_code(ft):
-    return {FieldType.EM_E: component_t('Eabs'), FieldType.EM_H: component_t(
-        'Habs'), FieldType.AC: component_t('uabs')}[ft]
+    return {FieldType.EM_E: FieldTag('Eabs'), FieldType.EM_H: FieldTag(
+        'Habs'), FieldType.AC: FieldTag('uabs')}[ft]
 
 def field_type_to_vector_code(ft):
-    return  {FieldType.EM_E: component_t('Et'), FieldType.EM_H: component_t(
-        'Ht'), FieldType.AC: component_t('ut')}[ft]
+    return  {FieldType.EM_E: FieldTag('Et'), FieldType.EM_H: FieldTag(
+        'Ht'), FieldType.AC: FieldTag('ut')}[ft]
 
 
 class TidyAxes:
@@ -538,8 +538,8 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
 
 
     labs = []
-    if do_cont: labs.append(cc_scalar.get_label())
-    if do_quiv: labs.append(cc_vector.get_label())
+    if do_cont: labs.append(cc_scalar.get_tex_plot_label())
+    if do_quiv: labs.append(cc_vector.get_tex_plot_label())
     comp_label = ', '.join(labs)
 
     #lw = decorator.get_property('linewidth')# TODO: Unused
@@ -716,7 +716,7 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_vector=cc_transvec)
 
     for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
-        cc = component_t.make_comp_from_Fcode(ft, flab)
+        cc = FieldTag.make_comp_from_Fcode(ft, flab)
 
         if not cc.is_signed_field(): continue  # already done vector and energy plots
 
@@ -743,7 +743,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
     if cc.is_transverse():
         cc_transvec = cc
         ft = plps['EM_AC']
-        cc_scal = component_t.make_comp_from_component(ft, 'abs')
+        cc_scal = FieldTag.make_comp_from_component(ft, 'abs')
     else:
         cc_transvec = None
         cc_scal = cc

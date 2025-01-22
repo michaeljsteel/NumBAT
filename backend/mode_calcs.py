@@ -290,7 +290,7 @@ class SimResult:
         #    nbapp.set_outprefix(prefix)
         #else:
         #    prefix = nbapp.outprefix()
-        #if not prefix: 
+        #if not prefix:
         #    prefix = nbapp.outprefix()
 
         pf = nbapp.outpath_fields(prefix=prefix)
@@ -702,8 +702,7 @@ class EMSimulation(Simulation):
         self.simres_EM = None  # kludge to simplify save code in Simulation. Fix
 
         self.fem_mesh = FemMesh()
-        self.fem_mesh.build_from_gmsh_mail(self.structure.mesh_mail_fname,
-                                           self.structure)
+        self.fem_mesh.build_from_gmsh_mail(self.structure)
 
         #self.fem_mesh.report_properties(structure)
 
@@ -794,7 +793,7 @@ class EMSimulation(Simulation):
         #print("modepol", self.mode_pol)
         #print("ls material: n", self.ls_material, self.ls_material.shape)
 
-        self.fem_mesh.store_em_mode_outputs(type_el, node_physindex, elnd_to_mshpt, v_nd_xy)
+        self.fem_mesh.store_fortran_em_mesh_properties(type_el, node_physindex, elnd_to_mshpt, v_nd_xy)
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
         print("  Calculating EM mode powers...")
@@ -1027,7 +1026,7 @@ class ACSimulation(Simulation):
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
-        self.fem_mesh.store_ac_mode_outputs(type_el_out, elnd_to_mshpt_out, v_nd_xy_out)
+        self.fem_mesh.store_fortran_ac_mesh_properties(type_el_out, elnd_to_mshpt_out, v_nd_xy_out)
 
         # FEM Eigenvalue is frequency, rather than angular frequency Omega
         Omega_AC = self.eigs_nu * twopi  # DELETE ME

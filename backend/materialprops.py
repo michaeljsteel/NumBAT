@@ -39,7 +39,11 @@ class OpticalProps:
 class ElasticProps:
     '''Elastic tensors in unit-indexed forms suitable for fortran'''
 
-    def __init__(self, v_acoustic_mats, symmetry_flag):
+    def __init__(self, wguide, symmetry_flag):
+
+             # construct list of materials with nonzero density, ie with acoustic properties likely defined
+        # Any material not given v_acoustic_mats assumed to be vacuum.
+        v_acoustic_mats = [m for m in wguide.d_materials.values() if m.has_elastic_properties()]
 
         self.n_mats_ac = len(v_acoustic_mats)
         self.v_active_mats = v_acoustic_mats
@@ -64,25 +68,33 @@ class ElasticProps:
 
         self.fill_tensors(v_acoustic_mats, symmetry_flag)
 
+        self._extract_elastic_mats(wguide)
 
-    def extract_elastic_mats(self, structure, opt_props):
+
+    def _extract_elastic_mats(self, wguide):
+
+        opt_props = wguide.optical_props
+
         el_conv_table = {}
         oldloc = 1
         newloc = 1
         d_mats_AC = {}
 
             #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
-        for mat in list(structure.d_materials.values())[:opt_props.n_mats_em]:
+        for mat in list(wguide.d_materials.values())[:opt_props.n_mats_em]:
             if mat.has_elastic_properties():
                 el_conv_table[oldloc] = newloc
                 newloc += 1
                 d_mats_AC[mat.material_name] = mat
             oldloc += 1
 
-        self.typ_el_AC = {}
-        for k, v in el_conv_table.items():
-            # now keeps its own rather than take from simres_EM which might not exist
-            self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
+        #self.typ_el_AC = {}
+        #for k, v in el_conv_table.items():
+        #    # now keeps its own rather than take from simres_EM which might not exist
+        #    self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
+        self.typ_el_AC = {opt_props.el_conv_table_n[k] : v for k, v in el_conv_table.items()}
+
+        
 
         #TODO: are these two in any way different?
 
