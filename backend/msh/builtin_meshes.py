@@ -113,7 +113,7 @@ class Circular(UserGeometryBase):
     def apply_parameters(self):
 
         subs = _process_one_and_two_incls_subs(self._gmsh_template_filename)
-        subs.append(("rect = 1;", "rect = 0;", ""))  # apply circularness
+        subs.append(("rect = 1;", "rect = %d;", "0"))  # apply circularness
 
         return subs
 

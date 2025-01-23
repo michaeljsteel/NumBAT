@@ -114,6 +114,28 @@ class SimResult:
             if self._sim.simres_EM is not None:  # TODO: to clean_for_asve9
                 self._sim.simres_EM.clean_for_save()
 
+    def get_modes_on_mesh(self, md, field_type):
+
+        fem_evecs = self.fem_evecs_for_ft(field_type)
+        n_msh_el = self.fem_mesh.n_msh_el
+
+        v_Fx6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+        v_Fy6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+        v_Fz6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+
+        i = 0
+        for i_el in range(n_msh_el):
+            for i_node in range(6):  # TODO: make this one xyz array so we can broadcast
+                v_Fx6p[i] = fem_evecs[0, i_node, md, i_el]
+                v_Fy6p[i] = fem_evecs[1, i_node, md, i_el]
+                v_Fz6p[i] = fem_evecs[2, i_node, md, i_el]
+                i += 1
+
+        v_Fa6p = np.sqrt(np.abs(v_Fx6p)**2 +
+                        np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
+
+        return (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p)
+
     def save_simulation(self, prefix): # must be overidden
 
         self.clean_for_save()
@@ -279,7 +301,7 @@ class SimResult:
             print(f"Plotting {modetype} mode m={ival_range[0]}.")
 
         mode_helper = self.get_mode_helper()
-        mode_helper.setup_plot_grid(n_pts=n_points)
+        mode_helper.define_plot_grid_2d(n_pts=n_points)
 
         if decorator is None:
             decorator = Decorator()
@@ -364,6 +386,10 @@ class EMSimResult(SimResult):
     #     self.clean_for_save()
     #     np.savez(prefix, simulation=self)
 
+
+
+    def fem_evecs_for_ft(self, ft):
+        return self.fem_evecs_H if ft == FieldType.EM_H else self.fem_evecs
 
     def make_H_fields(self):
         n_modes = len(self.eigs_kz)
@@ -496,6 +522,10 @@ class ACSimResult(SimResult):
     #     self.clean_for_save()
     #     np.savez(prefix, simulation=self)
 
+
+
+    def fem_evecs_for_ft(self, ft):
+        return self.fem_evecs
 
     def is_AC(self):
         return True

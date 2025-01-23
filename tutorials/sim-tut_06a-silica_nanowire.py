@@ -21,7 +21,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_nm = 550
 domain_x = 4500
 domain_y = 1.0*domain_x
 inc_a_x = 550

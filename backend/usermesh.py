@@ -20,9 +20,7 @@ from pathlib import Path
 import numbers
 
 import reporting
-
-def is_real_number(x):
-    return isinstance(x, numbers.Real)  # need numpy.int32, int36, float64, etc
+from numbattools import is_real_number
 
 class UserGeometryBase():
 
@@ -138,7 +136,12 @@ class UserGeometryBase():
                    f'{self.gmsh_template_filename()}_msh_template.geo'), 'r').read()
 
         for (olds, news, sval) in subs:
-            val = self.get_param(sval)
+            # sval can be either an actual float or a string rep of a float
+            # or the name of a parameter
+            try:
+                val = float(sval)
+            except ValueError:
+                val = self.get_param(sval)
 
             if val is not None:
                 assert is_real_number(val), f'Parameter {sval} is not a number'
