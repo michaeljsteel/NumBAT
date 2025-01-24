@@ -1,4 +1,5 @@
 
+core
 *.so
 *.cls
 *.pyc
