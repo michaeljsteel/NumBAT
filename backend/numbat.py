@@ -100,15 +100,12 @@ class _NumBATApp:
         self._outprefix=s
 
     def outprefix(self):
-        """Return the current global output prefix as a string."""
         return self._outprefix
 
     def outdir(self):
-        """Return the current global output directory as a string."""
         return self._outdir
 
     def set_outdir(self, outdir):
-        """Set the current global output directory."""
         self._outdir = outdir
         path=Path(outdir)
 
@@ -118,15 +115,12 @@ class _NumBATApp:
             reporting.report_and_exit(f'Output path {outdir} exists and is not a directory.')
 
     def outpath(self, prefix=''):
-        '''Returns a string composed of the current output directory and the given prefix.'''
-
         outpref = prefix if prefix else self._outprefix
-        return str(Path(self._outdir, outpref))
+        return Path(self._outdir, outpref)
 
     def outpath_fields(self, prefix=''):
-        '''Returns a string composed of the current output directory for modal fields and the given prefix.'''
         outpref = prefix if prefix else self._outprefix
-        return str(Path(self._outdir, outpref+'-fields'))
+        return Path(self._outdir, outpref+'-fields')
 
 
     def path_gmsh(self):

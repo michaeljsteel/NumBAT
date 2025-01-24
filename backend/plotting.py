@@ -23,6 +23,10 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
+#import matplotlib.colors as mplcolors
+
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
+#from collections.abc import Iterable
 
 import numbat
 from nbtypes import SI_GHz

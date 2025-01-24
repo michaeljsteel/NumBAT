@@ -19,6 +19,7 @@ import traceback
 import queue
 import time
 import datetime
+#import numbat
 
 
 class CalcThread(threading.Thread):

@@ -32,6 +32,9 @@ from math import sqrt, atan
 import reporting
 
 twopi = 2*math.pi
+#cvac = nbtypes.SI_speed_c
+
+
 
 class EMPoln(Enum):
     TE = 'TE'

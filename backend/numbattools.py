@@ -20,7 +20,6 @@ import scipy.integrate as sciint
 import math
 import subprocess
 import numbers
-import collections.abc as abc
 
 import reporting
 
@@ -28,7 +27,7 @@ def is_real_number(x):
     return isinstance(x, numbers.Real)  # need numpy.int32, int36, float64, etc
 
 def is_float_pair(x):
-    return (isinstance(x, abc.Sequence) and len(x)==2
+    return (isinstance(collections.Sequence) and len(x)==2
             and is_real_number(x[0]) and is_real_number(x[1]))
 
 def almost_zero(x, tol=1e-10):
