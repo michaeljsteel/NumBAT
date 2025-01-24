@@ -40,6 +40,19 @@ def modeplot_filename(plps, ival, label=''):
 
     return filestart + nbapp.plotfile_ext()
 
+def modeplot_filename_1d(plps, ival, cut, label=''):
+
+    nbapp = numbat.NumBATApp()
+    fullpref = str(nbapp.outpath_fields(prefix=plps['prefix']))
+
+    comp = plps['EM_AC'].name
+    suf = plps['suffix']
+    filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}_{cut}cut'
+
+    if label: filestart += '_'+label
+
+    return filestart + nbapp.plotfile_ext()
+
 def field_type_to_intensity_code(ft):
     return {FieldType.EM_E: FieldTag('Eabs'), FieldType.EM_H: FieldTag(
         'Habs'), FieldType.AC: FieldTag('uabs')}[ft]
@@ -503,7 +516,8 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
 
     cbar = None
     if do_cont:
-        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[cc_scalar._f_code], cc_scalar, plps, decorator)
+        im_co, cbar = add_contour_plot(fig, ax, d_xy,
+                                       v_fields[cc_scalar.component_as_F()], cc_scalar, plps, decorator)
 
     if do_quiv:
         add_quiver_plot(fig, ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
@@ -716,12 +730,12 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_vector=cc_transvec)
 
     for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
-        cc = FieldTag.make_comp_from_Fcode(ft, flab)
+        cc = FieldTag.make_comp_from_field_and_Fcode(ft, flab)
 
         if not cc.is_signed_field(): continue  # already done vector and energy plots
 
         # don't plot what will likely be pure zero fields
-        if (hide_minors and not cc.is_dominant()): continue
+        if (hide_minors and not cc.is_minor()): continue
 
         ax = axs[axi]; axi += 1
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
@@ -743,7 +757,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
     if cc.is_transverse():
         cc_transvec = cc
         ft = plps['EM_AC']
-        cc_scal = FieldTag.make_comp_from_component(ft, 'abs')
+        cc_scal = FieldTag.make_from_field_and_component(ft, 'abs')
     else:
         cc_transvec = None
         cc_scal = cc

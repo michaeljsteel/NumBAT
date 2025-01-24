@@ -7,7 +7,7 @@ all: tut01 tut02 tut03a tut03b tut04 tut05 tut06a tut06b \
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b \
 		ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
 
-fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
+fast2:	ftut06a ftut06b ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
 
 slow: tut04 tut05 tut06 tut07 tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 

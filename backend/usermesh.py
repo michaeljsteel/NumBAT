@@ -17,7 +17,6 @@
 import uuid
 import os
 from pathlib import Path
-import numbers
 
 import reporting
 from numbattools import is_real_number

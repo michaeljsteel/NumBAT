@@ -23,7 +23,7 @@
 import subprocess
 import copy
 import traceback
-#import itertools
+
 
 
 import tempfile
@@ -31,7 +31,6 @@ from pathlib import Path
 import json
 import importlib
 import matplotlib.pyplot as plt
-#import matplotlib.ticker as mticker
 
 import numpy as np
 import scipy.interpolate
@@ -388,7 +387,9 @@ class Structure:
         nbapp = numbat.NumBATApp()
         gmsh_exe = nbapp.path_gmsh()
 
-        outprefix = Path(numbat.NumBATApp().outdir(), outpref)
+        #outprefix = Path(numbat.NumBATApp().outdir(), outpref)
+        outprefix = nbapp.outpath(outpref)
+
         tdir = tempfile.TemporaryDirectory()
         tmpoutpref = str(Path(tdir.name, outpref))
 

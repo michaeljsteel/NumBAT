@@ -109,29 +109,8 @@ class CrystalGroup(IntEnum):
 class FieldTag:
     '''Class for transferring between user readable and code name versions of field components.'''
 
-    #@staticmethod
-    #def Ecomp(c): return FieldTag('E'+c)
-#
-#    @staticmethod
-#    def Hcomp(c): return FieldTag('H'+c)
-#
-#    @staticmethod
-#    def ucomp(c): return FieldTag('u'+c)
-
-    @staticmethod
-    def make_comp_noreim(ft, fc):
-        '''Create a FieldTag from the field-agnostic component Fx, Fy, Fz, Fabs, etc and the field type.
-        Set the _f_code to the default.  '''
-        if ft == FieldType.EM_E:
-            uc=f'E{fc[1]}'
-        elif ft == FieldType.EM_H:
-            uc=f'H{fc[1]}'
-        else:
-            uc=f'u{fc[1]}'
-        return FieldTag(uc)
-
-    @staticmethod
-    def make_comp_from_component(ft, cc):
+    @staticmethod  # make plain module method
+    def make_from_field_and_component(ft, cc):
         '''Create a FieldTag from the field type and component suffix x, y, z, abs, t.'''
         if ft == FieldType.EM_E:
             uc = 'E'+cc
@@ -143,31 +122,34 @@ class FieldTag:
 
 
     @staticmethod
-    def make_comp_from_Fcode(emac, fc):
-        '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.'''
-        if emac == FieldType.EM_E:
+    def make_comp_from_field_and_Fcode(ft, fc):
+        '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.
+
+        The fc can override the preference for major real/imag part.'''
+        if ft == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
                   'Fzr': 'Ez', 'Fzi': 'Ez', 'Fabs': 'Eabs', 'Ft': 'Et'}[fc]
-        elif emac == FieldType.EM_H:
+        elif ft == FieldType.EM_H:
             uc = {'Fxr': 'Hx', 'Fxi': 'Hx', 'Fyr': 'Hy', 'Fyi': 'Hy',
                   'Fzr': 'Hz', 'Fzi': 'Hz', 'Fabs': 'Habs', 'Ft': 'Ht'}[fc]
         else:
             uc = {'Fxr': 'ux', 'Fxi': 'ux', 'Fyr': 'uy', 'Fyi': 'uy',
                   'Fzr': 'uz', 'Fzi': 'uz', 'Fabs': 'uabs', 'Ft': 'ut'}[fc]
 
-         # we override the _f_code in __init__ because we may not be asking for the dominant re/im part
         return FieldTag(uc, fc)
 
     def __init__(self, uc, fc=''):
         '''Make FieldTag knowing the actual field component Ex, Ey, Ez, Et, Eabs, ux, uy etc.
 
-           Sets  _f_code to the field-agnostic form starting with F and with the dominant real/imag part for that component.
+           By default, the tag is set to the dominant real/imag part of the field component.
+           This can be overridden or changed later using set_to_major() or set_to_minor().
 
            Args:
               uc: str  - User-friendly field component code.
               fc: str  - Field-agnostic symbol indicating rea/imag/abs/t part of whichever field is active.
 
            A user code (uc) is one of Ex, Ey, Ez, Et, Eabs, Hx, Hy, Hz, Ht, Habs, ux, uy, uz, ut, uabs.
+
            A field code (fc) is one of Fxr, Fxi, Fyr, Fyi, Fzr, Fzi, Fabs, Ft.
         '''
 
@@ -175,35 +157,45 @@ class FieldTag:
         self._F = uc[0]    # E, H, or u
         self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
         self._xyz = uc[1]  # x, y, z, a, t
-        self._Fimaj = self.reim_major(self._Fi)
-        self._Fimin = self.reim_minor(self._Fi)
 
         # default real/imag given the _F value
         if fc:
             self._f_code = fc
         else:
-            self._f_code = {'Ex': 'Fxr', 'Ey': 'Fyr', 'Ez': 'Fzi', 'Eabs': 'Fabs', 'Et': 'Ft',
-                        'Hx': 'Fxr', 'Hy': 'Fyr', 'Hz': 'Fzi', 'Habs': 'Fabs', 'Ht': 'Ft',
-                        'ux': 'Fxr', 'uy': 'Fyr', 'uz': 'Fzi', 'uabs': 'Fabs', 'ut': 'Ft',
-                        }[self._user_code]
+            self._f_code = self.major_component_as_F()
 
-    def is_user_code(self, uc):
-        return uc in ('Ex', 'Ey', 'Ez', 'Eabs', 'Et', 'Hx', 'Hy', 'Hz', 'Habs', 'Ht', 'ux', 'uy', 'uz', 'uabs', 'ut')
+    def __str__(self):
+        return f"FieldTag: {self._user_code}, {self._f_code}"
 
-    def is_field_code(self, fc):
-        return fc in ('Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs', 'Ft')
+    def __repr__(self):
+        return f"FieldTag({self._user_code}, {self._f_code})"
+
+    def field_component(self):
+        return self._user_code
+
+    #def is_user_code(self, uc):
+    #     return uc in ('Ex', 'Ey', 'Ez', 'Eabs', 'Et', 'Hx', 'Hy', 'Hz', 'Habs', 'Ht', 'ux', 'uy', 'uz', 'uabs', 'ut')
+
+    #def is_field_code(self, fc):
+    #    return fc in ('Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs', 'Ft')
 
     def is_AC(self): return self._F == 'u'
 
     def is_abs(self): return self._f_code == 'Fabs'
 
+    def is_x(self): return self._xyz == 'x'
+    def is_y(self): return self._xyz == 'y'
+    def is_z(self): return self._xyz == 'z'
+
     def is_signed_field(self): return self._f_code not in ('Ft', 'Fabs')
 
     def is_transverse(self): return self._user_code in ('Et', 'Ht', 'ut')
 
-    def is_dominant(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
+    def is_minor(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
 
-    def reim_major(self, fi):
+    @staticmethod
+    def reim_major(fi):
+        '''Returns the tag of the major part (real or imag) of the field component fi.'''
         try:
             return {'Ex': 'Exr', 'Ey': 'Eyr', 'Ez': 'Ezi', 'Ea': 'Ea',
                     'Hx': 'Hxr', 'Hy': 'Hyr', 'Hz': 'Hzi', 'Ha': 'Ha',
@@ -211,7 +203,9 @@ class FieldTag:
         except KeyError:
             return fi
 
-    def reim_minor(self, fi):
+    @staticmethod
+    def reim_minor(fi):
+        '''Returns the tag of the minor part (real or imag) of the field component fi.'''
         try:
             return {'Ex': 'Exi', 'Ey': 'Eyi', 'Ez': 'Ezi', 'Ea': 'Ea',
                     'Hx': 'Hxi', 'Hy': 'Hyi', 'Hz': 'Hzi', 'Ha': None,
@@ -219,14 +213,69 @@ class FieldTag:
         except KeyError:
             return None
 
+    def major_component(self):
+        """Returns the major component of the field in E/H/u notation."""
+        return FieldTag.reim_major(self._user_code)
+
+    def minor_component(self):
+        """Returns the minor component of the field in E/H/u notation."""
+        return FieldTag.reim_minor(self._user_code)
+
+    def major_component_as_F(self):
+        """Returns the major component of the field in F notation."""
+        majco = self.major_component()
+        majcoF = 'F' + majco[1:]
+        return majcoF
+
+    def minor_component_as_F(self):
+        """Returns the minor component of the field in F notation."""
+        minco = self.minor_component()
+        mincoF = 'F' + minco[1:]
+        return mincoF
+    def component_as_F(self):
+        return self._f_code
+
     def get_tex_plot_label(self):
         lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',
                'Fyr': r'Re($F_y$)', 'Fzi': r'Im($F_z$)', 'Fxi': r'Im($F_x$)', 'Fyi': r'Im($F_y$)', 'Fzr': r'Re($F_z$)',
                'Fabs': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fabs gives |F|^2
         return lab.replace('F', self._F)
 
+    def set_to_major(self):
+        self._f_code = self.major_component_as_F()
+
+    def set_to_minor(self):
+        self._f_code = self.minor_component_as_F()
+
+
     def field_type_label(self):
         if self.is_AC:
             return 'AC'
         else:
             return 'EM'
+
+    def linestyle(self, all_comps):
+        """Field amplitudes are dashed (major) or dotted (minor) if they are plotted alongside an absolute value"""
+
+        if self.is_abs():
+            return 'solid'
+        mixed = 'a' in all_comps or 'abs' in all_comps
+
+        if not mixed:
+            return 'solid'
+
+        return 'dashed' if self.is_minor() else 'dotted'
+
+    def linecolor(self):
+        """Field amplitudes have standard colours."""
+
+        if self.is_abs():
+            return 'red'
+        if self.is_x():
+            return 'blue'
+        if self.is_y():
+            return 'green'
+        if self.is_z():
+            return 'brown'
+
+        return None

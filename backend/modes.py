@@ -17,53 +17,18 @@
 
 from math import sqrt
 import numpy as np
+import matplotlib.pyplot as plt
 
 import numbat
 from nbtypes import FieldType, FieldTag, SI_um, SI_vacuum_impedance_Z0
 import reporting
 
-from numbattools import int2d_trapz, np_min_max
+from numbattools import int2d_trapz
+import femmesh
 import plotmodes
 import plotmoderaw
+import plotting
 
-# # Checks of mesh and triangles satisfy conditions for triangulation
-# # Quadratic algorithm. Use on the smallest grid possible
-# def check_triangulation(vx, vy, triangs):
-#     # are points unique
-#     print('\n\nChecking triangulation goodness')
-#     npts = len(vx)
-#     dsepmin = 1e6
-#     dsi = 0
-#     dsj = 0
-#     for i in range(npts):
-#         for j in range(i+1, npts):
-#             dsep = sqrt((vx[i]-vx[j])**2 + (vy[i]-vy[j])**2)
-#             if dsep < dsepmin:
-#                 dsepmin = dsep
-#                 dsi = i
-#                 dsj = j
-
-#     print('  Closest space of triangle points was', dsepmin)
-#     if dsepmin < 1e-11:
-#         msg = f'Point collision at {dsi}, {
-#             dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]}).'
-#         msg += '\nIt seems the mesh grid reordering has failed.'
-#         reporting.report_and_exit(msg)
-
-#     # is list of triangles unique
-#     s_vtri = set()
-#     clean = True
-#     for tri in triangs:
-#         stri = str(tri)
-#         if stri in s_vtri:
-#             print("        Double triangle at", stri)
-#             clean = False
-#         else:
-#             s_vtri.add(stri)
-#     if clean:
-#         print("  No doubled triangles found")
-#     else:
-#         print("  Found doubled triangles")
 
 
 class ModePlotHelper:
@@ -76,13 +41,18 @@ class ModePlotHelper:
 
         self.plot_params = {}
 
-        self.setup_for_npoints = 0
+        self.setup_for_2d_n_pts = 0
+        self.setup_for_1d = ()
 
         # Points for the plot grid in absolute coords and units of meters
         self.xy_raw = {}
 
         # Points for the plot grid in shifted coords and units of microns
         self.xy_out = {}
+
+        # x-axis for any 1D cut plots
+        self.v_x_axis = None
+
 
         self.interper_f_2d = None
         self.interper_f_1d = None
@@ -134,47 +104,26 @@ class ModePlotHelper:
             self.plot_params['decorator'] = plotmodes.Decorator()
 
 
-    def interpolate_mode_i(self, md, field_type):
+    def interpolate_mode_i(self, md, field_type, dims=2):
         # construct the meshed field from fortran solution
 
         simres = self.sim_result
 
-        #fm = self.sim_result.fem_mesh
-
-        # # extract the field data at every node of every elt for the desired mode and field
-
-        # v_Fx6p = np.zeros(6*fm.n_msh_el, dtype=np.complex128)
-        # v_Fy6p = np.zeros(6*fm.n_msh_el, dtype=np.complex128)
-        # v_Fz6p = np.zeros(6*fm.n_msh_el, dtype=np.complex128)
-
-        # fem_evecs = simres.fem_evecs_for_ft(field_type)
-
-        # i = 0
-        # for i_el in range(fm.n_msh_el):
-        #     for i_node in range(6):  # TODO: make this one xyz array so we can broadcast
-        #         v_Fx6p[i] = fem_evecs[0, i_node, ival, i_el]
-        #         v_Fy6p[i] = fem_evecs[1, i_node, ival, i_el]
-        #         v_Fz6p[i] = fem_evecs[2, i_node, ival, i_el]
-
-        #         i += 1
-
-        # v_F6p = np.sqrt(np.abs(v_Fx6p)**2 +
-        #                 np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
-
-        (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p) = simres.get_modes_on_mesh(
+        (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p) = simres.get_modes_on_fem_mesh(
             md, field_type)
 
-        # Always need these ones.
+        interper_f = self.interper_f_2d if dims == 2 else self.interper_f_1d
 
-        m_ReFx = self.interper_f_2d(v_Fx6p.real)
-        m_ReFy = self.interper_f_2d(v_Fy6p.real)
-        m_ImFz = self.interper_f_2d(v_Fz6p.imag)
-        m_AbsF = self.interper_f_2d(v_Fa6p)
+        # Always need these ones.
+        m_ReFx = interper_f(v_Fx6p.real)
+        m_ReFy = interper_f(v_Fy6p.real)
+        m_ImFz = interper_f(v_Fz6p.imag)
+        m_AbsF = interper_f(v_Fa6p)
 
         # often not needed for plotting, but are used for measuring fractions. (Could fix taht?)
-        m_ImFx = self.interper_f_2d(v_Fx6p.imag)
-        m_ImFy = self.interper_f_2d(v_Fy6p.imag)
-        m_ReFz = self.interper_f_2d(v_Fz6p.real)
+        m_ImFx = interper_f(v_Fx6p.imag)
+        m_ImFy = interper_f(v_Fy6p.imag)
+        m_ReFz = interper_f(v_Fz6p.real)
 
         d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx,
                     'Fyr': m_ReFy, 'Fyi': m_ImFy,
@@ -187,14 +136,14 @@ class ModePlotHelper:
 
         return d_fields
 
+
     def _choose_plot_points(self, n_pts):
         '''Picks actual data points for the plot grid based on requested resolution.'''
-        self.setup_for_npoints = n_pts
+        self.setup_for_2d_n_pts = n_pts
 
         fm = self.sim_result.fem_mesh
 
-        x_min, x_max = np_min_max(fm.v_nd_xy[0, :])
-        y_min, y_max = np_min_max(fm.v_nd_xy[1, :])
+        x_min, x_max, y_min, y_max = fm.get_xy_limits()
 
         area = abs((x_max-x_min)*(y_max-y_min))
         n_pts_x = int(n_pts*abs(x_max-x_min)/np.sqrt(area))
@@ -202,7 +151,6 @@ class ModePlotHelper:
 
         # Now use the coords user would like to think in
         shiftx, shifty = self.sim_result.get_xyshift()
-        # self.shiftx, self.shifty = shiftx, shifty  # TODO: get rid of these.
 
         # These are the actual x and y domains of the final plots
         v_x = np.linspace(x_min, x_max, n_pts_x)
@@ -230,7 +178,7 @@ class ModePlotHelper:
     def define_plot_grid_2d(self, n_pts=501):
         '''Define interpolation plotting grids for a nominal n_pts**2 points distributed evenly amongst x and y.'''
 
-        if self.setup_for_npoints == n_pts:
+        if self.setup_for_2d_n_pts == n_pts:
             return  # only need to repeat if the grid density changes
 
         fm = self.sim_result.fem_mesh
@@ -244,6 +192,49 @@ class ModePlotHelper:
 
         self.interper_f_2d = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
 
+    def define_plot_grid_1d(self, s_cut, val1, val2, n_pts):
+
+        if self.setup_for_1d == (s_cut, val1, val2, n_pts):
+            return  # no update to interpolator needed
+
+        self.setup_for_1d=(s_cut, val1, val2, n_pts)
+
+        fm = self.sim_result.fem_mesh
+        x_min, x_max, y_min, y_max = fm.get_xy_limits()
+
+
+        match s_cut.lower():
+            case 'x':
+                v_y_flat = np.linspace(y_min, y_max, n_pts)
+                v_x_flat = val1 * SI_um + np.zeros(n_pts)
+            case 'y':
+                v_x_flat = np.linspace(x_min, x_max, n_pts)
+                v_y_flat = val1 * SI_um + np.zeros(n_pts)
+            case 'line':
+                v_x_flat = np.linspace(val1[0]* SI_um, val2[0]* SI_um, n_pts)
+                v_y_flat = np.linspace(val1[1]* SI_um, val2[1]* SI_um, n_pts)
+
+        nx = len(v_x_flat)
+        ny = 1
+        self.interper_f_1d = fm.make_interpolator_for_grid(
+            v_x_flat, v_y_flat, nx, ny)
+
+        shiftx, shifty = self.sim_result.get_xyshift()
+        v_x_flat -= shiftx
+        v_y_flat -= shifty
+
+        v_z_1d = np.sqrt((v_x_flat - v_x_flat[0]) ** 2 + (v_y_flat - v_y_flat[0]) ** 2)
+
+
+        match s_cut.lower():
+            case 'x':
+                v_x_ax = v_y_flat
+            case 'y':
+                v_x_ax = v_x_flat
+            case 'line':
+                v_x_ax = v_z_1d
+        #    return v_x_ax
+        self.v_x_axis = v_x_ax / SI_um
 
 
 class Mode:
@@ -271,7 +262,6 @@ class Mode:
 
         self.mode_helper = self.sim_result.get_mode_helper()
 
-
         self.clear_mode_plot_data()
 
     def clear_mode_plot_data(self):
@@ -284,9 +274,9 @@ class Mode:
 
         self.mode_helper.assign_decorator(decorator)
 
-        field_type = FieldType.AC if self.is_AC else field_type
+        field_type = FieldType.AC if self.is_AC() else field_type
 
-        self.interpolate_mode_2d(n_pts, field_type)
+        self._interpolate_mode_2d(n_pts, field_type)
         self._plot_me_2d(n_pts, comps, field_type, ax)
 
         #self.clear_mode_plot_data()
@@ -297,78 +287,103 @@ class Mode:
 
 
 
-    def plot_mode_1d_cut(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E,
-                         n_pts=501, decorator=None):
+    def plot_mode_1d_cut(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501):
 
+        """Make a 1D plot of the field components of this mode along a line.
 
-        if s_cut not in ('x', 'y', 'line'):
-            reporting.report_and_exit('Invalid plot cut type. Must be "x", "y" or "line".')
+        s_cut is a string determining the cut direction, with allowed values: 'x', 'y', or 'line'.
+
+        For s_cut='x', the function is plotted along y at fixed x=val1, where val1 is a float.
+
+        For s_cut='y', the function is plotted along x at fixed x=val1, where val1 is a float.
+
+        For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
+        """
+
+        print('field_type', field_type, self.is_AC)
+
+        femmesh.validate_1d_cut_format(s_cut, val1, val2)
+        field_type = FieldType.AC if self.is_AC() else field_type
+
+        self.v_xaxis = self._interpolate_mode_1d(s_cut, val1, val2, n_pts, field_type)
 
         if s_cut.lower() == "x":
-            if not numbat.is_number(val1):
-                reporting.report_and_exit('Invalid value for x cut plot: val1 must be a float within the x-domain.')
-            self._plot_mode_1d_xcut(prefix, val1, n_pts)
-
+            self._plot_mode_1d_xcut(comps, field_type)
         elif s_cut.lower() == "y":
-            if not numbat.is_number(val1):
-                reporting.report_and_exit('Invalid value for y cut plot: val1 must be a float within the y-domain.')
-            self._plot_mode_1d_ycut(prefix, val1, n_pts)
-
+            self._plot_mode_1d_ycut(comps, field_type)
         else:
-            if not is_float_pair(val1) or not is_float_pair(val2):
-                reporting.report_and_exit('Invalid value for line cut plot: val1 and val2 must be tuples of two floats.')
-            self._plot_mode_1d_line(prefix, val1, val2, n_pts)
+            self._plot_mode_1d_line(comps, field_type)
 
 
-    def _plot_mode_1d_xcut(prefix, val1, comps, ft, n_pts):
-        v_y_flat = self.v_y
-        v_x_flat = x0 + np.zeros(len(self.v_y))
-
-        self.interper = self.fem_mesh.make_interpolator_for_grid(
-            v_x_flat, v_y_flat, len(self.v_y), 1
-        )
-        fig, ax = plt.subplots()
-        ax.set_xlabel('$y$ (μm)')
-
-    def _plot_mode_1d_ycut(prefix, val1, comps, ft, n_pts):
-
-        v_y_flat = self.v_y
-        v_x_flat = x0 + np.zeros(len(self.v_y))
-
-        self.interper = self.fem_mesh.make_interpolator_for_grid(
-            v_x_flat, v_y_flat, len(self.v_y), 1
-        )
-        fig, ax = plt.subplots()
-        ax.set_xlabel('$x$ (μm)')
-
-    def _plot_mode_1d_line(prefix, pt0, pt1, comps, ft, n_pts):
 
 
-        x0, y0 = pt0
-        x1, y1 = pt1
-        v_x_flat = np.linspace(x0, x1, n_pts)
-        v_y_flat = np.linspace(y0, y1, n_pts)
-        v_d = np.sqrt((v_x_flat - v_x_flat[0]) ** 2 + (v_y_flat - v_y_flat[0]) ** 2)
+    def _plot_mode_1d_gencut(self, comps, ft, xlab, cut):
+        params = self.mode_helper.plot_params
 
-        self.interper = self.fem_mesh.make_interpolator_for_grid(
-            v_x_flat, v_y_flat, len(v_x_flat), 1
-        )
+
+        tags=[]
+        if not len(comps):
+            comps = ['x', 'y', 'z', 'abs']
+
+        tags = [FieldTag.make_from_field_and_component(ft, comp) for comp in comps]
+
+        # add minor tag components if required
+        all_tags = tags.copy()
+        if not params['suppress_imimre']:
+            for tag in tags:
+                tag.set_to_minor()
+                all_tags.append(tag)
 
         fig, ax = plt.subplots()
-        ax.set_xlabel(self.d_lab)
-        ylab = self.nm_eng + " " + self.nm_math + " " + self.unit
-        ax.set_ylabel(ylab)
-
-        for i in range(self.dim):
-            v_scalar = self.interper(self.scalar_fields[i])
-            ax.plot(v_d, v_scalar)
-
-        plotting.save_and_close_figure(
-            fig, prefix + "-" + self.fname_suffix + "_linecut.png"
-        )
+        v_genx = self.mode_helper.v_x_axis
 
 
-    def interpolate_mode_2d(self, n_pts, field_type):
+        for tag in all_tags:
+            #majco = tag.major_component_as_F()
+            #tag.set_to_major()
+            lc = tag.linecolor()
+            ls = tag.linestyle(comps)
+            co = tag.component_as_F()
+
+            ax.plot(v_genx, self.d_fields_1d[co], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
+
+        # if not params['suppress_imimre']:
+        #     minco = tag.minor_component_as_F()
+        #     tag.set_to_minor()
+        #     lc = tag.linecolor()
+        #     ls = tag.linestyle(comps)
+
+        #     if minco is not None:
+        #         ax.plot(v_genx, self.d_fields_1d[minco], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
+
+
+        ax.set_xlabel(xlab)
+        ax.set_ylabel('fields')
+        ax.legend()
+
+        plps = self.mode_helper.plot_params
+        fn = plotmodes.modeplot_filename_1d(plps, self.mode_num,
+                                            cut, label='')
+
+
+        plotting.save_and_close_figure(fig, fn)
+
+
+    def _plot_mode_1d_xcut(self, comps, ft):
+
+        xlab = '$y$ (μm)'
+        self._plot_mode_1d_gencut(comps, ft, xlab, 'x')
+
+    def _plot_mode_1d_ycut(self, comps, ft):
+        xlab = '$x$ (μm)'
+        self._plot_mode_1d_gencut(comps, ft, xlab, 'y')
+
+    def _plot_mode_1d_line(self, comps, ft):
+        xlab = '$z$ (μm)'
+        self._plot_mode_1d_gencut(comps, ft, xlab, 'line')
+
+
+    def _interpolate_mode_2d(self, n_pts, field_type):
         """Extracts fields from FEM grid to desired rectangular grid for either plotting or analysis."""
 
         mh = self.mode_helper
@@ -376,8 +391,19 @@ class Mode:
         mh.define_plot_grid_2d(n_pts=n_pts)
 
         if not self.interpolated_2d[field_type]:
-            self.d_fields_2d = mh.interpolate_mode_i(self.mode_num, field_type)
+            self.d_fields_2d = mh.interpolate_mode_i(self.mode_num, field_type, dims=2)
             self.interpolated_2d[field_type] = True
+
+    def _interpolate_mode_1d(self, s_cut, val1, val2, n_pts,
+                             field_type):
+        mh = self.mode_helper
+
+        mh.define_plot_grid_1d(s_cut, val1, val2, n_pts)
+
+        self.d_fields_1d = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
+
+        print('Interpolated 1D fields', mh.v_x_axis[:5],
+              list(self.d_fields_1d.values())[0][:5])
 
 
     def _plot_me_2d(self, n_pts, comps, field_type, ax=None):
@@ -407,7 +433,7 @@ class Mode:
             decorator.set_for_single()
             # options are ['x', 'y', 'z', 'abs', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = FieldTag.make_comp_from_component(field_type, comp)
+                cc = FieldTag.make_from_field_and_component(field_type, comp)
                 plotmodes.plot_one_component(
                     mh.xy_out, self.d_fields_2d, mh.plot_params, self.mode_num, cc, ax)
 
@@ -565,7 +591,7 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
-        self.interpolate_mode_2d(n_pts, EM_field)
+        self._interpolate_mode_2d(n_pts, EM_field)
 
         self.analysed = True
 
@@ -637,36 +663,45 @@ class Mode:
     def write_to_file(self):
         #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
         #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
-        ccs = ('Fx', 'Fy', 'Fz')
         ft=self.field_type
         mh = self.mode_helper
         v_x = mh.xy_out['v_x']
         v_y = mh.xy_out['v_y']
         s_xy= f'v_x: {v_x[0]:.8f}, {v_x[-1]:.8f}, {len(v_x)}, ' + f'v_y: {v_y[0]:.8f}, {v_y[-1]:.8f}, {len(v_y)}'
 
+
+        #ccs = ('Fx', 'Fy', 'Fz')
+        ccs = ('x', 'y', 'z')
         for cc in ccs:
-            comp = FieldTag.make_comp_noreim(ft, cc)
+            #comp = FieldTag.make_comp_noreim(ft, cc)
+            comp = FieldTag.make_from_field_and_component(ft, cc)
+
             pref=numbat.NumBATApp().outpath_fields()
-            longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp._user_code}'
+            longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp.field_component()}'
             self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2d)
 
     def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
+
+        fc = comp.component_as_F() # eg 'Fabs'
+
         if comp.is_abs():  # a real valued quantity
             fname = longpref+'.txt'
-            fld = d_fields[comp._f_code]  # eg 'Fabs'
-            header=f'# {comp._f_code}, '  + s_xy
+            fld = d_fields[fc]
+            header=f'# {fc}, '  + s_xy
             np.savetxt(fname, fld,header=header)
 
         else:
             fname = longpref+'_re.txt'
-            fld = d_fields['F'+comp._xyz+'r']  # eg 'Fxr'
-            print('the field', fld, d_fields['Fxr'])
-            header=f'# {comp._f_code}_re, '  + s_xy
+            tagmaj = f'F{comp._xyz}r'
+            tagmin = f'F{comp._xyz}i'
+
+            fld = d_fields[tagmaj]  # eg 'Fxr'
+            header=f'# {fc}_re, '  + s_xy
             np.savetxt(fname, fld,header=header)
 
             fname = longpref+'_im.txt'
-            fld = d_fields['F'+comp._xyz+'i']  # eg 'Fxr'
-            header=f'# {comp._f_code}__im, '  + s_xy
+            fld = d_fields[tagmin]  # eg 'Fxr'
+            header=f'# {fc}_im, '  + s_xy
             np.savetxt(fname, fld,header=header)
 
 
