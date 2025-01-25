@@ -32,10 +32,27 @@ import numbat
 from plottools import save_and_close_figure
 import reporting
 import plotting
+from numbattools import is_real_number, is_float_pair
 
 
 
+def validate_1d_cut_format(s_cut, val1, val2):
+    """Checks the format of the input values for a 1D cut plot."""
 
+    if s_cut not in ('x', 'y', 'line'):
+        reporting.report_and_exit(f'Invalid plot cut type. Must be "x", "y" or "line". Received {s_cut}.')
+
+    if s_cut.lower() == "x":
+        if not is_real_number(val1):
+            reporting.report_and_exit('Invalid value for x cut plot: val1 must be a float within the x-domain.')
+
+    elif s_cut.lower() == "y":
+        if not is_real_number(val1):
+            reporting.report_and_exit('Invalid value for y cut plot: val1 must be a float within the y-domain.')
+
+    else:
+        if not is_float_pair(val1) or not is_float_pair(val2):
+            reporting.report_and_exit('Invalid value for line cut plot: val1 and val2 must be tuples of two floats.')
 
 
 # def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
@@ -260,7 +277,7 @@ class FemMesh:
 
         # rename  el_conv_table -> mat_conv_table
 
-        opt_props = wguide.optical_props
+        #opt_props = wguide.optical_props
         el_props = wguide.elastic_props
 
 
@@ -365,6 +382,11 @@ class FemMesh:
         self.node_physindex = node_physindex_AC  # TODO: Does this ever get filled?
 
         self._report_ac_mesh_properties(el_props)
+
+    def get_xy_limits(self):
+        x_min, x_max = np_min_max(self.v_nd_xy[0, :])
+        y_min, y_max = np_min_max(self.v_nd_xy[1, :])
+        return x_min, x_max, y_min, y_max
 
     def _report_ac_mesh_properties(self, el_props):
 
@@ -661,12 +683,12 @@ class FEMScalarFieldPlotter:
         For s_cut='y', the function is plotted along x at fixed x=val1, where val1 is a float.
 
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
-
-
         """
 
         # full out-directory parth
         prefix = str(Path(numbat.NumBATApp().outdir(), pref))
+
+        validate_1d_cut_format(s_cut, val1, val2)
 
         if s_cut.lower() == "x":
             self._make_plot_xcut(prefix, val1)

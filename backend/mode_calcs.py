@@ -20,6 +20,7 @@
 
 import copy
 import numpy as np
+from pathlib import Path
 
 
 import numbat
@@ -39,7 +40,7 @@ from nbtypes import (
 
 from femmesh import FemMesh
 
-from plotmodes import Decorator
+#from plotmodes import Decorator
 import integration
 from fortran import nb_fortran
 
@@ -114,7 +115,7 @@ class SimResult:
             if self._sim.simres_EM is not None:  # TODO: to clean_for_asve9
                 self._sim.simres_EM.clean_for_save()
 
-    def get_modes_on_mesh(self, md, field_type):
+    def get_modes_on_fem_mesh(self, md, field_type):
 
         fem_evecs = self.fem_evecs_for_ft(field_type)
         n_msh_el = self.fem_mesh.n_msh_el
@@ -303,23 +304,12 @@ class SimResult:
         mode_helper = self.get_mode_helper()
         mode_helper.define_plot_grid_2d(n_pts=n_points)
 
-        if decorator is None:
-            decorator = Decorator()
 
         nbapp = numbat.NumBATApp()
-
-        #if prefix:
-        #    nbapp.set_outprefix(prefix)
-        #else:
-        #    prefix = nbapp.outprefix()
-        #if not prefix:
-        #    prefix = nbapp.outprefix()
-
-        pf = nbapp.outpath_fields(prefix=prefix)
+        pf = Path(nbapp.outpath_fields(prefix=prefix))
 
         if not pf.exists():
             pf.mkdir()
-
 
 
         mode_helper.update_plot_params(
@@ -351,6 +341,66 @@ class SimResult:
         else:
             self.get_mode(ival_range[0]).plot_mode(comps, field_type)
 
+    def plot_modes_1d(self,
+        scut,
+        val1,
+        val2=None,
+        ivals=None,
+        n_points=501,
+        field_type="EM_E",
+        num_ticks=None,
+        prefix="",
+        suffix="",
+        ticks=True,
+        comps=[],
+        decorator=None,
+        suppress_imimre=True,
+    ):
+
+        field_type = FieldType.AC if self.is_AC() else FieldType.from_str(field_type)
+
+        if field_type == FieldType.EM_H:
+            self.make_H_fields()
+
+        modetype = "acoustic" if field_type == FieldType.AC else "em"
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+
+        ntoplot = len(ival_range)
+
+        if ntoplot > 1:
+            print(f"Plotting 1D cuts of {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+        else:
+            print(f"Plotting 1D cut of {modetype} mode m={ival_range[0]}.")
+
+        mode_helper = self.get_mode_helper()
+        mode_helper.define_plot_grid_2d(n_pts=n_points)
+
+        nbapp = numbat.NumBATApp()
+        pf = Path(nbapp.outpath_fields(prefix=prefix))
+
+        if not pf.exists():
+            pf.mkdir()
+
+
+        mode_helper.update_plot_params(
+            {
+                'field_type': field_type,
+                'num_ticks': num_ticks,
+                'prefix': prefix,
+                'suffix': suffix,
+                'ticks': ticks,
+                'decorator': decorator,
+                'suppress_imimre': suppress_imimre,
+            }
+        )
+
+        if ntoplot > 1:
+            for m in progressBar(ival_range, prefix="  Progress:", length=20):
+                self.get_mode(m).plot_mode_1d_cut(scut, val1, val2,
+                                                  comps, field_type)
+        else:
+            self.get_mode(ival_range[0]).plot_mode_1d_cut(scut, val1, val2,
+                                                  comps, field_type)
 
 class EMSimResult(SimResult):
     def __init__(self, sim):
