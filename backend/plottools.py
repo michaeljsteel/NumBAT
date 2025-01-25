@@ -65,3 +65,38 @@ def join_figs(l_fns, fnout, clip=None):
         x_offset += im.size[0]
 
     new_im.save(fnout)
+
+#fill = '█',   # TODO: this messes with pdflatex in docs. Fix
+def progressBar(sequence, prefix = '', suffix = '',
+                decimals = 1, length = 100,
+                fill = 'x',
+                printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+        @params:
+            iterable    - Required  : iterable object (Iterable)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+
+    """
+    total = len(sequence)
+    # Progress Bar Printing Function
+    def printProgressBar (iteration):
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+
+    if len(sequence) > 1:
+        printProgressBar(0)  # Initial Call
+        for i, item in enumerate(sequence):   # Update Progress Bar
+            yield item
+            printProgressBar(i + 1)
+    else:
+        yield sequence[0]
+
+    print() # Print New Line on Complete

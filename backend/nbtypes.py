@@ -57,6 +57,7 @@ class SimType(Enum):
     AC = 'AC'
 
 
+#User facing
 class FieldType(Enum):
     EM_E = 'EM_E'
     EM_H = 'EM_H'
@@ -72,6 +73,31 @@ class FieldType(Enum):
             return FieldType.AC
         else:
             raise ValueError("The value of field_type must be either 'AC', 'EM_E' or 'EM_H'.")
+
+# Internal
+class FieldCode:
+    def __init__(self, ft, force_AC=False):
+        if not isinstance(ft, FieldType):
+            ft = FieldType(ft)
+        self._ft = FieldType.AC if force_AC else ft
+
+    def is_EM(self):
+        return self._ft in (FieldType.EM_E, FieldType.EM_H)
+
+    def is_AC(self):
+        return self._ft == FieldType.AC
+
+    def is_EM_E(self):
+        return self._ft == FieldType.EM_E
+
+    def is_EM_H(self):
+        return self._ft == FieldType.EM_H
+
+    def mode_type_as_str(self):
+        return "acoustic" if self.is_AC() else "optical"
+
+    def as_field_type(self):
+        return self._ft
 
 class PointGroup(IntEnum):
     Unknown = 1

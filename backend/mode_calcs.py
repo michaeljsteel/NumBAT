@@ -26,9 +26,11 @@ from pathlib import Path
 import numbat
 from modes import ModeAC, ModeEM, ModePlotHelper
 from numbattools import process_fortran_return
+from plottools import progressBar
 
 from nbtypes import (
     FieldType,
+    FieldCode,
     PointGroup,
     QAcMethod,
     SI_nm,
@@ -40,45 +42,8 @@ from nbtypes import (
 
 from femmesh import FemMesh
 
-#from plotmodes import Decorator
 import integration
 from fortran import nb_fortran
-
-
-
-#fill = '█',   # TODO: this messes with pdflatex in docs. Fix
-def progressBar(iterable, prefix = '', suffix = '',
-                decimals = 1, length = 100,
-                fill = 'x',
-                printEnd = "\r"):
-    """
-    Call in a loop to create terminal progress bar
-        @params:
-            iterable    - Required  : iterable object (Iterable)
-            prefix      - Optional  : prefix string (Str)
-            suffix      - Optional  : suffix string (Str)
-            decimals    - Optional  : positive number of decimals in percent complete (Int)
-            length      - Optional  : character length of bar (Int)
-            fill        - Optional  : bar fill character (Str)
-            printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
-
-    """
-    total = len(iterable)
-    # Progress Bar Printing Function
-    def printProgressBar (iteration):
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
-        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
-
-    printProgressBar(0)  # Initial Call
-    for i, item in enumerate(iterable):   # Update Progress Bar
-        yield item
-        printProgressBar(i + 1)
-
-    print() # Print New Line on Complete
-
-
 
 
 class SimResult:
@@ -104,16 +69,16 @@ class SimResult:
         return False
 
     def make_H_fields(self):  # keep linter quiet, should never be called
-        pass
+        raise NotImplementedError
 
-    def clean_for_save(self):
+    def clean_for_pickle(self):
         if self._mode_plot_helper is not None:
             self._mode_plot_helper.cleanup()
 
         if self.is_AC():
             # Acoustic sims can contain EM sims which must also be clean for saving
             if self._sim.simres_EM is not None:  # TODO: to clean_for_asve9
-                self._sim.simres_EM.clean_for_save()
+                self._sim.simres_EM.clean_for_pickle()
 
     def get_modes_on_fem_mesh(self, md, field_type):
 
@@ -139,9 +104,10 @@ class SimResult:
 
     def save_simulation(self, prefix): # must be overidden
 
-        self.clean_for_save()
+        self.clean_for_pickle()
         np.savez(prefix, simulation=self)
 
+    # TODO: make this a property?
     def get_mode_helper(self):
         if self._mode_plot_helper is None:
             self._mode_plot_helper = ModePlotHelper(self)
@@ -286,12 +252,12 @@ class SimResult:
             modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
         """
 
-        field_type = FieldType.AC if self.is_AC() else FieldType.from_str(field_type)
+        field_code = FieldCode(field_type, self.is_AC())
 
-        if field_type == FieldType.EM_H:
+        if field_code.is_EM_H():
             self.make_H_fields()
 
-        modetype = "acoustic" if field_type == FieldType.AC else "em"
+        modetype = field_code.mode_type_as_str()
         ival_range = ivals if ivals is not None else range(self.n_modes)
 
         ntoplot = len(ival_range)
@@ -319,7 +285,8 @@ class SimResult:
                 'ylim_min': ylim_min,
                 'ylim_max': ylim_max,
                 'aspect': aspect,
-                'field_type': field_type,
+                #'field_type': field_type,
+                'field_type': field_code.as_field_type(),
                 'hide_vector_field': hide_vector_field,
                 'quiver_points': quiver_points,
                 'num_ticks': num_ticks,
@@ -334,12 +301,8 @@ class SimResult:
             }
         )
 
-        if ntoplot > 1:
-            for m in progressBar(ival_range, prefix="  Progress:", length=20):
-                self.get_mode(m).plot_mode(comps, field_type)
-
-        else:
-            self.get_mode(ival_range[0]).plot_mode(comps, field_type)
+        for m in progressBar(ival_range, prefix="  Progress:", length=20):
+                self.get_mode(m).plot_mode(comps, field_code.as_field_type())
 
     def plot_modes_1d(self,
         scut,
@@ -357,12 +320,15 @@ class SimResult:
         suppress_imimre=True,
     ):
 
-        field_type = FieldType.AC if self.is_AC() else FieldType.from_str(field_type)
 
-        if field_type == FieldType.EM_H:
+
+        field_code = FieldCode(field_type, self.is_AC())
+
+        if field_code.is_EM_H():
             self.make_H_fields()
 
-        modetype = "acoustic" if field_type == FieldType.AC else "em"
+        modetype = field_code.mode_type_as_str() #"acoustic" if field_type == FieldType.AC else "em"
+
         ival_range = ivals if ivals is not None else range(self.n_modes)
 
         ntoplot = len(ival_range)
@@ -384,7 +350,7 @@ class SimResult:
 
         mode_helper.update_plot_params(
             {
-                'field_type': field_type,
+                'field_type': field_code.as_field_type(),
                 'num_ticks': num_ticks,
                 'prefix': prefix,
                 'suffix': suffix,
@@ -394,13 +360,13 @@ class SimResult:
             }
         )
 
-        if ntoplot > 1:
-            for m in progressBar(ival_range, prefix="  Progress:", length=20):
-                self.get_mode(m).plot_mode_1d_cut(scut, val1, val2,
-                                                  comps, field_type)
-        else:
-            self.get_mode(ival_range[0]).plot_mode_1d_cut(scut, val1, val2,
-                                                  comps, field_type)
+        #if ntoplot > 1:
+        for m in progressBar(ival_range, prefix="  Progress:", length=20):
+            self.get_mode(m).plot_mode_1d_cut(scut, val1, val2,
+                                                comps, field_code.as_field_type())
+        #else:
+         #   self.get_mode(ival_range[0]).plot_mode_1d_cut(scut, val1, val2,
+          #                                        comps, field_type)
 
 class EMSimResult(SimResult):
     def __init__(self, sim):
@@ -428,12 +394,12 @@ class EMSimResult(SimResult):
         self.EM_mode_power = sim.EM_mode_power
 
 
-    # def clean_for_save(self):
+    # def clean_for_pickle(self):
     #     if self._mode_plot_helper is not None:
     #         self._mode_plot_helper.cleanup()
 
     # def save_simulation(self, prefix):
-    #     self.clean_for_save()
+    #     self.clean_for_pickle()
     #     np.savez(prefix, simulation=self)
 
 
@@ -564,12 +530,12 @@ class ACSimResult(SimResult):
         self.ac_Qmech = sim.ac_Qmech
         self.ac_linewidth = sim.ac_linewidth
 
-    # def clean_for_save(self):
+    # def clean_for_pickle(self):
     #     if self._mode_plot_helper is not None:
     #         self._mode_plot_helper.cleanup()
 
     # def save_simulation(self, prefix):
-    #     self.clean_for_save()
+    #     self.clean_for_pickle()
     #     np.savez(prefix, simulation=self)
 
 
@@ -727,16 +693,16 @@ class Simulation:
         npzfile = np.load(prefix + ".npz", allow_pickle=True)
         return npzfile["simulation"].tolist()
 
-    def clean_for_save(self):
+    def clean_for_pickle(self):
         if self.mode_plot_helper is not None:
             self.mode_plot_helper.cleanup()
 
     def save_simulation(self, prefix):
-        self.clean_for_save()
+        self.clean_for_pickle()
 
         # Acoustic sims can contain EM sims which must also be clean for saving
         if self.simres_EM is not None:  # TODO: to clean_for_asve9)
-            self.simres_EM.clean_for_save()
+            self.simres_EM.clean_for_pickle()
 
         np.savez(prefix, simulation=self)
 
@@ -1356,7 +1322,7 @@ def bkwd_Stokes_modes(EM_sim):  # TODO: make a member function
                    are travelling in the negative z-direction.
     """
 
-    # EM_sim.clean_for_save()
+    # EM_sim.clean_for_pickle()
 
     Stokes_modes = copy.deepcopy(EM_sim)
     Stokes_modes.fem_evecs = np.conj(Stokes_modes.fem_evecs)
@@ -1374,7 +1340,7 @@ def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
 
     """
 
-    EM_sim.clean_for_save()
+    EM_sim.clean_for_pickle()
 
     Stokes_modes = copy.deepcopy(EM_sim)
     return Stokes_modes
