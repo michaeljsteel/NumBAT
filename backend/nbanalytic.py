@@ -255,7 +255,7 @@ def getqt(Om, q, V):
     # p=0 torsional
 
 
-def chareq_elastic_rod_p0_1d(Om, p, q, rho, c11, c12, c44, a_nm):
+def chareq_elastic_rod_p0_1D(Om, p, q, rho, c11, c12, c44, a_nm):
 
     Vs = np.sqrt(c44/rho)
     qts = getqt(Om, q, Vs)
@@ -274,7 +274,7 @@ def chareq_elastic_rod_p0_1d(Om, p, q, rho, c11, c12, c44, a_nm):
     # p=0 Pochammer
 
 
-def chareq_elastic_rod_p0_2d(Om, p, q, rho, c11, c12, c44, a_nm):
+def chareq_elastic_rod_p0_2D(Om, p, q, rho, c11, c12, c44, a_nm):
     Vl = np.sqrt(c11/rho)
     Vs = np.sqrt(c44/rho)
 
@@ -374,10 +374,10 @@ def chareq_elastic_rod_ppos(Om, p, q, rho, c11, c12, c44, a_nm):  # p is azimuth
 def chareq_elastic_rod(Om, m, q, rho, c11, c12, c44, arad):  # m is azimuthal order
     a_nm = arad*1e9
     if m == -1:  # actually denotes a p=0 1D state
-        return chareq_elastic_rod_p0_1d(Om, 0, q, rho, c11, c12, c44, a_nm)
+        return chareq_elastic_rod_p0_1D(Om, 0, q, rho, c11, c12, c44, a_nm)
 
     if m == 0:
-        return chareq_elastic_rod_p0_2d(Om, m, q, rho, c11, c12, c44, a_nm)
+        return chareq_elastic_rod_p0_2D(Om, m, q, rho, c11, c12, c44, a_nm)
 
     return chareq_elastic_rod_ppos(Om, m, q, rho, c11, c12, c44, a_nm)
 

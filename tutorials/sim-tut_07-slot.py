@@ -130,6 +130,9 @@ else:
     simres_AC = mode_calcs.load_simulation("tut_07_acoustic")
 
 simres_AC.plot_modes(quiver_points=20, aspect=4)
+simres_AC.plot_modes_1D('x', 0, ivals=range(5))
+simres_AC.plot_modes_1D('y', 0, ivals=range(5))
+simres_AC.plot_modes_1D('line', (-1,1), (1,1), ivals=range(5))
 
 # Print the frequencies of AC modes.
 v_nu = simres_AC.nu_AC_all()

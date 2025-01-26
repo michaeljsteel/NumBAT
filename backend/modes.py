@@ -20,10 +20,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import numbat
-from nbtypes import FieldType, FieldTag, SI_um, SI_vacuum_impedance_Z0
+from nbtypes import FieldType, FieldCode, FieldTag, SI_um, SI_vacuum_impedance_Z0
 import reporting
 
-from numbattools import int2d_trapz
+from numbattools import int2D_trapz
 import femmesh
 import plotmodes
 import plotmoderaw
@@ -39,10 +39,10 @@ class ModePlotHelper:
     def __init__(self, simresult):  # , field_type):
         self.sim_result = simresult
 
-        self.plot_params = {}
+        #self.plot_params = {}
 
-        self.setup_for_2d_n_pts = 0
-        self.setup_for_1d = ()
+        self.setup_for_2D_n_pts = 0
+        self.setup_for_1D = ()
 
         # Points for the plot grid in absolute coords and units of meters
         self.xy_raw = {}
@@ -54,54 +54,54 @@ class ModePlotHelper:
         self.v_x_axis = None
 
 
-        self.interper_f_2d = None
-        self.interper_f_1d = None
+        self.interper_f_2D = None
+        self.interper_f_1D = None
 
 
-        self._init_plot_params()
+        #self._init_plot_params()
 
         self.zero_arrays()
 
     def zero_arrays(self):
-        self.interper_f_2d = None
-        self.interper_f_1d = None
+        self.interper_f_2D = None
+        self.interper_f_1D = None
 
         self.xy_raw = {}
         self.xy_out = {}
 
     def cleanup(self):
-        if self.interper_f_2d is not None: del self.interper_f_2d
-        if self.interper_f_1d is not None: del self.interper_f_1d
+        if self.interper_f_2D is not None: del self.interper_f_2D
+        if self.interper_f_1D is not None: del self.interper_f_1D
 
         #self.xy_raw = {}
         #self.xy_out = {}
 
         self.zero_arrays()
 
-    def _init_plot_params(self):
-        # TODO: replaced with Named Tuple?
+    # def _init_plot_params(self):
+    #     # TODO: replaced with Named Tuple?
 
-        self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
-                            'aspect': 1.0,
-                            'ticks': True, 'num_ticks': None,
-                            'colorbar': True, 'contours': False, 'contour_lst': None,
-                            'EM_AC': FieldType.EM_E,
-                            'hide_vector_field': False,
-                            'prefix': 'tmp', 'suffix': '',
-                            'decorator': plotmodes.Decorator(),
-                            'suppress_imimre': True,
-                            'quiver_points': 30
-                            }
+    #     self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
+    #                         'aspect': 1.0,
+    #                         'ticks': True, 'num_ticks': None,
+    #                         'colorbar': True, 'contours': False, 'contour_lst': None,
+    #                         'EM_AC': FieldType.EM_E,
+    #                         'hide_vector_field': False,
+    #                         'prefix': 'tmp', 'suffix': '',
+    #                         'decorator': plotmodes.Decorator(),
+    #                         'suppress_imimre': True,
+    #                         'quiver_points': 30
+    #                         }
 
-    def update_plot_params(self, d_params):
-        """Update parameters according to Mode.plot_mode() call."""
-        self.plot_params.update(d_params)
+    # def update_plot_params(self, d_params):
+    #     """Update parameters according to Mode.plot_mode() call."""
+    #     self.plot_params.update(d_params)
 
-    def assign_decorator(self, decorator):  # Belongs in ModePlotHelper
-        if decorator is not None:
-            self.plot_params['decorator'] = decorator
-        elif self.plot_params['decorator'] is None:
-            self.plot_params['decorator'] = plotmodes.Decorator()
+    # def assign_decorator(self, decorator):  # Belongs in ModePlotHelper
+    #     if decorator is not None:
+    #         self.plot_params['decorator'] = decorator
+    #     elif self.plot_params['decorator'] is None:
+    #         self.plot_params['decorator'] = plotmodes.Decorator()
 
 
     def interpolate_mode_i(self, md, field_type, dims=2):
@@ -112,7 +112,7 @@ class ModePlotHelper:
         (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p) = simres.get_modes_on_fem_mesh(
             md, field_type)
 
-        interper_f = self.interper_f_2d if dims == 2 else self.interper_f_1d
+        interper_f = self.interper_f_2D if dims == 2 else self.interper_f_1D
 
         # Always need these ones.
         m_ReFx = interper_f(v_Fx6p.real)
@@ -139,7 +139,7 @@ class ModePlotHelper:
 
     def _choose_plot_points(self, n_pts):
         '''Picks actual data points for the plot grid based on requested resolution.'''
-        self.setup_for_2d_n_pts = n_pts
+        self.setup_for_2D_n_pts = n_pts
 
         fm = self.sim_result.fem_mesh
 
@@ -175,10 +175,10 @@ class ModePlotHelper:
 
 
 
-    def define_plot_grid_2d(self, n_pts=501):
+    def define_plot_grid_2D(self, n_pts=501):
         '''Define interpolation plotting grids for a nominal n_pts**2 points distributed evenly amongst x and y.'''
 
-        if self.setup_for_2d_n_pts == n_pts:
+        if self.setup_for_2D_n_pts == n_pts:
             return  # only need to repeat if the grid density changes
 
         fm = self.sim_result.fem_mesh
@@ -190,14 +190,14 @@ class ModePlotHelper:
 
         nx, ny = len(self.xy_out['v_x']), len(self.xy_out['v_y'])
 
-        self.interper_f_2d = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
+        self.interper_f_2D = fm.make_interpolator_for_grid(v_x_flat, v_y_flat, nx, ny)
 
-    def define_plot_grid_1d(self, s_cut, val1, val2, n_pts):
+    def define_plot_grid_1D(self, s_cut, val1, val2, n_pts):
 
-        if self.setup_for_1d == (s_cut, val1, val2, n_pts):
+        if self.setup_for_1D == (s_cut, val1, val2, n_pts):
             return  # no update to interpolator needed
 
-        self.setup_for_1d=(s_cut, val1, val2, n_pts)
+        self.setup_for_1D=(s_cut, val1, val2, n_pts)
 
         fm = self.sim_result.fem_mesh
         x_min, x_max, y_min, y_max = fm.get_xy_limits()
@@ -216,14 +216,14 @@ class ModePlotHelper:
 
         nx = len(v_x_flat)
         ny = 1
-        self.interper_f_1d = fm.make_interpolator_for_grid(
+        self.interper_f_1D = fm.make_interpolator_for_grid(
             v_x_flat, v_y_flat, nx, ny)
 
         shiftx, shifty = self.sim_result.get_xyshift()
         v_x_flat -= shiftx
         v_y_flat -= shifty
 
-        v_z_1d = np.sqrt((v_x_flat - v_x_flat[0]) ** 2 + (v_y_flat - v_y_flat[0]) ** 2)
+        v_z_1D = np.sqrt((v_x_flat - v_x_flat[0]) ** 2 + (v_y_flat - v_y_flat[0]) ** 2)
 
 
         match s_cut.lower():
@@ -232,7 +232,7 @@ class ModePlotHelper:
             case 'y':
                 v_x_ax = v_x_flat
             case 'line':
-                v_x_ax = v_z_1d
+                v_x_ax = v_z_1D
         #    return v_x_ax
         self.v_x_axis = v_x_ax / SI_um
 
@@ -245,9 +245,9 @@ class Mode:
         self.mode_num = m
 
         self.field_type = None
-        self.d_fields_2d = {}
+        self.d_fields_2D = {}
 
-        self.interpolated_2d = {FieldType.EM_E: False,
+        self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
         self.fracs = []  # fx, fy, ft, fz
@@ -265,19 +265,22 @@ class Mode:
         self.clear_mode_plot_data()
 
     def clear_mode_plot_data(self):
-        for k in self.d_fields_2d.keys():
-            self.d_fields_2d[k] = None
-        self.interpolated_2d = {FieldType.EM_E: False,
+        for k in self.d_fields_2D.keys():
+            self.d_fields_2D[k] = None
+        self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None):
+    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None,
+                  plot_params=plotmodes.PlotParams2D()):
 
-        self.mode_helper.assign_decorator(decorator)
+        if decorator is not None: plot_params['decorator'] = decorator
 
-        field_type = FieldType.AC if self.is_AC() else field_type
+        fc = FieldCode(field_type, self.is_AC())
+        ft = fc.as_field_type()
+        plot_params['field_type'] = ft  # awkward way to get the correct filename
 
-        self._interpolate_mode_2d(n_pts, field_type)
-        self._plot_me_2d(n_pts, comps, field_type, ax)
+        self._interpolate_mode_2D(n_pts, ft)
+        self._plot_me_2D(n_pts, comps, fc, plot_params, ax)
 
         #self.clear_mode_plot_data()
 
@@ -287,7 +290,8 @@ class Mode:
 
 
 
-    def plot_mode_1d_cut(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501):
+    def plot_mode_1D_cut(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501,
+        plot_params=plotmodes.PlotParams2D()):
 
         """Make a 1D plot of the field components of this mode along a line.
 
@@ -300,26 +304,26 @@ class Mode:
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
 
-        print('field_type', field_type, self.is_AC)
 
-        femmesh.validate_1d_cut_format(s_cut, val1, val2)
-        field_type = FieldType.AC if self.is_AC() else field_type
+        femmesh.validate_1D_cut_format(s_cut, val1, val2)
+        fc = FieldCode(field_type, self.is_AC())
+        ft = fc.as_field_type()
 
-        self.v_xaxis = self._interpolate_mode_1d(s_cut, val1, val2, n_pts, field_type)
+        plot_params['field_type'] = ft  # awkward way to get the correct filename
+
+        self.v_xaxis = self._interpolate_mode_1D(s_cut, val1, val2, n_pts, ft)
 
         if s_cut.lower() == "x":
-            self._plot_mode_1d_xcut(comps, field_type)
+            xlab = '$y$ (μm)'        # apparently reversed labels is correct!
         elif s_cut.lower() == "y":
-            self._plot_mode_1d_ycut(comps, field_type)
+            xlab = '$x$ (μm)'
         else:
-            self._plot_mode_1d_line(comps, field_type)
+            xlab = '$z$ (μm)'
+
+        self._plot_mode_1D_gencut(comps, fc, ft, xlab, s_cut, plot_params)
 
 
-
-
-    def _plot_mode_1d_gencut(self, comps, ft, xlab, cut):
-        params = self.mode_helper.plot_params
-
+    def _plot_mode_1D_gencut(self, comps, fc, ft, xlab, cut, plot_params):
 
         tags=[]
         if not len(comps):
@@ -329,7 +333,7 @@ class Mode:
 
         # add minor tag components if required
         all_tags = tags.copy()
-        if not params['suppress_imimre']:
+        if not plot_params['suppress_imimre']:
             for tag in tags:
                 tag.set_to_minor()
                 all_tags.append(tag)
@@ -339,74 +343,42 @@ class Mode:
 
 
         for tag in all_tags:
-            #majco = tag.major_component_as_F()
-            #tag.set_to_major()
             lc = tag.linecolor()
             ls = tag.linestyle(comps)
             co = tag.component_as_F()
 
-            ax.plot(v_genx, self.d_fields_1d[co], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
-
-        # if not params['suppress_imimre']:
-        #     minco = tag.minor_component_as_F()
-        #     tag.set_to_minor()
-        #     lc = tag.linecolor()
-        #     ls = tag.linestyle(comps)
-
-        #     if minco is not None:
-        #         ax.plot(v_genx, self.d_fields_1d[minco], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
-
+            ax.plot(v_genx, self.d_fields_1D[co], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
 
         ax.set_xlabel(xlab)
         ax.set_ylabel('fields')
         ax.legend()
 
-        plps = self.mode_helper.plot_params
-        fn = plotmodes.modeplot_filename_1d(plps, self.mode_num,
-                                            cut, label='')
-
+        fn = plotmodes.modeplot_filename_1D(fc, plot_params, self.mode_num, cut, label='')
 
         plotting.save_and_close_figure(fig, fn)
 
 
-    def _plot_mode_1d_xcut(self, comps, ft):
-
-        xlab = '$y$ (μm)'
-        self._plot_mode_1d_gencut(comps, ft, xlab, 'x')
-
-    def _plot_mode_1d_ycut(self, comps, ft):
-        xlab = '$x$ (μm)'
-        self._plot_mode_1d_gencut(comps, ft, xlab, 'y')
-
-    def _plot_mode_1d_line(self, comps, ft):
-        xlab = '$z$ (μm)'
-        self._plot_mode_1d_gencut(comps, ft, xlab, 'line')
-
-
-    def _interpolate_mode_2d(self, n_pts, field_type):
+    def _interpolate_mode_2D(self, n_pts, field_type):
         """Extracts fields from FEM grid to desired rectangular grid for either plotting or analysis."""
 
         mh = self.mode_helper
 
-        mh.define_plot_grid_2d(n_pts=n_pts)
+        mh.define_plot_grid_2D(n_pts=n_pts)
 
-        if not self.interpolated_2d[field_type]:
-            self.d_fields_2d = mh.interpolate_mode_i(self.mode_num, field_type, dims=2)
-            self.interpolated_2d[field_type] = True
+        if not self.interpolated_2D[field_type]:
+            self.d_fields_2D = mh.interpolate_mode_i(self.mode_num, field_type, dims=2)
+            self.interpolated_2D[field_type] = True
 
-    def _interpolate_mode_1d(self, s_cut, val1, val2, n_pts,
+    def _interpolate_mode_1D(self, s_cut, val1, val2, n_pts,
                              field_type):
         mh = self.mode_helper
 
-        mh.define_plot_grid_1d(s_cut, val1, val2, n_pts)
+        mh.define_plot_grid_1D(s_cut, val1, val2, n_pts)
 
-        self.d_fields_1d = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
-
-        print('Interpolated 1D fields', mh.v_x_axis[:5],
-              list(self.d_fields_1d.values())[0][:5])
+        self.d_fields_1D = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
 
 
-    def _plot_me_2d(self, n_pts, comps, field_type, ax=None):
+    def _plot_me_2D(self, n_pts, comps, field_code, plot_params, ax=None):
 
         # TODO: weirdly, we only ax != None when there is one component to plot
         if ax is not None and len(comps) != 1:
@@ -414,18 +386,18 @@ class Mode:
 
         mh = self.mode_helper
 
-        decorator = mh.plot_params['decorator']
-
+        #decorator = mh.plot_params['decorator']
+        decorator = plot_params['decorator']
         # All components in one plot
 
         decorator.set_for_multi()
         # TODO this is a kludgy way of doing this. send it through separately
-        mh.plot_params['EM_AC'] = field_type
+        #plot_params['EM_AC'] = field_code.as_field_type()
 
         # can't do multiplots on a provided axis (would need a provided figure)
         if ax is None:
-            plotmodes.plot_all_components(mh.xy_out, self.d_fields_2d,
-                                          mh.plot_params, self.sim_result, self.mode_num)
+            plotmodes.plot_all_components(field_code, mh.xy_out, self.d_fields_2D,
+                                          plot_params, self.sim_result, self.mode_num)
 
         # Individual component plots
 
@@ -433,9 +405,9 @@ class Mode:
             decorator.set_for_single()
             # options are ['x', 'y', 'z', 'abs', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = FieldTag.make_from_field_and_component(field_type, comp)
-                plotmodes.plot_one_component(
-                    mh.xy_out, self.d_fields_2d, mh.plot_params, self.mode_num, cc, ax)
+                cc = FieldTag.make_from_field_and_component(field_code.as_field_type(), comp)
+                plotmodes.plot_one_component(field_code,
+                    mh.xy_out, self.d_fields_2D, plot_params, self.mode_num, cc, ax)
 
 
 
@@ -591,7 +563,7 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
-        self._interpolate_mode_2d(n_pts, EM_field)
+        self._interpolate_mode_2D(n_pts, EM_field)
 
         self.analysed = True
 
@@ -605,7 +577,7 @@ class Mode:
         dx = m_x[1, 0]-m_x[0, 0]
         dy = m_y[1, 1]-m_y[1, 0]
 
-        mFs = self.d_fields_2d  # the incoming fields, not necessarily normalised in any way
+        mFs = self.d_fields_2D  # the incoming fields, not necessarily normalised in any way
 
         # unit = [|F|^2], mag. \approx 1
         m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2
@@ -614,9 +586,9 @@ class Mode:
         m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2          # unit = [|F|^2]
 
         # unit = [|F|^2] um^2, mag. \approx 1
-        s_fx = int2d_trapz(m_Fx2, dx=dx, dy=dy)
-        s_fy = int2d_trapz(m_Fy2, dx=dx, dy=dy)
-        s_fz = int2d_trapz(m_Fz2, dx=dx, dy=dy)
+        s_fx = int2D_trapz(m_Fx2, dx=dx, dy=dy)
+        s_fy = int2D_trapz(m_Fy2, dx=dx, dy=dy)
+        s_fz = int2D_trapz(m_Fz2, dx=dx, dy=dy)
         s_f = s_fx+s_fy+s_fz
 
         f_x = s_fx/s_f                           # dimensionless
@@ -632,8 +604,8 @@ class Mode:
         m_xmod = m_x * m_Fall2  # could do this by broadcasting without meshgrid?
         m_ymod = m_yud * m_Fall2
 
-        x0 = int2d_trapz(m_xmod, dx, dy)/s_f          # unit = um
-        y0 = int2d_trapz(m_ymod, dx, dy)/s_f
+        x0 = int2D_trapz(m_xmod, dx, dy)/s_f          # unit = um
+        y0 = int2D_trapz(m_ymod, dx, dy)/s_f
 
         # This just makes the outdata look cleaner on plots, by avoiding a -0.000
         if abs(x0) < 1e-6:
@@ -651,8 +623,8 @@ class Mode:
 
         m_x2mod = np.power((m_x - w_x0), 2) * m_Fall2
         m_y2mod = np.power((m_yud - w_y0), 2) * m_Fall2
-        w2x = sqrt(int2d_trapz(m_x2mod, dx, dy)/s_f)
-        w2y = sqrt(int2d_trapz(m_y2mod, dx, dy)/s_f)
+        w2x = sqrt(int2D_trapz(m_x2mod, dx, dy)/s_f)
+        w2y = sqrt(int2D_trapz(m_y2mod, dx, dy)/s_f)
 
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
@@ -673,12 +645,11 @@ class Mode:
         #ccs = ('Fx', 'Fy', 'Fz')
         ccs = ('x', 'y', 'z')
         for cc in ccs:
-            #comp = FieldTag.make_comp_noreim(ft, cc)
             comp = FieldTag.make_from_field_and_component(ft, cc)
 
             pref=numbat.NumBATApp().outpath_fields()
             longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp.field_component()}'
-            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2d)
+            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2D)
 
     def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
 
@@ -712,7 +683,7 @@ class Mode:
         simres = self.sim_result
         ft = self.field_type
 
-        fem_evecs = simres.fem_evecs_H if ft == FieldType.EM_H else simres.fem_evecs
+        fem_evecs = simres.fem_evecs_for_ft(ft)
         plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_helper,
                                          self.sim_result.fem_mesh, fem_evecs, self.mode_num)
 
@@ -733,6 +704,9 @@ class ModeEM(Mode):
         s = f'EM mode # {self.mode_num}'
         return s
 
+    def __repr__(self):
+        s = f'ModeEM(simres, mode_num={self.mode_num})'
+        return s
 
 
 
@@ -748,4 +722,8 @@ class ModeAC(Mode):
 
     def __str__(self):
         s = 'AC mode # {self.mode_num}'
+        return s
+
+    def __repr__(self):
+        s = f'ModeAC(simres, mode_num={self.mode_num})'
         return s

@@ -93,6 +93,9 @@ class FieldCode:
     def is_EM_H(self):
         return self._ft == FieldType.EM_H
 
+    def as_str(self):
+        return self._ft.name
+
     def mode_type_as_str(self):
         return "acoustic" if self.is_AC() else "optical"
 

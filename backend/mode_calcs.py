@@ -27,6 +27,7 @@ import numbat
 from modes import ModeAC, ModeEM, ModePlotHelper
 from numbattools import process_fortran_return
 from plottools import progressBar
+import plotmodes
 
 from nbtypes import (
     FieldType,
@@ -210,7 +211,7 @@ class SimResult:
         prefix="",
         suffix="",
         ticks=True,
-        comps=[],
+        comps=(),
         decorator=None,
         suppress_imimre=True,
     ):
@@ -268,7 +269,7 @@ class SimResult:
             print(f"Plotting {modetype} mode m={ival_range[0]}.")
 
         mode_helper = self.get_mode_helper()
-        mode_helper.define_plot_grid_2d(n_pts=n_points)
+        mode_helper.define_plot_grid_2D(n_pts=n_points)
 
 
         nbapp = numbat.NumBATApp()
@@ -277,8 +278,10 @@ class SimResult:
         if not pf.exists():
             pf.mkdir()
 
+        plotparams = plotmodes.PlotParams2D()
 
-        mode_helper.update_plot_params(
+        #mode_helper.update_plot_params(
+        plotparams.update(
             {
                 'xlim_min': xlim_min,
                 'xlim_max': xlim_max,
@@ -302,9 +305,9 @@ class SimResult:
         )
 
         for m in progressBar(ival_range, prefix="  Progress:", length=20):
-                self.get_mode(m).plot_mode(comps, field_code.as_field_type())
+                self.get_mode(m).plot_mode(comps, field_code.as_field_type(), plot_params = plotparams)
 
-    def plot_modes_1d(self,
+    def plot_modes_1D(self,
         scut,
         val1,
         val2=None,
@@ -339,7 +342,7 @@ class SimResult:
             print(f"Plotting 1D cut of {modetype} mode m={ival_range[0]}.")
 
         mode_helper = self.get_mode_helper()
-        mode_helper.define_plot_grid_2d(n_pts=n_points)
+        mode_helper.define_plot_grid_2D(n_pts=n_points)
 
         nbapp = numbat.NumBATApp()
         pf = Path(nbapp.outpath_fields(prefix=prefix))
@@ -348,7 +351,8 @@ class SimResult:
             pf.mkdir()
 
 
-        mode_helper.update_plot_params(
+        plotparams = plotmodes.PlotParams1D()
+        plotparams.update(
             {
                 'field_type': field_code.as_field_type(),
                 'num_ticks': num_ticks,
@@ -360,13 +364,10 @@ class SimResult:
             }
         )
 
-        #if ntoplot > 1:
         for m in progressBar(ival_range, prefix="  Progress:", length=20):
-            self.get_mode(m).plot_mode_1d_cut(scut, val1, val2,
-                                                comps, field_code.as_field_type())
-        #else:
-         #   self.get_mode(ival_range[0]).plot_mode_1d_cut(scut, val1, val2,
-          #                                        comps, field_type)
+            self.get_mode(m).plot_mode_1D_cut(scut, val1, val2,
+                                                comps, field_code.as_field_type(), plot_params=plotparams)
+
 
 class EMSimResult(SimResult):
     def __init__(self, sim):
@@ -760,7 +761,7 @@ class EMSimulation(Simulation):
 
         Returns a ``Simulation`` object that has these key values:
 
-        eigs_kz: a 1d array of Eigenvalues (propagation constants) in [1/m]
+        eigs_kz: a 1D array of Eigenvalues (propagation constants) in [1/m]
 
         fem_evecs: the associated Eigenvectors, ie. the fields, stored as [field comp, node nu on element, Eig value, el nu]
 
@@ -1004,7 +1005,7 @@ class ACSimulation(Simulation):
 
         Returns a ``Simulation`` object that has these key values:
 
-        eigs_nu: a 1d array of Eigenvalues (frequencies) in [1/s]
+        eigs_nu: a 1D array of Eigenvalues (frequencies) in [1/s]
 
         fem_evecs: the associated Eigenvectors, ie. the fields, stored as
                [field comp, node num on element, Eig value, el num]
@@ -1037,7 +1038,6 @@ class ACSimulation(Simulation):
 
         show_mem_est = False
 
-        print('doing AC cal')
         # TODO: rmove _AC suffixes from fm.fields_AC
         resm = nb_fortran.calc_ac_modes(
             self.n_modes,
@@ -1313,7 +1313,7 @@ def bkwd_Stokes_modes(EM_sim):  # TODO: make a member function
 
     Returns a ``Simulation`` object that has these key values:
 
-    Eig_values: a 1d array of Eigenvalues (propagation constants) in [1/m]
+    Eig_values: a 1D array of Eigenvalues (propagation constants) in [1/m]
 
     fem_evecs: the associated Eigenvectors, ie. the fields, stored as
            [field comp, node nu on element, Eig value, el nu]

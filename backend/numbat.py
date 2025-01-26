@@ -23,6 +23,7 @@ from pathlib import Path
 import reporting
 import objects
 from mode_calcs import Simulation
+import meshing.templates as mshtemplates
 
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
@@ -48,8 +49,6 @@ class _NumBATApp:
     #    return cls.instance
 
     def __init__(self, outprefix='nbtmp', outdir='.'):
-        #if _NumBATApp.my_num_instances:
-        #    reporting.report_and_exit('You may only create a single NumBAT object.')
 
         _NumBATApp.__instance = self
 
@@ -72,7 +71,7 @@ class _NumBATApp:
         self._check_versions()
         self._setup_paths()
         reporting.init_logger()
-        objects.initialise_waveguide_templates(self)
+        mshtemplates.initialise_waveguide_templates(self)
 
     @staticmethod
     def get_instance(outprefix='', outdir=''):

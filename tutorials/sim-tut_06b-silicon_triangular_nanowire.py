@@ -50,11 +50,11 @@ lc_norm = 1
 lc_corner = 1
 
 
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
                               base_width=basewid, peak_height=peak_ht,
-                              peak_xoff = peak_xoff, 
-                              material_bkg=materials.make_material("Vacuum"), 
-                              material_a=materials.make_material("Si_2021_Poulton"), 
+                              peak_xoff = peak_xoff,
+                              material_bkg=materials.make_material("Vacuum"),
+                              material_a=materials.make_material("Si_2021_Poulton"),
                               lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
 
 

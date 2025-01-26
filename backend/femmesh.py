@@ -36,7 +36,7 @@ from numbattools import is_real_number, is_float_pair
 
 
 
-def validate_1d_cut_format(s_cut, val1, val2):
+def validate_1D_cut_format(s_cut, val1, val2):
     """Checks the format of the input values for a 1D cut plot."""
 
     if s_cut not in ('x', 'y', 'line'):
@@ -55,7 +55,7 @@ def validate_1d_cut_format(s_cut, val1, val2):
             reporting.report_and_exit('Invalid value for line cut plot: val1 and val2 must be tuples of two floats.')
 
 
-# def omake_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
+# def omake_interper_f_2D(tri_triang6p, finder, vx_out, vy_out, nx, ny):
 #    return lambda femsol: matplotlib.tri.LinearTriInterpolator(
 #    tri_triang6p, femsol, trifinder=finder)(vx_out, vy_out).reshape(
 #        nx, ny)
@@ -95,29 +95,29 @@ class TriInterpWrapper:
 
         return mptri
 
-def make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny):
+def make_interper_f_2D(tri_triang6p, finder, vx_out, vy_out, nx, ny):
     """vx_out and vy_out are flattened 1D lists of x and y coords from a 2D grid of dimension nx x ny."""
 
-#    def mif2d(femsol):
+#    def mif2D(femsol):
 #        return matplotlib.tri.LinearTriInterpolator(
 #            tri_triang6p, femsol, trifinder=finder
 #        )(vx_out, vy_out).reshape(nx, ny)
 #
-#    return mif2d
+#    return mif2D
 
     return TriInterpWrapper(tri_triang6p, finder, vx_out, vy_out, nx, ny)
 
 
 
-def make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out):
+def make_interper_f_1D(tri_triang6p, finder, vx_out, vy_out):
     """vx_out and vy_out are 1D lists of x and y coords from a 1D sampling line."""
 
-    # def mif1d(femsol):
+    # def mif1D(femsol):
     #     return matplotlib.tri.LinearTriInterpolator(
     #         tri_triang6p, femsol, trifinder=finder
     #     )(vx_out, vy_out)
 
-    # return mif1d
+    # return mif1D
     return TriInterpWrapper(tri_triang6p, finder, vx_out, vy_out)
 
 
@@ -524,9 +524,9 @@ class FemMesh:
         # But why is the trifinder based on 1p?  Does it make a difference?
 
         if ny > 1:  # a 2D sampling, not a line cut
-            interper_f = make_interper_f_2d(tri_triang6p, finder, vx_out, vy_out, nx, ny)
+            interper_f = make_interper_f_2D(tri_triang6p, finder, vx_out, vy_out, nx, ny)
         else:
-            interper_f = make_interper_f_1d(tri_triang6p, finder, vx_out, vy_out)
+            interper_f = make_interper_f_1D(tri_triang6p, finder, vx_out, vy_out)
 
         return interper_f
 
@@ -688,7 +688,7 @@ class FEMScalarFieldPlotter:
         # full out-directory parth
         prefix = str(Path(numbat.NumBATApp().outdir(), pref))
 
-        validate_1d_cut_format(s_cut, val1, val2)
+        validate_1D_cut_format(s_cut, val1, val2)
 
         if s_cut.lower() == "x":
             self._make_plot_xcut(prefix, val1)

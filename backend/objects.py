@@ -20,16 +20,9 @@
 
 #TODO: reduce number of imports
 
-import subprocess
 import copy
-import traceback
-
-
-
 import tempfile
 from pathlib import Path
-import json
-import importlib
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -41,6 +34,8 @@ import reporting
 from nbtypes import SI_nm
 from numbattools import run_subprocess, f2f_with_subs
 
+import meshing.templates as mshtemplates
+
 import materials
 from mode_calcs import em_mode_calculation, ac_mode_calculation
 import nbgmsh
@@ -50,76 +45,6 @@ import femmesh
 from materialprops import OpticalProps, ElasticProps
 
 from fortran import nb_fortran
-
-def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
-    """Loads and instantiates waveguide templates specified in .json file {pth_wgtemplate_index} in directory {pth_wgtemplate_dir}.
-
-    Returns an index of waveguide inc_shape to class."""
-
-    try:
-        with open(pth_wgtemplate_index) as fin:
-            wg_index = json.load(fin)['wguides']
-    except Exception as ex:
-        raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
-
-    for wg in wg_index: # eg rectangular, circular, Onion, etc
-
-        if not wg.get('active', 1):  # this mesh is turned off for now
-            continue
-
-        wgnm = wg['inc_shape']    # Name of inc_shape requested by user
-        wgclsnm = wg['wg_class']  # Python class implementing this template
-        wgpy = wg['wg_impl']      # Python file defining that class
-
-        # Find and load the module containing the class that implements this waveguide template
-        pth_mod = pth_wgtemplate_dir / wgpy
-
-        if not pth_mod.exists():
-            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({pth_wgtemplate_index}).'
-                            + f'\nFile was expected in directory {str(pth_wgtemplate_dir)}')
-
-        # wgnm is just a convenient name
-        spec = importlib.util.spec_from_file_location(wgnm, pth_mod)
-
-        try:
-            py_mod = spec.loader.load_module()
-        except Exception as ex:
-            reporting.report_and_exit(f"Python couldn't load the user module '{str(wgpy)}'."+
-                                      "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+
-                                      f'\n\n\n The full traceback was {traceback.format_exc()}')
-
-        # Now extract the class that implements this waveguide template
-        if not hasattr(py_mod, wgclsnm):
-            reporting.report_and_exit(f"Can't find waveguide template class {wgclsnm} in implementation file: {wgpy}")
-        wgcls = getattr(py_mod, wgclsnm)
-
-        wg['wg_template_cls'] = wgcls
-
-    return wg_index
-
-
-g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
-
-# called at startup from NumBATApp.__init__
-def initialise_waveguide_templates(nbapp):
-    global g_waveguide_templates
-    pmsh_dir = nbapp.path_mesh_templates()
-
-    pmsh_index_builtin = pmsh_dir / 'builtin_waveguides.json'
-    pmsh_index_user = pmsh_dir / 'user_waveguides.json'
-
-    if pmsh_index_builtin.exists():
-        g_waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
-    else:
-        reporting.register_warning(
-            f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
-
-    if pmsh_index_user.exists():
-        user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-        g_waveguide_templates.extend(user_wg_templates)
-    else:
-        reporting.register_warning(
-            f"Couldn't find user waveguide template index file: {pmsh_index_user}")
 
 
 class Structure:
@@ -234,17 +159,24 @@ class Structure:
 
         self._clean_and_handle_args_and_parameters(*largs, **kwargs)
 
+        # full path to backend directory that this code file is in
+        #this_directory = Path(__file__).resolve().parent
+
+        # locations of gmsh input and output files
+        self.msh_location_in = numbat.NumBATApp().path_mesh_templates()
+
+        #this_directory / 'msh'
+        self.msh_location_out = self.msh_location_in / 'build'
+
+        if not self.msh_location_out.is_dir():
+            self.msh_location_out.mkdir()
+
         n_mats_em = self._build_waveguide_geometry()
 
         # Build the whole mesh (A major step involving Fortran)
         self._build_mesh()
 
-
         self.optical_props = OpticalProps(list(self.d_materials.values()), n_mats_em, self.loss)
-
-        # construct list of materials with nonzero density, ie with acoustic properties likely defined
-        # Any material not given v_acoustic_mats assumed to be vacuum.
-        #v_acoustic_mats = [m for m in self.d_materials.values() if m.has_elastic_properties()]
 
         self.elastic_props = ElasticProps(self, self.symmetry_flag)
 
@@ -272,43 +204,18 @@ class Structure:
 
 
     def _build_waveguide_geometry(self):
-        """ Take the parameters specified in python and make a Gmsh FEM mesh.
-            Creates a .geo and .msh file from the .geo template,
-            then uses Fortran conv_gmsh routine
-            to convert .msh into .mail, which is used in NumBAT FEM routine.
+        """ Take the parameters specified in python and make a User waveguide class.
         """
 
-        # full path to backend directory that this code file is in
-        this_directory = Path(__file__).resolve().parent
+        # Find and instantiate the class that defines this waveguide model
+        wg_cls = mshtemplates.get_waveguide_template_class(self.inc_shape)
+        wg_geom = wg_cls(self.all_params, self.d_materials)
+        wg_geom.init_geometry()   # run the user code to set up the geometry
 
-        # locations of gmsh input and output files
-        self.msh_location_in = this_directory / 'msh'
-        self.msh_location_out = self.msh_location_in / 'build'
+        # This is number of distinct materials == element types materials declared by the template
+        n_mats_em = wg_geom._num_materials
 
-
-        if not self.msh_location_out.is_dir():
-            self.msh_location_out.mkdir()
-
-        self.wg_geom = None
-
-        for wg in g_waveguide_templates:
-            if self.inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
-
-                # Instantiate the class that defines this waveguide model
-                wg_geom = wg['wg_template_cls'](self.all_params, self.d_materials)
-
-                wg_geom.init_geometry()   # run the user code to set up the geometry
-
-                n_mats_em = wg_geom._num_materials  # This is number of distinct materials == element types materials declared by the template
-
-                assert n_mats_em > 0, 'No active materials defined in the waveguide geometry.'
-
-                break
-
-        else:  # didn't find required wg
-            raise NotImplementedError(f"\n Selected inc_shape = '{self.inc_shape}' "
-                                      'is not currently implemented. \nPlease make a mesh with gmsh and '
-                                      'consider contributing this to NumBAT via github.')
+        assert n_mats_em > 0, 'No active materials defined in the waveguide geometry.'
 
         wg_geom.check_parameters(self.all_params)
         wg_geom.validate_dimensions()
@@ -325,52 +232,47 @@ class Structure:
 
         return n_mats_em
 
-
-
-
-
     def _build_mesh(self):
         """Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
         to generate the NumBAT .mail file."""
 
         print(' Calling Gmsh: ', end='')
 
-        msh_template = self.wg_geom.gmsh_template_filename()  # template we're reading from
-        msh_fname = self.wg_geom.get_instance_filename()      # unique name for this instance
+        msh_tmpl_fname = self.wg_geom.gmsh_template_filename()  # template we're reading from
+        msh_inst_fname = self.wg_geom.get_instance_filename()      # unique name for this instance
 
         # create string in .geo format from the template file with all parameters adjusted for our design
-        geo_str = self.wg_geom.make_geometry(numbat.NumBATApp().path_mesh_templates())
-        fname = Path(self.msh_location_out) / msh_fname
-        with open(str(fname) + '.geo', 'w') as fout:
+        geo_str = self.wg_geom.make_geometry(self.msh_location_in)
+
+        path_geo_out = self.msh_location_out / msh_inst_fname
+
+        with open(str(path_geo_out) + '.geo', 'w') as fout:
             fout.write(geo_str)
 
         # Convert our Gmsh .geo file into Gmsh .msh
         gmsh_exe =  numbat.NumBATApp().path_gmsh()
-        args =f' -2 -order 2 -v 0 -o {msh_fname}.msh {msh_fname}.geo'
+        args =f' -2 -order 2 -v 0 -o {msh_inst_fname}.msh {msh_inst_fname}.geo'
         cmd = [gmsh_exe]
         cmd.extend(args.split())
-        comp_stat = subprocess.run(cmd, cwd=self.msh_location_out)
-        if comp_stat.returncode:
-            tcmd = ' '.join(cmd)
-            reporting.report_and_exit(f'Gmsh call failed executing: "{tcmd}".')
+        run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
 
         # And now to NumBAT .mail format
         assertions_on = False
-        err_no, err_msg = nb_fortran.conv_gmsh(str(fname), assertions_on)
+        err_no, err_msg = nb_fortran.conv_gmsh(str(path_geo_out), assertions_on)
         if err_no:
-            s = f'Terminating after Fortran error in processing .geo file "{fname}.geo".'
+            s = f'Terminating after Fortran error in processing .geo file "{path_geo_out}.geo".'
             if len(err_msg):
                 s += f'\nMessage was:\n {err_msg}'
             s += f"""
 
-            Is the mesh template file "backend/fortran/msh/{msh_template}_msh_template.geo" designed correctly?
+            Is the mesh template file "backend/fortran/msh/{msh_tmpl_fname}_msh_template.geo" designed correctly?
             To help diagnose the problem, try viewing the generated mesh file in gmsh by running:
-                gmsh {fname}.geo"""
+                gmsh {path_geo_out}.geo"""
             reporting.report_and_exit(s)
 
-        self.mesh_mail_fname = str(fname) + '.mail'
+        self.mesh_mail_fname = str(path_geo_out) + '.mail'
         # TODO: curently used onyl to generate filenames for plot_mesh. Needed? Fix the filenames.
-        self.msh_name = msh_fname
+        self.msh_name = msh_inst_fname
 
     def plot_mail_mesh(self, outpref):
         """Visualise the mesh in .mail format."""

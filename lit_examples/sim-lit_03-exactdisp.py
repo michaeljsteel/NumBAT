@@ -76,7 +76,7 @@ def getqt(Om, q, V):
 #The imaginary terms always come in product pairs giving a real answer
 
     #p=0 torsional
-def chareq_elastic_rod_p0_1d(Om, p, q, rho, c11, c12, c44, a_nm):
+def chareq_elastic_rod_p0_1D(Om, p, q, rho, c11, c12, c44, a_nm):
 
     Vs = np.sqrt(c44/rho)
     qts = getqt(Om, q, Vs)
@@ -93,7 +93,7 @@ def chareq_elastic_rod_p0_1d(Om, p, q, rho, c11, c12, c44, a_nm):
     return np.real(chareq) + np.imag(chareq)
 
     #p=0 Pochammer
-def chareq_elastic_rod_p0_2d(Om, p, q, rho, c11, c12, c44, a_nm):
+def chareq_elastic_rod_p0_2D(Om, p, q, rho, c11, c12, c44, a_nm):
     Vl = np.sqrt(c11/rho)
     Vs = np.sqrt(c44/rho)
 
@@ -194,10 +194,10 @@ def chareq_elastic_rod_ppos(Om, p, q, rho, c11, c12, c44, a_nm): #p is azimuthal
 
 def chareq_elastic_rod(Om, p, q, rho, c11, c12, c44, a_nm): #p is azimuthal order
     if p==-1:  # actually denotes a p=0 1D state
-        return chareq_elastic_rod_p0_1d(Om, 0, q, rho, c11, c12, c44, a_nm)
+        return chareq_elastic_rod_p0_1D(Om, 0, q, rho, c11, c12, c44, a_nm)
 
     if p==0:
-        return chareq_elastic_rod_p0_2d(Om, p, q, rho, c11, c12, c44, a_nm)
+        return chareq_elastic_rod_p0_2D(Om, p, q, rho, c11, c12, c44, a_nm)
 
     return chareq_elastic_rod_ppos(Om, p, q, rho, c11, c12, c44, a_nm)
 
@@ -297,7 +297,7 @@ def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
     print('Material properties:')
     print(f'c11: {c11/1e9} GPa, c12: {c12/1e9} GPa, c44: {c44/1e9} GPa, Vs {Vs:.2f} m/s, Vl {Vl:.2f} m/s')
 
-    #chareq_elastic_rod_p0_2d(2*pi*3.5e9, 0, 3.1e6, rho, c11, c12, c44, arad)
+    #chareq_elastic_rod_p0_2D(2*pi*3.5e9, 0, 3.1e6, rho, c11, c12, c44, arad)
     #sys.exit(0)
 
     swap_axes = prefix.endswith('wide')

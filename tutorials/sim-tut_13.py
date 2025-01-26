@@ -67,7 +67,7 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
         f"c11: {c11/1e9} GPa, c12: {c12/1e9} GPa, c44: {c44/1e9} GPa, Vs {Vs:.2f} m/s, Vl {Vl:.2f} m/s"
     )
 
-    # chareq_elastic_rod_p0_2d(2*pi*3.5e9, 0, 3.1e6, rho, c11, c12, c44, arad)
+    # chareq_elastic_rod_p0_2D(2*pi*3.5e9, 0, 3.1e6, rho, c11, c12, c44, arad)
     # sys.exit(0)
 
     # The worker function passed to CalcThread to do one task

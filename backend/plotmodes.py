@@ -28,25 +28,29 @@ from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plottools import save_and_close_figure
 
 
-def modeplot_filename(plps, ival, label=''):
+def modeplot_filename_2D(field_code, plps, ival, label=''):
     nbapp = numbat.NumBATApp()
-    fullpref = str(nbapp.outpath_fields(prefix=plps['prefix']))
 
-    comp = plps['EM_AC'].name
+    pref=plps['prefix']
     suf = plps['suffix']
+    comp = field_code.as_str()
+
+    fullpref = str(nbapp.outpath_fields(prefix=pref))
     filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
 
     if label: filestart += '_'+label
 
     return filestart + nbapp.plotfile_ext()
 
-def modeplot_filename_1d(plps, ival, cut, label=''):
+def modeplot_filename_1D(field_code, plps, ival, cut, label=''):
 
     nbapp = numbat.NumBATApp()
-    fullpref = str(nbapp.outpath_fields(prefix=plps['prefix']))
 
-    comp = plps['EM_AC'].name
+    pref=plps['prefix']
     suf = plps['suffix']
+    comp = field_code.as_str()
+
+    fullpref = str(nbapp.outpath_fields(prefix=pref))
     filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}_{cut}cut'
 
     if label: filestart += '_'+label
@@ -242,11 +246,6 @@ class Decorator(object):
             print(f'Warning: unknown fontsize label "{lab}" in Decorator::get_property()')
         return ans
 
-    # def is_single_plot(self):
-    #     '''Returns True if this Decorator is for a single axes plot such as a spectrum or spatial map of a single field component.
-    #        '''
-    #     return self._is_single
-
     def set_property(self, label, prop):
         '''Add or override an axes property for a single plot corresponding to the given label.'''
         self._props[label] = prop
@@ -265,6 +264,60 @@ class Decorator(object):
           users may add extra features to a plot.
           '''
         pass
+
+class PlotParams:
+
+    def __init__(self):
+        self._d_pp = {}
+
+    def update(self, d):
+        self._d_pp.update(d)
+        if self._d_pp['decorator'] is None:
+            self._d_pp['decorator'] = Decorator()
+
+    def __getitem__(self, k):
+        v= self._d_pp[k]
+        return v
+
+    def __setitem__(self, k,v):
+        self._d_pp[k] = v
+
+    def get(self, k, dflt):
+        return self._d_pp.get(k, dflt)
+
+
+class PlotParams2D(PlotParams):
+    def __init__(self):
+        super().__init__()
+
+        self.update({'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
+                      'aspect': 1.0,
+                      'ticks': True, 'num_ticks': None,
+                      'colorbar': True, 'contours': False, 'contour_lst': None,
+                     # 'EM_AC': FieldType.EM_E,
+                      'hide_vector_field': False,
+                      'prefix': 'tmp', 'suffix': '',
+                      'decorator': Decorator(),
+                      'suppress_imimre': True,
+                      'quiver_points': 30
+                      })
+class PlotParams1D(PlotParams):
+
+    def __init__(self):
+        super().__init__()
+
+        self.update({#'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
+                      'aspect': 1.0,
+                      'ticks': True, 'num_ticks': None,
+                      #'colorbar': True, 'contours': False, 'contour_lst': None,
+                     # 'EM_AC': FieldType.EM_E,
+                      #'hide_vector_field': False,
+                      'prefix': 'tmp', 'suffix': '',
+                      'decorator': Decorator(),
+                      'suppress_imimre': True,
+                      #'quiver_points': 30
+                      })
+
 
 
 
@@ -694,7 +747,7 @@ def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
             _write_line(x0, y0, f'   {k}: {v}'); y0 -= dy
 
 
-def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
+def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
     decorator = plps['decorator']
     figsz = decorator.get_property('figsize')
     ws = decorator.get_property('subplots_wspace')
@@ -716,7 +769,8 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
     ax = axs[axi]; axi += 1
     write_mode_data(ax, plps, sim_result, ival)  # mode data summary
 
-    ft = plps['EM_AC']
+    #ft = plps['EM_AC']
+    ft = field_code.as_field_type()
     cc_scal = field_type_to_intensity_code(ft) # comonent_t with arg of Eabs, Habs, uabs
     cc_transvec = field_type_to_vector_code(ft) # comonent_t with arg of Et, Ht, ut
 
@@ -741,13 +795,13 @@ def plot_all_components(d_xy, v_plots, plps, sim_result, ival):
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
 
 
-    fig_fname = modeplot_filename(plps, ival)
+    fig_fname = modeplot_filename_2D(field_code, plps, ival)
     save_and_close_figure(fig,  fig_fname)
 
 
 
 
-def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
+def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
 
     if axis is None:
         fig, ax = plt.subplots(figsize=(12, 10))
@@ -756,7 +810,8 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
 
     if cc.is_transverse():
         cc_transvec = cc
-        ft = plps['EM_AC']
+        #ft = plps['EM_AC']
+        ft = field_code.as_field_type()
         cc_scal = FieldTag.make_from_field_and_component(ft, 'abs')
     else:
         cc_transvec = None
@@ -766,7 +821,7 @@ def plot_one_component(d_xy, v_fields, plps, ival, cc, axis=None):
                             cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
-        fig_fname = modeplot_filename(plps, ival, cc._user_code)
+        fig_fname = modeplot_filename_2D(field_code, plps, ival, cc._user_code)
         save_and_close_figure(fig, fig_fname)
 
 
