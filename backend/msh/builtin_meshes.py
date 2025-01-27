@@ -916,6 +916,33 @@ class TrapezoidalRib(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
+    def draw_mpl_frame(self, ax):
+        rib_top_w = self.get_param("rib_top_width") * nmtoum
+        rib_base_w = self.get_param("rib_base_width") * nmtoum
+        rib_h = self.get_param("rib_height") * nmtoum
+        slab_w = self.get_param("slab_width") * nmtoum
+        slab_h = self.get_param("slab_thickness") * nmtoum
+
+
+        vertices = np.array(
+            [
+                [-slab_w / 2, -slab_h],
+                [-slab_w / 2, 0],
+                [-rib_base_w / 2, 0],
+                [-rib_top_w / 2, rib_h],
+                [rib_top_w / 2, rib_h],
+                [rib_base_w / 2, 0],
+                [slab_w / 2, 0],
+                [slab_w / 2, -slab_h],
+                [-slab_w / 2, -slab_h],
+            ]
+        )
+
+        ax.add_patch(
+            mplpatches.Polygon(
+                vertices, facecolor=None, fill=False, edgecolor=EDGE_COLOR, linewidth=LINEWIDTH
+            )
+        )
 
 class Rib(UserGeometryBase):
     """NumBAT geometry template for a rib waveguide."""

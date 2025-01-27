@@ -18,6 +18,8 @@ slab_width = 1800.0;
 //Scaled dimensions
 dy = dy_in_nm/dx_in_nm;  // height (fraction or width)
 hy2 = -.65*dy; // top of the substrate
+hy2 = -.5*dy; // top of the substrate
+
 x0 = -.5;
 y0 = .5*dy;
 
@@ -34,7 +36,7 @@ Point(2) = {0+x0, -dy+y0, 0, lc};
 Point(3) = {1+x0, -dy+y0, 0, lc};
 Point(4) = {1+x0, 0+y0, 0, lc};
 
-// slab (burried part of the rib)
+// slab (buried part of the rib)
 Point(5) = {.5+x0-slab_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
 Point(6) = {.5+x0+slab_width/dx_in_nm/2., hy2+y0, 0, lc_refine_2};
 Point(13) = {.5+x0-slab_width/dx_in_nm/2., hy2+y0-slab_thickness/dx_in_nm, 0, lc_refine_2};
