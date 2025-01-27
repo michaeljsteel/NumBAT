@@ -3,7 +3,7 @@ import numpy as np
 class OpticalProps:
     """EM properties in unit-indexed forms suitable for fortran."""
 
-    def __init__(self, v_mats_em, n_mats_em, loss):
+    def __init__(self, d_mats, n_mats_em, loss):
         """Create OpticalProps object.
 
         Parameters:
@@ -13,6 +13,7 @@ class OpticalProps:
 
         """
 
+        v_mats_em = list(d_mats.values())
         self.n_mats_em = n_mats_em         #
 
         matvals = v_mats_em[:n_mats_em]    # Material objects of those
@@ -36,6 +37,7 @@ class OpticalProps:
 
 
 
+# TODO: could replace wguide with d_materials and OpticalProps
 class ElasticProps:
     '''Elastic tensors in unit-indexed forms suitable for fortran'''
 
@@ -94,9 +96,6 @@ class ElasticProps:
         #    self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
         self.typ_el_AC = {opt_props.el_conv_table_n[k] : v for k, v in el_conv_table.items()}
 
-        
-
-        #TODO: are these two in any way different?
 
     def is_elastic_material_index(self, idx):
         return idx in self.typ_el_AC

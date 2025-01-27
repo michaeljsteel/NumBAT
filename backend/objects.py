@@ -21,8 +21,6 @@
 #TODO: reduce number of imports
 
 import copy
-import tempfile
-from pathlib import Path
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -32,17 +30,19 @@ import scipy.interpolate
 import numbat
 import reporting
 from nbtypes import SI_nm
-from numbattools import run_subprocess, f2f_with_subs
+from numbattools import run_subprocess
 
 import meshing.templates as mshtemplates
 
 import materials
 from mode_calcs import em_mode_calculation, ac_mode_calculation
 import nbgmsh
-import plotting
-import plottools
 import femmesh
 from materialprops import OpticalProps, ElasticProps
+
+import plottools
+import plotting.gmsh as pltgmsh
+import plotting.profiles as pltprof
 
 from fortran import nb_fortran
 
@@ -129,17 +129,7 @@ class Structure:
         if len(largs)>3: self.all_params['inc_a_x'] = largs[3]
         if len(largs)>4: self.all_params['inc_a_y'] = largs[4]
 
-        mat_vac = materials.make_material('Vacuum')
-        self.d_materials = {'bkg': kwargs['material_bkg']}  # this one must come first
 
-        # fill up materials with vacuums
-        for letter in range(ord('a'), ord('r')+1):
-            self.d_materials[chr(letter)] = mat_vac
-
-        # overwrite vacuums for those materials provided by user
-        for k,v in kwargs.items():
-            if k.startswith('material_') and k !='material_bkg':
-                self.d_materials[k[9:]] = v
 
 
         # needed before building
@@ -159,24 +149,33 @@ class Structure:
 
         self._clean_and_handle_args_and_parameters(*largs, **kwargs)
 
-        # full path to backend directory that this code file is in
-        #this_directory = Path(__file__).resolve().parent
-
         # locations of gmsh input and output files
         self.msh_location_in = numbat.NumBATApp().path_mesh_templates()
-
-        #this_directory / 'msh'
         self.msh_location_out = self.msh_location_in / 'build'
 
         if not self.msh_location_out.is_dir():
             self.msh_location_out.mkdir()
+
+
+        mat_vac = materials.make_material('Vacuum')
+        self.d_materials = {'bkg': kwargs['material_bkg']}  # this one must come first
+
+        # fill up materials with vacuums
+        for letter in range(ord('a'), ord('r')+1):
+            self.d_materials[chr(letter)] = mat_vac
+
+        # overwrite vacuums for those materials provided by user
+        for k,v in kwargs.items():
+            if k.startswith('material_') and k !='material_bkg':
+                self.d_materials[k[9:]] = v
+
 
         n_mats_em = self._build_waveguide_geometry()
 
         # Build the whole mesh (A major step involving Fortran)
         self._build_mesh()
 
-        self.optical_props = OpticalProps(list(self.d_materials.values()), n_mats_em, self.loss)
+        self.optical_props = OpticalProps(self.d_materials, n_mats_em, self.loss)
 
         self.elastic_props = ElasticProps(self, self.symmetry_flag)
 
@@ -276,59 +275,19 @@ class Structure:
 
     def plot_mail_mesh(self, outpref):
         """Visualise the mesh in .mail format."""
-        path = numbat.NumBATApp().outpath()
-        mail_data = nbgmsh.MailData(self.mesh_mail_fname)
-        mail_data.plot_mesh(path)
+
+        pltgmsh.plot_mail_mesh(self.mesh_mail_fname, outpref)
 
     def plot_mesh(self, outpref):
         """Visualise mesh with gmsh and save to a file."""
 
-        # Manipulate scripts in backend/fortran/build
-        # Writes final png file to user directory
-
-        nbapp = numbat.NumBATApp()
-        gmsh_exe = nbapp.path_gmsh()
-
-        #outprefix = Path(numbat.NumBATApp().outdir(), outpref)
-        outprefix = nbapp.outpath(outpref)
-
-        tdir = tempfile.TemporaryDirectory()
-        tmpoutpref = str(Path(tdir.name, outpref))
-
-        # Make the wire frame image
-        fn_in = Path(self.msh_location_in) / 'geo2png.scr'
-        fn_out = Path(self.msh_location_out) / (self.msh_name + '_geo2png.scr')
-        f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-entities'})
-        cmd = [gmsh_exe, self.msh_name + '.geo', fn_out.name]
-        run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
-
-        # Make the mesh image
-        fn_in = Path(self.msh_location_in) / 'msh2png.scr'
-        fn_out = Path(self.msh_location_out) / (self.msh_name + '_msh2png.scr')
-        f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-mesh_nodes'})
-
-        cmd = [gmsh_exe, self.msh_name + '.msh', fn_out.name]
-        run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
-
-        # Join the two images
-        plottools.join_figs([tmpoutpref+'-entities.png',
-                          tmpoutpref+'-mesh_nodes.png',],
-                          str(outprefix)+'-mesh.png',
-                          clip=(60,50,60,50))
-
-
+        pltgmsh.plot_mesh(self.msh_location_in, self.msh_location_out,
+                          self.msh_name, outpref)
 
     def check_mesh(self):
         """Visualise geometry and mesh with gmsh."""
 
-        nbapp = numbat.NumBATApp()
-        gmsh_exe = str(nbapp.path_gmsh())
-
-        gmsh_cmd = [gmsh_exe, f'{self.msh_location_out}/{self.msh_name}.geo']
-        run_subprocess(gmsh_cmd, 'Gmsh', cwd=self.msh_location_out)
-
-        gmsh_cmd = [gmsh_exe, f'{self.msh_location_out}/{self.msh_name}.msh']
-        run_subprocess(gmsh_cmd, 'Gmsh', cwd=self.msh_location_out)
+        pltgmsh.check_mesh(self.msh_location_out, self.msh_name)
 
 
     def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False,
@@ -376,29 +335,29 @@ class Structure:
         return ac_mode_calculation(self, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args)
 
 
-    def _make_refindex_plotter(self, as_epsilon, n_points):
+    # def _make_refindex_plotter(self, as_epsilon, n_points):
 
 
-        v_neffeps = self.optical_props.v_refindexn  # mapping from material index to refractive index
+    #     v_neffeps = self.optical_props.v_refindexn  # mapping from material index to refractive index
 
-        if as_epsilon:
-            v_neffeps = v_neffeps**2
-            nm_eng = 'Dielectric constant'
-            nm_math=r'$\epsilon(\vec x)$'
-            fname_suffix='dielectric_constant'
-        else:
-            nm_eng = 'Refractive index'
-            nm_math=r'$n(\vec x)$'
-            fname_suffix='refractive_index'
+    #     if as_epsilon:
+    #         v_neffeps = v_neffeps**2
+    #         nm_eng = 'Dielectric constant'
+    #         nm_math=r'$\epsilon(\vec x)$'
+    #         fname_suffix='dielectric_constant'
+    #     else:
+    #         nm_eng = 'Refractive index'
+    #         nm_math=r'$n(\vec x)$'
+    #         fname_suffix='refractive_index'
 
-        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
+    #     fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
 
-        unit=''
+    #     unit=''
 
-        fsfp.setup_scalar_properties(nm_eng, unit, nm_math, fname_suffix)
-        fsfp.fill_quantity_by_material_index(v_neffeps)
+    #     fsfp.setup_scalar_properties(nm_eng, unit, nm_math, fname_suffix)
+    #     fsfp.fill_quantity_by_material_index(v_neffeps)
 
-        return fsfp
+    #     return fsfp
 
     def plot_refractive_index_profile(self, pref):
         """Draw 2D plot of refractive index profile."""
@@ -407,24 +366,17 @@ class Structure:
 
     def get_structure_plotter_refractive_index(self, n_points=500):
         """Make plotter for arbitrary 1D and 2D slices of the refractive index profile."""
-        return self._make_refindex_plotter(False, n_points)
+        return pltprof._make_dielectric_plotter(self, self.optical_props, False, n_points)
+
 
     def get_structure_plotter_epsilon(self, n_points=500):
         """Make plotter for arbitrary 1D and 2D slices of the dielectric constant profile."""
-        return self._make_refindex_plotter(True, n_points)
+        return pltprof._make_dielectric_plotter(self, self.optical_props, True, n_points)
 
     def get_structure_plotter_stiffness(self, c_I, c_J, n_points=500):
         """Make plotter for arbitrary 1D and 2D slices of the elastic stiffness."""
-        if c_I not in range(1,7) or c_J not in range(1,7):
-            reporting.report_and_exit('Stiffness tensor indices c_I, c_J must be in the range 1..6.')
+        return pltprof.get_structure_plotter_stiffness(self, c_I, c_J, n_points)
 
-        v_stiff = np.zeros(5) # fill me
-
-        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
-        qname = 'Stiffness $c_{'+f'{c_I},{c_J}' +'}$'
-        suffname = f'stiffness_c_{c_I}{c_J}'
-        fsfp.set_quantity_name(qname, suffname)
-        fsfp.fill_scalar_by_material_index(v_stiff)
 
     def get_structure_plotter_acoustic_velocity(self, vel_index=0, n_points=500):
         """Make plotter for arbitrary 1D and 2D slices of the elastic acoustic phase speed.
@@ -434,104 +386,15 @@ class Structure:
 
         Currently only works for isotropic materials."""
 
-        v_mats = list(self.d_materials.values())
-        v_acvel = np.zeros([len(v_mats),3])
-
-        for i in range(len(v_mats)): # get all 3 phase velocities for each material
-            if v_mats[i].has_elastic_properties():
-                v_acvel[i,:] = v_mats[i].Vac_phase()
-
-        fsfp = femmesh.FEMScalarFieldPlotter(self, n_points)
-        fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$',
-                                     [r'$v_0$', r'$v_1$', r'$v_2$'],
-                                     'elastic_velocity', ['v0', 'v1', 'v2'])
-
-        fsfp.fill_quantity_by_material_index(v_acvel)
-        return fsfp
+        return pltprof.get_structure_plotter_acoustic_velocity(self, self.d_materials,
+                                                               vel_index, n_points)
 
 
     def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
         """ Draws refractive index profile by primitive sampling, not proper triangular mesh sampling"""
 
-        print('\n\nPlotting ref index')
+        pltprof.plot_refractive_index_profile_rough(
+            self.mesh_mail_fname,
+            self.d_materials,
+            prefix, n_points , as_epsilon)
 
-        mail = nbgmsh.MailData(self.mesh_mail_fname)
-        v_x, v_y = mail.v_centx, mail.v_centy
-        v_elt_indices = mail.v_elts[:,-1]  # the elt number column
-        v_refindex = 0*v_x
-
-        print('Mesh props', mail.n_msh_pts, mail.n_msh_elts)
-
-        uniq_elts = set(list(v_elt_indices))
-
-
-        # find ref index at each centroid
-        v_elt_refindex = np.zeros(len(uniq_elts))
-
-        for i in range(len(v_elt_refindex)):
-            v_elt_refindex[i] = np.real(list(self.d_materials.values())[i].refindex_n)
-
-
-        for i,elt in enumerate(v_elt_indices):
-            v_refindex[i] = v_elt_refindex[elt-1]  # the type of element is labelled by gmsh from 1.
-
-        # Now we have an irregular x,y,n array to interpolate onto.
-
-
-        # Construct a regular rect array with n_pts_x * n_pts_y ~ n_points**2
-        # and with approximately square pixels
-        x_min = np.min(v_x)
-        x_max = np.max(v_x)
-        y_min = np.min(v_y)
-        y_max = np.max(v_y)
-
-        area = abs((x_max-x_min)*(y_max-y_min))
-        n_pts_x = int(n_points*abs(x_max-x_min)/np.sqrt(area))
-        n_pts_y = int(n_points*abs(y_max-y_min)/np.sqrt(area))
-
-        v_regx = np.linspace(x_min, x_max, n_pts_x)
-        v_regy = np.linspace(y_min, y_max, n_pts_y)
-        m_regx, m_regy = np.meshgrid(v_regx, v_regy)
-
-        xy_in = np.array([v_x, v_y]).T
-        xy_out = np.vstack([m_regx.ravel(), m_regy.ravel()]).T
-
-
-        v_regindex = scipy.interpolate.griddata(xy_in, v_refindex, xy_out).reshape([n_pts_y, n_pts_x])
-        fig, ax = plt.subplots()
-
-        #v_regindex = np.where(v_regindex==0, 1, v_regindex)
-        v_regindex = np.nan_to_num(v_regindex, nan=1.0)
-
-        if as_epsilon:
-            v_regindex = v_regindex**2
-            fig.suptitle('Dielectric constant')
-        else:
-            fig.suptitle('Refractive index')
-
-        cmap='cool'
-        cf=ax.imshow(v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex), origin='lower',
-                     extent = [x_min, x_max, y_min, y_max])
-        #cf=ax.contourf(m_regx, m_regy, v_regindex, cmap=cmap, vmin=1.0, vmax=np.nanmax(v_regindex))
-        ax.set_xlabel(r'$x$ [μm]')
-        ax.set_ylabel(r'$y$ [μm]')
-        cb = fig.colorbar(cf)
-        cf.set_clim(1,np.nanmax(v_regindex))
-        cb.outline.set_linewidth(.5)
-        cb.outline.set_color('gray')
-
-
-        plotting.save_and_close_figure(fig, prefix+'refn.png')
-
-
-
-
-def print_waveguide_help(inc_shape):
-    for wg in g_waveguide_templates:
-        if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
-            #found = True
-
-            # Instantiate the class that defines this waveguide model
-            wg_geom = wg['wg_template_cls'](None, None)
-            wg_geom.init_geometry()
-            print(wg_geom.get_parameter_help_summary())

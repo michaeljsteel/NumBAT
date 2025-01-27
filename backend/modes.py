@@ -27,7 +27,7 @@ from numbattools import int2D_trapz
 import femmesh
 import plotmodes
 import plotmoderaw
-import plotting
+import plottools
 
 
 
@@ -36,10 +36,8 @@ class ModePlotHelper:
        Factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim.
        '''
 
-    def __init__(self, simresult):  # , field_type):
+    def __init__(self, simresult):
         self.sim_result = simresult
-
-        #self.plot_params = {}
 
         self.setup_for_2D_n_pts = 0
         self.setup_for_1D = ()
@@ -57,9 +55,6 @@ class ModePlotHelper:
         self.interper_f_2D = None
         self.interper_f_1D = None
 
-
-        #self._init_plot_params()
-
         self.zero_arrays()
 
     def zero_arrays(self):
@@ -73,35 +68,7 @@ class ModePlotHelper:
         if self.interper_f_2D is not None: del self.interper_f_2D
         if self.interper_f_1D is not None: del self.interper_f_1D
 
-        #self.xy_raw = {}
-        #self.xy_out = {}
-
         self.zero_arrays()
-
-    # def _init_plot_params(self):
-    #     # TODO: replaced with Named Tuple?
-
-    #     self.plot_params = {'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
-    #                         'aspect': 1.0,
-    #                         'ticks': True, 'num_ticks': None,
-    #                         'colorbar': True, 'contours': False, 'contour_lst': None,
-    #                         'EM_AC': FieldType.EM_E,
-    #                         'hide_vector_field': False,
-    #                         'prefix': 'tmp', 'suffix': '',
-    #                         'decorator': plotmodes.Decorator(),
-    #                         'suppress_imimre': True,
-    #                         'quiver_points': 30
-    #                         }
-
-    # def update_plot_params(self, d_params):
-    #     """Update parameters according to Mode.plot_mode() call."""
-    #     self.plot_params.update(d_params)
-
-    # def assign_decorator(self, decorator):  # Belongs in ModePlotHelper
-    #     if decorator is not None:
-    #         self.plot_params['decorator'] = decorator
-    #     elif self.plot_params['decorator'] is None:
-    #         self.plot_params['decorator'] = plotmodes.Decorator()
 
 
     def interpolate_mode_i(self, md, field_type, dims=2):
@@ -355,7 +322,7 @@ class Mode:
 
         fn = plotmodes.modeplot_filename_1D(fc, plot_params, self.mode_num, cut, label='')
 
-        plotting.save_and_close_figure(fig, fn)
+        plottools.save_and_close_figure(fig, fn)
 
 
     def _interpolate_mode_2D(self, n_pts, field_type):

@@ -26,7 +26,7 @@ import matplotlib
 from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max, process_fortran_return
 import reporting
-import plotting
+import plotgain
 from fortran import nb_fortran
 
 
@@ -197,7 +197,7 @@ class GainProps(object):
         em_pump_m = self._allowed_pumps_m[0]
         em_Stokes_m = self._allowed_Stokes_m[0]
 
-        return plotting.plot_gain_spectra(
+        return plotgain.plot_gain_spectra(
             self.sim_AC,
             self._gain_tot,
             self._gain_PE,

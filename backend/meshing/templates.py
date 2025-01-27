@@ -104,6 +104,18 @@ def get_waveguide_template_class(inc_shape):
             return wg_cls
 
     else:  # didn't find required wg
-        reporting.report_and_exit(f"Selected inc_shape = '{self.inc_shape}' "
+        reporting.report_and_exit(f"Selected inc_shape = '{inc_shape}' "
                                       'is not currently implemented. \nPlease make a mesh with gmsh and '
                                       'consider contributing this to NumBAT via github.')
+
+
+
+def print_waveguide_help(inc_shape):
+    for wg in g_waveguide_templates:
+        if inc_shape in wg['inc_shape']:  # is the desired shape supported by this template class?
+            #found = True
+
+            # Instantiate the class that defines this waveguide model
+            wg_geom = wg['wg_template_cls'](None, None)
+            wg_geom.init_geometry()
+            print(wg_geom.get_parameter_help_summary())

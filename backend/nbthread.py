@@ -29,7 +29,7 @@ class CalcThread(threading.Thread):
     an integer(8) identifying which piece of work is being done.
 
     An additional optional queue q_work_noshare contains any tasks that may involve
-    non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
+    non-thread-safe tasks, such as matplotlib plotgain. Only one thread should be supplied
     a non-empty q_work_noshare. Obviously, this queue should be be small compared to the
     main work queue or there will be minimal parallel advantage.
 
@@ -232,7 +232,7 @@ class CalcProcess(multiprocessing.Process):
     an integer(8) identifying which piece of work is being done.
 
     An additional optional queue q_work_noshare contains any tasks that may involve
-    non-thread-safe tasks, such as matplotlib plotting. Only one thread should be supplied
+    non-thread-safe tasks, such as matplotlib plotgain. Only one thread should be supplied
     a non-empty q_work_noshare. Obviously, this queue should be be small compared to the
     main work queue or there will be minimal parallel advantage.
 

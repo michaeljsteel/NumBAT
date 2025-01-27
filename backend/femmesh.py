@@ -31,7 +31,7 @@ from nbtypes import SI_to_gmpercc, SI_um
 import numbat
 from plottools import save_and_close_figure
 import reporting
-import plotting
+import plottools
 from numbattools import is_real_number, is_float_pair
 
 
@@ -716,7 +716,7 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(self.v_x, v_scalar)
 
-        plotting.save_and_close_figure(
+        plottools.save_and_close_figure(
             fig, prefix + "-" + self.fname_suffix + "_xcut.png"
         )
 
@@ -738,7 +738,7 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(self.v_y, v_scalar)
 
-        plotting.save_and_close_figure(
+        plottools.save_and_close_figure(
             fig, prefix + "-" + self.fname_suffix + "_ycut.png"
         )
 
@@ -763,7 +763,7 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(v_d, v_scalar)
 
-        plotting.save_and_close_figure(
+        plottools.save_and_close_figure(
             fig, prefix + "-" + self.fname_suffix + "_linecut.png"
         )
 
@@ -835,7 +835,7 @@ class FEMScalarFieldPlotter:
                 cb.outline.set_linewidth(0.5)
                 cb.outline.set_color("gray")
 
-            plotting.save_and_close_figure(fig, fname)
+            plottools.save_and_close_figure(fig, fname)
 
 
 

@@ -18,8 +18,8 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 from nbtypes import SI_GHz
-from plotting import Decorator
-import plotting
+from plotgain import Decorator
+import plotgain
 import integration
 import mode_calcs
 import materials
@@ -55,7 +55,7 @@ class EMDecorator(Decorator):
 emdecorate = EMDecorator()
 
 
-class ACDecorator(plotting.Decorator):
+class ACDecorator(plotgain.Decorator):
     def __init__(self):
         super().__init__()
 

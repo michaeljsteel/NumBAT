@@ -1,4 +1,4 @@
-# plotting.py is a subroutine of NumBAT that contains numerous plotting
+# plotgain.py is a subroutine of NumBAT that contains numerous plotting
 # routines.
 
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.

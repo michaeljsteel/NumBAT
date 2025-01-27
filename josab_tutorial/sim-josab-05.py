@@ -15,7 +15,7 @@ import numbat
 import materials
 import mode_calcs
 import integration
-import plotting
+import plotgain
 
 
 import starter
@@ -136,7 +136,7 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = (
 
 freq_min = 2.5e9
 freq_max = 3.0e9
-plotting.plot_gain_spectra(
+plotgain.plot_gain_spectra(
     sim_AC,
     SBS_gain,
     SBS_gain_PE,

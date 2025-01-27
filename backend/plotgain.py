@@ -1,4 +1,4 @@
-# plotting.py is a subroutine of NumBAT that contains numerous plotting
+# plotgain.py is a subroutine of NumBAT that contains numerous plotting
 # routines.
 
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
@@ -37,7 +37,7 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
                  dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                  pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                  show_gains='All'):
-    reporting.report_and_exit('The function plotting.gain_spectra() is deprecated.\n'
+    reporting.report_and_exit('The function plotgain.gain_spectra() is deprecated.\n'
                               + 'Please now use Gain.plot_spectra() and observe the changes in calling convention described in the Release notes.')
 
 

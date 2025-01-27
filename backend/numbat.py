@@ -151,7 +151,7 @@ class _NumBATApp:
         return objects.Structure(*args, direct_call=False, **kwargs)
 
     def wg_structure_help(self, inc_shape):
-        objects.print_waveguide_help(inc_shape)
+        mshtemplates.print_waveguide_help(inc_shape)
 
     def _setup_paths(self):
         # numbat paths
@@ -200,8 +200,8 @@ def assert_numbat_object_created():
 
 
 
-#TODO: move this to plotting.py and
-# make the NumBATPlotPrefs call return a reference to object in plotting.py
+#TODO: move this to plotgain.py and
+# make the NumBATPlotPrefs call return a reference to object in plotgain.py
 class _NumBATPlotPrefs:
     def __init__(self):
         self.cmap_field_signed = 'seismic'
