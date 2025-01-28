@@ -538,16 +538,21 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc, plps, decorator, do
 
     vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(field_code)
     vecarrow_scale = numbat.NumBATPlotPrefs().vector_field_arrow_scale()
+    vecarrow_lw = numbat.NumBATPlotPrefs().vector_field_arrow_linewidth()
+    vecarrow_hw = numbat.NumBATPlotPrefs().vecplot_arrow_headwidth
+
 
 
     # Ignore all imaginary values. If there are significant imag values,
     # then instantaneous vector plots don't make much sense anyway
-    d_quiv_kw = {'linewidths': (0.2,),
+    d_quiv_kw = {#'linewidths': (vecarrow_lw,),
+                 'width': vecarrow_lw,
                  'edgecolor': vecarrow_col,
                  'facecolor':vecarrow_col,
                  'pivot':'mid',
                  #'headlength':3,
-                 'scale':vecarrow_scale}
+                 'scale':vecarrow_scale,
+                 'headwidth': vecarrow_hw}
 
     if do_cont:  # no colours in the quiver
         d_quiv_kw['color'] = 'gray'

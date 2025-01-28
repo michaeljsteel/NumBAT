@@ -208,10 +208,11 @@ class _NumBATPlotPrefs:
     # Add color combinations here
     # See https://matplotlib.org/stable/users/explain/colors/colormaps.html
 
-    color_tup_1 = ('seismic', 'OrRd', 'blue')
+    color_tup_1 = ('seismic', 'OrRd', 'dimgray')
     color_tup_2 = ('PRGn', 'GnBu', 'brown')
-    color_tup_3 = ('BrBg', 'YlOrBr', 'black')
-    color_tup_4 = ('coolwarm', 'Reds', 'black')
+    color_tup_3 = ('BrBG', 'YlOrBr', 'black')
+    color_tup_4 = ('PuOr', 'YlOrBr', 'black')
+    color_tup_5 = ('coolwarm', 'Reds', 'black')
 
 
 
@@ -220,7 +221,7 @@ class _NumBATPlotPrefs:
 
         # Select color combinations here
         coltup_em = self.color_tup_1
-        coltup_ac = self.color_tup_2
+        coltup_ac = self.color_tup_4
 
         # electromagnetic plots
         (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
@@ -236,7 +237,11 @@ class _NumBATPlotPrefs:
             ) = coltup_ac
 
 
-        self.vecplot_arrow_scale = 20
+        self.vecplot_arrow_scale = 40  # larger makes smaller arrows
+        self.vecplot_arrow_linewidth = 0.0025       # width of the shaft in fractions of plot width
+        self.vecplot_arrow_headwidth = 2             # multiple of shaft width
+
+
 
         #self.vecplot_arrow_head = 2
         #self.vecplot_arrow_len = 2
@@ -283,6 +288,10 @@ class _NumBATPlotPrefs:
 
     def vector_field_arrow_scale(self):
         return self.vecplot_arrow_scale
+
+    def vector_field_arrow_linewidth(self):
+        return self.vecplot_arrow_linewidth
+
 
 def NumBATPlotPrefs():
     return _NumBATPlotPrefs()
