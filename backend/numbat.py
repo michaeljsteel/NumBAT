@@ -200,16 +200,105 @@ def assert_numbat_object_created():
 
 
 
-#TODO: move this to plotgain.py and
-# make the NumBATPlotPrefs call return a reference to object in plotgain.py
+#TODO: move this to plottools.py and
+# make the NumBATPlotPrefs call return a reference to object in plottools.py
 class _NumBATPlotPrefs:
+    """Selection of color scales and line properties for different field plots."""
+
+    # Add color combinations here
+    # See https://matplotlib.org/stable/users/explain/colors/colormaps.html
+
+    color_tup_1 = ('seismic', 'OrRd', 'blue')
+    color_tup_2 = ('PRGn', 'GnBu', 'brown')
+    color_tup_3 = ('BrBg', 'YlOrBr', 'black')
+    color_tup_4 = ('coolwarm', 'Reds', 'black')
+
+
+
+
     def __init__(self):
-        self.cmap_field_signed = 'seismic'
-        self.cmap_field_unsigned = 'OrRd'
+
+        # Select color combinations here
+        coltup_em = self.color_tup_1
+        coltup_ac = self.color_tup_2
+
+        # electromagnetic plots
+        (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
+            self.cmap_em_field_unsigned,   # |E|^2, |H|^2,
+            self.vecplot_arrow_color_em
+            ) = coltup_em
+
+
+        # acoustic plots
+        (self.cmap_ac_field_signed,        # ux, uy, uz
+            self.cmap_ac_field_unsigned,   # |u|^2
+            self.vecplot_arrow_color_ac
+            ) = coltup_ac
+
+
+        self.vecplot_arrow_scale = 20
+
+        #self.vecplot_arrow_head = 2
+        #self.vecplot_arrow_len = 2
+
+
+
+        # colormap for refractive index plots
         self.cmap_ref_index = 'cool'
+
+
+        # properties of waveguide boundary frames
+
+        # EDGE_COLOR="gray"
+        # EDGE_COLOR="dimgray"
+        # EDGE_COLOR="black"
+        # EDGE_COLOR="brown"
+        EDGE_COLOR="darkred"
+
+        self.WG_FRAME_EDGE_COLOR = EDGE_COLOR
+
+        self.WG_FRAME_LINEWIDTH_WHOLEFIG = 0.75   # if field plot is whole figure
+        self.WG_FRAME_LINEWIDTH_SUBFIG = 0.25      # if field plot is a part figure
+
+
+
+    def cmap_field_signed(self, field_code):
+        if field_code.is_EM():
+            return self.cmap_em_field_signed
+        else:
+            return self.cmap_ac_field_signed
+
+    def cmap_field_unsigned(self, field_code):
+        if field_code.is_EM():
+            return self.cmap_em_field_unsigned
+        else:
+            return self.cmap_ac_field_unsigned
+
+    def vector_field_arrow_color(self, field_code):
+        if field_code.is_EM():
+            return self.vecplot_arrow_color_em
+        else:
+            return self.vecplot_arrow_color_ac
+
+
+    def vector_field_arrow_scale(self):
+        return self.vecplot_arrow_scale
 
 def NumBATPlotPrefs():
     return _NumBATPlotPrefs()
+
+# def NumBAT_color_styles():
+
+
+#     #EDGE_COLOR="mediumblue"
+#     #EDGE_COLOR="darkblue"
+
+#     styles = {'WG_FRAME_EDGE_COLOR': WG_FRAME_EDGE_COLOR,
+#               'WG_FRAME_LINEWIDTH': WG_FRAME_LINEWIDTH,
+#               }
+
+
+#     return styles
 
 def load_simulation(prefix):
     return Simulation.load_simulation(prefix)

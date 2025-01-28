@@ -178,7 +178,7 @@ class UserGeometryBase():
         raise NotImplementedError('UserGeometryBase.apply_parameters() must be overriden')
         return ''
 
-    def draw_mpl_frame(self, ax): # optional method
+    def draw_mpl_frame(self, ax, styles): # optional method
         '''Add elements to a matplotlib axis to draw outline of the structure'''
         pass
         # print('base class drawmplframe on ', ax)

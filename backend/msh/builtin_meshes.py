@@ -8,7 +8,10 @@ import reporting
 
 nmtoum = 0.001  # template radii are in nm but matplotlib plots are in microns
 
-EDGE_COLOR="gray"
+
+
+
+
 LINEWIDTH=0.75
 
 def _process_one_and_two_incls(params):
@@ -117,7 +120,10 @@ class Circular(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
 
         rad = self.get_param("inc_a_x") * 0.5
 
@@ -160,7 +166,10 @@ class Rectangular(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
 
         wid = self.get_param("inc_a_x") * nmtoum
         hgt = self.get_param("inc_a_y") * nmtoum
@@ -210,7 +219,10 @@ class TwoIncl(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
 
         widl = self.get_param("inc_a_x") * nmtoum
         hgtl = self.get_param("inc_a_y") * nmtoum
@@ -350,7 +362,10 @@ class TwoInclVert(UserGeometryBase):
 
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
 
         widu = self.get_param("inc_a_w") * nmtoum
         hgtu = self.get_param("inc_a_h") * nmtoum
@@ -446,7 +461,10 @@ class Triangular(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
         wid = self.get_param("base_width") * nmtoum
         xoff = self.get_param("peak_xoff") * nmtoum
         hgt = self.get_param("peak_height") * nmtoum
@@ -488,7 +506,10 @@ def make_onion_subs():
     return subs
 
 
-def draw_onion_frame(ax, umb):
+def draw_onion_frame(ax, umb, styles):
+    EDGE_COLOR = styles['edgecolor']
+    LINEWIDTH = styles['linewidth']
+
 
     layers = (
         "inc_a_x",
@@ -560,8 +581,8 @@ class Onion(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class Onion1(UserGeometryBase):
@@ -601,8 +622,8 @@ class Onion1(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class Onion2(UserGeometryBase):
@@ -648,8 +669,8 @@ class Onion2(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class Onion3(UserGeometryBase):
@@ -697,8 +718,8 @@ class Onion3(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class CircOnion(UserGeometryBase):
@@ -711,8 +732,8 @@ class CircOnion(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class CircOnion1(UserGeometryBase):
@@ -725,8 +746,8 @@ class CircOnion1(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class CircOnion2(UserGeometryBase):
@@ -739,8 +760,8 @@ class CircOnion2(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class CircOnion3(UserGeometryBase):
@@ -787,8 +808,8 @@ class CircOnion3(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
-        draw_onion_frame(ax, self)
+    def draw_mpl_frame(self, ax, styles):
+        draw_onion_frame(ax, self, styles)
 
 
 class Pedestal(UserGeometryBase):
@@ -916,7 +937,10 @@ class TrapezoidalRib(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
         rib_top_w = self.get_param("rib_top_width") * nmtoum
         rib_base_w = self.get_param("rib_base_width") * nmtoum
         rib_h = self.get_param("rib_height") * nmtoum
@@ -992,7 +1016,10 @@ class Rib(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
         rib_w = self.get_param("rib_w") * nmtoum
         rib_h = self.get_param("rib_h") * nmtoum
         slab_w = self.get_param("slab_w") * nmtoum
@@ -1250,7 +1277,10 @@ class RibMkII(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax):
+    def draw_mpl_frame(self, ax, styles):
+        EDGE_COLOR = styles['edgecolor']
+        LINEWIDTH = styles['linewidth']
+
 
         rib_w = self.get_param("rib_w") * nmtoum
         rib_h = self.get_param("rib_h") * nmtoum

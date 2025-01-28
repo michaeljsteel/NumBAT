@@ -213,8 +213,18 @@ class Decorator(object):
         self._frame_drawer = fd
 
     def add_frame(self, ax):
+        plprefs = numbat.NumBATPlotPrefs()
+        styles = {}
+
+        styles['edgecolor'] = plprefs.WG_FRAME_EDGE_COLOR
+        if self._is_single:
+            styles['linewidth'] = plprefs.WG_FRAME_LINEWIDTH_WHOLEFIG
+        else:
+            styles['linewidth'] = plprefs.WG_FRAME_LINEWIDTH_SUBFIG
+
+
         if self._frame_drawer is not None:
-            self._frame_drawer.draw_mpl_frame(ax)
+            self._frame_drawer.draw_mpl_frame(ax, styles)
 
     def _get_props(self):
         return self._props
@@ -354,10 +364,10 @@ def get_quiver_skip_range(npts, skip):
     return np.array(range(j0, npts, skip))
 
 
-def add_contour_plot(fig, ax, d_xy, c_field, cc_cont, plps, decorator):
+def add_contour_plot(fig, ax, d_xy, c_field, field_code, cc_cont, plps, decorator):
 
-    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed
-    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned
+    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed(field_code)
+    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned(field_code)
 
     cont_signed = cc_cont.is_signed_field()
     cmap = cmap_signed if cont_signed else cmap_unsigned
@@ -482,20 +492,13 @@ def _make_quiver_slices(v_x, v_y, plps, deftrim):
     quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
     quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
 
-    #dx= v_x[1]-v_x[0]
-    #dy= v_y[1]-v_y[0]
-    #print('domx domy dx dy', v_x[-1]-v_x[0], v_y[-1]-v_y[0], dx, dy)
-
-    #print('quivptsn, quivskipn, quivskipL', quiver_points_x, quiver_points_y,
-    #      quiver_skip_x, quiver_skip_y, quiver_skip_x*dx, quiver_skip_y*dy)
-
     # getting a nice symmetric pattern of points to do quivers centred around the middle
     qslice_x = get_quiver_skip_range(n_pts_x, quiver_skip_x)
     qslice_y = get_quiver_skip_range(n_pts_y, quiver_skip_y)
 
     return qslice_x, qslice_y
 
-def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
+def add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc, plps, decorator, do_cont):
 
 
     # give a little space around elastic profiles
@@ -533,11 +536,19 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     #m_ImEy_q = v_fields['Fyi'][qslice_x[:, np.newaxis], qslice_y]
 
 
+    vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(field_code)
+    vecarrow_scale = numbat.NumBATPlotPrefs().vector_field_arrow_scale()
+
+
     # Ignore all imaginary values. If there are significant imag values,
-    # then instaneous vector plots don't make much sense anyway
-    d_quiv_kw = {'linewidths': (0.2,), 'edgecolor': 'blue', 'facecolor':'blue',
-                 'pivot':'mid', #'headlength':3,
-                 'scale':16}
+    # then instantaneous vector plots don't make much sense anyway
+    d_quiv_kw = {'linewidths': (0.2,),
+                 'edgecolor': vecarrow_col,
+                 'facecolor':vecarrow_col,
+                 'pivot':'mid',
+                 #'headlength':3,
+                 'scale':vecarrow_scale}
+
     if do_cont:  # no colours in the quiver
         d_quiv_kw['color'] = 'gray'
         ax.quiver(m_x_q, m_y_q, m_ReEx_q, m_ReEy_q,  ** d_quiv_kw)
@@ -557,7 +568,7 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
 
-def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_vector=None,
+def plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps, cc_scalar=None, cc_vector=None,
                             is_single_plot=False):
 
     #v_x, v_y, m_X, m_Y = list(d_xy.values())
@@ -570,10 +581,10 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, cc_scalar=None, cc_ve
     cbar = None
     if do_cont:
         im_co, cbar = add_contour_plot(fig, ax, d_xy,
-                                       v_fields[cc_scalar.component_as_F()], cc_scalar, plps, decorator)
+                                       v_fields[cc_scalar.component_as_F()], field_code, cc_scalar, plps, decorator)
 
     if do_quiv:
-        add_quiver_plot(fig, ax, d_xy, v_fields, cc_vector, plps, decorator, do_cont)
+        add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc_vector, plps, decorator, do_cont)
 
     # Adjustments to the visible plot domain
 
@@ -776,12 +787,12 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
 
     ax = axs[axi]; axi += 1  # the whole field (top row middle)
     if plps['hide_vector_field']:
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal)
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_scalar=cc_scal)
     else:
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
 
     ax = axs[axi]; axi += 1  # the intensity (top row right)
-    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_vector=cc_transvec)
+    plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_vector=cc_transvec)
 
     for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
         cc = FieldTag.make_comp_from_field_and_Fcode(ft, flab)
@@ -792,7 +803,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
         if (hide_minors and not cc.is_minor()): continue
 
         ax = axs[axi]; axi += 1
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, cc_scalar=cc)  # the scalar plots
+        plot_contour_and_quiver(fig, ax, d_xy,  v_plots, field_code, plps, cc_scalar=cc)  # the scalar plots
 
 
     fig_fname = modeplot_filename_2D(field_code, plps, ival)
@@ -817,7 +828,7 @@ def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
         cc_transvec = None
         cc_scal = cc
 
-    plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
+    plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps,
                             cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
