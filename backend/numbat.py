@@ -22,7 +22,7 @@ from pathlib import Path
 
 import reporting
 import objects
-from mode_calcs import Simulation
+from modecalcs import Simulation
 import meshing.templates as mshtemplates
 
 

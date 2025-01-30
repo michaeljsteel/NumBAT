@@ -35,7 +35,7 @@ from numbattools import run_subprocess
 import meshing.templates as mshtemplates
 
 import materials
-from mode_calcs import em_mode_calculation, ac_mode_calculation
+from modecalcs import em_mode_calculation, ac_mode_calculation
 import nbgmsh
 import femmesh
 from materialprops import OpticalProps, ElasticProps
