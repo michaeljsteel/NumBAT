@@ -19,6 +19,7 @@
 import numpy as np
 from pathlib import Path
 
+import copy
 
 import numbat
 from modes import ModeAC, ModeEM, ModePlotHelper
@@ -496,6 +497,44 @@ class EMSimResult(SimResult):
         """
         return self.eigs_kz
 
+
+    def bkwd_Stokes_modes(self):
+        """Defines the backward travelling Stokes waves as the conjugate
+            of the forward travelling pump waves.
+
+        Returns a ``Simulation`` object that has these key values:
+
+        Eig_values: a 1D array of Eigenvalues (propagation constants) in [1/m]
+
+        fem_evecs: the associated Eigenvectors, ie. the fields, stored as
+            [field comp, node nu on element, Eig value, el nu]
+
+        EM_mode_power: the power in the Stokes modes. Note this power is negative because the modes
+                    are travelling in the negative z-direction.
+        """
+
+        # EM_sim.clean_for_pickle()
+
+        Stokes_modes = copy.deepcopy(self)
+        Stokes_modes.fem_evecs = np.conj(Stokes_modes.fem_evecs)
+        Stokes_modes.eigs_kz = -1.0 * Stokes_modes.eigs_kz
+        Stokes_modes.EM_mode_power = -1.0 * Stokes_modes.EM_mode_power
+
+        return Stokes_modes
+
+
+    def fwd_Stokes_modes(self):  # TODO: make a member function
+        """Defines the forward travelling Stokes waves as a copy
+            of the forward travelling pump waves.
+
+        Returns a ``Simulation`` object that has these key values:
+
+        """
+
+        self.clean_for_pickle()
+
+        Stokes_modes = copy.deepcopy(self)
+        return Stokes_modes
 
 class ACSimResult(SimResult):
     def __init__(self, sim):

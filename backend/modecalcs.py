@@ -1,6 +1,3 @@
-# mode_calcs.py is a subroutine of NumBAT that contains methods to
-# calculate the EM and Acoustic modes of a structure.
-
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
 # NumBAT is free software: you can redistribute it and/or modify
@@ -196,6 +193,7 @@ class EMSimulation(Simulation):
             fm.n_msh_el,
             #opt_props.n_mats_em,   # f2py figures this out from v_refindex, probably because not using f2py(depends)
             opt_props.v_refindexn,
+            shortrun
         )
 
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
@@ -313,7 +311,7 @@ class EMSimulation(Simulation):
 
 
 
-    def convert_to_Stokes():
+    def convert_to_Stokes(self):
         # If considering a the backwards propagating Stokes field.
         if self.Stokes:
             self.eigs_kz = -1 * self.eigs_kz
@@ -336,9 +334,10 @@ class EMSimulation(Simulation):
         print("\n\nCalculating EM modes:")
 
 
-        if (shortrun): return   #TODO REMOVE ME SHORTRUN
 
         self.do_main_eigensolve(shortrun)
+
+        if (shortrun): return   #TODO REMOVE ME SHORTRUN
 
         self.calc_field_powers()
 
@@ -352,6 +351,9 @@ class EMSimulation(Simulation):
 
 
         self.make_result()
+
+
+
 
 
 class ACSimulation(Simulation):
@@ -727,43 +729,7 @@ class ACSimulation(Simulation):
         self.sim_result = ACSimResult(self)
 
 
-def bkwd_Stokes_modes(EM_sim):  # TODO: make a member function
-    """Defines the backward travelling Stokes waves as the conjugate
-        of the forward travelling pump waves.
 
-    Returns a ``Simulation`` object that has these key values:
-
-    Eig_values: a 1D array of Eigenvalues (propagation constants) in [1/m]
-
-    fem_evecs: the associated Eigenvectors, ie. the fields, stored as
-           [field comp, node nu on element, Eig value, el nu]
-
-    EM_mode_power: the power in the Stokes modes. Note this power is negative because the modes
-                   are travelling in the negative z-direction.
-    """
-
-    # EM_sim.clean_for_pickle()
-
-    Stokes_modes = copy.deepcopy(EM_sim)
-    Stokes_modes.fem_evecs = np.conj(Stokes_modes.fem_evecs)
-    Stokes_modes.eigs_kz = -1.0 * Stokes_modes.eigs_kz
-    Stokes_modes.EM_mode_power = -1.0 * Stokes_modes.EM_mode_power
-
-    return Stokes_modes
-
-
-def fwd_Stokes_modes(EM_sim):  # TODO: make a member function
-    """Defines the forward travelling Stokes waves as a copy
-        of the forward travelling pump waves.
-
-    Returns a ``Simulation`` object that has these key values:
-
-    """
-
-    EM_sim.clean_for_pickle()
-
-    Stokes_modes = copy.deepcopy(EM_sim)
-    return Stokes_modes
 
 
 

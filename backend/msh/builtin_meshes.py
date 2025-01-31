@@ -9,10 +9,14 @@ import reporting
 nmtoum = 0.001  # template radii are in nm but matplotlib plots are in microns
 
 
+#LINEWIDTH=0.75
+
+#TODO:
+# expand allowed_/reqd_ parameters to take a 'is_dim' field.
+# have objects.Structure determine whether units are microns or nm.
+# multiply by nm_to_um  in get_param if required.
 
 
-
-LINEWIDTH=0.75
 
 def _process_one_and_two_incls(params):
     nelts = 0
