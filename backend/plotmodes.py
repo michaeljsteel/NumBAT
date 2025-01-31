@@ -656,7 +656,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps, cc_scalar
 
 
 
-def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
+def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summary
 
     decorator = plps['decorator']
     fs = decorator.get_property('data_label_fs')
@@ -682,8 +682,6 @@ def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
     [f_x, f_y, f_t, f_z] = mode.field_fracs()
     (r0x, r0y) = mode.center_of_mass()         # In units of um
     (wx, wy, w0) = mode.second_moment_widths() # In units of um
-
-
 
 
     _write_line(x0-.05, y0, f'Mode properties: m={ival}', fs+2); y0 -= dy
@@ -718,7 +716,7 @@ def write_mode_data(ax, plps, sim_result, ival):  # mode data summary
     _write_line(x0, y0, r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm'); y0 -= dy
     _write_line(x0, y0, f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm'); y0 -= dy
 
-    if mode.field_type == FieldType.EM_H:
+    if field_code.is_EM_H():
         _write_line(x0, y0, r'$H$ field multiplied by $Z_0=376.7\, \Omega$'); y0 -= dy
 
     sc = sim_result.symmetry_classification(ival)
@@ -783,7 +781,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
     axi = 0
 
     ax = axs[axi]; axi += 1
-    write_mode_data(ax, plps, sim_result, ival)  # mode data summary
+    write_mode_data(ax, plps, sim_result, ival, field_code)  # mode data summary
 
     #ft = plps['EM_AC']
     ft = field_code.as_field_type()
