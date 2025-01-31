@@ -11,7 +11,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 
@@ -59,13 +59,13 @@ new_calcs = True
 # Calculate Electromagnetic modes.
 if new_calcs:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
 
     # simres_EM_pump.save_simulation('tut_11b_pump')
     # simres_EM_Stokes.save_simulation('tut_11b_stokes')
 else:
-    simres_EM_pump = mode_calcs.load_simulation('tut_11b_pump')
-    simres_EM_Stokes = mode_calcs.load_simulation('tut_11b_stokes')
+    simres_EM_pump = numbat.load_simulation('tut_11b_pump')
+    simres_EM_Stokes = numbat.load_simulation('tut_11b_stokes')
 
 # Display the wavevectors of EM modes.
 v_kz = simres_EM_pump.kz_EM_all()
@@ -93,7 +93,7 @@ if new_calcs:
   simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
 #  simres_AC.save_simulation('tut_11b_acoustic')
 else:
-  simres_AC = mode_calcs.load_simulation('tut_11b_acoustic')
+  simres_AC = numbat.load_simulation('tut_11b_acoustic')
 
 # Print the frequencies of AC modes.
 v_nu = simres_AC.nu_AC_all()

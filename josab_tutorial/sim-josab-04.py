@@ -14,7 +14,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 
 import starter
@@ -90,7 +90,7 @@ print("n_eff = ", np.round(n_eff_sim, 4))
 # sys.exit("We interrupt your regularly scheduled computation to bring you something completely different... for now")
 
 # calculate the EM modes for the Stokes
-sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 
 # Generate images for the EM modes involved in the calculation
 # note: use field_type='EM_H' for magnetic H field

@@ -16,7 +16,7 @@ sys.path.append(str(Path('../backend')))
 
 from plotgain import Decorator
 import integration
-import mode_calcs
+import modecalcs
 import materials
 import numbat
 
@@ -94,7 +94,7 @@ if doem:
         npzfile = np.load(prefix+'-wguide_data.npz', allow_pickle=True)
         sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
-    sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
     np.savez(prefix+'-wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
     # npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
     # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()

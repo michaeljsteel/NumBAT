@@ -13,7 +13,7 @@ sys.path.append(str(Path('../backend')))
 import numbat
 
 import materials
-import mode_calcs
+import modecalcs
 import integration
 from nbtypes import SI_GHz
 
@@ -85,7 +85,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 # npzfile = np.load('wguide_data.npz')
 # sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
-sim_EM_Stokes = mode_calcs.fwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ivals=range(5),
                          ylim_min=0.2, ylim_max=0.2, field_type='EM_E', )

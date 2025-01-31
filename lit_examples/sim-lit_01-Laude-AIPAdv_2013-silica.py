@@ -18,7 +18,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 
 import starter
@@ -59,15 +59,15 @@ recalc=True
 #recalc=False
 if recalc:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
     sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          ylim_min=0.4, ylim_max=0.4, )
 else:
-    sim_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation(prefix+'_pump')
+    sim_EM_pump = numbat.load_simulation(prefix+'_pump')
+    sim_EM_Stokes = numbat.load_simulation(prefix+'_pump')
 
 
 # Print the wavevectors of EM modes.
@@ -87,7 +87,7 @@ if recalc:
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
     sim_AC.save_simulation(prefix+'_ac')
 else:
-    sim_AC = mode_calcs.load_simulation(prefix+'_ac')
+    sim_AC = numbat.load_simulation(prefix+'_ac')
 
 
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,

@@ -18,7 +18,7 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 
 import starter
@@ -129,7 +129,7 @@ def modes_n_gain(diam):
 
     #sim_EM_pump.plot_modes(ivals=range(5), field_type='EM_E', )
 
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
     # find correct fundamental EM mode in case there are spurious ones found as ground state
     EM_ival_pump = 0

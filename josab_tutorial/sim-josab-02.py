@@ -15,7 +15,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 import plotgain
 
@@ -85,7 +85,7 @@ for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 #sys.exit("We interrupt your regularly scheduled computation to bring you ... for now")
 
 # Calculate the Electromagnetic modes of the Stokes field.
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
 # Generating images for the EM modes involved in the calculation
 print("Plotting EM fields ")

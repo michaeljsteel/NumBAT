@@ -9,13 +9,14 @@ from multiprocessing import Pool
 
 import matplotlib.pyplot as plt
 import numpy as np
+import copy
 
 from pathlib import Path
 sys.path.append(str(Path('../backend')))
 
 
 import numbat
-import mode_calcs
+
 import materials
 
 import starter
@@ -26,8 +27,11 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 3.0*lambda_nm
+#domain_x = 3.0*lambda_nm
+#domain_y = domain_x
+domain_x = 2.0*lambda_nm
 domain_y = domain_x
+
 inc_a_x = 800.
 inc_a_y = 220.
 inc_shape = 'rectangular'
@@ -47,15 +51,17 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
-                           lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                           #lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                           lc_bkg=.1, lc_refine_1=2.0*refine_fac, lc_refine_2=2.0*refine_fac)
 
-wguide.check_mesh()
+#wguide.plot_mesh(prefix)
+
 # Estimated effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Calculate Electromagnetic modes.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
 # Will scan from forward to backward SBS so need to know q_AC of backward SBS.
 q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
@@ -65,12 +71,12 @@ q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
 
 
 def solve_ac_mode_freqs(qset):
-    ik, nk, q_AC = qset
+    ik, nk, q_AC, sim_EM = qset
     print('\nPID: %d  commencing mode calculation for q_AC %d/%d = %f /m' % (
         os.getpid(), ik+1, nk, q_AC))
 
     # Calculate the modes, grab the output frequencies only and convert to GHz
-    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
+    sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM)
 
     print('PID: %d got ac modes for q_AC = %f' % (os.getpid(), q_AC))
 
@@ -94,10 +100,12 @@ acoustic_qs = np.linspace(5., q_AC*1.1, n_qs)
 print(f"The acoustic wavevector 2*kp = {q_AC:f}")
 
 multiproc = nbapp.is_linux()  # multiproc not yet working for windows and macos
-multiproc = False
+#multiproc = False
 
 # make jobs list with entries of form  (iq, n_qs, q)  (qstep, total qs, qval)
-qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs, acoustic_qs)
+emsim_copies = [copy.deepcopy(sim_EM_pump) for i in range(n_qs)]
+qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs,
+            acoustic_qs, emsim_copies)
 
 if multiproc:
     num_cores = os.cpu_count()  # Let OS decide how many processes to run

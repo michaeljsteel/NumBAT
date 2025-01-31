@@ -17,7 +17,7 @@ sys.path.append(str(Path('../backend')))
 import numbat
 from plotgain import Decorator
 import integration
-import mode_calcs
+import modecalcs
 import materials
 from nbtypes import SI_GHz
 
@@ -106,7 +106,7 @@ if doem:
     else:
         npzfile = np.load(prefix+'-wguide_data_florez.npz', allow_pickle=True)
         sim_EM_pump = npzfile['sim_EM_pump'].tolist()
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
     sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=range(6),
                         ylim_min=0.2, ylim_max=0.2, decorator=emdecorate,

@@ -11,7 +11,7 @@ sys.path.append(str(Path("../backend")))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 from nbtypes import SI_GHz
 
@@ -85,13 +85,13 @@ recalc_fields = True  # run the calculation from scratch
 # Calculate Electromagnetic modes.
 if recalc_fields:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
 
     simres_EM_pump.save_simulation("tut_07_pump")
     simres_EM_Stokes.save_simulation("tut_07_stokes")
 else:
-    simres_EM_pump = mode_calcs.load_simulation("tut_07_pump")
-    simres_EM_Stokes = mode_calcs.load_simulation("tut_07_stokes")
+    simres_EM_pump = numbat.load_simulation("tut_07_pump")
+    simres_EM_Stokes = numbat.load_simulation("tut_07_stokes")
 
 simres_EM_pump.plot_modes(
     quiver_points=20,
@@ -127,7 +127,7 @@ if recalc_fields:
     )
     simres_AC.save_simulation("tut_07_acoustic")
 else:
-    simres_AC = mode_calcs.load_simulation("tut_07_acoustic")
+    simres_AC = numbat.load_simulation("tut_07_acoustic")
 
 simres_AC.plot_modes(quiver_points=20, aspect=4)
 simres_AC.plot_modes_1D('x', 0, ivals=range(5))

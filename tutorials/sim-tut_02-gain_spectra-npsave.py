@@ -17,7 +17,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import integration
-import mode_calcs
+
 import materials
 
 # Geometric Parameters - all in nm.
@@ -75,7 +75,7 @@ if reuse_old_fields:
     simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
     print('\nSaving EM fields')
     simres_EM_pump.save_simulation('tut02_em_pump')
     simres_EM_Stokes.save_simulation('tut02_em_stokes')

@@ -15,7 +15,7 @@ sys.path.append(str(Path('../backend')))
 import numbat
 from nbtypes import SI_GHz
 import integration
-import mode_calcs
+import modecalcs
 import materials
 
 import starter
@@ -65,7 +65,7 @@ n_eff = 1.4
 
 # Calculate Electromagnetic Modes
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
 sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=range(5))
 

@@ -211,13 +211,12 @@ class Mode:
         self.sim_result = simres
         self.mode_num = m
 
-        self.field_type = None
         self.d_fields_2D = {}
 
         self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-        self.fracs = []  # fx, fy, ft, fz
+        self.poln_fracs = []  # fx, fy, ft, fz
         self.r0 = None  # centre of mass
 
         self.r0_offset = (0.0, 0.0)
@@ -406,7 +405,7 @@ class Mode:
         if not self.analysed:
             reporting.report_and_exit('mode has not being analysed')
 
-        return self.fracs
+        return self.poln_fracs
 
     def __str__(self):
         '''String representation of the mode.'''
@@ -419,7 +418,7 @@ class Mode:
            :rtype: bool
            '''
         polthresh = .7
-        return self.fracs[0] > polthresh
+        return self.poln_fracs[0] > polthresh
 
     def is_poln_ey(self):
         '''Returns true if mode is predominantly y-polarised (ie if *fy*>0.7).
@@ -427,7 +426,7 @@ class Mode:
            :rtype: bool
            '''
         polthresh = .7
-        return self.fracs[1] > polthresh
+        return self.poln_fracs[1] > polthresh
 
     def is_poln_indeterminate(self):
         '''Returns true if transverse polarisation is neither predominantly *x* or *y* oriented.
@@ -517,7 +516,7 @@ class Mode:
       '''
         self.r0_offset = (x0, y0)
 
-    def analyse_mode(self, n_pts=501, EM_field=FieldType.EM_E):
+    def analyse_mode(self, n_pts=501, ft=FieldType.EM_E):
         '''Perform a series of measurements on the mode *f* to determine polarisation fractions, second moment widths etc.
 
            :param array v_x: Vector of x points.
@@ -530,7 +529,7 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
-        self._interpolate_mode_2D(n_pts, EM_field)
+        self._interpolate_mode_2D(n_pts, ft)
 
         self.analysed = True
 
@@ -544,6 +543,9 @@ class Mode:
         dx = m_x[1, 0]-m_x[0, 0]
         dy = m_y[1, 1]-m_y[1, 0]
 
+        #
+        # Polarisation fractions
+        #
         mFs = self.d_fields_2D  # the incoming fields, not necessarily normalised in any way
 
         # unit = [|F|^2], mag. \approx 1
@@ -563,7 +565,11 @@ class Mode:
         f_z = s_fz/s_f
         f_t = f_x+f_y
 
-        self.fracs = [f_x, f_y, f_t, f_z]
+        self.poln_fracs = [f_x, f_y, f_t, f_z]
+
+
+        #
+        # Positions and widths        #
 
         # Flipping upside down y to get sensible values for r0 position.
         m_yud = np.flipud(m_y)
@@ -602,7 +608,6 @@ class Mode:
     def write_to_file(self):
         #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
         #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
-        ft=self.field_type
         mh = self.mode_helper
         v_x = mh.xy_out['v_x']
         v_y = mh.xy_out['v_y']
@@ -612,35 +617,12 @@ class Mode:
         #ccs = ('Fx', 'Fy', 'Fz')
         ccs = ('x', 'y', 'z')
         for cc in ccs:
+            ft=self.field_code.as_field_type()
             comp = FieldTag.make_from_field_and_component(ft, cc)
 
             pref=numbat.NumBATApp().outpath_fields()
             longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp.field_component()}'
-            self._write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2D)
-
-    def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
-
-        fc = comp.component_as_F() # eg 'Fabs'
-
-        if comp.is_abs():  # a real valued quantity
-            fname = longpref+'.txt'
-            fld = d_fields[fc]
-            header=f'# {fc}, '  + s_xy
-            np.savetxt(fname, fld,header=header)
-
-        else:
-            fname = longpref+'_re.txt'
-            tagmaj = f'F{comp._xyz}r'
-            tagmin = f'F{comp._xyz}i'
-
-            fld = d_fields[tagmaj]  # eg 'Fxr'
-            header=f'# {fc}_re, '  + s_xy
-            np.savetxt(fname, fld,header=header)
-
-            fname = longpref+'_im.txt'
-            fld = d_fields[tagmin]  # eg 'Fxr'
-            header=f'# {fc}_im, '  + s_xy
-            np.savetxt(fname, fld,header=header)
+            _write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2D)
 
 
 
@@ -648,9 +630,7 @@ class Mode:
         '''Plot the requested field components on the sim mesh with no interpolation.'''
 
         simres = self.sim_result
-        ft = self.field_type
-
-        fem_evecs = simres.fem_evecs_for_ft(ft)
+        fem_evecs = simres.fem_evecs_for_ft(self.field_code.as_field_type())
         plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_helper,
                                          self.sim_result.fem_mesh, fem_evecs, self.mode_num)
 
@@ -666,6 +646,7 @@ class ModeEM(Mode):
 
     def __init__(self, sim, m):
         super().__init__(sim, m)
+        self.field_code = FieldCode(FieldType.EM_E)
 
     def __str__(self):
         s = f'EM mode # {self.mode_num}'
@@ -683,6 +664,8 @@ class ModeAC(Mode):
     def __init__(self, sim, m):
         super().__init__(sim, m)
 
+        self.field_code = FieldCode(FieldType.AC)
+
         self.gain = {}  # { (EM_p_i, EM_s_j): gain}
         self.gain_PE = {}
         self.gain_MB = {}
@@ -694,3 +677,28 @@ class ModeAC(Mode):
     def __repr__(self):
         s = f'ModeAC(simres, mode_num={self.mode_num})'
         return s
+
+
+def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
+
+    fc = comp.component_as_F() # eg 'Fabs'
+
+    if comp.is_abs():  # a real valued quantity
+        fname = longpref+'.txt'
+        fld = d_fields[fc]
+        header=f'# {fc}, '  + s_xy
+        np.savetxt(fname, fld,header=header)
+
+    else:
+        fname = longpref+'_re.txt'
+        tagmaj = f'F{comp._xyz}r'
+        tagmin = f'F{comp._xyz}i'
+
+        fld = d_fields[tagmaj]  # eg 'Fxr'
+        header=f'# {fc}_re, '  + s_xy
+        np.savetxt(fname, fld,header=header)
+
+        fname = longpref+'_im.txt'
+        fld = d_fields[tagmin]  # eg 'Fxr'
+        header=f'# {fc}_im, '  + s_xy
+        np.savetxt(fname, fld,header=header)

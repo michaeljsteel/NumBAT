@@ -15,7 +15,7 @@ sys.path.append(str(Path('../backend')))
 import numbat
 
 import materials
-import mode_calcs
+import modecalcs
 import integration
 from nbtypes import SI_GHz
 
@@ -88,7 +88,7 @@ sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
                          )
 
 # Calculate the Electromagnetic modes of the Stokes field.
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 # np.savez('wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
 # npzfile = np.load('wguide_data2.npz')
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()

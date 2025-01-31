@@ -10,7 +10,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 import starter
@@ -59,7 +59,7 @@ for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 # # Alt
 # sim_EM_Stokes = wguide.calc_EM_modes(lambda_nm, num_modes_EM_Stokes, n_eff, Stokes=True)
 

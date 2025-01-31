@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 
 
@@ -59,7 +59,7 @@ wguide = nbapp.make_structure(
 n_eff = wguide.get_material("a").refindex_n - 0.1
 
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
 # Will scan from forward to backward SBS so need to know q_AC of backward SBS.
 q_AC = np.real(sim_EM_pump.kz_EM(0) - sim_EM_Stokes.kz_EM(0))

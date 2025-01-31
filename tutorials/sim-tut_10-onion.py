@@ -11,7 +11,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 import starter
@@ -70,13 +70,13 @@ new_calcs = True
 # Calculate Electromagnetic modes.
 if new_calcs:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
     #sim_EM_pump.save_simulation('tut_10_pump')
     #sim_EM_Stokes.save_simulation('tut_10_stokes')
 else:
-    sim_EM_pump = mode_calcs.load_simulation('tut_10_pump')
-    sim_EM_Stokes = mode_calcs.load_simulation('tut_10_stokes')
+    sim_EM_pump = numbat.load_simulation('tut_10_pump')
+    sim_EM_Stokes = numbat.load_simulation('tut_10_stokes')
 
 # Display the wavevectors of EM modes.
 v_kz = sim_EM_pump.kz_EM_all()
@@ -108,7 +108,7 @@ if new_calcs:
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
     sim_AC.save_simulation('tut_10_acoustic')
 else:
-    sim_AC = mode_calcs.load_simulation('tut_10_acoustic')
+    sim_AC = numbat.load_simulation('tut_10_acoustic')
 
 # Print the frequencies of AC modes.
 v_nu = sim_AC.nu_AC_all()

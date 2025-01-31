@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 
 import starter
@@ -56,7 +56,7 @@ n_eff = 3.4
 
 # Calculate Electromagnetic modes.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
 sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
                          ylim_min=0.2, ylim_max=0.2, )

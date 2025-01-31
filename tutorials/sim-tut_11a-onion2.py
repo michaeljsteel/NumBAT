@@ -16,7 +16,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 import starter
@@ -61,13 +61,13 @@ new_calcs = True
 if new_calcs:
     simres_EM_pump = wguide.calc_EM_modes(
         num_modes_EM_pump, lambda_nm, n_eff, calc_EM_mode_energy=True)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
 
   # simres_EM_pump.save_simulation('tut_11_pump')
   # simres_EM_Stokes.save_simulation('tut_11_stokes')
 else:
-    simres_EM_pump = mode_calcs.load_simulation('tut_11_pump')
-    simres_EM_Stokes = mode_calcs.load_simulation('tut_11_stokes')
+    simres_EM_pump = numbat.load_simulation('tut_11_pump')
+    simres_EM_Stokes = numbat.load_simulation('tut_11_stokes')
 
 print('EM modes:\n')
 kz_EM_mu = np.real(simres_EM_pump.kz_EM_all())*1e-6
@@ -101,7 +101,7 @@ if new_calcs:
         num_modes_AC, q_AC, EM_sim=simres_EM_pump, calc_AC_mode_power=True)
   # simres_AC.save_simulation('tut_11_acoustic')
 else:
-    simres_AC = mode_calcs.load_simulation('tut_11_acoustic')
+    simres_AC = numbat.load_simulation('tut_11_acoustic')
 
 print('AC mode properties (GHz) \n')
 nu_AC = np.real(simres_AC.nu_AC_all())*1e-9

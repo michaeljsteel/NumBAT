@@ -14,7 +14,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 import starter
@@ -54,11 +54,11 @@ use_old_fields=False     # run the calculation from scratch
 
 # Calculate Electromagnetic Modes
 if use_old_fields:
-    simres_EM_pump = mode_calcs.load_simulation(prefix+'_pump')
-    simres_EM_Stokes = mode_calcs.load_simulation(prefix+'_stokes')
+    simres_EM_pump = numbat.load_simulation(prefix+'_pump')
+    simres_EM_Stokes = numbat.load_simulation(prefix+'_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
     simres_EM_pump.save_simulation(prefix+'_pump')
     simres_EM_Stokes.save_simulation(prefix+'_stokes')
 
@@ -84,7 +84,7 @@ shift_Hz = 4e9
 
 # Calculate Acoustic modes.
 if use_old_fields:
-    simres_AC = mode_calcs.load_simulation(prefix+'_acoustic')
+    simres_AC = numbat.load_simulation(prefix+'_acoustic')
 else:
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump, shift_Hz=shift_Hz)
     simres_AC.save_simulation(prefix+'_acoustic')

@@ -13,7 +13,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+import modecalcs
 import integration
 from nbtypes import SI_GHz
 from nbtypes import PointGroup
@@ -94,7 +94,7 @@ sim_EM_pump.plot_modes( xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
     ylim_min=0.2, ylim_max=0.2, num_ticks=3, ticks=True,)
 
 if not reuse_fields:
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
     np.savez("wguide_data2", sim_EM_Stokes=sim_EM_Stokes)
 else:
     npzfile = np.load("wguide_data2.npz", allow_pickle=True)

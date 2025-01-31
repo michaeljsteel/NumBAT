@@ -15,7 +15,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-import mode_calcs
+
 import integration
 
 import starter
@@ -37,8 +37,8 @@ def finish_plot(fig, ax1, ax2, ylabl, ylabr, suffix):
     ax1.yaxis.set_label_position("right")
     ax1.tick_params(axis='y', colors='red')
 
-    ax1.set_xscale('log')  
-    ax2.set_xscale('log')  
+    ax1.set_xscale('log')
+    ax2.set_xscale('log')
 
     handles, labels = ax2.get_legend_handles_labels()
 
@@ -89,7 +89,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material("Si_2016_Smith"),
-                               lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac, 
+                               lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac,
                                               lc_refine_2=(lc_ref/2)*refine_fac)
 
     # Expected effective index of fundamental guided mode.
@@ -97,7 +97,7 @@ for i_lc, lc_ref in enumerate(lc_list):
 
     # Calculate Electromagnetic modes.
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = mode_calcs.bkwd_Stokes_modes(sim_EM_pump)
+    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
 
     # Calculate Acoustic modes.
     q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -

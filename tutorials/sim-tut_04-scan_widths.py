@@ -7,7 +7,6 @@
 import os
 import sys
 from multiprocessing import Pool
-import threading
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -20,7 +19,7 @@ sys.path.append(str(Path('../backend')))
 import numbat
 from nbtypes import SI_GHz
 import materials
-import mode_calcs
+
 import integration
 import plotgain
 import starter
@@ -54,15 +53,14 @@ known_geo = 315.
 
 def modes_n_gain(wwguide):
     width, wguide = wwguide
-    thread_nm = threading.current_thread().name
-    print('Process %d, thread %s: commencing mode calculation for width a_x = %f' % (
-        os.getpid(), thread_nm, width))
+    print('Process %d: commencing mode calculation for width a_x = %f' % (
+        os.getpid(), width))
     # Expected effective index of fundamental guided mode.
     n_eff = (wguide.get_material('a').refindex_n-0.1) * width/known_geo
 
     # Calculate Electromagnetic modes.
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = mode_calcs.bkwd_Stokes_modes(simres_EM_pump)
+    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
     q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
                    simres_EM_Stokes.kz_EM(EM_ival_Stokes))
 
@@ -73,8 +71,8 @@ def modes_n_gain(wwguide):
     gain_box = integration.get_gains_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
         EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
 
-    print('Process %d, thread %s: completed mode calculation for width a_x = %.3f' % (
-        os.getpid(), thread_nm, width))
+    print('Process %d: completed mode calculation for width a_x = %.3f' % (
+        os.getpid(), width))
     return [width, simres_EM_pump, simres_AC, gain_box]
 
 
