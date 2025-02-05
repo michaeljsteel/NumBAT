@@ -31,7 +31,7 @@ import plottools
 
 
 
-class ModePlotHelper:
+class ModeInterpolator:
     '''Helper class for plotting modes.
        Factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim.
        '''
@@ -95,7 +95,7 @@ class ModePlotHelper:
         d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx,
                     'Fyr': m_ReFy, 'Fyi': m_ImFy,
                     'Fzr': m_ReFz, 'Fzi': m_ImFz,
-                    'Fabs': m_AbsF}
+                    'Fa': m_AbsF}
 
         if field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
             for m_F in d_fields.values():   # Do this when they are first made
@@ -226,7 +226,7 @@ class Mode:
         self.extra_data = {}
         self.analysed = False
 
-        self.mode_helper = self.sim_result.get_mode_helper()
+        self.mode_interpolator = self.sim_result.get_mode_interpolator()
 
         self.clear_mode_plot_data()
 
@@ -236,9 +236,10 @@ class Mode:
         self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-    def plot_mode(self, comps, field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None,
+    def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='',
                   plot_params=plotmodes.PlotParams2D()):
 
+        if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
 
         fc = FieldCode(field_type, self.is_AC())
@@ -256,7 +257,7 @@ class Mode:
 
 
 
-    def plot_mode_1D_cut(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501,
+    def plot_mode_1D(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501, prefix='',
         plot_params=plotmodes.PlotParams2D()):
 
         """Make a 1D plot of the field components of this mode along a line.
@@ -270,6 +271,7 @@ class Mode:
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
 
+        if prefix: plot_params['prefix'] = prefix
 
         femmesh.validate_1D_cut_format(s_cut, val1, val2)
         fc = FieldCode(field_type, self.is_AC())
@@ -277,7 +279,7 @@ class Mode:
 
         plot_params['field_type'] = ft  # awkward way to get the correct filename
 
-        self.v_xaxis = self._interpolate_mode_1D(s_cut, val1, val2, n_pts, ft)
+        self._interpolate_mode_1D(s_cut, val1, val2, n_pts, ft)
 
         if s_cut.lower() == "x":
             xlab = '$y$ (μm)'        # apparently reversed labels is correct!
@@ -291,9 +293,12 @@ class Mode:
 
     def _plot_mode_1D_gencut(self, comps, fc, ft, xlab, cut, plot_params):
 
+        logx = plot_params.get('logx', False)
+        logy = plot_params.get('logy', False)
+
         tags=[]
         if not len(comps):
-            comps = ['x', 'y', 'z', 'abs']
+            comps = ['x', 'y', 'z', 'a']
 
         tags = [FieldTag.make_from_field_and_component(ft, comp) for comp in comps]
 
@@ -305,7 +310,7 @@ class Mode:
                 all_tags.append(tag)
 
         fig, ax = plt.subplots()
-        v_genx = self.mode_helper.v_x_axis
+        v_genx = self.mode_interpolator.v_x_axis
 
 
         for tag in all_tags:
@@ -313,7 +318,11 @@ class Mode:
             ls = tag.linestyle(comps)
             co = tag.component_as_F()
 
-            ax.plot(v_genx, self.d_fields_1D[co], label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
+            v_y = self.d_fields_1D[co]
+            if logy: v_y = np.abs(v_y)
+            ax.plot(v_genx, v_y, label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
+            if logx: ax.set_xscale('log')
+            if logy: ax.set_yscale('log')
 
         ax.set_xlabel(xlab)
         ax.set_ylabel('fields')
@@ -327,7 +336,7 @@ class Mode:
     def _interpolate_mode_2D(self, n_pts, field_type):
         """Extracts fields from FEM grid to desired rectangular grid for either plotting or analysis."""
 
-        mh = self.mode_helper
+        mh = self.mode_interpolator
 
         mh.define_plot_grid_2D(n_pts=n_pts)
 
@@ -337,7 +346,7 @@ class Mode:
 
     def _interpolate_mode_1D(self, s_cut, val1, val2, n_pts,
                              field_type):
-        mh = self.mode_helper
+        mh = self.mode_interpolator
 
         mh.define_plot_grid_1D(s_cut, val1, val2, n_pts)
 
@@ -350,7 +359,7 @@ class Mode:
         if ax is not None and len(comps) != 1:
             reporting.report_and_exit('When providing an axis to plot on, must specify exactly one modal component.')
 
-        mh = self.mode_helper
+        mh = self.mode_interpolator
 
         #decorator = mh.plot_params['decorator']
         decorator = plot_params['decorator']
@@ -369,7 +378,7 @@ class Mode:
 
         if len(comps):
             decorator.set_for_single()
-            # options are ['x', 'y', 'z', 'abs', 't']
+            # options are ['x', 'y', 'z', 'a', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
                 cc = FieldTag.make_from_field_and_component(field_code.as_field_type(), comp)
                 plotmodes.plot_one_component(field_code,
@@ -533,7 +542,7 @@ class Mode:
 
         self.analysed = True
 
-        mh = self.mode_helper
+        mh = self.mode_interpolator
 
         # Tranposed indexing to get image style ordering
         # These are 'output' domains so in microns
@@ -605,25 +614,71 @@ class Mode:
 
 
 
-    def write_to_file(self):
+    def write_mode(self, prefix='', n_points=501,
+                   field_type=FieldType.EM_E):
+
+        # Must call interoplate first?
+
         #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
         #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
-        mh = self.mode_helper
-        v_x = mh.xy_out['v_x']
-        v_y = mh.xy_out['v_y']
-        s_xy= f'v_x: {v_x[0]:.8f}, {v_x[-1]:.8f}, {len(v_x)}, ' + f'v_y: {v_y[0]:.8f}, {v_y[-1]:.8f}, {len(v_y)}'
 
+        ft = FieldType.AC if self.is_AC() else FieldType(field_type)
 
-        #ccs = ('Fx', 'Fy', 'Fz')
+        self._interpolate_mode_2D(n_points, ft)
+
+        md_interp = self.mode_interpolator
+        #md_interp.define_plot_grid_2D(n_pts=n_points)
+
+        # TODO sort out wanting H fields on a singl direct call to this fnc
+
+        v_x = md_interp.xy_out['v_x']
+        v_y = md_interp.xy_out['v_y']
+        s_xy= f'vx: [{v_x[0]:.6f},{v_x[-1]:.6f}: {len(v_x)}], ' + f'vy: [{v_y[0]:.6f},{v_y[-1]:.6f}: {len(v_y)}]'
+
         ccs = ('x', 'y', 'z')
         for cc in ccs:
-            ft=self.field_code.as_field_type()
-            comp = FieldTag.make_from_field_and_component(ft, cc)
+            #ft=self.field_code.as_field_type()
+            ftag = FieldTag.make_from_field_and_component(ft, cc)
+            pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
+            longpref=f'{pref}/{ftag.field_type_label()}_mode_{self.mode_num:02d}_{ftag.field_component()}'
 
-            pref=numbat.NumBATApp().outpath_fields()
-            longpref=f'{pref}/{comp.field_type_label()}_mode_{self.mode_num:02d}_{comp.field_component()}'
-            _write_one_component_to_file(longpref, comp, s_xy, self.d_fields_2D)
+            print('longpref', longpref)
+            _write_one_component_to_file(self.mode_num,
+                                         longpref, ftag, s_xy, self.d_fields_2D)
 
+    def write_mode_1D(self, s_cut, val1, val2=None, n_points=501,
+                      prefix='', field_type=FieldType.EM_E):
+
+
+
+        self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
+
+        #md_interp.define_plot_grid_1D(s_cut, val1, val2, n_points)
+
+        pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
+        ftag = FieldTag.make_from_field(field_type)
+        print(field_type, ftag)
+        mt = ftag.mode_type_as_str()
+        longpref=f'{pref}/{mt}_mode_{self.mode_num:02d}_{s_cut}cut'
+        fname = longpref+'.txt'
+
+        v_genx = self.mode_interpolator.v_x_axis
+        nr = len(v_genx)
+        nc = 8 # v_genx, vFxr, Fxi, Fyr, Fyi, Fzr, Fzi, Fa
+
+        flds = np.zeros([nr,nc], dtype=np.float64)
+        header='x Fxr Fxi Fyr Fyi Fzr Fzi Fa'
+
+        flds[:,0] = v_genx
+        flds[:,1] = self.d_fields_1D['Fxr']
+        flds[:,2] = self.d_fields_1D['Fxi']
+        flds[:,3] = self.d_fields_1D['Fyr']
+        flds[:,4] = self.d_fields_1D['Fyi']
+        flds[:,5] = self.d_fields_1D['Fzr']
+        flds[:,6] = self.d_fields_1D['Fzi']
+        flds[:,7] = self.d_fields_1D['Fa']
+
+        np.savetxt(fname, flds, header=header, fmt='%16.8f')
 
 
     def plot_mode_raw_fem(self, comps):
@@ -631,14 +686,14 @@ class Mode:
 
         simres = self.sim_result
         fem_evecs = simres.fem_evecs_for_ft(self.field_code.as_field_type())
-        plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_helper,
+        plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_interpolator,
                                          self.sim_result.fem_mesh, fem_evecs, self.mode_num)
 
     def plot_strain(self):
         if not self.sim_result.is_AC():
             print("Doing strain in an EM sim.!")
         print('doing strain')
-        self.mode_helper.plot_strain_mode_i(self.mode_num)
+        self.mode_interpolator.plot_strain_mode_i(self.mode_num)
 
 
 class ModeEM(Mode):
@@ -679,26 +734,26 @@ class ModeAC(Mode):
         return s
 
 
-def _write_one_component_to_file(self, longpref, comp, s_xy, d_fields):
+def _write_one_component_to_file(md_index, longpref, ftag, s_xy, d_fields):
 
-    fc = comp.component_as_F() # eg 'Fabs'
+    fc = ftag.component_as_F() # eg 'Fabs'
 
-    if comp.is_abs():  # a real valued quantity
+    if ftag.is_abs():  # a real valued quantity
         fname = longpref+'.txt'
         fld = d_fields[fc]
-        header=f'# {fc}, '  + s_xy
+        header=f'Mode {md_index:02d}, {fc}, '  + s_xy
         np.savetxt(fname, fld,header=header)
 
     else:
         fname = longpref+'_re.txt'
-        tagmaj = f'F{comp._xyz}r'
-        tagmin = f'F{comp._xyz}i'
+        tagmaj = f'F{ftag._xyz}r'
+        tagmin = f'F{ftag._xyz}i'
 
         fld = d_fields[tagmaj]  # eg 'Fxr'
-        header=f'# {fc}_re, '  + s_xy
+        header=f'Mode {md_index:02d}, {fc}_re, ' + s_xy
         np.savetxt(fname, fld,header=header)
 
         fname = longpref+'_im.txt'
         fld = d_fields[tagmin]  # eg 'Fxr'
-        header=f'# {fc}_im, '  + s_xy
+        header=f'Mode {md_index:02d}, {fc}_im, ' + s_xy
         np.savetxt(fname, fld,header=header)

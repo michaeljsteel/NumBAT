@@ -122,10 +122,17 @@ class _NumBATApp:
         outpref = prefix if prefix else self._outprefix
         return str(Path(self._outdir, outpref))
 
-    def outpath_fields(self, prefix=''):
-        '''Returns a string composed of the current output directory for modal fields and the given prefix.'''
+    def outdir_fields_path(self, prefix=''):
+        '''Returns a string composed of the current output directory for modal fields and the given prefix.
+
+        Creates the directory if it does not exist.'''
         outpref = prefix if prefix else self._outprefix
-        return str(Path(self._outdir, outpref+'-fields'))
+        pout = Path(self._outdir, outpref+'-fields')
+
+        if not pout.exists():
+            pout.mkdir()
+
+        return pout
 
 
     def path_gmsh(self):
@@ -267,20 +274,20 @@ class _NumBATPlotPrefs:
 
 
 
-    def cmap_field_signed(self, field_code):
-        if field_code.is_EM():
+    def cmap_field_signed(self, ftag):
+        if ftag.is_EM():
             return self.cmap_em_field_signed
         else:
             return self.cmap_ac_field_signed
 
-    def cmap_field_unsigned(self, field_code):
-        if field_code.is_EM():
+    def cmap_field_unsigned(self, ftag):
+        if ftag.is_EM():
             return self.cmap_em_field_unsigned
         else:
             return self.cmap_ac_field_unsigned
 
-    def vector_field_arrow_color(self, field_code):
-        if field_code.is_EM():
+    def vector_field_arrow_color(self, ftag):
+        if ftag.is_EM():
             return self.vecplot_arrow_color_em
         else:
             return self.vecplot_arrow_color_ac

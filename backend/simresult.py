@@ -17,19 +17,21 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
-from pathlib import Path
+#from pathlib import Path
 
 import copy
 
 import numbat
-from modes import ModeAC, ModeEM, ModePlotHelper
+from modes import ModeAC, ModeEM, ModeInterpolator
 
 from plottools import progressBar
 import plotmodes
+import reporting
 
 from nbtypes import (
     FieldType,
     FieldCode,
+    FieldTag,
     PointGroup,
     SymRep,
     SI_speed_c,
@@ -100,9 +102,9 @@ class SimResult:
         np.savez(prefix, simulation=self)
 
     # TODO: make this a property?
-    def get_mode_helper(self):
+    def get_mode_interpolator(self):
         if self._mode_plot_helper is None:
-            self._mode_plot_helper = ModePlotHelper(self)
+            self._mode_plot_helper = ModeInterpolator(self)
         return self._mode_plot_helper
 
     def get_xyshift(self):
@@ -188,10 +190,10 @@ class SimResult:
         ivals=None,
         n_points=501,
         quiver_points=30,
-        xlim_min=0,
-        xlim_max=0,
-        ylim_min=0,
-        ylim_max=0,
+        xlim_min=None,
+        xlim_max=None,
+        ylim_min=None,
+        ylim_max=None,
         aspect = 1.0,
         field_type="EM_E",
         hide_vector_field=False,
@@ -205,6 +207,7 @@ class SimResult:
         comps=(),
         decorator=None,
         suppress_imimre=True,
+        **kwargs
     ):
         """Plot E or H fields of EM mode, or the AC modes displacement fields.
 
@@ -244,6 +247,9 @@ class SimResult:
             modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
         """
 
+        if 'ivals' in kwargs:
+            reporting.report_and_exit("The parameter 'ivals' has been renamed to 'mode_indices'.")
+
         field_code = FieldCode(field_type, self.is_AC())
 
         if field_code.is_EM_H():
@@ -259,20 +265,12 @@ class SimResult:
         else:
             print(f"Plotting {modetype} mode m={ival_range[0]}.")
 
-        mode_helper = self.get_mode_helper()
-        mode_helper.define_plot_grid_2D(n_pts=n_points)
+        mode_interpolator = self.get_mode_interpolator()
+        mode_interpolator.define_plot_grid_2D(n_pts=n_points)
 
+        plot_params = plotmodes.PlotParams2D()
 
-        nbapp = numbat.NumBATApp()
-        pf = Path(nbapp.outpath_fields(prefix=prefix))
-
-        if not pf.exists():
-            pf.mkdir()
-
-        plotparams = plotmodes.PlotParams2D()
-
-        #mode_helper.update_plot_params(
-        plotparams.update(
+        plot_params.update(
             {
                 'xlim_min': xlim_min,
                 'xlim_max': xlim_max,
@@ -296,7 +294,7 @@ class SimResult:
         )
 
         for m in progressBar(ival_range, prefix="  Progress:", length=20):
-                self.get_mode(m).plot_mode(comps, field_code.as_field_type(), plot_params = plotparams)
+                self.get_mode(m).plot_mode(comps, field_code.as_field_type(), plot_params = plot_params)
 
     def plot_modes_1D(self,
         scut,
@@ -312,9 +310,9 @@ class SimResult:
         comps=[],
         decorator=None,
         suppress_imimre=True,
+        logx=False,
+        logy=False,
     ):
-
-
 
         field_code = FieldCode(field_type, self.is_AC())
 
@@ -332,18 +330,16 @@ class SimResult:
         else:
             print(f"Plotting 1D cut of {modetype} mode m={ival_range[0]}.")
 
-        mode_helper = self.get_mode_helper()
-        mode_helper.define_plot_grid_2D(n_pts=n_points)
+        mode_interpolator = self.get_mode_interpolator()
+        mode_interpolator.define_plot_grid_2D(n_pts=n_points)
 
-        nbapp = numbat.NumBATApp()
-        pf = Path(nbapp.outpath_fields(prefix=prefix))
+        # path is lookd after by plot_mode...
 
-        if not pf.exists():
-            pf.mkdir()
+        #nbapp = numbat.NumBATApp()
+        #pf = Path(nbapp.outdir_fields_path(prefix=prefix))
 
-
-        plotparams = plotmodes.PlotParams1D()
-        plotparams.update(
+        plot_params = plotmodes.PlotParams1D()
+        plot_params.update(
             {
                 'field_type': field_code.as_field_type(),
                 'num_ticks': num_ticks,
@@ -352,12 +348,69 @@ class SimResult:
                 'ticks': ticks,
                 'decorator': decorator,
                 'suppress_imimre': suppress_imimre,
+                'logx': logx,
+                'logy': logy,
             }
         )
 
         for m in progressBar(ival_range, prefix="  Progress:", length=20):
-            self.get_mode(m).plot_mode_1D_cut(scut, val1, val2,
-                                                comps, field_code.as_field_type(), plot_params=plotparams)
+            self.get_mode(m).plot_mode_1D(scut, val1, val2,
+                                                comps, field_code.as_field_type(), plot_params=plot_params)
+
+    def write_modes(self, prefix='', field_type = FieldType.EM_E, ivals=None, n_points=501):
+        """Writes a set of mode profiles as ascii files on a rectangular grid containing the FEM structure to the current output fields director.
+
+        All components Fx, Fy, Fz are written with separate fields for each component and the real and imaginary parts.
+            Args:
+                prefix: adjust the output directory
+                ivals: list of mode indices or None for all
+                field_type: for EM fields, write E or H fields
+                n_points: dimension of rectangular grid
+        """
+
+        # TODO: Simplify FieldCode here
+        field_code = FieldCode(field_type, self.is_AC())
+
+        if field_code.is_EM_H():
+            self.make_H_fields()
+
+
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+
+        #mode_interpolator = self.get_mode_interpolator()
+        #mode_interpolator.define_plot_grid_2D(n_pts=n_points)
+
+        # path is lookd after by write_mode
+        #nbapp = numbat.NumBATApp()
+        #pf = nbapp.outdir_fields_path(prefix=prefix)
+
+        for m in ival_range:
+            self.get_mode(m).write_mode(prefix, n_points, field_type)
+
+    def write_modes_1D(self, s_cut, val1, val2=None, ivals=None, prefix='',
+                       n_points=501, field_type = FieldType.EM_E):
+
+        # TODO: Simplify FieldCode here
+        #field_code = FieldCode(field_type, self.is_AC())
+        ft = FieldType.AC if self.is_AC() else field_type
+
+        ftag = FieldTag.make_from_field(ft)
+
+        if ftag.is_EM_H():
+            self.make_H_fields()
+
+
+        ival_range = ivals if ivals is not None else range(self.n_modes)
+
+        # mode_interpolator = self.get_mode_interpolator()
+        # mode_interpolator.define_plot_grid_1D(s_cut, val1, val2, n_points)
+
+        # nbapp = numbat.NumBATApp()
+        # pf = nbapp.outdir_fields_path(prefix=prefix)
+
+        for m in ival_range:
+            self.get_mode(m).write_mode_1D(s_cut, val1, val2,
+                                           n_points, prefix, ft)
 
 
 class EMSimResult(SimResult):
@@ -402,12 +455,13 @@ class EMSimResult(SimResult):
     def make_H_fields(self):
         n_modes = len(self.eigs_kz)
         fm = self.fem_mesh
+
         self.fem_evecs_H = nb_fortran.h_mode_field_ez(
             self.k_0,
             n_modes,
             fm.n_msh_el,
             fm.n_msh_pts,
-            fm.n_nodes,
+            #fm.n_nodes,
             fm.elnd_to_mshpt,
             fm.v_nd_xy,
             self.eigs_kz,

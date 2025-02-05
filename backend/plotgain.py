@@ -137,7 +137,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     fig, ax = plt.subplots()
 
-    lw = decorator.get_property('linewidth')
+    lw = decorator.get_property('ax_linewidth')
     fs = decorator.get_property('ax_label_fs')
     ts = decorator.get_property('ax_tick_fs')
 

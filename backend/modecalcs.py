@@ -214,7 +214,6 @@ class EMSimulation(Simulation):
         # TODO: ls_material is just refractive index of each element (13 reps for some reason)
         #       clean up and give to FemMesh
 
-
         self.fem_mesh.store_fortran_em_mesh_properties(type_el, node_physindex, elnd_to_mshpt, v_nd_xy)
 
     def calc_field_powers(self):
@@ -650,7 +649,7 @@ class ACSimulation(Simulation):
             self.Q_method = QAcMethod.Intrinsic
 
             # Calc alpha (loss) Eq. 45
-            print("Acoustic loss calc")
+            print("Acoustic loss calculation with intrinsic losses")
 
             if tstruc.using_linear_elements():
                 resm = nb_fortran.ac_alpha_analytic(
@@ -702,6 +701,7 @@ class ACSimulation(Simulation):
             self.ac_Qmech =  0.5 * (np.real(Omega_AC) / self.ac_alpha_t) * np.ones(self.n_modes)
 
         else:
+            print("Acoustic losses calculaetd from specified fixed Q.")
             self.Q_method = QAcMethod.Fixed
             # factor of a 1/2 because alpha is for power!
             # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q

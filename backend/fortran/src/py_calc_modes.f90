@@ -70,7 +70,7 @@ contains
 
    subroutine calc_em_modes_impl(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, &
-      mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
+      mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_evecs, poln_fracs, &
       elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
 
@@ -83,6 +83,7 @@ contains
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
 
       complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
+      integer(8) :: shortrun
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
       complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_el)
@@ -130,12 +131,13 @@ contains
 
       arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
+
       call clock_main%reset()
 
       !TODO: move pp,qq to elsewhere. SparseCSC?
       vacwavenum_k0 = 2.0d0*D_PI/lambda
       call  check_materials_and_fem_formulation(E_H_field, n_elt_mats, &
-         vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
+      vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
       RET_ON_NBERR(nberr)
 
       !  ----------------------------------------------------------------
@@ -191,7 +193,7 @@ contains
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
       call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
-         mesh_raw, entities, cscmat, pbcs, nberr)
+      mesh_raw, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -225,7 +227,11 @@ contains
       call complex_nalloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', nberr); RET_ON_NBERR(nberr)
 
       call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
-         v_evals_beta, arp_evecs, nberr); RET_ON_NBERR(nberr)
+      v_evals_beta, arp_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
+      if (shortrun .ne. 0) then
+         write(*,*) 'Exiting with shortrun in py_calc_modes.f'
+         return
+      endif
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
@@ -238,14 +244,14 @@ contains
       !  The eigenvectors will be stored in the array femsol_evecs
       !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
       call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
-         entities, cscmat, pbcs, bloch_vec, v_evals_beta, arp_evecs, &
-         femsol_evecs, poln_fracs, nberr)
+      entities, cscmat, pbcs, bloch_vec, v_evals_beta, arp_evecs, &
+      femsol_evecs, poln_fracs, nberr)
       RET_ON_NBERR(nberr)
 
 
       !TODO: does this serve any purpose any more? Just poln_fracs?
       call mode_energy (n_modes, n_msh_el, n_core, mesh_raw, &
-         n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
+      n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
 
 
 

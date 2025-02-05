@@ -1,7 +1,7 @@
 
 subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    !  inputs
    E_H_field, bdy_cdn, itermax, debug, &
-   mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, & !  inputs
+   mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, & !  inputs
    v_evals_beta, femsol_em, poln_fracs, &
    elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, &
    ls_material, errco, emsg)
@@ -19,6 +19,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
    integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
 
    complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
+   integer(8) :: shortrun
 
    complex(8), intent(out) :: v_evals_beta(n_modes)
    complex(8), intent(out) :: femsol_em(3,P2_NODES_PER_EL+7,n_modes,n_msh_el)
@@ -37,7 +38,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
 
    call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, debug, mesh_file,&
-      n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, &
+      n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_em, poln_fracs, elnd_to_mshpt, &
       v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
 

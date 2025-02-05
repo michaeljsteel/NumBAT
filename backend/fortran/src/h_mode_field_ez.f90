@@ -1,18 +1,17 @@
 #include "numbat_decl.h"
 
-
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
- !  The z-component of the E-field is not normalised
+ ! The z-component of the E-field is not normalised
 
-subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_to_mshpt, &
- x, v_beta, soln_k1, soln_H1)
+subroutine h_mode_field_ez (k_0, n_modes, n_msh_el, n_msh_pts, elnd_to_mshpt, &
+ v_nd_xy, v_beta, soln_k1, soln_H1)
 
    use numbatmod
-   integer(8) n_modes, n_msh_el, n_msh_pts, nnodes_P2
-   integer(8) elnd_to_mshpt(nnodes_P2,n_msh_el)
-   double precision x(2,n_msh_pts)
-   complex(8) soln_k1(3,nnodes_P2+7,n_modes,n_msh_el)
-   complex(8) soln_H1(3,nnodes_P2,n_modes,n_msh_el)
+   integer(8) n_modes, n_msh_el, n_msh_pts
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
+   double precision v_nd_xy(2,n_msh_pts)
+   complex(8) soln_k1(3,P2_NODES_PER_EL+7,n_modes,n_msh_el)
+   complex(8) soln_H1(3,P2_NODES_PER_EL,n_modes,n_msh_el)
    complex(8) beta1
    complex(8) v_beta(n_modes)
    double precision k_0
@@ -35,21 +34,21 @@ subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_t
    integer(8), parameter :: ZCOMP = 3
 
    !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
-   !f2py intent(in) nnodes_P2, elnd_to_mshpt
+   !f2py intent(in) P2_NODES_PER_EL, elnd_to_mshpt
    !f2py intent(in) x, v_beta, soln_k1
    !
-   !f2py depend(elnd_to_mshpt) nnodes_P2, n_msh_el
+   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
    !f2py depend(x) n_msh_pts
    !f2py depend(v_beta) n_modes
-   !f2py depend(soln_k1) nnodes_P2, n_modes, n_msh_el
+   !f2py depend(soln_k1) P2_NODES_PER_EL, n_modes, n_msh_el
    !
    !f2py intent(out) soln_H1
 
    ui = stdout
 
 
-   if ( nnodes_P2 .ne. 6 ) then
-      write(ui,*) "EM_mode_en_int_v2: problem nnodes = ", nnodes_P2
+   if ( P2_NODES_PER_EL .ne. 6 ) then
+      write(ui,*) "EM_mode_en_int_v2: problem nnodes = ", P2_NODES_PER_EL
       write(ui,*) "EM_mode_en_int_v2: nnodes should be equal to 6 !"
       write(ui,*) "EM_mode_en_int_v2: Aborting..."
       stop
@@ -58,11 +57,11 @@ subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_t
    do ival=1,n_modes
       beta1 = v_beta(ival)
       do iel=1,n_msh_el
-         do j=1,nnodes_P2
+         do j=1,P2_NODES_PER_EL
             j1 = elnd_to_mshpt(j,iel)
             nod_el_p(j) = j1
-            xel(1,j) = x(1,j1)
-            xel(2,j) = x(2,j1)
+            xel(1,j) = v_nd_xy(1,j1)
+            xel(2,j) = v_nd_xy(2,j1)
          enddo
 
          !         The geometric transformation (x,y) -> (x_g,y_g) = mat_B*(x,y)^t + (x_0, y_0, z_0)^t
@@ -92,7 +91,7 @@ subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_t
          !         then the gradient on the actual triangle is:
          !         grad_i  = Transpose(mat_T)*grad_i0
 
-         do inod=1,nnodes_P2
+         do inod=1,P2_NODES_PER_EL
             !           The components (E_x,E_y) of the mode ival
             do j=1,2
 
@@ -117,7 +116,7 @@ subroutine H_mode_field_Ez (k_0, n_modes, n_msh_el, n_msh_pts, nnodes_P2, elnd_t
             !           The longitudinal component at the edge nodes and interior node (P3 elements)
             !j=3
 
-            Ez_field_el_P3(inod) = soln_k1(ZCOMP,inod+nnodes_P2-3,ival,iel)
+            Ez_field_el_P3(inod) = soln_k1(ZCOMP,inod+P2_NODES_PER_EL-3,ival,iel)
          enddo
 
          call get_H_field_p3(k_0, beta1, mat_T,&

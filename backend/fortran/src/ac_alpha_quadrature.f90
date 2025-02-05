@@ -37,7 +37,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
    complex(8) bas_ovrlp(3*P2_NODES_PER_EL,3,3,3*P2_NODES_PER_EL)
    complex(8) U, Ustar
-   integer(8) j, typ_e
+   integer(8) typ_e
    integer(8) i_el, ind_i, xyz_i, xyz_k
    integer(8) bf_l, ind_l, xyz_l, xyz_j
    integer(8) bf_i, iq

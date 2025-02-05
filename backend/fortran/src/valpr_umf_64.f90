@@ -240,7 +240,7 @@ end subroutine
 ! ext_workd, ext_resid, ext_lworkl, &
 
 subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
-   cscmat, v_evals, v_evecs, nberr)
+   cscmat, v_evals, v_evecs, nberr, shortrun)
 
    !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
    !  mat2 is the identity and hopefully never used ?
@@ -268,6 +268,8 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
+
+   integer(8) shortrun
 
    ! ----------------------------------------------------------
 
@@ -309,9 +311,10 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    errco = 0
    emsg = ""
 
+
    if (i_base .ne. 0) then
       write(emsg,*) "valpr_64: i_base != 0 : ", i_base, &
-         "valpr_64: UMFPACK requires 0-based indexing"
+      "valpr_64: UMFPACK requires 0-based indexing"
       call nberr%set(NBERROR_103, emsg)
       return
 
@@ -371,7 +374,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    umf_info(1) = 0
    call umf4zsym (n_dof, n_dof, cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, &
-      umf_symbolic, umf_control, umf_info)
+   umf_symbolic, umf_control, umf_info)
 
 
    if (umf_info (1) .lt. 0) then
@@ -382,8 +385,18 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
 
    !  Complete the umf_numeric factorization
+   ! This is the call that causes concurrency/race problems if calc_modes() is called before
+   ! threading/process pooling starts.
+   ! But doesn't care if multiple calc_modes() calls are made _after_ threading starts
+   ! It creates a data structure stored at the handle umf_numeric, freed at the bottom of the function
+   !
    call umf4znum (cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, umf_symbolic, &
-      umf_numeric, umf_control, umf_info)
+   umf_numeric, umf_control, umf_info)
+
+   if (shortrun .ne. 0) then
+      write(*,*) 'Exiting with shortrun in valpr_umf_64.f'
+      return
+   endif
 
    if (umf_info (1) .lt. 0) then
       write(emsg,*) 'Error occurred in sparse matrix umf_numeric factorization umf4znum: ', umf_info (1)
@@ -484,6 +497,9 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
       end if
    end do
 
+
+   call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
+
    !--------------------------------------------------
    !  Either we have convergence, or there is an error. |
    !---------------------------------------------------
@@ -560,7 +576,6 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
 
 
-   call umf4zfnum (umf_numeric)   !  free the umf_numeric factorization
    deallocate(mOp_stiff_re, mOp_stiff_im)
    deallocate(lhx_re, lhx_im)
 

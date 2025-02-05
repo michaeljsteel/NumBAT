@@ -28,34 +28,39 @@ from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plottools import save_and_close_figure
 
 
-def modeplot_filename_2D(field_code, plps, ival, label=''):
+def modeplot_filename_2D(field_code, plps, ival, label='', cut=''):
     nbapp = numbat.NumBATApp()
 
     pref=plps['prefix']
     suf = plps['suffix']
     comp = field_code.as_str()
 
-    fullpref = str(nbapp.outpath_fields(prefix=pref))
-    filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
+    fullpref = str(nbapp.outdir_fields_path(prefix=pref))
+    #filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
+    filestart = f'{fullpref}/{comp}_mode_{ival:02d}{suf}'
+    if cut:
+        filestart = filestart + f'_{cut}cut'
 
     if label: filestart += '_'+label
 
     return filestart + nbapp.plotfile_ext()
 
+# TODO: allow a suffix to label multiple cut planes
 def modeplot_filename_1D(field_code, plps, ival, cut, label=''):
 
-    nbapp = numbat.NumBATApp()
+    return modeplot_filename_2D(field_code, plps, ival, label, cut)
+    # nbapp = numbat.NumBATApp()
 
-    pref=plps['prefix']
-    suf = plps['suffix']
-    comp = field_code.as_str()
+    # pref=plps['prefix']
+    # suf = plps['suffix']
+    # comp = field_code.as_str()
 
-    fullpref = str(nbapp.outpath_fields(prefix=pref))
-    filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}_{cut}cut'
+    # fullpref = str(nbapp.outdir_fields_path(prefix=pref))
+    # filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}_{cut}cut'
 
-    if label: filestart += '_'+label
+    # if label: filestart += '_'+label
 
-    return filestart + nbapp.plotfile_ext()
+    # return filestart + nbapp.plotfile_ext()
 
 def field_type_to_intensity_code(ft):
     return {FieldType.EM_E: FieldTag('Eabs'), FieldType.EM_H: FieldTag(
@@ -84,8 +89,6 @@ class TidyAxes:
             props['ax_label_fs'] = 10
             props['ax_label_xpad'] = ''
             props['ax_label_ypad'] = ''
-
-
             props['ax_ticklabel_fs'] = 10
             props['ax_tickwidth'] = .25
             props['ax_linewidth'] = 1
@@ -94,7 +97,7 @@ class TidyAxes:
             props['ax_label_pad'] = 5
             props['ax_ticklabel_fs'] =  10
             props['ax_tickwidth'] = 1
-            props['ax_linewthidth'] = 1
+            props['ax_linewidth'] = 1
         else:
             props['ax_label_fs'] =  18
             props['ax_label_pad'] = 5
@@ -130,11 +133,14 @@ class TidyAxes:
         for i in range(len(axs)):
             ax = axs[i]
 
+            # Shape
             if pr['aspect'] >0 : ax.set_aspect(pr['aspect'])
 
+            # Ticks
             ax.tick_params(labelsize=pr['ax_ticklabel_fs'],
                            width=pr['ax_tickwidth'])
 
+            # Axis labels
             ax.xaxis.label.set_size(pr['ax_label_fs'])
             ax.yaxis.label.set_size(pr['ax_label_fs'])
 
@@ -147,7 +153,7 @@ class TidyAxes:
                 ylab = ax.yaxis.get_label_text()
                 ax.set_ylabel(ylab, labelpad=ypad)
 
-
+            # Axes visibility
             for axis in ['top','bottom','left','right']:
                 ax.spines[axis].set_linewidth(pr['ax_linewidth'])
                 ax.spines[axis].set_color(pr['axes_color'])
@@ -188,7 +194,8 @@ class Decorator(object):
                              'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
                              'data_label_fs': mp_base_fs-8,
                              'cbar_tick_fs': mp_base_fs-12,
-                             'linewidth': '.75', 'edgecolor': 'gray',
+                             'ax_linewidth': '.75', # used in plotgain only
+                             'ax_edgecolor': 'gray',
                              'cbar_size': '5%', 'cbar_pad': '6%'}
 
         self._single_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .2,
@@ -198,7 +205,8 @@ class Decorator(object):
                               'ax_label_fs': 20, 'ax_label_pad': 20, 'ax_tick_fs': 20,
                               'data_label_fs': sp_base_fs-8,
                               'cbar_tick_fs': 20,
-                              'linewidth': '.75', 'edgecolor': 'gray',
+                              'ax_linewidth': '.75',
+                              'ax_edgecolor': 'gray',
                               'cbar_size': '5%', 'cbar_pad': '2%'}
 
         #self._props = self._multi_props if multi else self._single_props
@@ -207,10 +215,16 @@ class Decorator(object):
         self._is_single = not multi
         self._cmap_limits = {}
         self._title = ''
-        self._frame_drawer = None
+        self._waveguide = None
 
-    def set_frame_drawer(self, fd):
-        self._frame_drawer = fd
+    def __getitem__(self, kw):
+        return self._props[kw]
+
+    def __setitem__(self, kw, val):
+        self._props[kw]=val
+
+    def set_waveguide(self, wg):
+        self._waveguide = wg
 
     def add_frame(self, ax):
         plprefs = numbat.NumBATPlotPrefs()
@@ -223,8 +237,8 @@ class Decorator(object):
             styles['linewidth'] = plprefs.WG_FRAME_LINEWIDTH_SUBFIG
 
 
-        if self._frame_drawer is not None:
-            self._frame_drawer.draw_mpl_frame(ax, styles)
+        #if self._waveguide is not None:
+        self._waveguide.draw_mpl_frame(ax, styles)
 
     def _get_props(self):
         return self._props
@@ -262,7 +276,7 @@ class Decorator(object):
 
     def set_title(self, t): self._title = t
 
-    def add_title(self, ax):
+    def add_title(self, ax): # used only in plotgain , remove?
         if self._title:
             ax.set_title(self._title)
 
@@ -292,25 +306,32 @@ class PlotParams:
     def __setitem__(self, k,v):
         self._d_pp[k] = v
 
-    def get(self, k, dflt):
-        return self._d_pp.get(k, dflt)
+    def get(self, k, dflt, override_None=False):
+        val = self._d_pp.get(k, dflt)
+        if val is None and override_None:
+            val = dflt
+        return val
 
+    def __str__(self):
+        return str(self._d_pp)
 
 class PlotParams2D(PlotParams):
     def __init__(self):
         super().__init__()
 
-        self.update({'xlim_min': 0, 'xlim_max': 0, 'ylim_min': 0, 'ylim_max': 0,
+        self.update({'xlim_min': None, 'xlim_max': None,
+                     'ylim_min': None, 'ylim_max': None,
                       'aspect': 1.0,
                       'ticks': True, 'num_ticks': None,
                       'colorbar': True, 'contours': False, 'contour_lst': None,
                      # 'EM_AC': FieldType.EM_E,
                       'hide_vector_field': False,
-                      'prefix': 'tmp', 'suffix': '',
+                      'prefix': '', 'suffix': '',
                       'decorator': Decorator(),
                       'suppress_imimre': True,
                       'quiver_points': 30
                       })
+
 class PlotParams1D(PlotParams):
 
     def __init__(self):
@@ -322,7 +343,7 @@ class PlotParams1D(PlotParams):
                       #'colorbar': True, 'contours': False, 'contour_lst': None,
                      # 'EM_AC': FieldType.EM_E,
                       #'hide_vector_field': False,
-                      'prefix': 'tmp', 'suffix': '',
+                      'prefix': '', 'suffix': '',
                       'decorator': Decorator(),
                       'suppress_imimre': True,
                       #'quiver_points': 30
@@ -339,11 +360,11 @@ def plot_set_ticks(ax, plps):
         ax.set_xticks([])
         ax.set_yticks([])
 
-
-def plot_set_axes_style(ax, plps, decorator):
-    if decorator.get_property('axes.linewidth') is not None:
-        plt.setp(ax.spines.values(),
-                 linewidth=decorator.get_property('axes.linewidth'))
+#UNUSERD DELETE
+# def plot_set_axes_style(ax, plps, decorator):
+#     if decorator.get_property('axes.linewidth') is not None:
+#         plt.setp(ax.spines.values(),
+#                  linewidth=decorator.get_property('axes.linewidth'))
 
 
 def plot_set_title(ax, comp_label, plps, decorator):
@@ -364,12 +385,12 @@ def get_quiver_skip_range(npts, skip):
     return np.array(range(j0, npts, skip))
 
 
-def add_contour_plot(fig, ax, d_xy, c_field, field_code, cc_cont, plps, decorator):
+def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
-    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed(field_code)
-    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned(field_code)
+    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed(ftag_cont)
+    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned(ftag_cont)
 
-    cont_signed = cc_cont.is_signed_field()
+    cont_signed = ftag_cont.is_signed_field()
     cmap = cmap_signed if cont_signed else cmap_unsigned
 
 
@@ -379,7 +400,7 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_code, cc_cont, plps, decorato
     # transpose because arrays
     cont_field = (c_field).copy().T
 
-    if cc_cont.is_abs():
+    if ftag_cont.is_abs():
         # TODO: cleanup: plot |u| as |u|^2
         cont_field = np.abs(cont_field)**2
 
@@ -400,8 +421,8 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_code, cc_cont, plps, decorato
 
     d_kw = {'origin':'lower', 'extent':extents, 'interpolation':interp, 'cmap':cmap}
 
-    if decorator.get_cmap_limits(cc_cont._xyz) is not None:
-        (act_zlo, act_zhi) = decorator.get_cmap_limits(cc_cont._xyz)
+    if decorator.get_cmap_limits(ftag_cont._xyz) is not None:
+        (act_zlo, act_zhi) = decorator.get_cmap_limits(ftag_cont._xyz)
         tsnorm = mplcolors.TwoSlopeNorm(
             vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)
 
@@ -484,10 +505,10 @@ def _make_quiver_slices(v_x, v_y, plps, deftrim):
     #  or along the whole x range before trimming.
     # We choose the latter so trim doesn't change the spacing
 
-    xlmi = plps.get('xlim_min', deftrim)
-    xlma = plps.get('xlim_max', deftrim)
-    ylmi = plps.get('ylim_min', deftrim)
-    ylma = plps.get('ylim_max', deftrim)
+    xlmi = plps.get('xlim_min', deftrim, override_None=True)
+    xlma = plps.get('xlim_max', deftrim, override_None=True)
+    ylmi = plps.get('ylim_min', deftrim, override_None=True)
+    ylma = plps.get('ylim_max', deftrim, override_None=True)
 
     quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
     quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
@@ -498,11 +519,11 @@ def _make_quiver_slices(v_x, v_y, plps, deftrim):
 
     return qslice_x, qslice_y
 
-def add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc, plps, decorator, do_cont):
+def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
     # give a little space around elastic profiles
-    deftrim = -.05 if cc._F=='u' else 0.0
+    deftrim = -0.1 if cc._F=='u' else -0.05
 
     v_x, v_y, m_x, m_y = d_xy.values()
 
@@ -536,7 +557,7 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc, plps, decorator, do
     #m_ImEy_q = v_fields['Fyi'][qslice_x[:, np.newaxis], qslice_y]
 
 
-    vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(field_code)
+    vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(cc)
     vecarrow_scale = numbat.NumBATPlotPrefs().vector_field_arrow_scale()
     vecarrow_lw = numbat.NumBATPlotPrefs().vector_field_arrow_linewidth()
     vecarrow_hw = numbat.NumBATPlotPrefs().vecplot_arrow_headwidth
@@ -572,47 +593,37 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc, plps, decorator, do
         ax.set_ylim(v_y_q[0], v_y_q[-1])
 
 
-
-def plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps, cc_scalar=None, cc_vector=None,
+def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, ftag_vector=None,
                             is_single_plot=False):
 
-    #v_x, v_y, m_X, m_Y = list(d_xy.values())
+    is_AC = (ftag_scalar and ftag_scalar.is_AC()) or (ftag_vector and ftag_vector.is_AC())
 
-    do_cont = cc_scalar is not None
-    do_quiv = cc_vector is not None
+    do_cont = ftag_scalar is not None
+    do_quiv = ftag_vector is not None
 
     decorator = plps['decorator']
 
     cbar = None
     if do_cont:
-        im_co, cbar = add_contour_plot(fig, ax, d_xy,
-                                       v_fields[cc_scalar.component_as_F()], field_code, cc_scalar, plps, decorator)
+        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftag_scalar.component_as_F()],
+                                       ftag_scalar, plps, decorator)
 
     if do_quiv:
-        add_quiver_plot(fig, ax, d_xy, v_fields, field_code, cc_vector, plps, decorator, do_cont)
+        add_quiver_plot(fig, ax, d_xy, v_fields,
+                        ftag_vector, plps, decorator, do_cont)
 
     # Adjustments to the visible plot domain
 
-    deftrim = -.05
-
-    xlmi = plps.get('xlim_min', deftrim)
-    xlma = plps.get('xlim_max', deftrim)
-    ylmi = plps.get('ylim_min', deftrim)
-    ylma = plps.get('ylim_max', deftrim)
-
-    is_AC = (cc_scalar and cc_scalar.is_AC()) or (cc_vector and cc_vector.is_AC())
-    if is_AC: # By default, give a little space around elastic profiles
-        if not xlmi: xlmi = deftrim
-        if not xlma: xlma = deftrim
-        if not ylmi: ylmi = deftrim
-        if not ylma: ylma = deftrim
-
+    deftrim = -.1 if is_AC else -0.05
+    xlmi = plps.get('xlim_min', deftrim, override_None=True)
+    xlma = plps.get('xlim_max', deftrim, override_None=True)
+    ylmi = plps.get('ylim_min', deftrim, override_None=True)
+    ylma = plps.get('ylim_max', deftrim, override_None=True)
 
     if xlmi != 0 or xlma != 0:
         xmin, xmax = ax.get_xlim()
         width_x = xmax-xmin
         ax.set_xlim(xmin+xlmi*width_x, xmax-xlma*width_x)
-
 
     if ylmi != 0 or ylma != 0:
         ymin, ymax = ax.get_ylim()
@@ -621,12 +632,12 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps, cc_scalar
 
 
     labs = []
-    if do_cont: labs.append(cc_scalar.get_tex_plot_label())
-    if do_quiv: labs.append(cc_vector.get_tex_plot_label())
+    if do_cont: labs.append(ftag_scalar.get_tex_plot_label())
+    if do_quiv: labs.append(ftag_vector.get_tex_plot_label())
     comp_label = ', '.join(labs)
 
     #lw = decorator.get_property('linewidth')# TODO: Unused
-    ec = decorator.get_property('edgecolor')
+    ec = decorator.get_property('ax_edgecolor')
 
     aspect = plps.get('aspect', 1.0)
 
@@ -686,42 +697,44 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
 
     _write_line(x0-.05, y0, f'Mode properties: m={ival}', fs+2); y0 -= dy
 
+    lines=[]
+
     if sim_result.is_EM():
-        _write_line(x0, y0, r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz') ; y0 -= dy
-        _write_line(x0, y0, r'$k$: ' + f'{sim_result.kz_EM(ival)/1.e6:.5f} ' + r'μm$^{{-1}}$');  y0 -= dy
+        lines.append( r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz')
+        lines.append( r'$k$: ' + f'{sim_result.kz_EM(ival)/1.e6:.5f} ' + r'μm$^{{-1}}$')
 
         neff = sim_result.neff(ival)
         if sim_result.ngroup_EM_available():
             ng = sim_result.ngroup_EM(ival)
-            _write_line(x0, y0, r'$\bar{{n}}$: ' + f'{neff:.6f},' + f'$n_g$: {ng:.6f}');  y0 -= dy
+            lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f},' + f'$n_g$: {ng:.6f}')
         else:
-            _write_line(x0, y0, r'$\bar{{n}}$: ' + f'{neff:.6f}');  y0 -= dy
+            lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f}')
     else:
         q_AC = sim_result.q_AC
         nu_AC = np.real(sim_result.nu_AC(ival))
         vp = sim_result.vp_AC(ival)
 
-        _write_line(x0, y0,
+        lines.append(
                    f'$q$: {q_AC * SI_um:.5f} ' + r'μm$^{{-1}}$, $\lambda:$ '+ f'{twopi/q_AC/SI_um:.5f} ' + r'μm') ;y0 -= dy
 
-        _write_line(x0, y0, r'$q/2\pi$: ' + f'{q_AC*SI_um/twopi:.5f} '+ r'μm$^{{-1}}$'); y0 -= dy
-        _write_line(x0, y0, r'$\Omega/(2\pi)$: ' + f'{nu_AC/SI_GHz:.5f} GHz' ); y0 -= dy
+        lines.append( r'$q/2\pi$: ' + f'{q_AC*SI_um/twopi:.5f} '+ r'μm$^{{-1}}$')
+        lines.append( r'$\Omega/(2\pi)$: ' + f'{nu_AC/SI_GHz:.5f} GHz' )
         if sim_result.vgroup_AC_available():
             vg = sim_result.vg_AC(ival)
-            _write_line(x0, y0, f'$v_p$: {vp:.2f} m/s, $v_g$: {vg:.2f} m/s'); y0 -= dy
+            lines.append( f'$v_p$: {vp:.2f} m/s, $v_g$: {vg:.2f} m/s')
         else:
-            _write_line(x0, y0, f'$v_p$: {vp:.2f} m/s'); y0 -= dy
-    _write_line(x0, y0, f'$f_x:$ {f_x:.3f}, $f_y$: {f_y:.3f}'); y0 -= dy
-    _write_line(x0, y0, f'$f_t:$ {f_t:.3f}, $f_z$: {f_z:.3f}'); y0 -= dy
-    _write_line(x0, y0, r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm'); y0 -= dy
-    _write_line(x0, y0, f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm'); y0 -= dy
+            lines.append( f'$v_p$: {vp:.2f} m/s')
+    lines.append( f'$f_x:$ {f_x:.3f}, $f_y$: {f_y:.3f}')
+    lines.append( f'$f_t:$ {f_t:.3f}, $f_z$: {f_z:.3f}')
+    lines.append( r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm')
+    lines.append( f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm')
 
     if field_code.is_EM_H():
-        _write_line(x0, y0, r'$H$ field multiplied by $Z_0=376.7\, \Omega$'); y0 -= dy
+        lines.append( r'$H$ field multiplied by $Z_0=376.7\, \Omega$')
 
     sc = sim_result.symmetry_classification(ival)
     if len(sc):
-        _write_line(x0, y0, f'Sym: {sc}'); y0 -= dy
+        lines.append( f'Sym: {sc}')
 
     # TODO: reactivate
     # if sim_result.is_AC() and sim_result.Q_method != QAcMethod.NotSet:
@@ -756,25 +769,26 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
 
     d_ext = mode.get_mode_data()
     if len(d_ext):
-        _write_line(x0, y0, r'Extra data:') ; y0 -= dy
+        lines.append( r'Extra data:')
         for (k, v) in d_ext.items():
-            _write_line(x0, y0, f'   {k}: {v}'); y0 -= dy
+            lines.append( f'   {k}: {v}')
 
+    for line in lines:
+        _write_line(x0, y0, line);
+        y0 -= dy
 
 def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
     decorator = plps['decorator']
-    figsz = decorator.get_property('figsize')
-    ws = decorator.get_property('subplots_wspace')
-    hs = decorator.get_property('subplots_hspace')
+    figsz = decorator['figsize']
+    ws = decorator['subplots_wspace']
+    hs = decorator['subplots_hspace']
 
-    decorator.set_frame_drawer(sim_result._structure.wg_geom)
+    decorator.set_waveguide(sim_result._structure.wg_geom)
 
     hide_minors = plps['suppress_imimre']
     rows = 2 if hide_minors else 3
 
-    fig, axs = plt.subplots(rows, 3, figsize=figsz
-                            #, layout='constrained'
-                            )
+    fig, axs = plt.subplots(rows, 3, figsize=figsz)
     fig.subplots_adjust(hspace=hs, wspace=ws*1.5)
 
     axs = axs.flat
@@ -783,22 +797,28 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
     ax = axs[axi]; axi += 1
     write_mode_data(ax, plps, sim_result, ival, field_code)  # mode data summary
 
-    #ft = plps['EM_AC']
     ft = field_code.as_field_type()
-    cc_scal = field_type_to_intensity_code(ft) # comonent_t with arg of Eabs, Habs, uabs
-    cc_transvec = field_type_to_vector_code(ft) # comonent_t with arg of Et, Ht, ut
+
+    ftag_scal = FieldTag.make_from_field_and_component(ft, 'a')
+    ftag_transvec = FieldTag.make_from_field_and_component(ft, 't')
+
+    if plps['hide_vector_field']:
+        ftag_transjoint = None
+    else:
+        ftag_transjoint = ftag_transvec
 
     ax = axs[axi]; axi += 1  # the whole field (top row middle)
-    if plps['hide_vector_field']:
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_scalar=cc_scal)
-    else:
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_scalar=cc_scal, cc_vector=cc_transvec)
+    #if plps['hide_vector_field']:
+    #    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=ftag_scal)
+    #else:
+    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps,
+                            ftag_scalar=ftag_scal, ftag_vector=ftag_transjoint)
 
     ax = axs[axi]; axi += 1  # the intensity (top row right)
-    plot_contour_and_quiver(fig, ax, d_xy, v_plots, field_code, plps, cc_vector=cc_transvec)
+    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_vector=ftag_transvec)
 
     for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
-        cc = FieldTag.make_comp_from_field_and_Fcode(ft, flab)
+        cc = FieldTag.make_from_field_and_Fcode(ft, flab)
 
         if not cc.is_signed_field(): continue  # already done vector and energy plots
 
@@ -806,33 +826,34 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
         if (hide_minors and not cc.is_minor()): continue
 
         ax = axs[axi]; axi += 1
-        plot_contour_and_quiver(fig, ax, d_xy,  v_plots, field_code, plps, cc_scalar=cc)  # the scalar plots
+        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=cc)  # the scalar plots
 
 
     fig_fname = modeplot_filename_2D(field_code, plps, ival)
-    save_and_close_figure(fig,  fig_fname)
+    save_and_close_figure(fig, fig_fname)
 
 
 
 
 def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
-
+    decorator = plps['decorator']
     if axis is None:
-        fig, ax = plt.subplots(figsize=(12, 10))
+        figsz = decorator['figsize']
+        fig, ax = plt.subplots(figsize=figsz)
     else:
         ax = axis
 
     if cc.is_transverse():
-        cc_transvec = cc
+        ftag_transvec = cc
         #ft = plps['EM_AC']
         ft = field_code.as_field_type()
-        cc_scal = FieldTag.make_from_field_and_component(ft, 'abs')
+        ftag_scal = FieldTag.make_from_field_and_component(ft, 'abs')
     else:
-        cc_transvec = None
-        cc_scal = cc
+        ftag_transvec = None
+        ftag_scal = cc
 
-    plot_contour_and_quiver(fig, ax, d_xy, v_fields, field_code, plps,
-                            cc_scalar=cc_scal, cc_vector=cc_transvec, is_single_plot=True)
+    plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
+                            ftag_scalar=ftag_scal, ftag_vector=ftag_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename_2D(field_code, plps, ival, cc._user_code)
