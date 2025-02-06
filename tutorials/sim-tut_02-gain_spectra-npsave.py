@@ -37,9 +37,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 25
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 # choose between faster or more accurate calculation
 if len(sys.argv) > 1 and sys.argv[1] == 'fast=1':
@@ -75,7 +75,7 @@ if reuse_old_fields:
     simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
+    simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
     print('\nSaving EM fields')
     simres_EM_pump.save_simulation('tut02_em_pump')
     simres_EM_Stokes.save_simulation('tut02_em_stokes')
@@ -96,9 +96,9 @@ print(f'\nThe fundamental optical mode has effective index n_eff = {n_eff_sim:.6
 # For instance xlim_min=0.2 will remove 20% of the x axis from the left outer edge
 # to the center. xlim_max=0.2 will remove 20% from the right outer edge towards the center.
 # This leaves just the inner 60% of the unit cell displayed in the plot.
-# The ylim variables perform the equivalent actions on the y axis.
+# The ylim variables perform the equmode_indexent actions on the y axis.
 
-# Let's plot fields for only the first few modes (ival=range(4)=0--3)
+# Let's plot fields for only the first few modes (mode_index=range(4)=0--3)
 
 
 simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
@@ -106,11 +106,11 @@ simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
 #simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, ivals=range(4))
+#                          ylim_max=0.2, mode_indices=range(4))
 
 # Plot the H field of the pump mode
 #simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, ivals=range(4),
+#                          ylim_max=0.2, mode_indices=range(4),
 #                          field_type='EM_H')
 
 # Acoustic wavevector
@@ -136,15 +136,15 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-#simres_AC.plot_modes(contours=True, quiver_points=20, ivals=range(10))
+#simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
 
 #if reuse_old_fields:
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain = integration.get_gains_and_qs(
-    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_ival_pump=EM_ival_pump,
-    EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
+    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 # Save the gain calculation results
 #np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
 #else:
@@ -155,10 +155,10 @@ gain = integration.get_gains_and_qs(
 # which may be of interest to users wanting to calculate expressions not currently
 # included in NumBAT. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
-comsol_ivals = 5  # Number of modes contained in data file.
+comsol_mode_indices = 5  # Number of modes contained in data file.
 #SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
 #    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, 'comsol_ac_modes_1-5.dat',
-#    comsol_ivals=comsol_ivals)
+#    comsol_mode_indices=comsol_mode_indices)
 
 # Print the PE contribution to gain SBS gain of the AC modes.
 print("\n Displaying results of first five modes with negligible components masked out")
@@ -167,17 +167,17 @@ SBS_gain_MB = gain.gain_MB_all()
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
-masked_PE = np.ma.masked_inside(SBS_gain_PE[:comsol_ivals], 0, threshold)
-masked_MB = np.ma.masked_inside(SBS_gain_MB[:comsol_ivals], 0, threshold)
+masked_PE = np.ma.masked_inside(SBS_gain_PE[:comsol_mode_indices], 0, threshold)
+masked_MB = np.ma.masked_inside(SBS_gain_MB[:comsol_mode_indices], 0, threshold)
 np.set_printoptions(precision=4)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 print("SBS_gain [1/(Wm)] MB NumBAT default (Fortran)\n", masked_MB)
 
 #masked = np.ma.masked_inside(
-#    SBS_gain_PE_py[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+#    SBS_gain_PE_py[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold)
 #print("SBS_gain [1/(Wm)] python integration routines \n", masked)
 #masked = np.ma.masked_inside(
-#    SBS_gain_PE_comsol[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+#    SBS_gain_PE_comsol[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold)
 #print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.

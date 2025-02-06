@@ -74,9 +74,9 @@ inc_shape = 'circular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv, sub='a')
 
@@ -106,9 +106,9 @@ if doem:
     else:
         npzfile = np.load(prefix+'-wguide_data_florez.npz', allow_pickle=True)
         sim_EM_pump = npzfile['sim_EM_pump'].tolist()
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
-    sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=range(6),
+    sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, mode_indices=range(6),
                         ylim_min=0.2, ylim_max=0.2, decorator=emdecorate,
                         )
 
@@ -124,7 +124,7 @@ if not doac:
     sys.exit(0)
 
 q_AC = np.real(sim_EM_pump.kz_EM_all()[
-               EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
+               EM_mode_index_pump] - sim_EM_Stokes.kz_EM_all()[EM_mode_index_Stokes])
 
 shift_Hz = 4*SI_GHz
 
@@ -137,7 +137,7 @@ else:
     npzfile = np.load('wguide_data_florez_AC.npz', allow_pickle=True)
     sim_AC = npzfile['sim_AC'].tolist()
 
-sim_AC.plot_modes(ivals=range(10),
+sim_AC.plot_modes(mode_indices=range(10),
                     xlim_min=-.1, ylim_min=-.1, xlim_max=-.1, ylim_max=-.1,
                     decorator=acdecorate)
 
@@ -150,7 +150,7 @@ set_q_factor = 1000.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5*SI_GHz

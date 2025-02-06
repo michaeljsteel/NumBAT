@@ -43,11 +43,11 @@ num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 100
 # The EM pump mode(s) for which to calculate interaction with AC modes. Typically 0 for FSBS.
-EM_ival_pump = 1
+EM_mode_index_pump = 1
 # The EM Stokes mode(s) for which to calculate interaction with AC modes. Typically 0 for FSBS.
-EM_ival_Stokes = EM_ival_pump
+EM_mode_index_Stokes = EM_mode_index_pump
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = 'All'
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv)
 
@@ -93,7 +93,7 @@ sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 # note: use field_type='EM_H' for magnetic H field
 print("Plotting EM fields ")
 
-sim_EM_pump.plot_modes(ivals=[EM_ival_pump],
+sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump],
                          field_type='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
                           quiver_points=40,
                          n_points=1000, colorbar=True)
@@ -114,7 +114,7 @@ for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu):.4e}')
 # well as other important quantities
 gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 freq_min = .1e9
 freq_max = 5e9
@@ -143,15 +143,15 @@ maxGainloc=7  #note sometimes its necessary to manually specify as certain value
 
 print("Plotting acoustic modes")
 
-sim_AC.plot_modes(ivals=range(15), num_ticks=3, quiver_points=40, colorbar=True)
+sim_AC.plot_modes(mode_indices=range(15), num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
 print("-----------------")
 print("Displaying results for maximum (physically realisable) \"gain\" value found:")
 print("Greatest SBS_gain  [1/(Wm)] total \n", masked.data[maxGainloc])
 print("displaying corresponding acoustic mode number (i.e., AC_field_#) for reference \n",maxGainloc )
-print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_ival_pump] )
-print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_ival_Stokes] )
+print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_mode_index_pump] )
+print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes] )
 print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM/1e12 )
 print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc] )
 print("AC loss alpha [1/s] \n", gain_box.alpha[maxGainloc] )
@@ -159,7 +159,7 @@ print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc]/(1e9*2*math.pi) )
 print("AC linewidth [MHz] \n", gain_box.linewidth_Hz[maxGainloc]/1e6)
 
 #since the overlap is not returned directly we'll have to deduce it
-absQtot2 = (gain_box.alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_ival_pump]*sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
+absQtot2 = (gain_box.alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_mode_index_pump]*sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
 absQtot = pow(absQtot2,1/2)
 print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
 

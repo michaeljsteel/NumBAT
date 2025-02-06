@@ -31,9 +31,9 @@ inc_shape = 'circular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(6, sys.argv, sub='a')
 
@@ -58,7 +58,7 @@ if use_old_fields:
     simres_EM_Stokes = numbat.load_simulation(prefix+'_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
+    simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
     simres_EM_pump.save_simulation(prefix+'_pump')
     simres_EM_Stokes.save_simulation(prefix+'_stokes')
 
@@ -71,14 +71,14 @@ v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
-simres_EM_pump.plot_modes(ivals=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
+simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
 print(f"n_eff = {n_eff_sim:.4e}")
 
 # Acoustic wavevector
-q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(simres_EM_pump.kz_EM(EM_mode_index_pump) - simres_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
 shift_Hz = 4e9
 
@@ -97,14 +97,15 @@ for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 simres_AC.plot_modes()
 
 set_q_factor = 1000.
+#set_q_factor = None
 
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes,
-    AC_ival=AC_ival, fixed_Q=set_q_factor)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes,
+    AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz

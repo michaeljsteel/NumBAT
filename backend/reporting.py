@@ -37,6 +37,32 @@ def report_and_exit(msg):
 #g_logger.error('from logger')
     sys.exit(1)
 
+def deprecated_function(fold, fnew, extra=''):
+    msg = f"""Warning:
+    The function '{fold}' has been replaced by the function '{fnew}'.\nPlease see the module documentation and/or release notes for details and update your call appropriately."""
+
+    if extra:
+        msg+='\n'+extra
+
+    print(msg)
+    #report_and_exit(msg)
+
+def deprecated_parameter_exit(pold, pnew, func, extra=''):
+    msg = f"The function '{pold}' for the function {func} has been replaced by the parameter '{pnew}'.\nPlease see the module documentation and/or release notes for details and update your call appropriately."
+
+    if extra:
+        msg+='\n'+extra
+
+    report_and_exit(msg)
+
+def deprecated_parameter_warning(pold, pnew, func, extra=''):
+    msg = f"Deprecation warning:  The function '{pold}' for the function {func} has been replaced by the parameter '{pnew}'.\nPlease see the module documentation and/or release notes for details and update your call appropriately."
+
+    if extra:
+        msg+='\n'+extra
+
+    print(msg)
+
 
 def assertion(assertion_ok, msg, severity='fatal'):
     if not assertion_ok:

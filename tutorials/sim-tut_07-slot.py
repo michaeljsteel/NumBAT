@@ -39,9 +39,9 @@ slab_a_y = 300
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
-EM_ival_pump = 1
-EM_ival_Stokes = 1
-AC_ival = "All"
+EM_mode_index_pump = 1
+EM_mode_index_Stokes = 1
+AC_mode_index = "All"
 
 prefix, refine_fac = starter.read_args(7, sys.argv)
 
@@ -85,7 +85,7 @@ recalc_fields = True  # run the calculation from scratch
 # Calculate Electromagnetic modes.
 if recalc_fields:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
+    simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
 
     simres_EM_pump.save_simulation("tut_07_pump")
     simres_EM_Stokes.save_simulation("tut_07_stokes")
@@ -114,7 +114,7 @@ n_eff_sim = np.real(simres_EM_pump.neff(0))
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 q_AC = np.real(
-    simres_EM_pump.kz_EM(EM_ival_pump) - simres_EM_Stokes.kz_EM(EM_ival_Stokes)
+    simres_EM_pump.kz_EM(EM_mode_index_pump) - simres_EM_Stokes.kz_EM(EM_mode_index_Stokes)
 )
 
 # Specify the expected acoustic frequency (chosen slightly lower than likely resonances).
@@ -130,9 +130,9 @@ else:
     simres_AC = numbat.load_simulation("tut_07_acoustic")
 
 simres_AC.plot_modes(quiver_points=20, aspect=4)
-simres_AC.plot_modes_1D('x', 0, ivals=range(5))
-simres_AC.plot_modes_1D('y', 0, ivals=range(5))
-simres_AC.plot_modes_1D('line', (-1,1), (1,1), ivals=range(5))
+simres_AC.plot_modes_1D('x', 0, mode_indices=range(5))
+simres_AC.plot_modes_1D('y', 0, mode_indices=range(5))
+simres_AC.plot_modes_1D('line', (-1,1), (1,1), mode_indices=range(5))
 
 # Print the frequencies of AC modes.
 v_nu = simres_AC.nu_AC_all()
@@ -147,9 +147,9 @@ gain_box = integration.get_gains_and_qs(
     simres_EM_Stokes,
     simres_AC,
     q_AC,
-    EM_ival_pump=EM_ival_pump,
-    EM_ival_Stokes=EM_ival_Stokes,
-    AC_ival=AC_ival,
+    EM_mode_index_pump=EM_mode_index_pump,
+    EM_mode_index_Stokes=EM_mode_index_Stokes,
+    AC_mode_index=AC_mode_index,
     fixed_Q=set_q_factor,
 )
 

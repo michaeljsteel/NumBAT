@@ -76,7 +76,7 @@ class ModeInterpolator:
 
         simres = self.sim_result
 
-        (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p) = simres.get_modes_on_fem_mesh(
+        (v_Fx6p, v_Fy6p, v_Fz6p, v_Fa6p) = simres.get_mode_fields_on_fem_mesh(
             md, field_type)
 
         interper_f = self.interper_f_2D if dims == 2 else self.interper_f_1D
@@ -617,17 +617,11 @@ class Mode:
     def write_mode(self, prefix='', n_points=501,
                    field_type=FieldType.EM_E):
 
-        # Must call interoplate first?
-
-        #comps = ('exr', 'exi','eyr', 'eyi','ezr', 'ezi',
-        #         'hxr', 'ehi','ehr', 'ehi','ehr', 'ehi')
-
         ft = FieldType.AC if self.is_AC() else FieldType(field_type)
 
         self._interpolate_mode_2D(n_points, ft)
 
         md_interp = self.mode_interpolator
-        #md_interp.define_plot_grid_2D(n_pts=n_points)
 
         # TODO sort out wanting H fields on a singl direct call to this fnc
 
@@ -639,27 +633,24 @@ class Mode:
         for cc in ccs:
             #ft=self.field_code.as_field_type()
             ftag = FieldTag.make_from_field_and_component(ft, cc)
+            ftlab = ftag.field_type_label()
             pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
-            longpref=f'{pref}/{ftag.field_type_label()}_mode_{self.mode_num:02d}_{ftag.field_component()}'
 
-            print('longpref', longpref)
+            longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{ftag.field_component()}'
+
             _write_one_component_to_file(self.mode_num,
                                          longpref, ftag, s_xy, self.d_fields_2D)
 
     def write_mode_1D(self, s_cut, val1, val2=None, n_points=501,
                       prefix='', field_type=FieldType.EM_E):
 
-
-
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
-
-        #md_interp.define_plot_grid_1D(s_cut, val1, val2, n_points)
 
         pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
         ftag = FieldTag.make_from_field(field_type)
-        print(field_type, ftag)
-        mt = ftag.mode_type_as_str()
-        longpref=f'{pref}/{mt}_mode_{self.mode_num:02d}_{s_cut}cut'
+        ftlab = ftag.field_type_label()
+
+        longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{s_cut}cut'
         fname = longpref+'.txt'
 
         v_genx = self.mode_interpolator.v_x_axis

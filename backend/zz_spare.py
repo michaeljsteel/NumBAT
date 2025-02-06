@@ -196,7 +196,7 @@ def del_plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
         decorator.extra_axes_commands(ax)
 
 
-# def plot_strain_mode_i(self, ival):
+# def plot_strain_mode_i(self, mode_index):
     #     # TODO: this interpolation looks very old. Can we get strain directly from fortran?
     #     # Interpolate onto rectangular Cartesian grid
 
@@ -231,7 +231,7 @@ def del_plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
 
     #     xy = list(zip(self.v_x6p, self.v_y6p))
 
-    #     # This seems to be equivalent  to taking grid_x = self.m_Y, grid_y = self.m_X
+    #     # This seems to be equmode_indexent  to taking grid_x = self.m_Y, grid_y = self.m_X
     #     # CONFIRM!
     #     # grid_x, grid_y = np.mgrid[x_min:x_max:n_pts_x*1j, y_min:y_max:n_pts_y*1j]  #OLD CODE
     #     grid_x, grid_y = self.m_Y, self.m_X  # NEW CODE
@@ -331,23 +331,23 @@ def del_plot_one_component_quiver(ax, m_X, m_Y, v_fields, plps, cc):
     #         cbar.ax.tick_params(labelsize=decorator.get_font_size('cbar_tick'))
     #     fig.set_tight_layout(True)
     #     n_str = ''
-    #     if np.imag(sim_wguide.Eig_values[ival]) < 0:
+    #     if np.imag(sim_wguide.Eig_values[mode_index]) < 0:
     #         k_str = r'$\Omega/2\pi = %(re_k)f %(im_k)f i$ GHz' % \
-    #             {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
-    #              'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
+    #             {'re_k': np.real(sim_wguide.Eig_values[mode_index]*1e-9),
+    #              'im_k': np.imag(sim_wguide.Eig_values[mode_index]*1e-9)}
     #     else:
     #         k_str = r'$\Omega/2\pi = %(re_k)f + %(im_k)f i$ GHz' % \
-    #             {'re_k': np.real(sim_wguide.Eig_values[ival]*1e-9),
-    #              'im_k': np.imag(sim_wguide.Eig_values[ival]*1e-9)}
-    #     plt.suptitle('Mode #' + str(ival) + '   ' + k_str + '   ' +
+    #             {'re_k': np.real(sim_wguide.Eig_values[mode_index]*1e-9),
+    #              'im_k': np.imag(sim_wguide.Eig_values[mode_index]*1e-9)}
+    #     plt.suptitle('Mode #' + str(mode_index) + '   ' + k_str + '   ' +
     #                  n_str, fontsize=decorator.get_font_size('title'))
 
     #     if pdf_png == 'png':
     #         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.png' %
-    #                     {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix})
+    #                     {'pre': prefix, 's': EM_AC, 'i': mode_index, 'add': suffix})
     #     elif pdf_png == 'pdf':
     #         plt.savefig('%(pre)sfields/%(s)s_S_field_%(i)i%(add)s.pdf' %
-    #                     {'pre': prefix, 's': EM_AC, 'i': ival, 'add': suffix}, bbox_inches='tight')
+    #                     {'pre': prefix, 's': EM_AC, 'i': mode_index, 'add': suffix}, bbox_inches='tight')
     #     if not keep_plots_open:
     #         plt.close()
 

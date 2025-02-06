@@ -30,9 +30,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 20
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(9, sys.argv)
 
@@ -59,7 +59,7 @@ for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
-sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 # # Alt
 # sim_EM_Stokes = wguide.calc_EM_modes(lambda_nm, num_modes_EM_Stokes, n_eff, Stokes=True)
 
@@ -69,7 +69,7 @@ print("\n Fundamental optical mode ")
 print(" n_eff = ", np.round(n_eff_sim, 4))
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 print('\n AC wavenumber (1/m) = ', np.round(q_AC, 4))
 
 # Calculate Acoustic modes, using the mesh from the EM calculation.
@@ -85,7 +85,7 @@ for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 gain_box.plot_spectra(freq_min=0, freq_max=30e9, )
 

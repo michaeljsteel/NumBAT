@@ -37,9 +37,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 30
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 50
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
 
@@ -60,16 +60,16 @@ def modes_n_gain(wwguide):
 
     # Calculate Electromagnetic modes.
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
-    q_AC = np.real(simres_EM_pump.kz_EM(EM_ival_pump) -
-                   simres_EM_Stokes.kz_EM(EM_ival_Stokes))
+    simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
+    q_AC = np.real(simres_EM_pump.kz_EM(EM_mode_index_pump) -
+                   simres_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
     # Calculate Acoustic modes.
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
 
     # Calculate interaction integrals and SBS gain.
     gain_box = integration.get_gains_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
-        EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+        EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
     print('Process %d: completed mode calculation for width a_x = %.3f' % (
         os.getpid(), width))
@@ -141,7 +141,7 @@ for i_w, width_obj in enumerate(v_width_data):
     # Linewidth of Lorentzian is half the FWHM style linewidth.
     linewidth = gain_box.linewidth_Hz_all()/2
     num_modes = len(linewidth)
-    gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
+    gain_box.set_EM_modes(EM_mode_index_pump, EM_mode_index_Stokes)
     for m in range(num_modes):
         gain_list = np.real(gain_box.gain_total(m) * linewidth[m]**2/(linewidth[m]**2 + detuning_range**2))
         freq_list = np.real(simres_AC.nu_AC(m) + detuning_range)

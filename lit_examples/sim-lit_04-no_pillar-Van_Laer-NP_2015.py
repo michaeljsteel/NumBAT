@@ -57,9 +57,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 60
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, sub='a')
 
@@ -99,7 +99,7 @@ if doem:
     # npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
     # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-    sim_EM_pump.plot_modes(xlim_min=0.43, xlim_max=0.43, ivals=[EM_ival_pump],
+    sim_EM_pump.plot_modes(xlim_min=0.43, xlim_max=0.43, mode_indices=[EM_mode_index_pump],
                         n_points=2000, quiver_points=10,  decorator=emdecorate)
 
     # Print the wavevectors of EM modes.
@@ -120,14 +120,14 @@ if doac:
         npzfile = np.load(prefix+'-wguide_data_AC.npz', allow_pickle=True)
         sim_AC = npzfile['sim_AC'].tolist()
 
-    sim_AC.plot_modes(ivals=range(20))
+    sim_AC.plot_modes(mode_indices=range(20))
 
 set_q_factor = 306
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')

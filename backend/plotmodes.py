@@ -28,7 +28,7 @@ from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plottools import save_and_close_figure
 
 
-def modeplot_filename_2D(field_code, plps, ival, label='', cut=''):
+def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
     nbapp = numbat.NumBATApp()
 
     pref=plps['prefix']
@@ -36,19 +36,21 @@ def modeplot_filename_2D(field_code, plps, ival, label='', cut=''):
     comp = field_code.as_str()
 
     fullpref = str(nbapp.outdir_fields_path(prefix=pref))
-    #filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}'
-    filestart = f'{fullpref}/{comp}_mode_{ival:02d}{suf}'
+    filestart = f'{fullpref}/{comp}_mode_{mode_index:02d}'
+
     if cut:
         filestart = filestart + f'_{cut}cut'
+    if suf:
+        filestart = filestart + f'_{suf}'
 
     if label: filestart += '_'+label
 
     return filestart + nbapp.plotfile_ext()
 
 # TODO: allow a suffix to label multiple cut planes
-def modeplot_filename_1D(field_code, plps, ival, cut, label=''):
+def modeplot_filename_1D(field_code, plps, mode_index, cut, label=''):
 
-    return modeplot_filename_2D(field_code, plps, ival, label, cut)
+    return modeplot_filename_2D(field_code, plps, mode_index, label, cut)
     # nbapp = numbat.NumBATApp()
 
     # pref=plps['prefix']
@@ -56,7 +58,7 @@ def modeplot_filename_1D(field_code, plps, ival, cut, label=''):
     # comp = field_code.as_str()
 
     # fullpref = str(nbapp.outdir_fields_path(prefix=pref))
-    # filestart = f'{fullpref}/{comp}_field_{ival:02d}{suf}_{cut}cut'
+    # filestart = f'{fullpref}/{comp}_field_{mode_index:02d}{suf}_{cut}cut'
 
     # if label: filestart += '_'+label
 
@@ -667,7 +669,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
 
 
 
-def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summary
+def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data summary
 
     decorator = plps['decorator']
     fs = decorator.get_property('data_label_fs')
@@ -682,7 +684,7 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
     ax.set_aspect('equal')
     ax.axis('off')
 
-    mode = sim_result.get_all_modes()[ival]
+    mode = sim_result.get_all_modes()[mode_index]
     mode.analyse_mode()
 
 
@@ -695,24 +697,24 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
     (wx, wy, w0) = mode.second_moment_widths() # In units of um
 
 
-    _write_line(x0-.05, y0, f'Mode properties: m={ival}', fs+2); y0 -= dy
+    _write_line(x0-.05, y0, f'Mode properties: m={mode_index}', fs+2); y0 -= dy
 
     lines=[]
 
     if sim_result.is_EM():
         lines.append( r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz')
-        lines.append( r'$k$: ' + f'{sim_result.kz_EM(ival)/1.e6:.5f} ' + r'μm$^{{-1}}$')
+        lines.append( r'$k$: ' + f'{sim_result.kz_EM(mode_index)/1.e6:.5f} ' + r'μm$^{{-1}}$')
 
-        neff = sim_result.neff(ival)
+        neff = sim_result.neff(mode_index)
         if sim_result.ngroup_EM_available():
-            ng = sim_result.ngroup_EM(ival)
+            ng = sim_result.ngroup_EM(mode_index)
             lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f},' + f'$n_g$: {ng:.6f}')
         else:
             lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f}')
     else:
         q_AC = sim_result.q_AC
-        nu_AC = np.real(sim_result.nu_AC(ival))
-        vp = sim_result.vp_AC(ival)
+        nu_AC = np.real(sim_result.nu_AC(mode_index))
+        vp = sim_result.vp_AC(mode_index)
 
         lines.append(
                    f'$q$: {q_AC * SI_um:.5f} ' + r'μm$^{{-1}}$, $\lambda:$ '+ f'{twopi/q_AC/SI_um:.5f} ' + r'μm') ;y0 -= dy
@@ -720,7 +722,7 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
         lines.append( r'$q/2\pi$: ' + f'{q_AC*SI_um/twopi:.5f} '+ r'μm$^{{-1}}$')
         lines.append( r'$\Omega/(2\pi)$: ' + f'{nu_AC/SI_GHz:.5f} GHz' )
         if sim_result.vgroup_AC_available():
-            vg = sim_result.vg_AC(ival)
+            vg = sim_result.vg_AC(mode_index)
             lines.append( f'$v_p$: {vp:.2f} m/s, $v_g$: {vg:.2f} m/s')
         else:
             lines.append( f'$v_p$: {vp:.2f} m/s')
@@ -732,7 +734,7 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
     if field_code.is_EM_H():
         lines.append( r'$H$ field multiplied by $Z_0=376.7\, \Omega$')
 
-    sc = sim_result.symmetry_classification(ival)
+    sc = sim_result.symmetry_classification(mode_index)
     if len(sc):
         lines.append( f'Sym: {sc}')
 
@@ -748,17 +750,17 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
     #         y0 -= dy
 
     #     ax.text(x0+.1, r, r'$\alpha$: {0:.3e} s$^{{-1}}$, {1:.2f} cm$^{{-1}}$, {2:.2f} dB/cm'.format(
-    #         sim_result.alpha_t_AC(ival),
-    #         sim_result.alpha_s_AC(ival)/100.,
-    #         sim_result.alpha_s_AC(ival)/100./(np.log(10.0)/10.0)
+    #         sim_result.alpha_t_AC(mode_index),
+    #         sim_result.alpha_s_AC(mode_index)/100.,
+    #         sim_result.alpha_s_AC(mode_index)/100./(np.log(10.0)/10.0)
     #     ), transform=ax.transAxes, fontsize=fs)
     #     y0 -= dy
 
     #     ax.text(x0+.1, r, r'$Q_m$: {0:.2f}'.format(
-    #         sim_result.Qmech_AC(ival)), transform=ax.transAxes, fontsize=fs)
+    #         sim_result.Qmech_AC(mode_index)), transform=ax.transAxes, fontsize=fs)
     #     y0 -= dy
     #     ax.text(x0+.1, r, r'$\Delta\Omega/(2\pi)$: {0:.4f} MHz'.format(
-    #         1.e-6*sim_result.linewidth_AC(ival)), transform=ax.transAxes, fontsize=fs)
+    #         1.e-6*sim_result.linewidth_AC(mode_index)), transform=ax.transAxes, fontsize=fs)
     #     y0 -= dy
     #     mg_pe = plps['modal_gain'].get('PE', 0)
     #     mg_mb = plps['modal_gain'].get('MB', 0)
@@ -774,10 +776,10 @@ def write_mode_data(ax, plps, sim_result, ival, field_code):  # mode data summar
             lines.append( f'   {k}: {v}')
 
     for line in lines:
-        _write_line(x0, y0, line);
+        _write_line(x0, y0, line)
         y0 -= dy
 
-def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
+def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index):
     decorator = plps['decorator']
     figsz = decorator['figsize']
     ws = decorator['subplots_wspace']
@@ -795,7 +797,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
     axi = 0
 
     ax = axs[axi]; axi += 1
-    write_mode_data(ax, plps, sim_result, ival, field_code)  # mode data summary
+    write_mode_data(ax, plps, sim_result, mode_index, field_code)  # mode data summary
 
     ft = field_code.as_field_type()
 
@@ -808,16 +810,13 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
         ftag_transjoint = ftag_transvec
 
     ax = axs[axi]; axi += 1  # the whole field (top row middle)
-    #if plps['hide_vector_field']:
-    #    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=ftag_scal)
-    #else:
     plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps,
                             ftag_scalar=ftag_scal, ftag_vector=ftag_transjoint)
 
     ax = axs[axi]; axi += 1  # the intensity (top row right)
     plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_vector=ftag_transvec)
 
-    for flab in v_plots.keys(): # ['Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fabs']
+    for flab in v_plots.keys():
         cc = FieldTag.make_from_field_and_Fcode(ft, flab)
 
         if not cc.is_signed_field(): continue  # already done vector and energy plots
@@ -829,13 +828,13 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, ival):
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=cc)  # the scalar plots
 
 
-    fig_fname = modeplot_filename_2D(field_code, plps, ival)
+    fig_fname = modeplot_filename_2D(field_code, plps, mode_index)
     save_and_close_figure(fig, fig_fname)
 
 
 
 
-def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
+def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=None):
     decorator = plps['decorator']
     if axis is None:
         figsz = decorator['figsize']
@@ -845,9 +844,8 @@ def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
 
     if cc.is_transverse():
         ftag_transvec = cc
-        #ft = plps['EM_AC']
         ft = field_code.as_field_type()
-        ftag_scal = FieldTag.make_from_field_and_component(ft, 'abs')
+        ftag_scal = FieldTag.make_from_field_and_component(ft, 'a')
     else:
         ftag_transvec = None
         ftag_scal = cc
@@ -856,7 +854,7 @@ def plot_one_component(field_code, d_xy, v_fields, plps, ival, cc, axis=None):
                             ftag_scalar=ftag_scal, ftag_vector=ftag_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
-        fig_fname = modeplot_filename_2D(field_code, plps, ival, cc._user_code)
+        fig_fname = modeplot_filename_2D(field_code, plps, mode_index, cc._user_code)
         save_and_close_figure(fig, fig_fname)
 
 

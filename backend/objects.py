@@ -92,12 +92,6 @@ class Structure:
 
     def _clean_and_handle_args_and_parameters(self, *largs, **kwargs):
 
-        if 'plt_mesh' in kwargs:
-            print("\n Warning: Option 'plt_mesh' is deprecated. Call method .plot_mesh() on your Struct object.\n\n")
-
-        if 'check_mesh' in kwargs:
-            print("\n Warning: Option 'check_mesh' is deprecated. Call method .check_mesh() on your Struct object.\n\n")
-
         if kwargs.get('direct_call', 0):
             reporting.register_warning(
                 'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')

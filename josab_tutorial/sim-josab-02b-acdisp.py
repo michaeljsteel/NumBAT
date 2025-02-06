@@ -33,9 +33,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 100
-EM_ival_pump = 0
-EM_ival_Stokes = EM_ival_pump
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = EM_mode_index_pump
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(2, sys.argv, sub='b')
 
@@ -53,19 +53,19 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
 n_eff = wguide.get_material('a').refindex_n-0.1
 # Calculate Electromagnetic modes.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
-sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 # Print EM mode info
 v_kz=sim_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
-n_eff_sim = np.real(sim_EM_pump.neff(EM_ival_pump))
+n_eff_sim = np.real(sim_EM_pump.neff(EM_mode_index_pump))
 print("\n Fundamental optical mode ")
 print(" n_eff = ", np.round(n_eff_sim, 4))
 
 #   q_AC of backward SBS.
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 # Number of wavevectors steps.
 nu_ks = 50
 

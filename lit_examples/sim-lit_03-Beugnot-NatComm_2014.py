@@ -62,9 +62,9 @@ inc_shape = 'circular'
 num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 200
-EM_ival_pump = 1    # exploit degeneracy to escape weird mode m=0 fails
-EM_ival_Stokes = 1  # exploit degeneracy to escape weird mode m=0 fails
-AC_ival = 'All'
+EM_mode_index_pump = 1    # exploit degeneracy to escape weird mode m=0 fails
+EM_mode_index_Stokes = 1  # exploit degeneracy to escape weird mode m=0 fails
+AC_mode_index = 'All'
 
 # Expected effective index of fundamental guided mode.
 n_eff = 1.44 # just a little under the core index
@@ -127,20 +127,20 @@ def modes_n_gain(diam):
 
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
-    #sim_EM_pump.plot_modes(ivals=range(5), field_type='EM_E', )
+    #sim_EM_pump.plot_modes(mode_indices=range(5), field_type='EM_E', )
 
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
     # find correct fundamental EM mode in case there are spurious ones found as ground state
-    EM_ival_pump = 0
+    EM_mode_index_pump = 0
     for m_p in range(num_modes_EM_pump):
         if sim_EM_pump.neff(m_p)<mat_a.refindex_n: # first mode in physical region
-            EM_ival_pump = m_p
+            EM_mode_index_pump = m_p
             break
 
-    EM_ival_Stokes = EM_ival_pump
+    EM_mode_index_Stokes = EM_mode_index_pump
 
-    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
     shift_Hz = 4e9
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
@@ -149,11 +149,11 @@ def modes_n_gain(diam):
 #    set_q_factor = 600.
     gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-        EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)#, fixed_Q=set_q_factor)
+        EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)#, fixed_Q=set_q_factor)
 
-    #gain_box.set_allowed_EM_pumps(EM_ival_pump)
-    #gain_box.set_allowed_EM_Stokes(EM_ival_Stokes)
-    #gain_box.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
+    #gain_box.set_allowed_EM_pumps(EM_mode_index_pump)
+    #gain_box.set_allowed_EM_Stokes(EM_mode_index_Stokes)
+    #gain_box.set_EM_modes(EM_mode_index_pump, EM_mode_index_Stokes)
 
     (nu_gain_tot, nu_gain_PE, nu_gain_MB) = gain_box.plot_spectra(
             freq_min, freq_max, num_interp_pts=num_interp_pts, logy=True,
@@ -162,9 +162,9 @@ def modes_n_gain(diam):
     if abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
         #pass
 
-        sim_EM_pump.plot_modes(ivals=range(10),
+        sim_EM_pump.plot_modes(mode_indices=range(10),
                                   prefix=prefix+f'-diam-{round(diam):04d}')
-        sim_AC.plot_modes(ivals=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
+        sim_AC.plot_modes(mode_indices=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
         for m in range(num_modes_AC):
             print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gain_box.gain_total(m):.3e}, ',
                  f'{gain_box.gain_PE(m):.4e}, {gain_box.gain_MB(m):.4e}')

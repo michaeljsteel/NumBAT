@@ -64,9 +64,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 20
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
@@ -97,17 +97,17 @@ for i_lc, lc_ref in enumerate(lc_list):
 
     # Calculate Electromagnetic modes.
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
     # Calculate Acoustic modes.
-    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-                   sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) -
+                   sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
     # Calculate interaction integrals and SBS gain.
     gain_box= integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-        EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+        EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
     conv_list.append([sim_EM_pump, sim_AC, gain_box.gain_total_all(),
                       gain_box.gain_PE_all(), gain_box.gain_MB_all()])
@@ -140,7 +140,7 @@ ax2 = ax1.twinx()
 EM_plot_Mk = rel_mode_kz_EM*1e-6
 error0 = np.abs((np.array(EM_plot_Mk[0:-1])-EM_plot_Mk[-1])/EM_plot_Mk[-1])
 ax1.plot(x_axis, np.real(EM_plot_Mk), 'r-.o', label=r'EM k$_z$')
-ax2.plot(x_axis[0:-1], error0, 'b-v', label='Mode #%i' % EM_ival_pump)
+ax2.plot(x_axis[0:-1], error0, 'b-v', label='Mode #%i' % EM_mode_index_pump)
 finish_plot(fig, ax1, ax2, r"EM k$_z$ ($\times 10^6$ 1/m)", r"Relative Error EM k$_z$", 'freq_EM')
 
 

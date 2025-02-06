@@ -148,11 +148,11 @@ num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 35
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
-EM_ival_pump = 0
+EM_mode_index_pump = 0
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 1  # INTERMODE SBS TE0 to TE1
+EM_mode_index_Stokes = 1  # INTERMODE SBS TE0 to TE1
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = 'All'
+AC_mode_index = 'All'
 
 # Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer")
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
@@ -192,14 +192,14 @@ sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 
 print("starting EM field plotting ")
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
-                       ivals=[EM_ival_pump, EM_ival_Stokes],
+                       mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
                        ylim_min=0.435, ylim_max=0.435, field_type='EM_E', num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
                        comps=('Ex', 'Ey', 'Ez', 'Eabs', 'Et'), n_points=2000, colorbar=True)
 
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
-                       ivals=[EM_ival_pump, EM_ival_Stokes],
+                       mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
                        ylim_min=0.435, ylim_max=0.435, field_type='EM_H', num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
@@ -212,7 +212,7 @@ print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
 print("n_eff = ", np.round(sim_EM_pump.neff_all(), 4))
 
 q_AC = np.real(sim_EM_pump.kz_EM_all()[
-               EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
+               EM_mode_index_pump] - sim_EM_Stokes.kz_EM_all()[EM_mode_index_Stokes])
 print('Intermode q_AC (Hz) \n', q_AC)
 
 shift_Hz = 2e9
@@ -230,7 +230,7 @@ sim_AC = wguide.calc_AC_modes(
 selected_AC_modes = [7, 13, 23]
 print("AC modes selected for field plotting", selected_AC_modes)
 print("plotting acoustic modes")
-sim_AC.plot_modes(ivals=selected_AC_modes,
+sim_AC.plot_modes(mode_indices=selected_AC_modes,
                   num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1,
                   quiver_points=20, decorator=acdecorate, colorbar=True)
 
@@ -240,7 +240,7 @@ set_q_factor = 460.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival,fixed_Q=set_q_factor)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index,fixed_Q=set_q_factor)
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')

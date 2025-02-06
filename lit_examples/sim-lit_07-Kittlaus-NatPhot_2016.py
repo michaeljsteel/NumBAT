@@ -51,11 +51,11 @@ num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 80
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
-EM_ival_pump = 0
+EM_mode_index_pump = 0
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 0
+EM_mode_index_Stokes = 0
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = 'All'
+AC_mode_index = 'All'
 
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
@@ -87,7 +87,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
 
 sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 
-sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ivals=range(5),
+sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, mode_indices=range(5),
                          ylim_min=0.2, ylim_max=0.2, field_type='EM_E', )
 
 # Print the wavevectors of EM modes.
@@ -109,14 +109,14 @@ sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=s
 # Print the frequencies of AC modes.
 print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4))
 
-sim_AC.plot_modes( ivals=range(40))
+sim_AC.plot_modes( mode_indices=range(40))
 
 set_q_factor = 680.
 
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival,fixed_Q=set_q_factor)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index,fixed_Q=set_q_factor)
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')

@@ -227,7 +227,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
 
         if doplot: # Only worker 1 will ever do this
             print('Doing plot of modes', ik)
-            simres_EM.plot_modes(ivals=range(nmodes), prefix=f'{prefix}_{ik}', ticks=True)
+            simres_EM.plot_modes(mode_indices=range(nmodes), prefix=f'{prefix}_{ik}', ticks=True)
             print('Done plot of modes', ik)
 
         return (ik, tk, neff_k)
@@ -378,16 +378,16 @@ def do_main():
     # Values from Biryukov et al, Quantum Electronics 38, 620 (2008). DOI: 10.1070/QE2008v038n078ABEH013828
     fibpar = 2
 
-    match fibpar: 
+    match fibpar:
         case 1:
             n_1 = 3.5
             n_2 = 2.0
-            rcore = 2000  
+            rcore = 2000
             h_1 = 110
             h_2 = 210
             lam0 = 1700
         case 2:
-            rcore = 1328  
+            rcore = 1328
             n_1 = 1.49
             n_2 = 1.17
             h_1 = 213

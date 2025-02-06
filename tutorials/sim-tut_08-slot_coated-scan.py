@@ -42,9 +42,9 @@ slab_a_y = 300
 num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 40
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
@@ -79,11 +79,11 @@ def ac_mode_freqs(wid_x):
 
     # Calculate Electromagnetic modes.
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
-    #sim_EM_pump.plot_modes(ivals=range(5))
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
+    #sim_EM_pump.plot_modes(mode_indices=range(5))
 
     # Calculate Acoustic modes.
-    q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+    q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
     shift_Hz = 4e9
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
@@ -93,7 +93,7 @@ def ac_mode_freqs(wid_x):
     set_q_factor = 1000.
     gain_box = integration.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-        EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+        EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 
     # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
     freq_min = 4e9

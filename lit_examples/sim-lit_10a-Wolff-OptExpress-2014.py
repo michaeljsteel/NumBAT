@@ -48,11 +48,11 @@ num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 100
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
-EM_ival_pump = 0
+EM_mode_index_pump = 0
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 0
+EM_mode_index_Stokes = 0
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = "All"
+AC_mode_index = "All"
 
 # reuse_fields=True   # use saved data
 reuse_fields = False  # calculate from scratch
@@ -95,10 +95,10 @@ else:
 sim_EM_pump.analyse_symmetries(PointGroup.C2V)
 #sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
-sim_EM_pump.plot_modes( xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump], ylim_min=0.2, ylim_max=0.2, num_ticks=3, ticks=True,)
+sim_EM_pump.plot_modes( xlim_min=0.2, xlim_max=0.2, mode_indices=[EM_mode_index_pump], ylim_min=0.2, ylim_max=0.2, num_ticks=3, ticks=True,)
 
 if not reuse_fields:
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
     np.savez("wguide_data2", sim_EM_Stokes=sim_EM_Stokes)
 else:
     npzfile = np.load("wguide_data2.npz", allow_pickle=True)
@@ -115,7 +115,7 @@ for i, kz in enumerate(v_kz):
 n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("\n n_eff = ", np.round(n_eff_sim, 4))
 
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 print("\n AC wavenumber (1/m) = ", np.round(q_AC, 4))
 
 
@@ -146,7 +146,7 @@ for i, nu in enumerate(v_nu):
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 
 print('Gains by acoustic mode:')

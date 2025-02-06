@@ -228,12 +228,20 @@ def get_gains_and_qs(
     sim_EM_Stokes,
     sim_AC,
     q_AC,
-    EM_ival_pump=0,
-    EM_ival_Stokes=0,
-    AC_ival=0,
+    EM_mode_index_pump=0,
+    EM_mode_index_Stokes=0,
+    AC_mode_index=0,
     fixed_Q=None,
     typ_select_out=None,
+    **kwargs
 ):
+
+    if 'EM_ival_pump' in kwargs:
+
+        reporting.report_and_exit('The parameter EM_ival_pump is now called EM_mode_index_pump')
+
+    if 'EM_ival_Stokes' in kwargs:
+        reporting.report_and_exit('The parameter EM_ival_Stokes is now called EM_mode_index_Stokes')
 
     # TODO: get rid of this old backend
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
@@ -241,12 +249,13 @@ def get_gains_and_qs(
         sim_EM_Stokes,
         sim_AC,
         q_AC,
-        EM_ival_pump,
-        EM_ival_Stokes,
-        AC_ival,
+        EM_mode_index_pump,
+        EM_mode_index_Stokes,
+        AC_mode_index,
         fixed_Q,
         typ_select_out,
         new_call_format=True,
+
     )
 
     gain = GainProps()
@@ -258,10 +267,10 @@ def get_gains_and_qs(
     gain._set_linewidth_Hz(linewidth_Hz)
     gain._set_Q_factor(Q_factors)
 
-    gain.set_allowed_EM_pumps(EM_ival_pump)
-    gain.set_allowed_EM_Stokes(EM_ival_Stokes)
-    gain.set_allowed_AC(AC_ival)
-    gain.set_EM_modes(EM_ival_pump, EM_ival_Stokes)
+    gain.set_allowed_EM_pumps(EM_mode_index_pump)
+    gain.set_allowed_EM_Stokes(EM_mode_index_Stokes)
+    gain.set_allowed_AC(AC_mode_index)
+    gain.set_EM_modes(EM_mode_index_pump, EM_mode_index_Stokes)
 
     gain.check_acoustic_expansion_size()
 
@@ -273,9 +282,9 @@ def gain_and_qs(
     simres_EM_Stokes,
     simres_AC,
     q_AC,
-    EM_ival_pump=0,
-    EM_ival_Stokes=0,
-    AC_ival=0,
+    EM_mode_index_pump=0,
+    EM_mode_index_Stokes=0,
+    AC_mode_index=0,
     fixed_Q=None,
     typ_select_out=None,
     new_call_format=False,
@@ -315,19 +324,19 @@ def gain_and_qs(
             q_AC  (float): Propagation constant of acoustic modes.
 
         Keyword Args:
-            EM_ival_pump  (int/string): Specify mode number of EM mode 1 (pump mode)
+            EM_mode_index_pump  (int/string): Specify mode number of EM mode 1 (pump mode)
                 to calculate interactions for.
                 Numbering is python index so runs from 0 to num_EM_modes-1,
                 with 0 being fundamental mode (largest prop constant).
                 Can also set to 'All' to include all modes.
 
-            EM_ival_Stokes  (int/string): Specify mode number of EM mode 2 (stokes mode)
+            EM_mode_index_Stokes  (int/string): Specify mode number of EM mode 2 (stokes mode)
                 to calculate interactions for.
                 Numbering is python index so runs from 0 to num_EM_modes-1,
                 with 0 being fundamental mode (largest prop constant).
                 Can also set to 'All' to include all modes.
 
-            AC_ival  (int/string): Specify mode number of AC mode
+            AC_mode_index  (int/string): Specify mode number of AC mode
                 to calculate interactions for.
                 Numbering is python index so runs from 0 to num_AC_modes-1,
                 with 0 being fundamental mode (largest prop constant).
@@ -370,18 +379,18 @@ def gain_and_qs(
             "Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()"
         )
 
-    if EM_ival_pump == "All":
-        EM_ival_pump_fortran = -1
+    if EM_mode_index_pump == "All":
+        EM_mode_index_pump_fortran = -1
     else:
-        EM_ival_pump_fortran = EM_ival_pump + 1  # convert back to Fortran indexing
-    if EM_ival_Stokes == "All":
-        EM_ival_Stokes_fortran = -1
+        EM_mode_index_pump_fortran = EM_mode_index_pump + 1  # convert back to Fortran indexing
+    if EM_mode_index_Stokes == "All":
+        EM_mode_index_Stokes_fortran = -1
     else:
-        EM_ival_Stokes_fortran = EM_ival_Stokes + 1  # convert back to Fortran indexing
-    if AC_ival == "All":
-        AC_ival_fortran = -1
+        EM_mode_index_Stokes_fortran = EM_mode_index_Stokes + 1  # convert back to Fortran indexing
+    if AC_mode_index == "All":
+        AC_mode_index_fortran = -1
     else:
-        AC_ival_fortran = AC_ival + 1  # convert back to Fortran indexing
+        AC_mode_index_fortran = AC_mode_index + 1  # convert back to Fortran indexing
 
     # TODO : bad !
     sim_EM_pump = simres_EM_pump._sim
@@ -417,14 +426,14 @@ def gain_and_qs(
 
         # for n in range(nnodes):
         #     for x in range(ncomps):
-        #         for ival in range(n_modes_EM_pump):
-        #             trimmed_EM_pump_field[x, n, ival, el] = sim_EM_pump.fem_evecs[
-        #                 x, n, ival, new_el
+        #         for mode_index in range(n_modes_EM_pump):
+        #             trimmed_EM_pump_field[x, n, mode_index, el] = sim_EM_pump.fem_evecs[
+        #                 x, n, mode_index, new_el
         #             ]
 
-        #         for ival in range(n_modes_EM_Stokes):
-        #             trimmed_EM_Stokes_field[x, n, ival, el] = sim_EM_Stokes.fem_evecs[
-        #                 x, n, ival, new_el
+        #         for mode_index in range(n_modes_EM_Stokes):
+        #             trimmed_EM_Stokes_field[x, n, mode_index, el] = sim_EM_Stokes.fem_evecs[
+        #                 x, n, mode_index, new_el
         #             ]
 
     relevant_eps_effs = []  # TODO: move this into ElProps
@@ -499,9 +508,9 @@ def gain_and_qs(
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
         sim_AC.n_modes,
-        EM_ival_pump_fortran,
-        EM_ival_Stokes_fortran,
-        AC_ival_fortran,
+        EM_mode_index_pump_fortran,
+        EM_mode_index_Stokes_fortran,
+        AC_mode_index_fortran,
         fem_ac.n_msh_el,
         fem_ac.n_msh_pts,
         fem_ac.elnd_to_mshpt,
@@ -532,9 +541,9 @@ def gain_and_qs(
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
         sim_AC.n_modes,
-        EM_ival_pump_fortran,
-        EM_ival_Stokes_fortran,
-        AC_ival_fortran,
+        EM_mode_index_pump_fortran,
+        EM_mode_index_Stokes_fortran,
+        AC_mode_index_fortran,
         fem_ac.n_msh_el,
         fem_ac.n_msh_pts,
         fem_ac.elnd_to_mshpt,
@@ -633,7 +642,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
 
     sym_list = []
 
-    for ival in range(len(simres.eigs_kz)):
+    for mode_index in range(len(simres.eigs_kz)):
         # dense triangulation with multiple points
         v_x6p = np.zeros(6 * simres.n_msh_el)
         v_y6p = np.zeros(6 * simres.n_msh_el)
@@ -659,8 +668,8 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
                 # values
                 v_x6p[i] = v_nd_xy[i_ex, 0]
                 v_y6p[i] = v_nd_xy[i_ex, 1]
-                v_Ex6p[i] = mode_fields[0, i_node, ival, i_el]
-                v_Ey6p[i] = mode_fields[1, i_node, ival, i_el]
+                v_Ex6p[i] = mode_fields[0, i_node, mode_index, i_el]
+                v_Ey6p[i] = mode_fields[1, i_node, mode_index, i_el]
                 i += 1
 
         # dense triangulation with unique points
@@ -785,7 +794,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         #     cax = divider.append_axes("right", size="5%", pad=0.1)
         #     cbar = plt.colorbar(im, cax=cax)
         # plt.savefig('fields/field_%(i)i-ymirror.pdf' %
-        #         {'i' : ival}, bbox_inches='tight')
+        #         {'i' : mode_index}, bbox_inches='tight')
         # plt.close()
         # v_plots = [np.real(m_Ex_xmirror),np.real(m_Ey_xmirror),np.real(m_Ez_xmirror),
         #     np.imag(m_Ex_xmirror),np.imag(m_Ey_xmirror),np.imag(m_Ez_xmirror)]
@@ -800,7 +809,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         #     cax = divider.append_axes("right", size="5%", pad=0.1)
         #     cbar = plt.colorbar(im, cax=cax)
         # plt.savefig('fields/field_%(i)i-xmirror.pdf' %
-        #         {'i' : ival}, bbox_inches='tight')
+        #         {'i' : mode_index}, bbox_inches='tight')
         # plt.close()
         # v_plots = [np.real(m_Ex_rotated),np.real(m_Ey_rotated),np.real(m_Ez_rotated),
         #     np.imag(m_Ex_rotated),np.imag(m_Ey_rotated),np.imag(m_Ez_rotated)]
@@ -815,7 +824,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         #     cax = divider.append_axes("right", size="5%", pad=0.1)
         #     cbar = plt.colorbar(im, cax=cax)
         # plt.savefig('fields/field_%(i)i-rotated.pdf' %
-        #         {'i' : ival}, bbox_inches='tight')
+        #         {'i' : mode_index}, bbox_inches='tight')
         # plt.close()
         # v_plots = [m_ReEx,m_ReEy,m_ReEz,
         #     m_ImEx,m_ImEy,m_ImEz]
@@ -830,7 +839,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         #     cax = divider.append_axes("right", size="5%", pad=0.1)
         #     cbar = plt.colorbar(im, cax=cax)
         # plt.savefig('fields/field_%(i)i.pdf' %
-        #         {'i' : ival}, bbox_inches='tight')
+        #         {'i' : mode_index}, bbox_inches='tight')
         # plt.close()
 
     return sym_list
@@ -879,7 +888,7 @@ def grad_u(dx, dy, u_mat, q_AC):
     return del_u_mat, del_u_mat_star
 
 
-def comsol_fields(data_file, n_points, ival=0):
+def comsol_fields(data_file, n_points, mode_index=0):
     """Load Comsol field data on (assumed) grid mesh."""
 
     with open(data_file, "rt", encoding="ascii") as csvfile:
@@ -896,9 +905,9 @@ def comsol_fields(data_file, n_points, ival=0):
             row = [float(x) for x in row]
             x_coord.append(row[0])
             y_coord.append(row[1])
-            u_x.append(row[(ival * 6) + 2] + 1j * row[(ival * 6) + 3])
-            u_y.append(row[(ival * 6) + 4] + 1j * row[(ival * 6) + 5])
-            u_z.append(row[(ival * 6) + 6] + 1j * row[(ival * 6) + 7])
+            u_x.append(row[(mode_index * 6) + 2] + 1j * row[(mode_index * 6) + 3])
+            u_y.append(row[(mode_index * 6) + 4] + 1j * row[(mode_index * 6) + 5])
+            u_z.append(row[(mode_index * 6) + 6] + 1j * row[(mode_index * 6) + 7])
 
     x_coord = np.array(x_coord).reshape(n_points, n_points)
     y_coord = np.array(y_coord).reshape(n_points, n_points)
@@ -921,9 +930,9 @@ def interp_py_fields(
     sim_AC,
     q_AC,
     n_points,
-    EM_ival_pump=0,
-    EM_ival_Stokes=0,
-    AC_ival=0,
+    EM_mode_index_pump=0,
+    EM_mode_index_Stokes=0,
+    AC_mode_index=0,
 ):
     """Interpolate fields from FEM mesh to square grid."""
 
@@ -941,10 +950,10 @@ def interp_py_fields(
         for n in range(nnodes):
             for x in range(ncomps):
                 trimmed_EM_field_p[x, n, el] = sim_EM_pump.fem_evecs[
-                    x, n, EM_ival_pump, new_el
+                    x, n, EM_mode_index_pump, new_el
                 ]
                 trimmed_EM_field_S[x, n, el] = sim_EM_Stokes.fem_evecs[
-                    x, n, EM_ival_Stokes, new_el
+                    x, n, EM_mode_index_Stokes, new_el
                 ]
             trimmed_EM_n[0, n, el] = sim_EM_pump.ls_material[0, n, new_el]
 
@@ -999,9 +1008,9 @@ def interp_py_fields(
             # values
             v_x6p[i] = v_nd_xy[i_ex, 0]
             v_y6p[i] = v_nd_xy[i_ex, 1]
-            v_ux6p[i] = sim_AC.fem_evecs[0, i_node, AC_ival, i_el]
-            v_uy6p[i] = sim_AC.fem_evecs[1, i_node, AC_ival, i_el]
-            v_uz6p[i] = sim_AC.fem_evecs[2, i_node, AC_ival, i_el]
+            v_ux6p[i] = sim_AC.fem_evecs[0, i_node, AC_mode_index, i_el]
+            v_uy6p[i] = sim_AC.fem_evecs[1, i_node, AC_mode_index, i_el]
+            v_uz6p[i] = sim_AC.fem_evecs[2, i_node, AC_mode_index, i_el]
             v_Ex6p_E_p[i] = trimmed_EM_field_p[0, i_node, i_el]
             v_Ey6p_E_p[i] = trimmed_EM_field_p[1, i_node, i_el]
             v_Ez6p_E_p[i] = trimmed_EM_field_p[2, i_node, i_el]
@@ -1118,7 +1127,7 @@ def grid_integral(
     u_mat,
     del_u_mat,
     del_u_mat_star,
-    AC_ival,
+    AC_mode_index,
 ):
     """Quadrature integration of AC energy density, AC loss (alpha), and PE gain."""
 
@@ -1137,7 +1146,7 @@ def grid_integral(
         for r in range(n_pts_x):
             I_en[r] = np.trapz(np.imag(integrand_AC[r, :]), dx=dy)
         F_AC_energy += 1j * np.trapz(I_en, dx=dx)
-    energy_py = 2 * F_AC_energy * sim_AC_Omega_AC[AC_ival] ** 2
+    energy_py = 2 * F_AC_energy * sim_AC_Omega_AC[AC_mode_index] ** 2
 
     # AC loss (alpha) integral
     F_alpha = 0
@@ -1158,7 +1167,7 @@ def grid_integral(
                     for r in range(n_pts_x):
                         I_en[r] = np.trapz(np.imag(integrand[r, :]), dx=dy)
                     F_alpha += 1j * np.trapz(I_en, dx=dx)
-    alpha_py = np.real(F_alpha * sim_AC_Omega_AC[AC_ival] ** 2 / energy_py)
+    alpha_py = np.real(F_alpha * sim_AC_Omega_AC[AC_mode_index] ** 2 / energy_py)
 
     # PE gain integral
 
@@ -1189,7 +1198,7 @@ def grid_integral(
 
 
 def gain_python(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, comsol_ivals=1
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, comsol_data_file, comsol_mode_indices=1
 ):
     """Calculate interaction integrals and SBS gain in python.
     Load in acoustic mode displacement and calculate gain from this also.
@@ -1199,8 +1208,8 @@ def gain_python(
     return
     n_modes_EM = sim_EM_pump.n_modes
     # n_modes_AC = sim_AC.n_modes
-    EM_ival_pump = 0
-    EM_ival_Stokes = 0
+    EM_mode_index_pump = 0
+    EM_mode_index_Stokes = 0
 
     n_points = 100
     n_points_comsol_data = 100
@@ -1210,20 +1219,20 @@ def gain_python(
     #     if el_typ+1 in sim_AC.typ_el_AC:
     #         relevant_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
 
-    energy_py = np.zeros(comsol_ivals, dtype=np.complex128)
-    alpha_py = np.zeros(comsol_ivals)
+    energy_py = np.zeros(comsol_mode_indices, dtype=np.complex128)
+    alpha_py = np.zeros(comsol_mode_indices)
     Q_PE_py = np.zeros(
-        (len(sim_EM_pump.eigs_kz), len(sim_EM_Stokes.eigs_kz), comsol_ivals),
+        (len(sim_EM_pump.eigs_kz), len(sim_EM_Stokes.eigs_kz), comsol_mode_indices),
         dtype=np.complex128,
     )
-    energy_comsol = np.zeros(comsol_ivals, dtype=np.complex128)
-    alpha_comsol = np.zeros(comsol_ivals)
+    energy_comsol = np.zeros(comsol_mode_indices, dtype=np.complex128)
+    alpha_comsol = np.zeros(comsol_mode_indices)
     Q_PE_comsol = np.zeros(
-        (len(sim_EM_pump.eigs_kz), len(sim_EM_Stokes.eigs_kz), comsol_ivals),
+        (len(sim_EM_pump.eigs_kz), len(sim_EM_Stokes.eigs_kz), comsol_mode_indices),
         dtype=np.complex128,
     )
 
-    for AC_ival in range(comsol_ivals):  # Comsol data only contains some AC modes
+    for AC_mode_index in range(comsol_mode_indices):  # Comsol data only contains some AC modes
         # Interpolate NumBAT FEM fields onto grid
         (
             n_pts_x,
@@ -1242,16 +1251,16 @@ def gain_python(
             sim_AC,
             q_AC,
             n_points,
-            EM_ival_pump=EM_ival_pump,
-            EM_ival_Stokes=EM_ival_Stokes,
-            AC_ival=AC_ival,
+            EM_mode_index_pump=EM_mode_index_pump,
+            EM_mode_index_Stokes=EM_mode_index_Stokes,
+            AC_mode_index=AC_mode_index,
         )
 
         # Carry out integration
         (
-            energy_py[AC_ival],
-            alpha_py[AC_ival],
-            Q_PE_py[EM_ival_pump, EM_ival_Stokes, AC_ival],
+            energy_py[AC_mode_index],
+            alpha_py[AC_mode_index],
+            Q_PE_py[EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index],
         ) = grid_integral(
             m_n,
             sim_AC.structure,
@@ -1265,12 +1274,12 @@ def gain_python(
             u_mat,
             del_u_mat,
             del_u_mat_star,
-            AC_ival,
+            AC_mode_index,
         )
 
         # Load Comsol FEM fields onto grid - acoustic displacement fields
         x_coord, y_coord, u_mat_comsol = comsol_fields(
-            comsol_data_file, n_points_comsol_data, ival=AC_ival
+            comsol_data_file, n_points_comsol_data, mode_index=AC_mode_index
         )
         dx_comsol = x_coord[-1, 0] - x_coord[-2, 0]
         dy_comsol = y_coord[0, -1] - y_coord[0, -2]
@@ -1280,9 +1289,9 @@ def gain_python(
         n_pts_x_comsol = n_points_comsol_data
         n_pts_y_comsol = n_points_comsol_data
         (
-            energy_comsol[AC_ival],
-            alpha_comsol[AC_ival],
-            Q_PE_comsol[EM_ival_pump, EM_ival_Stokes, AC_ival],
+            energy_comsol[AC_mode_index],
+            alpha_comsol[AC_mode_index],
+            Q_PE_comsol[EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index],
         ) = grid_integral(
             m_n,
             sim_AC.structure,
@@ -1296,29 +1305,29 @@ def gain_python(
             u_mat_comsol,
             del_u_mat_comsol,
             del_u_mat_star_comsol,
-            AC_ival,
+            AC_mode_index,
         )
 
     # Note this is only the PE contribution to gain.
     gain_PE_py = (
         2
         * sim_EM_pump.omega_EM
-        * sim_AC.Omega_AC[:comsol_ivals]
+        * sim_AC.Omega_AC[:comsol_mode_indices]
         * np.real(Q_PE_py * np.conj(Q_PE_py))
     )
-    normal_fact_py = np.zeros((n_modes_EM, n_modes_EM, comsol_ivals), dtype=complex)
+    normal_fact_py = np.zeros((n_modes_EM, n_modes_EM, comsol_mode_indices), dtype=complex)
     gain_PE_comsol = (
         2
         * sim_EM_pump.omega_EM
-        * sim_AC.Omega_AC[:comsol_ivals]
+        * sim_AC.Omega_AC[:comsol_mode_indices]
         * np.real(Q_PE_comsol * np.conj(Q_PE_comsol))
     )
-    normal_fact_comsol = np.zeros((n_modes_EM, n_modes_EM, comsol_ivals), dtype=complex)
+    normal_fact_comsol = np.zeros((n_modes_EM, n_modes_EM, comsol_mode_indices), dtype=complex)
     for i in range(n_modes_EM):
         P1 = sim_EM_pump.EM_mode_power[i]
         for j in range(n_modes_EM):
             P2 = sim_EM_Stokes.EM_mode_power[j]
-            for k in range(comsol_ivals):
+            for k in range(comsol_mode_indices):
                 P3_py = energy_py[k]
                 normal_fact_py[i, j, k] = P1 * P2 * P3_py * alpha_py[k]
                 P3_comsol = energy_comsol[k]

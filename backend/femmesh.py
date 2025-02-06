@@ -492,7 +492,7 @@ class FemMesh:
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
 
-        # Plots show that these are equivalent meshes with different mesh point orderings
+        # Plots show that these are equmode_indexent meshes with different mesh point orderings
         # triang6p: tabnod_py[i_el, i_node] ordering: sequence of numbers reading out the elnd_to_mshpt
         # triang1p: tabnod_py[i_el, i_node] ordering: straight node ordering 0, 1, 2, ..5, 6+(0, 1, 2, ..5), 12+ 0, 1, 2, ..5
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)

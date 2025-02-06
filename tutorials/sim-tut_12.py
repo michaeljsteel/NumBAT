@@ -138,7 +138,7 @@ def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbas
         if False and doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 multiprocessing.current_process().name, ik, len(kvec)-1))
-            simres_EM.plot_modes(ivals=range(nmodes),
+            simres_EM.plot_modes(mode_indices=range(nmodes),
                                       prefix=prefix+'_%d'%ik, ticks=True)
 
         return (ik, tk, neff_k)

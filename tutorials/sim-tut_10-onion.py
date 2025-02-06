@@ -26,9 +26,9 @@ inc_shape = 'onion'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 20
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(10, sys.argv)
 
@@ -70,7 +70,7 @@ new_calcs = True
 # Calculate Electromagnetic modes.
 if new_calcs:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
     #sim_EM_pump.save_simulation('tut_10_pump')
     #sim_EM_Stokes.save_simulation('tut_10_stokes')
@@ -90,18 +90,18 @@ print("n_eff", np.round(n_eff_sim, 4))
 
 # # Plot the E fields of the EM modes fields
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
-# # Only plot fields of fundamental (ival = 0) mode.
+# # Only plot fields of fundamental (mode_index = 0) mode.
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, ivals=range(10), contours=True,
+                          ylim_max=0.3, mode_indices=range(10), contours=True,
                            ticks=True, quiver_points=20)
 
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, ivals=range(10), contours=True, field_type='EM_H',
+                          ylim_max=0.3, mode_indices=range(10), contours=True, field_type='EM_H',
                            ticks=True, quiver_points=20)
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-               sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) -
+               sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
 # Calculate Acoustic modes.
 if new_calcs:
@@ -116,14 +116,14 @@ print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu):
     print(f'{i:3d}  {np.real(nu)*1e-9:.4e}')
 
-sim_AC.plot_modes(contours=False, ticks=True, ivals=[10], quiver_points=20)
+sim_AC.plot_modes(contours=False, ticks=True, mode_indices=[10], quiver_points=20)
 
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
-    EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
+    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # Hz

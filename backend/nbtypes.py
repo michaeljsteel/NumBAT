@@ -140,8 +140,11 @@ class FieldTag:
     '''Class for transferring between user readable and code name versions of field components.'''
 
     @staticmethod  # make plain module method
-    def make_from_field(ft):
+    def make_from_field(ft, force_AC=False):
         '''Create a FieldTag from just the field type. Defaults to x component.'''
+
+        if force_AC:
+            ft=FieldType.AC
         return FieldTag.make_from_field_and_component(ft, 'x')
 
     @staticmethod  # make plain module method
@@ -312,8 +315,15 @@ class FieldTag:
     def set_to_minor(self):
         self._f_code = self.minor_component_as_F()
 
-    def mode_type_as_str(self):
+    def domain_type_as_str(self):
         return "acoustic" if self.is_AC() else "optical"
+
+
+    def field_type_as_str(self):
+        return {FieldType.EM_E: 'electric',
+                FieldType.EM_H: 'magnetic',
+                FieldType.AC: 'displacement'
+                }[self._field_type]
 
     def field_type_label(self):
         if self.is_AC():
@@ -352,5 +362,8 @@ class FieldTag:
         tag = FieldTag.make_from_field_and_component(self._field_type, cc)
         return tag
 
-    def as_field_code(self):
-        return FieldCode(self._field_type)
+    #def as_field_code(self):
+    #    return FieldCode(self._field_type)
+
+    def as_field_type(self):
+        return self._field_type

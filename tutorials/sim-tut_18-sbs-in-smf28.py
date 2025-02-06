@@ -32,9 +32,9 @@ domain_y = domain_x
 num_modes_EM_pump = 40
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 200
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(18, sys.argv)
 
@@ -78,7 +78,7 @@ recalc_fields=True     # run the calculation from scratch
 # Calculate Electromagnetic Modes
 if recalc_fields:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 #    sim_EM_pump.save_simulation('tut_18_pump')
 #    sim_EM_Stokes.save_simulation('tut_18_stokes')
@@ -92,7 +92,7 @@ else:
 print('\nPlotting EM fields')
 #trim=0.4
 trim=0
-sim_EM_pump.plot_modes(ivals=range(5),
+sim_EM_pump.plot_modes(mode_indices=range(5),
         xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Display the wavevectors of EM modes.
@@ -105,7 +105,7 @@ n_eff_sim = np.real(sim_EM_pump.neff(0))
 print(f"n_eff = {n_eff_sim:.4e}".format())
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
 
 # expected location of longitudinal modes
@@ -138,7 +138,7 @@ print('\nCalculating gains')
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 
 # np.savez('wguide_data_AC_gain', SBS_gain=SBS_gain, SBS_gain_PE=SBS_gain_PE, SBS_gain_MB=SBS_gain_MB, alpha=alpha)
 # npzfile = np.load('wguide_data_AC_gain.npz')

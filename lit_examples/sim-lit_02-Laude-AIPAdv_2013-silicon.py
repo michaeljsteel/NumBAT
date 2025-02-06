@@ -35,9 +35,9 @@ num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 #num_modes_AC = 800
 num_modes_AC = 300
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 
 prefix, refine_fac = starter.read_args(2, sys.argv)
@@ -56,9 +56,9 @@ n_eff = 3.4
 
 # Calculate Electromagnetic modes.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
-sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ivals=[EM_ival_pump],
+sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, mode_indices=[EM_mode_index_pump],
                          ylim_min=0.2, ylim_max=0.2, )
 
 # Print the wavevectors of EM modes.
@@ -68,7 +68,7 @@ print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 # Calculate the EM effective index of the waveguide.
 print("n_eff = ", np.round(sim_EM_pump.neff_all(), 4))
 
-q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
+q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_mode_index_pump] - sim_EM_Stokes.kz_EM_all()[EM_mode_index_Stokes])
 print(q_AC)
 
 shift_Hz = 31e9
@@ -84,7 +84,7 @@ print('Freq of AC modes (GHz) \n', np.round(np.real(sim_AC.nu_AC_all())*1e-9, 4)
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')

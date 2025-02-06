@@ -50,11 +50,11 @@ num_modes_AC = 20
 
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
-EM_ival_pump = 0
+EM_mode_index_pump = 0
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 0
+EM_mode_index_Stokes = 0
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = 'All'
+AC_mode_index = 'All'
 
 # Step 4
 # Create the primary NumBAT application object and set the file output prefix
@@ -102,7 +102,7 @@ for (i, kz) in enumerate(v_kz):
 # Calculate the Electromagnetic modes of the Stokes field.
 # For an idealised backward SBS simulation the Stokes modes are identical
 # to the pump modes but travel in the opposite direction.
-sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 # Alternatively, solve again directly
 # sim_EM_Stokes = wguide.calc_EM_modes(lambda_nm, num_modes_EM_Stokes, n_eff, Stokes=True)
@@ -134,20 +134,20 @@ set_q_factor = 1000.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 #SBS_gain_tot, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.##gain_and_qs(
-  #  sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
-  #  EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+  #  sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
+  #  EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 
 gain = integration.get_gains_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_ival_pump=EM_ival_pump,
-    EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival, fixed_Q=set_q_factor)
+    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
+    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 
 # Step 13
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:
 
-SBS_gain_PE_ij = gain.gain_PE_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
-SBS_gain_MB_ij = gain.gain_MB_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
-SBS_gain_tot_ij = gain.gain_total_all_by_em_modes(EM_ival_pump, EM_ival_Stokes)
+SBS_gain_PE_ij = gain.gain_PE_all_by_em_modes(EM_mode_index_pump, EM_mode_index_Stokes)
+SBS_gain_MB_ij = gain.gain_MB_all_by_em_modes(EM_mode_index_pump, EM_mode_index_Stokes)
+SBS_gain_tot_ij = gain.gain_total_all_by_em_modes(EM_mode_index_pump, EM_mode_index_Stokes)
 
 # Print the Backward SBS gain of the AC modes.
 print("\nContributions to SBS gain [1/(WM)]")

@@ -34,9 +34,9 @@ slab_a_y = 800
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 60
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(4, sys.argv, sub='b')
 
@@ -65,7 +65,7 @@ n_eff = wguide.get_material('a').refindex_n-0.1
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 
-sim_EM_pump.plot_modes(ivals=[EM_ival_pump],
+sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump],
                          xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.2)
 
 # Print the wavevectors of EM modes.
@@ -84,7 +84,7 @@ set_q_factor = 306
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(sim_AC.nu_AC_all()[0]) - 2e9  # GHz

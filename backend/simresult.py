@@ -21,7 +21,6 @@ import numpy as np
 
 import copy
 
-import numbat
 from modes import ModeAC, ModeEM, ModeInterpolator
 
 from plottools import progressBar
@@ -30,7 +29,6 @@ import reporting
 
 from nbtypes import (
     FieldType,
-    FieldCode,
     FieldTag,
     PointGroup,
     SymRep,
@@ -44,10 +42,10 @@ from fortran import nb_fortran
 class SimResult:
 
     def __init__(self, sim):
-        self._structure = ( sim.structure )
+        self._structure = sim.structure
         # TODO: limit and ultimately remove access to these
         self._sim = sim
-        self._mode_plot_helper = None
+        self._mode_interpolator = None
 
         self.n_modes = sim.n_modes
         self.mode_set = []
@@ -66,30 +64,37 @@ class SimResult:
         raise NotImplementedError
 
     def clean_for_pickle(self):
-        if self._mode_plot_helper is not None:
-            self._mode_plot_helper.cleanup()
+        if self._mode_interpolator is not None:
+            self._mode_interpolator.cleanup()
 
         if self.is_AC():
             # Acoustic sims can contain EM sims which must also be clean for saving
             if self._sim.simres_EM is not None:  # TODO: to clean_for_asve9
                 self._sim.simres_EM.clean_for_pickle()
 
-    def get_modes_on_fem_mesh(self, md, field_type):
+    def get_mode_fields_on_fem_mesh(self, md, field_type):
 
         fem_evecs = self.fem_evecs_for_ft(field_type)
         n_msh_el = self.fem_mesh.n_msh_el
 
-        v_Fx6p = np.zeros(6*n_msh_el, dtype=np.complex128)
-        v_Fy6p = np.zeros(6*n_msh_el, dtype=np.complex128)
-        v_Fz6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+        # v_Fx6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+        # v_Fy6p = np.zeros(6*n_msh_el, dtype=np.complex128)
+        # v_Fz6p = np.zeros(6*n_msh_el, dtype=np.complex128)
 
-        i = 0
-        for i_el in range(n_msh_el):
-            for i_node in range(6):  # TODO: make this one xyz array so we can broadcast
-                v_Fx6p[i] = fem_evecs[0, i_node, md, i_el]
-                v_Fy6p[i] = fem_evecs[1, i_node, md, i_el]
-                v_Fz6p[i] = fem_evecs[2, i_node, md, i_el]
-                i += 1
+        # # i = 0
+        # for i_el in range(n_msh_el):
+        #     for i_node in range(6):  # TODO: make this one xyz array so we can broadcast
+        #         v_Fx6p[i] = fem_evecs[0, i_node, md, i_el]
+        #         v_Fy6p[i] = fem_evecs[1, i_node, md, i_el]
+        #         v_Fz6p[i] = fem_evecs[2, i_node, md, i_el]
+        #         i += 1
+
+        # This is slice equiv of above loops
+        # The ordering matches the xy coords defind at XXXXXX
+
+        v_Fx6p = np.array(fem_evecs[0, :6, md, :].T.flat)
+        v_Fy6p = np.array(fem_evecs[1, :6, md, :].T.flat)
+        v_Fz6p = np.array(fem_evecs[2, :6, md, :].T.flat)
 
         v_Fa6p = np.sqrt(np.abs(v_Fx6p)**2 +
                         np.abs(v_Fy6p)**2 + np.abs(v_Fz6p)**2)
@@ -103,9 +108,9 @@ class SimResult:
 
     # TODO: make this a property?
     def get_mode_interpolator(self):
-        if self._mode_plot_helper is None:
-            self._mode_plot_helper = ModeInterpolator(self)
-        return self._mode_plot_helper
+        if self._mode_interpolator is None:
+            self._mode_interpolator = ModeInterpolator(self)
+        return self._mode_interpolator
 
     def get_xyshift(self):
         if self.is_EM():
@@ -187,26 +192,26 @@ class SimResult:
 
     def plot_modes(
         self,
-        ivals=None,
+        mode_indices=None,
         n_points=501,
-        quiver_points=30,
+        field_type=FieldType.EM_E,
+        comps=(),
+        prefix="",
+        suffix="",
         xlim_min=None,
         xlim_max=None,
         ylim_min=None,
         ylim_max=None,
         aspect = 1.0,
-        field_type="EM_E",
         hide_vector_field=False,
+        quiver_points=30,
+        ticks=True,
         num_ticks=None,
         colorbar=True,
         contours=False,
         contour_lst=None,
-        prefix="",
-        suffix="",
-        ticks=True,
-        comps=(),
-        decorator=None,
         suppress_imimre=True,
+        decorator=None,
         **kwargs
     ):
         """Plot E or H fields of EM mode, or the AC modes displacement fields.
@@ -215,7 +220,7 @@ class SimResult:
             sim_result : A ``Struct`` instance that has had calc_modes calculated
 
         Keyword Args:
-            ivals  (list): mode numbers of modes you wish to plot
+            mode_indices  (list): mode numbers of modes you wish to plot
 
             n_points  (int): The number of points across unitcell to
                 interpolate the field onto
@@ -248,59 +253,69 @@ class SimResult:
         """
 
         if 'ivals' in kwargs:
-            reporting.report_and_exit("The parameter 'ivals' has been renamed to 'mode_indices'.")
+            reporting.deprecated_parameter_exit('ivals', 'mode_indices',
+                                                'SimResult.plot_modes')
+        d_args = locals()
+        del d_args['self']
 
-        field_code = FieldCode(field_type, self.is_AC())
-
-        if field_code.is_EM_H():
+        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        if ftag.is_EM_H():
             self.make_H_fields()
 
-        modetype = field_code.mode_type_as_str()
-        ival_range = ivals if ivals is not None else range(self.n_modes)
+        domain_s = ftag.domain_type_as_str()
+        field_s = ftag.field_type_as_str()
 
-        ntoplot = len(ival_range)
+
+        md_range = mode_indices if mode_indices is not None else range(self.n_modes)
+
+        ntoplot = len(md_range)
 
         if ntoplot > 1:
-            print(f"Plotting {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+            print(f"Plotting {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
         else:
-            print(f"Plotting {modetype} mode m={ival_range[0]}.")
+            print(f"Plotting {field_s} field of {domain_s} mode m={md_range[0]}.")
 
-        mode_interpolator = self.get_mode_interpolator()
-        mode_interpolator.define_plot_grid_2D(n_pts=n_points)
+        md_interp = self.get_mode_interpolator()
+        md_interp.define_plot_grid_2D(n_pts=n_points)
 
         plot_params = plotmodes.PlotParams2D()
 
-        plot_params.update(
-            {
-                'xlim_min': xlim_min,
-                'xlim_max': xlim_max,
-                'ylim_min': ylim_min,
-                'ylim_max': ylim_max,
-                'aspect': aspect,
-                #'field_type': field_type,
-                'field_type': field_code.as_field_type(),
-                'hide_vector_field': hide_vector_field,
-                'quiver_points': quiver_points,
-                'num_ticks': num_ticks,
-                'colorbar': colorbar,
-                'contours': contours,
-                'contour_lst': contour_lst,
-                'prefix': prefix,
-                'suffix': suffix,
-                'ticks': ticks,
-                'decorator': decorator,
-                'suppress_imimre': suppress_imimre,
-            }
-        )
+        plot_params.update(d_args)
+        plot_params['field_type'] = ftag.as_field_type()
 
-        for m in progressBar(ival_range, prefix="  Progress:", length=20):
-                self.get_mode(m).plot_mode(comps, field_code.as_field_type(), plot_params = plot_params)
+
+        # plot_params.update(
+        #     {
+        #         'xlim_min': xlim_min,
+        #         'xlim_max': xlim_max,
+        #         'ylim_min': ylim_min,
+        #         'ylim_max': ylim_max,
+        #         'aspect': aspect,
+        #         #'field_type': field_type,
+        #         'field_type': ftag.as_field_type(),
+        #         'hide_vector_field': hide_vector_field,
+        #         'quiver_points': quiver_points,
+        #         'num_ticks': num_ticks,
+        #         'colorbar': colorbar,
+        #         'contours': contours,
+        #         'contour_lst': contour_lst,
+        #         'prefix': prefix,
+        #         'suffix': suffix,
+        #         'ticks': ticks,
+        #         'decorator': decorator,
+        #         'suppress_imimre': suppress_imimre,
+        #     }
+        # )
+
+        for m in progressBar(md_range, prefix="  Progress:", length=20):
+                self.get_mode(m).plot_mode(comps,
+                                           ftag.as_field_type(), plot_params = plot_params)
 
     def plot_modes_1D(self,
         scut,
         val1,
         val2=None,
-        ivals=None,
+        mode_indices=None,
         n_points=501,
         field_type="EM_E",
         num_ticks=None,
@@ -314,34 +329,37 @@ class SimResult:
         logy=False,
     ):
 
-        field_code = FieldCode(field_type, self.is_AC())
+        #field_code = FieldCode(field_type, self.is_AC())
 
-        if field_code.is_EM_H():
+        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        if ftag.is_EM_H():
             self.make_H_fields()
 
-        modetype = field_code.mode_type_as_str() #"acoustic" if field_type == FieldType.AC else "em"
+        #if field_code.is_EM_H():
+        #   self.make_H_fields()
 
-        ival_range = ivals if ivals is not None else range(self.n_modes)
+      #  modetype = field_code.mode_type_as_str() #"acoustic" if field_type == FieldType.AC else "em"
 
-        ntoplot = len(ival_range)
+        domain_s = ftag.domain_type_as_str()
+        field_s = ftag.field_type_as_str()
+
+
+        md_range = mode_indices if mode_indices is not None else range(self.n_modes)
+
+        ntoplot = len(md_range)
 
         if ntoplot > 1:
-            print(f"Plotting 1D cuts of {ntoplot} {modetype} modes in range m=[{ival_range[0]},{ival_range[-1]}]:")
+            print(f"Plotting 1D cuts of {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
         else:
-            print(f"Plotting 1D cut of {modetype} mode m={ival_range[0]}.")
+            print(f"Plotting 1D cut of {field_s} field of {domain_s} mode m={md_range[0]}.")
 
-        mode_interpolator = self.get_mode_interpolator()
-        mode_interpolator.define_plot_grid_2D(n_pts=n_points)
-
-        # path is lookd after by plot_mode...
-
-        #nbapp = numbat.NumBATApp()
-        #pf = Path(nbapp.outdir_fields_path(prefix=prefix))
+        md_interp = self.get_mode_interpolator()
+        md_interp.define_plot_grid_2D(n_pts=n_points)
 
         plot_params = plotmodes.PlotParams1D()
         plot_params.update(
             {
-                'field_type': field_code.as_field_type(),
+                'field_type': ftag.as_field_type(),
                 'num_ticks': num_ticks,
                 'prefix': prefix,
                 'suffix': suffix,
@@ -353,64 +371,50 @@ class SimResult:
             }
         )
 
-        for m in progressBar(ival_range, prefix="  Progress:", length=20):
-            self.get_mode(m).plot_mode_1D(scut, val1, val2,
-                                                comps, field_code.as_field_type(), plot_params=plot_params)
+        for m in progressBar(md_range, prefix="  Progress:", length=20):
+            self.get_mode(m).plot_mode_1D(scut, val1, val2, comps,
+                                          ftag.as_field_type(),
+                                          plot_params=plot_params)
 
-    def write_modes(self, prefix='', field_type = FieldType.EM_E, ivals=None, n_points=501):
+    def write_modes(self, prefix='', field_type = FieldType.EM_E, mode_indices=None, n_points=501):
         """Writes a set of mode profiles as ascii files on a rectangular grid containing the FEM structure to the current output fields director.
 
         All components Fx, Fy, Fz are written with separate fields for each component and the real and imaginary parts.
             Args:
                 prefix: adjust the output directory
-                ivals: list of mode indices or None for all
+                mode_indices: list of mode indices or None for all
                 field_type: for EM fields, write E or H fields
                 n_points: dimension of rectangular grid
         """
 
-        # TODO: Simplify FieldCode here
-        field_code = FieldCode(field_type, self.is_AC())
-
-        if field_code.is_EM_H():
-            self.make_H_fields()
-
-
-        ival_range = ivals if ivals is not None else range(self.n_modes)
-
-        #mode_interpolator = self.get_mode_interpolator()
-        #mode_interpolator.define_plot_grid_2D(n_pts=n_points)
-
-        # path is lookd after by write_mode
-        #nbapp = numbat.NumBATApp()
-        #pf = nbapp.outdir_fields_path(prefix=prefix)
-
-        for m in ival_range:
-            self.get_mode(m).write_mode(prefix, n_points, field_type)
-
-    def write_modes_1D(self, s_cut, val1, val2=None, ivals=None, prefix='',
-                       n_points=501, field_type = FieldType.EM_E):
-
-        # TODO: Simplify FieldCode here
-        #field_code = FieldCode(field_type, self.is_AC())
-        ft = FieldType.AC if self.is_AC() else field_type
-
-        ftag = FieldTag.make_from_field(ft)
+        ftag = FieldTag.make_from_field(field_type, self.is_AC())
 
         if ftag.is_EM_H():
             self.make_H_fields()
 
 
-        ival_range = ivals if ivals is not None else range(self.n_modes)
+        md_range = mode_indices if mode_indices is not None else range(self.n_modes)
 
-        # mode_interpolator = self.get_mode_interpolator()
-        # mode_interpolator.define_plot_grid_1D(s_cut, val1, val2, n_points)
+        for m in md_range:
+            self.get_mode(m).write_mode(prefix, n_points, ftag.as_field_type())
 
-        # nbapp = numbat.NumBATApp()
-        # pf = nbapp.outdir_fields_path(prefix=prefix)
+    def write_modes_1D(self, s_cut, val1, val2=None, mode_indices=None, prefix='',
+                       n_points=501, field_type = FieldType.EM_E):
 
-        for m in ival_range:
+
+        #ft = FieldType.AC if self.is_AC() else field_type
+
+        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+
+        if ftag.is_EM_H():
+            self.make_H_fields()
+
+
+        md_range = mode_indices if mode_indices is not None else range(self.n_modes)
+
+        for m in md_range:
             self.get_mode(m).write_mode_1D(s_cut, val1, val2,
-                                           n_points, prefix, ft)
+                                           n_points, prefix, ftag.as_field_type())
 
 
 class EMSimResult(SimResult):
@@ -420,39 +424,30 @@ class EMSimResult(SimResult):
 
         super().__init__(sim)
 
+        # Pull EM properties from Simulation
+
         self.lambda_m = sim.lambda_m
-        self.omega_EM = (
-            twopi * SI_speed_c / self.lambda_m
-        )  # Angular freq in units of rad/s
+
+        # Angular freq in units of rad/s
+        self.omega_EM = twopi * SI_speed_c / self.lambda_m
+
         self.k_0 = twopi / self.lambda_m
-
-        self.fem_mesh = sim.fem_mesh
-
-        # Eigen solutions
-        self.fem_evecs = sim.fem_evecs
-        self.fem_evecs_H = None
-
         self.eigs_kz = sim.eigs_kz
-
-        # Additional quantities
         self.EM_mode_energy = sim.EM_mode_energy
         self.EM_mode_power = sim.EM_mode_power
 
-
-    # def clean_for_pickle(self):
-    #     if self._mode_plot_helper is not None:
-    #         self._mode_plot_helper.cleanup()
-
-    # def save_simulation(self, prefix):
-    #     self.clean_for_pickle()
-    #     np.savez(prefix, simulation=self)
-
+        self.fem_mesh = sim.fem_mesh
+        self.fem_evecs = sim.fem_evecs
+        self.fem_evecs_H = None
 
 
     def fem_evecs_for_ft(self, ft):
         return self.fem_evecs_H if ft == FieldType.EM_H else self.fem_evecs
 
     def make_H_fields(self):
+        if self.fem_evecs_H is not None:
+            return
+
         n_modes = len(self.eigs_kz)
         fm = self.fem_mesh
 
@@ -461,7 +456,6 @@ class EMSimResult(SimResult):
             n_modes,
             fm.n_msh_el,
             fm.n_msh_pts,
-            #fm.n_nodes,
             fm.elnd_to_mshpt,
             fm.v_nd_xy,
             self.eigs_kz,
@@ -551,8 +545,19 @@ class EMSimResult(SimResult):
         """
         return self.eigs_kz
 
-
     def bkwd_Stokes_modes(self):
+        reporting.deprecated_function('numbat.bkwd_backwd_modes()',
+                                      'SimResult.clone_as_backward_modes()')
+        self.clean_for_pickle()
+        return self.clone_as_backward_modes()
+
+    def fwd_Stokes_modes(self):
+        reporting.deprecated_function('numbat.fwd_Stokes_modes()',
+                                      'SimResult.clone_as_forward_modes()')
+
+        return self.clone_as_forward_modes()
+
+    def clone_as_backward_modes(self):
         """Defines the backward travelling Stokes waves as the conjugate
             of the forward travelling pump waves.
 
@@ -567,17 +572,16 @@ class EMSimResult(SimResult):
                     are travelling in the negative z-direction.
         """
 
-        # EM_sim.clean_for_pickle()
 
-        Stokes_modes = copy.deepcopy(self)
-        Stokes_modes.fem_evecs = np.conj(Stokes_modes.fem_evecs)
-        Stokes_modes.eigs_kz = -1.0 * Stokes_modes.eigs_kz
-        Stokes_modes.EM_mode_power = -1.0 * Stokes_modes.EM_mode_power
+        backwd_modes = copy.deepcopy(self)
+        backwd_modes.fem_evecs = np.conj(backwd_modes.fem_evecs)
+        backwd_modes.eigs_kz = -1.0 * backwd_modes.eigs_kz
+        backwd_modes.EM_mode_power = -1.0 * backwd_modes.EM_mode_power
 
-        return Stokes_modes
+        return backwd_modes
 
 
-    def fwd_Stokes_modes(self):  # TODO: make a member function
+    def clone_as_forward_modes(self):
         """Defines the forward travelling Stokes waves as a copy
             of the forward travelling pump waves.
 
@@ -585,10 +589,13 @@ class EMSimResult(SimResult):
 
         """
 
+
         self.clean_for_pickle()
 
-        Stokes_modes = copy.deepcopy(self)
-        return Stokes_modes
+        fwd_modes = copy.deepcopy(self)
+        return fwd_modes
+
+
 
 class ACSimResult(SimResult):
     def __init__(self, sim):
@@ -615,8 +622,8 @@ class ACSimResult(SimResult):
         self.ac_linewidth = sim.ac_linewidth
 
     # def clean_for_pickle(self):
-    #     if self._mode_plot_helper is not None:
-    #         self._mode_plot_helper.cleanup()
+    #     if self._mode_interpolator is not None:
+    #         self._mode_interpolator.cleanup()
 
     # def save_simulation(self, prefix):
     #     self.clean_for_pickle()

@@ -260,7 +260,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, simres_EM, cmat):
                     threading.current_thread().name, iq, len(qvec) - 1
                 )
             )
-            simres_AC.plot_modes(ivals=range(nmodes), prefix=prefix + "_%d" % iq)
+            simres_AC.plot_modes(mode_indices=range(nmodes), prefix=prefix + "_%d" % iq)
 
         return (iq, tq, v_nu_num)
 

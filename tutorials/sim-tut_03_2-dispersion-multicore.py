@@ -39,9 +39,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 60
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'b')
 
@@ -61,11 +61,11 @@ n_eff = wguide.get_material('a').refindex_n-0.1
 
 # Calculate Electromagnetic modes.
 sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 # Will scan from forward to backward SBS so need to know q_AC of backward SBS.
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-               sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) -
+               sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
 # Rather than calculating with a loop we can use pool to do a multi core sim
 

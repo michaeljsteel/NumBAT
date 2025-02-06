@@ -33,16 +33,18 @@ from plotmodes import Decorator
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
-                 EM_ival_pump, EM_ival_Stokes, AC_ival, freq_min=0., freq_max=50e9, num_interp_pts=3000,
+                 EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index, freq_min=0., freq_max=50e9, num_interp_pts=3000,
                  dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                  pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
                  show_gains='All'):
-    reporting.report_and_exit('The function plotgain.gain_spectra() is deprecated.\n'
-                              + 'Please now use Gain.plot_spectra() and observe the changes in calling convention described in the Release notes.')
+    reporting.deprecated_function('plotgain.gain_spectra',
+                                  'Gain.plot_spectra')
+    # reporting.report_and_exit('The function plotgain.gain_spectra() is deprecated.\n'
+    #                           + 'Please now use Gain.plot_spectra() and observe the changes in calling convention described in the Release notes.')
 
 
 def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-                      EM_ival_pump, EM_ival_Stokes, AC_ival='All',
+                      EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index='All',
                       freq_min=0., freq_max=50e9, num_interp_pts=3000,
                       dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
                       pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
@@ -61,11 +63,11 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
             linewidth_Hz  (array): Linewidth of each mode [Hz].
 
-            EM_ival_pump  (int or 'All'): Which EM pump mode(s) to consider.
+            EM_mode_index_pump  (int or 'All'): Which EM pump mode(s) to consider.
 
-            EM_ival_Stokes  (int or 'All'): Which EM Stokes mode(s) to consider.
+            EM_mode_index_Stokes  (int or 'All'): Which EM Stokes mode(s) to consider.
 
-            AC_ival  (int or 'All'):  Which AC mode(s) to consider.
+            AC_mode_index  (int or 'All'):  Which AC mode(s) to consider.
 
             freq_min  (float): Minimum of frequency range.
 
@@ -141,22 +143,22 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     fs = decorator.get_property('ax_label_fs')
     ts = decorator.get_property('ax_tick_fs')
 
-    ivals = []
-    if AC_ival is None or AC_ival == 'All':
-        ivals = range(num_modes)
+    mode_indices = []
+    if AC_mode_index is None or AC_mode_index == 'All':
+        mode_indices = range(num_modes)
     else:
         try:
-            ivals = [i for i in AC_ival if 0 <= i < num_modes]
+            mode_indices = [i for i in AC_mode_index if 0 <= i < num_modes]
         except Exception:
             reporting.report_and_exit(
-                'AC_ival in gain_spectra() must be "All" or a list of mode numbers.')
+                'AC_mode_index in gain_spectra() must be "All" or a list of mode numbers.')
 
     # Total gain via sum over all modes in the vicinity of their peak
-    for m in ivals:  # TODO: this is same as top of next big loop? DELETE?
+    for m in mode_indices:  # TODO: this is same as top of next big loop? DELETE?
         # build lorentzian centered on mode m
         v_nu_loc = np.real(sim_AC.nu_AC(m) + detuning_range)
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
-        v_gain_loc = np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]) * v_Lorentz
+        v_gain_loc = np.real(SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, m]) * v_Lorentz
         #lor_glob = np.interp(nu_grid, v_nu_loc, v_Lorentz)
 
         if mode_comps:
@@ -203,9 +205,9 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     mask = np.where((sim_AC.nu_AC_all() > freq_min) *
                     (sim_AC.nu_AC_all() < freq_max), 1, 0)
 
-    gain = np.max(np.abs(np.real(mask*SBS_gain[EM_ival_pump, EM_ival_Stokes, :])))
-    gain_PE = np.max(np.abs(np.real(mask*SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :])))
-    gain_MB = np.max(np.abs(np.real(mask*SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :])))
+    gain = np.max(np.abs(np.real(mask*SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, :])))
+    gain_PE = np.max(np.abs(np.real(mask*SBS_gain_PE[EM_mode_index_pump, EM_mode_index_Stokes, :])))
+    gain_MB = np.max(np.abs(np.real(mask*SBS_gain_MB[EM_mode_index_pump, EM_mode_index_Stokes, :])))
 
     if do_tot:
         maxG = np.max(np.array([gain, gain_PE, gain_MB]))
@@ -220,7 +222,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     modelabs = []
     modelabs_logy = []
 
-    for m in ivals:
+    for m in mode_indices:
         nu0_m = np.real(sim_AC.nu_AC(m))
 
         if not freq_min < nu0_m < freq_max:
@@ -230,7 +232,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
 
         if do_tot:
-            gain_m = abs(np.real(SBS_gain[EM_ival_pump, EM_ival_Stokes, m]))
+            gain_m = abs(np.real(SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, m]))
             v_gain_loc = gain_m * v_Lorentz
             interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
             v_gain_global_tot += interp_spectrum
@@ -238,14 +240,14 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                 ax.plot(nu0_m*1e-9, gain_m, 'ob')
 
         if do_PE:
-            gain_PE_m = abs(np.real(SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, m]))
+            gain_PE_m = abs(np.real(SBS_gain_PE[EM_mode_index_pump, EM_mode_index_Stokes, m]))
             v_gain_loc = gain_PE_m * v_Lorentz
             v_gain_global_PE += np.interp(nu_grid, v_nu_loc, v_gain_loc)
             if gain_PE_m > mark_modes_threshold*maxG:
                 ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
 
         if do_MB:
-            gain_MB_m = abs(np.real(SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, m]))
+            gain_MB_m = abs(np.real(SBS_gain_MB[EM_mode_index_pump, EM_mode_index_Stokes, m]))
             v_gain_loc = gain_MB_m * v_Lorentz
             v_gain_global_MB += np.interp(nu_grid, v_nu_loc, v_gain_loc)
             if gain_MB_m > mark_modes_threshold*maxG:

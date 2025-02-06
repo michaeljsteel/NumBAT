@@ -36,9 +36,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 120
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(1, sys.argv)
 
@@ -59,11 +59,11 @@ recalc=True
 #recalc=False
 if recalc:
     sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff=n_eff)
-    sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+    sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
-    sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, ivals=[EM_ival_pump],
+    sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, mode_indices=[EM_mode_index_pump],
                          ylim_min=0.4, ylim_max=0.4, )
 else:
     sim_EM_pump = numbat.load_simulation(prefix+'_pump')
@@ -78,7 +78,7 @@ print('k_z of EM modes \n', np.round(np.real(kzs), 4))
 n_eff_sim = np.real(sim_EM_pump.neff_all())
 print("n_eff = ", np.round(n_eff_sim, 4))
 
-q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_ival_pump] - sim_EM_Stokes.kz_EM_all()[EM_ival_Stokes])
+q_AC = np.real(sim_EM_pump.kz_EM_all()[EM_mode_index_pump] - sim_EM_Stokes.kz_EM_all()[EM_mode_index_Stokes])
 
 shift_Hz = 8e9
 
@@ -91,7 +91,7 @@ else:
 
 
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
-    EM_ival_pump=EM_ival_pump, EM_ival_Stokes=EM_ival_Stokes, AC_ival=AC_ival)
+    EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
@@ -108,7 +108,7 @@ high_g_indices = np.abs(gain_box.gain_total_all()).argsort()[-nplot:]
 high_g_indices.sort()
 
 if recalc:
-    sim_AC.plot_modes(ivals=high_g_indices)
+    sim_AC.plot_modes(mode_indices=high_g_indices)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9  # Hz

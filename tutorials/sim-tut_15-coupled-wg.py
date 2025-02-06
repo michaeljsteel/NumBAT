@@ -32,9 +32,9 @@ inc_shape = 'twoincl'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 20
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix_str, refine_fac = starter.read_args(14, sys.argv)
 
@@ -66,7 +66,7 @@ new_calcs = True
 if new_calcs:
   sim_EM_pump = wguide.calc_EM_modes(
       num_modes_EM_pump, lambda_nm, n_eff, calc_EM_mode_energy=True)
-  sim_EM_Stokes = sim_EM_pump.bkwd_Stokes_modes()
+  sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
   sim_EM_pump.save_simulation('tut_14_pump')
   sim_EM_Stokes.save_simulation('tut_14_stokes')
@@ -86,13 +86,13 @@ for m in range(num_modes_EM_pump):
 n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
-sim_EM_pump.plot_modes(ivals=range(8), contours=True, ticks=True, quiver_points=20)
+sim_EM_pump.plot_modes(mode_indices=range(8), contours=True, ticks=True, quiver_points=20)
 
-sim_EM_pump.plot_modes(ivals=range(8), contours=True, field_type='EM_H', ticks=True, quiver_points=20)
+sim_EM_pump.plot_modes(mode_indices=range(8), contours=True, field_type='EM_H', ticks=True, quiver_points=20)
 
 # Acoustic wavevector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) -
-               sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) -
+               sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 
 # Calculate Acoustic modes.
 if new_calcs:
@@ -113,6 +113,6 @@ for m in range(num_modes_AC):
 sim_AC.calc_acoustic_losses()
 
 sim_AC.plot_modes(contours=False,
-                          ticks=True, ivals=range(10), quiver_points=20)
+                          ticks=True, mode_indices=range(10), quiver_points=20)
 
 print(nbapp.final_report())

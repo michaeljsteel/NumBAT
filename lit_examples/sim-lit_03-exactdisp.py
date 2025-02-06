@@ -454,7 +454,7 @@ def solve_elastic_rod_numerical(prefix, qvec, nmodes, wguide, sim_EM, cmat):
         if doplot: # Only worker 1 will ever do this
             print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
                 threading.current_thread().name, iq, len(qvec)-1))
-            sim_AC.plot_modes(ivals=range(nmodes), prefix=prefix+'_%d'%iq)
+            sim_AC.plot_modes(mode_indices=range(nmodes), prefix=prefix+'_%d'%iq)
 
         return (iq, tq, v_nu_num)
 

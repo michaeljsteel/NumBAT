@@ -42,11 +42,11 @@ num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 100  # Number of acoustic modes to solve for.
 # The EM pump mode(s) for which to calculate interaction with AC modes.
 # Can specify a mode number (zero has lowest propagation constant) or 'All'.
-EM_ival_pump = 1
+EM_mode_index_pump = 1
 # The EM Stokes mode(s) for which to calculate interaction with AC modes.
-EM_ival_Stokes = 0
+EM_mode_index_Stokes = 0
 # The AC mode(s) for which to calculate interaction with EM modes.
-AC_ival = "All"
+AC_mode_index = "All"
 
 prefix, refine_fac = starter.read_args(5, sys.argv)
 
@@ -80,7 +80,7 @@ sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
 # Generate images for the EM modes involved in the calculation
 print("Starting EM field plotting ")
 sim_EM_pump.plot_modes(
-    ivals=[EM_ival_pump, EM_ival_Stokes],
+    mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
     field_type="EM_E",
     num_ticks=3,
     xlim_min=0.2,
@@ -107,7 +107,7 @@ n_eff_sim = np.real(sim_EM_pump.neff(0))
 print("n_eff = ", np.round(n_eff_sim, 4))
 
 # Calculate and print the acoustic wave vector
-q_AC = np.real(sim_EM_pump.kz_EM(EM_ival_pump) - sim_EM_Stokes.kz_EM(EM_ival_Stokes))
+q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) - sim_EM_Stokes.kz_EM(EM_mode_index_Stokes))
 print("Intermode q_AC (Hz) \n", q_AC)
 
 # Calculate Acoustic Modes
@@ -128,9 +128,9 @@ SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = (
         sim_EM_Stokes,
         sim_AC,
         q_AC,
-        EM_ival_pump=EM_ival_pump,
-        EM_ival_Stokes=EM_ival_Stokes,
-        AC_ival=AC_ival,
+        EM_mode_index_pump=EM_mode_index_pump,
+        EM_mode_index_Stokes=EM_mode_index_Stokes,
+        AC_mode_index=AC_mode_index,
     )
 )
 
@@ -142,9 +142,9 @@ plotgain.plot_gain_spectra(
     SBS_gain_PE,
     SBS_gain_MB,
     linewidth_Hz,
-    EM_ival_pump,
-    EM_ival_Stokes,
-    AC_ival,
+    EM_mode_index_pump,
+    EM_mode_index_Stokes,
+    AC_mode_index,
     freq_min=freq_min,
     freq_max=freq_max,
 )
@@ -152,12 +152,12 @@ plotgain.plot_gain_spectra(
 # Mask negligible gain values to improve clarity of print out.
 threshold = 1e-3
 masked_PE = np.ma.masked_inside(
-    SBS_gain_PE[EM_ival_pump, EM_ival_Stokes, :], 0, threshold
+    SBS_gain_PE[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold
 )
 masked_MB = np.ma.masked_inside(
-    SBS_gain_MB[EM_ival_pump, EM_ival_Stokes, :], 0, threshold
+    SBS_gain_MB[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold
 )
-masked = np.ma.masked_inside(SBS_gain[EM_ival_pump, EM_ival_Stokes, :], 0, threshold)
+masked = np.ma.masked_inside(SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold)
 
 # Display these in terminal
 print("\n Displaying results with negligible components masked out")
@@ -169,7 +169,7 @@ maxGainloc = 6
 # note sometimes its necessary to manually specify as certain values are NOT possible by symmetry arguments
 
 print("Plotting acoustic mode corresponding to maximum")
-sim_AC.plot_modes(ivals=range(15), num_ticks=3, quiver_points=40, colorbar=True)
+sim_AC.plot_modes(mode_indices=range(15), num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
 print("-----------------")
@@ -179,8 +179,8 @@ print(
     "displaying corresponding acoustic mode number (i.e., AC_field_#) for reference \n",
     maxGainloc,
 )
-print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_ival_pump])
-print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_ival_Stokes])
+print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_mode_index_pump])
+print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes])
 print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM / 1e12)
 print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc])
 print("AC loss alpha [1/s] \n", alpha[maxGainloc])
@@ -190,8 +190,8 @@ print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc] / 1e6)
 # since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (
     alpha[maxGainloc]
-    * sim_EM_pump.EM_mode_power[EM_ival_pump]
-    * sim_EM_Stokes.EM_mode_power[EM_ival_Stokes]
+    * sim_EM_pump.EM_mode_power[EM_mode_index_pump]
+    * sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]
     * sim_AC.AC_mode_energy[maxGainloc]
     * masked.data[maxGainloc]
 ) / (2 * sim_EM_pump.omega_EM * sim_AC.Omega_AC[maxGainloc])

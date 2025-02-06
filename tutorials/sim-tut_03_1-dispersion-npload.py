@@ -29,9 +29,9 @@ inc_shape = 'rectangular'
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
 num_modes_AC = 25
-EM_ival_pump = 0
-EM_ival_Stokes = 0
-AC_ival = 'All'
+EM_mode_index_pump = 0
+EM_mode_index_Stokes = 0
+AC_mode_index = 'All'
 
 prefix, refine_fac = starter.read_args(3, sys.argv, 'a')
 
@@ -54,7 +54,7 @@ if reuse_old_fields:
     simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
 else:
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
-    simres_EM_Stokes = simres_EM_pump.bkwd_Stokes_modes()
+    simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
 
 
 
