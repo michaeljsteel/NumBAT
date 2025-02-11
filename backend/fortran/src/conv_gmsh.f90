@@ -91,7 +91,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    fnamelen = len_trim(geo_fname)
    if (fnamelen .ge. FNAME_LENGTH) then
       write(emsg, *) "Name of .geo file is too long extend in ",&
-         "conv_gmsh_py.f"
+      "conv_gmsh_py.f"
       errco = NBERROR_110
    endif
 
@@ -101,7 +101,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
 
    !Second stage conversion:  .msh to .mail
    call parse_msh_file(fname_msh, gmsh_version, n_pts, n_elts, &
-      vx, vy, v_ipts, v_ielts, v_gmsh_elt_type, errco, emsg)
+   vx, vy, v_ipts, v_ielts, v_gmsh_elt_type, errco, emsg)
    RETONERROR(errco)
 
    if (assertions_on .ne. 0) then
@@ -109,6 +109,12 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
       call check_point_separations(n_pts, vx, vy, errco, emsg)
    endif
 
+   if (n_pts .gt. MAX_N_ELTS) then
+      write(emsg, '(A,I7,A,I7,A)') 'The generated mesh has ', n_pts, \
+         ' nodes, which exceeds the maximum of ', MAX_N_ELTS, '.'
+      errco = NBERR_MESH_TOO_LARGE
+      return
+   endif
 
    call integer_alloc_2d(v_lines_nodes, 3_8, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
    call integer_alloc_2d(v_triang_nodes, 6_8, MAX_N_ELTS, 'v_triang_nodes', errco, emsg); RETONERROR(errco)
@@ -116,14 +122,16 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    call integer_alloc_1d(v_eltint_physsurf, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
    call integer_alloc_1d(v_nd_iphyscurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
 
+   write(*,*) 'npts', n_pts, MAX_N_ELTS
+
    !  Now we know the number of points and mappings (even if trivial)
    !  Next we load elt data according to the gmsh element types
 
    call decode_element_tags(fname_msh, gmsh_version, &
-      n_pts, n_elts, v_gmsh_elt_type, v_ipts, &
-      n_gelts_lines, n_gelts_triangs, v_lines_nodes,  &
-      v_triang_nodes, v_eltbdy_physcurve, v_eltint_physsurf,  &
-      errco, emsg)
+   n_pts, n_elts, v_gmsh_elt_type, v_ipts, &
+   n_gelts_lines, n_gelts_triangs, v_lines_nodes,  &
+   v_triang_nodes, v_eltbdy_physcurve, v_eltint_physsurf,  &
+   errco, emsg)
    RETONERROR(errco)
 
    !  Now we have:
@@ -134,6 +142,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
 
    !  Next, associate the three nodes on each boundary elt with their physical_curve stored in v_nd_iphyscurve
    !  If v_nd_iphyscurve(j) = pc_k != 0,  node j lies on PhysicalCurve pc_k
+
 
    do i=1,n_pts
       v_nd_iphyscurve(i) = 0
@@ -149,7 +158,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    enddo
 
 
-!  i_sym = 0 always, so this is switched off  TODO: the call to symmetry is very broken with parameteres
+   !  i_sym = 0 always, so this is switched off  TODO: the call to symmetry is very broken with parameteres
    !if(i_sym .ne. 0) then
 
    !call symmetry(n_pts, n_gelts_triangs, &
@@ -158,13 +167,13 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    !endif
 
    call balance_fem_node_graph(n_pts, n_gelts_triangs, &
-      v_triang_nodes, v_nd_iphyscurve, vx, vy,  &
-      assertions_on, errco, emsg)
+   v_triang_nodes, v_nd_iphyscurve, vx, vy,  &
+   assertions_on, errco, emsg)
    RETONERROR(errco)
 
    call write_mail_file(fname_mail, n_pts, n_elts, n_gelts_triangs, &
-      vx, vy, v_nd_iphyscurve, v_triang_nodes, &
-      v_eltint_physsurf)
+   vx, vy, v_nd_iphyscurve, v_triang_nodes, &
+   v_eltint_physsurf)
 
    if (assertions_on .ne. 0) then
       write(*,*) 'Node check after FEM rebalance'
