@@ -75,7 +75,7 @@ class SimResult:
     def get_mode_fields_on_fem_mesh(self, md, field_type):
 
         fem_evecs = self.fem_evecs_for_ft(field_type)
-        n_msh_el = self.fem_mesh.n_msh_el
+        #n_msh_el = self.fem_mesh.n_msh_el
 
         # v_Fx6p = np.zeros(6*n_msh_el, dtype=np.complex128)
         # v_Fy6p = np.zeros(6*n_msh_el, dtype=np.complex128)
@@ -207,10 +207,13 @@ class SimResult:
         quiver_points=30,
         ticks=True,
         num_ticks=None,
+        title=True,
+        frame=True,
         colorbar=True,
         contours=False,
         contour_lst=None,
         suppress_imimre=True,
+        logamp=False,
         decorator=None,
         **kwargs
     ):

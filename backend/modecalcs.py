@@ -757,3 +757,7 @@ def ac_mode_calculation(wg, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **arg
     sim.calc_modes(bcs)
 
     return sim.get_sim_result()
+
+# deprecated
+def bkwd_Stokes_modes(sim):
+    return sim.bkwd_Stokes_modes()

@@ -160,6 +160,8 @@ class TidyAxes:
                 ax.spines[axis].set_linewidth(pr['ax_linewidth'])
                 ax.spines[axis].set_color(pr['axes_color'])
 
+    def hide_axes(self, ax):
+        ax.set_axis_off()
 
     def apply_to_cbars(self, cbs):
         if not isinstance(cbs, Iterable):
@@ -228,7 +230,7 @@ class Decorator(object):
     def set_waveguide(self, wg):
         self._waveguide = wg
 
-    def add_frame(self, ax):
+    def add_waveguide_border(self, ax):
         plprefs = numbat.NumBATPlotPrefs()
         styles = {}
 
@@ -327,6 +329,7 @@ class PlotParams2D(PlotParams):
                       'ticks': True, 'num_ticks': None,
                       'colorbar': True, 'contours': False, 'contour_lst': None,
                      # 'EM_AC': FieldType.EM_E,
+                      'title': True, 'frame': True,
                       'hide_vector_field': False,
                       'prefix': '', 'suffix': '',
                       'decorator': Decorator(),
@@ -389,11 +392,15 @@ def get_quiver_skip_range(npts, skip):
 
 def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
+    logamp = plps['logamp']
+
     cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed(ftag_cont)
     cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned(ftag_cont)
 
     cont_signed = ftag_cont.is_signed_field()
+    #cmap = cmap_signed if (cont_signed and not logamp) else cmap_unsigned
     cmap = cmap_signed if cont_signed else cmap_unsigned
+
 
 
     v_x, v_y, m_X, m_Y = list(d_xy.values())
@@ -405,6 +412,13 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
     if ftag_cont.is_abs():
         # TODO: cleanup: plot |u| as |u|^2
         cont_field = np.abs(cont_field)**2
+
+    logmax=5  # show up to 5 orders of magnitude contrast
+    if logamp:
+        #cont_field = np.log10(np.abs(cont_field))
+        lcf = np.log10(np.abs(cont_field)) + logmax
+        lcf = np.where(lcf>0, lcf, 0)
+        cont_field = np.sign(cont_field) * lcf
 
     # if the data is all noise, just plot zeros
     plot_threshold = 1e-8
@@ -429,6 +443,18 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
             vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)
 
         d_kw['norm'] = tsnorm
+    elif logamp:
+        #act_zlo = np.nanmin(cont_field)
+        #act_zhi = np.nanmax(cont_field)
+        vma = logmax
+        if cont_signed:
+            vmi = -logmax
+        else:
+            vmi=0
+
+        d_kw['vmin'] = vmi
+        d_kw['vmax'] = vma
+
     else:
         act_zlo = np.nanmin(cont_field)
         act_zhi = np.nanmax(cont_field)
@@ -439,7 +465,6 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
         d_kw['vmax'] = vma
 
     im_co = ax.imshow(cont_field, **d_kw)
-
 
     do_cbar = plps['colorbar']
     do_contours = plps['contours']
@@ -654,15 +679,16 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
     if cbar:
         tidy.apply_to_cbars(cbar)
 
+    if not plps['frame']:
+        tidy.hide_axes(ax)
 
     plot_set_ticks(ax, plps)
     #plot_set_axes_style(ax, plps, decorator)
 
-    plot_set_title(ax, comp_label, plps, decorator)
+    if plps['title']:
+        plot_set_title(ax, comp_label, plps, decorator)
 
-
-    decorator.add_frame(ax)
-
+    decorator.add_waveguide_border(ax)
     decorator.extra_axes_commands(ax)
 
 

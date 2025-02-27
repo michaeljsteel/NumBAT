@@ -553,6 +553,8 @@ class Material(object):
             r = lam / mu
             self.nuPoisson = 0.5 * r / (1 + r)
             self.EYoung = 2 * mu * (1 + self.nuPoisson)
+            self.Lame_mu = mu
+            self.Lame_lambda = lam
 
         elif "EYoung" in self._params and "nuPoisson" in self._params:
             self.EYoung = self._params["EYoung"]
@@ -562,6 +564,9 @@ class Material(object):
             c11 = c12 + 2 * c44
             self.stiffness_c_IJ = voigt.VoigtTensor4(self.material_name, "c")
             self.stiffness_c_IJ.make_isotropic_tensor(c11, c12, c44)
+
+            self.Lame_mu = self.stiffness_c_IJ.mat[4, 4]
+            self.Lame_lambda = self.stiffness_c_IJ.mat[1, 2]
         else:
             reporting.report_and_exit( "Broken isotropic material file:" + self.json_file)
 

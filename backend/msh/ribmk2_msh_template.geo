@@ -60,10 +60,10 @@ Point(7) = {xm-rib_w/2, ym+rib_h, 0, lc_refine_1};
 Point(8) = {xm+rib_w/2, ym+rib_h, 0, lc_refine_1};
 
 // Slab ends
-Point(11) = {x0, ym, 0, lc_bkg};
-Point(12) = {x1, ym, 0, lc_bkg};
-Point(13) = {x0, slab1_y, 0, lc_bkg};
-Point(14) = {x1, slab1_y, 0, lc_bkg};
+Point(11) = {x0, ym, 0, lc_refine_2};
+Point(12) = {x1, ym, 0, lc_refine_2};
+Point(13) = {x0, slab1_y, 0, lc_refine_2};
+Point(14) = {x1, slab1_y, 0, lc_refine_2};
 
 
 // Top vacuum
@@ -99,8 +99,8 @@ Plane Surface(51) = {51};
 // Extra slabs
 
 If (nslabs>=2)
-    Point(15) = {x0, slab2_y, 0, lc_bkg};
-    Point(16) = {x1, slab2_y, 0, lc_bkg};
+    Point(15) = {x0, slab2_y, 0, lc_refine_2};
+    Point(16) = {x1, slab2_y, 0, lc_refine_2};
 
     Line(120) = {13,15};
     Line(121) = {15,16};
@@ -110,8 +110,8 @@ If (nslabs>=2)
 
 
     If (nslabs>=3)
-        Point(17) = {x0, slab3_y, 0, lc_bkg};
-        Point(18) = {x1, slab3_y, 0, lc_bkg};
+        Point(17) = {x0, slab3_y, 0, lc_refine_2};
+        Point(18) = {x1, slab3_y, 0, lc_refine_2};
         Line(130) = {15,17};
         Line(131) = {17,18};
         Line(132) = {18,16};
@@ -119,8 +119,8 @@ If (nslabs>=2)
         Plane Surface(53) = {53};
 
         If (nslabs>=4)
-            Point(19) = {x0, slab4_y, 0, lc_bkg};
-            Point(20) = {x1, slab4_y, 0, lc_bkg};
+            Point(19) = {x0, slab4_y, 0, lc_refine_2};
+            Point(20) = {x1, slab4_y, 0, lc_refine_2};
             Line(140) = {17,19};
             Line(141) = {19,20};
             Line(142) = {20,18};
@@ -128,8 +128,8 @@ If (nslabs>=2)
             Plane Surface(54) = {54};
 
             If (nslabs>=5)
-                Point(21) = {x0, slab5_y, 0, lc_bkg};
-                Point(22) = {x1, slab5_y, 0, lc_bkg};
+                Point(21) = {x0, slab5_y, 0, lc_refine_2};
+                Point(22) = {x1, slab5_y, 0, lc_refine_2};
                 Line(150) = {19,21};
                 Line(151) = {21,22};
                 Line(152) = {22,20};

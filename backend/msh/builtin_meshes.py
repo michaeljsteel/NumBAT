@@ -438,7 +438,7 @@ class Triangular(UserGeometryBase):
             ("peak_height = 400.0;", "peak_height = %f;", "peak_height"),
             ("lc = 0.1;", "lc = %f;", "lc_bkg"),
             ("lc_refine_1 = lc/1.0;", "lc_refine_1 = lc/%f;", "lc_refine_1"),
-            ("lc_refine_2 = lc/3.0;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
+            ("lc_refine_2 = lc/1.0;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
         ]
 
         return subs
@@ -1159,12 +1159,12 @@ class RibDoubleCoated(UserGeometryBase):
             ("slab2y = 5;", "slab2y = %f;", "slab_b_y"),
             ("coat2x = 4;", "coat2x = %f;", "coat2_w"),
             ("coat2y = 4;", "coat2y = %f;", "coat2_h"),
-            ("lc = 0.1;", "lc = %f;", "lc_bkg"),
-            ("lc_refine_1 = lc/1;", "lc_refine_1 = lc/%f;", "lc_refine_1"),
-            ("lc_refine_2 = lc/1;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
-            ("lc_refine_3 = lc/1;", "lc_refine_3 = lc/%f;", "lc_refine_3"),
-            ("lc_refine_4 = lc/1;", "lc_refine_4 = lc/%f;", "lc_refine_4"),
-            ("lc_refine_5 = lc/1;", "lc_refine_5 = lc/%f;", "lc_refine_5"),
+            ("lc_bkg = 0.05;", "lc = %f;", "lc_bkg"),
+            ("lc_refine_1 = lc_bkg/2.0;", "lc_refine_1 = lc_bkg/%f;", "lc_refine_1"),
+            ("lc_refine_2 = lc_bkg/2.0;", "lc_refine_2 = lc_bkg/%f;", "lc_refine_2"),
+            ("lc_refine_3 = lc_bkg/2.0;", "lc_refine_3 = lc_bkg/%f;", "lc_refine_3"),
+            ("lc_refine_4 = lc_bkg/2.0;", "lc_refine_4 = lc_bkg/%f;", "lc_refine_4"),
+            ("lc_refine_5 = lc_bkg/2.0;", "lc_refine_5 = lc_bkg/%f;", "lc_refine_5"),
         ]
 
         return subs
@@ -1237,7 +1237,7 @@ class RibMkII(UserGeometryBase):
 
         self.set_required_parameters( ["rib_w", "rib_h", "slab1_h"], num_req_mats=3)
 
-        self.set_allowed_parameters(["lc_bkg", "lc_refine_1", "lc_refine_2",
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_1", 
                                      "slab2_h", "slab3_h", "slab4_h", "slab5_h", "nslabs"], num_allowed_mats=7) # How specify mats_?
 
         nslabs, nelts = _process_rib_mk_2(self._d_params)
@@ -1274,8 +1274,8 @@ class RibMkII(UserGeometryBase):
             ("un_slab4_h = 100.0;", "un_slab4_h = %f;", "slab4_h"),
             ("un_slab5_h = 100.0;", "un_slab5_h = %f;", "slab5_h"),
             ("lc_bkg = 0.05;", "lc_bkg = %f;", "lc_bkg"),
-            ("lc_refine_1 = lc/1;", "lc_refine_1 = lc/%f;", "lc_refine_1"),
-            ("lc_refine_2 = lc/1;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
+            ("lc_refine_1 = lc_bkg/2.0;", "lc_refine_1 = lc_bkg/%f;", "lc_refine_1"),
+            ("lc_refine_2 = lc_bkg/2.0;", "lc_refine_2 = lc_bkg/%f;", "lc_refine_2"),
             ("nslabs = 4;", "nslabs = %d;", "nslabs"),
         ]
 

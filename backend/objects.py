@@ -165,7 +165,6 @@ class Structure:
 
 
         n_mats_em = self._build_waveguide_geometry()
-
         # Build the whole mesh (A major step involving Fortran)
         self._build_mesh()
 

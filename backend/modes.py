@@ -631,7 +631,6 @@ class Mode:
 
         ccs = ('x', 'y', 'z')
         for cc in ccs:
-            #ft=self.field_code.as_field_type()
             ftag = FieldTag.make_from_field_and_component(ft, cc)
             ftlab = ftag.field_type_label()
             pref=str(numbat.NumBATApp().outdir_fields_path(prefix))

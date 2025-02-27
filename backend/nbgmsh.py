@@ -53,8 +53,8 @@ class MailData:
 
         # arrays of centroids of element triangles
         # length self.n_msh_elts
-        self.v_centx = None
-        self.v_centy = None
+        #self.v_centx = None
+        #self.v_centy = None
 
         self._parse_lines(lines)
         self.summarise_mesh()
@@ -154,8 +154,8 @@ class MailData:
 
 
 
-        self.v_centx = np.zeros(nelts)
-        self.v_centy = np.zeros(nelts)
+        #self.v_centx = np.zeros(nelts)
+        #self.v_centy = np.zeros(nelts)
 
         # read mesh points
         secoff=1  # line offset in .mail file
@@ -179,7 +179,8 @@ class MailData:
 
             # average of the corner points:
             # TODO: this is much less fundamental and hould be bumped somewhere secondary.
-            self.v_centx[i] = (vx[eltnds[0]] + vx[eltnds[1]] + vx[eltnds[2]])/3.0
-            self.v_centy[i] = (vy[eltnds[0]] + vy[eltnds[1]] + vy[eltnds[2]])/3.0
+            # Seems unused
+            #self.v_centx[i] = (vx[eltnds[0]] + vx[eltnds[1]] + vx[eltnds[2]])/3.0
+            #self.v_centy[i] = (vy[eltnds[0]] + vy[eltnds[1]] + vy[eltnds[2]])/3.0
 
         self.v_elts_mat = self.v_elts[:,-1]

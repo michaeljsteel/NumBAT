@@ -23,7 +23,7 @@ ph = peak_height*scale;
 
 lc = 0.1;         // background and unitcell edge
 lc_refine_1 = lc/1.0;  // triangle boundaries
-lc_refine_2 = lc/3.0;  // peak corner (which should be the sharp one if there is one)
+lc_refine_2 = lc/1.0;  // peak corner (which should be the sharp one if there is one)
 
 //////////////////////////////////////////
 

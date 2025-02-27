@@ -81,6 +81,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_QUAD_INT  = -61
    integer(8), parameter :: NBERR_BAD_MB_EDGES  = -62
    integer(8), parameter :: NBERR_BAD_ELT_ENERGY  = -63
+   integer(8), parameter :: NBERR_MESH_TOO_LARGE  = -64
 
 
 
