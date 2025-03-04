@@ -1,3 +1,4 @@
 ipykernel
 nbsphinx
 sphinxcontrib.bibtex
+sphinx_subfigure

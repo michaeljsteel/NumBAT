@@ -68,9 +68,10 @@ class GainProps(object):
         self.sim_AC = None
 
         # these choices guaranteed to work
-        self.set_allowed_EM_pumps(0)
-        self.set_allowed_EM_Stokes(0)
-        self.set_allowed_AC(0)
+        self.set_allowed_EM_pumps('All')
+        self.set_allowed_EM_Stokes('All')
+        self.set_allowed_AC('All')
+        self.set_EM_modes(0,0)
 
     def _set_sim_AC(self, sac):
         self.sim_AC = sac
@@ -243,6 +244,11 @@ def get_gains_and_qs(
     if 'EM_ival_Stokes' in kwargs:
         reporting.report_and_exit('The parameter EM_ival_Stokes is now called EM_mode_index_Stokes')
 
+    if 'AC_ival' in kwargs:
+        reporting.report_and_exit('The parameter AC_ival is now called AC_mode_index')
+
+    print('ACs ', AC_mode_index)
+
     # TODO: get rid of this old backend
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
         sim_EM_pump,
@@ -257,6 +263,8 @@ def get_gains_and_qs(
         new_call_format=True,
 
     )
+
+    print('out of gains', SBS_gain)
 
     gain = GainProps()
     gain._set_sim_AC(sim_AC)
@@ -528,6 +536,10 @@ def gain_and_qs(
     (Q_PE,) = process_fortran_return(
         resm, "finding linear element photoelastic couplings"
     )
+    print('doing gain photoel', Q_PE,
+        EM_mode_index_pump_fortran,
+        EM_mode_index_Stokes_fortran,
+        AC_mode_index_fortran)
 
     # Calc Q_moving_boundary Eq. 41
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing

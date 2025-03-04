@@ -701,7 +701,7 @@ class ACSimulation(Simulation):
             self.ac_Qmech =  0.5 * (np.real(Omega_AC) / self.ac_alpha_t) * np.ones(self.n_modes)
 
         else:
-            print("Acoustic losses calculaetd from specified fixed Q.")
+            print("Acoustic losses calculated from specified fixed Q.")
             self.Q_method = QAcMethod.Fixed
             # factor of a 1/2 because alpha is for power!
             # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
