@@ -1000,7 +1000,8 @@ class Rib(UserGeometryBase):
                 "slab_w": "width of slab substrate region",
                 "slab_h": "height of slab substrate region",
                 "material_bkg": "background material",
-                "material_a": "material of triangular core",
+                "material_a": "material of raised rib region",
+                "material_b": "material of slab substrate region",
             }
         )
 

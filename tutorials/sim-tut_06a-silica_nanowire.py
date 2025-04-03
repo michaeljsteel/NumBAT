@@ -21,7 +21,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 550
+lambda_nm = 1550
 domain_x = 4500
 domain_y = 1.0*domain_x
 inc_a_x = 550
@@ -71,7 +71,7 @@ v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
-simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim, logamp=True)
+simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
