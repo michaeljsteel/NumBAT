@@ -262,7 +262,6 @@ def get_gains_and_qs(
 
     )
 
-    print('done raw gain', SBS_gain_MB)
     gain = GainProps()
     gain._set_sim_AC(sim_AC)
     gain._set_gain_tot(SBS_gain)
@@ -404,6 +403,8 @@ def gain_and_qs(
     sim_EM_Stokes = simres_EM_Stokes._sim
     sim_AC = simres_AC._sim
 
+    sim_AC.calc_acoustic_losses(fixed_Q)
+
     ncomps = 3
 
     n_modes_EM_pump = sim_EM_pump.n_modes
@@ -431,77 +432,14 @@ def gain_and_qs(
         trimmed_EM_pump_field[:, :, :, el] = sim_EM_pump.fem_evecs[:, :6, :, new_el]
         trimmed_EM_Stokes_field[:, :, :, el] = sim_EM_Stokes.fem_evecs[:, :6, :, new_el]
 
-        # for n in range(nnodes):
-        #     for x in range(ncomps):
-        #         for mode_index in range(n_modes_EM_pump):
-        #             trimmed_EM_pump_field[x, n, mode_index, el] = sim_EM_pump.fem_evecs[
-        #                 x, n, mode_index, new_el
-        #             ]
-
-        #         for mode_index in range(n_modes_EM_Stokes):
-        #             trimmed_EM_Stokes_field[x, n, mode_index, el] = sim_EM_Stokes.fem_evecs[
-        #                 x, n, mode_index, new_el
-        #             ]
-
-    relevant_eps_effs = []  # TODO: move this into ElProps
-    for el_typ in range(opt_props.n_mats_em):
-        if el_typ + 1 in el_props.typ_el_AC:
-            relevant_eps_effs.append(opt_props.v_refindexn[el_typ] ** 2)
-
-    sim_AC.calc_acoustic_losses(fixed_Q)
-
-    # print("\n-----------------------------------------------")
-    #    if fixed_Q is None:
-    #        # Calc alpha (loss) Eq. 45
-    #        print("Acoustic loss calc")
-    #        start = time.time()
-    #        try:
-    #            if sim_EM_pump.structure.inc_shape in sim_EM_pump.structure.linear_element_shapes:
-    #                alpha = nb_fortran.ac_alpha_int_v2(sim_AC.n_modes,
-    #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.elnd_to_mshpt, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
-    #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
-    #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
-    #                    # sim_AC.AC_mode_power) # appropriate for alpha in [1/m]
-    #                    sim_AC.AC_mode_energy) # appropriate for alpha in [1/s]
-    #            else:
-    #                if sim_EM_pump.structure.inc_shape not in sim_EM_pump.structure.curvilinear_element_shapes:
-    #                    print("Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
-    #                        "\n using slow quadrature integration by default.\n\n")
-    #                alpha = nb_fortran.ac_alpha_int(sim_AC.n_modes,
-    #                    sim_AC.n_msh_el, sim_AC.n_msh_pts, nnodes,
-    #                    sim_AC.elnd_to_mshpt, sim_AC.v_el_2_mat_idx, sim_AC.v_nd_xy,
-    #                    sim_AC.structure.n_mats_ac, sim_AC.structure.elastic_props.eta_ijkl,
-    #                    q_AC, sim_AC.Omega_AC, sim_AC.fem_evecs,
-    #                    # sim_AC.AC_mode_power, Fortran_debug) # appropriate for alpha in [1/m]
-    #                    sim_AC.AC_mode_energy, Fortran_debug) # appropriate for alpha in [1/s]
-    #        except KeyboardInterrupt:
-    #            print("\n\n Routine ac_alpha_int interrupted by keyboard.\n\n")
-    #        alpha = np.real(alpha)
-    #        # Q_factors = 0.5*(q_AC/alpha)*np.ones(n_modes_AC) # appropriate for alpha in [1/m]
-    #        Q_factors = 0.5*(sim_AC.Omega_AC/alpha)*np.ones(n_modes_AC) # appropriate for alpha in [1/s]
-    #        end = time.time()
-    #        print("     time (sec.)", (end - start))
-    #        print("remove me alpha", alpha)
-    #        print("remove me Qs", Q_factors)
-    #    else:
-    #        # factor of a 1/2 because alpha is for power!
-    #        # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
-    #        # alpha [1/s] = vg * alpha [1/m]
-    #        # alpha [1/s] = Omega_AC/(2*fixed_Q)
-    #        # alpha = 0.5*(q_AC/fixed_Q)*np.ones(n_modes_AC) # appropriate for alpha in [1/m]
-    #        alpha = 0.5*(sim_AC.Omega_AC/fixed_Q)*np.ones(n_modes_AC) # appropriate for alpha in [1/s]
-    #        Q_factors = fixed_Q*np.ones(n_modes_AC)
-    #        print("fixed q:", alpha, Q_factors)
-    #
-    #    linewidth_Hz = alpha/np.pi # SBS linewidth of each resonance in [Hz]
-
-    # Calc Q_photoelastic Eq. 33
+    acoustic_eps_effs = el_props.v_acoustic_eps_eff
 
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
 
     sim_AC.fem_evecs[2, :, :, :] = 0   # Explain!
+
+    # Calc Q_photoelastic Eq. 33
 
     is_curvi = False
     if struc.using_linear_elements():
@@ -529,7 +467,7 @@ def gain_and_qs(
         trimmed_EM_pump_field,
         trimmed_EM_Stokes_field,
         sim_AC.fem_evecs,
-        relevant_eps_effs,
+        acoustic_eps_effs,
     )
 
     (Q_PE,) = process_fortran_return(
@@ -539,8 +477,8 @@ def gain_and_qs(
 
     # Calc Q_moving_boundary Eq. 41
     #TODO: Needs major fixing to get multiple boundaries right
-    typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
-    if len(relevant_eps_effs) == 2 and relevant_eps_effs[0]!= relevant_eps_effs[1]: # This check needed in case two regions actually have the same index and are not the interesting boundary
+    typ_select_in = 1  # first element in acoustic_eps_effs list, in fortan indexing
+    if len(acoustic_eps_effs) == 2 and acoustic_eps_effs[0]!= acoustic_eps_effs[1]: # This check needed in case two regions actually have the same index and are not the interesting boundary
         typ_select_out = 2
     elif typ_select_out is None:
         typ_select_out = -1
@@ -565,7 +503,7 @@ def gain_and_qs(
         trimmed_EM_pump_field,
         trimmed_EM_Stokes_field,
         sim_AC.fem_evecs,
-        relevant_eps_effs,
+        acoustic_eps_effs,
     )
 
     (Q_MB,) = process_fortran_return(resm, "finding moving boundary coupling")
@@ -598,20 +536,6 @@ def gain_and_qs(
     SBS_gain = np.real(gain / normal_fact)
     SBS_gain_PE = np.real(gain_PE / normal_fact)
     SBS_gain_MB = np.real(gain_MB / normal_fact)
-
-
-    print('gain sum',
-          np.max(np.abs(SBS_gain_PE)),
-          np.max(np.abs(SBS_gain_MB)),
-       np.max(np.abs(SBS_gain)),
-
-          )
-
-    print('gain sum 1', SBS_gain_MB[0,0,:])
-    print('gain sum 2', SBS_gain_MB[0,1,:])
-    print('gain sum 3', SBS_gain_MB[1,0,:])
-
-    print('max', np.argmax(np.abs(Q_MB)), SBS_gain.shape)
 
 
     return (
@@ -1201,7 +1125,7 @@ def grid_integral(
         for k in range(3):
             for l in range(3):
                 for j in range(3):
-                    # integrand_PE = relevant_eps_effs[0]**2 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.elastic_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
+                    # integrand_PE = acoustic_eps_effs[0]**2 * E_mat_p[j]*np.conj(E_mat_S[i])*sim_AC_structure.elastic_props.p_ijkl[i,j,k,l]*del_u_mat_star[k,l]
                     integrand_PE = (
                         m_n**4
                         * E_mat_p[j]
@@ -1239,10 +1163,10 @@ def gain_python(
     n_points = 100
     n_points_comsol_data = 100
 
-    # relevant_eps_effs =[]
+    # acoustic_eps_effs =[]
     # for el_typ in range(sim_EM_pump.structure.n_mats_em):
     #     if el_typ+1 in sim_AC.typ_el_AC:
-    #         relevant_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
+    #         acoustic_eps_effs.append(sim_EM_pump.v_refindexn[el_typ]**2)
 
     energy_py = np.zeros(comsol_mode_indices, dtype=np.complex128)
     alpha_py = np.zeros(comsol_mode_indices)

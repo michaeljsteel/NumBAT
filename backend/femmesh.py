@@ -231,7 +231,7 @@ class FemMesh:
         #matvals = list(wguide.d_materials.values())[: opt_props.n_mats_em]
         matvals = wguide.get_optical_materials()
 
-        print(" The material index table is:", opt_props.el_conv_table_n, "\n")
+        #print(" The material index table is:", opt_props.el_conv_table_n, "\n")
         print(f" There are {opt_props.n_mats_em} active materials:")
         for im, m in enumerate(matvals):
             # +1 because materials are reported by their Fortran index
@@ -396,7 +396,7 @@ class FemMesh:
 
         print(" The material index table is:", el_props.typ_el_AC, "\n")
         print(f" There are {el_props.n_mats_ac} active materials:")
-        for mat in el_props.v_active_mats:
+        for mat in el_props.v_acoustic_mats:
             vphases = mat.Vac_phase()
             print(
                 f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc, v_i = [{vphases[0]:.4f}, {vphases[1]:.4f}, {vphases[2]:.4f}] km/s.'

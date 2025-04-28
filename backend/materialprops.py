@@ -43,12 +43,13 @@ class ElasticProps:
 
     def __init__(self, wguide, symmetry_flag):
 
-             # construct list of materials with nonzero density, ie with acoustic properties likely defined
+        # construct list of materials with acoustic properties
         # Any material not given v_acoustic_mats assumed to be vacuum.
-        v_acoustic_mats = [m for m in wguide.d_materials.values() if m.has_elastic_properties()]
+        self.v_acoustic_mats = [m for m in wguide.d_materials.values() if m.has_elastic_properties()]
+        self.n_mats_ac = len(self.v_acoustic_mats)
 
-        self.n_mats_ac = len(v_acoustic_mats)
-        self.v_active_mats = v_acoustic_mats
+        self.v_acoustic_refindexn = [m.refindex_n for m in self.v_acoustic_mats]
+        self.v_acoustic_eps_eff = [m.refindex_n**2 for m in self.v_acoustic_mats]
 
         # density  shape = [n_mats_ac]
         self.rho = np.zeros(self.n_mats_ac)
@@ -68,7 +69,7 @@ class ElasticProps:
         # eta tensor as rank 4 ijkl tensor [3x3x3x3  x  n_mats_ac]
         self.eta_ijkl = np.zeros((3, 3, 3, 3, self.n_mats_ac))
 
-        self.fill_tensors(v_acoustic_mats, symmetry_flag)
+        self.fill_tensors(self.v_acoustic_mats, symmetry_flag)
 
         self._extract_elastic_mats(wguide)
 
@@ -80,21 +81,18 @@ class ElasticProps:
         el_conv_table = {}
         oldloc = 1
         newloc = 1
-        d_mats_AC = {}
 
-            #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
+        #No need to examine any materials beyond the max in the EM simulation (they are all vacuum anyway)
         for mat in list(wguide.d_materials.values())[:opt_props.n_mats_em]:
             if mat.has_elastic_properties():
                 el_conv_table[oldloc] = newloc
                 newloc += 1
-                d_mats_AC[mat.material_name] = mat
             oldloc += 1
 
-        #self.typ_el_AC = {}
-        #for k, v in el_conv_table.items():
-        #    # now keeps its own rather than take from simres_EM which might not exist
-        #    self.typ_el_AC[opt_props.el_conv_table_n[k]] = v
-        self.typ_el_AC = {opt_props.el_conv_table_n[k] : v for k, v in el_conv_table.items()}
+        # Table mapping {opt_mat_index -> acoustic_mat_index}
+        # ie for k, v in self.typ_al_AC:  v_acoustic_mat[v] = v_opt_mat[k], but indexed from 1
+        #self.typ_el_AC = {opt_props.el_conv_table_n[k] : v for k, v in el_conv_table.items()}
+        self.typ_el_AC = el_conv_table
 
 
     def is_elastic_material_index(self, idx):

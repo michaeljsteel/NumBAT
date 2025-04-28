@@ -450,6 +450,7 @@ class Material(object):
                 "Failed to load anisotropic crystal class in material data file {self.json_file}"
             )
 
+    # TODO: make a property
     def set_refractive_index(self, nr, ni=0.0):
         self.refindex_n = nr + 1j * ni
 
