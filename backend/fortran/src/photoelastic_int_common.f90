@@ -30,7 +30,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    complex(8) beta_ac
 
-   complex(8), intent(out) :: Q_PE(nval_em_s, nval_em_p, nval_ac_u)
+   complex(8), intent(out) :: Q_PE(nval_em_p, nval_em_s, nval_ac_u)
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) ::  emsg
 
@@ -159,7 +159,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
                                  zt1 = E_s_i_star * E_p_j * Ustar_l
 
                                  do xyz_k=1,3
-                                    Q_PE(t_ival_s,t_ival_p,t_ival_u) = Q_PE(t_ival_s,t_ival_p,t_ival_u) &
+                                    Q_PE(t_ival_p,t_ival_s,t_ival_u) = Q_PE(t_ival_p,t_ival_s,t_ival_u) &
                                        + zt1 * basis_overlap(ind_ip,ind_jp,xyz_k,ind_lp)
                                  enddo
 

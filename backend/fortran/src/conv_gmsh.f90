@@ -110,7 +110,7 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    endif
 
    if (n_pts .gt. MAX_N_ELTS) then
-      write(emsg, '(A,I7,A,I7,A)') 'The generated mesh has ', n_pts, \
+      write(emsg, '(A,I7,A,I7,A)') 'The generated mesh has ', n_pts, &
          ' nodes, which exceeds the maximum of ', MAX_N_ELTS, '.'
       errco = NBERR_MESH_TOO_LARGE
       return
@@ -121,8 +121,6 @@ subroutine conv_gmsh_impl(geo_fname, assertions_on, errco, emsg)
    call integer_alloc_1d(v_eltbdy_physcurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
    call integer_alloc_1d(v_eltint_physsurf, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
    call integer_alloc_1d(v_nd_iphyscurve, MAX_N_ELTS, 'v_lines_nodes', errco, emsg); RETONERROR(errco)
-
-   write(*,*) 'npts', n_pts, MAX_N_ELTS
 
    !  Now we know the number of points and mappings (even if trivial)
    !  Next we load elt data according to the gmsh element types

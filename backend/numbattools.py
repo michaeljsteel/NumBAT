@@ -28,8 +28,11 @@ def is_real_number(x):
     return isinstance(x, numbers.Real)  # need numpy.int32, int36, float64, etc
 
 def is_float_pair(x):
-    return (isinstance(x, abc.Sequence) and len(x)==2
-            and is_real_number(x[0]) and is_real_number(x[1]))
+    #print('float pair test', x,
+    #isinstance(x, abc.Sequence) ,len(x)==2, is_real_number(x[0]), is_real_number(x[1]))
+
+    is_arr = isinstance(x, abc.Sequence) or isinstance(x, np.ndarray)
+    return is_arr and len(x)==2 and is_real_number(x[0]) and is_real_number(x[1])
 
 def almost_zero(x, tol=1e-10):
     return math.isclose(x, 0, abs_tol=tol)
