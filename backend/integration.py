@@ -247,8 +247,6 @@ def get_gains_and_qs(
     if 'AC_ival' in kwargs:
         reporting.report_and_exit('The parameter AC_ival is now called AC_mode_index')
 
-    print('ACs ', AC_mode_index)
-
     # TODO: get rid of this old backend
     SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = gain_and_qs(
         sim_EM_pump,
@@ -264,8 +262,7 @@ def get_gains_and_qs(
 
     )
 
-    print('out of gains', SBS_gain)
-
+    print('done raw gain', SBS_gain_MB)
     gain = GainProps()
     gain._set_sim_AC(sim_AC)
     gain._set_gain_tot(SBS_gain)
@@ -391,10 +388,12 @@ def gain_and_qs(
         EM_mode_index_pump_fortran = -1
     else:
         EM_mode_index_pump_fortran = EM_mode_index_pump + 1  # convert back to Fortran indexing
+
     if EM_mode_index_Stokes == "All":
         EM_mode_index_Stokes_fortran = -1
     else:
         EM_mode_index_Stokes_fortran = EM_mode_index_Stokes + 1  # convert back to Fortran indexing
+
     if AC_mode_index == "All":
         AC_mode_index_fortran = -1
     else:
@@ -502,7 +501,7 @@ def gain_and_qs(
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
 
-    sim_AC.fem_evecs[2, :, :, :] = 0
+    sim_AC.fem_evecs[2, :, :, :] = 0   # Explain!
 
     is_curvi = False
     if struc.using_linear_elements():
@@ -536,18 +535,17 @@ def gain_and_qs(
     (Q_PE,) = process_fortran_return(
         resm, "finding linear element photoelastic couplings"
     )
-    print('doing gain photoel', Q_PE,
-        EM_mode_index_pump_fortran,
-        EM_mode_index_Stokes_fortran,
-        AC_mode_index_fortran)
+
 
     # Calc Q_moving_boundary Eq. 41
+    #TODO: Needs major fixing to get multiple boundaries right
     typ_select_in = 1  # first element in relevant_eps_effs list, in fortan indexing
-    if len(relevant_eps_effs) == 2:
+    if len(relevant_eps_effs) == 2 and relevant_eps_effs[0]!= relevant_eps_effs[1]: # This check needed in case two regions actually have the same index and are not the interesting boundary
         typ_select_out = 2
     elif typ_select_out is None:
         typ_select_out = -1
     print("\n Moving boundary calc")
+
 
     resm = nb_fortran.moving_boundary(
         sim_EM_pump.n_modes,
@@ -600,6 +598,21 @@ def gain_and_qs(
     SBS_gain = np.real(gain / normal_fact)
     SBS_gain_PE = np.real(gain_PE / normal_fact)
     SBS_gain_MB = np.real(gain_MB / normal_fact)
+
+
+    print('gain sum',
+          np.max(np.abs(SBS_gain_PE)),
+          np.max(np.abs(SBS_gain_MB)),
+       np.max(np.abs(SBS_gain)),
+
+          )
+
+    print('gain sum 1', SBS_gain_MB[0,0,:])
+    print('gain sum 2', SBS_gain_MB[0,1,:])
+    print('gain sum 3', SBS_gain_MB[1,0,:])
+
+    print('max', np.argmax(np.abs(Q_MB)), SBS_gain.shape)
+
 
     return (
         SBS_gain,

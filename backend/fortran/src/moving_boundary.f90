@@ -31,7 +31,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    complex(8) soln_ac_u(3, P2_NODES_PER_EL, nval_ac, n_msh_el)
 
    complex(8) v_eps_rel(n_elt_mats)
-   complex(8), intent(out) :: Q_MB(nval_em_s, nval_em_p, nval_ac)
+   complex(8), intent(out) :: Q_MB(nval_em_p, nval_em_s, nval_ac)
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) ::  emsg
 
@@ -95,6 +95,8 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    !           6    5
    !        1    4     2
 
+   write(*,*) 'MOVBD 1', n_elt_mats, v_eps_rel
+
    edge_endpoints(1,1) = 1   ! Edge 1 has endpoints at nodes 1 and 2
    edge_endpoints(2,1) = 2
    opposite_node(1) = 3      !        and is opposite node 3
@@ -121,7 +123,6 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    call fill_ival_arrays(v_ival_p, nval_em_p, ival_p)
    call fill_ival_arrays(v_ival_s, nval_em_s, ival_s)
    call fill_ival_arrays(v_ival_ac, nval_ac, ival_ac)
-
 
    do i_el=1,n_msh_el
       typ_e = el_material(i_el)
@@ -327,6 +328,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
                            tmp2 = (1.0d0/eps_b-1.0d0/eps_a)/SI_EPS_0 * n_dot_d(1) * n_dot_d(2)
                            r_tmp = p2_p2_p2_1d(j_1, j_2, j_3)
+
 
                            Q_MB(t_ival_p, t_ival_s, t_ival_ac) = Q_MB(t_ival_p, t_ival_s, t_ival_ac) &
                               + r_tmp*conjg(n_dot_uv_ac)*(tmp1 + tmp2)
