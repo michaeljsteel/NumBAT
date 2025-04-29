@@ -1,0 +1,22 @@
+ {
+  "format": "NumBATMaterial-fmt-2.0",
+  "material_name": "Si_light",  // Name of this file, will be used as identifier
+  "chemical": "Silight",  // Chemical composition
+  "author": "Steel",  // Author of data
+  "institution": "Macquarie",  // Author of data
+  "doi": "_",  // Author of data
+  "date": "2025",  // Year of data publication/creation
+  "Re_n": 2.48,  // Real part of refractive index []
+  "Im_n": 0.0,  // Imaginary part of refractive index []
+  "s": 0.2329,  // Density [kg/m3]
+  "crystal_class": "Isotropic",
+  "c_11": 165.6e5,  // Stiffness tensor component [Pa]
+  "c_12": 63.9e5,  // Stiffness tensor component [Pa]
+  "c_44": 79.5e5,  // Stiffness tensor component [Pa]
+  "p_11": -0.094,  // Photoelastic tensor component []
+  "p_12": 0.017,  // Photoelastic tensor component []
+  "p_44": -0.051,  // Photoelastic tensor component []
+  "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_44": 0.62e-3  // Acoustic loss tensor component [Pa s]
+}
