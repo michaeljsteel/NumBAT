@@ -27,10 +27,9 @@ contains
 
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       bdy_cdn, itermax, tol, debug, show_mem_est, &
-      symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
-      mesh_file, n_msh_pts, n_msh_el, &
-      v_nd_physindex, &
-      elnd_to_mshpt, v_el_material, v_nd_xy, &
+      symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
+      mesh_file, n_msh_pts, n_msh_el,n_elt_mats, &
+      elnd_to_mshpt, v_el_material, v_nd_physindex,  v_nd_xy, &
       v_eigs_nu, femsol_ac, poln_fracs, nberr)
 
 
@@ -42,7 +41,7 @@ contains
       complex(8), intent(in) :: shift_nu
       integer(8), intent(in) :: bdy_cdn, itermax, debug, show_mem_est
       double precision, intent(in) :: tol
-      integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
+      integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
       integer(8), intent(in) :: n_elt_mats
 
       complex(8), intent(in) :: c_tensor(6,6,n_elt_mats)
@@ -85,6 +84,10 @@ contains
       integer(8), dimension(:), allocatable :: a_iwork
       complex(8), dimension(:), allocatable :: b_zwork
       double precision, dimension(:), allocatable :: c_dwork
+
+      integer(8), dimension(:), allocatable :: aiwk_wksp, aiwk_col_ptr, aiwk_row
+      integer(8), dimension(:), allocatable :: aiwk_work, aiwk_work_sort
+
 
       !double precision, dimension(:,:), allocatable :: d_dwork
       !complex(8), dimension(:,:), allocatable :: dummy_overlap_L  !  not actually used.
@@ -145,6 +148,7 @@ contains
 
 
       errco = 0
+      emsg = ""
 
       ui_out = stdout
 
@@ -152,9 +156,6 @@ contains
       !  nvect = 2*n_modes + n_modes/2 +3
       nvect = 3*n_modes + 3
 
-
-      errco= 0
-      emsg = ""
 
       call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
@@ -166,9 +167,26 @@ contains
          n_ddl, errco, emsg)
       call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
-      allocate(a_iwork(int_max), STAT=alloc_stat)
-      call check_alloc(alloc_stat, int_max, "a", -1, nberr);
-      RET_ON_NBERR(nberr)
+      ! allocate(a_iwork(int_max), STAT=alloc_stat)
+      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
+      ! RET_ON_NBERR(nberr)
+
+
+
+      ! allocate(aiwk_col_ptr(n_dof+1), STAT=alloc_stat)
+      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
+      ! RET_ON_NBERR(nberr)
+
+      ! allocate(aiwk_row(n_dof+1), STAT=alloc_stat)
+      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
+      ! RET_ON_NBERR(nberr)
+
+
+
+
+
+
+
 
       allocate(b_zwork(cmplx_max), STAT=alloc_stat)
       call check_alloc(alloc_stat, cmplx_max, "b", -1, nberr); RET_ON_NBERR(nberr)
@@ -208,7 +226,7 @@ contains
       call clock_main%reset()
 
 
-      if (supplied_geo_flag .eq. 0) then
+      if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
          call construct_fem_node_tables_ac (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
             P2_NODES_PER_EL, n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, errco, emsg)
          call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
@@ -219,97 +237,48 @@ contains
       !  Fills:  MeshRaw: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
 
-      if (supplied_geo_flag .eq. 0) then
+      if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
-         call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, nberr);
+         call mesh_raw%construct_node_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
-         call mesh_raw%load_node_tables_from_py(v_nd_xy, v_nd_physindex, &
+         call mesh_raw%construct_node_tables_from_py(v_nd_xy, v_nd_physindex, &
             v_el_material, elnd_to_mshpt, nberr);
          RET_ON_NBERR(nberr)
       endif
 
 
-      !call periodic_lattice_vec (n_msh_pts, v_nd_xy, lat_vecs, debug)
-
-
-      !  Determine number of boundary conditions (n_dof) and 2D index array
-      !  a_iwork(ip_eq)
-      !call bound_cond_AC (bdy_cdn, n_msh_pts, n_dof, v_nd_physindex, a_iwork(ip_eq))
-      call bound_cond_AC (bdy_cdn, mesh_raw, n_dof,  a_iwork(ip_eq))
-
-      call cscmat%set_bound_cond(bdy_cdn, mesh_raw, nberr)
+      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, nberr)
       RET_ON_NBERR(nberr)
 
-      !
-      !  Sparse matrix storage
-      ip_col_ptr = ip_eq + 3*n_msh_pts
 
-      call csr_make_col_ptr_loose_AC (n_msh_el, n_msh_pts, n_dof, P2_NODES_PER_EL, &
-         elnd_to_mshpt, a_iwork(ip_eq), a_iwork(ip_col_ptr), nonz_max)
-
-      ip = ip_col_ptr + n_dof + 1
-      if (ip .gt. int_max) then
-         write(emsg,*) "py_calc_modes_AC: ip > int_max : ", &
-            ip, int_max, &
-            "py_calc_modes_AC: nonz_max = ", nonz_max, &
-            "py_calc_modes_AC: increase the size of int_max"
-         errco = -3
-         return
-      endif
-      !
-      ip_row = ip_col_ptr + n_dof + 1
-
-      call csr_length_AC (n_msh_el, n_msh_pts, n_dof, P2_NODES_PER_EL, &
-         elnd_to_mshpt, a_iwork(ip_eq), a_iwork(ip_row), a_iwork(ip_col_ptr), nonz_max, &
-         nonz, max_row_len, ip, int_max, debug)
-
-      ip_work = ip_row + nonz
-      ip_work_sort = ip_work + 3*n_msh_pts
-      ip_work_sort2 = ip_work_sort + max_row_len
-
-      !  sorting csr ...
-      call sort_csr (n_dof, nonz, max_row_len, a_iwork(ip_row), &
-         a_iwork(ip_col_ptr), &
-      !a_iwork(ip_work_sort),
-         a_iwork(ip_work))
-      !a_iwork(ip_work_sort2)
+      call cscmat%make_csc_arrays(mesh_raw, entities, nonz_max, nonz, max_row_len, nberr)
+      RET_ON_NBERR(nberr)
 
 
-      if (debug .eq. 1) then
-         write(ui_out,*) "py_calc_modes_AC: nonz_max = ", nonz_max
-         write(ui_out,*) "py_calc_modes_AC: nonz = ", nonz
-         write(ui_out,*) "py_calc_modes_AC: cmplx_max/nonz = ", &
-            dble(cmplx_max)/dble(nonz)
-      endif
 
-      int_used = ip_work_sort2 + max_row_len
+      call integer_nalloc_1d(aiwk_wksp, 3*n_msh_pts, 'iwork', nberr); RET_ON_NBERR(nberr)
 
-      if (int_max .lt. int_used) then
-         write(emsg,*)"The size of the integer(8) supervector is too small", &
-            "integer(8) super-vec: int_max  = ", int_max, &
-            "integer(8) super-vec: int_used = ", int_used
-         errco = -4
-         call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
-      endif
+
+
 
       jp_rhs = jp_x + 2*n_msh_pts
       !  jp_rhs will also be used (in gmsh_post_process) to store a solution
-      jp_mat2 = jp_rhs + max(n_dof, 3*n_msh_pts)
+      jp_mat2 = jp_rhs + max(cscmat%n_dof, 3*n_msh_pts)
       jp_vect1 = jp_mat2 + nonz
-      jp_vect2 = jp_vect1 + n_dof
-      jp_workd = jp_vect2 + n_dof
-      jp_resid = jp_workd + 3*n_dof
+      jp_vect2 = jp_vect1 + cscmat%n_dof
+      jp_workd = jp_vect2 + cscmat%n_dof
+      jp_resid = jp_workd + 3*cscmat%n_dof
       jp_eigenum_modes_tmp = jp_resid+3*P2_NODES_PER_EL*n_modes*n_msh_el
       !  Eigenvectors
       jp_vschur = jp_eigenum_modes_tmp + n_modes + 1
-      jp_eigen_pol = jp_vschur + n_dof*nvect
+      jp_eigen_pol = jp_vschur + cscmat%n_dof*nvect
       jp_trav = jp_eigen_pol + n_modes*4
 
       ltrav = 3*nvect*(nvect+2)
       jp_vp = jp_trav + ltrav
-      cmplx_used = jp_vp + n_dof*n_modes
+      cmplx_used = jp_vp + cscmat%n_dof*n_modes
 
       if (cmplx_max .lt. cmplx_used)  then
          write(emsg,*)"The size of the complex supervector is too small", &
@@ -322,10 +291,10 @@ contains
 
 
       kp_rhs_re = 1
-      kp_rhs_im = kp_rhs_re + n_dof
-      kp_lhs_re = kp_rhs_im + n_dof
-      kp_lhs_im = kp_lhs_re + n_dof
-      kp_mat1_re = kp_lhs_im + n_dof
+      kp_rhs_im = kp_rhs_re + cscmat%n_dof
+      kp_lhs_re = kp_rhs_im + cscmat%n_dof
+      kp_lhs_im = kp_lhs_re + cscmat%n_dof
+      kp_mat1_re = kp_lhs_im + cscmat%n_dof
       kp_mat1_im = kp_mat1_re + nonz
       real_used = kp_mat1_im + nonz
 
@@ -346,20 +315,8 @@ contains
          return
       endif
 
-      !
-      !###############################################
-      !
-      !  ----------------------------------------------------------------
-      !  convert from 1-based to 0-based
-      !  ----------------------------------------------------------------
-      !
-      do 60 j = 1, n_dof+1
-         a_iwork(j+ip_col_ptr-1) = a_iwork(j+ip_col_ptr-1) - 1
-60    continue
-      do 70 j = 1, nonz
-         a_iwork(j+ip_row-1) = a_iwork(j+ip_row-1) - 1
-70    continue
-      !
+
+
       !
       !  The CSC iindexing, i.e., ip_col_ptr, is 1-based
       !  (but valpr.f will change the CSC iindexing to 0-based iindexing)
@@ -383,20 +340,20 @@ contains
       write(ui_out,'(A,A)') "   - assembling linear system:"
       call clock_spare%reset()
 
-      call asmbly_AC (i_base, n_msh_el, n_msh_pts, n_dof, P2_NODES_PER_EL, &
+      call asmbly_AC (i_base, n_msh_el, n_msh_pts, cscmat%n_dof, P2_NODES_PER_EL, &
          shift_omsq, q_ac, n_elt_mats, rho, c_tensor, &
-         elnd_to_mshpt, v_el_material, a_iwork(ip_eq), &
-         v_nd_xy, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), &
-         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), a_iwork(ip_work), &
+         mesh_raw%elnd_to_mshpt, mesh_raw%el_material, cscmat%m_eqs, &
+         v_nd_xy, nonz, cscmat%v_row_ind, cscmat%v_col_ptr, &
+         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), aiwk_wksp, &
          symmetry_flag, debug)
 
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
-      write(ui_out,'(A,i9,A)') '      ', n_dof, ' linear equations'
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations'
       write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
-      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*n_dof*n_dof)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', n_dof*(nvect+6)*16/2**20, ' MB est. working memory '
+      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*cscmat%n_dof*cscmat%n_dof)*100.d0, ' % sparsity'
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof*(nvect+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
@@ -405,14 +362,14 @@ contains
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
-      call valpr_64_AC (i_base, nvect, n_modes, n_dof, itermax, ltrav, &
-         tol, nonz, a_iwork(ip_row), a_iwork(ip_col_ptr), c_dwork(kp_mat1_re), &
+      call valpr_64_AC (i_base, nvect, n_modes, cscmat%n_dof, itermax, ltrav, &
+         tol, nonz, cscmat%v_row_ind, cscmat%v_col_ptr, c_dwork(kp_mat1_re), &
          c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
          b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), b_zwork(jp_resid), &
          b_zwork(jp_vschur), v_eigs_nu, b_zwork(jp_trav), b_zwork(jp_vp), &
          c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, &
          debug, show_mem_est, errco, emsg)
-     
+
       call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
 
@@ -451,8 +408,8 @@ contains
       if (debug .eq. 1) then
          write(ui_out,*) "py_calc_modes_AC: call to array_sol"
       endif
-      call array_sol_AC (n_modes, n_msh_el, n_msh_pts, n_dof, &
-         P2_NODES_PER_EL, iindex, elnd_to_mshpt, v_el_material, a_iwork(ip_eq), v_nd_xy, &
+      call array_sol_AC (n_modes, n_msh_el, n_msh_pts, cscmat%n_dof, &
+         P2_NODES_PER_EL, iindex, mesh_raw%elnd_to_mshpt, mesh_raw%el_material, cscmat%m_eqs, v_nd_xy, &
          v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), poln_fracs, b_zwork(jp_vp), femsol_ac)
 
       if (debug .eq. 1) then
@@ -483,7 +440,7 @@ contains
       !  open (unit=34,file=tchar)
       !  do i=1,n_modes
       !  call gmsh_post_process_AC (i, n_modes, n_msh_el,
-      !  *         n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, v_el_material,
+      !  *         n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, mesh_raw%el_material,
       !  *         v_nd_xy, v_eigs_nu, femsol_ac, b_zwork(jp_rhs), a_iwork(ip_visite),
       !  *         gmsh_file_pos, dir_name, dimscale_in_m, debug)
       !  enddo
@@ -514,7 +471,7 @@ contains
       !  write(26,*)
       !  write(26,*) "n_msh_pts, n_msh_el, P2_NODES_PER_EL  = ", n_msh_pts, &
       !  n_msh_el, P2_NODES_PER_EL
-      !  write(26,*) "n_dof, bdy_cdn = ", n_dof, bdy_cdn
+      !  write(26,*) "cscmat%n_dof, bdy_cdn = ", cscmat%n_dof, bdy_cdn
       !  write(26,*) " lat_vecs:  = "
       !  write(26,"(2(f18.10))") lat_vecs
       !  write(26,*) "mesh_file = ", mesh_file
@@ -532,7 +489,7 @@ contains
       write(ui_out,*) "-----------------------------------------------"
       write(ui_out,*)
       !
-      deallocate(a_iwork, b_zwork, c_dwork, iindex)
+      deallocate(b_zwork, c_dwork, iindex)
 
    end subroutine calc_ac_modes_impl
 

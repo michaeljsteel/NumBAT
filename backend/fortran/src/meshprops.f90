@@ -154,8 +154,8 @@ module class_MeshRaw
 !
 !      procedure :: node_phys_index_by_ref => MeshRaw_node_phys_index_by_ref
 !
-      procedure :: construct_node_tables => MeshRawAC_construct_node_tables
-      procedure :: load_node_tables_from_py => MeshRawAC_load_node_tables_from_py
+      procedure :: construct_node_tables_from_scratch => MeshRawAC_construct_node_tables_from_scratch
+      procedure :: construct_node_tables_from_py => MeshRawAC_construct_node_tables_from_py
 
 
 

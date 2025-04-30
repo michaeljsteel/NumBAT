@@ -67,8 +67,8 @@ module class_SparseCSC_AC
 
    contains
 
-   !procedure :: set_boundary_conditions => SparseCSC_AC_set_boundary_conditions
-   procedure :: set_bound_cond => SparseCSC_AC_set_bound_cond
+   procedure :: set_boundary_conditions => SparseCSC_AC_set_boundary_conditions
+   !procedure :: set_boundary_conditions => SparseCSC_AC_set_bound_cond
 
    procedure :: make_csc_arrays => SparseCSC_AC_make_csc_arrays
 

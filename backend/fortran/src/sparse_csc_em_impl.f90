@@ -590,7 +590,6 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
    ! Now we know n_nonz
    call integer_nalloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
 
-
    this%v_row_ind(1:n_nonz) = row_ind_tmp(1:n_nonz)
 
 

@@ -48,7 +48,7 @@ end subroutine
 
 subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    bdy_cdn, itermax, tol, debug, show_mem_est, &
-   symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
+   symmetry_flag, n_elt_mats, c_tensor, rho, build_acmesh_from_emmesh, &
    mesh_file, n_msh_pts, n_msh_el, &
    v_nd_physindex, &
    elnd_to_mshpt, v_el_material, v_nd_xy, &
@@ -64,7 +64,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    complex(8), intent(in) :: shift_nu
    integer(8), intent(in) :: bdy_cdn, itermax, debug, show_mem_est
    double precision, intent(in) :: tol
-   integer(8), intent(in) :: symmetry_flag, supplied_geo_flag
+   integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
    integer(8), intent(in) :: n_elt_mats
 
    complex(8), intent(in) :: c_tensor(6,6,n_elt_mats)
@@ -97,10 +97,9 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       bdy_cdn, itermax, tol, debug, show_mem_est, &
-      symmetry_flag, n_elt_mats, c_tensor, rho, supplied_geo_flag, &
-      mesh_file, n_msh_pts, n_msh_el, &
-      v_nd_physindex, &
-      elnd_to_mshpt, v_el_material, v_nd_xy, &
+      symmetry_flag, c_tensor, rho, build_acmesh_from_emmesh, &
+      mesh_file, n_msh_pts, n_msh_el, n_elt_mats,  &
+      elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, &
       v_eigs_nu, femsol_ac, poln_fracs, nberr)
 
    call nberr%to_py(errco, emsg)

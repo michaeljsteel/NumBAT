@@ -49,9 +49,9 @@ nb_impl_fsrcs = files(
     'bound_cond_ac.f90',
     'construct_fem_tables.f90',
     'conv_gmsh_subroutines_mod.f90',
-    'csr_length_AC.f',
+    'csr_length_AC.f90',
 
-    'csr_max_length_ac.f90',
+    #'csr_max_length_ac.f90',
     'get_H_field_p3.f90',
     'get_coord_p3.f90',
     'gmsh_post_process.f90',

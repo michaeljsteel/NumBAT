@@ -21,7 +21,7 @@ end subroutine
 
 
  ! Seems identical to the EM version.
-subroutine MeshRawAC_load_node_tables_from_py(this, &
+subroutine MeshRawAC_construct_node_tables_from_py(this, &
    v_nd_xy, v_nd_physindex, el_material, elnd_to_mshpt, nberr)
 
    class(MeshRawAC) :: this
@@ -42,7 +42,7 @@ subroutine MeshRawAC_load_node_tables_from_py(this, &
 end subroutine
 
  ! Seems identical to the EM version.
-subroutine MeshRawAC_construct_node_tables(this, mesh_file, dimscale_in_m,nberr)
+subroutine MeshRawAC_construct_node_tables_from_scratch(this, mesh_file, dimscale_in_m,nberr)
 
    class(MeshRawAC) :: this
 
