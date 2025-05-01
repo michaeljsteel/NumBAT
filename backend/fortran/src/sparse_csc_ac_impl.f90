@@ -12,7 +12,7 @@
 !    integer(8) :: bdy_cdn !, n_dof
 !    integer(8) :: debug
 
-!    type(MeshRaw) :: mesh_raw
+!    type(MeshRawEM) :: mesh_raw
 !    type(MeshEntities) :: entities
 
 !    type(NBError) nberr
@@ -109,7 +109,7 @@
 subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
 
    use numbatmod
-   use class_MeshRaw
+   use class_MeshRawEM
 
    class(SparseCSC_AC) :: this
    integer(8) bdy_cdn
@@ -157,7 +157,7 @@ end
 
 
 
-subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, entities, n_nonz_max, n_nonz,  max_row_len, nberr)
+subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, entities, nberr)
 
    class(SparseCSC_AC) :: this
    type(MeshRawAC) :: mesh_raw
@@ -331,7 +331,7 @@ end
 
 
  !    class(SparseCSC_AC) :: this
- !    type(MeshRaw) :: mesh_raw
+ !    type(MeshRawEM) :: mesh_raw
  !    type(MeshEntities) :: entities
 
  !    integer(8) n_nonz_max, max_row_len
@@ -362,7 +362,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
    use numbatmod
    use alloc
 
-   use class_MeshRaw
+   use class_MeshRawEM
 
    class(SparseCSC_AC) :: this
    type(MeshRawAC) mesh_raw

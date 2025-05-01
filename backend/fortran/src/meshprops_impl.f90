@@ -1,6 +1,6 @@
-subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, nberr)
+subroutine MeshRawEM_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, nberr)
 
-   class(MeshRaw) :: this
+   class(MeshRawEM) :: this
    integer(8) :: n_msh_el, n_msh_pts, n_elt_mats
    type(NBError) nberr
 
@@ -19,15 +19,15 @@ subroutine MeshRaw_allocate(this, n_msh_pts, n_msh_el, n_elt_mats, nberr)
 
 end subroutine
 
- ! subroutine MeshRaw_destructor(this)
- !    type(MeshRaw) :: this
+ ! subroutine MeshRawEM_destructor(this)
+ !    type(MeshRawEM) :: this
 
  ! end subroutine
 
-subroutine MeshRaw_fill_python_arrays(this, &
+subroutine MeshRawEM_fill_python_arrays(this, &
    el_material, v_nd_physindex, elnd_to_mshpt, v_nd_xy)
 
-   class(MeshRaw) :: this
+   class(MeshRawEM) :: this
 
    integer(8), intent(out) :: el_material(:)
    integer(8), intent(out) :: v_nd_physindex(:)
@@ -42,22 +42,22 @@ subroutine MeshRaw_fill_python_arrays(this, &
 end subroutine
 
  ! boundary nodes have non zero GMsh physindex codes
-pure logical function  MeshRaw_is_boundary_node(this, nd) result(res)
-   class(MeshRaw), intent(in) :: this
+pure logical function  MeshRawEM_is_boundary_node(this, nd) result(res)
+   class(MeshRawEM), intent(in) :: this
    integer(8), intent(in)  :: nd
 
    res = this%v_nd_physindex(nd) .ne. 0
 end function
 
-pure logical function MeshRaw_is_boundary_node_2(this, i_nd, i_el) result(res)
-   class(MeshRaw), intent(in) :: this
+pure logical function MeshRawEM_is_boundary_node_2(this, i_nd, i_el) result(res)
+   class(MeshRawEM), intent(in) :: this
    integer(8), intent(in)  :: i_nd, i_el
    res = this%v_nd_physindex(this%elnd_to_mshpt(i_nd, i_el)) .ne. 0
 end function
 
  ! get node type by indirection through node table
-integer(8) function  MeshRaw_node_phys_index_by_ref(this, i_nd, i_el) result(res)
-   class(MeshRaw) :: this
+integer(8) function  MeshRawEM_node_phys_index_by_ref(this, i_nd, i_el) result(res)
+   class(MeshRawEM) :: this
    integer(8) :: i_nd, i_el
    res = this%v_nd_physindex(this%elnd_to_mshpt(i_nd, i_el))
 end function
@@ -79,9 +79,9 @@ end function
 
 !  -  Fills:  v_nd_xy, v_nd_physindex, el_material, elnd_to_mshpt
 
-subroutine MeshRaw_construct_node_tables(this, mesh_file, dimscale_in_m, nberr)
+subroutine MeshRawEM_construct_node_tables(this, mesh_file, dimscale_in_m, nberr)
 
-   class(MeshRaw) :: this
+   class(MeshRawEM) :: this
 
    ! ins
    character(len=*) mesh_file
@@ -153,10 +153,10 @@ end
 
 
 
-subroutine MeshRaw_find_nodes_for_elt(this, i_el, &
+subroutine MeshRawEM_find_nodes_for_elt(this, i_el, &
    el_nds_i, el_nds_xy, is_curved)
 
-   class(MeshRaw) :: this
+   class(MeshRawEM) :: this
    integer(8) i_el
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision el_nds_xy(2,P2_NODES_PER_EL)

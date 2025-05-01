@@ -8,16 +8,16 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_MeshRawEM
    use class_PeriodicBCs
-   use class_SparseCSC
+   use class_SparseCSC_EM
    use class_BasisFunctions
    use class_TriangleIntegrators
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
-   type(SparseCSC) :: cscmat
+   type(SparseCSC_EM) :: cscmat
    type(NBError) :: nberr
 
 
@@ -101,8 +101,8 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    n_curved = 0
    z_phase_fact = 1.0
 
-   do i_el=1,mesh_raw%n_msh_el                     ! For each element
-      typ_e = mesh_raw%el_material(i_el)       ! Find the material
+   do i_el=1,mesh_raw%n_msh_el              ! For each element
+      typ_e = mesh_raw%el_material(i_el)    ! Find the material and local material properrties
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)

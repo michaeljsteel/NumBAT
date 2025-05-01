@@ -1,44 +1,35 @@
-!  ------------------------------------------------------------------
+#include "numbat_decl.h"
 
-!  VALPR_64.
-!  ------
-!  Manages the use of ARPACK
 
-!  ------------------------------------------------------------------
-
-subroutine valpr_64_AC (i_base, nvect, n_modes, n_dof, itermax,&
-ltrav, tol, nonz, row_ind, col_ptr, mat1_re, mat1_im, mat2,&
-vect1, vect2, workd, resid, vschur, nu_out, trav, vp,&
-rhs_re, rhs_im, lhs_re, lhs_im, n_conv,&
-debug, show_mem_est, errno, emsg)
+subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
+   ltrav, tol, &
+   n_conv, v_evals_nu, v_evecs_arp, nberr)
 
 !  ------------------------------------------------------------------
 
    use numbatmod
+   use alloc
+   use class_SparseCSC_AC
+
+   type(NBError) nberr
+
+   type(SparseCSC_AC) :: cscmat
 
    integer(8) :: n_modes
-   integer(8) n_dof, nonz, n_conv, i_base, nvect, ltrav
-   integer(8) row_ind(nonz), col_ptr(n_dof+1)
-
-   integer(8) errno
-   character(len=EMSG_LENGTH) emsg
+   integer(8) n_conv, i_base, nvect, ltrav
 
 
-   double precision mat1_re(nonz), mat1_im(nonz)
-   double precision rhs_re(n_dof), rhs_im(n_dof)
-   double precision lhs_re(n_dof), lhs_im(n_dof)
+   !complex(8) mat2(cscmat%n_nonz)
 
-   complex(8) mat2(nonz)
-   complex(8) resid(n_dof), vschur(n_dof,nvect), workd(3*n_dof)
-   complex(8) vect1(n_dof), vect2(n_dof), trav(ltrav)
-   complex(8) nu_out(n_modes+1), shift2, vp(n_dof,n_modes)
+
+   complex(8) v_evals_nu(n_modes+1), shift2, v_evecs_arp(cscmat%n_dof,n_modes)
 
    double precision time1_fact, time2_fact
 
    double precision control (20), info_umf (90)
    integer(8) numeric, symbolic, sys
 
-   integer(8) itermax, i, j
+   integer(8) itermax, i, j, n_dof, n_nonz
    integer(8) compteur
 
 
@@ -46,35 +37,70 @@ debug, show_mem_est, errno, emsg)
 
    double precision tol
 
+   integer(8) errco
+   character(len=EMSG_LENGTH) emsg
+
    integer(8) alloc_stat
    complex(8), dimension(:), allocatable :: workev
    double precision, dimension(:), allocatable :: rwork
    logical, dimension(:), allocatable :: selecto
 
 
-!  Local variables
-!  32-bit integers for ARPACK
-   integer(4) n_dof_32, n_modes_32, nvect_32
+   complex(8), dimension(:), allocatable :: vect1, vect2, workd, resid, trav
+   complex(8), dimension(:,:), allocatable :: vschur
+
+
+   double precision, allocatable, dimension(:) :: lhs_re, lhs_im
+   double precision, allocatable, dimension(:) :: rhs_re, rhs_im
+   double precision, allocatable, dimension(:) :: mOp_stiff_re, mOp_stiff_im
+
+
+   !  Local variables
+   !  32-bit integers for ARPACK
+   integer(4) n_modes_32, nvect_32, n_dof_32
    integer(4) ido_32, info_32, ierr_32, iparam_32(11)
    integer(4) ipntr_32(14), ltrav_32
 
    logical rvec
    character bmat*1, which*2
 
-!  data bmat/'G'/
-!  data which/'SR'/
-!  data which/'SM'/
    data bmat/'I'/
    data which/'LM'/
 
    integer(8) ui, debug, show_mem_est
-!  common/imp/ui, debug
 
 !  ------------------------------------------------------------------
 
+   debug = 0
+   show_mem_est = 0
+
    ui = stdout
-   errno = 0
+   errco = 0
    emsg = ""
+
+   n_dof = cscmat%n_dof
+   n_nonz = cscmat%n_nonz
+
+   call complex_nalloc_1d(vect1, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call complex_nalloc_1d(vect2, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call complex_nalloc_1d(workd, 3*cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call complex_nalloc_1d(resid, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call complex_nalloc_1d(trav, ltrav, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+
+   call complex_nalloc_2d(vschur, cscmat%n_dof, nvect, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+
+
+   call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
+
+   call double_nalloc_1d(lhs_re, n_dof, 'lhs_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(lhs_im, n_dof, 'lhs_im', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(rhs_re, n_dof, 'rhs_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(rhs_im, n_dof, 'rhs_im', nberr); RET_ON_NBERR(nberr)
+
+   mOp_stiff_re = dble(cscmat%mOp_stiff)
+   mOp_stiff_im = dimag(cscmat%mOp_stiff)
+
 
    call cpu_time(time1_fact)
 
@@ -98,14 +124,16 @@ debug, show_mem_est, errno, emsg)
    call umf4zpcon (control)
 
 !  pre-order and symbolic analysis
-   call umf4zsym (n_dof, n_dof, col_ptr, row_ind, mat1_re, mat1_im, symbolic, control, info_umf)
+   call umf4zsym (cscmat%n_dof, cscmat%n_dof, cscmat%v_col_ptr, cscmat%v_row_ind, &
+      mOp_stiff_re, mOp_stiff_im, symbolic, control, info_umf)
 
 !  print statistics computed so far
 !  call umf4zpinf (control, info_umf) could also be done.
    call report_stats_umf4zsym(debug, show_mem_est, info_umf)
    if (info_umf (1) .lt. 0) then
       write(emsg,*) 'Error occurred in umf4zsym: ', info_umf (1)
-      errno = -104
+      errco = -104
+      call nberr%set(errco, emsg);
       return
    endif
 
@@ -113,7 +141,7 @@ debug, show_mem_est, errno, emsg)
 !  write(*,*) 'Starting num fac'
 !  numeric factorization
 !  TODO: This call does not appear to be thread safe!  Breaks tutorial 3 B in thread mode
-   call umf4znum (col_ptr, row_ind, mat1_re, mat1_im, symbolic, numeric, control, info_umf)
+   call umf4znum (cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, symbolic, numeric, control, info_umf)
 !  write(*,*) 'Done num fac'
 
 !  call umf4zpinf (control, info_umf) could also be done.
@@ -121,7 +149,8 @@ debug, show_mem_est, errno, emsg)
 
    if (info_umf (1) .lt. 0) then
       write(emsg,*) 'Error occurred in umf4znum: ', info_umf(1)
-      errno = -105
+      errco = -105
+      call nberr%set(errco, emsg);
       return
    endif
 
@@ -131,7 +160,8 @@ debug, show_mem_est, errno, emsg)
       write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
       &"for the arrays workev, rwork",&
       &"alloc_stat, nvect = ", alloc_stat, nvect
-      errno = -100
+      errco = -100
+      call nberr%set(errco, emsg);
       return
    endif
 
@@ -140,14 +170,15 @@ debug, show_mem_est, errno, emsg)
       write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
       &"for the array selecto",&
       &"alloc_stat, nvect = ", alloc_stat, nvect
-      errno = -101
+      errco = -101
+      call nberr%set(errco, emsg);
       return
    endif
 
 
 
    do i=1,n_modes
-      nu_out(i) = 0.0d0
+      v_evals_nu(i) = 0.0d0
    enddo
 
 !  ##################################################################
@@ -155,7 +186,8 @@ debug, show_mem_est, errno, emsg)
    if (i_base .ne. 0) then
       write(emsg,*) "valpr_64: i_base != 0 : ", i_base,&
       &"valpr_64: UMFPACK requires 0-based indexing"
-      errno = -102
+      errco = -102
+      call nberr%set(errco, emsg);
    endif
 
 
@@ -224,7 +256,7 @@ debug, show_mem_est, errno, emsg)
 !  | "which".                                                   |
 !  ------------------------------------------------------------
 
-   n_dof_32 = int(n_dof, 4)
+   n_dof_32 = int(cscmat%n_dof, 4)
    n_modes_32 = int(n_modes, 4)
    nvect_32 = int(nvect, 4)
    ltrav_32 = int(ltrav, 4)
@@ -255,7 +287,8 @@ debug, show_mem_est, errno, emsg)
       &' conditions failed (would generate ARPACK znaupd error ' //&
       &'code of -3).' // NEW_LINE('A'),&
       &'You should probably increase the grid resolution.'
-      errno = -106
+      errco = -106
+      call nberr%set(errco, emsg);
       return
    endif
 
@@ -275,10 +308,10 @@ debug, show_mem_est, errno, emsg)
 !  ------------------------------------------------------
 
       call zcopy(n_dof_32, workd(ipntr_32(1)), 1,vect1, 1)
-      call z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind,&
-      &col_ptr, mat2)
+      call z_mxv_csc (cscmat%n_dof, vect1, vect2, cscmat%n_nonz, cscmat%v_row_ind,&
+      &cscmat%v_col_ptr, cscmat%mOp_mass)
 
-      do i=1,n_dof
+      do i=1,cscmat%n_dof
          rhs_re(i) = dble(vect2(i))
          rhs_im(i) = imag(vect2(i))
       enddo
@@ -290,10 +323,11 @@ debug, show_mem_est, errno, emsg)
       if (info_umf (1) .lt. 0) then
          write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
          emsg = 'Error occurred in umf4zsol: '
-         errno = -107
+         errco = -107
+         call nberr%set(errco, emsg);
          return
       endif
-      do i=1,n_dof
+      do i=1,cscmat%n_dof
          vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
       enddo
 
@@ -311,10 +345,10 @@ debug, show_mem_est, errno, emsg)
 !  ----------------------------------------------
 
       call zcopy(n_dof_32, workd(ipntr_32(1)), 1, vect1, 1)
-      call z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind,&
-      &col_ptr, mat2)
+      call z_mxv_csc (cscmat%n_dof, vect1, vect2, cscmat%n_nonz, cscmat%v_row_ind,&
+      &cscmat%v_col_ptr, cscmat%mOp_mass)
 
-      do i=1,n_dof
+      do i=1,cscmat%n_dof
          rhs_re(i) = dble(vect2(i))
          rhs_im(i) = imag(vect2(i))
       enddo
@@ -326,10 +360,11 @@ debug, show_mem_est, errno, emsg)
       if (info_umf (1) .lt. 0) then
          write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
          emsg = 'Error occurred in umf4zsol: '
-         errno = -108
+         errco = -108
+         call nberr%set(errco, emsg);
          return
       endif
-      do i=1,n_dof
+      do i=1,cscmat%n_dof
          vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
       enddo
       call zcopy(n_dof_32, vect2,1, workd(ipntr_32(2)), 1)
@@ -407,7 +442,7 @@ debug, show_mem_est, errno, emsg)
       rvec = .true.
       shift2 = (0.0d0,0.0d0)
 
-      call zneupd (rvec, 'A', selecto, nu_out, vschur, n_dof_32, shift2,&
+      call zneupd (rvec, 'A', selecto, v_evals_nu, vschur, n_dof_32, shift2,&
       &workev, bmat, n_dof_32, which, n_modes_32, tol,&
       &resid, nvect_32, vschur, n_dof_32, iparam_32, ipntr_32,&
       &workd, trav, ltrav_32, rwork, ierr_32)
@@ -425,13 +460,14 @@ debug, show_mem_est, errno, emsg)
          &' Error with _neupd, info_32 = ', ierr_32,&
          &' Check the documentation of zneupd. ',&
          &' This error can occur if the mesh is too coarse.'
-         errno = -109
+         errco = -109
+         call nberr%set(errco, emsg);
          return
 
       else
          do i = 1, n_modes
-            do j = 1, n_dof
-               vp(j,i) = vschur(j,i)
+            do j = 1, cscmat%n_dof
+               v_evecs_arp(j,i) = vschur(j,i)
             enddo
          enddo
       endif
@@ -443,7 +479,7 @@ debug, show_mem_est, errno, emsg)
 
 !  if (debug .eq. 1) then
 !  do i=1,n_modes
-!  write (*,*) "i, nu_out(i) = ", i, nu_out(i)
+!  write (*,*) "i, v_evals_nu(i) = ", i, v_evals_nu(i)
 !  enddo
 !  endif
 

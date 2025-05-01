@@ -1,30 +1,36 @@
 !  Difference from array_sol_AC.f is that the u_z field is multiplied by i
 !  which gives you the correct physical displacement field.
 
-!  sol_0(*,i) : contains the imaginary and real parts of the solution for points such that in_dof(i) != 0
+!  v_evecs_arpack(*,i) : contains the imaginary and real parts of the solution for points such that cscmat%m_eqs(i) != 0
 !  sol(i) : contains solution for all points
 !  The dimension of the geometric domain is : dim_32 = 2
 !  The dimension of the vector field is : dim2 = 3
 
 
-subroutine array_sol_AC (num_modes, n_msh_el, n_msh_pts, n_dof,&
-nnodes, iindex, elnd_to_mshpt, type_el, in_dof,&
-x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
+subroutine array_sol_AC (mesh_raw, cscmat, num_modes, iindex, &
+ v_eigs_nu, v_evecs_arpack, mode_pol, sol)
 
 
    use numbatmod
+   use alloc
 
-   integer(8) nnodes
-   integer(8) num_modes, n_msh_el, n_msh_pts, n_dof
+   use class_MeshRawEM
+   use class_SparseCSC_AC
+
+   type(MeshRawAC) mesh_raw
+   type(SparseCSC_AC) cscmat
+   type(NBError) nberr
+
+
+   integer(8) num_modes
 !  TODO: n_core seems to be never initialised. Is that code ever called?
-   integer(8) n_core(2), type_el(n_msh_el)
-   integer(8) in_dof(3,n_msh_pts), iindex(*)
-   integer(8) elnd_to_mshpt(nnodes,n_msh_el)
-   complex(8) sol_0(n_dof,num_modes)
-   double precision x(2,n_msh_pts)
-!  sol(3, 1..nnodes,num_modes, n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-   complex(8) sol(3,nnodes,num_modes,n_msh_el)
-   complex(8) v_cmplx(num_modes), v_tmp(num_modes)
+   integer(8) n_core(2)
+   integer(8) iindex(*)
+   complex(8) v_evecs_arpack(cscmat%n_dof,num_modes)
+
+!  sol(3, 1..P2_NODES_PER_EL,num_modes, mesh_raw%n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
+   complex(8) sol(3,P2_NODES_PER_EL,num_modes,mesh_raw%n_msh_el)
+   complex(8) v_eigs_nu(num_modes), v_tmp(num_modes)
    complex(8) mode_pol(4,num_modes)
 
 
@@ -53,38 +59,33 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
    debug = 0
 
-   if ( nnodes .ne. 6 ) then
-      write(*,*) "array_sol: problem nnodes = ", nnodes
-      write(*,*) "array_sol: nnodes should be equal to 6 !"
-      write(*,*) "array_sol: Aborting..."
-      stop
-   endif
 
+   sol= C_ZERO
 
-   do ival=1,num_modes
-      do iel=1,n_msh_el
-         do inod=1,nnodes
-            do j=1,3
-               sol(j,inod,ival,iel) = 0
-            enddo
-         enddo
-      enddo
-   enddo
+   ! do ival=1,num_modes
+   !    do iel=1,mesh_raw%n_msh_el
+   !       do inod=1,P2_NODES_PER_EL
+   !          do j=1,3
+   !             sol(j,inod,ival,iel) = 0
+   !          enddo
+   !       enddo
+   !    enddo
+   ! enddo
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   x_min = x(1,1)
-   x_max = x(1,1)
-   do j=1,n_msh_pts
-      x_0 = x(1,j)
+   x_min = mesh_raw%v_nd_xy(1,1)
+   x_max = mesh_raw%v_nd_xy(1,1)
+   do j=1,mesh_raw%n_msh_pts
+      x_0 = mesh_raw%v_nd_xy(1,j)
       if(x_0 .lt. x_min) x_min = x_0
       if(x_0 .gt. x_max) x_max = x_0
    enddo
-   y_min = x(2,1)
-   y_max = x(2,1)
-   do j=1,n_msh_pts
-      y_0 = x(2,j)
+   y_min = mesh_raw%v_nd_xy(2,1)
+   y_max = mesh_raw%v_nd_xy(2,1)
+   do j=1,mesh_raw%n_msh_pts
+      y_0 = mesh_raw%v_nd_xy(2,j)
       if(y_0 .lt. y_min) y_min = y_0
       if(y_0 .gt. y_max) y_max = y_0
    enddo
@@ -97,9 +98,9 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 !  Length in the y direction
    ly = y_max - y_min
 
-   rx = sqrt(n_msh_el * lx / (2.0d0 * ly))
+   rx = sqrt(mesh_raw%n_msh_el * lx / (2.0d0 * ly))
    ry = rx * ly/lx
-!  rx and ry and such that : rx * ry = 2 * n_msh_el
+!  rx and ry and such that : rx * ry = 2 * mesh_raw%n_msh_el
 
 
    dx = lx / rx
@@ -121,7 +122,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
       write(*,*) "array_sol:    dy = ", dy
       write(*,*) "array_sol:    rx = ", rx
       write(*,*) "array_sol:    ry = ", ry
-      write(*,*) "array_sol:   n_msh_el = ", n_msh_el
+      write(*,*) "array_sol:   mesh_raw%n_msh_el = ", mesh_raw%n_msh_el
       write(*,*)
    endif
 
@@ -134,10 +135,10 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
 
    do j=1,num_modes
       j1=iindex(j)
-      v_tmp(j) = v_cmplx(j1)
+      v_tmp(j) = v_eigs_nu(j1)
    enddo
    do j=1,num_modes
-      v_cmplx(j) = v_tmp(j)
+      v_eigs_nu(j) = v_tmp(j)
    enddo
 
    do ival=1,num_modes
@@ -150,23 +151,23 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
       i_sol_max = 0
       i_component = 0
 
-      do iel=1,n_msh_el
-         typ_e = type_el(iel)
+      do iel=1,mesh_raw%n_msh_el
+         typ_e = mesh_raw%el_material(iel)
          do j=1,4
             mode_comp(j) = 0.0d0
          enddo
-         do inod=1,nnodes
-            j = elnd_to_mshpt(inod,iel)
+         do inod=1,P2_NODES_PER_EL
+            j = mesh_raw%elnd_to_mshpt(inod,iel)
             nod_el_p(inod) = j
-            xel(1,inod) = x(1,j)
-            xel(2,inod) = x(2,j)
+            xel(1,inod) = mesh_raw%v_nd_xy(1,j)
+            xel(2,inod) = mesh_raw%v_nd_xy(2,j)
          enddo
-         do inod=1,nnodes
-            jp = elnd_to_mshpt(inod,iel)
+         do inod=1,P2_NODES_PER_EL
+            jp = mesh_raw%elnd_to_mshpt(inod,iel)
             do j_eq=1,3
-               ind_jp = in_dof(j_eq,jp)
+               ind_jp = cscmat%m_eqs(j_eq,jp)
                if (ind_jp .gt. 0) then
-                  z_tmp1 = sol_0(ind_jp, ival2)
+                  z_tmp1 = v_evecs_arpack(ind_jp, ival2)
                   sol_el(j_eq,inod) = z_tmp1
                else
                   sol_el(j_eq,inod) = 0
@@ -182,7 +183,7 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
                   z_sol_max = z_tmp2
 !  We want to normalise such the the z-component is purely imaginary complex number
                   if (j == 3) z_sol_max = - C_IM_ONE* z_sol_max
-                  i_sol_max = elnd_to_mshpt(inod,iel)
+                  i_sol_max = mesh_raw%elnd_to_mshpt(inod,iel)
                   i_component = j
                endif
             enddo
@@ -194,8 +195,8 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
          enddo
 !  Avarage values
          do j=1,3
-            mode_comp(j) = mode_comp(j)/dble(nnodes)
-!  mode_comp(j) = abs(det)*mode_comp(j)/dble(nnodes)
+            mode_comp(j) = mode_comp(j)/dble(P2_NODES_PER_EL)
+!  mode_comp(j) = abs(det)*mode_comp(j)/dble(P2_NODES_PER_EL)
          enddo
 !  Add the contribution of the element iel to the mode component
          do j=1,3
@@ -245,20 +246,20 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
          write(*,*) "z_sol_max     = ", z_sol_max, abs(z_sol_max)
       endif
 !  Normalization so that the maximum field component is 1
-      do iel=1,n_msh_el
-         do inod=1,nnodes
-            i1 = elnd_to_mshpt(inod,iel)
+      do iel=1,mesh_raw%n_msh_el
+         do inod=1,P2_NODES_PER_EL
+            i1 = mesh_raw%elnd_to_mshpt(inod,iel)
             do j=1,3
                z_tmp1 = sol(j,inod,ival,iel)/z_sol_max
                sol(j,inod,ival,iel) = z_tmp1
             enddo
-            i1 = elnd_to_mshpt(inod,iel)
+            i1 = mesh_raw%elnd_to_mshpt(inod,iel)
             if (i1 .eq. i_sol_max_tmp .and. debug .eq. 1) then
                write(*,*) "array_sol (B):"
                write(*,*) "ival, i1, iel = ", ival, i1, iel
                write(*,*) "array_sol: Field normalisaion point:"
-               write(*,*) "x = ", dble(x(1,i1))
-               write(*,*) "y = ", dble(x(2,i1))
+               write(*,*) "x = ", dble(mesh_raw%v_nd_xy(1,i1))
+               write(*,*) "y = ", dble(mesh_raw%v_nd_xy(2,i1))
                write(*,*) "i_sol_max = ", i_sol_max
                write(*,*) "i_component_tmp = ", i_component_tmp
                write(*,*) ival, i1, iel,&
@@ -270,9 +271,9 @@ x, v_cmplx, v_tmp, mode_pol, sol_0, sol)
             endif
          enddo
       enddo
-      do j=1,n_dof
-         z_tmp1 = sol_0(j,ival2)/z_sol_max
-         sol_0(j,ival2) = z_tmp1
+      do j=1,cscmat%n_dof
+         z_tmp1 = v_evecs_arpack(j,ival2)/z_sol_max
+         v_evecs_arpack(j,ival2) = z_tmp1
       enddo
 
       if (debug .eq. 1) then

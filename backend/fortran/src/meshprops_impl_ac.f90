@@ -120,3 +120,23 @@ subroutine MeshRawAC_construct_node_tables_from_scratch(this, mesh_file, dimscal
 
 end
 
+subroutine MeshRawAC_find_nodes_for_elt(this, i_el, el_nds_i, el_nds_xy)
+
+   class(MeshRawAC) :: this
+   integer(8) i_el
+   integer(8) el_nds_i(P2_NODES_PER_EL)
+   double precision el_nds_xy(2, P2_NODES_PER_EL)
+
+   integer(8) nd_i, mesh_pt
+
+   do nd_i=1,P2_NODES_PER_EL                    ! For each of the 6 P2 nodes
+      mesh_pt = this%elnd_to_mshpt(nd_i,i_el)    !    find the index of the mesh point
+      el_nds_i(nd_i) = mesh_pt                      !    store the mesh point indices for this element
+      el_nds_xy(:,nd_i) = this%v_nd_xy(:,mesh_pt)  !    find their physical positions
+   enddo
+
+end subroutine
+
+
+
+

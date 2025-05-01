@@ -8,12 +8,12 @@
 
 !             use numbatmod
 !             use alloc
-!             use class_MeshRaw
-!             use class_SparseCSC
+!             use class_MeshRawEM
+!             use class_SparseCSC_EM
 
-!             type(MeshRaw) :: mesh_raw
+!             type(MeshRawEM) :: mesh_raw
 !             type(MeshEntities) :: entities
-!             type(SparseCSC) :: cscmat
+!             type(SparseCSC_EM) :: cscmat
 
 !             !integer(8), dimension(:), allocatable, intent(inout) :: v_row_ind
 !             !integer(8), dimension(:), allocatable, intent(inout) :: v_col_ptr

@@ -3,7 +3,7 @@ subroutine PeriodicBCs_allocate(this, mesh_raw, entities, nberr)
 
    class(PeriodicBCs) :: this
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
 
    type(NBError) nberr

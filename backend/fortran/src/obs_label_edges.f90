@@ -8,11 +8,11 @@
 ! table_edge seems to be unused
 subroutine label_edges (mesh_raw, elnd_to_mshpt, n_edge, visited)
 
-   use class_MeshRaw
+   use class_MeshRawEM
 
    implicit none
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    integer(8) n_edge
 

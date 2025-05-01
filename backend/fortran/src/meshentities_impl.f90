@@ -51,7 +51,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
    use alloc
 
    class(MeshEntities) :: this
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    type(NBError) nberr
 
@@ -118,7 +118,7 @@ end
 subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -218,7 +218,7 @@ end
 subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -378,7 +378,7 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
 
 
    class(MeshEntities) :: this
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -433,7 +433,7 @@ end
 subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
    class(MeshEntities) :: this
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
    integer(8) visited(:)
 

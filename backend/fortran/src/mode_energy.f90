@@ -12,7 +12,7 @@
 subroutine mode_energy (nval, nel,  n_core, &
    mesh_raw, nb_typ_el, eps_eff,  sol, mode_pol)
 
-   use class_MeshRaw
+   use class_MeshRawEM
    use numbatmod
 
    integer(8) nval, nel
@@ -20,7 +20,7 @@ subroutine mode_energy (nval, nel,  n_core, &
    complex(8) sol(3,N_DOF_PER_EL,nval,nel)
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
 
 !
 !  variables for quadrature interpolation

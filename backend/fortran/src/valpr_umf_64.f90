@@ -249,8 +249,8 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    use class_ValprVecs
    use alloc
 
-   use class_SparseCSC
-   type(SparseCSC) :: cscmat
+   use class_SparseCSC_EM
+   type(SparseCSC_EM) :: cscmat
 
 
    integer(8), intent(in) :: itermax, dim_krylov
@@ -275,7 +275,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    ! UMFPACK requires complex arrays as pairs of doubles
    double precision, allocatable, dimension(:) :: mOp_stiff_re, mOp_stiff_im
-   double precision, allocatable, dimension(:) :: lhx_re, lhx_im
+   double precision, allocatable, dimension(:) :: lhs_re, lhs_im
    double precision, allocatable, dimension(:) :: rhs_re, rhs_im
 
 
@@ -351,8 +351,8 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
    call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
 
-   call double_nalloc_1d(lhx_re, n_dof, 'lhx_re', nberr); RET_ON_NBERR(nberr)
-   call double_nalloc_1d(lhx_im, n_dof, 'lhx_im', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(lhs_re, n_dof, 'lhs_re', nberr); RET_ON_NBERR(nberr)
+   call double_nalloc_1d(lhs_im, n_dof, 'lhs_im', nberr); RET_ON_NBERR(nberr)
    call double_nalloc_1d(rhs_re, n_dof, 'rhs_re', nberr); RET_ON_NBERR(nberr)
    call double_nalloc_1d(rhs_im, n_dof, 'rhs_im', nberr); RET_ON_NBERR(nberr)
 
@@ -460,7 +460,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
          call apply_arpack_OPx(n_dof, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
             n_nonz, cscmat%v_row_ind, cscmat%v_col_ptr, cscmat%mOp_mass, vecs%vect1, vecs%vect2, &
-            lhx_re, lhx_im,  umf_numeric, umf_control, umf_info, nberr);
+            lhs_re, lhs_im,  umf_numeric, umf_control, umf_info, nberr);
             RET_ON_NBERR(nberr)
 
 
@@ -481,14 +481,14 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
          rhs_im = dimag(vecs%vect2)
 
          !  solve Ax=b, without iterative refinement
-         call umf4zsol (UMFPACK_A, lhx_re, lhx_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
+         call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im, umf_numeric, umf_control, umf_info)
          if (umf_info (1) .lt. 0) then
             write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
             call nberr%set(NBERROR_107, emsg)
             return
          endif
 
-         vecs%vect2 = lhx_re + C_IM_ONE * lhx_im
+         vecs%vect2 = lhs_re + C_IM_ONE * lhs_im
 
          call zcopy(n_dof_32, vecs%vect2, 1, vecs%workd(ipntr_32(2)), 1)
 
@@ -577,7 +577,7 @@ subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
 
    deallocate(mOp_stiff_re, mOp_stiff_im)
-   deallocate(lhx_re, lhx_im)
+   deallocate(lhs_re, lhs_im)
 
    return
 end

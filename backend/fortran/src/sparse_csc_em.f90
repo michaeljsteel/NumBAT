@@ -43,16 +43,16 @@
 
 
 
-module class_SparseCSC
+module class_SparseCSC_EM
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_MeshRawEM
    use class_PeriodicBCs
 
    private
 
-   type, public :: SparseCSC
+   type, public :: SparseCSC_EM
 
    integer(8) n_dof
    integer(8) n_nonz
@@ -67,22 +67,22 @@ module class_SparseCSC
 
    contains
 
-   procedure :: set_boundary_conditions => SparseCSC_set_boundary_conditions
-   procedure :: bound_cond_em => SparseCSC_bound_cond_em
+   procedure :: set_boundary_conditions => SparseCSC_EM_set_boundary_conditions
+   procedure :: bound_cond_em => SparseCSC_EM_bound_cond_em
 
-   procedure :: make_csc_arrays => SparseCSC_make_csc_arrays
+   procedure :: make_csc_arrays => SparseCSC_EM_make_csc_arrays
 
-   procedure :: make_col_ptr_provisional => SparseCSC_make_col_ptr_provisional
+   procedure :: make_col_ptr_provisional => SparseCSC_EM_make_col_ptr_provisional
    procedure :: make_arrays_final => SparseSC_make_arrays_final
 
 
-   procedure :: cscmat_contains_elt_row_col => SparseCSC_cscmat_contains_elt_row_col
-   procedure :: dump_csc_arrays => SparseCSC_dump_csc_arrays
+   procedure :: cscmat_contains_elt_row_col => SparseCSC_EM_cscmat_contains_elt_row_col
+   procedure :: dump_csc_arrays => SparseCSC_EM_dump_csc_arrays
 
-   end type SparseCSC
+   end type SparseCSC_EM
 
    contains
 
 #include "sparse_csc_em_impl.f90"
 
-end module class_SparseCSC
+end module class_SparseCSC_EM

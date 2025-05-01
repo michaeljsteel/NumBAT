@@ -60,8 +60,8 @@ module calc_em_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRaw
-   use class_SparseCSC
+   use class_MeshRawEM
+   use class_SparseCSC_EM
    use class_PeriodicBCs
 
 
@@ -100,15 +100,15 @@ contains
 
       ! locals
 
-      type(MeshRaw) :: mesh_raw
+      type(MeshRawEM) :: mesh_raw
       type(MeshEntities) :: entities
-      type(SparseCSC) :: cscmat
+      type(SparseCSC_EM) :: cscmat
       type(PeriodicBCs) :: pbcs
 
       integer(8), dimension(:), allocatable :: v_eig_index
       complex(8), dimension(:,:), allocatable :: overlap_L
 
-      complex(8), dimension(:,:), allocatable :: arp_evecs
+      complex(8), dimension(:,:), allocatable :: arpack_evecs
 
       ! Should these be dynamic?
       complex(8) pp(n_elt_mats), qq(n_elt_mats)
@@ -134,7 +134,7 @@ contains
 
       call clock_main%reset()
 
-      !TODO: move pp,qq to elsewhere. SparseCSC?
+      !TODO: move pp,qq to elsewhere. SparseCSC_EM?
       vacwavenum_k0 = 2.0d0*D_PI/lambda
       call  check_materials_and_fem_formulation(E_H_field, n_elt_mats, &
       vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
@@ -153,7 +153,7 @@ contains
       call pbcs%allocate(mesh_raw, entities, nberr);
       RET_ON_NBERR(nberr)
 
-      !  Fills:  MeshRaw: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
+      !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
       call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, nberr);
       RET_ON_NBERR(nberr)
@@ -186,10 +186,6 @@ contains
       call clock_spare%reset()
 
 
-
-
-
-
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
       call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
@@ -212,7 +208,7 @@ contains
       !  This is the main solver.
       !  On completion:
       !  unshifted unsorted eigenvalues are in v_evals_beta[1..n_modes]
-      !  eigvectors are in arp arp_evecs
+      !  eigvectors are in arp arpack_evecs
 
       write(ui_out,'(/,A)') "  - solving linear system: "
 
@@ -224,10 +220,10 @@ contains
 
       call complex_nalloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
 
-      call complex_nalloc_2d(arp_evecs, cscmat%n_dof, n_modes, 'arp_evecs', nberr); RET_ON_NBERR(nberr)
+      call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
       call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
-      v_evals_beta, arp_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
+      v_evals_beta, arpack_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
       if (shortrun .ne. 0) then
          write(*,*) 'Exiting with shortrun in py_calc_modes.f'
          return
@@ -244,7 +240,7 @@ contains
       !  The eigenvectors will be stored in the array femsol_evecs
       !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
       call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
-      entities, cscmat, pbcs, bloch_vec, v_evals_beta, arp_evecs, &
+      entities, cscmat, pbcs, bloch_vec, v_evals_beta, arpack_evecs, &
       femsol_evecs, poln_fracs, nberr)
       RET_ON_NBERR(nberr)
 
@@ -260,7 +256,7 @@ contains
       call mesh_raw%fill_python_arrays(v_el_material, v_nd_physindex, elnd_to_mshpt, v_nd_xy)
 
 
-      deallocate(v_eig_index, overlap_L, arp_evecs)
+      deallocate(v_eig_index, overlap_L, arpack_evecs)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
       write(ui_out,*) "-----------------------------------------------"

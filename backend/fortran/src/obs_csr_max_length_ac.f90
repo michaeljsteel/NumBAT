@@ -3,7 +3,7 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
 
    use numbatmod
 
-   use class_MeshRaw
+   use class_MeshRawEM
    use class_SparseCSC_AC
 
    type(MeshRawAC) mesh_raw

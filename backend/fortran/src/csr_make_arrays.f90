@@ -6,12 +6,12 @@ subroutine make_csc_arrays(mesh_raw, entities, cscmat, debug, errco, emsg)
    use alloc
    use nbinterfacesb
 
-   use class_MeshRaw
-   use class_SparseCSC
+   use class_MeshRawEM
+   use class_SparseCSC_EM
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
-   type(SparseCSC) :: cscmat
+   type(SparseCSC_EM) :: cscmat
 
 
    integer(8) debug

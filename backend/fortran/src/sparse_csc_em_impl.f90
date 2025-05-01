@@ -3,16 +3,16 @@
 !#include "numbat_decl.h"
 
 
-subroutine SparseCSC_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, nberr)
+subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, nberr)
 
 
-   class(SparseCSC) :: this
+   class(SparseCSC_EM) :: this
    type(PeriodicBCs) :: pbcs
 
    integer(8) :: bdy_cdn !, n_dof
    integer(8) :: debug
 
-   type(MeshRaw) :: mesh_raw
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
 
    type(NBError) nberr
@@ -106,9 +106,9 @@ end subroutine
 
 !  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
 
-subroutine SparseCSC_bound_cond_em (this, bdy_cdn, entities, nberr)
+subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
-   class(SparseCSC) :: this
+   class(SparseCSC_EM) :: this
    type(MeshEntities) :: entities
 
    integer(8) bdy_cdn, n_dof
@@ -195,10 +195,10 @@ end
 
 
 
-subroutine SparseCSC_make_csc_arrays(this, mesh_raw, entities, nberr)
+subroutine SparseCSC_EM_make_csc_arrays(this, mesh_raw, entities, nberr)
 
-   class(SparseCSC) :: this
-   type(MeshRaw) :: mesh_raw
+   class(SparseCSC_EM) :: this
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
 
    type(NBError) nberr
@@ -283,9 +283,9 @@ end subroutine
 
 
 
-subroutine SparseCSC_cscmat_contains_elt_row_col(this, row, col, found, val)
+subroutine SparseCSC_EM_cscmat_contains_elt_row_col(this, row, col, found, val)
 
-   class(SparseCSC) :: this
+   class(SparseCSC_EM) :: this
    integer(8) row, col
    integer(8) found
 
@@ -309,8 +309,8 @@ subroutine SparseCSC_cscmat_contains_elt_row_col(this, row, col, found, val)
 end subroutine
 
 
-subroutine SparseCSC_dump_csc_arrays(this)
-   class(SparseCSC) :: this
+subroutine SparseCSC_EM_dump_csc_arrays(this)
+   class(SparseCSC_EM) :: this
    integer(8) i
 
 
@@ -330,11 +330,11 @@ end subroutine
 
 
 
-subroutine SparseCSC_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_max)
+subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_max)
 
 
-   class(SparseCSC) :: this
-   type(MeshRaw) :: mesh_raw
+   class(SparseCSC_EM) :: this
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
 
 
@@ -405,8 +405,8 @@ end subroutine
 ! subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
 
 
-!    class(SparseCSC) :: this
-!    type(MeshRaw) :: mesh_raw
+!    class(SparseCSC_EM) :: this
+!    type(MeshRawEM) :: mesh_raw
 !    type(MeshEntities) :: entities
 
 !    integer(8) n_nonz_max, max_row_len
@@ -435,8 +435,8 @@ end subroutine
 subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, nberr)
 
 
-   class(SparseCSC) :: this
-   type(MeshRaw) :: mesh_raw
+   class(SparseCSC_EM) :: this
+   type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
 
    integer(8) n_nonz_max, max_row_len

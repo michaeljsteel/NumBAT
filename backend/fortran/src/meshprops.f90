@@ -1,6 +1,6 @@
 #include "numbat_decl.h"
 
-module class_MeshRaw
+module class_MeshRawEM
 
    use numbatmod
    use alloc
@@ -9,7 +9,7 @@ module class_MeshRaw
 
    ! A class for holding the various mesh and node properties together.
    ! Also for exchanging mesh info between fortran and python
-   type, public  :: MeshRaw
+   type, public  :: MeshRawEM
 
       !character(FNAME_LENGTH) :: mesh_file
 
@@ -35,20 +35,20 @@ module class_MeshRaw
 
    contains
 
-      procedure :: allocate => MeshRaw_allocate
-      !final :: MeshRaw_destructor
+      procedure :: allocate => MeshRawEM_allocate
+      !final :: MeshRawEM_destructor
 
-      procedure :: find_nodes_for_elt => MeshRaw_find_nodes_for_elt
-      procedure :: fill_python_arrays => MeshRaw_fill_python_arrays
-      procedure :: is_boundary_node => MeshRaw_is_boundary_node
-      procedure :: is_boundary_node_2 => MeshRaw_is_boundary_node_2
+      procedure :: find_nodes_for_elt => MeshRawEM_find_nodes_for_elt
+      procedure :: fill_python_arrays => MeshRawEM_fill_python_arrays
+      procedure :: is_boundary_node => MeshRawEM_is_boundary_node
+      procedure :: is_boundary_node_2 => MeshRawEM_is_boundary_node_2
 
-      procedure :: node_phys_index_by_ref => MeshRaw_node_phys_index_by_ref
+      procedure :: node_phys_index_by_ref => MeshRawEM_node_phys_index_by_ref
 
-      procedure :: construct_node_tables => MeshRaw_construct_node_tables
+      procedure :: construct_node_tables => MeshRawEM_construct_node_tables
 
 
-   end type MeshRaw
+   end type MeshRawEM
 
 ! ---------------------------------------
 
@@ -79,18 +79,18 @@ module class_MeshRaw
       ! Positions indexed by tag
       ! [2 x n_ddl]
       ! [:, 1] - barycentre of the face
-      ! [:, 2..4] - P2 edge positions cloned from MeshRaw%v_nd_xy
-      ! [:, 5..7] - P3 vertex positions cloned from MeshRaw%v_nd_xy
-      ! [:, 8..13] - P3 edge positions built from MeshRaw%v_nd_xy at 1/3, 2/3 intervals
+      ! [:, 2..4] - P2 edge positions cloned from MeshRawEM%v_nd_xy
+      ! [:, 5..7] - P3 vertex positions cloned from MeshRawEM%v_nd_xy
+      ! [:, 8..13] - P3 edge positions built from MeshRawEM%v_nd_xy at 1/3, 2/3 intervals
       ! [:, 14] - P3 interior at barycentre
       double precision, dimension(:,:), allocatable :: v_xy
 
 
       !   [2 x n_ddl]
       !   [1, :]  for face: interior (0)
-      !   [1, :]  for edge: take from MeshRaw%v_nd_physindex
-      !   [1, :]  for P3 vertex: take from MeshRaw%v_nd_physindex
-      !   [1, :]  for P3 edges: take from P2 edge in MeshRaw%v_nd_physindex
+      !   [1, :]  for edge: take from MeshRawEM%v_nd_physindex
+      !   [1, :]  for P3 vertex: take from MeshRawEM%v_nd_physindex
+      !   [1, :]  for P3 edges: take from P2 edge in MeshRawEM%v_nd_physindex
       !   [1, :]  for P3 interior point:  0
 
       !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
@@ -145,14 +145,14 @@ module class_MeshRaw
    contains
 
       procedure :: allocate => MeshRawAC_allocate
-      !final :: MeshRaw_destructor
+      !final :: MeshRawEM_destructor
 
-      !procedure :: find_nodes_for_elt => MeshRaw_find_nodes_for_elt
-      !procedure :: fill_python_arrays => MeshRaw_fill_python_arrays
-      !procedure :: is_boundary_node => MeshRaw_is_boundary_node
-      !procedure :: is_boundary_node_2 => MeshRaw_is_boundary_node_2
+      procedure :: find_nodes_for_elt => MeshRawAC_find_nodes_for_elt
+      !procedure :: fill_python_arrays => MeshRawEM_fill_python_arrays
+      !procedure :: is_boundary_node => MeshRawEM_is_boundary_node
+      !procedure :: is_boundary_node_2 => MeshRawEM_is_boundary_node_2
 !
-!      procedure :: node_phys_index_by_ref => MeshRaw_node_phys_index_by_ref
+!      procedure :: node_phys_index_by_ref => MeshRawEM_node_phys_index_by_ref
 !
       procedure :: construct_node_tables_from_scratch => MeshRawAC_construct_node_tables_from_scratch
       procedure :: construct_node_tables_from_py => MeshRawAC_construct_node_tables_from_py
@@ -180,18 +180,18 @@ module class_MeshRaw
       ! Positions indexed by tag
       ! [2 x n_ddl]
       ! [:, 1] - barycentre of the face
-      ! [:, 2..4] - P2 edge positions cloned from MeshRaw%v_nd_xy
-      ! [:, 5..7] - P3 vertex positions cloned from MeshRaw%v_nd_xy
-      ! [:, 8..13] - P3 edge positions built from MeshRaw%v_nd_xy at 1/3, 2/3 intervals
+      ! [:, 2..4] - P2 edge positions cloned from MeshRawEM%v_nd_xy
+      ! [:, 5..7] - P3 vertex positions cloned from MeshRawEM%v_nd_xy
+      ! [:, 8..13] - P3 edge positions built from MeshRawEM%v_nd_xy at 1/3, 2/3 intervals
       ! [:, 14] - P3 interior at barycentre
       double precision, dimension(:,:), allocatable :: v_xy
 
 
       !   [2 x n_ddl]
       !   [1, :]  for face: interior (0)
-      !   [1, :]  for edge: take from MeshRaw%node_phys_i
-      !   [1, :]  for P3 vertex: take from MeshRaw%node_phys_i
-      !   [1, :]  for P3 edges: take from P2 edge in MeshRaw%node_phys_i
+      !   [1, :]  for edge: take from MeshRawEM%node_phys_i
+      !   [1, :]  for P3 vertex: take from MeshRawEM%node_phys_i
+      !   [1, :]  for P3 edges: take from P2 edge in MeshRawEM%node_phys_i
       !   [1, :]  for P3 interior point:  0
 
       !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
@@ -223,4 +223,4 @@ contains
 #include "meshprops_impl_ac.f90"
 
 
-end module class_MeshRaw
+end module class_MeshRawEM

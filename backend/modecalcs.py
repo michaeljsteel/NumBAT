@@ -422,7 +422,7 @@ class ACSimulation(Simulation):
         tstruc = self.structure
         elastic_props = self.structure.elastic_props
 
-        show_mem_est = False
+        #show_mem_est = False
 
         # TODO: rmove _AC suffixes from fm.fields_AC
         resm = nb_fortran.calc_ac_modes(
@@ -434,7 +434,7 @@ class ACSimulation(Simulation):
             itermax,
             ARPACK_tol,
             AC_FEM_debug,
-            show_mem_est,
+            #show_mem_est,
             tstruc.symmetry_flag,
             #elastic_props.n_mats_ac,  # => fort: n_elt_mats, #f2py figures out from arrays
             elastic_props.c_IJ,

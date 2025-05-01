@@ -20,13 +20,13 @@ module calc_ac_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRaw
+   use class_MeshRawEM
    use class_SparseCSC_AC
 
 contains
 
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
-      bdy_cdn, itermax, tol, debug, show_mem_est, &
+      bdy_cdn, itermax, tol, debug,  &
       symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_el,n_elt_mats, &
       elnd_to_mshpt, v_el_material, v_nd_physindex,  v_nd_xy, &
@@ -39,7 +39,7 @@ contains
       complex(8), intent(in) :: q_ac
       double precision, intent(in) :: dimscale_in_m
       complex(8), intent(in) :: shift_nu
-      integer(8), intent(in) :: bdy_cdn, itermax, debug, show_mem_est
+      integer(8), intent(in) :: bdy_cdn, itermax, debug
       double precision, intent(in) :: tol
       integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
       integer(8), intent(in) :: n_elt_mats
@@ -75,49 +75,13 @@ contains
       character(len=EMSG_LENGTH) :: emsg
 
 
-      integer(8) int_max, cmplx_max, int_used, cmplx_used
-      integer(8) real_max, real_used, n_ddl
-      integer(8) n_dof
-
-      integer(8) :: alloc_stat
-
-      integer(8), dimension(:), allocatable :: a_iwork
-      complex(8), dimension(:), allocatable :: b_zwork
-      double precision, dimension(:), allocatable :: c_dwork
-
-      integer(8), dimension(:), allocatable :: aiwk_wksp, aiwk_col_ptr, aiwk_row
-      integer(8), dimension(:), allocatable :: aiwk_work, aiwk_work_sort
+      complex(8), dimension(:,:), allocatable :: arpack_evecs
 
 
-      !double precision, dimension(:,:), allocatable :: d_dwork
-      !complex(8), dimension(:,:), allocatable :: dummy_overlap_L  !  not actually used.
-
-      !  Declare the pointers of the integer(8) super-vector
-      integer(8) ip_eq
-      integer(8) ip_visited
-
-      !  Declare the pointers of the real super-vector
-      integer(8) jp_x, jp_mat2
-      integer(8) jp_vect1, jp_vect2, jp_workd, jp_resid, jp_vschur
-      integer(8) jp_trav, jp_vp, jp_rhs
-      integer(8) jp_eigenum_modes_tmp, jp_eigen_pol
-
-      !  Declare the pointers of the real super-vector
-      integer(8) kp_mat1_re, kp_mat1_im
-      integer(8) kp_rhs_re, kp_rhs_im, kp_lhs_re, kp_lhs_im
-
-      !  Declare the pointers of for sparse matrix storage
-      integer(8) ip_col_ptr, ip_row
-      integer(8) ip_work, ip_work_sort, ip_work_sort2
-      integer(8) nonz, nonz_max, max_row_len
-
-
-
-      integer(8) i, j, ip
+      integer(8) i
       integer(8) ui_out,  namelength
 
 
-      !double precision lat_vecs(2,2)
       double precision dim_x, dim_y
 
       complex(8) shift_omsq
@@ -127,11 +91,8 @@ contains
       !  Variable used by valpr
       integer(8) ltrav, n_conv
       complex(8) z_beta, z_tmp, z_tmp0
-      integer(8), dimension(:), allocatable :: iindex
-      !  variable used by UMFPACK
+      integer(8), dimension(:), allocatable :: v_eig_index
 
-      !character*(8) start_date, end_date
-      !character*(10) start_time, end_time
 
       !  Variable used by valpr
       integer(8)  nvect
@@ -163,42 +124,10 @@ contains
       call entities%allocate(n_msh_el, nberr)
       RET_ON_NBERR(nberr)
 
-      call array_size(n_msh_pts, n_msh_el, n_modes, int_max, cmplx_max, real_max, &
-         n_ddl, errco, emsg)
-      call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
-      ! allocate(a_iwork(int_max), STAT=alloc_stat)
-      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
-      ! RET_ON_NBERR(nberr)
-
-
-
-      ! allocate(aiwk_col_ptr(n_dof+1), STAT=alloc_stat)
-      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
-      ! RET_ON_NBERR(nberr)
-
-      ! allocate(aiwk_row(n_dof+1), STAT=alloc_stat)
-      ! call check_alloc(alloc_stat, int_max, "a", -1, nberr);
-      ! RET_ON_NBERR(nberr)
-
-
-
-
-
-
-
-
-      allocate(b_zwork(cmplx_max), STAT=alloc_stat)
-      call check_alloc(alloc_stat, cmplx_max, "b", -1, nberr); RET_ON_NBERR(nberr)
-
-      allocate(c_dwork(real_max), STAT=alloc_stat)
-      call check_alloc(alloc_stat, real_max, "c", -1,  nberr); RET_ON_NBERR(nberr)
-
-      allocate(iindex(n_modes), STAT=alloc_stat)
-      call check_alloc(alloc_stat, n_modes, "iindex", -1, nberr); RET_ON_NBERR(nberr)
+      call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
 
       is_em = 0
-
 
       !  clean mesh_format
       namelength = len_trim(mesh_file)
@@ -216,12 +145,6 @@ contains
       shift_omsq= (2*D_PI*shift_nu)**2
 
 
-      !  pointer to FEM connectivity table
-      ip_visited= 1
-      ip_eq = ip_visited+ n_msh_pts
-      jp_x = 1
-      !
-
 
       call clock_main%reset()
 
@@ -234,7 +157,7 @@ contains
       endif
 
 
-      !  Fills:  MeshRaw: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
+      !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
 
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
@@ -252,87 +175,26 @@ contains
       RET_ON_NBERR(nberr)
 
 
-      call cscmat%make_csc_arrays(mesh_raw, entities, nonz_max, nonz, max_row_len, nberr)
+      call cscmat%make_csc_arrays(mesh_raw, entities, nberr)
       RET_ON_NBERR(nberr)
 
 
 
-      call integer_nalloc_1d(aiwk_wksp, 3*n_msh_pts, 'iwork', nberr); RET_ON_NBERR(nberr)
-
-
-
-
-
-      jp_rhs = jp_x + 2*n_msh_pts
-      !  jp_rhs will also be used (in gmsh_post_process) to store a solution
-      jp_mat2 = jp_rhs + max(cscmat%n_dof, 3*n_msh_pts)
-      jp_vect1 = jp_mat2 + nonz
-      jp_vect2 = jp_vect1 + cscmat%n_dof
-      jp_workd = jp_vect2 + cscmat%n_dof
-      jp_resid = jp_workd + 3*cscmat%n_dof
-      jp_eigenum_modes_tmp = jp_resid+3*P2_NODES_PER_EL*n_modes*n_msh_el
-      !  Eigenvectors
-      jp_vschur = jp_eigenum_modes_tmp + n_modes + 1
-      jp_eigen_pol = jp_vschur + cscmat%n_dof*nvect
-      jp_trav = jp_eigen_pol + n_modes*4
-
       ltrav = 3*nvect*(nvect+2)
-      jp_vp = jp_trav + ltrav
-      cmplx_used = jp_vp + cscmat%n_dof*n_modes
-
-      if (cmplx_max .lt. cmplx_used)  then
-         write(emsg,*)"The size of the complex supervector is too small", &
-            "complex super-vec: cmplx_max  = ", cmplx_max, &
-            "complex super-vec: cmplx_used = ", cmplx_used
-         errco = -5
-         call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
-      endif
-
-
-
-      kp_rhs_re = 1
-      kp_rhs_im = kp_rhs_re + cscmat%n_dof
-      kp_lhs_re = kp_rhs_im + cscmat%n_dof
-      kp_lhs_im = kp_lhs_re + cscmat%n_dof
-      kp_mat1_re = kp_lhs_im + cscmat%n_dof
-      kp_mat1_im = kp_mat1_re + nonz
-      real_used = kp_mat1_im + nonz
-
-      if (real_max .lt. real_used) then
-         write(ui_out,*)
-         write(ui_out,*) "The size of the real supervector is too small"
-         write(ui_out,*) "2*nonz  = ", 2*nonz
-         write(ui_out,*) "real super-vec: real_max  = ", real_max
-         write(ui_out,*) "real super-vec: real_used = ", real_used
-
-         write(emsg,*)"The size of the real supervector is too small", &
-            "2*nonz  = ", 2*nonz, &
-            "real super-vec: real_max  = ", real_max, &
-            "real super-vec: real_used = ", real_used
-
-         errco = -6
-         call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
-         return
-      endif
+!
 
 
 
       !
-      !  The CSC iindexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC iindexing to 0-based iindexing)
+      !  The CSC v_eig_indexing, i.e., ip_col_ptr, is 1-based
+      !  (but valpr.f will change the CSC v_eig_indexing to 0-based v_eig_indexing)
       i_base = 0
 
       !#####################  End FEM PRE-PROCESSING  #########################
       !
       write(ui_out,*)
       write(ui_out,*) "-----------------------------------------------"
-      !  write(ui_out,*) " AC FEM, k_AC : ", real(q_ac), " 1/m"
-      !  write(ui_out,*) "-----------------------------------------------"
-      !  write(ui_out,*)
 
-      !  if (debug .eq. 1) then
-      !  write(ui_out,*) "py_calc_modes_AC: call to asmbly"
-      !  endif
       write(ui_out,*) "AC FEM: "
 
       !  Assemble the coefficient matrix K and M of the finite element equations
@@ -340,19 +202,16 @@ contains
       write(ui_out,'(A,A)') "   - assembling linear system:"
       call clock_spare%reset()
 
-      call asmbly_AC (i_base, n_msh_el, n_msh_pts, cscmat%n_dof, P2_NODES_PER_EL, &
-         shift_omsq, q_ac, n_elt_mats, rho, c_tensor, &
-         mesh_raw%elnd_to_mshpt, mesh_raw%el_material, cscmat%m_eqs, &
-         v_nd_xy, nonz, cscmat%v_row_ind, cscmat%v_col_ptr, &
-         c_dwork(kp_mat1_re), c_dwork(kp_mat1_im), b_zwork(jp_mat2), aiwk_wksp, &
-         symmetry_flag, debug)
+      call assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
+         mesh_raw, cscmat, symmetry_flag, nberr)
+      RET_ON_NBERR(nberr)
 
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations'
-      write(ui_out,'(A,i9,A)') '      ', nonz, ' nonzero elements'
-      write(ui_out,'(A,f9.3,A)') '      ', nonz/(1.d0*cscmat%n_dof*cscmat%n_dof)*100.d0, ' % sparsity'
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_nonz, ' nonzero elements'
+      write(ui_out,'(A,f9.3,A)') '      ', cscmat%n_nonz/(1.d0*cscmat%n_dof*cscmat%n_dof)*100.d0, ' % sparsity'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof*(nvect+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
@@ -362,15 +221,12 @@ contains
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
-      call valpr_64_AC (i_base, nvect, n_modes, cscmat%n_dof, itermax, ltrav, &
-         tol, nonz, cscmat%v_row_ind, cscmat%v_col_ptr, c_dwork(kp_mat1_re), &
-         c_dwork(kp_mat1_im), b_zwork(jp_mat2), &
-         b_zwork(jp_vect1), b_zwork(jp_vect2), b_zwork(jp_workd), b_zwork(jp_resid), &
-         b_zwork(jp_vschur), v_eigs_nu, b_zwork(jp_trav), b_zwork(jp_vp), &
-         c_dwork(kp_rhs_re), c_dwork(kp_rhs_im), c_dwork(kp_lhs_re), c_dwork(kp_lhs_im), n_conv, &
-         debug, show_mem_est, errco, emsg)
+      call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
-      call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
+      call valpr_64_AC (i_base, nvect, n_modes, cscmat,  itermax, ltrav, tol, &
+         n_conv, v_eigs_nu, arpack_evecs, nberr)
+
+      RET_ON_NBERR(nberr)
 
 
 
@@ -400,25 +256,17 @@ contains
          v_eigs_nu(i) = z_beta
       enddo
       !
-      call z_indexx_AC (n_modes, v_eigs_nu, iindex)
+      call z_indexx_AC (n_modes, v_eigs_nu, v_eig_index)
       !
       !  The eigenvectors will be stored in the array femsol_ac
       !  The eigenum_modesues and eigenvectors will be renumbered
-      !  using the permutation vector iindex
-      if (debug .eq. 1) then
-         write(ui_out,*) "py_calc_modes_AC: call to array_sol"
-      endif
-      call array_sol_AC (n_modes, n_msh_el, n_msh_pts, cscmat%n_dof, &
-         P2_NODES_PER_EL, iindex, mesh_raw%elnd_to_mshpt, mesh_raw%el_material, cscmat%m_eqs, v_nd_xy, &
-         v_eigs_nu,  b_zwork(jp_eigenum_modes_tmp), poln_fracs, b_zwork(jp_vp), femsol_ac)
+      !  using the permutation vector v_eig_index
 
-      if (debug .eq. 1) then
-         write(ui_out,*) "py_calc_modes_AC: array_sol returns call"
-      endif
-      !
-      if(debug .eq. 1) then
-         write(ui_out,*) 'iindex = ', (iindex(i), i=1,n_modes)
-      endif
+      call array_sol_AC (mesh_raw, cscmat, n_modes,   &
+         v_eig_index,  &
+         v_eigs_nu, arpack_evecs, poln_fracs, femsol_ac)
+
+
       if(debug .eq. 1) then
          write(ui_out,*)
          !  write(ui_out,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
@@ -428,68 +276,13 @@ contains
          enddo
       endif
 
-      !C    Save Original solution
-      !  if (plot_modes .eq. 1) then
-      !  dir_name = "AC_fields"
-      !C        call write_sol_AC (n_modes, n_msh_el, P2_NODES_PER_EL, lambda,
-      !C      *       v_eigs_nu, femsol_ac, mesh_file, dir_name)
-      !C        call write_param (lambda, n_msh_pts, n_msh_el, bdy_cdn,
-      !C    *       n_modes, nvect, itermax, tol, shift_omsq, lx, ly,
-      !C    *       mesh_file, n_conv, dir_name)
-      !  tchar = "AC_fields/All_plots_png_abs2_eE.geo"
-      !  open (unit=34,file=tchar)
-      !  do i=1,n_modes
-      !  call gmsh_post_process_AC (i, n_modes, n_msh_el,
-      !  *         n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, mesh_raw%el_material,
-      !  *         v_nd_xy, v_eigs_nu, femsol_ac, b_zwork(jp_rhs), a_iwork(ip_visite),
-      !  *         gmsh_file_pos, dir_name, dimscale_in_m, debug)
-      !  enddo
-      !  close (unit=34)
-      !  endif
-      !C
-      !
-      !#########################  End Calculations  ###########################
-      !
-      !  call date_and_time ( end_date, end_time )
-      !  call cpu_time(time2)
-      !
-      !  if (debug .eq. 1) then
-      !  write(ui_out,*)
-      !  write(ui_out,*) 'Total CPU time (sec.)  = ', (time2-time1)
-      !
-      !  open (unit=26,file=log_file)
-      !  write(26,*)
-      !  write(26,*) "Date and time formats = ccyymmdd ; hhmmss.sss"
-      !  write(26,*) "Start date and time   = ", start_date, &
-      !  " ; ", start_time
-      !  write(26,*) "End date and time     = ", end_date, &
-      !  " ; ", end_time
-      !  write(26,*) "Total CPU time (sec.) = ",  (time2-time1)
-      !  write(26,*)
-      !  write(26,*) "q_ac = ", q_ac
-      !  write(26,*) "shift_omsq= ", shift_omsq
-      !  write(26,*)
-      !  write(26,*) "n_msh_pts, n_msh_el, P2_NODES_PER_EL  = ", n_msh_pts, &
-      !  n_msh_el, P2_NODES_PER_EL
-      !  write(26,*) "cscmat%n_dof, bdy_cdn = ", cscmat%n_dof, bdy_cdn
-      !  write(26,*) " lat_vecs:  = "
-      !  write(26,"(2(f18.10))") lat_vecs
-      !  write(26,*) "mesh_file = ", mesh_file
-      !  write(26,*) "gmsh_file = ", gmsh_file
-      !  write(26,*) "log_file  = ", log_file
-      !  close(26)
-      !
-      !  write(ui_out,*) "   .      .      ."
-      !  write(ui_out,*) "   .      .      ."
-      !  write(ui_out,*) "   .      . (d=",dimscale_in_m,")"
-      !  write(ui_out,*) "  and   we're   done!"
-      !  endif
+
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
       write(ui_out,*) "-----------------------------------------------"
       write(ui_out,*)
       !
-      deallocate(b_zwork, c_dwork, iindex)
+      deallocate( v_eig_index)
 
    end subroutine calc_ac_modes_impl
 
