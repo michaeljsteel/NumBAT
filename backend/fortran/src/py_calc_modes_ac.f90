@@ -9,7 +9,7 @@
  !  elnd_to_mshpt:
  !  v_el_material:
  !  v_nd_xy
- !  v_eigs_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
+ !  v_evals_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
  !  femsol_ac:
  !  poln_fracs:
 
@@ -26,11 +26,11 @@ module calc_ac_impl
 contains
 
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
-      bdy_cdn, itermax, tol, debug,  &
+      bdy_cdn, itermax, arp_tol, debug,  &
       symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_el,n_elt_mats, &
       elnd_to_mshpt, v_el_material, v_nd_physindex,  v_nd_xy, &
-      v_eigs_nu, femsol_ac, poln_fracs, nberr)
+      v_evals_nu, femsol_ac, poln_fracs, nberr)
 
 
 
@@ -40,7 +40,7 @@ contains
       double precision, intent(in) :: dimscale_in_m
       complex(8), intent(in) :: shift_nu
       integer(8), intent(in) :: bdy_cdn, itermax, debug
-      double precision, intent(in) :: tol
+      double precision, intent(in) :: arp_tol
       integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
       integer(8), intent(in) :: n_elt_mats
 
@@ -57,7 +57,7 @@ contains
 
       double precision, intent(inout) ::  v_nd_xy(2,n_msh_pts)
 
-      complex(8), intent(out), target :: v_eigs_nu(n_modes)
+      complex(8), intent(out), target :: v_evals_nu(n_modes)
       complex(8), intent(out), target :: femsol_ac(3,P2_NODES_PER_EL,n_modes,n_msh_el)
       complex(8), intent(out) :: poln_fracs(4,n_modes)
 
@@ -85,17 +85,17 @@ contains
       double precision dim_x, dim_y
 
       complex(8) shift_omsq
-      integer(8)  i_base
+      integer(8)  csc_index_offset
 
 
       !  Variable used by valpr
-      integer(8) ltrav, n_conv
+      integer(8) n_conv
       complex(8) z_beta, z_tmp, z_tmp0
       integer(8), dimension(:), allocatable :: v_eig_index
 
 
       !  Variable used by valpr
-      integer(8)  nvect
+      integer(8)  dim_krylov
 
       !  Names and Controls
 
@@ -114,8 +114,6 @@ contains
       ui_out = stdout
 
 
-      !  nvect = 2*n_modes + n_modes/2 +3
-      nvect = 3*n_modes + 3
 
 
       call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
@@ -129,20 +127,8 @@ contains
 
       is_em = 0
 
-      !  clean mesh_format
-      namelength = len_trim(mesh_file)
-      gmsh_file = mesh_file(1:namelength-5)//'.msh'
-      gmsh_file_pos = mesh_file(1:namelength)
-      log_file = mesh_file(1:namelength-5)//'-AC.log'
-      if (debug .eq. 1) then
-         write(*,*) "mesh_file = ", mesh_file
-         write(*,*) "gmsh_file = ", gmsh_file
-      endif
 
 
-      dim_x = dimscale_in_m
-      dim_y = dimscale_in_m
-      shift_omsq= (2*D_PI*shift_nu)**2
 
 
 
@@ -150,23 +136,37 @@ contains
 
 
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
+
+
+         !  clean mesh_format
+         namelength = len_trim(mesh_file)
+         gmsh_file = mesh_file(1:namelength-5)//'.msh'
+         gmsh_file_pos = mesh_file(1:namelength)
+         log_file = mesh_file(1:namelength-5)//'-AC.log'
+         if (debug .eq. 1) then
+            write(*,*) "mesh_file = ", mesh_file
+            write(*,*) "gmsh_file = ", gmsh_file
+         endif
+
+
+
+         dim_x = dimscale_in_m
+         dim_y = dimscale_in_m
+
          call construct_fem_node_tables_ac (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
-            P2_NODES_PER_EL, n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, errco, emsg)
+         P2_NODES_PER_EL, n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, errco, emsg)
          call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
-      endif
 
+         !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
+         ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
 
-      !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
-      ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-
-      if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
          call mesh_raw%construct_node_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
          call mesh_raw%construct_node_tables_from_py(v_nd_xy, v_nd_physindex, &
-            v_el_material, elnd_to_mshpt, nberr);
+         v_el_material, elnd_to_mshpt, nberr);
          RET_ON_NBERR(nberr)
       endif
 
@@ -180,14 +180,7 @@ contains
 
 
 
-      ltrav = 3*nvect*(nvect+2)
 
-
-      !  The CSC v_eig_indexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC v_eig_indexing to 0-based v_eig_indexing)
-      i_base = 0
-
-      !#####################  End FEM PRE-PROCESSING  #########################
 
       write(ui_out,*)
       write(ui_out,*) "-----------------------------------------------"
@@ -199,17 +192,27 @@ contains
       write(ui_out,'(A,A)') "   - assembling linear system:"
       call clock_spare%reset()
 
-      call assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
-         mesh_raw, cscmat, symmetry_flag, nberr)
+
+      !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
+
+      !  The CSC v_eig_indexing, i.e., ip_col_ptr, is 1-based
+      !  (but valpr.f will change the CSC v_eig_indexing to 0-based v_eig_indexing)
+      csc_index_offset = 0
+
+      shift_omsq= (2*D_PI*shift_nu)**2
+      call assembly_ac (csc_index_offset, shift_omsq, q_ac, rho, c_tensor, &
+      mesh_raw, cscmat, symmetry_flag, nberr)
       RET_ON_NBERR(nberr)
 
+      !  dim_krylov = 2*n_modes + n_modes/2 +3
+      dim_krylov = 3*n_modes + 3
 
       write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_nonz, ' nonzero elements'
       write(ui_out,'(A,f9.3,A)') '      ', cscmat%n_nonz/(1.d0*cscmat%n_dof*cscmat%n_dof)*100.d0, ' % sparsity'
-      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof*(nvect+6)*16/2**20, ' MB est. working memory '
+      write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof*(dim_krylov+6)*16/2**20, ' MB est. working memory '
 
       write(ui_out,'(/,A,A)') '       ', clock_spare%to_string()
 
@@ -220,22 +223,23 @@ contains
 
       call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
-      call valpr_64_AC (i_base, nvect, n_modes, cscmat,  itermax, ltrav, tol, &
-         n_conv, v_eigs_nu, arpack_evecs, nberr)
+
+      call valpr_64_ac (csc_index_offset, dim_krylov, n_modes,   itermax,  arp_tol, cscmat,&
+      n_conv, v_evals_nu, arpack_evecs, nberr)
 
       RET_ON_NBERR(nberr)
 
 
 
 
-      if (n_conv .ne. n_modes) then
-         write(emsg, '(A,I5,I5)') &
-            "py_calc_modes_AC: convergence problem " // &
-            "in valpr_64: n_conv != n_modes  ", n_conv, n_modes
-         errco = -7
-         call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
+      ! if (n_conv .ne. n_modes) then
+      !    write(emsg, '(A,I5,I5)') &
+      !       "py_calc_modes_AC: convergence problem " // &
+      !       "in valpr_64: n_conv != n_modes  ", n_conv, n_modes
+      !    errco = -7
+      !    call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
 
-      endif
+      ! endif
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
@@ -245,22 +249,22 @@ contains
 
 
       do i=1,n_modes
-         z_tmp0 = v_eigs_nu(i)
+         z_tmp0 = v_evals_nu(i)
          z_tmp = 1.0d0/z_tmp0+shift_omsq
          z_beta = sqrt(z_tmp) / (2.0d0 * D_PI)
          !  Frequency (z_beta) should always be positive.
          if (dble(z_beta) .lt. 0) z_beta = -z_beta
-         v_eigs_nu(i) = z_beta
+         v_evals_nu(i) = z_beta
       enddo
 
-      call z_indexx_AC (n_modes, v_eigs_nu, v_eig_index)
+      call z_indexx_AC (n_modes, v_evals_nu, v_eig_index)
       !
-      !  The eigenvectors will be stored in the array femsol_ac
-      !  The eigevalues and eigenvectors will be renumbered
+      !  The eigedim_krylovors will be stored in the array femsol_ac
+      !  The eigevalues and eigedim_krylovors will be renumbered
       !  using the permutation vector v_eig_index
 
       call array_sol_AC (mesh_raw, cscmat, n_modes,   &
-         v_eig_index, v_eigs_nu, arpack_evecs, poln_fracs, femsol_ac)
+         v_eig_index, v_evals_nu, arpack_evecs, poln_fracs, femsol_ac)
 
 
 

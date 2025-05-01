@@ -29,6 +29,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
    integer(8), intent(out) :: v_el_material(n_msh_el), v_nd_physindex(n_msh_pts)
    double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
    complex(8), intent(out) :: ls_material(1,P2_NODES_PER_EL+7,n_msh_el)
+   double precision arp_tol
 
    integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
@@ -36,8 +37,10 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
 
    call nberr%reset()
 
+ arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
+
    call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-      E_H_field, bdy_cdn, itermax, debug, mesh_file,&
+      E_H_field, bdy_cdn, itermax, arp_tol, debug, mesh_file,&
       n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_em, poln_fracs, elnd_to_mshpt, &
       v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
@@ -47,7 +50,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
 end subroutine
 
 subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
-   bdy_cdn, itermax, tol, debug, &
+   bdy_cdn, itermax, arp_tol, debug, &
    symmetry_flag, n_elt_mats, c_tensor, rho, build_acmesh_from_emmesh, &
    mesh_file, n_msh_pts, n_msh_el, &
    v_nd_physindex, &
@@ -63,7 +66,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    double precision, intent(in) :: dimscale_in_m
    complex(8), intent(in) :: shift_nu
    integer(8), intent(in) :: bdy_cdn, itermax, debug
-   double precision, intent(in) :: tol
+   double precision, intent(in) :: arp_tol
    integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
    integer(8), intent(in) :: n_elt_mats
 
@@ -96,7 +99,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    !f2py intent(out) elnd_to_mshpt, v_el_material, v_nd_xy
 
    call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
-      bdy_cdn, itermax, tol, debug,  &
+      bdy_cdn, itermax, arp_tol, debug,  &
       symmetry_flag, c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_el, n_elt_mats,  &
       elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, &

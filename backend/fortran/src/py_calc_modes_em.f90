@@ -69,7 +69,7 @@ module calc_em_impl
 contains
 
    subroutine calc_em_modes_impl(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
-      E_H_field, bdy_cdn, itermax, debug, &
+      E_H_field, bdy_cdn, itermax, arp_tol, debug, &
       mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_evecs, poln_fracs, &
       elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
@@ -118,7 +118,7 @@ contains
 
       !  Variable used by valpr
       integer(8) dim_krylov
-      integer(8) i_base
+      integer(8) csc_index_offset
       double precision arp_tol
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
@@ -128,8 +128,6 @@ contains
 
 
       ui_out = stdout
-
-      arp_tol = 1.0d-12 ! TODO: ARPACK_ stopping precision,  connect  to user switch
 
 
       call clock_main%reset()
@@ -170,7 +168,6 @@ contains
       ! Build sparse matrix index arrays
       call cscmat%make_csc_arrays(mesh_raw, entities, nberr); RET_ON_NBERR(nberr)
 
-      i_base = 0
 
 
       write(ui_out,*)
@@ -188,7 +185,8 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      call assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, pp, qq, &
+      csc_index_offset = 0
+      call assembly_em (bdy_cdn, csc_index_offset, shift_ksqr, bloch_vec, pp, qq, &
       mesh_raw, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 
@@ -222,7 +220,7 @@ contains
 
       call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
-      call valpr_64( i_base, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
+      call valpr_64_em( csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
       v_evals_beta, arpack_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
       if (shortrun .ne. 0) then
          write(*,*) 'Exiting with shortrun in py_calc_modes.f'
@@ -255,8 +253,6 @@ contains
       call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
       call mesh_raw%fill_python_arrays(v_el_material, v_nd_physindex, elnd_to_mshpt, v_nd_xy)
 
-
-      deallocate(v_eig_index, overlap_L, arpack_evecs)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
       write(ui_out,*) "-----------------------------------------------"

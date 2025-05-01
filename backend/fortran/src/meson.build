@@ -107,7 +107,7 @@ nb_impl_fsrcs = files(
     'sort_int.f90',
     'sort_n.f90',
     'utils.f90',
-    'valpr_umf_64.f90',
+    'valpr_umf_64_em.f90',
     'valpr_umf_64_ac.f90',
     'z_indexx.f90',
     'z_indexx_AC.f90',

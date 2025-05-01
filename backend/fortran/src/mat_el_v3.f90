@@ -18,9 +18,9 @@ subroutine mat_el_v3 (basfuncs, el_nds_xy, beta, c_tensor_el, rho_el, mat_K, mat
    ! double precision p2_p2(6,6), p2_p2x(6,6), p2_p2y(6,6)
    ! double precision p2x_p2x(6,6), p2y_p2y(6,6), p2x_p2y(6,6)
    ! double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
-   double precision det_b
-   complex(8) z_tmp1, z_tmp2
-   complex(8) z_mat_xyz(6,6,3,3), z_beta, z_tensor, t_zmat_xyz
+   !double precision det_b
+   complex(8) z_tmp1
+   complex(8) z_mat_xyz(6,6,3,3), z_tensor, t_zmat_xyz
    integer(8) i, j, i_p, j_p, i_xyz,  j_xyz
    integer(8) i_u_xyz,  j_u_xyz, i_ind, j_ind
    integer(8) S_index(3,3)

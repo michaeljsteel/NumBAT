@@ -1,8 +1,8 @@
 #include "numbat_decl.h"
 
 
-subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
-   ltrav, tol, &
+subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
+   arp_tol, cscmat, &
    n_conv, v_evals_nu, v_evecs_arp, nberr)
 
 !  ------------------------------------------------------------------
@@ -16,7 +16,7 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
    type(SparseCSC_AC) :: cscmat
 
    integer(8) :: n_modes
-   integer(8) n_conv, i_base, nvect, ltrav
+   integer(8) n_conv, i_base, dim_krylov, ltrav
 
 
    !complex(8) mat2(cscmat%n_nonz)
@@ -35,7 +35,7 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
 
 
 
-   double precision tol
+   double precision arp_tol
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
@@ -57,7 +57,7 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
 
    !  Local variables
    !  32-bit integers for ARPACK
-   integer(4) n_modes_32, nvect_32, n_dof_32
+   integer(4) n_modes_32, dim_krylov_32, n_dof_32
    integer(4) ido_32, info_32, ierr_32, iparam_32(11)
    integer(4) ipntr_32(14), ltrav_32
 
@@ -78,6 +78,8 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
    errco = 0
    emsg = ""
 
+   ltrav = 3*dim_krylov*(dim_krylov+2)
+
    n_dof = cscmat%n_dof
    n_nonz = cscmat%n_nonz
 
@@ -87,7 +89,7 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
    call complex_nalloc_1d(resid, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
    call complex_nalloc_1d(trav, ltrav, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
 
-   call complex_nalloc_2d(vschur, cscmat%n_dof, nvect, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call complex_nalloc_2d(vschur, cscmat%n_dof, dim_krylov, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
 
 
    call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
@@ -155,21 +157,21 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
    endif
 
    alloc_stat = 0
-   allocate(workev(3*nvect), rwork(nvect), STAT=alloc_stat)
+   allocate(workev(3*dim_krylov), rwork(dim_krylov), STAT=alloc_stat)
    if (alloc_stat /= 0) then
       write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
       &"for the arrays workev, rwork",&
-      &"alloc_stat, nvect = ", alloc_stat, nvect
+      &"alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
       errco = -100
       call nberr%set(errco, emsg);
       return
    endif
 
-   allocate(selecto(nvect), STAT=alloc_stat)
+   allocate(selecto(dim_krylov), STAT=alloc_stat)
    if (alloc_stat /= 0) then
       write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
       &"for the array selecto",&
-      &"alloc_stat, nvect = ", alloc_stat, nvect
+      &"alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
       errco = -101
       call nberr%set(errco, emsg);
       return
@@ -258,7 +260,7 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
 
    n_dof_32 = int(cscmat%n_dof, 4)
    n_modes_32 = int(n_modes, 4)
-   nvect_32 = int(nvect, 4)
+   dim_krylov_32 = int(dim_krylov, 4)
    ltrav_32 = int(ltrav, 4)
 
    ido_32 = 0
@@ -279,10 +281,10 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
 20 continue
 
 !  Test for dimesnion conditions in znaupd (err code = -3)
-!  Test for N=n_dof_32, NEV=n_modes_32, NCV=nvect_32
-!  Need 0<n_modes_32<n_dof_32-1, 1<= nvect_32-n_modes_32, nvect_32<=n_dof_32
-   if ((n_dof_32-1 .le. n_modes_32) .or. (nvect_32-n_modes_32 .lt. 1)&
-   &.or.  nvect_32 > n_dof_32) then
+!  Test for N=n_dof_32, NEV=n_modes_32, NCV=dim_krylov_32
+!  Need 0<n_modes_32<n_dof_32-1, 1<= dim_krylov_32-n_modes_32, dim_krylov_32<=n_dof_32
+   if ((n_dof_32-1 .le. n_modes_32) .or. (dim_krylov_32-n_modes_32 .lt. 1)&
+   &.or.  dim_krylov_32 > n_dof_32) then
       write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//&
       &' conditions failed (would generate ARPACK znaupd error ' //&
       &'code of -3).' // NEW_LINE('A'),&
@@ -292,8 +294,8 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
       return
    endif
 
-   call znaupd (ido_32, bmat, n_dof_32, which, n_modes_32, tol,&
-   &resid, nvect_32, vschur, n_dof_32, iparam_32,&
+   call znaupd (ido_32, bmat, n_dof_32, which, n_modes_32, arp_tol,&
+   &resid, dim_krylov_32, vschur, n_dof_32, iparam_32,&
    &ipntr_32, workd, trav, ltrav_32, rwork, info_32)
 
    compteur = compteur + 1
@@ -387,6 +389,22 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
       write(ui,*)
    endif
 
+
+
+   if (n_conv .ne. n_modes) then
+      write(emsg, '(A,I5,I5)') &
+         "py_calc_modes_AC: convergence problem " // &
+         "in valpr_64: n_conv != n_modes  ", n_conv, n_modes
+      errco = -7
+      call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
+
+   endif
+
+
+
+
+
+
    if (info_32.lt.0) then
 
 !  ---------------------------------------------------
@@ -443,8 +461,8 @@ subroutine valpr_64_AC (i_base, nvect, n_modes, cscmat, itermax,&
       shift2 = (0.0d0,0.0d0)
 
       call zneupd (rvec, 'A', selecto, v_evals_nu, vschur, n_dof_32, shift2,&
-      &workev, bmat, n_dof_32, which, n_modes_32, tol,&
-      &resid, nvect_32, vschur, n_dof_32, iparam_32, ipntr_32,&
+      &workev, bmat, n_dof_32, which, n_modes_32, arp_tol,&
+      &resid, dim_krylov_32, vschur, n_dof_32, iparam_32, ipntr_32,&
       &workd, trav, ltrav_32, rwork, ierr_32)
 !  ------------------------------------------------------------
 !  | La partie reelle d'une valeur propre se trouve dans la     |

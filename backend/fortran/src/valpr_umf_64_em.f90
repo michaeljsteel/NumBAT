@@ -239,7 +239,7 @@ end subroutine
 ! del_vect1, del_vect2, del_workl, &
 ! ext_workd, ext_resid, ext_lworkl, &
 
-subroutine valpr_64 (i_base, dim_krylov, n_modes, itermax, arp_tol, &
+subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    cscmat, v_evals, v_evecs, nberr, shortrun)
 
    !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
