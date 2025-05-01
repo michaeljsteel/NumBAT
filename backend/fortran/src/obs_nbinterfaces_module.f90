@@ -8,7 +8,7 @@
 
 !             use numbatmod
 !             use alloc
-!             use class_MeshRawEM
+!             use class_MeshRaw
 !             use class_SparseCSC_EM
 
 !             type(MeshRawEM) :: mesh_raw

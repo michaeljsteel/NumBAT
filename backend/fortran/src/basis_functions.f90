@@ -35,28 +35,33 @@ module class_BasisFunctions
       double precision mat_T_tr(2,2) ! transpose of inverse transform Ttr=Tr(B^-1)
       double precision det           ! transformation determinant
 
+      double precision p2_p2(6,6), p2_p2x(6,6), p2_p2y(6,6)    ! overlap products for analytic integration
+      double precision p2x_p2x(6,6), p2y_p2y(6,6), p2x_p2y(6,6)! overlap products for analytic integration
+
       ! rules for constructing vector elements on the face and 3 edges
       integer(8) vector_elt_map(4,3,N_ETY_TRANSVERSE)
 
 
-   contains
+  contains
 
-   procedure :: set_affine_for_elt => BasisFunctions_set_affine_for_elt
+      procedure :: set_affine_for_elt => BasisFunctions_set_affine_for_elt
 
-   procedure :: get_triint_p2_p2 => BasisFunctions_get_triint_p2_p2
+      procedure :: get_triint_set_p2_p2 => BasisFunctions_get_triint_set_p2_p2
+
+      procedure :: get_triint_p2_p2 => BasisFunctions_get_triint_p2_p2
 
 
-   procedure :: evaluate_at_position => BasisFunctions_evaluate_at_position
+      procedure :: evaluate_at_position => BasisFunctions_evaluate_at_position
 
-   procedure :: build_vector_elt_map => BasisFunctions_build_vector_elt_map
+      procedure :: build_vector_elt_map => BasisFunctions_build_vector_elt_map
 
-   procedure :: evaluate_vector_elts => BasisFunctions_evaluate_vector_elts
+      procedure :: evaluate_vector_elts => BasisFunctions_evaluate_vector_elts
 
-   procedure :: find_derivatives => BasisFunctions_find_derivatives
-   end type BasisFunctions
+      procedure :: find_derivatives => BasisFunctions_find_derivatives
+  end type BasisFunctions
 
    contains
 
 #include "basis_functions_impl.f90"
 
-end module
+   end module

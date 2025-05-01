@@ -42,7 +42,7 @@ subroutine em_mode_power_sz_analytic (k_0, n_modes, n_msh_el, n_msh_pts, &
    complex(8) vec_Es(3), vec_H(3)
    complex(8) t_Pz
 
-   type(AnalyticIntegrator) integrator
+   type(AnalyticIntegrator) integrator   ! TODO: replace with BasicFunctions object
    type(PyFrontEnd) frontend
    integer(8) ilo, ihi, off
 

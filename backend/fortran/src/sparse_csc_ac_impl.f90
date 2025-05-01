@@ -109,7 +109,7 @@
 subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
 
    use numbatmod
-   use class_MeshRawEM
+   use class_MeshRaw
 
    class(SparseCSC_AC) :: this
    integer(8) bdy_cdn
@@ -362,7 +362,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
    use numbatmod
    use alloc
 
-   use class_MeshRawEM
+   use class_MeshRaw
 
    class(SparseCSC_AC) :: this
    type(MeshRawAC) mesh_raw

@@ -20,7 +20,7 @@ module calc_ac_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRawEM
+   use class_MeshRaw
    use class_SparseCSC_AC
 
 contains
@@ -181,17 +181,14 @@ contains
 
 
       ltrav = 3*nvect*(nvect+2)
-!
 
 
-
-      !
       !  The CSC v_eig_indexing, i.e., ip_col_ptr, is 1-based
       !  (but valpr.f will change the CSC v_eig_indexing to 0-based v_eig_indexing)
       i_base = 0
 
       !#####################  End FEM PRE-PROCESSING  #########################
-      !
+
       write(ui_out,*)
       write(ui_out,*) "-----------------------------------------------"
 
@@ -246,7 +243,7 @@ contains
       write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 
-      !
+
       do i=1,n_modes
          z_tmp0 = v_eigs_nu(i)
          z_tmp = 1.0d0/z_tmp0+shift_omsq
@@ -255,34 +252,24 @@ contains
          if (dble(z_beta) .lt. 0) z_beta = -z_beta
          v_eigs_nu(i) = z_beta
       enddo
-      !
+
       call z_indexx_AC (n_modes, v_eigs_nu, v_eig_index)
       !
       !  The eigenvectors will be stored in the array femsol_ac
-      !  The eigenum_modesues and eigenvectors will be renumbered
+      !  The eigevalues and eigenvectors will be renumbered
       !  using the permutation vector v_eig_index
 
       call array_sol_AC (mesh_raw, cscmat, n_modes,   &
-         v_eig_index,  &
-         v_eigs_nu, arpack_evecs, poln_fracs, femsol_ac)
+         v_eig_index, v_eigs_nu, arpack_evecs, poln_fracs, femsol_ac)
 
-
-      if(debug .eq. 1) then
-         write(ui_out,*)
-         !  write(ui_out,*) "lambda, 1/lambda = ", lambda, 1.0d0/lambda
-         !  write(ui_out,*) "sqrt(shift_omsq)/(2*D_PI) = ", sqrt(omsq) / (2.0d0 * D_PI)
-         do i=1,n_modes
-            write(ui_out,"(i4,2(g22.14),2(g18.10))") i, v_eigs_nu(i)
-         enddo
-      endif
 
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
       write(ui_out,*) "-----------------------------------------------"
       write(ui_out,*)
-      !
-      deallocate( v_eig_index)
+
+      deallocate(v_eig_index)
 
    end subroutine calc_ac_modes_impl
 

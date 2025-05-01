@@ -6,8 +6,9 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
 
    use numbatmod
    use alloc
-   use class_MeshRawEM
+   use class_MeshRaw
    use class_SparseCSC_AC
+   use class_BasisFunctions
 
    type(MeshRawAC) mesh_raw
    type(SparseCSC_AC) cscmat
@@ -29,19 +30,20 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
 
    integer(8) i_base2,  typ_e
    integer(8) i, k, i_el
-   integer(8) ety_j, msh_pt_j, eqn_j, dof_j
    integer(8) ety_i, msh_pt_i, eqn_i, dof_i
+   integer(8) ety_j, msh_pt_j, eqn_j, dof_j
    integer(8) col_start, col_end
 
    complex(8) mat_K(18,18), mat_M(18,18)
    complex(8) c_tensor_el(6,6), rho_el
    complex(8) z_tmp1, z_tmp2
+   type(BasisFunctions) basfuncs
 
-!  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
-!  But valpr.f may have changed the CSC indexing to 0-based indexing)
 
    call integer_nalloc_1d(i_work, 3*mesh_raw%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
 
+   !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
+   !  But valpr.f may change the CSC indexing to 0-based
    if (i_base .eq. 0) then
       i_base2 = 1
    else
@@ -52,20 +54,24 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
    cscmat%mOp_mass = C_ZERO
 
    do i_el=1,mesh_raw%n_msh_el              ! For each elt
-
       typ_e = mesh_raw%el_material(i_el)    ! Find the material and its local material properties
 
       rho_el = rho(typ_e)
       c_tensor_el = c_tensor(:,:,typ_e)
 
-
       call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy)
 
+      call basfuncs%set_affine_for_elt(el_nds_xy, nberr)
+      RET_ON_NBERR(nberr)
+      call basfuncs%get_triint_set_p2_p2()
+
+
       !  If c_tensor has regular symmetries use more efficient formulation
+      !write(*,*) 'symflag', symmetry_flag
       if (symmetry_flag .eq. 1) then
          call mat_el_v2 (el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
       else
-         call mat_el_v3 (el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
+         call mat_el_v3 (basfuncs, el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
       endif
 
       do ety_j=1,P2_NODES_PER_EL

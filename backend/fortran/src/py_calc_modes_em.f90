@@ -60,7 +60,7 @@ module calc_em_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRawEM
+   use class_MeshRaw
    use class_SparseCSC_EM
    use class_PeriodicBCs
 

@@ -8,7 +8,7 @@
 ! table_edge seems to be unused
 subroutine label_edges (mesh_raw, elnd_to_mshpt, n_edge, visited)
 
-   use class_MeshRawEM
+   use class_MeshRaw
 
    implicit none
 

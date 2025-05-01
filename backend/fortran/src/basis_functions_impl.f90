@@ -123,8 +123,7 @@ subroutine BasisFunctions_set_affine_for_elt(this, el_nds_xy, nberr)
    this%mat_B(:,1) = el_nds_xy(:,2) - el_nds_xy(:,1)
    this%mat_B(:,2) = el_nds_xy(:,3) - el_nds_xy(:,1)
 
-   this%det = this%mat_B(1,1) * this%mat_B(2,2) &
-      - this%mat_B(1,2) * this%mat_B(2,1)
+   this%det = this%mat_B(1,1) * this%mat_B(2,2) - this%mat_B(1,2) * this%mat_B(2,1)
 
 
    if (abs(this%det) .le. 1.0d-22) then
@@ -338,4 +337,14 @@ subroutine BasisFunctions_get_triint_p2_p2(this, m_p2_p2)
 
    call find_overlaps_p2_p2(m_p2_p2, this%det)
 
+end subroutine
+
+subroutine BasisFunctions_get_triint_set_p2_p2(this)
+   class(BasisFunctions) this
+    call find_overlaps_p2_p2(this%p2_p2, this%det)
+    call find_overlaps_p2_p2x(this%p2_p2x, this%mat_T_tr, this%det)
+    call find_overlaps_p2_p2y(this%p2_p2y, this%mat_T_tr, this%det)
+    call find_overlaps_p2x_p2x(this%p2x_p2x, this%mat_T_tr, this%det)
+    call find_overlaps_p2x_p2y(this%p2x_p2y, this%mat_T_tr, this%det)
+    call find_overlaps_p2y_p2y(this%p2y_p2y, this%mat_T_tr, this%det)
 end subroutine

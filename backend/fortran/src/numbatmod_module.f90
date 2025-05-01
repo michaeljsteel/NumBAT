@@ -32,7 +32,7 @@ module numbatmod
    integer(8), parameter :: N_DOF_PER_EL = 13      ! 6 P2 nodes + 7 additional P3 nodes
 
 
-   integer(8), parameter :: NDDL_0_AC = 6
+!   integer(8), parameter :: NDDL_0_AC = 6
 
    integer(8),  parameter :: EMSG_LENGTH = 2048
    integer(8),  parameter :: FNAME_LENGTH = 1024

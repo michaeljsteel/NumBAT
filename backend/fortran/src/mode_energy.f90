@@ -12,7 +12,7 @@
 subroutine mode_energy (nval, nel,  n_core, &
    mesh_raw, nb_typ_el, eps_eff,  sol, mode_pol)
 
-   use class_MeshRawEM
+   use class_MeshRaw
    use numbatmod
 
    integer(8) nval, nel

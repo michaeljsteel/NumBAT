@@ -1,6 +1,6 @@
 #include "numbat_decl.h"
 
-module class_MeshRawEM
+module class_MeshRaw
 
    use numbatmod
    use alloc
@@ -223,4 +223,4 @@ contains
 #include "meshprops_impl_ac.f90"
 
 
-end module class_MeshRawEM
+end module class_MeshRaw

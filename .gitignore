@@ -32,6 +32,7 @@ backend/msh/build/*
 backend/fortran/nb_build_config.txt
 backend/fortran/build/*
 backend/fortran/mbuild_*
+backend/fortran/src/*.pdf
 
 josab_tutorial/*.png
 lit_examples/*.png

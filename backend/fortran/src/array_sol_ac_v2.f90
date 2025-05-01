@@ -14,12 +14,12 @@ subroutine array_sol_AC (mesh_raw, cscmat, num_modes, iindex, &
    use numbatmod
    use alloc
 
-   use class_MeshRawEM
+   use class_MeshRaw
    use class_SparseCSC_AC
 
    type(MeshRawAC) mesh_raw
    type(SparseCSC_AC) cscmat
-   type(NBError) nberr
+   !type(NBError) nberr
 
 
    integer(8) num_modes

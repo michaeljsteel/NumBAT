@@ -19,7 +19,7 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
    use numbatmod
    use alloc
-   use class_MeshRawEM
+   use class_MeshRaw
 
    integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
 

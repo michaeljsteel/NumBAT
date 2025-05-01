@@ -8,7 +8,7 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    use numbatmod
    use alloc
-   use class_MeshRawEM
+   use class_MeshRaw
    use class_PeriodicBCs
    use class_SparseCSC_EM
    use class_BasisFunctions
@@ -79,12 +79,10 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    errco=0
 
-   call integer_alloc_1d(i_work, 3*entities%n_entities, 'i_work', errco, emsg);
-   call nberr%set(errco, emsg)
-   RET_ON_NBERR(nberr)
+   call integer_nalloc_1d(i_work, 3*entities%n_entities, 'i_work', nberr); RET_ON_NBERR(nberr)
 
-   !  The CSC indexing, i.e., col_ptr, is 1-based
-   !  But valpr.f may have changed the CSC indexing to 0-based indexing)
+   !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
+   !  But valpr.f may change the CSC indexing to 0-based
    if (i_base .eq. 0) then
       i_base2 = 1
    else
@@ -239,6 +237,7 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               errco = NBERR_BAD_ASSEMBLY
                               write(emsg,*) "ety_i or ety_j has an ", "invalid value",  &
                                  "ety_i ety_j, = ", ety_i, ety_j
+                                 call nberr%set(errco, emsg);
                               return
                            endif
 
@@ -262,6 +261,7 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                            else
                               errco = NBERR_BAD_ASSEMBLY
                               write(emsg,*) "asmbly: problem with row_ind: k, nonz = ", k, cscmat%n_nonz
+                              call nberr%set(errco, emsg);
                               return
 
                            endif
