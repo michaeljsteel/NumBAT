@@ -78,7 +78,6 @@ contains
       complex(8), dimension(:,:), allocatable :: arpack_evecs
 
 
-      integer(8) i
       integer(8) ui_out,  namelength
 
 
@@ -86,12 +85,6 @@ contains
 
       complex(8) shift_omsq
       integer(8)  csc_index_offset
-
-
-      !  Variable used by valpr
-      integer(8) n_conv
-      complex(8) z_beta, z_tmp, z_tmp0
-      integer(8), dimension(:), allocatable :: v_eig_index
 
 
       !  Variable used by valpr
@@ -123,13 +116,7 @@ contains
       RET_ON_NBERR(nberr)
 
 
-      call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
-
       is_em = 0
-
-
-
-
 
 
       call clock_main%reset()
@@ -224,22 +211,11 @@ contains
       call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
 
-      call valpr_64_ac (csc_index_offset, dim_krylov, n_modes,   itermax,  arp_tol, cscmat,&
-      n_conv, v_evals_nu, arpack_evecs, nberr)
+      call valpr_64_ac (csc_index_offset, dim_krylov, n_modes, itermax,  arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr)
 
       RET_ON_NBERR(nberr)
 
 
-
-
-      ! if (n_conv .ne. n_modes) then
-      !    write(emsg, '(A,I5,I5)') &
-      !       "py_calc_modes_AC: convergence problem " // &
-      !       "in valpr_64: n_conv != n_modes  ", n_conv, n_modes
-      !    errco = -7
-      !    call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
-
-      ! endif
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
 
@@ -248,32 +224,20 @@ contains
       call clock_spare%reset()
 
 
-      do i=1,n_modes
-         z_tmp0 = v_evals_nu(i)
-         z_tmp = 1.0d0/z_tmp0+shift_omsq
-         z_beta = sqrt(z_tmp) / (2.0d0 * D_PI)
-         !  Frequency (z_beta) should always be positive.
-         if (dble(z_beta) .lt. 0) z_beta = -z_beta
-         v_evals_nu(i) = z_beta
-      enddo
 
-      call z_indexx_AC (n_modes, v_evals_nu, v_eig_index)
-      !
       !  The eigedim_krylovors will be stored in the array femsol_ac
       !  The eigevalues and eigedim_krylovors will be renumbered
-      !  using the permutation vector v_eig_index
+      !  by increasing q_ac
 
-      call array_sol_AC (mesh_raw, cscmat, n_modes,   &
-         v_eig_index, v_evals_nu, arpack_evecs, poln_fracs, femsol_ac)
-
-
+      call construct_solution_fields_ac (shift_omsq,  n_modes, &
+      mesh_raw, cscmat,   &
+         v_evals_nu, arpack_evecs, femsol_ac, poln_fracs,  nberr)
+         RET_ON_NBERR(nberr)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
       write(ui_out,*) "-----------------------------------------------"
       write(ui_out,*)
-
-      deallocate(v_eig_index)
 
    end subroutine calc_ac_modes_impl
 

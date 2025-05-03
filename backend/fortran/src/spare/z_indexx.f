@@ -4,7 +4,7 @@ c     sort algorithm.
 c     The sorted indices are stored in the indx array, which can be used to
 c     reorder the original array cor for other purposes where sorted order is required.
 
-      SUBROUTINE z_indexx(n,arr,indx)
+      SUBROUTINE find_eigvals_order(n,arr,indx)
 
       integer(8) n,indx(n),M,NSTACK
       complex(8) arr(n)
@@ -19,7 +19,7 @@ C
       if (allocate_status /= 0) then
         write(*,*) "The allocation is unsuccessful"
         write(*,*) "allocate_status = ", allocate_status
-        write(*,*) "z_indexx: Not enough memory for arr_0"
+        write(*,*) "find_eigvals_order: Not enough memory for arr_0"
         write(*,*) "nval = ", n
         write(*,*) "Aborting..."
         stop
@@ -93,7 +93,7 @@ c
 C        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
         if(jstack.gt.NSTACK) then
           write(*,*) 'NSTACK too small in indexx'
-          write(*,*) "z_indexx: Aborting..."
+          write(*,*) "find_eigvals_order: Aborting..."
           stop
         endif
         if(ir-i+1.ge.j-l)then

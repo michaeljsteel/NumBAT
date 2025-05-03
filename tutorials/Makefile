@@ -14,6 +14,11 @@ slow: tut04 tut05 tut06 tut07 tut08 tut09 tut11a  tut11b tut12 tut13 tut14
 goodtest: tut01 ftut02 ftut06 ftut08
 
 
+memtest:
+	valgrind $(PYTHON) sim-tut_01-first_calc.py fast=1 > val_tut1.txt 2>&1
+	valgrind $(PYTHON) sim-tut_02-gain_spectra-npsave.py fast=1 > val_tut2.txt 2>&1
+	valgrind $(PYTHON) sim-tut_06a-silica_nanowire.py fast=1 > val_tut6.txt 2>&1
+
 tut01:
 	$(PYTHON) sim-tut_01-first_calc.py
 

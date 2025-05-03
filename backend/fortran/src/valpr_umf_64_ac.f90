@@ -2,8 +2,7 @@
 
 
 subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
-   arp_tol, cscmat, &
-   n_conv, v_evals_nu, v_evecs_arp, nberr)
+   arp_tol, cscmat, v_evals_nu, v_evecs_arp, nberr)
 
 !  ------------------------------------------------------------------
 
@@ -11,43 +10,45 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
    use alloc
    use class_SparseCSC_AC
 
+   use class_ValprVecs
+
    type(NBError) nberr
 
    type(SparseCSC_AC) :: cscmat
 
    integer(8) :: n_modes
-   integer(8) n_conv, i_base, dim_krylov, ltrav
+   integer(8) n_conv, i_base, dim_krylov, lwork
 
 
    !complex(8) mat2(cscmat%n_nonz)
 
 
-   complex(8) v_evals_nu(n_modes+1), shift2, v_evecs_arp(cscmat%n_dof,n_modes)
+   complex(8) v_evals_nu(n_modes),  v_evecs_arp(cscmat%n_dof,n_modes)
 
    double precision time1_fact, time2_fact
 
-   double precision control (20), info_umf (90)
-   integer(8) numeric, symbolic, sys
+   double precision umf_control (20), umf_info (90)
+   integer(8) umf_numeric, symbolic, sys
 
    integer(8) itermax, i, j, n_dof, n_nonz
-   integer(8) compteur
 
 
-
+   type(ValprVecs) :: vecs
 
    double precision arp_tol
+   complex(8) arp_shift
 
    integer(8) errco
    character(len=EMSG_LENGTH) emsg
 
    integer(8) alloc_stat
-   complex(8), dimension(:), allocatable :: workev
-   double precision, dimension(:), allocatable :: rwork
-   logical, dimension(:), allocatable :: selecto
+   !complex(8), dimension(:), allocatable :: workev
+   !double precision, dimension(:), allocatable :: rwork
+   !logical, dimension(:), allocatable :: selecto
 
 
-   complex(8), dimension(:), allocatable :: vect1, vect2, workd, resid, trav
-   complex(8), dimension(:,:), allocatable :: vschur
+   !complex(8), dimension(:), allocatable :: vect1, vect2, workd, resid, work
+   !complex(8), dimension(:,:), allocatable :: vschur
 
 
    double precision, allocatable, dimension(:) :: lhs_re, lhs_im
@@ -58,18 +59,17 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
    !  Local variables
    !  32-bit integers for ARPACK
    integer(4) n_modes_32, dim_krylov_32, n_dof_32
-   integer(4) ido_32, info_32, ierr_32, iparam_32(11)
-   integer(4) ipntr_32(14), ltrav_32
+   integer(4) arp_ido, arp_info, ierr_32, arp_iparam(11)
+   integer(4) ipntr_32(14), lworkl_32
 
-   logical rvec
-   character bmat*1, which*2
-
-   data bmat/'I'/
-   data which/'LM'/
+   logical arp_rvec
+   character arp_bmat
+   character(2) arp_which
+   logical arp_active
 
    integer(8) ui, debug, show_mem_est
 
-!  ------------------------------------------------------------------
+   !  ------------------------------------------------------------------
 
    debug = 0
    show_mem_est = 0
@@ -78,18 +78,28 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
    errco = 0
    emsg = ""
 
-   ltrav = 3*dim_krylov*(dim_krylov+2)
+   if (i_base .ne. 0) then
+      write(emsg,*) "valpr_64: i_base != 0 : ", i_base,&
+      &"valpr_64: UMFPACK requires 0-based indexing"
+      errco = -102
+      call nberr%set(errco, emsg);
+   endif
+
+   lwork = 3*dim_krylov*(dim_krylov+2)
 
    n_dof = cscmat%n_dof
    n_nonz = cscmat%n_nonz
 
-   call complex_nalloc_1d(vect1, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
-   call complex_nalloc_1d(vect2, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
-   call complex_nalloc_1d(workd, 3*cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
-   call complex_nalloc_1d(resid, cscmat%n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
-   call complex_nalloc_1d(trav, ltrav, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   call vecs%init(n_modes, dim_krylov, n_dof, nberr); RET_ON_NBERR(nberr)
 
-   call complex_nalloc_2d(vschur, cscmat%n_dof, dim_krylov, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   !call complex_nalloc_1d(vect1, n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   !call complex_nalloc_1d(vect2, n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   !call complex_nalloc_1d(workd, 3*n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+   !call complex_nalloc_1d(work, lwork, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+
+   !call complex_nalloc_1d(resid, n_dof, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
+
+   !call complex_nalloc_2d(vschur, n_dof, dim_krylov, 'vect1_ac', nberr); RET_ON_NBERR(nberr)
 
 
    call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
@@ -104,290 +114,204 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
    mOp_stiff_im = dimag(cscmat%mOp_stiff)
 
 
-   call cpu_time(time1_fact)
-
 !  ----------------------------------------------------------------
 !  factor the matrix as A = LU and save to a file
 !  ----------------------------------------------------------------
 
-   if (debug .eq. 1) then
-      write(ui,*) "valpr_64: factorisation (UMFPACK)"
-   endif
+
 
 !  set default parameters
-   call umf4zdef (control)
 
-!  umfpack * report status (print level = control(1)) :
-!  print level = 0 or less : No output, even when an error occurs.
-!  print level = 1 (default value) : then error messages are printed,
-!  and nothing is printed if the status is UMFPACK OK.
-!  print level = 2 or more : then the status is always printed.
-   control (1) = 1
-   call umf4zpcon (control)
+   !  umfpack * report status (print level = umf_control(1)) :
+   !  print level = 0 or less : No output, even when an error occurs.
+   !  print level = 1 (default value) : then error messages are printed,
+   !  and nothing is printed if the status is UMFPACK OK.
+   !  print level = 2 or more : then the status is always printed.
+
+   call umf4zdef (umf_control)
+   umf_control (1) = 1
+   call umf4zpcon (umf_control)
 
 !  pre-order and symbolic analysis
-   call umf4zsym (cscmat%n_dof, cscmat%n_dof, cscmat%v_col_ptr, cscmat%v_row_ind, &
-      mOp_stiff_re, mOp_stiff_im, symbolic, control, info_umf)
+   call umf4zsym (n_dof, n_dof, cscmat%v_col_ptr, cscmat%v_row_ind, &
+      mOp_stiff_re, mOp_stiff_im, symbolic, umf_control, umf_info)
 
-!  print statistics computed so far
-!  call umf4zpinf (control, info_umf) could also be done.
-   call report_stats_umf4zsym(debug, show_mem_est, info_umf)
-   if (info_umf (1) .lt. 0) then
-      write(emsg,*) 'Error occurred in umf4zsym: ', info_umf (1)
-      errco = -104
-      call nberr%set(errco, emsg);
+   if (umf_info (1) .lt. 0) then
+      write(emsg,'(A,i4)') 'Error occurred in sparse matrix symbolic factorization umf4zsym:', int(umf_info (1))
+      call nberr%set(NBERR_BAD_UMF4ZSYM, emsg)
       return
    endif
 
 
-!  write(*,*) 'Starting num fac'
-!  numeric factorization
-!  TODO: This call does not appear to be thread safe!  Breaks tutorial 3 B in thread mode
-   call umf4znum (cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, symbolic, numeric, control, info_umf)
-!  write(*,*) 'Done num fac'
+   !  Complete the umf_numeric factorization
+   !  TODO: This call does not appear to be thread safe!  Breaks tutorial 3 B in thread mode
+   call umf4znum (cscmat%v_col_ptr, cscmat%v_row_ind, mOp_stiff_re, mOp_stiff_im, symbolic, umf_numeric, umf_control, umf_info)
 
-!  call umf4zpinf (control, info_umf) could also be done.
-   call report_stats_umf4znum(debug, show_mem_est, info_umf)
-
-   if (info_umf (1) .lt. 0) then
-      write(emsg,*) 'Error occurred in umf4znum: ', info_umf(1)
-      errco = -105
-      call nberr%set(errco, emsg);
+   if (umf_info (1) .lt. 0) then
+      write(emsg,*) 'Error occurred in sparse matrix umf_numeric factorization umf4znum: ', umf_info (1)
+      call nberr%set(NBERR_BAD_UMF4ZNUM, emsg)
       return
    endif
 
-   alloc_stat = 0
-   allocate(workev(3*dim_krylov), rwork(dim_krylov), STAT=alloc_stat)
-   if (alloc_stat /= 0) then
-      write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
-      &"for the arrays workev, rwork",&
-      &"alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
-      errco = -100
-      call nberr%set(errco, emsg);
-      return
-   endif
-
-   allocate(selecto(dim_krylov), STAT=alloc_stat)
-   if (alloc_stat /= 0) then
-      write(emsg,*) "VALPR_64: Mem. allocation is unsuccessfull ",&
-      &"for the array selecto",&
-      &"alloc_stat, dim_krylov = ", alloc_stat, dim_krylov
-      errco = -101
-      call nberr%set(errco, emsg);
-      return
-   endif
-
-
-
-   do i=1,n_modes
-      v_evals_nu(i) = 0.0d0
-   enddo
-
-!  ##################################################################
-
-   if (i_base .ne. 0) then
-      write(emsg,*) "valpr_64: i_base != 0 : ", i_base,&
-      &"valpr_64: UMFPACK requires 0-based indexing"
-      errco = -102
-      call nberr%set(errco, emsg);
-   endif
-
-
-!  save the symbolic analysis to the file s42.umf
-!  note that this is not needed until another matrix is
-!  factorized, below.
-!  filenum = 42
-!  call umf4zssym (symbolic, filenum, status)
-!  if (status .lt. 0) then
-!  write(ui,*) 'Error occurred in umf4zssym: ', status
-!  stop
-!  endif
-
-!  save the LU factors to the file n0.umf
-!  call umf4zsnum (numeric, filenum, status)
-!  if (status .lt. 0) then
-!  write(ui,*) 'Error occurred in umf4zsnum: ', status
-!  stop
-!  endif
-
-!  free the symbolic analysis
+   !  free the symbolic analysis
    call umf4zfsym (symbolic)
 
-!c       free the numeric factorization
-!  call umf4zfnum (numeric)
 
-   call cpu_time(time2_fact)
-   if (debug .eq. 1) then
-      write(ui,*) "valpr_64: factorisation completed"
-      write(ui,*) "LU factorisation : CPU time = ",&
-      &(time2_fact-time1_fact)
-!  ,
-!  *         100*(time2_fact-time1_fact)/(time2-time1),"%"
-   endif
 
-!  No LU factors (symbolic or numeric) are in memory at this point.
+   !call complex_nalloc_1d(workev, 3*dim_krylov, 'workev', nberr);
+   !call double_nalloc_1d(rwork, dim_krylov, 'rwork', nberr);
+   !call logical_nalloc_1d(selecto, dim_krylov, 'selecto', nberr);
 
-!c       ----------------------------------------------------------------
-!c       load the LU factors back in, and solve the system
-!c       ----------------------------------------------------------------
+   ! alloc
 
-!c       At this point the program could terminate and load the LU
-!C       factors (numeric) from the n0.umf file, and solve the
-!c       system (see below).  Note that the symbolic object is not
-!c       required.
+   ! do i=1,n_modes
+   !    v_evals_nu(i) = 0.0d0
+   ! enddo
 
-!c       load the numeric factorization back in (filename: n0.umf)
-!  call umf4zlnum (numeric, filenum, status)
-!  if (status .lt. 0) then
-!  write(ui,*) 'Error occurred in umf4zlnum: ', status
-!  stop
-!  endif
+   v_evals_nu = D_ZERO
+
+
 
 !  ##################################################################
 
-!  On commence le travail avec znaupd
+!  On commence le workail avec znaupd
 !  ----------------------------------
 
-!  ------------------------------------------------------------
-!  | Le parametre IDO_32 est utilise pour la communication.        |
-!  | A l'etape initiale il doit valoir 0.                       |
-!  | Le choix INFO_32=0 correspond a la construction par           |
-!  | Arpack d'un vecteur initial a composantes aleatoires       |
-!  | iparam_32(1)=1 signifie que Arpack calcule les translations   |
-!  | a partir de la matrice projetee et conformement au critere |
-!  | "which".                                                   |
-!  ------------------------------------------------------------
 
-   n_dof_32 = int(cscmat%n_dof, 4)
+   !  The arp_ido parameter is used for reverse communication.
+   !  Initially, it should be set to 0.
+
+   !  Setting arp_info to 0 instructs ARPACK to construct an initial vector with random components.
+   !  Setting arp_iparam(1) to 1 indicates that ARPACK should calculate translations
+   !  based on the projected matrix and according to the "arp_which criterion.
+
+
+   n_dof_32 = int(n_dof, 4)
    n_modes_32 = int(n_modes, 4)
    dim_krylov_32 = int(dim_krylov, 4)
-   ltrav_32 = int(ltrav, 4)
+   lworkl_32 = int(lwork, 4)
 
-   ido_32 = 0
-   iparam_32(1) = 1
-   iparam_32(3) = int(itermax, 4)
-!  iparam_32(7) = 3
-   iparam_32(7) = 1
-   info_32 = 0
-!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-   compteur = 0
-
-!  ----------------------------------------------------
-!  | Boucle principale en mode de communication inverse |
-!  ----------------------------------------------------
+   arp_ido = 0
+   arp_iparam(1) = 1
+   arp_iparam(3) = int(itermax, 4)
+!  arp_iparam(7) = 3
+   arp_iparam(7) = 1
+   arp_info = 0
 
 
-20 continue
+   !----------------------------------------------------
+   !  Main loop in inverse communication mode
+   !----------------------------------------------------
+   arp_bmat = 'I'    !  plain (not generalised) eigenvalue problem
+   arp_which = 'LM'  !  seek largest magnitude eigs
 
-!  Test for dimesnion conditions in znaupd (err code = -3)
-!  Test for N=n_dof_32, NEV=n_modes_32, NCV=dim_krylov_32
-!  Need 0<n_modes_32<n_dof_32-1, 1<= dim_krylov_32-n_modes_32, dim_krylov_32<=n_dof_32
-   if ((n_dof_32-1 .le. n_modes_32) .or. (dim_krylov_32-n_modes_32 .lt. 1)&
-   &.or.  dim_krylov_32 > n_dof_32) then
-      write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//&
-      &' conditions failed (would generate ARPACK znaupd error ' //&
-      &'code of -3).' // NEW_LINE('A'),&
-      &'You should probably increase the grid resolution.'
-      errco = -106
-      call nberr%set(errco, emsg);
-      return
-   endif
+   arp_active = .true.
+   arp_shift = C_ONE   !  Is ignored, as long as iparam(7)=1
 
-   call znaupd (ido_32, bmat, n_dof_32, which, n_modes_32, arp_tol,&
-   &resid, dim_krylov_32, vschur, n_dof_32, iparam_32,&
-   &ipntr_32, workd, trav, ltrav_32, rwork, info_32)
+   do while (arp_active)
 
-   compteur = compteur + 1
-
-!  if (ido_32.eq.-1) then
-   if (ido_32 .eq. -1 .or. ido_32 .eq. 1) then
-
-!  ------------------------------------------------------
-!  | On execute  y <--- OP*x = inv[A-SIGMA*M]*M*x         |
-!  | pour obtenir un vecteur de depart dans l'image de OP |
-!  | x = workd(ipntr_32(1)) et y = workd(ipntr_32(2))           |
-!  ------------------------------------------------------
-
-      call zcopy(n_dof_32, workd(ipntr_32(1)), 1,vect1, 1)
-      call z_mxv_csc (cscmat%n_dof, vect1, vect2, cscmat%n_nonz, cscmat%v_row_ind,&
-      &cscmat%v_col_ptr, cscmat%mOp_mass)
-
-      do i=1,cscmat%n_dof
-         rhs_re(i) = dble(vect2(i))
-         rhs_im(i) = imag(vect2(i))
-      enddo
-
-!  solve Ax=b, without iterative refinement
-      sys = 0
-      call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im,&
-      &numeric, control, info_umf)
-      if (info_umf (1) .lt. 0) then
-         write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-         emsg = 'Error occurred in umf4zsol: '
-         errco = -107
-         call nberr%set(errco, emsg);
+      !  Test for dimesnion conditions in znaupd (err code = -3)
+      !  Test for N=n_dof_32, NEV=n_modes_32, NCV=dim_krylov_32
+      !  Need 0<n_modes_32<n_dof_32-1, 1<= dim_krylov_32-n_modes_32, dim_krylov_32<=n_dof_32
+      if ((n_dof_32-1 .le. n_modes_32) .or. (dim_krylov_32-n_modes_32 .lt. 1) &
+         .or.  dim_krylov_32 > n_dof_32) then
+         write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//&
+            ' conditions failed (would generate ARPACK znaupd error ' //&
+            'code of -3).' // NEW_LINE('A'),&
+            'You should probably increase the grid resolution.'
+         call nberr%set(NBERR_BAD_ZNAUPD, emsg);
          return
       endif
-      do i=1,cscmat%n_dof
-         vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
-      enddo
 
-      call zcopy(n_dof_32, vect2, 1, workd(ipntr_32(2)), 1)
-      go to 20
+      call znaupd (arp_ido, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol,&
+         vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam,&
+         ipntr_32, vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
 
-   else if (ido_32.eq.2) then
+      if (arp_ido .eq. -1 .or. arp_ido .eq. 1) then
 
-      write(ui,*) 'VALPR_64: ATTENTION ido_32 = ', ido_32
-      write(ui,*) 'check the results...'
+         !------------------------------------------------------
+         !  Apply  y <--- OP*x = inv[A-SIGMA*M]*M*x
+         !  with x at x = vecs%workd(ipntr_32(1))
+         !  and place the result at  y = vecs%workd(ipntr_32(2))           |
+         !------------------------------------------------------
 
-!  ----------------------------------------------
-!  | On execute  y <--- M*x                       |
-!  | x = workd(ipntr_32(1))  et  y = workd(ipntr_32(2)) |
-!  ----------------------------------------------
+         call zcopy(n_dof_32, vecs%workd(ipntr_32(1)), 1,vecs%vect1_z, 1)
+         call z_mxv_csc (n_dof, vecs%vect1_z, vecs%vect2_z, cscmat%n_nonz, cscmat%v_row_ind,&
+            cscmat%v_col_ptr, cscmat%mOp_mass)
 
-      call zcopy(n_dof_32, workd(ipntr_32(1)), 1, vect1, 1)
-      call z_mxv_csc (cscmat%n_dof, vect1, vect2, cscmat%n_nonz, cscmat%v_row_ind,&
-      &cscmat%v_col_ptr, cscmat%mOp_mass)
+         rhs_re = dble(vecs%vect2_z)
+         rhs_im = imag(vecs%vect2_z)
 
-      do i=1,cscmat%n_dof
-         rhs_re(i) = dble(vect2(i))
-         rhs_im(i) = imag(vect2(i))
-      enddo
 
-!  solve Ax=b, without iterative refinement
-      sys = 0
-      call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im,&
-      &numeric, control, info_umf)
-      if (info_umf (1) .lt. 0) then
-         write(ui,*) 'Error occurred in umf4zsol: ', info_umf (1)
-         emsg = 'Error occurred in umf4zsol: '
-         errco = -108
-         call nberr%set(errco, emsg);
-         return
-      endif
-      do i=1,cscmat%n_dof
-         vect2 (i) = dcmplx (lhs_re (i), lhs_im (i))
-      enddo
-      call zcopy(n_dof_32, vect2,1, workd(ipntr_32(2)), 1)
-      go to 20
+         !  solve Ax=b, without iterative refinement
+         sys = 0
+         call umf4zsol (UMFPACK_A, lhs_re, lhs_im, rhs_re, rhs_im,&
+            umf_numeric, umf_control, umf_info)
 
-   end if
+         if (umf_info (1) .lt. 0) then
+            write(ui,*) 'Error occurred in umf4zsol: ', umf_info (1)
+            emsg = 'Error occurred in umf4zsol: '
+            call nberr%set(NBERR_BAD_UMF4ZSOL, emsg);
+            return
+         endif
 
-!  ---------------------------------------------------
-!  | Either we have convergence, or there is an error. |
-!  ---------------------------------------------------
+         vecs%vect2_z  = dcmplx (lhs_re, lhs_im )
 
-   n_conv = iparam_32(5)
+         call zcopy(n_dof_32, vecs%vect2_z, 1, vecs%workd(ipntr_32(2)), 1)
 
-   if (info_32 .gt. 0) then
-      write(ui,*)
-      write(ui,*) "VALPR_64: info_32 != 0 : ", info_32
-      write(ui,*) "VALPR_64: iparam_32(5)=", iparam_32(5), n_modes_32
-      write(ui,*) "VALPR_64: number of converged values = ",&
-      &iparam_32(5)
-      write(ui,*)
-   endif
+      else if (arp_ido .eq. 2) then
+
+         write(ui,*) 'VALPR_64: ATTENTION arp_ido = ', arp_ido
+         write(ui,*) 'check the results...'
+
+         !  ----------------------------------------------
+         !  | Apply  y <--- M*x                       |
+         !  | x = vecs%workd(ipntr_32(1))  et  y = vecs%workd(ipntr_32(2)) |
+         !  ----------------------------------------------
+
+         call zcopy(n_dof_32, vecs%workd(ipntr_32(1)), 1, vecs%vect1_z, 1)
+         call z_mxv_csc (n_dof, vecs%vect1_z, vecs%vect2_z, cscmat%n_nonz, cscmat%v_row_ind,&
+            cscmat%v_col_ptr, cscmat%mOp_mass)
+
+
+         rhs_re = dble(vecs%vect2_z)
+         rhs_im = imag(vecs%vect2_z)
+
+         !  solve Ax=b, without iterative refinement
+         sys = 0
+         call umf4zsol (sys, lhs_re, lhs_im, rhs_re, rhs_im,&
+            umf_numeric, umf_control, umf_info)
+
+         if (umf_info (1) .lt. 0) then
+            write(emsg, *) 'Error occurred in umf4zsol: ', umf_info (1)
+            call nberr%set(NBERR_BAD_UMF4ZSOL, emsg);
+            return
+         endif
+
+         vecs%vect2_z  = dcmplx (lhs_re, lhs_im )
+
+         call zcopy(n_dof_32, vecs%vect2_z,1, vecs%workd(ipntr_32(2)), 1)
+
+      else
+         arp_active = .false.
+      end if
+
+   enddo
+
+   !  ---------------------------------------------------
+   !  | Either we have convergence, or there is an error. |
+   !  ---------------------------------------------------
+
+   n_conv = arp_iparam(5)
+
+   ! if (arp_info .gt. 0) then
+   !    write(ui,*)
+   !    write(ui,*) "VALPR_64: arp_info != 0 : ", arp_info
+   !    write(ui,*) "VALPR_64: arp_iparam(5)=", arp_iparam(5), n_modes_32
+   !    write(ui,*) "VALPR_64: number of converged values = ",&
+   !    &arp_iparam(5)
+   !    write(ui,*)
+   ! endif
 
 
 
@@ -405,7 +329,7 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
 
 
 
-   if (info_32.lt.0) then
+   if (arp_info.lt.0) then
 
 !  ---------------------------------------------------
 !  | Error message, check the documentation in DNAUPD. |
@@ -445,64 +369,57 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes,  itermax,&
 !  ---------------------------------------------------
 
       write(emsg, '(A,I5,/,A)') 'Error occurred in _naupd:'//&
-      &' ARPACK error code = ', info_32,&
-      &' You should probably increase the grid resolution.'
+         ' ARPACK error code = ', arp_info,&
+         ' You should probably increase the grid resolution.'
 
       write(*,*)
       return
 
    else
 
-!  -------------------------------------
-!  | Ici on recupere les valeurs propres |
-!  -------------------------------------
 
-      rvec = .true.
-      shift2 = (0.0d0,0.0d0)
+      !  Get the final eigenvectors
+      !'A' means get the actual eigenvectors, not just schur/arnolid vectors
 
-      call zneupd (rvec, 'A', selecto, v_evals_nu, vschur, n_dof_32, shift2,&
-      &workev, bmat, n_dof_32, which, n_modes_32, arp_tol,&
-      &resid, dim_krylov_32, vschur, n_dof_32, iparam_32, ipntr_32,&
-      &workd, trav, ltrav_32, rwork, ierr_32)
-!  ------------------------------------------------------------
-!  | La partie reelle d'une valeur propre se trouve dans la     |
-!  | premiere colonne du tableau D, la partie imaginaire est    |
-!  | dans la seconde.                                           |
-!  | Les vecteurs propres sont dans les premieres n_modes_32 colonnes |
-!  | du tableau V, lorsque demande (rvec=.true.). Sinon, on y   |
-!  | trouve une base orthogonale de l'espace propre.            |
-!  ------------------------------------------------------------
+      arp_rvec = .true.
+      arp_shift = (0.0d0,0.0d0)
+
+      call zneupd (arp_rvec, 'A', vecs%arp_select, v_evals_nu, vecs%v_schur, n_dof_32, arp_shift,&
+         vecs%workev, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol,&
+         vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam, ipntr_32,&
+         vecs%workd, vecs%workl, lworkl_32, vecs%rwork, ierr_32)
+
+      !  Eigenvalues and eigenvectors:
+      !  The real part of an eigenvalue is listed in the first column of the D table.
+      !  The imaginary part of an eigenvalue is listed in the second column of the D table.
+      !  The eigenvectors are stored in the first n_modes_32 columns of the V table
+      !  when the arp_rvec option is set to true.
+      !  Otherwise, the V table contains an orthogonal basis of the eigenspace.
 
       if (ierr_32.ne.0) then
          write(emsg,*) 'VALPR_64:' ,&
-         &' Error with _neupd, info_32 = ', ierr_32,&
-         &' Check the documentation of zneupd. ',&
-         &' This error can occur if the mesh is too coarse.'
+            ' Error with _neupd, arp_info = ', ierr_32,&
+            ' Check the documentation of zneupd. ',&
+            ' This error can occur if the mesh is too coarse.'
          errco = -109
          call nberr%set(errco, emsg);
          return
 
       else
          do i = 1, n_modes
-            do j = 1, cscmat%n_dof
-               v_evecs_arp(j,i) = vschur(j,i)
+            do j = 1, n_dof
+               v_evecs_arp(j,i) = vecs%v_schur(j,i)
             enddo
          enddo
       endif
    endif
 
-!  free the numeric factorization
-   call umf4zfnum (numeric)
+!  free the umf_numeric factorization
+   call umf4zfnum (umf_numeric)
 
 
-!  if (debug .eq. 1) then
-!  do i=1,n_modes
-!  write (*,*) "i, v_evals_nu(i) = ", i, v_evals_nu(i)
-!  enddo
-!  endif
-
-   deallocate(workev, rwork, STAT=alloc_stat)
-   deallocate(selecto)
+   !deallocate(rwork, STAT=alloc_stat)
+   !deallocate(selecto)
 
    return
 end
@@ -510,24 +427,24 @@ end
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
 
-subroutine report_stats_umf4zsym(debug, show_mem_est, info_umf)
+subroutine report_stats_umf4zsym(debug, show_mem_est, umf_info)
 
    use numbatmod
 
-   double precision info_umf (90)
+   double precision umf_info (90)
    integer(8) ui, debug, show_mem_est
 
    ui = stdout
 
    if (debug .eq. 1 .or. show_mem_est .eq. 1) then
-      write(ui,80) info_umf (1), info_umf (16),&
-      &(info_umf (21) * info_umf (4)) / 2**20,&
-      &(info_umf (22) * info_umf (4)) / 2**20,&
-      &info_umf (23), info_umf (24), info_umf (25)
+      write(ui,80) umf_info (1), umf_info (16),&
+      &(umf_info (21) * umf_info (4)) / 2**20,&
+      &(umf_info (22) * umf_info (4)) / 2**20,&
+      &umf_info (23), umf_info (24), umf_info (25)
 80    format ('  symbolic analysis:',/,&
       &'   status:  ', f5.0, /,&
       &'   time:    ', e10.2, ' (sec)'/,&
-      &'   estimates (upper bound) for numeric LU:', /,&
+      &'   estimates (upper bound) for umf_numeric LU:', /,&
       &'   size of LU:    ', f12.2, ' (MB)', /,&
       &'   memory needed: ', f12.2, ' (MB)', /,&
       &'   flop count:    ', e12.2, /&
@@ -540,26 +457,26 @@ end
 !------------------------------------------------------------------------
 !------------------------------------------------------------------------
 
-subroutine report_stats_umf4znum(debug, show_mem_est, info_umf)
+subroutine report_stats_umf4znum(debug, show_mem_est, umf_info)
 
    use numbatmod
 
 
-   double precision info_umf (90)
+   double precision umf_info (90)
    integer(8) ui, debug, show_mem_est
 
    ui = stdout
 
    if (debug .eq. 1 .or. show_mem_est .eq. 1) then
 
-      write(ui,90) info_umf (1), info_umf (66),&
-      &(info_umf (41) * info_umf (4)) / 2**20,&
-      &(info_umf (42) * info_umf (4)) / 2**20,&
-      &info_umf (43), info_umf (44), info_umf (45)
-90    format ('  numeric factorization:',/,&
+      write(ui,90) umf_info (1), umf_info (66),&
+      &(umf_info (41) * umf_info (4)) / 2**20,&
+      &(umf_info (42) * umf_info (4)) / 2**20,&
+      &umf_info (43), umf_info (44), umf_info (45)
+90    format ('  umf_numeric factorization:',/,&
       &'   status:  ', f5.0, /,&
       &'   time:    ', e10.2, /,&
-      &'   actual numeric LU statistics:', /,&
+      &'   actual umf_numeric LU statistics:', /,&
       &'   size of LU:    ', f12.2, ' (MB)', /,&
       &'   memory needed: ', f12.2, ' (MB)', /,&
       &'   flop count:    ', e12.2, /&

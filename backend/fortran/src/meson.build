@@ -38,11 +38,11 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
+  'construct_solution_fields_ac.f90',
   'construct_solution_fields_em.f90',
   #'array_sol.f90',
     'ac_mode_power_analytic_impl.f90',
 
-    'array_sol_ac_v2.f90',
     'assembly_ac.f90',
     'assembly_em.f90',
     'basis_functions.f90',
@@ -109,8 +109,8 @@ nb_impl_fsrcs = files(
     'utils.f90',
     'valpr_umf_64_em.f90',
     'valpr_umf_64_ac.f90',
-    'z_indexx.f90',
-    'z_indexx_AC.f90',
+    'find_eigvals_order.f90',
+    #'find_eigvals_order_AC.f90',
     'z_mxv_csc_64.f90',
 
     #'array_size.f90',

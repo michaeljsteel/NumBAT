@@ -36,15 +36,18 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
 
    complex(8) mat_K(18,18), mat_M(18,18)
    complex(8) c_tensor_el(6,6), rho_el
-   complex(8) z_tmp1, z_tmp2
+   complex(8) K_elt, M_elt
+
    type(BasisFunctions) basfuncs
+
+   character(len=EMSG_LENGTH) :: emsg
 
 
    call integer_nalloc_1d(i_work, 3*mesh_raw%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
 
    !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
-   !  But valpr.f may change the CSC indexing to 0-based
-   if (i_base .eq. 0) then
+   !  But valpr.f may require the CSC indexing to be 0-based
+   if (i_base .eq. 0) then   ! This is the active case
       i_base2 = 1
    else
       i_base2 = 0
@@ -74,7 +77,7 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
          call mat_el_v3 (basfuncs, el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
       endif
 
-      do ety_j=1,P2_NODES_PER_EL
+      do ety_j=1,P2_NODES_PER_EL  ! iterating columns
          msh_pt_j = mesh_raw%elnd_to_mshpt(ety_j,i_el)
 
          do dof_j=1,3
@@ -89,27 +92,25 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
                   i_work(cscmat%v_row_ind(i) + i_base2) = i
                enddo
 
-               do ety_i=1,P2_NODES_PER_EL
+               do ety_i=1,P2_NODES_PER_EL   ! iterating rows
                   msh_pt_i = mesh_raw%elnd_to_mshpt(ety_i,i_el)
 
                   do dof_i=1,3
                      eqn_i = cscmat%m_eqs(dof_i,msh_pt_i)
 
                      if (eqn_i .gt. 0) then
-                        z_tmp1 = mat_K(3*(ety_i-1) + dof_i, 3*(ety_j-1) + dof_j)
-                        z_tmp2 = mat_M(3*(ety_i-1) + dof_i, 3*(ety_j-1) + dof_j)
-                        z_tmp1 = z_tmp1 - shift_omsq*z_tmp2
+                        K_elt = mat_K(3*(ety_i-1) + dof_i, 3*(ety_j-1) + dof_j)
+                        M_elt = mat_M(3*(ety_i-1) + dof_i, 3*(ety_j-1) + dof_j)
+                        K_elt = K_elt - shift_omsq*M_elt
                         k = i_work(eqn_i)
                         if (k .gt. 0 .and. k .le. cscmat%n_nonz) then
 
-                           cscmat%mOp_stiff(k) = cscmat%mOp_stiff(k) + z_tmp1
-                           cscmat%mOp_mass(k) = cscmat%mOp_mass(k) + z_tmp2
+                           cscmat%mOp_stiff(k) = cscmat%mOp_stiff(k) + K_elt
+                           cscmat%mOp_mass(k) = cscmat%mOp_mass(k) + M_elt
 
                         else
-                           write(*,*) "asmbly_AC: problem with cscmat%v_row_ind !!"
-                           write(*,*) "asmbly_AC: k, cscmat%n_nonz = ", k, cscmat%n_nonz
-                           write(*,*) "asmbly_AC: Aborting..."
-                           stop
+                           write(emsg,*) "asmbly_AC: problem with  row_ind !!", k, cscmat%n_nonz
+                           call nberr%set(NBERR_BAD_ASSEMBLY_AC, emsg);
                         endif
                      endif
 

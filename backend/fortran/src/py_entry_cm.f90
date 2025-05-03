@@ -55,7 +55,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    mesh_file, n_msh_pts, n_msh_el, &
    v_nd_physindex, &
    elnd_to_mshpt, v_el_material, v_nd_xy, &
-   v_eigs_nu, femsol_ac, poln_fracs, errco, emsg)
+   v_evals_nu, femsol_ac, poln_fracs, errco, emsg)
 
    use numbatmod
    use calc_ac_impl
@@ -83,7 +83,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    double precision ::  v_nd_xy(2,n_msh_pts)
 
-   complex(8), intent(out) :: v_eigs_nu(n_modes)
+   complex(8), intent(out) :: v_evals_nu(n_modes)
    complex(8), intent(out) :: femsol_ac(3,P2_NODES_PER_EL,n_modes,n_msh_el)
 
    complex(8), intent(out) :: poln_fracs(4,n_modes)
@@ -103,7 +103,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       symmetry_flag, c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_el, n_elt_mats,  &
       elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, &
-      v_eigs_nu, femsol_ac, poln_fracs, nberr)
+      v_evals_nu, femsol_ac, poln_fracs, nberr)
 
    call nberr%to_py(errco, emsg)
 

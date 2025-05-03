@@ -2,6 +2,7 @@ project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
   version: '2.0.1',
+  meson_version: '>1.4.0'
 )
 
 ccomp = meson.get_compiler('c')

@@ -19,6 +19,6 @@ done
 #em_mode_e_energy_int.f em_mode_energy_int_ez.f em_mode_energy_int.f
 #em_mode_energy_int_v2_ez.f em_mode_energy_int_v2.f em_mode_energy_int_v2_wg.f
 #jacobian_p1_2d.f jacobian_p2_2d.f
-#lattice_vec.f moving_boundary.f 
-#photoelastic_int.f photoelastic_int_v2.f quad_triangle.f 
-#sort_csr.f sort_int.f z_indexx_AC.f z_indexx.f
+#lattice_vec.f moving_boundary.f
+#photoelastic_int.f photoelastic_int_v2.f quad_triangle.f
+#sort_csr.f sort_int.f find_eigvals_order_AC.f find_eigvals_order.f

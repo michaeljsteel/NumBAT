@@ -1,4 +1,4 @@
-      SUBROUTINE z_indexx_AC(n,arr,indx)
+      SUBROUTINE find_eigvals_order_AC(n,arr,indx)
 
       integer(8) n,indx(n),M,NSTACK
       complex(8) arr(n)
@@ -8,9 +8,9 @@
       double precision arr_0(NSTACK), r_tmp
 c
       if(n .gt. NSTACK) then
-        write(*,*) "z_indexx_AC: npt > NSTACK : ",
+        write(*,*) "find_eigvals_order_AC: npt > NSTACK : ",
      *    n, NSTACK
-        write(*,*) "z_indexx_AC: Aborting..."
+        write(*,*) "find_eigvals_order_AC: Aborting..."
         stop
       endif
 c
@@ -85,7 +85,7 @@ c
 cc        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
         if(jstack.gt.NSTACK) then
           write(*,*) 'NSTACK too small in indexx'
-          write(*,*) "z_indexx_AC: Aborting..."
+          write(*,*) "find_eigvals_order_AC: Aborting..."
           stop
         endif
         if(ir-i+1.ge.j-l)then

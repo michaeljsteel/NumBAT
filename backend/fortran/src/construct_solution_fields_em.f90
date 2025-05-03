@@ -1,9 +1,9 @@
 
- !  On entry, evecs_raw is the raw eigenvectors from the arpack soln
+ !  On entry, evecs_raw is the raw eigenvectors from the arpack evecs_finaln
 
  !  On exit:
- !  evecs_raw(*,i) : contains the imaginary and real parts of the solution for points such that cscmat%m_eqs(i) /= 0
- !  sol(i) : contains solution for all points indexed as sol(xyz_comp, 23 nodes per el, n_modes, n_msh_elts)
+ !  evecs_raw(*,i) : contains the imaginary and real parts of the evecs_finalution for points such that cscmat%m_eqs(i) /= 0
+ !  evecs_final(i) : contains evecs_finalution for all points indexed as evecs_final(xyz_comp, 23 nodes per el, n_modes, n_msh_elts)
 
  !  This is 2D 3-vector component FEM:
 
@@ -14,7 +14,7 @@
 #include "numbat_decl.h"
 
 subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw, entities, &
-   cscmat, pbcs, bloch_vec, v_evals_beta, evecs_raw, sol, mode_poln_fracs, nberr)
+   cscmat, pbcs, bloch_vec, v_evals_beta, evecs_raw, evecs_final, mode_poln_fracs, nberr)
 
    use numbatmod
    use class_MeshRaw
@@ -37,9 +37,9 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    type(NBError), intent(out) :: nberr
 
 
-   !  sol(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-   !  sol(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
-   complex(8) sol(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_el)
+   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
+   !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+   complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_el)
    complex(8) v_evals_beta(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -55,7 +55,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision xy_nds_P2(2,P2_NODES_PER_EL), el_nds_xy(2,P2_NODES_PER_EL)
 
-   complex(8) sol_el(3,N_DOF_PER_EL) ! solution for this mode and elt
+   complex(8) evecs_final_el(3,N_DOF_PER_EL) ! evecs_finalution for this mode and elt
 
 
    double precision vec_phi_x(2), curlt_phi_x, phi_P3_x
@@ -67,7 +67,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    integer(8) m, nd_i, typ_e, xyz_i
    integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eq, dof_j
 
-   complex(8) z_tmp2, z_sol_max
+   complex(8) z_tmp2, z_evecs_final_max
 
    errco = 0
 
@@ -83,15 +83,15 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
       md_i2 = v_eig_index(md_i)   !  index of the mode in eigenvalue sorted sequence
 
 
-      z_sol_max = D_ZERO   !  value and loc of max field modulus
-      !i_sol_max = 0
+      z_evecs_final_max = D_ZERO   !  value and loc of max field modulus
+      !i_evecs_final_max = 0
 
       do i_el=1,mesh_raw%n_msh_el
          typ_e = mesh_raw%el_material(i_el)
 
          mode_comp = D_ZERO
          val_exp = D_ONE
-         sol_el = D_ZERO
+         evecs_final_el = D_ZERO
 
 
          call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
@@ -105,14 +105,14 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          call basfuncs%build_vector_elt_map(el_nds_i)
 
 
-         ! fill sol_el(1:3, 1..P2_NODES)
+         ! fill evecs_final_el(1:3, 1..P2_NODES)
          do nd_i=1,P2_NODES_PER_EL
             xy_ref = xy_nds_P2(:, nd_i)
 
             call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
             RET_ON_NBERR(nberr)
 
-            ! transverse part:  sol_el(1:2, 1..P2_NODES)
+            ! transverse part:  evecs_final_el(1:2, 1..P2_NODES)
             do ety_j=1,N_ETY_TRANSVERSE  ! for the transverse field entities on this elt
                ety_id = entities%v_tags(ety_j,i_el)    ! find the global ety id
 
@@ -133,15 +133,15 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
                         call basfuncs%evaluate_vector_elts(dof_j, ety_j, vec_phi_x, curlt_phi_x)
 
                         ! pbc version
-                        !sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x* val_exp(ety_j)
-                        sol_el(1:2,nd_i) = sol_el(1:2,nd_i) + evecs_raw(n_eq, md_i2) * vec_phi_x
+                        !evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x* val_exp(ety_j)
+                        evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(n_eq, md_i2) * vec_phi_x
 
                      endif
                   endif
                enddo
             enddo
 
-            !  Longtiudinal part:  sol_el(3, 1..P2_NODES)
+            !  Longtiudinal part:  evecs_final_el(3, 1..P2_NODES)
             !  Contribution to the longitudinal component
             !  The initial P3 value of Ez isinterpolated over P2 nodes
             do ety_j=N_ETY_TRANSVERSE+1,N_ENTITY_PER_EL
@@ -155,9 +155,9 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
                   phi_P3_x = basfuncs%phi_P3_ref(m)
 
                   !pbc version
-                  !sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x * val_exp(ety_j)
+                  !evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x * val_exp(ety_j)
 
-                  sol_el(3,nd_i) = sol_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x
+                  evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x
 
                endif
             enddo
@@ -165,15 +165,15 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
 
             ! check if we have a new maximum sized component
             do xyz_i=1,3
-               z_tmp2 = sol_el(xyz_i,nd_i)
-               if (abs(z_sol_max) < abs(z_tmp2)) then  !  found a new max
-                  z_sol_max = z_tmp2
-                  ! i_sol_max = mesh_raw%elnd_to_mshpt(nd_i,i_el)
+               z_tmp2 = evecs_final_el(xyz_i,nd_i)
+               if (abs(z_evecs_final_max) < abs(z_tmp2)) then  !  found a new max
+                  z_evecs_final_max = z_tmp2
+                  ! i_evecs_final_max = mesh_raw%elnd_to_mshpt(nd_i,i_el)
                endif
             enddo
 
             !  Contribution of the element i_el to the mode component
-            mode_comp(1:3) = mode_comp(1:3) + abs(sol_el(1:3,nd_i))**2
+            mode_comp(1:3) = mode_comp(1:3) + abs(evecs_final_el(1:3,nd_i))**2
 
          enddo  ! end of current P2 node
 
@@ -181,12 +181,12 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          mode_comp(1:3) = mode_comp(1:3) * abs(basfuncs%det)/dble(P2_NODES_PER_EL)
 
 
-         !  Longtiudinal part:  sol_el(3, P3_NODES...)
+         !  Longtiudinal part:  evecs_final_el(3, P3_NODES...)
          !   x and comps of the P3_NODES are left empty
          !  Saving the P3 values of Ez at: the 6 edge nodes and the interior node
          do nd_i=P2_NODES_PER_EL+1,N_DOF_PER_EL
 
-            !sol_el(1:3,nd_i) = D_ZERO
+            !evecs_final_el(1:3,nd_i) = D_ZERO
 
             !ety_j = N_ETY_TRANSVERSE+nd_i-P2_NODES_PER_EL+3
             ety_j = nd_i + 1  ! make space for the face element
@@ -195,7 +195,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
             n_eq = cscmat%m_eqs(dof_j,ety_id)
 
             if (n_eq > 0) then
-               sol_el(3,nd_i) = evecs_raw(n_eq, md_i2)* val_exp(ety_j)
+               evecs_final_el(3,nd_i) = evecs_raw(n_eq, md_i2)* val_exp(ety_j)
             endif
 
 
@@ -206,8 +206,8 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
          mode_poln_fracs(1:3, md_i) = mode_poln_fracs(1:3, md_i) + mode_comp(1:3)
 
 
-         ! Copy this element into the main solution array
-         sol(:,:,md_i,i_el) =  sol_el
+         ! Copy this element into the main evecs_finalution array
+         evecs_final(:,:,md_i,i_el) =  evecs_final_el
 
       enddo  ! end of current element
 
@@ -226,15 +226,15 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
       mode_poln_fracs(:,md_i) = mode_poln_fracs(:,md_i) / z_tmp2
 
       !  Check if the eigenvector is nonzero
-      if (abs(z_sol_max) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
-         write(emsg,*) "The largest node value for mode ", md_i, "is too small : ", z_sol_max
+      if (abs(z_evecs_final_max) < 1.0d-20) then ! 11/12/2024, trying to allow thin triangle element
+         write(emsg,*) "The largest node value for mode ", md_i, "is too small : ", z_evecs_final_max
          call nberr%set(NBERR_BAD_ELT_ENERGY, emsg)
          return
       endif
 
       !  Normalization for this mode so that the maximum field component has magnitude 1
-      sol(:,:,md_i,:) = sol(:,:,md_i,:)/z_sol_max
-      evecs_raw(1:cscmat%n_dof,md_i2) = evecs_raw(1:cscmat%n_dof,md_i2)/z_sol_max
+      evecs_final(:,:,md_i,:) = evecs_final(:,:,md_i,:)/z_evecs_final_max
+      evecs_raw(1:cscmat%n_dof,md_i2) = evecs_raw(1:cscmat%n_dof,md_i2)/z_evecs_final_max
 
    enddo
 
@@ -242,7 +242,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    !  The z-component must be multiplied by -i*beta to recover the physical,
    !  un-normalised z-component (see Eq. (25) of the JOSAA 2012 paper)
    do md_i=1,n_modes
-      sol(3,:,md_i,:) = C_IM_ONE * v_evals_beta(md_i) * sol(3,:,md_i,:)
+      evecs_final(3,:,md_i,:) = C_IM_ONE * v_evals_beta(md_i) * evecs_final(3,:,md_i,:)
    enddo
 
 end
@@ -270,6 +270,7 @@ subroutine zvec_reorder_by_index(v_src_dest, v_eig_index, num_elts)
 end subroutine
 
 subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_eig_index)
+   use numbatmod
 
    integer(8), intent(in) :: n_modes
    complex(8), intent(in) :: shift_ksqr
@@ -279,6 +280,7 @@ subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_
    integer(8) i
 
    complex(8) z_beta
+   type(NBError) nberr
 
    !TODO: make a function. Turn beta^2 raw eig into actual beta
    do i=1,n_modes
@@ -301,7 +303,7 @@ subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_
    enddo
 
    !  order v_evals_beta by magnitudes and store in v_eig_index
-   call z_indexx (n_modes, v_evals_beta, v_eig_index)
+   call find_eigvals_order (n_modes, v_evals_beta, v_eig_index, 0, nberr)
 
    ! Apply the reordering
    call zvec_reorder_by_index(v_evals_beta, v_eig_index, n_modes)

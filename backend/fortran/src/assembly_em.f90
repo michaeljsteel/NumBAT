@@ -62,7 +62,7 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    double precision phi3_z_j, gradt_phi3_j(2)
 
 
-   integer(8) i, j, k, mesh_pt, i_el, iq, typ_e, ip
+   integer(8) i,  k,  i_el, iq, typ_e
    integer(8) ety_i, msh_pt_i, eqn_i, dof_i
    integer(8) ety_j, msh_pt_j, eqn_j, dof_j
    integer(8) col_start, col_end
@@ -73,8 +73,9 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    complex(8) tperm_pp, tperm_qq
    complex(8) K_elt, M_elt
 
-   complex(8) val_exp(N_ENTITY_PER_EL), z_phase_fact
-   double precision delta_xx(2)
+   !complex(8) val_exp(N_ENTITY_PER_EL),
+   complex(8) z_phase_fact
+!   double precision delta_xx(2)
 
 
    errco=0
@@ -82,25 +83,25 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    call integer_nalloc_1d(i_work, 3*entities%n_entities, 'i_work', nberr); RET_ON_NBERR(nberr)
 
    !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
-   !  But valpr.f may change the CSC indexing to 0-based
-   if (i_base .eq. 0) then
+   !  But valpr.f may require the CSC indexing to be 0-based
+   if (i_base .eq. 0) then ! This is the active case
       i_base2 = 1
    else
       i_base2 = 0
    endif
 
-   call quadint%setup_reference_quadratures()
 
    ! These are the K and M matrices in Kokou's paper expressed in CSC format
    cscmat%mOp_stiff = C_ZERO
    cscmat%mOp_mass = C_ZERO
 
 
+   call quadint%setup_reference_quadratures()
    n_curved = 0
    z_phase_fact = 1.0
 
    do i_el=1,mesh_raw%n_msh_el              ! For each element
-      typ_e = mesh_raw%el_material(i_el)    ! Find the material and local material properrties
+      typ_e = mesh_raw%el_material(i_el)    ! Find the material and local material properties
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
@@ -111,31 +112,31 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
          n_curved = n_curved + 1
       endif
 
-      if (bdy_cdn .eq. BCS_PERIODIC) then
-         do j=1,P2_NODES_PER_EL
-            mesh_pt = pbcs%iperiod_N(el_nds_i(j))
-            if (mesh_pt .ne. 0) el_nds_i(j) = mesh_pt
-         enddo
-      endif
+      ! if (bdy_cdn .eq. BCS_PERIODIC) then
+      !    do j=1,P2_NODES_PER_EL
+      !       mesh_pt = pbcs%iperiod_N(el_nds_i(j))
+      !       if (mesh_pt .ne. 0) el_nds_i(j) = mesh_pt
+      !    enddo
+      ! endif
 
       call basfuncs%build_vector_elt_map(el_nds_i)
 
-      val_exp = C_ONE
 
-      ! TODO:  move to function
-      if (bdy_cdn .eq. BCS_PERIODIC) then
-         !  val_exp: Bloch mod ephase factor between the origin point and destination point
-         !  For a pair of periodic points, one is chosen as origin and the other is the destination
-         do j=1,N_ENTITY_PER_EL
-            ip = entities%v_tags(j,i_el)
-            mesh_pt = pbcs%iperiod_N_E_F(ip)
-            if (mesh_pt .ne. 0) then
-               delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,mesh_pt)
-               r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
-               val_exp(j) = exp(C_IM_ONE*r_tmp1)
-            endif
-         enddo
-      endif
+      ! ! TODO:  move to function
+      ! if (bdy_cdn .eq. BCS_PERIODIC) then
+      ! val_exp = C_ONE
+      !    !  val_exp: Bloch mod ephase factor between the origin point and destination point
+      !    !  For a pair of periodic points, one is chosen as origin and the other is the destination
+      !    do j=1,N_ENTITY_PER_EL
+      !       ip = entities%v_tags(j,i_el)
+      !       mesh_pt = pbcs%iperiod_N_E_F(ip)
+      !       if (mesh_pt .ne. 0) then
+      !          delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,mesh_pt)
+      !          r_tmp1 = ddot(2, bloch_vec, 1, delta_xx, 1)
+      !          val_exp(j) = exp(C_IM_ONE*r_tmp1)
+      !       endif
+      !    enddo
+      ! endif
 
       do iq=1,quadint%n_quad ! for each quadrature point in reference triangle
 
@@ -234,10 +235,9 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               M_elt = M_zz
 
                            else
-                              errco = NBERR_BAD_ASSEMBLY
                               write(emsg,*) "ety_i or ety_j has an ", "invalid value",  &
                                  "ety_i ety_j, = ", ety_i, ety_j
-                                 call nberr%set(errco, emsg);
+                                 call nberr%set(NBERR_BAD_ASSEMBLY, emsg);
                               return
                            endif
 
@@ -259,9 +259,8 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                               cscmat%mOp_stiff(k) = cscmat%mOp_stiff(k) + K_elt
                               cscmat%mOp_mass(k) = cscmat%mOp_mass(k) + M_elt
                            else
-                              errco = NBERR_BAD_ASSEMBLY
                               write(emsg,*) "asmbly: problem with row_ind: k, nonz = ", k, cscmat%n_nonz
-                              call nberr%set(errco, emsg);
+                              call nberr%set(NBERR_BAD_ASSEMBLY, emsg);
                               return
 
                            endif

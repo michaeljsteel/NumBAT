@@ -196,6 +196,8 @@ contains
       integer(8) alloc_stat
       type(NBError) nberr
 
+      call nberr%reset()
+
       allocate(vec(m), STAT=alloc_stat)
       call check_alloc(alloc_stat, m, nm, NBERROR_130, nberr)
    end subroutine
@@ -207,6 +209,8 @@ contains
 
       integer(8) alloc_stat
       type(NBError) nberr
+
+      call nberr%reset()
 
       allocate(vec(m), STAT=alloc_stat)
       call check_alloc(alloc_stat, m, nm, NBERROR_130, nberr)
@@ -220,6 +224,8 @@ contains
       integer(8) alloc_stat
       type(NBError) nberr
 
+      call nberr%reset()
+
       allocate(vec(m), STAT=alloc_stat)
       call check_alloc(alloc_stat, m, nm, NBERROR_130, nberr)
    end subroutine
@@ -232,6 +238,8 @@ contains
 
       integer(8) alloc_stat
       type(NBError) nberr
+
+      call nberr%reset()
 
       allocate(vec(m), STAT=alloc_stat)
 
@@ -247,6 +255,8 @@ contains
       integer(8) alloc_stat
       type(NBError) nberr
 
+      call nberr%reset()
+
       allocate(vec(m), STAT=alloc_stat)
       call check_alloc(alloc_stat, m, nm, NBERROR_130, nberr)
    end subroutine
@@ -258,6 +268,8 @@ contains
 
       integer(8) alloc_stat
       type(NBError) nberr
+
+      call nberr%reset()
 
       allocate(vec(m,n), STAT=alloc_stat)
       call check_alloc(alloc_stat, m*n, nm, NBERROR_130, nberr)
@@ -271,6 +283,8 @@ contains
       integer(8) alloc_stat
       type(NBError) nberr
 
+      call nberr%reset()
+
       allocate(vec(m,n), STAT=alloc_stat)
       call check_alloc(alloc_stat, m*n, nm, NBERROR_130, nberr)
    end subroutine
@@ -282,6 +296,8 @@ contains
 
       integer(8) alloc_stat
       type(NBError) nberr
+
+      call nberr%reset()
 
       allocate(vec(m,n), STAT=alloc_stat)
       call check_alloc(alloc_stat, m*n, nm, NBERROR_130, nberr)
@@ -295,6 +311,8 @@ contains
       integer(8) alloc_stat
       type(NBError) nberr
 
+      call nberr%reset()
+
       allocate(vec(m,n), STAT=alloc_stat)
       call check_alloc(alloc_stat, m*n, nm, NBERROR_130, nberr)
    end subroutine
@@ -306,6 +324,8 @@ contains
 
       integer(8) alloc_stat
       type(NBError) nberr
+
+      call nberr%reset()
 
       allocate(vec(m,n,q,r), STAT=alloc_stat)
       call check_alloc(alloc_stat, m*n*q*r, nm, NBERROR_130, nberr)

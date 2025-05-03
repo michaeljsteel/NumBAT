@@ -1,27 +1,16 @@
-!     This subroutine takes an array of complex numbers, computes their squared magnitudes,
-!     and sorts the indices of these magnitudes in descending order using a hybrid quicksort-insertion
-!     sort algorithm.
-!     The sorted indices are stored in the indx array, which can be used to
-!     reorder the original array cor for other purposes where sorted order is required.
-
-SUBROUTINE z_indexx(n,arr,indx)
+SUBROUTINE find_eigvals_order_AC(n,arr,indx)
 
    integer(8) n,indx(n),M,NSTACK
    complex(8) arr(n)
-   PARAMETER (M=7,NSTACK=50)
+   PARAMETER (M=7,NSTACK=1000)
    integer(8) i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
    double precision a
-   integer(8) :: allocate_status=0
-   double precision, dimension(:), allocatable :: arr_0
+   double precision arr_0(NSTACK), r_tmp
 !
-!
-   allocate(arr_0(n), STAT=allocate_status)
-   if (allocate_status /= 0) then
-      write(*,*) "The allocation is unsuccessful"
-      write(*,*) "allocate_status = ", allocate_status
-      write(*,*) "z_indexx: Not enough memory for arr_0"
-      write(*,*) "nval = ", n
-      write(*,*) "Aborting..."
+   if(n .gt. NSTACK) then
+      write(*,*) "find_eigvals_order_AC: npt > NSTACK : ",&
+      &n, NSTACK
+      write(*,*) "find_eigvals_order_AC: Aborting..."
       stop
    endif
 !
@@ -30,7 +19,10 @@ SUBROUTINE z_indexx(n,arr,indx)
 11 continue
 !
    do j=1,n
-      arr_0(j) = -1*dble(arr(j)**2)
+      r_tmp = abs(arr(j))
+!        r_tmp = -arr(j)**2
+!        r_tmp = dble(arr(j))
+      arr_0(j) = r_tmp
    enddo
 
 !
@@ -90,10 +82,10 @@ SUBROUTINE z_indexx(n,arr,indx)
 5     indx(l+1)=indx(j)
       indx(j)=indxt
       jstack=jstack+2
-!        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
+!c        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
       if(jstack.gt.NSTACK) then
          write(*,*) 'NSTACK too small in indexx'
-         write(*,*) "z_indexx: Aborting..."
+         write(*,*) "find_eigvals_order_AC: Aborting..."
          stop
       endif
       if(ir-i+1.ge.j-l)then
@@ -107,6 +99,4 @@ SUBROUTINE z_indexx(n,arr,indx)
       endif
    endif
    goto 1
-!
-   deallocate(arr_0)
 END

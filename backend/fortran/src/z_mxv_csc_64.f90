@@ -1,11 +1,8 @@
 
-!!!!!!!!!!!!!!!!
+! Compute the product of a matrix in CSC format by a vector
+! vect2 = mat * vect1
 
-!  Compute the product of a matrix in CSC format by a vector
-
-!!!!!!!!!!!!!!!!
-
-!TODO: Is there not a stnadard library function in SparseSuite for this?
+!TODO: Is there not a standard library function in SparseSuite for this?
 
 subroutine z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind, col_ptr, mat)
 
@@ -17,9 +14,6 @@ subroutine z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind, col_ptr, mat)
 
    integer(8) i, j, k, col_start, col_end, i_base
 
-   !  do i=1,n_dof
-   !  vect2(i) = 0.d0
-   !  enddo
    vect2 = C_ZERO
 
 !  valpr.f has changed the CSC indexing to 0-based indexing
@@ -37,5 +31,4 @@ subroutine z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind, col_ptr, mat)
       enddo
    enddo
 
-   return
 end

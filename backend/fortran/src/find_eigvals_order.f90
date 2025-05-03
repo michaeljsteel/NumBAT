@@ -1,31 +1,55 @@
-SUBROUTINE z_indexx_AC(n,arr,indx)
+#include "numbat_decl.h"
 
-   integer(8) n,indx(n),M,NSTACK
+!     This subroutine takes an array of complex numbers, computes their squared magnitudes,
+!     and sorts the indices of these magnitudes in descending order using a hybrid quicksort-insertion
+!     sort algorithm.
+!     The sorted indices are stored in the indx array, which can be used to
+!     reorder the original array cor for other purposes where sorted order is required.
+
+SUBROUTINE find_eigvals_order(n, arr, indx, order, nberr)
+
+   use alloc
+   use numbatmod
+
+   type(NBError) nberr
+
+   integer(8) n, indx(n), order
    complex(8) arr(n)
-   PARAMETER (M=7,NSTACK=1000)
+
+   integer(8), parameter :: M=7
+   integer(8), parameter :: NSTACK=50
+
    integer(8) i,indxt,ir,itemp,j,jstack,k,l,istack(NSTACK)
    double precision a
-   double precision arr_0(NSTACK), r_tmp
-!
-   if(n .gt. NSTACK) then
-      write(*,*) "z_indexx_AC: npt > NSTACK : ",&
-      &n, NSTACK
-      write(*,*) "z_indexx_AC: Aborting..."
-      stop
-   endif
-!
-   do 11 j=1,n
+   double precision, dimension(:), allocatable :: arr_0
+   character(len=EMSG_LENGTH) :: emsg
+
+
+!write(*,*) 'feo', n, arr
+   call double_nalloc_1d(arr_0, n, 'arr0', nberr); RET_ON_NBERR(nberr)
+
+
+   do  j=1,n
       indx(j) = j
-11 continue
-!
-   do j=1,n
-      r_tmp = abs(arr(j))
-!        r_tmp = -arr(j)**2
-!        r_tmp = dble(arr(j))
-      arr_0(j) = r_tmp
    enddo
 
-!
+   if (order .eq. 0) then
+      do j=1,n   ! sort largest real part first
+         arr_0(j) = -1*dble(arr(j)**2)
+      enddo
+
+   else if (order .eq. 1) then
+      do j=1,n   ! sort smallest  first
+         arr_0(j) = abs(arr(j))
+      enddo
+
+   else
+      write(emsg, *) 'Unknown order in find_eigvals_order'
+      call nberr%set(NBERR_UNKNOWN_SORT_ORDER, emsg)
+      return
+   end if
+
+
    jstack=0
    l=1
    ir=n
@@ -40,7 +64,9 @@ SUBROUTINE z_indexx_AC(n,arr,indx)
          i=l-1
 2        indx(i+1)=indxt
 13    continue
+
       if(jstack.eq.0)return
+
       ir=istack(jstack)
       l=istack(jstack-1)
       jstack=jstack-2
@@ -49,45 +75,55 @@ SUBROUTINE z_indexx_AC(n,arr,indx)
       itemp=indx(k)
       indx(k)=indx(l+1)
       indx(l+1)=itemp
+
       if( arr_0(indx(l)) .gt. arr_0(indx(ir))) then
          itemp=indx(l)
          indx(l)=indx(ir)
          indx(ir)=itemp
       endif
+
       if( arr_0(indx(l+1)) .gt. arr_0(indx(ir))) then
          itemp=indx(l+1)
          indx(l+1)=indx(ir)
          indx(ir)=itemp
       endif
+
       if( arr_0(indx(l)) .gt. arr_0(indx(l+1))) then
          itemp=indx(l)
          indx(l)=indx(l+1)
          indx(l+1)=itemp
       endif
+
       i=l+1
       j=ir
       indxt=indx(l+1)
       a = arr_0(indxt)
+
 3     continue
       i=i+1
-      if( arr_0(indx(i)) .lt. a)goto 3
+      if( arr_0(indx(i)) .lt. a) goto 3
+
 4     continue
       j=j-1
-      if( arr_0(indx(j)) .gt. a)goto 4
-      if(j.lt.i)goto 5
+      if( arr_0(indx(j)) .gt. a) goto 4
+
+      if(j.lt.i) goto 5
+
       itemp=indx(i)
       indx(i)=indx(j)
       indx(j)=itemp
       goto 3
+
 5     indx(l+1)=indx(j)
       indx(j)=indxt
       jstack=jstack+2
-!c        if(jstack.gt.NSTACK)pause 'NSTACK too small in indexx'
+
       if(jstack.gt.NSTACK) then
-         write(*,*) 'NSTACK too small in indexx'
-         write(*,*) "z_indexx_AC: Aborting..."
-         stop
+         write(emsg,*) 'NSTACK too small in indexx'
+         call nberr%set(NBERR_SORT_STACK_TOO_SMALL, emsg)
+         return
       endif
+
       if(ir-i+1.ge.j-l)then
          istack(jstack)=ir
          istack(jstack-1)=i
@@ -97,6 +133,8 @@ SUBROUTINE z_indexx_AC(n,arr,indx)
          istack(jstack-1)=l
          l=i
       endif
+
    endif
    goto 1
-END
+
+end

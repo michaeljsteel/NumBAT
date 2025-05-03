@@ -82,6 +82,14 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_MB_EDGES  = -62
    integer(8), parameter :: NBERR_BAD_ELT_ENERGY  = -63
    integer(8), parameter :: NBERR_MESH_TOO_LARGE  = -64
+   integer(8), parameter :: NBERR_SORT_STACK_TOO_SMALL  = -65
+   integer(8), parameter :: NBERR_UNKNOWN_SORT_ORDER = -66
+   integer(8), parameter :: NBERR_BAD_ELASTIC_ENERGY = -67
+   integer(8), parameter :: NBERR_BAD_ASSEMBLY_AC = -68
+   integer(8), parameter :: NBERR_BAD_ZNAUPD = -106
+   integer(8), parameter :: NBERR_BAD_UMF4ZSOL = -107
+   integer(8), parameter :: NBERR_BAD_UMF4ZSYM = -108
+   integer(8), parameter :: NBERR_BAD_UMF4ZNUM = -109
 
 
 
