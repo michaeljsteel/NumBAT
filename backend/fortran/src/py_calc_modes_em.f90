@@ -35,7 +35,7 @@
 
 
 
- !  lambda - free space wavelength in m
+ !  lambda_fsw - free space wavelength in m
  !  n_modes - desired number of eigenvectors
  !  n_msh_pts - number of FEM mesh points
  !  n_msh_el  - number of FEM (triang) elements
@@ -64,21 +64,21 @@ module calc_em_impl
    use class_SparseCSC_EM
    use class_PeriodicBCs
 
-
-
 contains
 
-   subroutine calc_em_modes_impl(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
+   subroutine calc_em_modes_impl(n_modes, lambda_fsw, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, arp_tol, debug, &
       mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_evecs, poln_fracs, &
       elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
 
       integer(8), intent(in) :: n_modes
-      double precision, intent(in) :: lambda, dimscale_in_m, bloch_vec(2)
+      double precision, intent(in) :: lambda_fsw, dimscale_in_m, bloch_vec(2)
       complex(8), intent(in) :: shift_ksqr
 
       integer(8), intent(in) :: E_H_field, bdy_cdn, itermax, debug
+      double precision arp_tol
+
       character(len=*), intent(in) :: mesh_file
       integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
 
@@ -119,7 +119,6 @@ contains
       !  Variable used by valpr
       integer(8) dim_krylov
       integer(8) csc_index_offset
-      double precision arp_tol
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       double precision vacwavenum_k0
@@ -128,12 +127,10 @@ contains
 
 
       ui_out = stdout
-
-
       call clock_main%reset()
 
       !TODO: move pp,qq to elsewhere. SparseCSC_EM?
-      vacwavenum_k0 = 2.0d0*D_PI/lambda
+      vacwavenum_k0 = 2.0d0*D_PI/lambda_fsw
       call  check_materials_and_fem_formulation(E_H_field, n_elt_mats, &
       vacwavenum_k0, v_refindex_n, eps_eff, n_core, pp, qq, debug, ui_out, nberr)
       RET_ON_NBERR(nberr)
@@ -167,7 +164,6 @@ contains
 
       ! Build sparse matrix index arrays
       call cscmat%make_csc_arrays(mesh_raw, entities, nberr); RET_ON_NBERR(nberr)
-
 
 
       write(ui_out,*)
@@ -220,7 +216,7 @@ contains
 
       call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
-      call valpr_64_em( csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
+      call solve_arpack_problem( csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
       v_evals_beta, arpack_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
       if (shortrun .ne. 0) then
          write(*,*) 'Exiting with shortrun in py_calc_modes.f'
@@ -391,7 +387,7 @@ contains
    subroutine report_results_em(debug, ui_out, &
       n_msh_pts, n_msh_el, &
       time1, time2, time_fact, time_arpack, time1_postp, &
-      lambda, e_h_field, bloch_vec, bdy_cdn,  &
+      lambda_fsw, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
       n_elt_mats, n_dof, dim_krylov, &
       shift_ksqr, v_evals_beta, eps_eff, v_refindex_n)
@@ -402,7 +398,7 @@ contains
 
       integer(8) debug, ui_out, e_h_field, bdy_cdn
       integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
-      double precision bloch_vec(2), lambda
+      double precision bloch_vec(2), lambda_fsw
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
       integer(8) n_conv, n_modes, n_elt_mats, nonz,  n_core(2), n_dof, dim_krylov
       character(len=FNAME_LENGTH)  log_file
@@ -446,7 +442,7 @@ contains
          !  *   (time1_asmbl-time1),
          !  *   100*(time1_asmbl-time1)/(time2-time1),"%"
          write(26,*)
-         write(26,*) "lambda  = ", lambda
+         write(26,*) "lambda_fsw  = ", lambda_fsw
          write(26,*) "n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
          write(26,*) "n_dof, bdy_cdn = ", n_dof, bdy_cdn
          if ( E_H_field .eq. FEM_FORMULATION_E) then

@@ -166,6 +166,7 @@ class EMSimulation(Simulation):
         bnd_cdn_i = 0  # Boundary conditions (0=Dirichlet,1=Neumann,2=domain_x)  TODO: this has been set to periodic for some time?!
 
         itermax = 30  # Maximum number of iterations for convergence
+        ARPACK_tol = 1e-12  # ARPACK accuracy (0.0 for machine precision)
 
         # Calculate where to center the Eigenmode solver around.
         # (Shift and invert FEM method)
@@ -187,6 +188,7 @@ class EMSimulation(Simulation):
              E_H_field,
             bnd_cdn_i,
             itermax,
+            ARPACK_tol,
             EM_FEM_debug,
             fm.mesh_mail_fname,
             fm.n_msh_pts,
@@ -414,7 +416,7 @@ class ACSimulation(Simulation):
 
         itermax = 30  # Maximum number of iterations for convergence
         AC_FEM_debug = 0  # Fortran routines will display & save add. info
-        ARPACK_tol = 1e-10  # ARPACK accuracy (0.0 for machine precision)
+        ARPACK_tol = 1e-12  # ARPACK accuracy (0.0 for machine precision)
 
         shift_nu = self.choose_eigensolver_frequency_shift()
 
@@ -433,7 +435,7 @@ class ACSimulation(Simulation):
             bnd_cdn_i,
             itermax,
             ARPACK_tol,
-            AC_FEM_debug,
+            #AC_FEM_debug,
             #show_mem_est,
             tstruc.symmetry_flag,
             #elastic_props.n_mats_ac,  # => fort: n_elt_mats, #f2py figures out from arrays

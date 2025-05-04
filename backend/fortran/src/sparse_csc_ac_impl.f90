@@ -157,11 +157,10 @@ end
 
 
 
-subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, entities, nberr)
+subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, nberr)
 
    class(SparseCSC_AC) :: this
    type(MeshRawAC) :: mesh_raw
-   type(MeshEntitiesAC) :: entities
 
    type(NBError) nberr
 

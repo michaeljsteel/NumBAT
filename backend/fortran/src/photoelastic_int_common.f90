@@ -115,12 +115,12 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
          endif
 
 
-         call make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved, &
+         call make_P2_overlaps_i_j_dk_l_quadrature(beta_ac, typ_e, is_curved, &
             eps, p_tensor, n_elt_mats, nds_xy, quadint, basis_overlap, errco, emsg)
          RETONERROR(errco)
       else
 
-         call make_P2_overlaps_i_j_dk_l_analytic(i_el, beta_ac, typ_e, &
+         call make_P2_overlaps_i_j_dk_l_analytic(beta_ac, typ_e, &
             eps, p_tensor, n_elt_mats, nds_xy, basis_overlap)
       endif
 

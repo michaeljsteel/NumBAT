@@ -72,9 +72,9 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
       !  If c_tensor has regular symmetries use more efficient formulation
       !write(*,*) 'symflag', symmetry_flag
       if (symmetry_flag .eq. 1) then
-         call mat_el_v2 (el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
+         call mat_el_v2 (el_nds_xy, q_ac, c_tensor_el, rho_el, mat_K, mat_M)
       else
-         call mat_el_v3 (basfuncs, el_nds_xy,q_ac,c_tensor_el,rho_el,mat_K,mat_M)
+         call mat_el_v3 (basfuncs, q_ac, c_tensor_el, rho_el, mat_K, mat_M)
       endif
 
       do ety_j=1,P2_NODES_PER_EL  ! iterating columns

@@ -182,9 +182,9 @@ end module
 
 ! Apply  vec_y = OP*vec_x = inv[K-sigma*M]*M*vec_x
 ! The inv[A-sigma M] operation is performed by umfpack using prepared structure in umf_numeric
-! M is the mass matrix Mop_stiff
+! M is the mass matrix Mop_mass
 subroutine apply_arpack_OPx(n_dof, vec_x, vec_y, n_nonz, row_ind, col_ptr, matM, vecs, &
-    umf_numeric, umf_control, umf_info, nberr)
+   umf_numeric, umf_control, umf_info, nberr)
 
    use numbatmod
    use alloc
@@ -228,7 +228,7 @@ subroutine apply_arpack_OPx(n_dof, vec_x, vec_y, n_nonz, row_ind, col_ptr, matM,
 
    if (umf_info (1) .lt. 0) then
       write(emsg,*) 'Error occurred in umf4zsol: ', umf_info (1)
-      call nberr%set(NBERROR_106, emsg)
+      call nberr%set(NBERR_BAD_UMF4ZSOL, emsg)
       return
    endif
 
@@ -288,10 +288,8 @@ end subroutine
 !  v = sovled eigvecs
 !  d = solved eigvals
 
-! del_vect1, del_vect2, del_workl, &
-! ext_workd, ext_resid, ext_lworkl, &
 
-subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
+subroutine solve_arpack_problem (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    cscmat, v_evals, v_evecs, nberr, shortrun)
 
    !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
@@ -327,9 +325,6 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    ! UMFPACK requires complex arrays as pairs of doubles
    double precision, allocatable, dimension(:) :: mOp_stiff_re, mOp_stiff_im
-   !double precision, allocatable, dimension(:) :: lhs_re, lhs_im
-   !double precision, allocatable, dimension(:) :: rhs_re, rhs_im
-
 
    double precision umf_control(UMFPACK_CONTROL)
    double precision umf_info(UMFPACK_INFO)
@@ -338,20 +333,19 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    type(ValprVecs) :: vecs
 
-   integer(8) :: lworkl, n_conv
+   integer(8) :: n_conv
 
    !  32-bit integers for ARPACK
-   integer(4) n_dof_32, n_modes_32, dim_krylov_32
-   integer(4) arp_ido, arp_info, arp_iparam(11)
    integer(8),  parameter :: ARP_IPNTR_DIM = 14
+   integer(4) n_dof_32, n_modes_32, dim_krylov_32
    integer(4) ipntr_32(ARP_IPNTR_DIM), lworkl_32
+   integer(4) arp_ido, arp_info, arp_iparam(11)
    double precision arp_tol
    complex(8) arp_shift
 
-   logical arp_rvec
+   logical arp_rvec, arp_active
    character arp_bmat
    character(2) arp_which
-   logical arp_active
 
    integer(8) ui
 
@@ -377,17 +371,8 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
    call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
 
-   !call double_nalloc_1d(lhs_re, n_dof, 'lhs_re', nberr); RET_ON_NBERR(nberr)
-   !call double_nalloc_1d(lhs_im, n_dof, 'lhs_im', nberr); RET_ON_NBERR(nberr)
-   !call double_nalloc_1d(rhs_re, n_dof, 'rhs_re', nberr); RET_ON_NBERR(nberr)
-   !call double_nalloc_1d(rhs_im, n_dof, 'rhs_im', nberr); RET_ON_NBERR(nberr)
-
    mOp_stiff_re = dble(cscmat%mOp_stiff)
    mOp_stiff_im = dimag(cscmat%mOp_stiff)
-
-
-
-   lworkl = 3 * dim_krylov**2 + 5 * dim_krylov   ! length specified in znaupd.f source file
 
    v_evals = C_ZERO
 
@@ -458,7 +443,7 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    n_dof_32 = int(n_dof, 4)
    n_modes_32 = int(n_modes, 4)
    dim_krylov_32 = int(dim_krylov, 4)
-   lworkl_32 = int(lworkl, 4)
+   lworkl_32 = int(vecs%lworkl, 4)
 
    arp_ido = 0
    arp_iparam(1) = 1                 !  exact shift strategy
@@ -476,25 +461,34 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
    arp_which = 'LM'  !  seek largest magnitude eigs
 
    arp_active = .true.
-   arp_shift = C_ONE   !  Is ignored, as long as iparam(7)=1
 
+
+   !  Test for dimesnion conditions in znaupd (err code = -3)
+   !  Test for N=n_dof_32, NEV=n_modes_32, NCV=dim_krylov_32
+   !  Need 0<n_modes_32<n_dof_32-1, 1<= dim_krylov_32-n_modes_32, dim_krylov_32<=n_dof_32
+   if ((n_dof_32-1 .le. n_modes_32) .or. (dim_krylov_32-n_modes_32 .lt. 1) &
+      .or.  dim_krylov_32 > n_dof_32) then
+      write(emsg,'(A,A)') 'ARPACK eigensolver dimensional'//&
+         ' conditions failed (would generate ARPACK znaupd error code of -3).' // NEW_LINE('A'),&
+         'You should probably increase the grid resolution.'
+      call nberr%set(NBERR_BAD_ZNAUPD, emsg);
+      return
+   endif
 
    do while (arp_active)
-      !call znaupd (arp_ido, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
-      !   resid, dim_krylov_32, v_schur, n_dof_32, arp_iparam,&
-      !   ipntr_32, workd, workl, lworkl_32, rwork, arp_info)
+
 
       call znaupd (arp_ido, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
          vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam,&
          ipntr_32, vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
 
 
-      if (arp_ido .eq. -1 .or. arp_ido .eq. 1) then   !  Request for y = OP*x = inv[A-SIGMA*M]*M*x
+      if (arp_ido .eq. -1 .or. arp_ido .eq. 1) then
 
          !------------------------------------------------------
          !  Apply  y <--- OP*x = inv[A-SIGMA*M]*M*x
          !  with x at x = workd(ipntr_32(1))
-         !  and place the result at  y = workd(ipntr_32(2))           |
+         !  and place the result at  y = workd(ipntr_32(2))
          !------------------------------------------------------
 
          call apply_arpack_OPx(n_dof, vecs%workd(ipntr_32(1)), vecs%workd(ipntr_32(2)), &
@@ -546,14 +540,56 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
 
    n_conv = arp_iparam(5)
 
+   call check_arpack_results(n_modes, n_conv, arp_info, nberr)
+   RET_ON_NBERR(nberr)
+
+
+   !  Get the final eigenvectors
+   !'A' means get the actual eigenvectors, not just schur/arnolid vectors
+   arp_rvec = .true. !  get the full set of vectors
+   arp_shift = C_ONE   !  Is ignored, as long as iparam(7)=1
+
+   call zneupd (arp_rvec, 'A', vecs%arp_select, &
+   vecs%eval_ritz, v_evecs, &
+      n_dof_32, arp_shift, &
+      vecs%workev, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
+      vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam, ipntr_32, &
+      vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
+
+
+   if (arp_info .ne. 0) then
+      write(emsg,*) 'VALPR_64: Error with _neupd, arp_info = ', arp_info, &
+         ' This error can occur if the mesh is too coarse.'
+      call nberr%set(NBERROR_109, emsg)
+      return
+   endif
+
+
+   v_evals = vecs%eval_ritz(1:n_modes) ! eval_ritz is one longer due to zneupd requirements
+
+
+
+end
+
+subroutine check_arpack_results(n_modes, n_conv, arp_info, nberr)
+
+   use numbatmod
+   integer(4)  arp_info
+   integer(8) n_modes,n_conv
+   type(NBError) nberr
+   character(len=EMSG_LENGTH) emsg
+   integer(8) ui
+
+   ui = stdout
+
+
    if (arp_info .gt. 0) then
-      write(ui,*)
-      write(ui,*) "VALPR_64: The Arnoldi iteration scheme has failed"
-      write(ui,*) "VALPR_64: The znaupd error flag has the value ",&
-      &"arp_info=", arp_info
+      write(emsg,*) "VALPR_64: The Arnoldi iteration scheme has failed. ", &
+         "  The znaupd error flag has the value arp_info=", arp_info
+
       if (arp_info .eq. 1) then
          write(ui,*) "VALPR_64: Max iterations exceeded."
-         write(ui,*) " Requested eigen_modes = ", n_modes_32
+         write(ui,*) " Requested eigen_modes = ", n_modes
          write(ui,*) " Converged eigen_modes = ", n_conv
          write(ui,*) " You might try:"
          write(ui,*) "  1) Increasing the requested number",&
@@ -565,10 +601,12 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
       endif
       write(ui,*) "VALPR_64: For details on znaupd errors see",&
       &" https://www.caam.rice.edu/software/ARPACK/UG/node138.html"
-      !  write(ui,*) "VALPR_64: arp_iparam(5) = ", arp_iparam(5), n_modes_32
+      !  write(ui,*) "VALPR_64: arp_iparam(5) = ", arp_iparam(5), n_modes
       !  write(ui,*) "VALPR_64: number of converged values = ",
       !  *                arp_iparam(5)
       write(ui,*)
+      call nberr%set(NBERROR_108, emsg)
+      return
    endif
 
    if (arp_info.lt.0) then
@@ -587,37 +625,4 @@ subroutine valpr_64_em (i_base, dim_krylov, n_modes, itermax, arp_tol, &
       return
    endif
 
-
-   !  Get the final eigenvectors
-   !'A' means get the actual eigenvectors, not just schur/arnolid vectors
-   arp_rvec = .true. !  get the full set of vectors
-
-   call zneupd (arp_rvec, 'A', vecs%arp_select, vecs%eval_ritz, &
-      v_evecs, &
-      n_dof_32, arp_shift, &
-      vecs%workev, arp_bmat, n_dof_32, arp_which, n_modes_32, arp_tol, &
-      vecs%resid, dim_krylov_32, vecs%v_schur, n_dof_32, arp_iparam, ipntr_32, &
-      vecs%workd, vecs%workl, lworkl_32, vecs%rwork, arp_info)
-
-
-   !  Eigenvalues and eigenvectors:
-   !  The real part of an eigenvalue is listed in the first column of the D table.
-   !  The imaginary part of an eigenvalue is listed in the second column of the D table.
-   !  The eigenvectors are stored in the first n_modes_32 columns of the V table
-   !  when the arp_rvec option is set to true.
-   !  Otherwise, the V table contains an orthogonal basis of the eigenspace.
-
-   if (arp_info .ne. 0) then
-      write(emsg,*) 'VALPR_64: Error with _neupd, arp_info = ', arp_info
-      call nberr%set(NBERROR_109, emsg)
-   else
-      v_evals = vecs%eval_ritz(1:n_modes) ! eval_ritz is one longer due to zneupd requirements
-   endif
-
-
-
-   deallocate(mOp_stiff_re, mOp_stiff_im)
-   !deallocate(lhs_re, lhs_im)
-
-   return
-end
+end subroutine

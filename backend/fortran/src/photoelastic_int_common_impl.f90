@@ -13,7 +13,7 @@
 ! \partial k acts as \partial x, \partial y, or \partial z = -i beta
 ! see storage layout below
 
-subroutine make_P2_overlaps_i_j_dk_l_analytic(i_el, beta_ac, typ_e,  &
+subroutine make_P2_overlaps_i_j_dk_l_analytic(beta_ac, typ_e,  &
    eps, p_tensor, n_elt_mats, nds_xy, bas_ovrlp)
 
    use numbatmod
@@ -31,7 +31,7 @@ subroutine make_P2_overlaps_i_j_dk_l_analytic(i_el, beta_ac, typ_e,  &
    !locals
 
    integer(8) nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
-   integer(8) i_el, ind_i, ind_j, ind_l, i
+   integer(8) ind_i, ind_j, ind_l, i
    complex(8) p2prod
 
    double precision mat_B(2,2), mat_T(2,2), mat_T_tr(2,2)
@@ -136,7 +136,7 @@ end subroutine  make_P2_overlaps_i_j_dk_l_analytic
 ! \partial k acts as \partial x, \partial y, or \partial z = -i beta
 ! see storage layout below
 
-subroutine make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved, &
+subroutine make_P2_overlaps_i_j_dk_l_quadrature(beta_ac, typ_e, is_curved, &
    eps, p_tensor, n_elt_mats, nds_xy, quadint, bas_ovrlp, errco, emsg)
 
    use numbatmod
@@ -161,7 +161,7 @@ subroutine make_P2_overlaps_i_j_dk_l_quadrature(i_el, beta_ac, typ_e, is_curved,
    type(NBError) nberr
    double precision t_quadwt
    integer(8) iq, nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
-   integer(8) i_el, ind_i, ind_j, ind_l
+   integer(8) ind_i, ind_j, ind_l
    double precision phi2_i, phi2_j, phi2_dk_l, phiprod
    complex(8) t_basov
    logical do_P3

@@ -26,7 +26,7 @@ module calc_ac_impl
 contains
 
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
-      bdy_cdn, itermax, arp_tol, debug,  &
+      bdy_cdn, itermax, arp_tol, &
       symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_el,n_elt_mats, &
       elnd_to_mshpt, v_el_material, v_nd_physindex,  v_nd_xy, &
@@ -39,7 +39,7 @@ contains
       complex(8), intent(in) :: q_ac
       double precision, intent(in) :: dimscale_in_m
       complex(8), intent(in) :: shift_nu
-      integer(8), intent(in) :: bdy_cdn, itermax, debug
+      integer(8), intent(in) :: bdy_cdn, itermax
       double precision, intent(in) :: arp_tol
       integer(8), intent(in) :: symmetry_flag, build_acmesh_from_emmesh
       integer(8), intent(in) :: n_elt_mats
@@ -71,43 +71,27 @@ contains
       type(SparseCSC_AC) cscmat
 
 
-      integer(8) :: errco
       character(len=EMSG_LENGTH) :: emsg
 
 
       complex(8), dimension(:,:), allocatable :: arpack_evecs
 
-
-      integer(8) ui_out,  namelength
-
-
-      double precision dim_x, dim_y
+      integer(8) ui_out
 
       complex(8) shift_omsq
-      integer(8)  csc_index_offset
+      integer(8) csc_index_offset
 
+      integer(8) shortrun
 
-      !  Variable used by valpr
       integer(8)  dim_krylov
-
-      !  Names and Controls
-
-      character(len=FNAME_LENGTH)  gmsh_file, log_file, gmsh_file_pos
-
 
       type(Stopwatch) :: clock_main, clock_spare
 
-      integer(8) :: is_em
 
-
-
-      errco = 0
       emsg = ""
 
       ui_out = stdout
-
-
-
+      call clock_main%reset()
 
       call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
@@ -115,46 +99,17 @@ contains
       call entities%allocate(n_msh_el, nberr)
       RET_ON_NBERR(nberr)
 
-
-      is_em = 0
-
-
-      call clock_main%reset()
-
-
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
-
-         !  clean mesh_format
-         namelength = len_trim(mesh_file)
-         gmsh_file = mesh_file(1:namelength-5)//'.msh'
-         gmsh_file_pos = mesh_file(1:namelength)
-         log_file = mesh_file(1:namelength-5)//'-AC.log'
-         if (debug .eq. 1) then
-            write(*,*) "mesh_file = ", mesh_file
-            write(*,*) "gmsh_file = ", gmsh_file
-         endif
-
-
-
-         dim_x = dimscale_in_m
-         dim_y = dimscale_in_m
-
-         call construct_fem_node_tables_ac (mesh_file, dim_x, dim_y, n_msh_el, n_msh_pts, &
-         P2_NODES_PER_EL, n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, errco, emsg)
-         call nberr%set(errco, emsg); RET_ON_NBERR(nberr)
-
-
-         !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
-         ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-
+         call construct_fem_node_tables_ac (mesh_file, dimscale_in_m,  n_msh_el, n_msh_pts, &
+         n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, nberr)
+         RET_ON_NBERR(nberr)
 
          call mesh_raw%construct_node_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
          call mesh_raw%construct_node_tables_from_py(v_nd_xy, v_nd_physindex, &
-         v_el_material, elnd_to_mshpt, nberr);
-         RET_ON_NBERR(nberr)
+         v_el_material, elnd_to_mshpt);
       endif
 
 
@@ -162,11 +117,8 @@ contains
       RET_ON_NBERR(nberr)
 
 
-      call cscmat%make_csc_arrays(mesh_raw, entities, nberr)
+      call cscmat%make_csc_arrays(mesh_raw, nberr)
       RET_ON_NBERR(nberr)
-
-
-
 
 
       write(ui_out,*)
@@ -211,15 +163,11 @@ contains
       call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
 
-      call valpr_64_ac (csc_index_offset, dim_krylov, n_modes, itermax,  arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr)
-
+      shortrun=0
+      call solve_arpack_problem (csc_index_offset, dim_krylov, n_modes, itermax,  arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr, shortrun)
       RET_ON_NBERR(nberr)
 
-
-
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
-
-
       write(ui_out,'(/,A)') "      assembling modes"
       call clock_spare%reset()
 

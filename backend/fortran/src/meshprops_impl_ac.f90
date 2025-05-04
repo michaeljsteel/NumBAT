@@ -22,12 +22,9 @@ end subroutine
 
  ! Seems identical to the EM version.
 subroutine MeshRawAC_construct_node_tables_from_py(this, &
-   v_nd_xy, v_nd_physindex, el_material, elnd_to_mshpt, nberr)
+   v_nd_xy, v_nd_physindex, el_material, elnd_to_mshpt)
 
    class(MeshRawAC) :: this
-
-   type(NBError) nberr
-
 
    integer(8) :: v_nd_physindex(this%n_msh_pts)
    double precision :: v_nd_xy(2, this%n_msh_pts)

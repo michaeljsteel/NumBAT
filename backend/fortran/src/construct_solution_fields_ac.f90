@@ -157,23 +157,25 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
       if (abs(z_evecs_final_max) .lt. 1.0d-10) then
          z_evecs_final_max = z_tmp2
          write(emsg,*) "array_evecs_final: z_evecs_final_max is too small" , z_evecs_final_max, &
-          "at md_i, md_i2, n_modes = ", md_i, md_i2, n_modes
+            "at md_i, md_i2, n_modes = ", md_i, md_i2, n_modes
          call nberr%set(NBERR_BAD_ELASTIC_ENERGY, emsg)
          return
       endif
 
 
-      !  Normalization so that the maximum field component is 1
-      do i_el=1,mesh_raw%n_msh_el
-         do nd_i=1,P2_NODES_PER_EL
-            i1 = mesh_raw%elnd_to_mshpt(nd_i,i_el)
+      ! !  Normalization so that the maximum field component is 1
+      ! do i_el=1,mesh_raw%n_msh_el
+      !    do nd_i=1,P2_NODES_PER_EL
+      !       i1 = mesh_raw%elnd_to_mshpt(nd_i,i_el)
 
 
 
-         enddo
-      enddo
+      !    enddo
+      ! enddo
 
-      evecs_raw(:,md_i2)  = evecs_raw(:,md_i2)/z_evecs_final_max
+      !evecs_raw(:,md_i2)  = evecs_raw(:,md_i2)/z_evecs_final_max
+
+      evecs_final(:,:,md_i,:) = evecs_final(:,:,md_i,:) / z_evecs_final_max
 
    enddo
 
