@@ -113,11 +113,7 @@ contains
       endif
 
 
-      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, nberr)
-      RET_ON_NBERR(nberr)
-
-
-      call cscmat%make_csc_arrays(mesh_raw, nberr)
+      call cscmat%make_csc_arrays(bdy_cdn, mesh_raw, nberr)
       RET_ON_NBERR(nberr)
 
 

@@ -155,10 +155,10 @@ profile. For this problem, the waveguide is rectangular with symmetry group :mat
 which  has four symmetry classes, which are marked in the dispersion diagram.
 
 This example also takes advantage of the ability to load and save simulation results to save repeated calculation using the ``save_simulation`` and ``load_simulation`` methods defined
-in the ``mode_calcs`` module.
+in the ``modecalcs`` module.
 The previous tutorial saved its electromagnetic
 results in the file ``tut02_wguide_data.npz``
-using the ``Simulation.save_simulation()`` method, while the present example recovers those results using ``mode_calc.load_simulation()``.
+using the ``Simulation.save_simulation()`` method, while the present example recovers those results using ``Simulation.load_simulation()``.
 This can be a very useful technique when trying to adjust the appearance
 of plots without having to repeat the whole calculation effort.
 

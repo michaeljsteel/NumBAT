@@ -17,7 +17,7 @@ The API consists of several core modules\:
   - ``numbat``, for creating the top-level |NUMBAT| application;
   - ``materials``, for defining waveguide materials and their properties;
   - ``objects``, for constructing waveguides from materials;
-  - ``mode_calcs``, for the core calculation of electromagnetic and acoustic modes;
+  - ``modecalcs``, for the core calculation of electromagnetic and acoustic modes;
   - ``integration``, for performing calculations relating to SBS gain;
   - ``plotting``, for creating output plots of modes and gain functions.
 
@@ -58,12 +58,12 @@ The diagrams in Chapter 2 can be used to identify which parameters (``slab_a_x, 
     :show-inheritance:
 
 
-mode_calcs module
+modecalcs module
 =================
 
-The ``mode_calcs`` module is responsible for the core engine to construct and solve the optical and elastic finite-element problems.
+The ``modecalcs`` module is responsible for the core engine to construct and solve the optical and elastic finite-element problems.
 
-.. automodule:: mode_calcs
+.. automodule:: modecalcs
     :members:
     :undoc-members:
     :show-inheritance:

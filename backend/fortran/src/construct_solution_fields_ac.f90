@@ -49,8 +49,8 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
    complex(8) evecs_final_el(3,P2_NODES_PER_EL)
 
 
-   integer(8) i, j, i1, nd_i, typ_e, debug
-   integer(8) i_el, md_i, md_i2, jp, ind_jp, j_eq
+   integer(8) nd_i, typ_e, debug
+   integer(8) i_el, md_i, md_i2, msh_pt_i, dof, nd_xyz
    complex(8) z_tmp2, z_evecs_final_max, z_beta
 
    character(len=EMSG_LENGTH) :: emsg
@@ -62,10 +62,10 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
    call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
 
-   do i=1,n_modes
-      z_beta = sqrt(1.0d0/v_evals_nu(i) + shift_omsq) / (2.0d0 * D_PI)
+   do md_i=1,n_modes
+      z_beta = sqrt(1.0d0/v_evals_nu(md_i) + shift_omsq) / (2.0d0 * D_PI)
       !!  Frequency (z_beta) should always be positive.
-      v_evals_nu(i) = abs(z_beta)
+      v_evals_nu(md_i) = abs(z_beta)
    enddo
 
    ! order with smallest eigenvalue first (order=1)
@@ -83,38 +83,38 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
       md_i2 = v_eig_index(md_i) !  index of the mode in eigenvalue sorted sequence
 
 
-      z_evecs_final_max = 0.0d0 !  value and loc of max fi_eld modulus
+      z_evecs_final_max = 0.0d0 !  value and loc of max field modulus
 
-      do i_el=1,mesh_raw%n_msh_el
+      do i_el=1,mesh_raw%n_msh_el            ! for each elt
          typ_e = mesh_raw%el_material(i_el)
 
          mode_comp = D_ZERO
 
          call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy)
 
-         do nd_i=1,P2_NODES_PER_EL
-            jp = mesh_raw%elnd_to_mshpt(nd_i,i_el)
+         do nd_i=1,P2_NODES_PER_EL           ! for each of 6 nodes of that elt
+            msh_pt_i = mesh_raw%elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
 
-            do j_eq=1,3
-               ind_jp = cscmat%m_eqs(j_eq,jp)
-               if (ind_jp .gt. 0) then
-                  evecs_final_el(j_eq, nd_i) = evecs_raw(ind_jp, md_i2)
+            do nd_xyz=1,3                    ! for each xyz component of this mesh pt
+               dof = cscmat%m_eqs(nd_xyz, msh_pt_i)  ! the actual fem dof
+               if (dof .gt. 0) then
+                  evecs_final_el(nd_xyz, nd_i) = evecs_raw(dof, md_i2)
                else
-                  evecs_final_el(j_eq, nd_i) = 0
+                  evecs_final_el(nd_xyz, nd_i) = 0
                endif
             enddo
 
-            !  The z-component must be multiplied by ii in order to get the un-normalised z-compoenent
-            j_eq=3
-            evecs_final_el(j_eq,nd_i) = C_IM_ONE* evecs_final_el(j_eq,nd_i)
+            !  The z-component must be multiplied by ii in order to get the un-normalised z-component
+            nd_xyz=3
+            evecs_final_el(nd_xyz,nd_i) = C_IM_ONE* evecs_final_el(nd_xyz,nd_i)
 
-            do j=1,3
-               z_tmp2 = evecs_final_el(j,nd_i)
-               evecs_final(j,nd_i,md_i,i_el) = z_tmp2
+            do nd_xyz=1,3
+               z_tmp2 = evecs_final_el(nd_xyz, nd_i)
+               evecs_final(nd_xyz, nd_i, md_i, i_el) = z_tmp2
                if (abs(z_evecs_final_max) .lt. abs(z_tmp2)) then
                   z_evecs_final_max = z_tmp2
                   !  We want to normalise such the the z-component is purely imaginary complex number
-                  if (j == 3) z_evecs_final_max = - C_IM_ONE* z_evecs_final_max
+                  if (nd_xyz == 3) z_evecs_final_max = - C_IM_ONE* z_evecs_final_max
                endif
             enddo
 

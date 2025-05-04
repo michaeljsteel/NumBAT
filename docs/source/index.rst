@@ -32,6 +32,8 @@ Release date: |today|
 
    technical
 
+   fem_formulation
+
    pythonapi
 
    refs

@@ -157,12 +157,14 @@ end
 
 
 
-subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, nberr)
+subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    class(SparseCSC_AC) :: this
    type(MeshRawAC) :: mesh_raw
 
    type(NBError) nberr
+
+   integer(8) bdy_cdn
 
    ! ------------------------------------------
 
@@ -171,6 +173,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, mesh_raw, nberr)
 
    !integer(8) row, col, rc_exists, cr_exists, val
 
+call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
 
    this%n_nonz=0
 

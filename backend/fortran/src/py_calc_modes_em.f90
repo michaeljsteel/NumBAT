@@ -157,13 +157,8 @@ contains
       call entities%build_mesh_tables(mesh_raw, nberr);
       RET_ON_NBERR(nberr)
 
-      ! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
-      call cscmat%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
-      RET_ON_NBERR(nberr)
-
-
-      ! Build sparse matrix index arrays
-      call cscmat%make_csc_arrays(mesh_raw, entities, nberr); RET_ON_NBERR(nberr)
+      !! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
+      call cscmat%make_csc_arrays(bdy_cdn, mesh_raw, entities, pbcs, nberr); RET_ON_NBERR(nberr)
 
 
       write(ui_out,*)

@@ -195,20 +195,24 @@ end
 
 
 
-subroutine SparseCSC_EM_make_csc_arrays(this, mesh_raw, entities, nberr)
+subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs, nberr)
 
    class(SparseCSC_EM) :: this
    type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
+   type(PeriodicBCs) :: pbcs
 
    type(NBError) nberr
 
-   ! ------------------------------------------
+   integer(8) bdy_cdn
+    ! ------------------------------------------
 
    integer(8) n_nonz_max, max_row_len
    integer(8), dimension(:), allocatable  :: iwork
 
-   !integer(8) row, col, rc_exists, cr_exists, val
+
+   call this%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
+   RET_ON_NBERR(nberr)
 
 
    this%n_nonz=0
