@@ -24,10 +24,7 @@ SUBROUTINE find_eigvals_order(n, arr, indx, order, nberr)
    double precision, dimension(:), allocatable :: arr_0
    character(len=EMSG_LENGTH) :: emsg
 
-
-!write(*,*) 'feo', n, arr
    call double_nalloc_1d(arr_0, n, 'arr0', nberr); RET_ON_NBERR(nberr)
-
 
    do  j=1,n
       indx(j) = j
