@@ -3,15 +3,15 @@
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
  ! The z-component of the E-field is not normalised
 
-subroutine h_mode_field_ez (k_0, n_modes, n_msh_el, n_msh_pts, elnd_to_mshpt, &
- v_nd_xy, v_beta, soln_k1, soln_H1)
+subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, elnd_to_mshpt, &
+ v_mshpt_xy, v_beta, soln_k1, soln_H1)
 
    use numbatmod
-   integer(8) n_modes, n_msh_el, n_msh_pts
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
-   complex(8) soln_k1(3,P2_NODES_PER_EL+7,n_modes,n_msh_el)
-   complex(8) soln_H1(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   integer(8) n_modes, n_msh_elts, n_msh_pts
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
+   complex(8) soln_k1(3,P2_NODES_PER_EL+7,n_modes,n_msh_elts)
+   complex(8) soln_H1(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
    complex(8) beta1
    complex(8) v_beta(n_modes)
    double precision k_0
@@ -33,14 +33,14 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_el, n_msh_pts, elnd_to_mshpt, &
    double precision mat_B(2,2), mat_T(2,2), det_b
    integer(8), parameter :: ZCOMP = 3
 
-   !f2py intent(in) k_0, n_modes, n_msh_el, n_msh_pts
+   !f2py intent(in) k_0, n_modes, n_msh_elts, n_msh_pts
    !f2py intent(in) P2_NODES_PER_EL, elnd_to_mshpt
    !f2py intent(in) x, v_beta, soln_k1
    !
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
+   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
    !f2py depend(x) n_msh_pts
    !f2py depend(v_beta) n_modes
-   !f2py depend(soln_k1) P2_NODES_PER_EL, n_modes, n_msh_el
+   !f2py depend(soln_k1) P2_NODES_PER_EL, n_modes, n_msh_elts
    !
    !f2py intent(out) soln_H1
 
@@ -56,12 +56,12 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_el, n_msh_pts, elnd_to_mshpt, &
 
    do ival=1,n_modes
       beta1 = v_beta(ival)
-      do iel=1,n_msh_el
+      do iel=1,n_msh_elts
          do j=1,P2_NODES_PER_EL
             j1 = elnd_to_mshpt(j,iel)
             nod_el_p(j) = j1
-            xel(1,j) = v_nd_xy(1,j1)
-            xel(2,j) = v_nd_xy(2,j1)
+            xel(1,j) = v_mshpt_xy(1,j1)
+            xel(2,j) = v_mshpt_xy(2,j1)
          enddo
 
          !         The geometric transformation (x,y) -> (x_g,y_g) = mat_B*(x,y)^t + (x_0, y_0, z_0)^t

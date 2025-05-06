@@ -260,11 +260,10 @@ contains
 
    end subroutine
 
-   subroutine assert_no_larger_than(val, limit, location, msg, failco, errco, emsg)
+   subroutine assert_no_larger_than(val, limit, location, msg, failco, nberr)
 
-      implicit none
+      type(NBError) nberr
 
-      integer(8) errco
       character(len=EMSG_LENGTH) emsg
       character location*(*), msg*(*)
       integer(8) val, limit
@@ -273,10 +272,9 @@ contains
       if (val .ge. limit) then
          write(emsg,*) 'Failed limit check at ', location, '.  ', &
             'Expected ', msg, ',  but found values', val, limit
-         errco = failco
+            call nberr%set(failco, emsg)
       endif
 
-      return
    end subroutine
 
    function int_2_str(val, fmt) result(str)

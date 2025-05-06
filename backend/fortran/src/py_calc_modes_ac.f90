@@ -3,12 +3,12 @@
  !  q_ac :   acoustic wave number (q_ac)
  !  n_modes:  desired number of solved acoustic modes
  !  n_msh_pts:  number of nodes in mesh
- !  n_msh_el:   number of (triang) elements in mesh
- !  n_v_el_material:  number of types of material
- !  v_nd_physindex:    ??
+ !  n_msh_elts:   number of (triang) elements in mesh
+ !  n_v_elt_material:  number of types of material
+ !  v_mshpt_physindex:    ??
  !  elnd_to_mshpt:
- !  v_el_material:
- !  v_nd_xy
+ !  v_elt_material:
+ !  v_mshpt_xy
  !  v_evals_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
  !  femsol_ac:
  !  poln_fracs:
@@ -28,8 +28,8 @@ contains
    subroutine calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       bdy_cdn, itermax, arp_tol, &
       symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
-      mesh_file, n_msh_pts, n_msh_el,n_elt_mats, &
-      elnd_to_mshpt, v_el_material, v_nd_physindex,  v_nd_xy, &
+      mesh_file, n_msh_pts, n_msh_elts,n_elt_mats, &
+      elnd_to_mshpt, v_elt_material, v_mshpt_physindex,  v_mshpt_xy, &
       v_evals_nu, femsol_ac, poln_fracs, nberr)
 
 
@@ -48,17 +48,17 @@ contains
       complex(8), intent(in) :: rho(n_elt_mats)
 
       character(len=FNAME_LENGTH), intent(in)  :: mesh_file
-      integer(8), intent(in) :: n_msh_pts, n_msh_el
+      integer(8), intent(in) :: n_msh_pts, n_msh_elts
 
-      integer(8), intent(in) :: v_nd_physindex(n_msh_pts)
+      integer(8), intent(in) :: v_mshpt_physindex(n_msh_pts)
 
-      integer(8), intent(inout) :: v_el_material(n_msh_el)
-      integer(8), intent(inout) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
+      integer(8), intent(inout) :: v_elt_material(n_msh_elts)
+      integer(8), intent(inout) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
 
-      double precision, intent(inout) ::  v_nd_xy(2,n_msh_pts)
+      double precision, intent(inout) ::  v_mshpt_xy(2,n_msh_pts)
 
       complex(8), intent(out), target :: v_evals_nu(n_modes)
-      complex(8), intent(out), target :: femsol_ac(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+      complex(8), intent(out), target :: femsol_ac(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
       complex(8), intent(out) :: poln_fracs(4,n_modes)
 
 
@@ -93,23 +93,23 @@ contains
       ui_out = stdout
       call clock_main%reset()
 
-      call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
+      call mesh_raw%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
 
-      call entities%allocate(n_msh_el, nberr)
+      call entities%allocate(n_msh_elts, nberr)
       RET_ON_NBERR(nberr)
 
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
-         call construct_fem_node_tables_ac (mesh_file, dimscale_in_m,  n_msh_el, n_msh_pts, &
-         n_elt_mats, v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt, nberr)
+         call construct_fem_node_tables_ac (mesh_file, dimscale_in_m,  n_msh_elts, n_msh_pts, &
+         n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt, nberr)
          RET_ON_NBERR(nberr)
 
-         call mesh_raw%construct_node_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
+         call mesh_raw%construct_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
-         call mesh_raw%construct_node_tables_from_py(v_nd_xy, v_nd_physindex, &
-         v_el_material, elnd_to_mshpt);
+         call mesh_raw%construct_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
+         v_elt_material, elnd_to_mshpt);
       endif
 
 
@@ -142,7 +142,7 @@ contains
       !  dim_krylov = 2*n_modes + n_modes/2 +3
       dim_krylov = 3*n_modes + 3
 
-      write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
+      write(ui_out,'(A,i9,A)') '      ', n_msh_elts, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_nonz, ' nonzero elements'
@@ -156,7 +156,7 @@ contains
       write(ui_out,'(/,A)') "      solving eigensystem"
       call clock_spare%reset()
 
-      call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
 
       shortrun=0

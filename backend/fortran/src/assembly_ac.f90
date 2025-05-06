@@ -43,7 +43,7 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
    character(len=EMSG_LENGTH) :: emsg
 
 
-   call integer_nalloc_1d(i_work, 3*mesh_raw%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(i_work, 3*mesh_raw%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
 
    !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
    !  But valpr.f may require the CSC indexing to be 0-based
@@ -56,8 +56,8 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
    cscmat%mOp_stiff = C_ZERO
    cscmat%mOp_mass = C_ZERO
 
-   do i_el=1,mesh_raw%n_msh_el              ! For each elt
-      typ_e = mesh_raw%el_material(i_el)    ! Find the material and its local material properties
+   do i_el=1,mesh_raw%n_msh_elts              ! For each elt
+      typ_e = mesh_raw%v_elt_material(i_el)    ! Find the material and its local material properties
 
       rho_el = rho(typ_e)
       c_tensor_el = c_tensor(:,:,typ_e)

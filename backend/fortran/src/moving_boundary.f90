@@ -12,23 +12,23 @@
 
 
 subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
-   n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, &
-   n_elt_mats, el_material, typ_select_in, typ_select_out, &
+   n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, &
+   n_elt_mats, v_elt_material, typ_select_in, typ_select_out, &
    soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, Q_MB, errco, emsg)
 
    use numbatmod
-   integer(8) n_msh_el, n_msh_pts,n_elt_mats
+   integer(8) n_msh_elts, n_msh_pts,n_elt_mats
    integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
 
-   integer(8) el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
-   double precision v_nd_xy(2, n_msh_pts)
+   integer(8) v_elt_material(n_msh_elts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   double precision v_mshpt_xy(2, n_msh_pts)
 
    integer(8) typ_select_in, typ_select_out
 
-   complex(8) soln_em_p(3, P2_NODES_PER_EL, nval_em_p, n_msh_el)
-   complex(8) soln_em_s(3, P2_NODES_PER_EL, nval_em_s, n_msh_el)
-   complex(8) soln_ac_u(3, P2_NODES_PER_EL, nval_ac, n_msh_el)
+   complex(8) soln_em_p(3, P2_NODES_PER_EL, nval_em_p, n_msh_elts)
+   complex(8) soln_em_s(3, P2_NODES_PER_EL, nval_em_s, n_msh_elts)
+   complex(8) soln_ac_u(3, P2_NODES_PER_EL, nval_ac, n_msh_elts)
 
    complex(8) v_eps_rel(n_elt_mats)
    complex(8), intent(out) :: Q_MB(nval_em_p, nval_em_s, nval_ac)
@@ -67,22 +67,22 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
    !f2py intent(in) nval_em_p, nval_em_s, nval_ac
    !f2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !f2py intent(in) n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, debug
-   !f2py intent(in) el_material, x, soln_em_p, soln_em_s, soln_ac_u
+   !f2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, debug
+   !f2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u
    !f2py intent(in) typ_select_in, typ_select_out, v_eps_rel, debug
 
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-   !f2py depend(el_material) n_msh_pts
+   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+   !f2py depend(v_elt_material) n_msh_pts
    !f2py depend(x) n_msh_pts
-   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_el
-   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_el
-   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac, n_msh_el
+   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
+   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_elts
+   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac, n_msh_elts
    !f2py depend(v_eps_rel) n_elt_mats
    !
    !fo2py intent(out) Q_MB
 
 
-   ! typ_select_in: Only the elements i_el with el_material(i_el)=typ_select_in will be analysed
+   ! typ_select_in: Only the elements i_el with v_elt_material(i_el)=typ_select_in will be analysed
    ! When nb_visited(j) is not zero: nb_visited(j) indicates the number of element the edge j belongs
 
 
@@ -94,8 +94,6 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    !             3
    !           6    5
    !        1    4     2
-
-   write(*,*) 'MOVBD 1', n_elt_mats, v_eps_rel
 
    edge_endpoints(1,1) = 1   ! Edge 1 has endpoints at nodes 1 and 2
    edge_endpoints(2,1) = 2
@@ -124,8 +122,8 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    call fill_ival_arrays(v_ival_s, nval_em_s, ival_s)
    call fill_ival_arrays(v_ival_ac, nval_ac, ival_ac)
 
-   do i_el=1,n_msh_el
-      typ_e = el_material(i_el)
+   do i_el=1,n_msh_elts
+      typ_e = v_elt_material(i_el)
       if(typ_e == typ_select_in) then
          !   Scan the edges
          do inod=4,6
@@ -149,8 +147,8 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
 
    ! Outward pointing normal vector to the interface edges
-   do i_el=1,n_msh_el
-      typ_e = el_material(i_el)
+   do i_el=1,n_msh_elts
+      typ_e = v_elt_material(i_el)
       if (typ_e .ne. typ_select_in) cycle  ! not the inside material
 
       !   Scan the edges
@@ -163,8 +161,8 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
          ls_edge_endpoint(1,j) = elnd_to_mshpt(inod_1,i_el)
          ls_edge_endpoint(2,j) = elnd_to_mshpt(inod_2,i_el)
 
-         xy_1 = v_nd_xy(:, elnd_to_mshpt(inod_1,i_el))
-         xy_2 = v_nd_xy(:, elnd_to_mshpt(inod_2,i_el))
+         xy_1 = v_mshpt_xy(:, elnd_to_mshpt(inod_1,i_el))
+         xy_2 = v_mshpt_xy(:, elnd_to_mshpt(inod_2,i_el))
 
          ! edge_vec: vector parallel to the edge
          edge_vec = xy_2 - xy_1
@@ -179,7 +177,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
          ! Node opposite to the edge inod
          inod_3 = opposite_node(inod-3)
-         xy_3(:) = v_nd_xy(:,elnd_to_mshpt(inod_3,i_el))
+         xy_3(:) = v_mshpt_xy(:,elnd_to_mshpt(inod_3,i_el))
          vec_0 = xy_3 - xy_1
 
          ! Scalar product of edge_perp and vec_0:
@@ -202,9 +200,9 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
 
    ! Numerical integration
-   do i_el=1,n_msh_el
+   do i_el=1,n_msh_elts
 
-      typ_e = el_material(i_el)
+      typ_e = v_elt_material(i_el)
       if(typ_e .ne. typ_select_in) then
          cycle
       endif
@@ -226,9 +224,9 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
          inod_1 = ls_edge_endpoint(1,j)
          inod_2 = ls_edge_endpoint(2,j)
-         xy_1(:) = v_nd_xy(:, inod_1)
-         xy_2(:) = v_nd_xy(:, inod_2)
-         xy_3(:) = v_nd_xy(:, j)
+         xy_1(:) = v_mshpt_xy(:, inod_1)
+         xy_2(:) = v_mshpt_xy(:, inod_2)
+         xy_3(:) = v_mshpt_xy(:, j)
 
          ! List of the nodes coordinates
          ls_xy(:,1) = xy_1  ! x-coord. of node 1

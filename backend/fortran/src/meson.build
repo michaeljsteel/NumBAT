@@ -4,7 +4,7 @@ nb_module_fsrcs = files(
     'alloc_module.f90',
     'numbatmod_module.f90',
     'stopwatch_module.f90',
-    'conv_gmsh_interfaces.f90',
+     'conv_gmsh_interfaces.f90',
 
     #'nbinterfaces_module.f90',
 )
@@ -20,7 +20,6 @@ nb_pyinterface_fsrcs = files(
     'array_material_em.f90',
     'array_material_ac.f90',
     'array_size.f90',
-    'conv_gmsh.f90',
     'em_mode_energy_int.f90',
     'em_mode_act_energy_quadrature.f90',
     'em_mode_power_sz_quadrature.f90',
@@ -33,7 +32,7 @@ nb_pyinterface_fsrcs = files(
     #'photoelastic_int_curvilinear.f90',
     #'photoelastic_int_curvilinear_old.f90',
     'py_entry_cm.f90',
-    'pyinterfaces.f90'
+    #'pyinterfaces.f90'
 )
 
 
@@ -50,6 +49,7 @@ nb_impl_fsrcs = files(
     'construct_fem_tables.f90',
     'conv_gmsh_subroutines_mod.f90',
     'csr_length_AC.f90',
+    'conv_gmsh_impl.f90',
 
     #'csr_max_length_ac.f90',
     'get_H_field_p3.f90',

@@ -6,20 +6,20 @@
 !  E_em = \int eps/2 |E|^2 dV + \int mu/2 |H|^2 dV
 !       = 2 eps_0 \int dV eps_r |E|^2
 
-subroutine em_mode_act_energy_quadrature (n_modes, n_msh_el, n_msh_pts, &
-   elnd_to_mshpt, v_nd_xy, n_elt_mats, el_material, &
+subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
+   elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material, &
    v_refindex, soln_em_e, m_energy, errco, emsg)
 
    use numbatmod
    use class_TriangleIntegrators
 
-   integer(8) n_modes, n_msh_el, n_msh_pts
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
+   integer(8) n_modes, n_msh_elts, n_msh_pts
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
    integer(8) n_elt_mats
-   integer(8) el_material(n_msh_el)
+   integer(8) v_elt_material(n_msh_elts)
    complex(8) v_refindex(n_elt_mats)
-   complex(8) soln_em_e(3,N_DOF_PER_EL,n_modes,n_msh_el)
+   complex(8) soln_em_e(3,N_DOF_PER_EL,n_modes,n_msh_elts)
    complex(8), dimension(n_modes), intent(out) :: m_energy
    integer(8), intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
@@ -46,11 +46,11 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_el, n_msh_pts, &
    double precision t_quadwt
 
 
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-!f2py depend(v_nd_xy) n_msh_pts
-!f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_el
+!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(v_mshpt_xy) n_msh_pts
+!f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_elts
 !f2py depend(v_refindex) n_elt_mats
-!f2py depend(el_material) n_msh_el
+!f2py depend(v_elt_material) n_msh_elts
 
 
    do_P3 = .false.
@@ -62,12 +62,12 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_el, n_msh_pts, &
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
-   do i_el=1,n_msh_el
+   do i_el=1,n_msh_elts
 
-      typ_e = el_material(i_el)
+      typ_e = v_elt_material(i_el)
       t_eps = v_refindex(typ_e)**2  ! Calculate permittivity
 
       call frontend%nodes_at_el(i_el, nds_xy)

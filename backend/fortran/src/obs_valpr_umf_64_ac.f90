@@ -73,8 +73,8 @@ subroutine valpr_64_ac (i_base, dim_krylov, n_modes, itermax, &
 
    call vecs%init(n_modes, dim_krylov, n_dof, nberr); RET_ON_NBERR(nberr)
 
-   call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
-   call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
 
    mOp_stiff_re = dble(cscmat%mOp_stiff)
    mOp_stiff_im = dimag(cscmat%mOp_stiff)

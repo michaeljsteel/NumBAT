@@ -6,14 +6,13 @@
  !  But we must also permute the indices and positions in v_nd_iphyscurve and vx, vy.
 
 subroutine balance_fem_node_graph(n_pts, n_gelts_triangs, v_triang_nodes, &
-   v_nd_iphyscurve, vx, vy, assertions_on, errco, emsg)
+   v_nd_iphyscurve, vx, vy, assertions_on, nberr)
 
    use numbatmod
    use alloc
+   type(NBError) nberr
 
-   integer(8) assertions_on, errco
-   character(len=EMSG_LENGTH) emsg
-   integer(8) n_pts, n_gelts_triangs
+   integer(8) n_pts, n_gelts_triangs, assertions_on
    integer(8) v_triang_nodes(6,n_gelts_triangs), v_nd_iphyscurve(n_pts)
    double precision vx(n_pts), vy(n_pts)
 
@@ -21,42 +20,41 @@ subroutine balance_fem_node_graph(n_pts, n_gelts_triangs, v_triang_nodes, &
    integer(8), dimension(:), allocatable:: xadj      !  cumulative number of connections
    integer(8), dimension(:), allocatable:: adjncy   !  how many nodes have a connection to this one
 
-   call integer_alloc_1d(xadj, MAX_N_PTS+1, 'xadj', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(adjncy,MAX_LONG_ADJ, 'adjncy', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(xadj, MAX_N_PTS+1, 'xadj', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(adjncy,MAX_LONG_ADJ, 'adjncy', nberr); RET_ON_NBERR(nberr)
 
    !  builds xadj and num_adj
-   call make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, errco, emsg)
-   RETONERROR(errco)
+   call make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, nberr)
+   RET_ON_NBERR(nberr)
 
    if (assertions_on .ne. 0) then
-      call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11_8, errco, emsg)
-      RETONERROR(errco)
+      call assert_no_larger_than(num_adj, MAX_LONG_ADJ, 'renumber_nodes','num_adj <= MAXLONGADJ', -11_8, nberr)
+      RET_ON_NBERR(nberr)
    endif
 
    !  builds adjncy
-   call make_adjacency_matrix(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, adjncy, errco, emsg)
-   !  write(*,*) 'renumbering with: num_adj = ', num_adj
-
+   call make_adjacency_matrix(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, adjncy, nberr)
+   RET_ON_NBERR(nberr)
 
    call rebalance_adjacency_matrix(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, &
-      adjncy, vx, vy, v_nd_iphyscurve, assertions_on, errco, emsg)
+      adjncy, vx, vy, v_nd_iphyscurve, assertions_on, nberr)
+      RET_ON_NBERR(nberr)
 
 end
 
  !-------------------------------------------------------------------------------
  !  builds xadj and num_adj from v_triang_nodes
  !  at end, numadj = xadj(n_pts+1) = sum_j neighbours(j)
-subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, errco, emsg)
+subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nodes, xadj, num_adj, nberr)
 
    use numbatmod
    use alloc
+   type(NBError) nberr
 
    integer(8) n_gelts_triangs, n_pts
    integer(8) v_triang_nodes(6,n_gelts_triangs)
    integer(8) xadj(MAX_N_PTS+1)     !  cumulative number of connections
    integer(8) num_adj
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
 
    integer(8) i, j, nd, i1
    integer(8) t_nodes(6)
@@ -64,8 +62,8 @@ subroutine make_adjacency_cumulative_vector(n_pts, n_gelts_triangs, v_triang_nod
    !integer(8) visited(MAX_N_PTS), neighbours(MAX_N_PTS)
    integer(8), dimension(:), allocatable :: visited, neighbours
 
-   call integer_alloc_1d(visited, n_pts, 'visited', errco, emsg); RETONERROR(errco);
-   call integer_alloc_1d(neighbours, n_pts, 'neighbours', errco, emsg); RETONERROR(errco);
+   call integer_alloc_1d(visited, n_pts, 'visited', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(neighbours, n_pts, 'neighbours', nberr); RET_ON_NBERR(nberr)
 
    visited = 0
    neighbours = 0
@@ -115,17 +113,16 @@ end subroutine
  !-------------------------------------------------------------------------------
  !  Make adjncy from xadj, num_adj, v_triang_nodes
  !  At end: adjncy(j) is non-zero except possibly for adjncy(n_gelts_triang)
-subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, num_adj, adjncy, errco, emsg)
+subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, num_adj, adjncy, nberr)
 
    use numbatmod
    use alloc
+   type(NBError) nberr
+
    integer(8) n_gelts_triang, n_pts
    integer(8) num_adj
    integer(8) v_triang_nodes(6,n_gelts_triang)
    integer(8) xadj(n_pts+1), adjncy(num_adj)
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
-
 
    integer(8) t_nodes(6)
    integer(8) i, j, k, i1, k1, ind1, ind2, m, m1
@@ -133,7 +130,7 @@ subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, n
    !integer(8) lb2(MAX_N_PTS)
    integer(8), dimension(:), allocatable :: lb2
 
-   call integer_alloc_1d(lb2, n_pts, 'lb2', errco, emsg); RETONERROR(errco);
+   call integer_alloc_1d(lb2, n_pts, 'lb2', nberr); RET_ON_NBERR(nberr)
    ! do i = 1,n_pts
    !    lb2(i)=0
    ! enddo
@@ -177,9 +174,10 @@ subroutine make_adjacency_matrix(n_pts, n_gelts_triang,  v_triang_nodes, xadj, n
 end subroutine
 
  !----------------------------------------------------------------------------
-subroutine check_point_separations(n_pts, vx, vy, errco, emsg)
+subroutine check_point_separations(n_pts, vx, vy, nberr)
    use numbatmod
-   integer(8) n_pts, errco
+   type(NBError) nberr
+   integer(8) n_pts
    double precision vx(*), vy(*)
    character(len=EMSG_LENGTH) emsg
    integer(8) i,j, mi, mj
@@ -211,7 +209,7 @@ subroutine check_point_separations(n_pts, vx, vy, errco, emsg)
    if (minsep .lt. 1e-10) then
       write(emsg,*) 'Minimum FEM node spatial separation seems very small:', minsep, &
          '(x,y)_i = ', vx(mi), vy(mi), '.  (x,y)_j = ', vx(mj), vy(mj)
-      errco = NBERR_BAD_NODE_SEPARATION
+      call nberr%set(NBERR_BAD_NODE_SEPARATION, emsg)
    endif
 
 end subroutine
@@ -219,15 +217,17 @@ end subroutine
  !----------------------------------------------------------------------------
  !  The permutation perm should an actual permutation of 1 to n_pts
  !  Every elt of adjncy except the last should be nonzero (apparently).
-subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, emsg)
+subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, nberr)
    use numbatmod
-   integer(8) errco
+   type(NBError) nberr
    character(len=EMSG_LENGTH) emsg
    integer(8) n_pts
    integer(8) num_adj
    integer(8) adjncy(num_adj), perm(*)
    integer(8) permcheck(n_pts)
    integer(8) found_bad, i
+
+   call nberr%reset()
 
    write(*,*)  'Checking permutation and adjacency invariants:'
    !  Is the permutation actually a permutation (a bijection)? Is every value mapped somewhere?
@@ -247,12 +247,13 @@ subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, e
    if (found_bad .ne. 0) then
       write(emsg,*) 'rebalance_adjaceny_matrix ',  '(in conv_gmsh.f): ', &
          ' Attention, permuted adjacency matrix has unexpected zero values', 'i, adjncy(i) = ', found_bad, adjncy(found_bad)
-      errco=NBERR_BAD_PERMUTATION
       write(*,*) 'Bad permutation. Index ',found_bad,' was mapped to ', permcheck(i), 'times.  Dumping all values.'
       write(*,*) 'i, perm(i)'
       do i = 1,n_pts
          write(*,*) i, perm(i)
       enddo
+      call nberr%set(NBERR_BAD_PERMUTATION, emsg)
+      return
    else
       write(*,*) '  - seems to be a good permutation.'
    endif
@@ -268,12 +269,13 @@ subroutine assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, e
    if (found_bad .ne. 0) then
       write(emsg,*) 'rebalance_adjaceny_matrix ',  '(in conv_gmsh.f): ', &
          ' Attention, permuted adjacency matrix has unexpected zero values', 'i, adjncy(i) = ', found_bad, adjncy(found_bad)
-      errco=NBERR_BAD_ADJACENCY
       write(*,*) 'Bad adjacency matrix, see log. Dumping all values'
       write(*,*) 'i, adjncy(i)'
       do i = 1,num_adj
          write(*,*) i, adjncy(i)
       enddo
+      call nberr%set(NBERR_BAD_ADJACENCY, emsg)
+      return
    else
       write(*,*) '  - seems to be a good adjacency matrix.'
    endif
@@ -283,18 +285,16 @@ end subroutine
 
  !----------------------------------------------------------------------------
  !  Shuffle v_triang_nodes, vx, vy
-subroutine apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy, errco, emsg)
+subroutine apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy, nberr)
    use numbatmod
    use alloc
+   type(NBError) nberr
 
    integer(8) n_gelts_triang, n_pts
    integer(8) perm(MAX_N_PTS)
    integer(8) idfn(n_pts)
    integer(8) v_triang_nodes(6,n_gelts_triang)
    double precision vx(n_pts), vy(n_pts)
-
-   integer(8) errco
-   character(len=EMSG_LENGTH) emsg
 
    !--------------------
 
@@ -305,10 +305,10 @@ subroutine apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_n
    double precision, dimension(:), allocatable :: x_r, y_r
 
 
-   call integer_alloc_1d(invperm, MAX_N_PTS, 'invperm', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(idfn_r, MAX_N_PTS, 'idfn_r', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(x_r, MAX_N_PTS, 'x_r', errco, emsg); RETONERROR(errco)
-   call double_alloc_1d(y_r, MAX_N_PTS, 'y_r', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(invperm, MAX_N_PTS, 'invperm', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(idfn_r, MAX_N_PTS, 'idfn_r', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(x_r, MAX_N_PTS, 'x_r', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(y_r, MAX_N_PTS, 'y_r', nberr); RET_ON_NBERR(nberr)
 
    do i = 1, n_pts
       invperm(perm(i)) = i
@@ -376,13 +376,13 @@ end subroutine
 
 
 subroutine rebalance_adjacency_matrix(n_pts, n_gelts_triang, v_triang_nodes, &
-   xadj, num_adj, adjncy, vx, vy, idfn, assertions_on, errco, emsg)
+   xadj, num_adj, adjncy, vx, vy, idfn, assertions_on, nberr)
 
    use numbatmod
    use alloc
+   type(NBError) nberr
 
-   integer(8) errco, assertions_on
-   character(len=EMSG_LENGTH) emsg
+   integer(8) assertions_on
    integer(8) n_gelts_triang, n_pts
    integer(8) num_adj
    integer(8) v_triang_nodes(6,n_gelts_triang), idfn(n_pts)
@@ -395,18 +395,19 @@ subroutine rebalance_adjacency_matrix(n_pts, n_gelts_triang, v_triang_nodes, &
    integer(8), dimension(:), allocatable:: xls
 
 
-   call integer_alloc_1d(mask, MAX_N_PTS, 'mask', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(perm, MAX_N_PTS, 'perm', errco, emsg); RETONERROR(errco)
-   call integer_alloc_1d(xls, MAX_N_PTS, 'xls', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(mask, MAX_N_PTS, 'mask', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(perm, MAX_N_PTS, 'perm', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(xls, MAX_N_PTS, 'xls', nberr); RET_ON_NBERR(nberr)
 
    call genrcm(n_pts, xadj, adjncy, perm, mask, xls)
 
    if (assertions_on .ne. 0) then
-      call assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, errco, emsg)
-      RETONERROR(errco)
+      call assert_good_adjmat_permutation(n_pts, num_adj, adjncy, perm, nberr)
+      RET_ON_NBERR(nberr)
    endif
 
-   call apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy, errco, emsg)
+   call apply_node_permutations(n_pts, n_gelts_triang, perm, idfn, v_triang_nodes, vx, vy, nberr)
+   RET_ON_NBERR(nberr)
 
 end subroutine
 

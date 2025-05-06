@@ -66,15 +66,15 @@ end
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine csr_length (n_msh_el, n_ddl, neq,  ety_tags, m_eqs, &
+subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_eqs, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
    nonz_max, nonz, max_row_len, debug, errco, emsg)
 
    use numbatmod
    use alloc
 
-   integer(8) n_msh_el, n_ddl, neq
-   integer(8) ety_tags(14,n_msh_el)
+   integer(8) n_msh_elts, n_ddl, neq
+   integer(8) ety_tags(14,n_msh_elts)
    integer(8) m_eqs(3,n_ddl)
 
 
@@ -111,7 +111,7 @@ subroutine csr_length (n_msh_el, n_ddl, neq,  ety_tags, m_eqs, &
    !  Determination of the column indices
 
    nonz = 0
-   do iel=1,n_msh_el                    ! for each element
+   do iel=1,n_msh_elts                    ! for each element
 
       do i_nd=1,NDDL_0_EM               !   and its 14 entities
          i_tag = ety_tags(i_nd, iel)

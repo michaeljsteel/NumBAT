@@ -1,7 +1,7 @@
 #include "numbat_decl.h"
 
  ! !  Storage locations in sequence
- ! !  - tab_N_E_F = table_N_E_F,   shape: 14 x n_msh_el
+ ! !  - tab_N_E_F = table_N_E_F,   shape: 14 x n_msh_elts
  ! !  - table_edges     shape: 4 x n_msh_pts
  ! !
 
@@ -14,14 +14,14 @@
  ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
  ! !
 
-subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+subroutine build_mesh_tables( n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
    mesh_raw, entities, errco, emsg)
 
    use numbatmod
    use alloc
    use class_MeshRaw
 
-   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
+   integer(8) n_msh_elts, n_msh_pts, nodes_per_el, n_ddl
 
    type(MeshRawEM) :: mesh_raw
    type(MeshEntities) :: entities
@@ -44,15 +44,15 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
 
    !  Fills:  tab_N_E_F[1,:]
-   call label_faces (mesh_raw%n_msh_el, entities%elnd_to_mshpt)
+   call label_faces (mesh_raw%n_msh_elts, entities%elnd_to_mshpt)
 
 
    !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
    !  note: each element has 1 face, 3 edges and 10 P3 nodes
-   !  so table_N_E_F = tab_N_E_F has dimensions 14 x n_msh_el
+   !  so table_N_E_F = tab_N_E_F has dimensions 14 x n_msh_elts
 
    !  each element is a face
-   n_face = mesh_raw%n_msh_el
+   n_face = mesh_raw%n_msh_elts
 
    !  Fills: n_edge, table_edge[1..4,:], tab_N_E_F[2:4,:], visited[1:n_msh_pts]
    !  Todo!  move n_edge later in list as an out variable
@@ -60,7 +60,7 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
    !  Fills: remainder of tab_N_E_F[5:,:], visited[1:n_msh_pts], n_msh_pts_3
    !  Todo: move n_msh_pts_p3 later
-   call label_nodes_P3 (n_msh_el, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, mesh_raw%elnd_to_mshpt, &
+   call label_nodes_P3 (n_msh_elts, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, mesh_raw%elnd_to_mshpt, &
       entities%elnd_to_mshpt,  visited)
 
 
@@ -71,10 +71,10 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
 
    ! if (debug .eq. 1) then
-   !    write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
+   !    write(ui_out,*) "py_calc_modes.f: n_msh_pts, n_msh_elts = ", n_msh_pts, n_msh_elts
    !    write(ui_out,*) "py_calc_modes.f: n_msh_pts_p3 = ", n_msh_pts_p3
-   !    write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_el = ", &
-   !       (n_msh_pts - n_edge), n_edge, n_face, n_msh_el
+   !    write(ui_out,*) "py_calc_modes.f: n_vertex, n_edge, n_face,", " n_msh_elts = ", &
+   !       (n_msh_pts - n_edge), n_edge, n_face, n_msh_elts
    !    write(ui_out,*) "py_calc_modes.f: 2D case of the Euler &
    !    & characteristic: V-E+F=1-(number of holes)"
    !    write(ui_out,*) "py_calc_modes.f: Euler characteristic: V - E + F &
@@ -84,13 +84,13 @@ subroutine build_mesh_tables( n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
    !  Fills: entities%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    !  Should be using c_dwork for x_E_F ?
-   call type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%type_nod, mesh_raw%elnd_to_mshpt, &
-      entities%elnd_to_mshpt, visited , entities%type_nod, mesh_raw%v_nd_xy, entities%v_nd_xy )
+   call type_node_edge_face (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%type_nod, mesh_raw%elnd_to_mshpt, &
+      entities%elnd_to_mshpt, visited , entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy )
 
 
    !  Fills: entities%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-   call get_coord_p3 (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%elnd_to_mshpt, mesh_raw%type_nod, &
-      entities%elnd_to_mshpt, entities%type_nod, mesh_raw%v_nd_xy, entities%v_nd_xy , visited)
+   call get_coord_p3 (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%elnd_to_mshpt, mesh_raw%type_nod, &
+      entities%elnd_to_mshpt, entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy , visited)
 
 
 end subroutine

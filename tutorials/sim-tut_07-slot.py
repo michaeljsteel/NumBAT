@@ -11,6 +11,7 @@ sys.path.append(str(Path("../backend")))
 
 import numbat
 import materials
+import nbgmsh
 
 import integration
 from nbtypes import SI_GHz
@@ -53,6 +54,7 @@ mat_slab=materials.make_material("SiO2_2013_Laude")
 mat_ribs=materials.make_material("Si_2016_Smith")
 
 
+refine_fac=.25
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     slot_w=slot_w, rib_w=rib_w, rib_h=rib_h, slab_w=slab_a_x, slab_h=slab_a_y,
     material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_ribs,
@@ -60,6 +62,9 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
 )
 
 #wguide.plot_mesh(prefix)
+gm = nbgmsh.MailData(wguide.mesh_mail_fname)
+gm.plot_mesh('tt')
+
 pl_ref = wguide.get_structure_plotter_refractive_index()
 pl_ref.make_plot_2D(prefix)
 

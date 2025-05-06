@@ -1,8 +1,8 @@
 
-! fills out elts table_N_E_F[2..4, 1_n_msh_el]
+! fills out elts table_N_E_F[2..4, 1_n_msh_elts]
 ! each edge is assigned a unique edge number
 !
-! t_nef[2/3/4,j] = n_msh_el + # of the edge that edge-node is centre of
+! t_nef[2/3/4,j] = n_msh_elts + # of the edge that edge-node is centre of
 
 
 ! table_edge seems to be unused
@@ -17,7 +17,7 @@ subroutine label_edges (mesh_raw, elnd_to_mshpt, n_edge, visited)
    integer(8) n_edge
 
    integer(8) visited(mesh_raw%n_msh_pts)
-   integer(8) elnd_to_mshpt(14,mesh_raw%n_msh_el)
+   integer(8) elnd_to_mshpt(14,mesh_raw%n_msh_elts)
 
    ! ---------------------------------------------
 
@@ -41,18 +41,18 @@ subroutine label_edges (mesh_raw, elnd_to_mshpt, n_edge, visited)
    list_end(1,i) = 1
    list_end(2,i) = 3
 
-   n_face = mesh_raw%n_msh_el
+   n_face = mesh_raw%n_msh_elts
    debug = 0
 
 
    visited= 0
 
    n_edge = 0
-   do i=1,mesh_raw%n_msh_el
+   do i=1,mesh_raw%n_msh_elts
 
       ! for the edge nodes 4,5,6
       do j=4,mesh_raw%nodes_per_el   !  checks some condition on this eleemnt. what is it?
-         if (mesh_raw%is_boundary_node_2(j,i)) then  ! edge node is on a physical bdy
+         if (mesh_raw%is_boundary_node_at_element(j,i)) then  ! edge node is on a physical bdy
 
 !            if (type_nod(elnd_to_mshpt(j,i)) .ne. 0) then  ! edge node is on a physical bdy
 
@@ -64,7 +64,7 @@ subroutine label_edges (mesh_raw, elnd_to_mshpt, n_edge, visited)
             !if (type_nod(elnd_to_mshpt(j1,i)) .eq. 0 .or. &
             !type_nod(elnd_to_mshpt(j2,i)) .eq. 0) then
 
-            if (.not. mesh_raw%is_boundary_node_2(j1,i) .or. .not. mesh_raw%is_boundary_node_2(j2,i)) then
+            if (.not. mesh_raw%is_boundary_node_at_element(j1,i) .or. .not. mesh_raw%is_boundary_node_at_element(j2,i)) then
 
                !TODO: hook up error msg
                write(*,*) "list_edge: elnd_to_mshpt = ", &

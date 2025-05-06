@@ -37,7 +37,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
 
    ui = stdout
 
-   call integer_nalloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', nberr); RET_ON_NBERR(nberr)
 
    row_ind_tmp = 0
 
@@ -45,7 +45,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
    !  Determination of the row indices
 
   n_nonz = 0
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
 
       do i_nd=1,N_ENTITY_PER_EL_AC
          ip = mesh_raw%elnd_to_mshpt(i_nd,iel)
@@ -146,7 +146,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
 
 
    ! Now we know n_nonz
-   !call integer_nalloc_1d(cscmat%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
+   !call integer_alloc_1d(cscmat%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
 
    !cscmat%v_row_ind(1:n_nonz) = row_ind_tmp(1:n_nonz)
 

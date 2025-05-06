@@ -1,17 +1,17 @@
-subroutine MeshEntities_allocate(this, n_msh_el, nberr)
+subroutine MeshEntities_allocate(this, n_msh_elts, nberr)
 
    class(MeshEntities) :: this
-   integer(8) :: n_msh_el, n_ddl_ub
+   integer(8) :: n_msh_elts, n_ddl_ub
    type(NBError) nberr
 
    ! upper bound for this%n_entities
-   n_ddl_ub = 9 * n_msh_el
+   n_ddl_ub = 9 * n_msh_elts
 
    this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
 
-   call double_nalloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_nalloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_nalloc_2d(this%v_tags, 14_8, n_msh_el, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
 
 
    !  Define endpoints of the 3 edges (mid-point) of the reference triangle
@@ -33,7 +33,7 @@ end subroutine
 
 
  ! !  Storage locations in sequence
- ! !  - tab_N_E_F = table_N_E_F,   shape: 14 x n_msh_el
+ ! !  - tab_N_E_F = table_N_E_F,   shape: 14 x n_msh_elts
  ! !  - table_edges     shape: 4 x n_msh_pts
  ! !
 
@@ -63,13 +63,13 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
 
    ui_out = stdout
 
-   call integer_nalloc_1d(visited, this%n_entities, 'visited', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(visited, this%n_entities, 'visited', nberr); RET_ON_NBERR(nberr)
 
    ! Each element has 1 face, 3 edges and 10 P3 nodes
    ! We fill the different rows of v_tags in stages
 
    !  Fills:  v_tags[1,:]
-   call this%count_and_label_faces (mesh_raw%n_msh_el)
+   call this%count_and_label_faces (mesh_raw%n_msh_elts)
 
    !  Fills: n_edge, v_tags[2:4,:], visited[1:n_msh_pts]
    !         table_edge[1..4,:] (unused)
@@ -89,7 +89,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
 end subroutine
 
 
-! fills tb_node_labels[1, 1_n_msh_el]
+! fills tb_node_labels[1, 1_n_msh_elts]
 subroutine MeshEntities_count_and_label_faces (this, n_elts)
 
    class(MeshEntities) :: this
@@ -107,10 +107,10 @@ end
 
 
 ! Counts the edges and
-! fills tb_node_labels[2..4, 1_n_msh_el]
+! fills tb_node_labels[2..4, 1_n_msh_elts]
 ! corresponding to edges 1,2,3 of each element.
 ! Each edge is assigned a unique edge number
-!    n_msh_el + # of the edge that edge-node is the centre of
+!    n_msh_elts + # of the edge that edge-node is the centre of
 ! Where an edge lies between two elements it gets the same label
 ! based on whichever is found first.
 
@@ -140,13 +140,13 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
 
    ! Check that boundary elements are well constructed.
    ! Not sure why this is an issue
-   do iel=1,mesh_raw%n_msh_el  ! for each element
+   do iel=1,mesh_raw%n_msh_elts  ! for each element
 
       ! for its edge nodes 4,5,6
       do jedge=4, P2_NODES_PER_EL
 
          ! if edge node is on a physical bdy
-         if (mesh_raw%is_boundary_node_2(jedge,iel)) then
+         if (mesh_raw%is_boundary_node_at_element(jedge,iel)) then
 
             ! find node indices (1,2,3) of vertices of the edge
             ed_vert_nda = this%edge_ends(1, jedge-3)
@@ -155,7 +155,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
             ! Check that both vertices are also bdy points
             ! (else would be a broken mesh)
 
-            if (.not. mesh_raw%is_boundary_node_2(ed_vert_nda,iel) .or. .not. mesh_raw%is_boundary_node_2(ed_vert_ndb,iel)) then
+            if (.not. mesh_raw%is_boundary_node_at_element(ed_vert_nda,iel) .or. .not. mesh_raw%is_boundary_node_at_element(ed_vert_ndb,iel)) then
 
                write(emsg,*) "list_edge: v_tags = ", &
                   mesh_raw%node_phys_index_by_ref(ed_vert_nda,iel), &
@@ -243,7 +243,7 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
    lab_off = this%n_edges + this%n_faces  ! assigned labels
    lab = 0
 
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
 
       ! find the absolute node indices of this element
       nod_el_p = mesh_raw%elnd_to_mshpt(:, iel)
@@ -391,12 +391,12 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
    visited= 0
 
 
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
 
       ! find the elt's material and its node's locations
       do j=1,P2_NODES_PER_EL
          nd = mesh_raw%elnd_to_mshpt(j,iel)
-         type_n(j) = mesh_raw%v_nd_physindex(nd)
+         type_n(j) = mesh_raw%v_mshpt_physindex(nd)
          el_xy(:,j) = this%v_xy(:,nd)
       enddo
 
@@ -464,7 +464,7 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
    !  The first 4 entries of this%v_tags(*,i) correspond to face and P2 edges and have been done
    row_off = 4
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
 
       ! do inod=1,P2_NODES_PER_EL
       !    el_nodes(inod) = mesh_raw%elnd_to_mshpt(inod,iel)
@@ -486,9 +486,9 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
             visited(nd) = iel
             !inod1 = el_nodes(inod)
             tag = p3_tags(inod)
-            this%v_xy(1, tag) = mesh_raw%v_nd_xy(1, nd)
-            this%v_xy(2, tag) = mesh_raw%v_nd_xy(2, nd)
-            this%v_ety_props(1, tag) = mesh_raw%v_nd_physindex(nd)
+            this%v_xy(1, tag) = mesh_raw%v_mshpt_xy(1, nd)
+            this%v_xy(2, tag) = mesh_raw%v_mshpt_xy(2, nd)
+            this%v_ety_props(1, tag) = mesh_raw%v_mshpt_physindex(nd)
 
             !  Vertex => dimension zero
             this%v_ety_props(2, tag) = 0
@@ -506,18 +506,18 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
             ! The P3 edge nodes are 1/3 and 2/3 along the edge
             !  Endpoints of the edge
             k1 = el_nodes(inod-3)
-            xx1 = mesh_raw%v_nd_xy(1,k1)
-            yy1 = mesh_raw%v_nd_xy(2,k1)
+            xx1 = mesh_raw%v_mshpt_xy(1,k1)
+            yy1 = mesh_raw%v_mshpt_xy(2,k1)
 
             k1 = el_nodes(ip(1,inod-3))
-            xx2 = mesh_raw%v_nd_xy(1,k1)
-            yy2 = mesh_raw%v_nd_xy(2,k1)
+            xx2 = mesh_raw%v_mshpt_xy(1,k1)
+            yy2 = mesh_raw%v_mshpt_xy(2,k1)
 
             dx1 = (xx2-xx1) * one_third
             dy1 = (yy2-yy1) * one_third
 
             !  type of the mid-edge node of the initial P2 mesh
-            ind = mesh_raw%v_nd_physindex(nd)
+            ind = mesh_raw%v_mshpt_physindex(nd)
 
             !  2 nodes per edge (for P3 element)
             do inod2=1,2
@@ -534,16 +534,16 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
       !  Coordinate of the vertices
       k1 = el_nodes(1)
-      xx1 = mesh_raw%v_nd_xy(1,k1)
-      yy1 = mesh_raw%v_nd_xy(2,k1)
+      xx1 = mesh_raw%v_mshpt_xy(1,k1)
+      yy1 = mesh_raw%v_mshpt_xy(2,k1)
 
       k1 = el_nodes(2)
-      xx2 = mesh_raw%v_nd_xy(1,k1)
-      yy2 = mesh_raw%v_nd_xy(2,k1)
+      xx2 = mesh_raw%v_mshpt_xy(1,k1)
+      yy2 = mesh_raw%v_mshpt_xy(2,k1)
 
       k1 = el_nodes(3)
-      xx3 = mesh_raw%v_nd_xy(1,k1)
-      yy3 = mesh_raw%v_nd_xy(2,k1)
+      xx3 = mesh_raw%v_mshpt_xy(1,k1)
+      yy3 = mesh_raw%v_mshpt_xy(2,k1)
 
       !  The tenth node is at the center of the triangle
       !  dimension(P3) = 10
@@ -567,20 +567,20 @@ end
 
 
 
-subroutine MeshEntitiesAC_allocate(this, n_msh_el, nberr)
+subroutine MeshEntitiesAC_allocate(this, n_msh_elts, nberr)
 
    class(MeshEntitiesAC) :: this
-   integer(8) :: n_msh_el, n_ddl_ub
+   integer(8) :: n_msh_elts, n_ddl_ub
    type(NBError) nberr
 
    ! upper bound for this%n_entities
-   n_ddl_ub = 9 * n_msh_el
+   n_ddl_ub = 9 * n_msh_elts
 
    this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
 
-   call double_nalloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_nalloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_nalloc_2d(this%v_tags, 14_8, n_msh_el, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
 
 
    !  Define endpoints of the 3 edges (mid-point) of the reference triangle

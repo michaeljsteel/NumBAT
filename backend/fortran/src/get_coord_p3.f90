@@ -6,18 +6,18 @@
 !  Fills x_N_E_F and type_N_E_F arrays
 !!!!!!!!!!!!!!!!
 
-subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+subroutine get_coord_p3(n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
    elnd_to_mshpt, type_nod, table_N_E_F, &
-   type_N_E_F, v_nd_xy, x_N_E_F, visited)
+   type_N_E_F, v_mshpt_xy, x_N_E_F, visited)
 
 
    implicit none
-   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
-   integer(8) elnd_to_mshpt(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) n_msh_elts, n_msh_pts, nodes_per_el, n_ddl
+   integer(8) elnd_to_mshpt(nodes_per_el,n_msh_elts), table_N_E_F(14,n_msh_elts)
    integer(8) type_nod(n_msh_pts), type_N_E_F(2,n_ddl)
    integer(8) visited(n_ddl)
 
-   double precision v_nd_xy(2,n_msh_pts), x_N_E_F(2,n_ddl)
+   double precision v_mshpt_xy(2,n_msh_pts), x_N_E_F(2,n_ddl)
 
    integer(8) nddl_0
    parameter (nddl_0 = 14)
@@ -54,7 +54,7 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
    !  The first 4 entries of table_N_E_F(*,i) correspond to face and edges and have been done
    mm = 4
-   do iel=1,n_msh_el
+   do iel=1,n_msh_elts
 
       do inod=1,nodes_per_el
          nut0(inod) = elnd_to_mshpt(inod,iel)
@@ -72,8 +72,8 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             visited(k) = iel
             inod1 = nut0(inod)
             inod2 = nut_N_E_F(inod)
-            x_N_E_F(1,inod2) = v_nd_xy(1,inod1)
-            x_N_E_F(2,inod2) = v_nd_xy(2,inod1)
+            x_N_E_F(1,inod2) = v_mshpt_xy(1,inod1)
+            x_N_E_F(2,inod2) = v_mshpt_xy(2,inod1)
             type_N_E_F(1,inod2) = type_nod(inod1)
 
             !  Vertex => dimension zero
@@ -96,11 +96,11 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
             visited(k) = iel
 !  Endpoints of the edge
             k1 = nut0(inod-3)
-            xx1 = v_nd_xy(1,k1)
-            yy1 = v_nd_xy(2,k1)
+            xx1 = v_mshpt_xy(1,k1)
+            yy1 = v_mshpt_xy(2,k1)
             k1 = nut0(ip(1,inod-3))
-            xx2 = v_nd_xy(1,k1)
-            yy2 = v_nd_xy(2,k1)
+            xx2 = v_mshpt_xy(1,k1)
+            yy2 = v_mshpt_xy(2,k1)
             dx1 = (xx2-xx1)/3.0d0
             dy1 = (yy2-yy1)/3.0d0
 
@@ -122,14 +122,14 @@ subroutine get_coord_p3(n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
 
       !  Coordinate of the vertices
       k1 = nut0(1)
-      xx1 = v_nd_xy(1,k1)
-      yy1 = v_nd_xy(2,k1)
+      xx1 = v_mshpt_xy(1,k1)
+      yy1 = v_mshpt_xy(2,k1)
       k1 = nut0(2)
-      xx2 = v_nd_xy(1,k1)
-      yy2 = v_nd_xy(2,k1)
+      xx2 = v_mshpt_xy(1,k1)
+      yy2 = v_mshpt_xy(2,k1)
       k1 = nut0(3)
-      xx3 = v_nd_xy(1,k1)
-      yy3 = v_nd_xy(2,k1)
+      xx3 = v_mshpt_xy(1,k1)
+      yy3 = v_mshpt_xy(2,k1)
 
       !  The tenth node is at the center of the triangle
       !  dimension(P3) = 10

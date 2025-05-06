@@ -4,8 +4,8 @@
 
 ! \alpha = \Omega^2/Energy_aC \int  eta_ijkl d_i u_j^* d_k u_l
 
-subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
-   elnd_to_mshpt, v_nd_xy, n_elt_mats, v_el_material,  &
+subroutine ac_alpha_analytic (n_modes, n_msh_elts, n_msh_pts, &
+   elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material,  &
    eta_ijkl, q_AC, Omega_AC, soln_ac_u, &
    v_ac_mode_energy, v_alpha_r, errco, emsg)
 
@@ -14,12 +14,12 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
    use class_BasisFunctions
 
    integer(8) n_modes, md_i
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) v_el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
+   integer(8) n_msh_elts, n_msh_pts, n_elt_mats
+   integer(8) v_elt_material(n_msh_elts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
 
-   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
    complex(8) Omega_AC(n_modes)
    complex(8) q_AC, v_ac_mode_energy(n_modes)
    complex(8) eta_ijkl(3,3,3,3,n_elt_mats)
@@ -51,14 +51,14 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
    type(BasisFunctions) basfuncs
 
 
-!f2py intent(in) n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
-!f2py intent(in) v_el_material, x, n_elt_mats, eta_ijkl, q_AC
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) v_elt_material, x, n_elt_mats, eta_ijkl, q_AC
 !f2py intent(in) soln_ac_u, debug, Omega_AC, v_ac_mode_energy
 
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-!f2py depend(v_el_material) n_msh_pts
-!f2py depend(v_nd_xy) n_msh_pts
-!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_el
+!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(v_elt_material) n_msh_pts
+!f2py depend(v_mshpt_xy) n_msh_pts
+!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
 !f2py depend(eta_ijkl) n_elt_mats
 !f2py depend(Omega_AC) n_modes
 !f2py depend(v_ac_mode_energy) n_modes
@@ -68,14 +68,14 @@ subroutine ac_alpha_analytic (n_modes, n_msh_el, n_msh_pts, &
    emsg = ""
    call nberr%reset()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    v_alpha = D_ZERO
    z_tmp1 = C_ZERO
 
-   do i_el=1,n_msh_el
-      typ_e = v_el_material(i_el)
+   do i_el=1,n_msh_elts
+      typ_e = v_elt_material(i_el)
 
       call frontend%nodes_at_el(i_el, nds_xy)
 

@@ -1,16 +1,16 @@
 
-subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
+subroutine type_node_edge_face (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
    type_nod, elnd_to_mshpt, table_N_E_F, &
-   visited, type_N_E_F, v_nd_xy, x_E_F)
+   visited, type_N_E_F, v_mshpt_xy, x_E_F)
 
 !!!!!!!!!!!!!!!!
 
    implicit none
-   integer(8) n_msh_el, n_msh_pts, nodes_per_el, n_ddl
+   integer(8) n_msh_elts, n_msh_pts, nodes_per_el, n_ddl
    integer(8) type_nod(n_msh_pts)
-   integer(8) elnd_to_mshpt(nodes_per_el,n_msh_el), table_N_E_F(14,n_msh_el)
+   integer(8) elnd_to_mshpt(nodes_per_el,n_msh_elts), table_N_E_F(14,n_msh_elts)
    integer(8) visited(n_ddl), type_N_E_F(2,n_ddl)
-   double precision v_nd_xy(2,n_msh_pts), x_E_F(2,n_ddl)
+   double precision v_mshpt_xy(2,n_msh_pts), x_E_F(2,n_ddl)
    double precision, parameter :: one_third = 1.d0/3.d0
 
 
@@ -44,14 +44,14 @@ subroutine type_node_edge_face (n_msh_el, n_msh_pts, nodes_per_el, n_ddl, &
    !  enddo
 
 
-   do i=1,n_msh_el
+   do i=1,n_msh_elts
 
       do j=1,nodes_per_el
          j1 = elnd_to_mshpt(j,i)
-         write(*,*) 'badnods', i, j, j1, n_msh_el, nodes_per_el
+         write(*,*) 'badnods', i, j, j1, n_msh_elts, nodes_per_el
          type_n(j) = type_nod(j1)
-         el_xy(1,j) = v_nd_xy(1,j1)
-         el_xy(2,j) = v_nd_xy(2,j1)
+         el_xy(1,j) = v_mshpt_xy(1,j1)
+         el_xy(2,j) = v_mshpt_xy(2,j1)
       enddo
 
       !  an element is a face

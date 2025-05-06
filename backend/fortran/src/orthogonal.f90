@@ -3,7 +3,7 @@
  !  TODO: this does much more than calculate the overlap. It is building fields
  !  Needs understanding and renaming
 
-subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
+subroutine orthogonal (n_modes, n_msh_elts, n_msh_pts, &
    nnodes, nb_typ_el, pp, elnd_to_mshpt, &
    type_el, x, beta1, soln_k1, &
    mat_overlap, overlap_file, PrintAll, &
@@ -12,12 +12,12 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    use numbatmod
 
    integer(8) :: n_modes
-   integer(8) n_msh_el, n_msh_pts, nnodes, nb_typ_el
-   integer(8) type_el(n_msh_el)
-   integer(8) elnd_to_mshpt(nnodes,n_msh_el)
+   integer(8) n_msh_elts, n_msh_pts, nnodes, nb_typ_el
+   integer(8) type_el(n_msh_elts)
+   integer(8) elnd_to_mshpt(nnodes,n_msh_elts)
    double precision x(2,n_msh_pts)
-   complex(8) soln_k1(3,nnodes+7,n_modes,n_msh_el)
-   complex(8) soln_k2(3,nnodes+7,n_modes,n_msh_el)
+   complex(8) soln_k1(3,nnodes+7,n_modes,n_msh_elts)
+   complex(8) soln_k2(3,nnodes+7,n_modes,n_msh_elts)
    complex(8) pp(nb_typ_el)
    complex(8) beta1(n_modes)
    complex(8) beta2(n_modes)
@@ -60,8 +60,8 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
    integer(8) skip, PrintAll
    logical pair_warning
    complex(8) betatmp1(1), betatmp2(1)
-   complex(8) soltmp1(3,nnodes+7,n_msh_el,1)
-   complex(8) soltmp2(3,nnodes+7,n_msh_el,1)
+   complex(8) soltmp1(3,nnodes+7,n_msh_elts,1)
+   complex(8) soltmp2(3,nnodes+7,n_msh_elts,1)
    integer(8) compcount, elcount, nodecount, redo, j2
    double precision val_max_diag, val_max_off
 
@@ -90,7 +90,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
 
    n_curved = 0
 
-   do iel=1,n_msh_el
+   do iel=1,n_msh_elts
       typ_e = type_el(iel)
       do j=1,nnodes
          j1 = elnd_to_mshpt(j,iel)
@@ -274,7 +274,7 @@ subroutine orthogonal (n_modes, n_msh_el, n_msh_pts, &
             beta2(j)  = betatmp2(1)
             beta2(j2) = betatmp1(1)
             do compcount = 1,3
-               do elcount = 1,n_msh_el
+               do elcount = 1,n_msh_elts
                   do nodecount = 1,nnodes+7
                      soltmp1(compcount,nodecount,elcount,1) = soln_k2(compcount,nodecount,j,elcount)
                      soltmp2(compcount,nodecount,elcount,1) = soln_k2(compcount,nodecount,j2,elcount)

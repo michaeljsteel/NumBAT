@@ -70,10 +70,10 @@ module class_TriangleIntegrators
 
    type, public :: PyFrontEnd
 
-      integer(8) n_msh_el
+      integer(8) n_msh_elts
       integer(8) n_msh_pts
       integer(8), dimension(:,:), allocatable :: elnd_to_mshpt
-      double precision, dimension(:,:), allocatable :: v_nd_xy
+      double precision, dimension(:,:), allocatable :: v_mshpt_xy
 
       integer(8) cur_elt
       double precision cur_nds_xy(2, P2_NODES_PER_EL)

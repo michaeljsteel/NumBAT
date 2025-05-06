@@ -38,7 +38,7 @@
  !  lambda_fsw - free space wavelength in m
  !  n_modes - desired number of eigenvectors
  !  n_msh_pts - number of FEM mesh points
- !  n_msh_el  - number of FEM (triang) elements
+ !  n_msh_elts  - number of FEM (triang) elements
  !  n_elt_mats  - number of types of elements (and therefore elements)
  !  v_refindex_n - array of effective index of materials
  !  bloch_vec - in-plane k-vector (normally tiny just to avoid degeneracies)
@@ -47,12 +47,12 @@
  !  v_evals_beta  - array of eigenvalues kz
  !  femsol_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
  !  poln_fracs  - unknown - never used in python
- !  elnd_to_mshpt - 2D array [node_on_elt-1..6][n_msh_el] giving the mesh point mp of each node
- !  Points where v_el_material[mp] is not the same for all 6 nodes must be interface points
- !  v_el_material   - n_msh_el array: material index for each element
- !  v_nd_physindex  - is boundary node?
- !  v_nd_xy  - (2 , n_msh_pts)  x,y coords?
- !  ls_material  - (1, N_DOF_PER_EL, n_msh_el)
+ !  elnd_to_mshpt - 2D array [node_on_elt-1..6][n_msh_elts] giving the mesh point mp of each node
+ !  Points where v_elt_material[mp] is not the same for all 6 nodes must be interface points
+ !  v_elt_material   - n_msh_elts array: material index for each element
+ !  v_mshpt_physindex  - is boundary node?
+ !  v_mshpt_xy  - (2 , n_msh_pts)  x,y coords?
+ !  ls_material  - (1, N_DOF_PER_EL, n_msh_elts)
 
 module calc_em_impl
 
@@ -68,9 +68,9 @@ contains
 
    subroutine calc_em_modes_impl(n_modes, lambda_fsw, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, arp_tol, debug, &
-      mesh_file, n_msh_pts, n_msh_el, n_elt_mats, v_refindex_n, shortrun, &
+      mesh_file, n_msh_pts, n_msh_elts, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_evecs, poln_fracs, &
-      elnd_to_mshpt, v_el_material, v_nd_physindex, v_nd_xy, ls_material, nberr)
+      elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, ls_material, nberr)
 
       integer(8), intent(in) :: n_modes
       double precision, intent(in) :: lambda_fsw, dimscale_in_m, bloch_vec(2)
@@ -80,22 +80,22 @@ contains
       double precision arp_tol
 
       character(len=*), intent(in) :: mesh_file
-      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
+      integer(8), intent(in) :: n_msh_pts,  n_msh_elts, n_elt_mats
 
       complex(8), intent(in) ::  v_refindex_n(n_elt_mats)
       integer(8) :: shortrun
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
-      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_elts)
 
       complex(8), intent(out) :: poln_fracs(4,n_modes)
 
-      integer(8), intent(out) :: v_el_material(n_msh_el)
-      integer(8), intent(out) :: v_nd_physindex(n_msh_pts)
-      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
-      double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
+      integer(8), intent(out) :: v_elt_material(n_msh_elts)
+      integer(8), intent(out) :: v_mshpt_physindex(n_msh_pts)
+      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+      double precision, intent(out) :: v_mshpt_xy(2,n_msh_pts)
 
-      complex(8), intent(out) :: ls_material(1,N_DOF_PER_EL,n_msh_el)
+      complex(8), intent(out) :: ls_material(1,N_DOF_PER_EL,n_msh_elts)
       type(NBError) nberr
 
       ! locals
@@ -137,10 +137,10 @@ contains
 
       !  ----------------------------------------------------------------
 
-      call mesh_raw%allocate(n_msh_pts, n_msh_el, n_elt_mats, nberr)
+      call mesh_raw%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
 
-      call entities%allocate(n_msh_el, nberr)
+      call entities%allocate(n_msh_elts, nberr)
       RET_ON_NBERR(nberr)
 
 
@@ -148,9 +148,9 @@ contains
       call pbcs%allocate(mesh_raw, entities, nberr);
       RET_ON_NBERR(nberr)
 
-      !  Fills:  MeshRawEM: v_nd_xy, v_nd_physindex, v_el_material, elnd_to_mshpt
+      !  Fills:  MeshRawEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-      call mesh_raw%construct_node_tables(mesh_file, dimscale_in_m, nberr);
+      call mesh_raw%construct_mesh_tables(mesh_file, dimscale_in_m, nberr);
       RET_ON_NBERR(nberr)
 
       ! Fills entities
@@ -184,7 +184,7 @@ contains
       dim_krylov = 2*n_modes + n_modes/2 +3
 
 
-      write(ui_out,'(A,i9,A)') '      ', n_msh_el, ' mesh elements'
+      write(ui_out,'(A,i9,A)') '      ', n_msh_elts, ' mesh elements'
       write(ui_out,'(A,i9,A)') '      ', n_msh_pts, ' mesh nodes'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_dof, ' linear equations (cscmat%n_dof)'
       write(ui_out,'(A,i9,A)') '      ', cscmat%n_nonz, ' nonzero elements  (cscmat%n_nonz)'
@@ -205,11 +205,11 @@ contains
       call clock_spare%reset()
 
 
-      call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
+      call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
 
-      call complex_nalloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
 
-      call complex_nalloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
       call solve_arpack_problem( csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
       v_evals_beta, arpack_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
@@ -235,14 +235,14 @@ contains
 
 
       !TODO: does this serve any purpose any more? Just poln_fracs?
-      call mode_energy (n_modes, n_msh_el, n_core, mesh_raw, &
+      call mode_energy (n_modes, n_msh_elts, n_core, mesh_raw, &
       n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
 
 
 
       ! prepare to return data to python end
-      call array_material_EM (n_msh_el, n_elt_mats, v_refindex_n, mesh_raw%el_material, ls_material)
-      call mesh_raw%fill_python_arrays(v_el_material, v_nd_physindex, elnd_to_mshpt, v_nd_xy)
+      call array_material_EM (n_msh_elts, n_elt_mats, v_refindex_n, mesh_raw%v_elt_material, ls_material)
+      call mesh_raw%fill_python_arrays(v_elt_material, v_mshpt_physindex, elnd_to_mshpt, v_mshpt_xy)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -325,9 +325,9 @@ contains
 
    end subroutine
 
-   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_el, n_msh_pts, &
+   subroutine check_orthogonality_of_em_sol(n_modes, n_msh_elts, n_msh_pts, &
       n_elt_mats, pp, elnd_to_mshpt, &
-      v_el_material, v_nd_xy, v_evals_beta, femsol_evecs, &
+      v_elt_material, v_mshpt_xy, v_evals_beta, femsol_evecs, &
    !v_evals_beta_pri, femsol_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
 
@@ -335,16 +335,16 @@ contains
       logical pair_warning
 
       integer(8), intent(in) :: n_modes, debug, ui_out
-      integer(8), intent(in) :: n_msh_pts,  n_msh_el, n_elt_mats
+      integer(8), intent(in) :: n_msh_pts,  n_msh_elts, n_elt_mats
       complex(8) pp(n_elt_mats)
 
-      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_el)
-      integer(8), intent(out) :: v_el_material(n_msh_el)
-      double precision, intent(out) :: v_nd_xy(2,n_msh_pts)
+      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+      integer(8), intent(out) :: v_elt_material(n_msh_elts)
+      double precision, intent(out) :: v_mshpt_xy(2,n_msh_pts)
       double precision vacwavenum_k0
 
       complex(8), target, intent(out) :: v_evals_beta(n_modes)
-      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_el)
+      complex(8), target, intent(out) :: femsol_evecs(3,N_DOF_PER_EL,n_modes,n_msh_elts)
 
       complex(8), dimension(:,:) :: overlap_L
 
@@ -355,7 +355,7 @@ contains
       character(len=FNAME_LENGTH)  overlap_file
 
       !complex(8)  :: v_evals_beta_pri(n_modes)
-      !complex(8)  :: femsol_evecs_pri(3,N_DOF_PER_EL,n_modes,n_msh_el)
+      !complex(8)  :: femsol_evecs_pri(3,N_DOF_PER_EL,n_modes,n_msh_elts)
 
       !  Orthogonal integral
       pair_warning = .false.
@@ -366,8 +366,8 @@ contains
 
       overlap_file = "Orthogonal.txt"
 
-      call orthogonal (n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, n_elt_mats, pp, elnd_to_mshpt, &
-         v_el_material, v_nd_xy, v_evals_beta, femsol_evecs, &
+      call orthogonal (n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, n_elt_mats, pp, elnd_to_mshpt, &
+         v_elt_material, v_mshpt_xy, v_evals_beta, femsol_evecs, &
       !v_evals_beta_pri, femsol_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)
 
@@ -380,7 +380,7 @@ contains
    end subroutine
 
    subroutine report_results_em(debug, ui_out, &
-      n_msh_pts, n_msh_el, &
+      n_msh_pts, n_msh_elts, &
       time1, time2, time_fact, time_arpack, time1_postp, &
       lambda_fsw, e_h_field, bloch_vec, bdy_cdn,  &
       int_max, cmplx_max, cmplx_used,  n_core, n_conv, n_modes, &
@@ -392,7 +392,7 @@ contains
       use numbatmod
 
       integer(8) debug, ui_out, e_h_field, bdy_cdn
-      integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_el
+      integer(8) int_max, cmplx_max, cmplx_used, int_used, real_max,  n_msh_pts, n_msh_elts
       double precision bloch_vec(2), lambda_fsw
       double precision time1, time2, start_time, end_time, time_fact, time_arpack, time1_postp
       integer(8) n_conv, n_modes, n_elt_mats, nonz,  n_core(2), n_dof, dim_krylov
@@ -438,7 +438,7 @@ contains
          !  *   100*(time1_asmbl-time1)/(time2-time1),"%"
          write(26,*)
          write(26,*) "lambda_fsw  = ", lambda_fsw
-         write(26,*) "n_msh_pts, n_msh_el = ", n_msh_pts, n_msh_el
+         write(26,*) "n_msh_pts, n_msh_elts = ", n_msh_pts, n_msh_elts
          write(26,*) "n_dof, bdy_cdn = ", n_dof, bdy_cdn
          if ( E_H_field .eq. FEM_FORMULATION_E) then
             write(26,*) "E_H_field   = ", E_H_field, " (E-Field formulation)"

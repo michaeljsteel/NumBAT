@@ -11,8 +11,8 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
    type(SparseCSC_AC) cscmat
 
 
-   !integer(8), intent(in) :: n_msh_el, n_msh_pts
-   !integer(8), intent(in) ::  elnd_to_mshpt (P2_NODES_PER_EL,mesh_raw%n_msh_el)
+   !integer(8), intent(in) :: n_msh_elts, n_msh_pts
+   !integer(8), intent(in) ::  elnd_to_mshpt (P2_NODES_PER_EL,mesh_raw%n_msh_elts)
 
    integer(8) :: lb(cscmat%n_dof+1)
    integer(8), intent(out) :: nonz_max
@@ -35,7 +35,7 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
    !  Determination of the bandwidths
 
 
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
       do i=1,nddl_0
          ip = mesh_raw%elnd_to_mshpt(i,iel)
          do k=1,3

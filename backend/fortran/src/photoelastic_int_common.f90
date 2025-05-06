@@ -9,8 +9,8 @@
 
 subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_ac_u, ival_p, &
    ival_s, ival_ac, &
-   n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, &
-   n_elt_mats, el_material, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac_u,&
+   n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, &
+   n_elt_mats, v_elt_material, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac_u,&
    v_eps_rel, Q_PE, errco, emsg)
 
    use numbatmod
@@ -19,13 +19,13 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    integer(8) is_curvilinear
    integer(8) nval_em_p, nval_em_s, nval_ac_u, ival_p, ival_s, ival_ac
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) el_material(n_msh_el), debug
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
-   complex(8) soln_em_p(3,P2_NODES_PER_EL,nval_em_p,n_msh_el)
-   complex(8) soln_em_s(3,P2_NODES_PER_EL,nval_em_s,n_msh_el)
-   complex(8) soln_ac_u(3,P2_NODES_PER_EL,nval_ac_u,n_msh_el)
+   integer(8) n_msh_elts, n_msh_pts, n_elt_mats
+   integer(8) v_elt_material(n_msh_elts), debug
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
+   complex(8) soln_em_p(3,P2_NODES_PER_EL,nval_em_p,n_msh_elts)
+   complex(8) soln_em_s(3,P2_NODES_PER_EL,nval_em_s,n_msh_elts)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,nval_ac_u,n_msh_elts)
    complex(8) p_tensor(3,3,3,3,n_elt_mats)
 
    complex(8) beta_ac
@@ -36,6 +36,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    !---------------------------
 
+   type(NBError) nberr
 
    double precision nds_xy(2,P2_NODES_PER_EL)
 
@@ -63,16 +64,16 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    !fo2py intent(in) nval_em_p, nval_em_s, nval_ac_u
    !fo2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !fo2py intent(in) n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, p_tensor, beta_ac, debug
-   !fo2py intent(in) el_material, x, soln_em_p, soln_em_s, soln_ac_u, v_eps_rel
+   !fo2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, p_tensor, beta_ac, debug
+   !fo2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u, v_eps_rel
    !
    ! Need these dependencies to get f2py calling to work
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-   !f2py depend(el_material) n_msh_pts
+   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+   !f2py depend(v_elt_material) n_msh_pts
    !f2py depend(x) n_msh_pts
-   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_el
-   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_el
-   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac_u, n_msh_el
+   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
+   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_elts
+   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac_u, n_msh_elts
    !f2py depend(p_tensor) n_elt_mats
    !f2py depend(v_eps_rel) n_elt_mats
    !
@@ -94,18 +95,19 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    call fill_ival_arrays(v_ival_u, nval_ac_u, ival_ac)
 
    call complex_alloc_4d(basis_overlap, 3*P2_NODES_PER_EL, 3*P2_NODES_PER_EL, 3_8, 3*P2_NODES_PER_EL, &
-      'basis_overlap', errco, emsg)
+      'basis_overlap', nberr)
+      RET_ON_NBERR_UNFOLD(nberr)
 
    Q_PE = D_ZERO
 
 
-   do i_el=1,n_msh_el
-      typ_e = el_material(i_el)
+   do i_el=1,n_msh_elts
+      typ_e = v_elt_material(i_el)
       eps = v_eps_rel(typ_e)
 
       ! find positions of all the P2 nodes for this elt
       do j=1,P2_NODES_PER_EL
-         nds_xy(:, j) = v_nd_xy(:,  elnd_to_mshpt(j,i_el))
+         nds_xy(:, j) = v_mshpt_xy(:,  elnd_to_mshpt(j,i_el))
       enddo
 
       if (is_curvilinear .ne. 0) then

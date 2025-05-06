@@ -7,11 +7,11 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      subroutine array_size (n_msh_pts, n_msh_el, n_modes, &
+      subroutine array_size (n_msh_pts, n_msh_elts, n_modes, &
  int_size, cmplx_size, real_size, n_ddl, errco, emsg)
 
       use numbatmod
-      integer(8), intent(in) :: n_msh_pts, n_msh_el, n_modes
+      integer(8), intent(in) :: n_msh_pts, n_msh_elts, n_modes
 
       integer(8), intent(out) :: int_size, cmplx_size, real_size, n_ddl
 
@@ -63,30 +63,30 @@
       ordre_ls = 0
 
 !  For most of the FEM meshes I have used, I have observed that:
-!  npt is approximately equal to n_msh_el * 2.1
+!  npt is approximately equal to n_msh_elts * 2.1
 
       !  what are npt, n_edge, npt_p3  maening?
 
-      npt = n_msh_el * 3                 !  = 3 n_msh_el
-      n_edge = (npt + n_msh_el) / 2      !  = 2 n_msh_el
-      npt_p3 = npt + n_edge + n_msh_el   !  = 6 n_msh_el
+      npt = n_msh_elts * 3                 !  = 3 n_msh_elts
+      n_edge = (npt + n_msh_elts) / 2      !  = 2 n_msh_elts
+      npt_p3 = npt + n_edge + n_msh_elts   !  = 6 n_msh_elts
       nvect = 2*n_modes + n_modes/2 +3
 
 !  Euler's polyhedron formula (no holes):
 !  V - E + F = 2
 !  V, E, and F are respectively the numbers of vertices (corners), edges and faces (triangles)
 
-!  Since V - E = 2 - n_msh_el and V + E = npt, we have E = n_edge = (npt+n_msh_el-2)/2
+!  Since V - E = 2 - n_msh_elts and V + E = npt, we have E = n_edge = (npt+n_msh_elts-2)/2
 
 
-      n_ddl = n_edge + n_msh_el + npt_p3         !  = 9 n_msh_el
-      n_ddl_max = npt + n_msh_el                 !  = 4 n_msh_el
-      n_dof = 3 * (n_edge + n_msh_el) + npt_p3     !  = 9 n_msh_el
+      n_ddl = n_edge + n_msh_elts + npt_p3         !  = 9 n_msh_elts
+      n_ddl_max = npt + n_msh_elts                 !  = 4 n_msh_elts
+      n_dof = 3 * (n_edge + n_msh_elts) + npt_p3     !  = 9 n_msh_elts
       n_dof_PW = (2*ordre_ls+1)**2                 !  = 1
 
 !  For most of the FEM meshes I have used, I have observed that:
 !  nonz = 34.25 * n_dof
-      nonz = 40 * n_dof                            != 360 n_msh_el
+      nonz = 40 * n_dof                            != 360 n_msh_elts
       nonz_max = nonz                            !TODO: remove nonz and just use nonz_max in this file
 
 !  I have observed that: max_row_len < 200
@@ -97,13 +97,13 @@
       !  A neater approach would be
       !  off =1
       !  ip_type_nod    = off;   off = off + npt
-      !  ip_type_el     = off;   off = off + n_msh_el
-      !  ip_elnd_to_mshpt   = off;   off = off + nnodes * n_msh_el
-      !  ip_table_N_E_F = off;   off = off + 14 * n_msh_el
+      !  ip_type_el     = off;   off = off + n_msh_elts
+      !  ip_elnd_to_mshpt   = off;   off = off + nnodes * n_msh_elts
+      !  ip_table_N_E_F = off;   off = off + 14 * n_msh_elts
       !  ...
 
       !TODO: collect these into a procedure
-      !  taking npt, n_msh_el, n_ddl etc.
+      !  taking npt, n_msh_elts, n_ddl etc.
       !  One for real, complex, int.
 
 
@@ -111,10 +111,10 @@
       ip_type_el  = ip_type_nod + npt
 
       !  pointer to FEM connectivity table
-      ip_elnd_to_mshpt   = ip_type_el       + n_msh_el
-      ip_table_N_E_F = ip_elnd_to_mshpt     + nnodes*n_msh_el
+      ip_elnd_to_mshpt   = ip_type_el       + n_msh_elts
+      ip_table_N_E_F = ip_elnd_to_mshpt     + nnodes*n_msh_elts
 
-      ip_visited     =  ip_table_N_E_F  + 14*n_msh_el
+      ip_visited     =  ip_table_N_E_F  + 14*n_msh_elts
       ip_table_E     = ip_visited       + n_ddl_max
 
       ip_type_N_E_F  =  ip_table_E       + 4*n_edge
@@ -150,11 +150,11 @@
       jp_resid   = jp_workd + 3*n_dof
 
       jp_sol1    = jp_resid + n_dof
-      jp_sol1b   = jp_sol1 + 3*(nnodes+7)*n_modes*n_msh_el
-      jp_sol2    = jp_sol1b + 3*(nnodes+7)*n_modes*n_msh_el
-      jp_sol1_H  = jp_sol2 + 3*(nnodes+7)*n_modes*n_msh_el
-      jp_sol1b_H = jp_sol1_H + 3*nnodes*n_modes*n_msh_el
-      jp_eigen_modes1 = jp_sol1b_H + 3*nnodes*n_modes*n_msh_el
+      jp_sol1b   = jp_sol1 + 3*(nnodes+7)*n_modes*n_msh_elts
+      jp_sol2    = jp_sol1b + 3*(nnodes+7)*n_modes*n_msh_elts
+      jp_sol1_H  = jp_sol2 + 3*(nnodes+7)*n_modes*n_msh_elts
+      jp_sol1b_H = jp_sol1_H + 3*nnodes*n_modes*n_msh_elts
+      jp_eigen_modes1 = jp_sol1b_H + 3*nnodes*n_modes*n_msh_elts
       jp_eigen_modes2 = jp_eigen_modes1 + n_modes + 1
 
       !  Eigenvectors
@@ -217,7 +217,7 @@
 !  write(26,*) "real_size = ", real_size
 !  write(26,*) "int_size_32 = ", int_size_32
 !  write(26,*)
-!  write(26,*) "n_msh_el = ", n_msh_el
+!  write(26,*) "n_msh_elts = ", n_msh_elts
 !  write(26,*) "n_modes = ", n_modes
 !  write(26,*) "nvect = ", nvect
 !  write(26,*) "ordre_ls = ", ordre_ls
@@ -239,11 +239,11 @@
 
 !  Dimension checking, can this actually happen?
 
-      if ((3*n_msh_pts+n_msh_el+nnodes*n_msh_el) .gt. int_size) then
+      if ((3*n_msh_pts+n_msh_elts+nnodes*n_msh_elts) .gt. int_size) then
          write(emsg,*) "py_calc_modes(_AC): ", &
-   "(3*n_msh_pts+n_msh_el+nnodes*n_msh_el) + ", &
+   "(3*n_msh_pts+n_msh_elts+nnodes*n_msh_elts) + ", &
    "n_msh_pts > int_max : ", &
-    (3*n_msh_pts+n_msh_el+nnodes*n_msh_el), int_size, &
+    (3*n_msh_pts+n_msh_elts+nnodes*n_msh_elts), int_size, &
    "increase the size of int_max"
          errco = -2
          return

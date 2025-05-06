@@ -1,6 +1,6 @@
 
 
-!#include "numbat_decl.h"
+#include "numbat_decl.h"
 
 
 ! subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, nberr)
@@ -27,10 +27,10 @@
 
 !    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 !       debug=0
-!       call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_nd_xy, lat_vecs, debug)
+!       call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_mshpt_xy, lat_vecs, debug)
 
-!       call periodic_node(mesh_raw%n_msh_el, mesh_raw%n_msh_pts, &
-!          P2_NODES_PER_EL, mesh_raw%v_nd_physindex, mesh_raw%v_nd_xy, pbcs%iperiod_N, &
+!       call periodic_node(mesh_raw%n_msh_elts, mesh_raw%n_msh_pts, &
+!          P2_NODES_PER_EL, mesh_raw%v_mshpt_physindex, mesh_raw%v_mshpt_xy, pbcs%iperiod_N, &
 !          pbcs%inperiod_N, mesh_raw%elnd_to_mshpt, lat_vecs)
 
 !       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, pbcs%iperiod_N_E_F, &
@@ -121,13 +121,13 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
    integer(8) i, n_dof
    logical is_interior
 
-   call integer_nalloc_2d(this%m_eqs, 3_8, mesh_raw%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_eqs, 3_8, mesh_raw%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
    if(bdy_cdn .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
 
       do i=1,mesh_raw%n_msh_pts
-         is_interior = mesh_raw%v_nd_physindex(i) == 0
+         is_interior = mesh_raw%v_mshpt_physindex(i) == 0
 
          if (is_interior ) then !  each element is associated to 3 interior DOF
             this%m_eqs(1,i) = n_dof + 1
@@ -177,7 +177,7 @@ call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
 
    this%n_nonz=0
 
-   call integer_nalloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', nberr); RET_ON_NBERR(nberr)
 
 
    call this%make_col_ptr_provisional (mesh_raw, n_nonz_max)
@@ -196,7 +196,7 @@ call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call integer_nalloc_1d(iwork, 3*mesh_raw%n_msh_pts, 'iwork', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(iwork, 3*mesh_raw%n_msh_pts, 'iwork', nberr); RET_ON_NBERR(nberr)
 
    call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr,  iwork)
 
@@ -204,9 +204,9 @@ call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
    !call this%dump_csc_arrays()
 
    ! Now we know how big the data arrays are
-   call complex_nalloc_1d(this%mOp_stiff, this%n_nonz, 'cscmat%mOp_stiff', nberr); RET_ON_NBERR(nberr)
+   call complex_alloc_1d(this%mOp_stiff, this%n_nonz, 'cscmat%mOp_stiff', nberr); RET_ON_NBERR(nberr)
 
-   call complex_nalloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', nberr); RET_ON_NBERR(nberr)
+   call complex_alloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', nberr); RET_ON_NBERR(nberr)
 
 
    !  convert from 1-based to 0-based
@@ -293,7 +293,7 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw,  nonz_max)
    !  Determination of the bandwidths
 
 
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
       do i=1,nddl_0
          ip = mesh_raw%elnd_to_mshpt(i,iel)
          do k=1,3
@@ -345,7 +345,7 @@ end
 
  !    write(*,*) 'maf 1'
 
- !    call csr_length (mesh_raw%n_msh_el, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
+ !    call csr_length (mesh_raw%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
  !       this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_row_len, errco, emsg)
  !    RETONERROR(errco)
 
@@ -392,7 +392,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
 
    ui = stdout
 
-   call integer_nalloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(row_ind_tmp, n_nonz_max, 'row_ind_tmp', nberr); RET_ON_NBERR(nberr)
 
    row_ind_tmp = 0
 
@@ -400,7 +400,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
    !  Determination of the row indices
 
    n_nonz = 0
-   do iel=1,mesh_raw%n_msh_el
+   do iel=1,mesh_raw%n_msh_elts
 
       do i_nd=1,N_ENTITY_PER_EL_AC
          ip = mesh_raw%elnd_to_mshpt(i_nd,iel)
@@ -493,8 +493,6 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
       if (row_len .gt. max_row_len) max_row_len = row_len
    enddo
 
-   write(*,*) 'final', max_row_len
-
    ! if ((ipointer+n_nonz) .gt. int_max) then
    !    write(ui,*) "csr_length_AC: (ipointer+nonz) > int_max : ",&
    !    &(ipointer+n_nonz), int_max
@@ -507,7 +505,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
 
 
    ! Now we know n_nonz
-   call integer_nalloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
 
    this%v_row_ind = row_ind_tmp
 

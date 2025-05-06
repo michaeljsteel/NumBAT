@@ -6,13 +6,11 @@ subroutine sort_csr (n_dof, nonz, max_row_len, col_ind, row_ptr, indx)
 
    use numbatmod
    use alloc
+   type (NBError) nberr
 
    integer(8) n_dof, nonz, max_row_len
    integer(8) row_ptr(n_dof+1), col_ind(nonz)
    integer(8) indx(max_row_len)
-
-   integer(8)  :: errco  ! TODO: hook up to function call
-   character(len=EMSG_LENGTH) :: emsg
 
    ! -----------------------------------------------
 
@@ -23,8 +21,8 @@ subroutine sort_csr (n_dof, nonz, max_row_len, col_ind, row_ptr, indx)
 
    ! -----------------------------------------------
 
-   call integer_alloc_1d(arr, max_row_len, 'arr', errco, emsg)
-   call integer_alloc_1d(istack, max_row_len, 'arr', errco, emsg)
+   call integer_alloc_1d(arr, max_row_len, 'arr', nberr)
+   call integer_alloc_1d(istack, max_row_len, 'arr', nberr)
 
 
    do i=1,n_dof

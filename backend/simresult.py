@@ -460,7 +460,7 @@ class EMSimResult(SimResult):
             fm.n_msh_el,
             fm.n_msh_pts,
             fm.elnd_to_mshpt,
-            fm.v_nd_xy,
+            fm.v_mshpt_xy,
             self.eigs_kz,
             self.fem_evecs,
         )

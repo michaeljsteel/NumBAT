@@ -1,5 +1,5 @@
 
-subroutine conv_gmsh(geo_name, assertions_on, errco, emsg)
+subroutine conv_gmsh222(geo_name, assertions_on, errco, emsg)
 
    use numbatmod
 

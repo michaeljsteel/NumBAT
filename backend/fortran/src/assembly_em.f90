@@ -80,7 +80,7 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
 
    errco=0
 
-   call integer_nalloc_1d(i_work, 3*entities%n_entities, 'i_work', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(i_work, 3*entities%n_entities, 'i_work', nberr); RET_ON_NBERR(nberr)
 
    !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
    !  But valpr.f may require the CSC indexing to be 0-based
@@ -100,8 +100,8 @@ subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    n_curved = 0
    z_phase_fact = 1.0
 
-   do i_el=1,mesh_raw%n_msh_el              ! For each element
-      typ_e = mesh_raw%el_material(i_el)    ! Find the material and local material properties
+   do i_el=1,mesh_raw%n_msh_elts              ! For each element
+      typ_e = mesh_raw%v_elt_material(i_el)    ! Find the material and local material properties
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)

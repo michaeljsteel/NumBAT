@@ -5,8 +5,8 @@
 
 ! E = 2 \Omega^2 \int dxdy \rho |u|^2
 
-subroutine AC_mode_energy_quadrature (n_modes, n_msh_el, n_msh_pts, v_nd_xy, &
-   elnd_to_mshpt, n_elt_mats, v_el_material,  &
+subroutine AC_mode_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, v_mshpt_xy, &
+   elnd_to_mshpt, n_elt_mats, v_elt_material,  &
    rho, Omega_AC, soln_ac_u, v_energy_r, errco, emsg)
 
    use numbatmod
@@ -14,11 +14,11 @@ subroutine AC_mode_energy_quadrature (n_modes, n_msh_el, n_msh_pts, v_nd_xy, &
    use class_BasisFunctions
 
    integer(8) n_modes, md_i
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) v_el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
-   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   integer(8) n_msh_elts, n_msh_pts, n_elt_mats
+   integer(8) v_elt_material(n_msh_elts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
    complex(8) Omega_AC(n_modes)
    double precision, dimension(n_modes), intent(out) :: v_energy_r
 
@@ -49,14 +49,14 @@ subroutine AC_mode_energy_quadrature (n_modes, n_msh_el, n_msh_pts, v_nd_xy, &
    double precision t_quadwt, t_qwt
 
 
-!f2py intent(in) n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
-!f2py intent(in) v_el_material, x, n_elt_mats, rho
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) v_elt_material, x, n_elt_mats, rho
 !f2py intent(in) soln_ac_u, debug, Omega_AC
 !
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-!f2py depend(v_el_material) n_msh_pts
-!f2py depend(v_nd_xy) n_msh_pts
-!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_el
+!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(v_elt_material) n_msh_pts
+!f2py depend(v_mshpt_xy) n_msh_pts
+!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
 !f2py depend(Omega_AC) n_modes
 !f2py depend(rho) n_elt_mats
 
@@ -66,13 +66,13 @@ subroutine AC_mode_energy_quadrature (n_modes, n_msh_el, n_msh_pts, v_nd_xy, &
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_el, n_msh_pts, elnd_to_mshpt, v_nd_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    v_energy = C_ZERO
 
-   do i_el=1,n_msh_el
-      typ_e = v_el_material(i_el)
+   do i_el=1,n_msh_elts
+      typ_e = v_elt_material(i_el)
 
       call frontend%nodes_at_el(i_el, el_nds_xy)
 

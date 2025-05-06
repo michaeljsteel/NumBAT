@@ -3,17 +3,17 @@
 !
 
 ! P_z = Re \int_A \dxdy (-2 i \Omega) c_zjkl u_j^* d_k u_l
-subroutine AC_mode_power_int_v2 (n_modes, n_msh_el, n_msh_pts, &
-   elnd_to_mshpt, v_el_material, v_nd_xy, n_elt_mats, &
+subroutine AC_mode_power_int_v2 (n_modes, n_msh_elts, n_msh_pts, &
+   elnd_to_mshpt, v_elt_material, v_mshpt_xy, n_elt_mats, &
    stiffC_zjkl, beta_AC, Omega_AC, soln_ac_u, overlap)
 
    use numbatmod
    integer(8) n_modes, ival
-   integer(8) n_msh_el, n_msh_pts, n_elt_mats
-   integer(8) v_el_material(n_msh_el)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_el)
-   double precision v_nd_xy(2,n_msh_pts)
-   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_el)
+   integer(8) n_msh_elts, n_msh_pts, n_elt_mats
+   integer(8) v_elt_material(n_msh_elts)
+   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   double precision v_mshpt_xy(2,n_msh_pts)
+   complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
    complex(8) Omega_AC(n_modes)
    complex(8) beta_AC
    complex(8), dimension(n_modes) :: overlap
@@ -38,14 +38,14 @@ subroutine AC_mode_power_int_v2 (n_modes, n_msh_el, n_msh_pts, &
 
 !
 !
-!f2py intent(in) n_modes, n_msh_el, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
-!f2py intent(in) v_el_material, x, n_elt_mats, stiffC_zjkl, beta_AC
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) v_elt_material, x, n_elt_mats, stiffC_zjkl, beta_AC
 !f2py intent(in) soln_ac_u, debug, Omega_AC
 !
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_el
-!f2py depend(v_el_material) n_msh_pts
-!f2py depend(v_nd_xy) n_msh_pts
-!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_el
+!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(v_elt_material) n_msh_pts
+!f2py depend(v_mshpt_xy) n_msh_pts
+!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
 !f2py depend(stiffC_zjkl) n_elt_mats
 !f2py depend(Omega_AC) n_modes
 !
@@ -71,13 +71,13 @@ subroutine AC_mode_power_int_v2 (n_modes, n_msh_el, n_msh_pts, &
 !ccccccccccc
 ! Loop over elements - start
 !ccccccccccc
-   do iel=1,n_msh_el
-      typ_e = v_el_material(iel)
+   do iel=1,n_msh_elts
+      typ_e = v_elt_material(iel)
       do j=1,P2_NODES_PER_EL
          j1 = elnd_to_mshpt(j,iel)
          nod_el_p(j) = j1
-         xel(1,j) = v_nd_xy(1,j1)
-         xel(2,j) = v_nd_xy(2,j1)
+         xel(1,j) = v_mshpt_xy(1,j1)
+         xel(2,j) = v_mshpt_xy(2,j1)
       enddo
       do i=1,2
          do j=1,2

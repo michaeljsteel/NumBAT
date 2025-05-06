@@ -50,28 +50,28 @@ contains
 
       this%lworkl = 3 * dim_krylov**2 + 5 * dim_krylov
 
-      call complex_nalloc_2d(this%v_schur, n_dof, dim_krylov, 'v_schur', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_2d(this%v_schur, n_dof, dim_krylov, 'v_schur', nberr); RET_ON_NBERR(nberr)
 
 
       ! A pair of workspace vectors that can switch between real and complex representation
-      call complex_nalloc_1d(this%vect1_z, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
-      call double_nalloc_1d(this%vect1_re, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
-      call double_nalloc_1d(this%vect1_im, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_1d(this%vect1_z, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
+      call double_alloc_1d(this%vect1_re, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
+      call double_alloc_1d(this%vect1_im, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
 
-      call complex_nalloc_1d(this%vect2_z, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
-      call double_nalloc_1d(this%vect2_re, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
-      call double_nalloc_1d(this%vect2_im, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
-
-
+      call complex_alloc_1d(this%vect2_z, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
+      call double_alloc_1d(this%vect2_re, n_dof, 'vect1', nberr); RET_ON_NBERR(nberr)
+      call double_alloc_1d(this%vect2_im, n_dof, 'vect2', nberr); RET_ON_NBERR(nberr)
 
 
-      call complex_nalloc_1d(this%workd, 3*n_dof, 'workd', nberr); RET_ON_NBERR(nberr)
-      call complex_nalloc_1d(this%workl, this%lworkl, 'workl', nberr); RET_ON_NBERR(nberr)
-      call complex_nalloc_1d(this%resid, n_dof, 'resid', nberr); RET_ON_NBERR(nberr)
-      call complex_nalloc_1d(this%eval_ritz, n_modes+1, 'eval_ritz', nberr); RET_ON_NBERR(nberr)
-      call complex_nalloc_1d(this%workev, 3*dim_krylov, 'workev', nberr); RET_ON_NBERR(nberr)
-      call double_nalloc_1d(this%rwork, dim_krylov, 'rwork', nberr); RET_ON_NBERR(nberr)
-      call logical_nalloc_1d(this%arp_select, dim_krylov, 'arp_select', nberr); RET_ON_NBERR(nberr)
+
+
+      call complex_alloc_1d(this%workd, 3*n_dof, 'workd', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_1d(this%workl, this%lworkl, 'workl', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_1d(this%resid, n_dof, 'resid', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_1d(this%eval_ritz, n_modes+1, 'eval_ritz', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_1d(this%workev, 3*dim_krylov, 'workev', nberr); RET_ON_NBERR(nberr)
+      call double_alloc_1d(this%rwork, dim_krylov, 'rwork', nberr); RET_ON_NBERR(nberr)
+      call logical_alloc_1d(this%arp_select, dim_krylov, 'arp_select', nberr); RET_ON_NBERR(nberr)
 
    end subroutine
 
@@ -368,8 +368,8 @@ subroutine solve_arpack_problem (i_base, dim_krylov, n_modes, itermax, arp_tol, 
 
    call vecs%init(n_modes, dim_krylov, n_dof, nberr); RET_ON_NBERR(nberr)
 
-   call double_nalloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
-   call double_nalloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(mOp_stiff_re, n_nonz, 'mOp_stiff_re', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_1d(mOp_stiff_im, n_nonz, 'mOp_stiff_im', nberr); RET_ON_NBERR(nberr)
 
    mOp_stiff_re = dble(cscmat%mOp_stiff)
    mOp_stiff_im = dimag(cscmat%mOp_stiff)

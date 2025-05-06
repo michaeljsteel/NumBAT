@@ -35,9 +35,9 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
    complex(8) evecs_raw(cscmat%n_dof,n_modes)
 
-   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_el)
+   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_elts)
    ! contains the values of the 3 components at P2 interpolation nodes
-   complex(8) evecs_final(3,P2_NODES_PER_EL,n_modes,mesh_raw%n_msh_el)
+   complex(8) evecs_final(3,P2_NODES_PER_EL,n_modes,mesh_raw%n_msh_elts)
    complex(8) v_evals_nu(n_modes) !, v_tmp(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -60,7 +60,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
    ! rescale and sort eigenvalues
 
-   call integer_nalloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(v_eig_index, n_modes, 'v_eig_index', nberr); RET_ON_NBERR(nberr)
 
    do md_i=1,n_modes
       z_beta = sqrt(1.0d0/v_evals_nu(md_i) + shift_omsq) / (2.0d0 * D_PI)
@@ -85,8 +85,8 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
       z_evecs_final_max = 0.0d0 !  value and loc of max field modulus
 
-      do i_el=1,mesh_raw%n_msh_el            ! for each elt
-         typ_e = mesh_raw%el_material(i_el)
+      do i_el=1,mesh_raw%n_msh_elts            ! for each elt
+         typ_e = mesh_raw%v_elt_material(i_el)
 
          mode_comp = D_ZERO
 
@@ -164,7 +164,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
 
       ! !  Normalization so that the maximum field component is 1
-      ! do i_el=1,mesh_raw%n_msh_el
+      ! do i_el=1,mesh_raw%n_msh_elts
       !    do nd_i=1,P2_NODES_PER_EL
       !       i1 = mesh_raw%elnd_to_mshpt(nd_i,i_el)
 

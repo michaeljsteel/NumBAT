@@ -3,7 +3,7 @@
 
  !  On exit:
  !  evecs_raw(*,i) : contains the imaginary and real parts of the evecs_finalution for points such that cscmat%m_eqs(i) /= 0
- !  evecs_final(i) : contains evecs_finalution for all points indexed as evecs_final(xyz_comp, 23 nodes per el, n_modes, n_msh_elts)
+ !  evecs_final(i) : contains evecs_finalution for all points indexed as evecs_final(xyz_comp, 23 nodes per el, n_modes, n_msh_eltsts)
 
  !  This is 2D 3-vector component FEM:
 
@@ -37,9 +37,9 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    type(NBError), intent(out) :: nberr
 
 
-   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_el)          contains the values of the 3 components at P2 interpolation nodes
-   !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_el) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
-   complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_el)
+   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_elts)          contains the values of the 3 components at P2 interpolation nodes
+   !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_elts) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+   complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_elts)
    complex(8) v_evals_beta(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -86,8 +86,8 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
       z_evecs_final_max = D_ZERO   !  value and loc of max field modulus
       !i_evecs_final_max = 0
 
-      do i_el=1,mesh_raw%n_msh_el
-         typ_e = mesh_raw%el_material(i_el)
+      do i_el=1,mesh_raw%n_msh_elts
+         typ_e = mesh_raw%v_elt_material(i_el)
 
          mode_comp = D_ZERO
          val_exp = D_ONE
@@ -350,7 +350,7 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
       j1 = pbcs%iperiod_N_E_F(ety_id)
       if (j1 /= 0) then
          !do k=1,dim_32
-         !  delta_xy_ref(k) = entities.v_nd_xy(k,ety_id) - entities.v_nd_xy(k,j1)
+         !  delta_xy_ref(k) = entities.v_mshpt_xy(k,ety_id) - entities.v_mshpt_xy(k,j1)
          !enddo
          delta_xy_ref = entities%v_xy(:,ety_id) - entities%v_xy(:,j1)
          r_tmp1 = ddot(2, bloch_vec, 1, delta_xy_ref, 1)

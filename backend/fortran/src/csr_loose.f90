@@ -79,15 +79,16 @@ end subroutine
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine csr_length (n_msh_el, n_entty, n_dof,  ety_tags, m_eqs, &
+subroutine csr_length (n_msh_elts, n_entty, n_dof,  ety_tags, m_eqs, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
-   nonz_max, nonz, max_row_len, errco, emsg)
+   nonz_max, nonz, max_row_len, nberr)
 
    use numbatmod
    use alloc
+   type(NBError) nberr
 
-   integer(8) n_msh_el, n_entty, n_dof
-   integer(8) ety_tags(14,n_msh_el)
+   integer(8) n_msh_elts, n_entty, n_dof
+   integer(8) ety_tags(14,n_msh_elts)
    integer(8) m_eqs(3,n_entty)
 
 
@@ -109,13 +110,11 @@ subroutine csr_length (n_msh_el, n_entty, n_dof,  ety_tags, m_eqs, &
    integer(8) row_start2, row_end2, ui, stored
    integer(8) ct
 
-   write(*,*) 'csrlen 1'
-
 
    ui = stdout
 
 
-   call integer_alloc_1d(col_ind_0, nonz_max, 'col_ind_0', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(col_ind_0, nonz_max, 'col_ind_0', nberr); RET_ON_NBERR(nberr)
 
    col_ind_0 = 0
 
@@ -126,7 +125,7 @@ subroutine csr_length (n_msh_el, n_entty, n_dof,  ety_tags, m_eqs, &
 
    write(*,*) 'Total dof is ', n_entty, n_dof, nonz_max
    nonz = 0
-   do k_el=1,n_msh_el                    ! for each element
+   do k_el=1,n_msh_elts                    ! for each element
 
       do i_nd=1,N_ENTITY_PER_EL               !   and its 14 entities
          i_tag = ety_tags(i_nd, k_el)
@@ -173,7 +172,7 @@ subroutine csr_length (n_msh_el, n_entty, n_dof,  ety_tags, m_eqs, &
 
                   if (stored .eq. 0) then ! shouldn't have got here
                      emsg = "csr_length: There is a problem with row/col indexing!"
-                     errco = NBERROR_118
+                     call nberr%set(NBERROR_188, emsg)
                      return
                   endif
 
@@ -272,7 +271,7 @@ subroutine csr_length (n_msh_el, n_entty, n_dof,  ety_tags, m_eqs, &
 
 
    ! Now we know nonz
-   call integer_alloc_1d(col_ind, nonz, 'col_ind', errco, emsg); RETONERROR(errco)
+   call integer_alloc_1d(col_ind, nonz, 'col_ind', nberr); RET_ON_NBERR(nberr)
 
    write(*,*) 'csrlen 6'
 
