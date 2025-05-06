@@ -4,7 +4,7 @@
 
 subroutine construct_fem_node_tables_ac(mesh_file, dimscale_in_m,  &
    n_msh_elts, n_msh_pts, n_elt_mats, &
-    v_mshpt_xy, type_nod, type_el, elnd_to_mshpt, nberr)
+    v_mshpt_xy, type_nod, type_el, m_elnd_to_mshpt, nberr)
 
    use numbatmod
 
@@ -14,7 +14,7 @@ subroutine construct_fem_node_tables_ac(mesh_file, dimscale_in_m,  &
    ! outs
    integer(8) n_msh_elts, n_msh_pts, n_elt_mats
    integer(8) type_nod(n_msh_pts), type_el(n_msh_elts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    double precision v_mshpt_xy(2,n_msh_pts)
 
    type(NBError) nberr
@@ -62,7 +62,7 @@ subroutine construct_fem_node_tables_ac(mesh_file, dimscale_in_m,  &
 !  Connectivity table
    n_elt_mats2 = 1   !  largest index of materials in the file
    do i=1,n_msh_elts
-      read(ui,*) k, (elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), type_el(i)
+      read(ui,*) k, (m_elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), type_el(i)
       j = type_el(i)
       if(n_elt_mats2 .lt. j) n_elt_mats2 = j
       if(j .lt. 0) then

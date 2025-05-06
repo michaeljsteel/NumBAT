@@ -205,7 +205,7 @@ class EMSimulation(Simulation):
             self.eigs_kz,
             self.fem_evecs,
             self.mode_pol,
-            elnd_to_mshpt,
+            m_elnd_to_mshpt,
             type_el,
             node_physindex,
             v_mshpt_xy,
@@ -216,7 +216,7 @@ class EMSimulation(Simulation):
         # TODO: ls_material is just refractive index of each element (13 reps for some reason)
         #       clean up and give to FemMesh
 
-        self.fem_mesh.store_fortran_em_mesh_properties(type_el, node_physindex, elnd_to_mshpt, v_mshpt_xy)
+        self.fem_mesh.store_fortran_em_mesh_properties(type_el, node_physindex, m_elnd_to_mshpt, v_mshpt_xy)
 
     def calc_field_powers(self):
         tstruc = self.structure
@@ -239,7 +239,7 @@ class EMSimulation(Simulation):
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.elnd_to_mshpt,
+                fm.m_elnd_to_mshpt,
                 fm.v_mshpt_xy,
                 self.eigs_kz,
                 self.fem_evecs,
@@ -258,7 +258,7 @@ class EMSimulation(Simulation):
                 self.n_modes,
                 fm.n_msh_el,
                 fm.n_msh_pts,
-                fm.elnd_to_mshpt,
+                fm.m_elnd_to_mshpt,
                 fm.v_mshpt_xy,
                 self.eigs_kz,
                 self.fem_evecs,
@@ -295,7 +295,7 @@ class EMSimulation(Simulation):
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.elnd_to_mshpt,
+                    fm.m_elnd_to_mshpt,
                     fm.v_mshpt_xy,
                     opt_props.n_mats_em,
                     fm.v_el_2_mat_idx,
@@ -446,13 +446,13 @@ class ACSimulation(Simulation):
             #fm.n_msh_pts,           #f2py figures out from arrays
             #fm.n_msh_el,            #f2py figures out from arrays
             fm.node_physindex,  # => fort: type_nod
-            fm.elnd_to_mshpt,       # => fort: elnd_to_mshpt
+            fm.m_elnd_to_mshpt,       # => fort: m_elnd_to_mshpt
             fm.v_el_2_mat_idx,  # => fort: type_el
             fm.v_mshpt_xy,         # => fort: v_mshpt_xy
         )
 
         (
-            elnd_to_mshpt_out,
+            m_elnd_to_mshpt_out,
             type_el_out,
             v_mshpt_xy_out,
             self.eigs_nu,
@@ -460,7 +460,7 @@ class ACSimulation(Simulation):
             self.mode_pol,
         ) = process_fortran_return(resm, "solving for acoustic modes")
 
-        self.fem_mesh.store_fortran_ac_mesh_properties(type_el_out, elnd_to_mshpt_out, v_mshpt_xy_out)
+        self.fem_mesh.store_fortran_ac_mesh_properties(type_el_out, m_elnd_to_mshpt_out, v_mshpt_xy_out)
 
                 # Retrieve the material properties of each mesh point.
         self.ls_material = nb_fortran.array_material_ac(
@@ -500,7 +500,7 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.v_mshpt_xy,
-                    fm.elnd_to_mshpt,
+                    fm.m_elnd_to_mshpt,
                     elastic_props.n_mats_ac,
                     fm.v_el_2_mat_idx,
                     elastic_props.c_IJ,
@@ -522,7 +522,7 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.v_mshpt_xy,
-                    fm.elnd_to_mshpt,
+                    fm.m_elnd_to_mshpt,
                     elastic_props.n_mats_ac,
                     fm.v_el_2_mat_idx,
                     #elastic_props.c_IJ,
@@ -553,7 +553,7 @@ class ACSimulation(Simulation):
                 fm.n_msh_el,
                 fm.n_msh_pts,
                 #fm.n_nodes,
-                fm.elnd_to_mshpt,
+                fm.m_elnd_to_mshpt,
                 fm.v_mshpt_xy,
                 elastic_props.n_mats_ac,
                 fm.v_el_2_mat_idx,
@@ -577,7 +577,7 @@ class ACSimulation(Simulation):
                 fm.n_msh_pts,
                 fm.v_mshpt_xy,
                 #fm.n_nodes,
-                fm.elnd_to_mshpt,
+                fm.m_elnd_to_mshpt,
                 elastic_props.n_mats_ac,
                 fm.v_el_2_mat_idx,
                 elastic_props.rho,
@@ -658,7 +658,7 @@ class ACSimulation(Simulation):
                     self.n_modes,
                     fm.n_msh_el,
                     fm.n_msh_pts,
-                    fm.elnd_to_mshpt,
+                    fm.m_elnd_to_mshpt,
                     fm.v_mshpt_xy,
                     elastic_props.n_mats_ac,
                     fm.v_el_2_mat_idx,
@@ -684,7 +684,7 @@ class ACSimulation(Simulation):
                     fm.n_msh_el,
                     fm.n_msh_pts,
                     fm.v_mshpt_xy,
-                    fm.elnd_to_mshpt,
+                    fm.m_elnd_to_mshpt,
                     elastic_props.n_mats_ac,
                     fm.v_el_2_mat_idx,
                     elastic_props.eta_ijkl,

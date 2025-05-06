@@ -36,9 +36,9 @@
 !               v_col_ptr(N+1)= nonz
 !
 !
-! Tehre is a trick where part of the CSC contructcion is made with a CSR function
+! There is a trick where part of the CSC contsruction is made with a CSR function
 ! with the row/col vectors passed in reverse.
-! The full matrix appeares to be symmetric, so this is ok, and gives a correct CSC format at the conclusion.
+! The full matrix appears to be symmetric, so this is ok, and gives a correct CSC format at the conclusion.
 
 
 
@@ -57,11 +57,24 @@ module class_SparseCSC_AC
    integer(8) n_dof
    integer(8) n_nonz
 
+   ! maps xyz_locdof (local DOF) and mesh_pt to absolute dof
+   ! size: [3, n_msh_pts]
+   ! ranges: [0..n_dof]
+   ! 0 value means no dof is associated with this site and local dof, due to bdy conditions
+   ! natural name would be m_global_dof
    integer(8), dimension(:,:), allocatable :: m_eqs
 
+   ! row indices for each nonzero element in the sparse representation
+   ! size: [n_nonz], ranges: [1..n_dof]
    integer(8), dimension(:), allocatable :: v_row_ind
-   integer(8), dimension(:), allocatable :: v_col_ptr
 
+   ! starting index for each new column in the sparse representation
+   ! size: [<=n_dof+1], ranges: [1..n_dof]
+   integer(8), dimension(:), allocatable ::  v_col_ptr
+
+   ! CSC representation of the FEM stiffness K and mass M matrices
+   ! (not to be confused with elastic stiffness C)
+   ! size: [n_nonz]
    complex(8), dimension(:), allocatable :: mOp_stiff
    complex(8), dimension(:), allocatable :: mOp_mass
 

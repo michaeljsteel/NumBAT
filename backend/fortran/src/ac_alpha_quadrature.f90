@@ -7,7 +7,7 @@
 
 
 subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
-   v_mshpt_xy, elnd_to_mshpt, n_elt_mats, v_elt_material, eta_ijkl, &
+   v_mshpt_xy, m_elnd_to_mshpt, n_elt_mats, v_elt_material, eta_ijkl, &
    q_AC, Omega_AC, soln_ac_u, &
    v_ac_mode_energy, v_alpha_r, errco, emsg)
 
@@ -19,7 +19,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    integer(8) n_modes, ival
    integer(8) n_msh_elts, n_msh_pts,  n_elt_mats
    integer(8) v_elt_material(n_msh_elts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
    double precision v_mshpt_xy(2,n_msh_pts)
 
    complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
@@ -56,11 +56,11 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    double precision t_quadwt, t_qwt
 
-!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt
 !f2py intent(in) v_elt_material, x, n_elt_mats, eta_ijkl, q_AC
 !f2py intent(in) soln_ac_u, debug, Omega_AC, v_ac_mode_energy
 
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
 !f2py depend(v_elt_material) n_msh_pts
 !f2py depend(v_mshpt_xy) n_msh_pts
 !f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
@@ -77,7 +77,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    v_alpha = C_ZERO

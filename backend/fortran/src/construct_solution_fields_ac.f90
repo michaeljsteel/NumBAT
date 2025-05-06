@@ -93,7 +93,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
          call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy)
 
          do nd_i=1,P2_NODES_PER_EL           ! for each of 6 nodes of that elt
-            msh_pt_i = mesh_raw%elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
+            msh_pt_i = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
 
             do nd_xyz=1,3                    ! for each xyz component of this mesh pt
                dof = cscmat%m_eqs(nd_xyz, msh_pt_i)  ! the actual fem dof
@@ -166,7 +166,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
       ! !  Normalization so that the maximum field component is 1
       ! do i_el=1,mesh_raw%n_msh_elts
       !    do nd_i=1,P2_NODES_PER_EL
-      !       i1 = mesh_raw%elnd_to_mshpt(nd_i,i_el)
+      !       i1 = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)
 
 
 

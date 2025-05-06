@@ -3,7 +3,7 @@
 
 subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
    ival_p, ival_s, ival_ac, &
-   n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, &
+   n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, &
    n_elt_mats, v_elt_material, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac_u, &
    v_eps_rel, Q_PE, errco, emsg)
 
@@ -16,7 +16,7 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
    integer(8) nval_em_p, nval_em_s, nval_ac_u, ival_p, ival_s, ival_ac
 
    integer(8) v_elt_material(n_msh_elts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    double precision v_mshpt_xy(2, n_msh_pts)
 
    complex(8) soln_em_p(3, P2_NODES_PER_EL, nval_em_p, n_msh_elts)
@@ -80,10 +80,10 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
 
    !fo2py intent(in) nval_em_p, nval_em_s, nval_ac_u
    !fo2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !fo2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, p_tensor, beta_ac , debug
+   !fo2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt, p_tensor, beta_ac , debug
    !fo2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u, v_eps_rel
 
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
    !f2py depend(v_elt_material) n_msh_pts
    !f2py depend(x) n_msh_pts
    !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
@@ -126,7 +126,7 @@ subroutine photoelastic_int_curvilinear_elts (nval_em_p, nval_em_s, nval_ac_u, &
 
       ! find positions of all the P2 nodes for this elt
       do j=1,P2_NODES_PER_EL
-         nds_xy(:, j) = v_mshpt_xy(:,  elnd_to_mshpt(j,i_el))
+         nds_xy(:, j) = v_mshpt_xy(:,  m_elnd_to_mshpt(j,i_el))
       enddo
 
       is_curved = log_is_curved_elem_tri (P2_NODES_PER_EL, nds_xy)

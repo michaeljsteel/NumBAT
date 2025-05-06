@@ -78,7 +78,7 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
       endif
 
       do ety_j=1,P2_NODES_PER_EL  ! iterating columns
-         msh_pt_j = mesh_raw%elnd_to_mshpt(ety_j,i_el)
+         msh_pt_j = mesh_raw%m_elnd_to_mshpt(ety_j,i_el)
 
          do dof_j=1,3
             eqn_j = cscmat%m_eqs(dof_j,msh_pt_j)
@@ -93,7 +93,7 @@ subroutine assembly_ac (i_base, shift_omsq, q_ac, rho, c_tensor, &
                enddo
 
                do ety_i=1,P2_NODES_PER_EL   ! iterating rows
-                  msh_pt_i = mesh_raw%elnd_to_mshpt(ety_i,i_el)
+                  msh_pt_i = mesh_raw%m_elnd_to_mshpt(ety_i,i_el)
 
                   do dof_i=1,3
                      eqn_i = cscmat%m_eqs(dof_i,msh_pt_i)

@@ -44,24 +44,24 @@ subroutine AnalyticIntegrator_build_transforms_at(this, nds_xy, nberr)
 end subroutine
 
 
-subroutine PyFrontEnd_init_from_py(this, n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+subroutine PyFrontEnd_init_from_py(this, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
 
    class(PyFrontEnd) this
    type(NBError), intent(out) :: nberr
 
    integer(8) n_msh_elts
    integer(8) n_msh_pts
-   integer(8) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    double precision:: v_mshpt_xy(2, n_msh_pts)
 
 
    call nberr%reset()
 
-   call this%init_from_py2(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+   call this%init_from_py2(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
 
 end subroutine
 
-subroutine PyFrontEnd_init_from_py2(this, n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+subroutine PyFrontEnd_init_from_py2(this, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
 
    use numbatmod
    class(PyFrontEnd) this
@@ -69,10 +69,10 @@ subroutine PyFrontEnd_init_from_py2(this, n_msh_elts, n_msh_pts, elnd_to_mshpt, 
    type(NBError) nberr
    integer(8) n_msh_elts
    integer(8) n_msh_pts
-   integer(8) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    double precision:: v_mshpt_xy(2, n_msh_pts)
 
-   call integer_alloc_2d(this%elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'elnd_to_mshpt', nberr);
+   call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'm_elnd_to_mshpt', nberr);
    RET_ON_NBERR(nberr)
 
    call double_alloc_2d(this%v_mshpt_xy, 2_8, n_msh_pts, 'v_mshpt_xy', nberr);
@@ -80,7 +80,7 @@ subroutine PyFrontEnd_init_from_py2(this, n_msh_elts, n_msh_pts, elnd_to_mshpt, 
 
    this%n_msh_pts = n_msh_pts
    this%n_msh_elts = n_msh_elts
-   this%elnd_to_mshpt = elnd_to_mshpt
+   this%m_elnd_to_mshpt = m_elnd_to_mshpt
    this%v_mshpt_xy = v_mshpt_xy
 
 end subroutine
@@ -93,7 +93,7 @@ subroutine PyFrontEnd_nodes_at_el(this, i_el, nds_xy)
 
 
    do j=1,P2_NODES_PER_EL
-      nds_xy(:, j) = this%v_mshpt_xy(:, this%elnd_to_mshpt(j,i_el))
+      nds_xy(:, j) = this%v_mshpt_xy(:, this%m_elnd_to_mshpt(j,i_el))
    enddo
 
    this%cur_elt = i_el

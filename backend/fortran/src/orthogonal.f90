@@ -4,7 +4,7 @@
  !  Needs understanding and renaming
 
 subroutine orthogonal (n_modes, n_msh_elts, n_msh_pts, &
-   nnodes, nb_typ_el, pp, elnd_to_mshpt, &
+   nnodes, nb_typ_el, pp, m_elnd_to_mshpt, &
    type_el, x, beta1, soln_k1, &
    mat_overlap, overlap_file, PrintAll, &
    pair_warning, k_0)
@@ -14,7 +14,7 @@ subroutine orthogonal (n_modes, n_msh_elts, n_msh_pts, &
    integer(8) :: n_modes
    integer(8) n_msh_elts, n_msh_pts, nnodes, nb_typ_el
    integer(8) type_el(n_msh_elts)
-   integer(8) elnd_to_mshpt(nnodes,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(nnodes,n_msh_elts)
    double precision x(2,n_msh_pts)
    complex(8) soln_k1(3,nnodes+7,n_modes,n_msh_elts)
    complex(8) soln_k2(3,nnodes+7,n_modes,n_msh_elts)
@@ -93,7 +93,7 @@ subroutine orthogonal (n_modes, n_msh_elts, n_msh_pts, &
    do iel=1,n_msh_elts
       typ_e = type_el(iel)
       do j=1,nnodes
-         j1 = elnd_to_mshpt(j,iel)
+         j1 = m_elnd_to_mshpt(j,iel)
          nod_el_p(j) = j1
          xel(1,j) = x(1,j1)
          xel(2,j) = x(2,j1)

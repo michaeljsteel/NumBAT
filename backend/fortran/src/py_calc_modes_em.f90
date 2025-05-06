@@ -47,7 +47,7 @@
  !  v_evals_beta  - array of eigenvalues kz
  !  femsol_evecs   - 4-dim array of solutions [field comp, node of element (1..13)?!, eigvalue, element number] (strange ordering)
  !  poln_fracs  - unknown - never used in python
- !  elnd_to_mshpt - 2D array [node_on_elt-1..6][n_msh_elts] giving the mesh point mp of each node
+ !  m_elnd_to_mshpt - 2D array [node_on_elt-1..6][n_msh_elts] giving the mesh point mp of each node
  !  Points where v_elt_material[mp] is not the same for all 6 nodes must be interface points
  !  v_elt_material   - n_msh_elts array: material index for each element
  !  v_mshpt_physindex  - is boundary node?
@@ -70,7 +70,7 @@ contains
       E_H_field, bdy_cdn, itermax, arp_tol, debug, &
       mesh_file, n_msh_pts, n_msh_elts, n_elt_mats, v_refindex_n, shortrun, &
       v_evals_beta, femsol_evecs, poln_fracs, &
-      elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, ls_material, nberr)
+      m_elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, ls_material, nberr)
 
       integer(8), intent(in) :: n_modes
       double precision, intent(in) :: lambda_fsw, dimscale_in_m, bloch_vec(2)
@@ -92,7 +92,7 @@ contains
 
       integer(8), intent(out) :: v_elt_material(n_msh_elts)
       integer(8), intent(out) :: v_mshpt_physindex(n_msh_pts)
-      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+      integer(8), intent(out) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
       double precision, intent(out) :: v_mshpt_xy(2,n_msh_pts)
 
       complex(8), intent(out) :: ls_material(1,N_DOF_PER_EL,n_msh_elts)
@@ -148,7 +148,7 @@ contains
       call pbcs%allocate(mesh_raw, entities, nberr);
       RET_ON_NBERR(nberr)
 
-      !  Fills:  MeshRawEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt
+      !  Fills:  MeshRawEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
       call mesh_raw%construct_mesh_tables(mesh_file, dimscale_in_m, nberr);
       RET_ON_NBERR(nberr)
@@ -242,7 +242,7 @@ contains
 
       ! prepare to return data to python end
       call array_material_EM (n_msh_elts, n_elt_mats, v_refindex_n, mesh_raw%v_elt_material, ls_material)
-      call mesh_raw%fill_python_arrays(v_elt_material, v_mshpt_physindex, elnd_to_mshpt, v_mshpt_xy)
+      call mesh_raw%fill_python_arrays(v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -326,7 +326,7 @@ contains
    end subroutine
 
    subroutine check_orthogonality_of_em_sol(n_modes, n_msh_elts, n_msh_pts, &
-      n_elt_mats, pp, elnd_to_mshpt, &
+      n_elt_mats, pp, m_elnd_to_mshpt, &
       v_elt_material, v_mshpt_xy, v_evals_beta, femsol_evecs, &
    !v_evals_beta_pri, femsol_evecs_pri, &
       overlap_L, overlap_file, debug, ui_out, pair_warning, vacwavenum_k0, errco, emsg)
@@ -338,7 +338,7 @@ contains
       integer(8), intent(in) :: n_msh_pts,  n_msh_elts, n_elt_mats
       complex(8) pp(n_elt_mats)
 
-      integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+      integer(8), intent(out) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
       integer(8), intent(out) :: v_elt_material(n_msh_elts)
       double precision, intent(out) :: v_mshpt_xy(2,n_msh_pts)
       double precision vacwavenum_k0
@@ -366,7 +366,7 @@ contains
 
       overlap_file = "Orthogonal.txt"
 
-      call orthogonal (n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, n_elt_mats, pp, elnd_to_mshpt, &
+      call orthogonal (n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, n_elt_mats, pp, m_elnd_to_mshpt, &
          v_elt_material, v_mshpt_xy, v_evals_beta, femsol_evecs, &
       !v_evals_beta_pri, femsol_evecs_pri,
          overlap_L, overlap_file, debug, pair_warning, vacwavenum_k0)

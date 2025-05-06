@@ -71,7 +71,6 @@ contains
 
       read(ui_in,'(a5)') str_in      !  $EndNodes
 
-
       !  Read elements
       read(ui_in,'(a5)') str_in      !  $Elements
       read(ui_in,*) n_msh_elts           !  Number of elements

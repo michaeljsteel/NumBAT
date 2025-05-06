@@ -69,6 +69,7 @@ elif ccomp.get_id() == 'intel-llvm'   # intel on linux
     add_global_arguments(['-Wno-format', '-Wno-misleading-indentation' ], language: 'c',)   # numpy f2py has bad format strings that do no harm
 
 else  # gcc on linux and mac
+  #add_global_arguments(['-fimplicit-none', '-std=f2023', '-fall-intrinsics'], language: 'fortran',)
     add_global_arguments(['-fimplicit-none'], language: 'fortran',)
     add_global_arguments(['-Wno-format'], language: 'c',)   # numpy f2py has bad format strings that do no harm
 endif

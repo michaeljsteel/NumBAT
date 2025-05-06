@@ -48,7 +48,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
    do iel=1,mesh_raw%n_msh_elts
 
       do i_nd=1,N_ENTITY_PER_EL_AC
-         ip = mesh_raw%elnd_to_mshpt(i_nd,iel)
+         ip = mesh_raw%m_elnd_to_mshpt(i_nd,iel)
 
          do i_dof=1,3
             ind_ip = cscmat%m_eqs(i_dof,ip)
@@ -57,7 +57,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
                row_end = cscmat%v_col_ptr(ind_ip+1) - 1
 
                do j_nd=1,N_ENTITY_PER_EL_AC
-                  jp = mesh_raw%elnd_to_mshpt(j_nd,iel)
+                  jp = mesh_raw%m_elnd_to_mshpt(j_nd,iel)
 
                   do j_dof=1,3
                      ind_jp = cscmat%m_eqs(j_dof,jp)

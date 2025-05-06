@@ -28,7 +28,7 @@
       integer(8) ltrav
 
 !  Declare the pointers of the integer(8) super-vector
-      integer(8) ip_type_nod, ip_type_el, ip_elnd_to_mshpt
+      integer(8) ip_type_nod, ip_type_el, ip_m_elnd_to_mshpt
       integer(8) ip_table_E, ip_table_N_E_F, ip_visited
       integer(8) ip_type_N_E_F, ip_eq
       integer(8) ip_period_N, ip_nperiod_N
@@ -98,7 +98,7 @@
       !  off =1
       !  ip_type_nod    = off;   off = off + npt
       !  ip_type_el     = off;   off = off + n_msh_elts
-      !  ip_elnd_to_mshpt   = off;   off = off + nnodes * n_msh_elts
+      !  ip_m_elnd_to_mshpt   = off;   off = off + nnodes * n_msh_elts
       !  ip_table_N_E_F = off;   off = off + 14 * n_msh_elts
       !  ...
 
@@ -111,8 +111,8 @@
       ip_type_el  = ip_type_nod + npt
 
       !  pointer to FEM connectivity table
-      ip_elnd_to_mshpt   = ip_type_el       + n_msh_elts
-      ip_table_N_E_F = ip_elnd_to_mshpt     + nnodes*n_msh_elts
+      ip_m_elnd_to_mshpt   = ip_type_el       + n_msh_elts
+      ip_table_N_E_F = ip_m_elnd_to_mshpt     + nnodes*n_msh_elts
 
       ip_visited     =  ip_table_N_E_F  + 14*n_msh_elts
       ip_table_E     = ip_visited       + n_ddl_max

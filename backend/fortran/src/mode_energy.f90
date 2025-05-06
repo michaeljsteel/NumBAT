@@ -68,7 +68,7 @@ subroutine mode_energy (nval, nel,  n_core, &
 
       typ_e = mesh_raw%v_elt_material(iel)
       do inode=1,P2_NODES_PER_EL
-         global = mesh_raw%elnd_to_mshpt(inode,iel)
+         global = mesh_raw%m_elnd_to_mshpt(inode,iel)
          nod_el_p(inode) = global
          xel(1,inode) = mesh_raw%v_mshpt_xy(1,global)
          xel(2,inode) = mesh_raw%v_mshpt_xy(2,global)

@@ -31,7 +31,7 @@ subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entiti
 
       call periodic_node(mesh_raw%n_msh_elts, mesh_raw%n_msh_pts, &
          P2_NODES_PER_EL, mesh_raw%v_mshpt_physindex, mesh_raw%v_mshpt_xy, pbcs%iperiod_N, &
-         pbcs%inperiod_N, mesh_raw%elnd_to_mshpt, lat_vecs)
+         pbcs%inperiod_N, mesh_raw%m_elnd_to_mshpt, lat_vecs)
 
       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, pbcs%iperiod_N_E_F, &
          pbcs%inperiod_N_E_F, lat_vecs)

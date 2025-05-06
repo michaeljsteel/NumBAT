@@ -6,7 +6,7 @@
  !  n_msh_elts:   number of (triang) elements in mesh
  !  n_v_elt_material:  number of types of material
  !  v_mshpt_physindex:    ??
- !  elnd_to_mshpt:
+ !  m_elnd_to_mshpt:
  !  v_elt_material:
  !  v_mshpt_xy
  !  v_evals_nu:  eigen frequencies nu=omega/(2D_PI) for each mode
@@ -29,7 +29,7 @@ contains
       bdy_cdn, itermax, arp_tol, &
       symmetry_flag,  c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_elts,n_elt_mats, &
-      elnd_to_mshpt, v_elt_material, v_mshpt_physindex,  v_mshpt_xy, &
+      m_elnd_to_mshpt, v_elt_material, v_mshpt_physindex,  v_mshpt_xy, &
       v_evals_nu, femsol_ac, poln_fracs, nberr)
 
 
@@ -53,7 +53,7 @@ contains
       integer(8), intent(in) :: v_mshpt_physindex(n_msh_pts)
 
       integer(8), intent(inout) :: v_elt_material(n_msh_elts)
-      integer(8), intent(inout) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+      integer(8), intent(inout) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
 
       double precision, intent(inout) ::  v_mshpt_xy(2,n_msh_pts)
 
@@ -102,14 +102,14 @@ contains
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
          call construct_fem_node_tables_ac (mesh_file, dimscale_in_m,  n_msh_elts, n_msh_pts, &
-         n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt, nberr)
+         n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt, nberr)
          RET_ON_NBERR(nberr)
 
          call mesh_raw%construct_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
          call mesh_raw%construct_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
-         v_elt_material, elnd_to_mshpt);
+         v_elt_material, m_elnd_to_mshpt);
       endif
 
 

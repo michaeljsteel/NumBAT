@@ -2,7 +2,7 @@
  ! analytic expressions for basis function overlaps on linear elements.
  !
 subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
-    nel, npt, elnd_to_mshpt, type_el, x,&
+    nel, npt, m_elnd_to_mshpt, type_el, x,&
     &nb_typ_el, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac,&
     &eps_lst, overlap, errco, emsg)
 
@@ -11,7 +11,7 @@ subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, 
        integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
        integer(8) nel, npt, nb_typ_el
        integer(8) type_el(nel), debug
-       integer(8) elnd_to_mshpt(P2_NODES_PER_EL,nel)
+       integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,nel)
        double precision x(2,npt)
        complex(8) soln_em_p(3,P2_NODES_PER_EL,nval_em_p,nel)
        complex(8) soln_em_s(3,P2_NODES_PER_EL,nval_em_s,nel)
@@ -60,11 +60,11 @@ subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, 
        debug = 0
        !fo2py intent(in) nval_em_p, nval_em_s, nval_ac
        !fo2py intent(in) ival_p, ival_s, ival_ac, nb_typ_el
-       !fo2py intent(in) nel, npt, P2_NODES_PER_EL, elnd_to_mshpt, p_tensor, beta_ac, debug
+       !fo2py intent(in) nel, npt, P2_NODES_PER_EL, m_elnd_to_mshpt, p_tensor, beta_ac, debug
        !fo2py intent(in) type_el, x, soln_em_p, soln_em_s, soln_ac, eps_lst
        !
        ! Need these dependencies to get f2py calling to work
-       !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, nel
+       !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, nel
        !f2py depend(type_el) npt
        !f2py depend(x) npt
        !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, nel
@@ -115,7 +115,7 @@ subroutine photoelastic_int_linear_elts (nval_em_p, nval_em_s, nval_ac, ival_p, 
        do iel=1,nel
           typ_e = type_el(iel)
           do j=1,P2_NODES_PER_EL
-             j1 = elnd_to_mshpt(j,iel)
+             j1 = m_elnd_to_mshpt(j,iel)
              xel(1,j) = x(1,j1)
              xel(2,j) = x(2,j1)
           enddo

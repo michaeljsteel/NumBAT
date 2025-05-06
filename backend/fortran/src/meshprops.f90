@@ -36,7 +36,7 @@ module class_MeshRaw
       ! .mail elt data, but transposed: tn[i,j] = ith node of elt j
       !  tn[1..3,j] = vertex nodes, [4..6, j] edge nodes
       ! ranges: [1..n_msh_pts]
-      integer(8), dimension(:,:), allocatable :: elnd_to_mshpt
+      integer(8), dimension(:,:), allocatable :: m_elnd_to_mshpt
 
    contains
 
@@ -154,7 +154,7 @@ module class_MeshRaw
       ! .mail elt data, but transposed: tn[i,j] = ith node of elt j
       !  tn[1..3,j] = vertex nodes, [4..6, j] edge nodes
 
-      integer(8), dimension(:,:), allocatable :: elnd_to_mshpt
+      integer(8), dimension(:,:), allocatable :: m_elnd_to_mshpt
 
    contains
 
@@ -162,8 +162,9 @@ module class_MeshRaw
       !final :: MeshRawEM_destructor
 
       procedure :: find_nodes_for_elt => MeshRawAC_find_nodes_for_elt
+      procedure :: is_boundary_mesh_point => MeshRawAC_is_boundary_mesh_point
+
       !procedure :: fill_python_arrays => MeshRawEM_fill_python_arrays
-      !procedure :: is_boundary_mesh_point => MeshRawEM_is_boundary_mesh_point
       !procedure :: is_boundary_node_at_element => MeshRawEM_is_boundary_node_at_element
 !
 !      procedure :: node_phys_index_by_ref => MeshRawEM_node_phys_index_by_ref

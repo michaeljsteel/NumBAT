@@ -3,12 +3,12 @@
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
  ! The z-component of the E-field is not normalised
 
-subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, elnd_to_mshpt, &
+subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, &
  v_mshpt_xy, v_beta, soln_k1, soln_H1)
 
    use numbatmod
    integer(8) n_modes, n_msh_elts, n_msh_pts
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
    double precision v_mshpt_xy(2,n_msh_pts)
    complex(8) soln_k1(3,P2_NODES_PER_EL+7,n_modes,n_msh_elts)
    complex(8) soln_H1(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
@@ -34,10 +34,10 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, elnd_to_mshpt, 
    integer(8), parameter :: ZCOMP = 3
 
    !f2py intent(in) k_0, n_modes, n_msh_elts, n_msh_pts
-   !f2py intent(in) P2_NODES_PER_EL, elnd_to_mshpt
+   !f2py intent(in) P2_NODES_PER_EL, m_elnd_to_mshpt
    !f2py intent(in) x, v_beta, soln_k1
    !
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
    !f2py depend(x) n_msh_pts
    !f2py depend(v_beta) n_modes
    !f2py depend(soln_k1) P2_NODES_PER_EL, n_modes, n_msh_elts
@@ -58,7 +58,7 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, elnd_to_mshpt, 
       beta1 = v_beta(ival)
       do iel=1,n_msh_elts
          do j=1,P2_NODES_PER_EL
-            j1 = elnd_to_mshpt(j,iel)
+            j1 = m_elnd_to_mshpt(j,iel)
             nod_el_p(j) = j1
             xel(1,j) = v_mshpt_xy(1,j1)
             xel(2,j) = v_mshpt_xy(2,j1)

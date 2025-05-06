@@ -7,14 +7,14 @@
 !       = 2 eps_0 \int dV eps_r |E|^2
 
 subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
-   elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material, &
+   m_elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material, &
    v_refindex, soln_em_e, m_energy, errco, emsg)
 
    use numbatmod
    use class_TriangleIntegrators
 
    integer(8) n_modes, n_msh_elts, n_msh_pts
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
    double precision v_mshpt_xy(2,n_msh_pts)
    integer(8) n_elt_mats
    integer(8) v_elt_material(n_msh_elts)
@@ -46,7 +46,7 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    double precision t_quadwt
 
 
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
 !f2py depend(v_mshpt_xy) n_msh_pts
 !f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_elts
 !f2py depend(v_refindex) n_elt_mats
@@ -62,7 +62,7 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    call quadint%setup_reference_quadratures()
 
-   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    do i_el=1,n_msh_elts

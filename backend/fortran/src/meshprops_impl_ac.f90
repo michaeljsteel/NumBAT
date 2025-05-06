@@ -14,7 +14,7 @@ subroutine MeshRawAC_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
    call integer_alloc_1d(this%v_mshpt_physindex, n_msh_pts, 'v_mshpt_physindex', nberr); RET_ON_NBERR(nberr)
 
-   call integer_alloc_2d(this%elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'elnd_to_mshpt', nberr);
+   call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'm_elnd_to_mshpt', nberr);
    RET_ON_NBERR(nberr)
 
 end subroutine
@@ -22,19 +22,19 @@ end subroutine
 
  ! Seems identical to the EM version.
 subroutine MeshRawAC_construct_mesh_tables_from_py(this, &
-   v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt)
+   v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt)
 
    class(MeshRawAC) :: this
 
    integer(8) :: v_mshpt_physindex(this%n_msh_pts)
    double precision :: v_mshpt_xy(2, this%n_msh_pts)
    integer(8) :: v_elt_material(this%n_msh_elts)
-   integer(8) :: elnd_to_mshpt(P2_NODES_PER_EL, this%n_msh_elts)
+   integer(8) :: m_elnd_to_mshpt(P2_NODES_PER_EL, this%n_msh_elts)
 
    this%v_mshpt_physindex = v_mshpt_physindex
    this%v_mshpt_xy = v_mshpt_xy
    this%v_elt_material = v_elt_material
-   this%elnd_to_mshpt = elnd_to_mshpt
+   this%m_elnd_to_mshpt = m_elnd_to_mshpt
 
    ! do i=1,this%n_msh_elts
    !    write(*,*) 'eltmat', i, v_elt_material(i)
@@ -53,7 +53,7 @@ subroutine MeshRawAC_construct_mesh_tables_from_scratch(this, mesh_file, dimscal
    double precision dimscale_in_m
 
    ! outs
-   !integer(8) elnd_to_mshpt(P2_NODES_PER_EL, this%n_msh_elts)
+   !integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, this%n_msh_elts)
 
    type(NBError) nberr
 
@@ -99,7 +99,7 @@ subroutine MeshRawAC_construct_mesh_tables_from_scratch(this, mesh_file, dimscal
    n_elt_mats2 = 1   !  largest index of materials in the file
    do i=1,this%n_msh_elts
 
-      read(ui,*) k, (this%elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), this%v_elt_material(i)
+      read(ui,*) k, (this%m_elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), this%v_elt_material(i)
 
       j = this%v_elt_material(i)
       if(n_elt_mats2 .lt. j) n_elt_mats2 = j
@@ -122,6 +122,16 @@ subroutine MeshRawAC_construct_mesh_tables_from_scratch(this, mesh_file, dimscal
 
 end
 
+
+! boundary nodes have non zero GMsh physindex codes
+pure logical function  MeshRawAC_is_boundary_mesh_point(this, msh_pt) result(res)
+
+class(MeshRawAC), intent(in) :: this
+integer(8), intent(in) :: msh_pt
+
+res = this%v_mshpt_physindex(msh_pt) .ne. 0
+end function
+
 subroutine MeshRawAC_find_nodes_for_elt(this, i_el, el_nds_i, el_nds_xy)
 
    class(MeshRawAC) :: this
@@ -132,7 +142,7 @@ subroutine MeshRawAC_find_nodes_for_elt(this, i_el, el_nds_i, el_nds_xy)
    integer(8) nd_i, mesh_pt
 
    do nd_i=1,P2_NODES_PER_EL                          ! For each of the 6 P2 nodes
-      mesh_pt = this%elnd_to_mshpt(nd_i,i_el)         !    find the global index of that mesh point
+      mesh_pt = this%m_elnd_to_mshpt(nd_i,i_el)         !    find the global index of that mesh point
       el_nds_i(nd_i) = mesh_pt                        !       store the mesh point indicex
       el_nds_xy(:,nd_i) = this%v_mshpt_xy(:,mesh_pt)  !       and the corresponding physical coordinates
    enddo

@@ -12,7 +12,7 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
 
 
    !integer(8), intent(in) :: n_msh_elts, n_msh_pts
-   !integer(8), intent(in) ::  elnd_to_mshpt (P2_NODES_PER_EL,mesh_raw%n_msh_elts)
+   !integer(8), intent(in) ::  m_elnd_to_mshpt (P2_NODES_PER_EL,mesh_raw%n_msh_elts)
 
    integer(8) :: lb(cscmat%n_dof+1)
    integer(8), intent(out) :: nonz_max
@@ -37,7 +37,7 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
 
    do iel=1,mesh_raw%n_msh_elts
       do i=1,nddl_0
-         ip = mesh_raw%elnd_to_mshpt(i,iel)
+         ip = mesh_raw%m_elnd_to_mshpt(i,iel)
          do k=1,3
             ind_ip = cscmat%m_eqs(k,ip)
             if (ind_ip .ne. 0) lb(ind_ip) = lb(ind_ip)+1

@@ -7,7 +7,7 @@
 
 
 subroutine ac_mode_power_analytic (n_modes, n_msh_elts, n_msh_pts,  &
-   v_mshpt_xy, elnd_to_mshpt, &
+   v_mshpt_xy, m_elnd_to_mshpt, &
    n_elt_mats, v_elt_material, stiffC_IJ_el, &
    q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, errco, emsg)
 
@@ -18,7 +18,7 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_elts, n_msh_pts,  &
 
    integer(8) n_modes, n_msh_elts, n_msh_pts
    double precision v_mshpt_xy(2,n_msh_pts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
 
    integer(8) n_elt_mats
    integer(8) v_elt_material(n_msh_elts)
@@ -49,11 +49,11 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_elts, n_msh_pts,  &
    type(PyFrontEnd) frontend
    type(BasisFunctions) basfuncs
 
-!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt
 !f2py intent(in) v_elt_material, x, n_elt_mats, stiffC_zjkl, q_AC
 !f2py intent(in) soln_ac_u, Omega_AC
 !
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
 !f2py depend(v_elt_material) n_msh_pts
 !f2py depend(v_mshpt_xy) n_msh_pts
 !f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
@@ -67,7 +67,7 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_elts, n_msh_pts,  &
    call nberr%reset()
 
 
-   call frontend%init_from_py(n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, nberr)
+   call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR_UNFOLD(nberr)
 
    v_power_Sz = 0.0d0
@@ -123,7 +123,7 @@ end subroutine ac_mode_power_analytic
 
 
 subroutine AC_mode_power_analytic_old (n_modes, n_msh_elts, n_msh_pts,  &
-   v_mshpt_xy, elnd_to_mshpt, &
+   v_mshpt_xy, m_elnd_to_mshpt, &
    n_elt_mats, v_elt_material, stiffC_zjkl, &
    q_AC, Omega_AC, soln_ac_u, v_power_Sz)
 
@@ -131,7 +131,7 @@ subroutine AC_mode_power_analytic_old (n_modes, n_msh_elts, n_msh_pts,  &
 
    integer(8) n_modes, n_msh_elts, n_msh_pts
    double precision v_mshpt_xy(2,n_msh_pts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL,n_msh_elts)
    integer(8) n_elt_mats
    integer(8) v_elt_material(n_msh_elts)
 
@@ -157,11 +157,11 @@ subroutine AC_mode_power_analytic_old (n_modes, n_msh_elts, n_msh_pts,  &
 
 
 
-!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt
+!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt
 !f2py intent(in) v_elt_material, x, n_elt_mats, stiffC_zjkl, q_AC
 !f2py intent(in) soln_ac_u, Omega_AC
 
-!f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
 !f2py depend(v_elt_material) n_msh_pts
 !f2py depend(v_mshpt_xy) n_msh_pts
 !f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
@@ -178,7 +178,7 @@ subroutine AC_mode_power_analytic_old (n_modes, n_msh_elts, n_msh_pts,  &
    do i_el=1,n_msh_elts
       typ_e = v_elt_material(i_el)
       do j=1,P2_NODES_PER_EL
-         j1 = elnd_to_mshpt(j,i_el)
+         j1 = m_elnd_to_mshpt(j,i_el)
          nod_el_p(j) = j1
          xel(:,j) = v_mshpt_xy(:,j1)
       enddo

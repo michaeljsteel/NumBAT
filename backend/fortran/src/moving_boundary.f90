@@ -12,7 +12,7 @@
 
 
 subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
-   n_msh_elts, n_msh_pts, elnd_to_mshpt, v_mshpt_xy, &
+   n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, &
    n_elt_mats, v_elt_material, typ_select_in, typ_select_out, &
    soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, Q_MB, errco, emsg)
 
@@ -21,7 +21,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
 
    integer(8) v_elt_material(n_msh_elts)
-   integer(8) elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    double precision v_mshpt_xy(2, n_msh_pts)
 
    integer(8) typ_select_in, typ_select_out
@@ -67,11 +67,11 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
    !f2py intent(in) nval_em_p, nval_em_s, nval_ac
    !f2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !f2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, elnd_to_mshpt, debug
+   !f2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt, debug
    !f2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u
    !f2py intent(in) typ_select_in, typ_select_out, v_eps_rel, debug
 
-   !f2py depend(elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
    !f2py depend(v_elt_material) n_msh_pts
    !f2py depend(x) n_msh_pts
    !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
@@ -127,7 +127,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
       if(typ_e == typ_select_in) then
          !   Scan the edges
          do inod=4,6
-            j = elnd_to_mshpt(inod,i_el)
+            j = m_elnd_to_mshpt(inod,i_el)
             !   Will indicate the number of
             nb_visited(j) = nb_visited(j) + 1
          enddo
@@ -153,16 +153,16 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
       !   Scan the edges
       do inod=4,6
-         j = elnd_to_mshpt(inod,i_el)
+         j = m_elnd_to_mshpt(inod,i_el)
          if (nb_visited(j) .ne. 1) cycle ! not an active edge
 
          inod_1 = edge_endpoints(1,inod-3)
          inod_2 = edge_endpoints(2,inod-3)
-         ls_edge_endpoint(1,j) = elnd_to_mshpt(inod_1,i_el)
-         ls_edge_endpoint(2,j) = elnd_to_mshpt(inod_2,i_el)
+         ls_edge_endpoint(1,j) = m_elnd_to_mshpt(inod_1,i_el)
+         ls_edge_endpoint(2,j) = m_elnd_to_mshpt(inod_2,i_el)
 
-         xy_1 = v_mshpt_xy(:, elnd_to_mshpt(inod_1,i_el))
-         xy_2 = v_mshpt_xy(:, elnd_to_mshpt(inod_2,i_el))
+         xy_1 = v_mshpt_xy(:, m_elnd_to_mshpt(inod_1,i_el))
+         xy_2 = v_mshpt_xy(:, m_elnd_to_mshpt(inod_2,i_el))
 
          ! edge_vec: vector parallel to the edge
          edge_vec = xy_2 - xy_1
@@ -177,7 +177,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
          ! Node opposite to the edge inod
          inod_3 = opposite_node(inod-3)
-         xy_3(:) = v_mshpt_xy(:,elnd_to_mshpt(inod_3,i_el))
+         xy_3(:) = v_mshpt_xy(:,m_elnd_to_mshpt(inod_3,i_el))
          vec_0 = xy_3 - xy_1
 
          ! Scalar product of edge_perp and vec_0:
@@ -216,7 +216,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
       !   Scan the edges
       do inod=4,6
-         j = elnd_to_mshpt(inod,i_el)
+         j = m_elnd_to_mshpt(inod,i_el)
 
          if (ls_edge_endpoint(1,j) .eq. 0) then ! Not an edge
             cycle

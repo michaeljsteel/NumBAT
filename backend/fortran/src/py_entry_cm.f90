@@ -3,7 +3,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
    E_H_field, bdy_cdn, itermax, arp_tol, debug, &
    mesh_file, n_msh_pts, n_msh_elts, n_elt_mats, v_refindex_n, shortrun, & !  inputs
    v_evals_beta, femsol_em, poln_fracs, &
-   elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, &
+   m_elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, &
    ls_material, errco, emsg)
 
    use numbatmod
@@ -26,7 +26,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
    complex(8), intent(out) :: femsol_em(3,P2_NODES_PER_EL+7,n_modes,n_msh_elts)
 
    complex(8), intent(out) :: poln_fracs(4,n_modes)
-   integer(8), intent(out) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8), intent(out) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
    integer(8), intent(out) :: v_elt_material(n_msh_elts), v_mshpt_physindex(n_msh_pts)
    double precision, intent(out) :: v_mshpt_xy(2,n_msh_pts)
    complex(8), intent(out) :: ls_material(1,P2_NODES_PER_EL+7,n_msh_elts)
@@ -42,7 +42,7 @@ subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, 
    call calc_em_modes_impl( n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &
       E_H_field, bdy_cdn, itermax, arp_tol, debug, mesh_file,&
       n_msh_pts, n_msh_elts, n_elt_mats, v_refindex_n, shortrun, &
-      v_evals_beta, femsol_em, poln_fracs, elnd_to_mshpt, &
+      v_evals_beta, femsol_em, poln_fracs, m_elnd_to_mshpt, &
       v_elt_material, v_mshpt_physindex, v_mshpt_xy, ls_material, nberr)
 
    call nberr%to_py(errco, emsg)
@@ -54,7 +54,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    symmetry_flag, n_elt_mats, c_tensor, rho, build_acmesh_from_emmesh, &
    mesh_file, n_msh_pts, n_msh_elts, &
    v_mshpt_physindex, &
-   elnd_to_mshpt, v_elt_material, v_mshpt_xy, &
+   m_elnd_to_mshpt, v_elt_material, v_mshpt_xy, &
    v_evals_nu, femsol_ac, poln_fracs, errco, emsg)
 
    use numbatmod
@@ -79,7 +79,7 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
    integer(8), intent(in) :: v_mshpt_physindex(n_msh_pts)
 
    integer(8) :: v_elt_material(n_msh_elts)
-   integer(8) :: elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   integer(8) :: m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
 
    double precision ::  v_mshpt_xy(2,n_msh_pts)
 
@@ -95,14 +95,14 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    call nberr%reset()
 
-   !f2py intent(in) elnd_to_mshpt, v_elt_material, v_mshpt_xy
-   !f2py intent(out) elnd_to_mshpt, v_elt_material, v_mshpt_xy
+   !f2py intent(in) m_elnd_to_mshpt, v_elt_material, v_mshpt_xy
+   !f2py intent(out) m_elnd_to_mshpt, v_elt_material, v_mshpt_xy
 
    call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       bdy_cdn, itermax, arp_tol, &
       symmetry_flag, c_tensor, rho, build_acmesh_from_emmesh, &
       mesh_file, n_msh_pts, n_msh_elts, n_elt_mats,  &
-      elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, &
+      m_elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, &
       v_evals_nu, femsol_ac, poln_fracs, nberr)
 
    call nberr%to_py(errco, emsg)

@@ -44,7 +44,7 @@ subroutine build_mesh_tables( n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
 
 
    !  Fills:  tab_N_E_F[1,:]
-   call label_faces (mesh_raw%n_msh_elts, entities%elnd_to_mshpt)
+   call label_faces (mesh_raw%n_msh_elts, entities%m_elnd_to_mshpt)
 
 
    !  For P2 FEM n_msh_pts=N_Vertices+N_Edge
@@ -60,8 +60,8 @@ subroutine build_mesh_tables( n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
 
    !  Fills: remainder of tab_N_E_F[5:,:], visited[1:n_msh_pts], n_msh_pts_3
    !  Todo: move n_msh_pts_p3 later
-   call label_nodes_P3 (n_msh_elts, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, mesh_raw%elnd_to_mshpt, &
-      entities%elnd_to_mshpt,  visited)
+   call label_nodes_P3 (n_msh_elts, n_msh_pts, nodes_per_el, n_edge, n_msh_pts_p3, mesh_raw%m_elnd_to_mshpt, &
+      entities%m_elnd_to_mshpt,  visited)
 
 
    !  TODO: what is signif of this quanitty?
@@ -84,13 +84,13 @@ subroutine build_mesh_tables( n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
 
    !  Fills: entities%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
    !  Should be using c_dwork for x_E_F ?
-   call type_node_edge_face (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%type_nod, mesh_raw%elnd_to_mshpt, &
-      entities%elnd_to_mshpt, visited , entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy )
+   call type_node_edge_face (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%type_nod, mesh_raw%m_elnd_to_mshpt, &
+      entities%m_elnd_to_mshpt, visited , entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy )
 
 
    !  Fills: entities%type_nod(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-   call get_coord_p3 (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%elnd_to_mshpt, mesh_raw%type_nod, &
-      entities%elnd_to_mshpt, entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy , visited)
+   call get_coord_p3 (n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, mesh_raw%m_elnd_to_mshpt, mesh_raw%type_nod, &
+      entities%m_elnd_to_mshpt, entities%type_nod, mesh_raw%v_mshpt_xy, entities%v_mshpt_xy , visited)
 
 
 end subroutine

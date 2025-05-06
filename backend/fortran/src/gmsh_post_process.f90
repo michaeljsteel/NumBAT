@@ -4,7 +4,7 @@
  !
 
 subroutine gmsh_post_process (plot_val, E_H_field, nval,&
-   nel, npt, nnodes, elnd_to_mshpt, type_el, nb_typ_el,&
+   nel, npt, nnodes, m_elnd_to_mshpt, type_el, nb_typ_el,&
    n_eff, x, val_cmplx, sol, visited,&
    gmsh_file_pos, dir_name,&
    q_average, plot_real, plot_imag, plot_abs)
@@ -13,7 +13,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
 
    integer(8) nval, nel, npt, nnodes, plot_val, E_H_field
    integer(8) nb_typ_el
-   integer(8) elnd_to_mshpt(nnodes,nel), type_el(nel)
+   integer(8) m_elnd_to_mshpt(nnodes,nel), type_el(nel)
    integer(8) visited(npt)
    double precision x(2,npt)
    complex(8) sol(3,nnodes+7,nval,nel), n_eff(nb_typ_el)
@@ -87,7 +87,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
       enddo
       do iel=1,nel
          do i=1,nnodes
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             visited(i1) = visited(i1) + 1
             do j=1,3
                sol_avg(j,i1) = sol_avg(j,i1) +&
@@ -327,7 +327,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
          !          abs_index = abs(sqrt(eps_eff(typ_e)))
          zz = 0.0d0
          do i=1,nnodes
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
@@ -336,7 +336,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
             !            ls_abs_index(i) = abs_index
          enddo
          do i=1,3
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             xel_p1(1,i) = x(1,i1)
             xel_p1(2,i) = x(2,i1)
             xel_p1(3,i) = zz
@@ -346,7 +346,7 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
             sol_el_abs2_eE(i) = 0.0
             !            sol_el_abs2_iD(i) = 0.0
             if (q_average .eq. 1) then
-               i1 = elnd_to_mshpt(i,iel)
+               i1 = m_elnd_to_mshpt(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1
@@ -467,20 +467,20 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
          typ_e = type_el(iel)
          zz = 0.0d0
          do i=1,nnodes
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
          enddo
          do i=1,3
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             xel_p1(1,i) = x(1,i1)
             xel_p1(2,i) = x(2,i1)
             xel_p1(3,i) = zz
          enddo
          do i=1,nnodes
             if (q_average .eq. 1) then
-               i1 = elnd_to_mshpt(i,iel)
+               i1 = m_elnd_to_mshpt(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1
@@ -561,14 +561,14 @@ subroutine gmsh_post_process (plot_val, E_H_field, nval,&
          typ_e = type_el(iel)
          zz = 0.0d0
          do i=1,nnodes
-            i1 = elnd_to_mshpt(i,iel)
+            i1 = m_elnd_to_mshpt(i,iel)
             xel(1,i) = x(1,i1)
             xel(2,i) = x(2,i1)
             xel(3,i) = zz
          enddo
          do i=1,nnodes
             if (q_average .eq. 1) then
-               i1 = elnd_to_mshpt(i,iel)
+               i1 = m_elnd_to_mshpt(i,iel)
                do j=1,3
                   z_tmp1 = sol_avg(j,i1)
                   sol_el(j,i) = z_tmp1

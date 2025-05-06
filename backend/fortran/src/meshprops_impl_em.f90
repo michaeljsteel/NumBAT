@@ -14,7 +14,7 @@ subroutine MeshRawEM_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
    call integer_alloc_1d(this%v_mshpt_physindex, n_msh_pts, 'v_mshpt_physindex', nberr); RET_ON_NBERR(nberr)
 
-   call integer_alloc_2d(this%elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'elnd_to_mshpt', nberr);
+   call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'm_elnd_to_mshpt', nberr);
    RET_ON_NBERR(nberr)
 
 end subroutine
@@ -25,18 +25,18 @@ end subroutine
  ! end subroutine
 
 subroutine MeshRawEM_fill_python_arrays(this, &
-   v_elt_material, v_mshpt_physindex, elnd_to_mshpt, v_mshpt_xy)
+   v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
 
    class(MeshRawEM) :: this
 
    integer(8), intent(out) :: v_elt_material(:)
    integer(8), intent(out) :: v_mshpt_physindex(:)
-   integer(8), intent(out) :: elnd_to_mshpt(:, :)
+   integer(8), intent(out) :: m_elnd_to_mshpt(:, :)
    double precision, intent(out) :: v_mshpt_xy(:,:)
 
    v_elt_material = this%v_elt_material
    v_mshpt_physindex = this%v_mshpt_physindex
-   elnd_to_mshpt = this%elnd_to_mshpt
+   m_elnd_to_mshpt = this%m_elnd_to_mshpt
    v_mshpt_xy = this%v_mshpt_xy
 
 end subroutine
@@ -52,14 +52,14 @@ end function
 pure logical function MeshRawEM_is_boundary_node_at_element(this, i_nd, i_el) result(res)
    class(MeshRawEM), intent(in) :: this
    integer(8), intent(in)  :: i_nd, i_el
-   res = this%v_mshpt_physindex(this%elnd_to_mshpt(i_nd, i_el)) .ne. 0
+   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el)) .ne. 0
 end function
 
  ! get node type by indirection through node table
 integer(8) function  MeshRawEM_node_phys_index_by_ref(this, i_nd, i_el) result(res)
    class(MeshRawEM) :: this
    integer(8) :: i_nd, i_el
-   res = this%v_mshpt_physindex(this%elnd_to_mshpt(i_nd, i_el))
+   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el))
 end function
 
 
@@ -74,10 +74,10 @@ end function
 
 !  Reads .mail file to find
 !  - x,y coords of mesh points  (v_mshpt_xy)
-!  - mesh points associated with each element (elnd_to_mshpt)
+!  - mesh points associated with each element (m_elnd_to_mshpt)
 !  - whether number of material types read matches expected value n_elt_mats
 
-!  -  Fills:  v_mshpt_xy, v_mshpt_physindex, v_elt_material, elnd_to_mshpt
+!  -  Fills:  v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
 
 subroutine MeshRawEM_construct_mesh_tables(this, mesh_file, dimscale_in_m, nberr)
 
@@ -133,7 +133,7 @@ subroutine MeshRawEM_construct_mesh_tables(this, mesh_file, dimscale_in_m, nberr
 
    do i=1,this%n_msh_elts
 
-      read(ui,*) k, (this%elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), this%v_elt_material(i)
+      read(ui,*) k, (this%m_elnd_to_mshpt(j,i),j=1,P2_NODES_PER_EL), this%v_elt_material(i)
 
       j = this%v_elt_material(i)
 
@@ -165,7 +165,7 @@ subroutine MeshRawEM_find_nodes_for_elt(this, i_el, &
    integer(8) nd_i, mesh_pt
 
    do nd_i=1,P2_NODES_PER_EL                    ! For each of the 6 P2 nodes
-      mesh_pt = this%elnd_to_mshpt(nd_i,i_el)    !    find the index of the mesh point
+      mesh_pt = this%m_elnd_to_mshpt(nd_i,i_el)    !    find the index of the mesh point
       el_nds_i(nd_i) = mesh_pt                      !    store the mesh point indices for this element
       el_nds_xy(:,nd_i) = this%v_mshpt_xy(:,mesh_pt)  !    find their physical positions
    enddo
