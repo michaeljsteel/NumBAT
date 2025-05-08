@@ -90,6 +90,7 @@ module numbatmod
    integer(8), parameter :: NBERR_BAD_UMF4ZSOL = -107
    integer(8), parameter :: NBERR_BAD_UMF4ZSYM = -108
    integer(8), parameter :: NBERR_BAD_UMF4ZNUM = -109
+   integer(8), parameter :: NBERR_BAD_SPARSE_FINAL = -110
 
 
 

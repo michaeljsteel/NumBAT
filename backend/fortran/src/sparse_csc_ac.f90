@@ -89,7 +89,7 @@ module class_SparseCSC_AC
    procedure :: make_arrays_final => SparseSC_make_arrays_final
 
 
-   procedure :: cscmat_contains_elt_row_col => SparseCSC_AC_cscmat_contains_elt_row_col
+   !procedure :: cscmat_contains_elt_row_col => SparseCSC_AC_cscmat_contains_elt_row_col
    procedure :: dump_csc_arrays => SparseCSC_AC_dump_csc_arrays
 
    end type SparseCSC_AC

@@ -208,8 +208,6 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
     ! ------------------------------------------
 
    integer(8) n_nonz_max, max_row_len
-   integer(8), dimension(:), allocatable  :: iwork
-
 
    call this%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
    RET_ON_NBERR(nberr)
@@ -260,9 +258,7 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call integer_alloc_1d(iwork, 3*entities%n_entities, 'iwork', nberr); RET_ON_NBERR(nberr)
-
-   call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr,  iwork)
+   call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr)
 
    !call this%dump_csc_arrays()
 
@@ -287,30 +283,30 @@ end subroutine
 
 
 
-subroutine SparseCSC_EM_cscmat_contains_elt_row_col(this, row, col, found, val)
+! subroutine SparseCSC_EM_cscmat_contains_elt_row_col(this, row, col, found, val)
 
-   class(SparseCSC_EM) :: this
-   integer(8) row, col
-   integer(8) found
+!    class(SparseCSC_EM) :: this
+!    integer(8) row, col
+!    integer(8) found
 
-   integer(8) val
-   integer(8) vct_1, vct_2, ri
+!    integer(8) val
+!    integer(8) vct_1, vct_2, ri
 
-   found = 0
-   if (col .lt. 1 .or. col .gt. this%n_dof) then
-      return
-   endif
+!    found = 0
+!    if (col .lt. 1 .or. col .gt. this%n_dof) then
+!       return
+!    endif
 
-   vct_1 = this%v_col_ptr(col)
-   vct_2 = this%v_col_ptr(col+1)
-   do ri = vct_1, vct_2
-      if (this%v_row_ind(ri) .eq. row) then
-         found = 1
-         val = 1
-      endif
-   enddo
+!    vct_1 = this%v_col_ptr(col)
+!    vct_2 = this%v_col_ptr(col+1)
+!    do ri = vct_1, vct_2
+!       if (this%v_row_ind(ri) .eq. row) then
+!          found = 1
+!          val = 1
+!       endif
+!    enddo
 
-end subroutine
+! end subroutine
 
 
 subroutine SparseCSC_EM_dump_csc_arrays(this)

@@ -3,8 +3,8 @@
  !  dof_props = 0  => interior ddl (ddl = Degree Of Freedom)
  !  dof_props != 0 => boundary ddl
 
- !  bdy_cdn = 0 => Dirichlet boundary condition (E-field: electric wall condition)
- !  bdy_cdn = 1 => Neumann boundary condition (E-field: magnetic wall condition)
+ !  bdy_cdn = 0 => Dirichlet boundary condition (E-fi_eld: electric wall condition)
+ !  bdy_cdn = 1 => Neumann boundary condition (E-fi_eld: magnetic wall condition)
  !  bdy_cdn = 2 => Periodic boundary condition
 
 
@@ -136,8 +136,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    ! ------------------------------------------
 
-   integer(8) n_nonz_max, max_row_len, n_nonz
-   integer(8), dimension(:), allocatable  :: iwork
+   integer(8) n_nonz_max, max_col_len, n_nonz
 
    call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
 
@@ -151,16 +150,14 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, n_nonz_max, n_nonz, max_row_len, nberr);
+   call this%make_arrays_final (mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr);
    RET_ON_NBERR(nberr)
 
 
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call integer_alloc_1d(iwork, 3*mesh_raw%n_msh_pts, 'iwork', nberr); RET_ON_NBERR(nberr)
-
-   call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr,  iwork)
+   call sort_csr (this%n_dof, this%n_nonz, max_col_len, this%v_row_ind, this%v_col_ptr)
 
 
    !call this%dump_csc_arrays()
@@ -187,30 +184,30 @@ end subroutine
 
 
 
-subroutine SparseCSC_AC_cscmat_contains_elt_row_col(this, row, col, found, val)
+! subroutine SparseCSC_AC_cscmat_contains_elt_row_col(this, row, col, found, val)
 
-   class(SparseCSC_AC) :: this
-   integer(8) row, col
-   integer(8) found
+!    class(SparseCSC_AC) :: this
+!    integer(8) row, col
+!    integer(8) found
 
-   integer(8) val
-   integer(8) vct_1, vct_2, ri
+!    integer(8) val
+!    integer(8) vct_1, vct_2, ri
 
-   found = 0
-   if (col .lt. 1 .or. col .gt. this%n_dof) then
-      return
-   endif
+!    found = 0
+!    if (col .lt. 1 .or. col .gt. this%n_dof) then
+!       return
+!    endif
 
-   vct_1 = this%v_col_ptr(col)
-   vct_2 = this%v_col_ptr(col+1)
-   do ri = vct_1, vct_2
-      if (this%v_row_ind(ri) .eq. row) then
-         found = 1
-         val = 1
-      endif
-   enddo
+!    vct_1 = this%v_col_ptr(col)
+!    vct_2 = this%v_col_ptr(col+1)
+!    do ri = vct_1, vct_2
+!       if (this%v_row_ind(ri) .eq. row) then
+!          found = 1
+!          val = 1
+!       endif
+!    enddo
 
-end subroutine
+! end subroutine
 
 
 subroutine SparseCSC_AC_dump_csc_arrays(this)
@@ -233,7 +230,9 @@ subroutine SparseCSC_AC_dump_csc_arrays(this)
 end subroutine
 
 ! Find upper bound for number of nonzero elements of FEM operators
-! And a first version of v_col_ptr
+! Builds a first version of v_col_ptr
+! with enough spaces in each column to allow interactions with every dof on
+! neighbouring elements
 subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
    use numbatmod
 
@@ -242,7 +241,7 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
 
    integer(8), intent(out) :: nonz_max
 
-   integer(8) :: i_dof,  i_el, dof, nd_xyz, tag_mshpt, nd_i
+   integer(8) :: i_dof,  i_el, dof, i_nd_xy, tag_mshpt, nd_i
    integer(8) :: last_ct, this_ct
 
    !TODO: try and use pointer alias for readability
@@ -262,8 +261,8 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
    do i_el=1,mesh_raw%n_msh_elts                          ! for every element
       do nd_i=1,P2_NODES_PER_EL                           ! and all nodes in the element
          tag_mshpt = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)  ! find global mesh point label
-         do nd_xyz=1,3                                    ! for each coordinate
-            dof = this%m_eqs(nd_xyz, tag_mshpt)           ! find index of absolute dof
+         do i_nd_xy=1,3                                    ! for each coordinate
+            dof = this%m_eqs(i_nd_xy, tag_mshpt)           ! find index of absolute dof
             if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1           ! increment number of roles this dof plays in multiple elements
          enddo
       enddo
@@ -304,7 +303,7 @@ end
  ! row/col names seem backward
  ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_row_len, nberr)
+subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr)
 
    use numbatmod
    use alloc
@@ -318,21 +317,20 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
 
    integer(8) n_nonz_max,n_nonz
 
-
-
-
-   integer(8) max_row_len
+   integer(8) max_col_len
 
 
    integer(8), dimension(:), allocatable :: row_ind_tmp
 
    integer(8), parameter :: N_ENTITY_PER_EL_AC = 6
 
-   integer(8) i, j, i_nd, j_nd, k, k1, i_dof, j_dof
-   integer(8) iel, ind_ip, ip, ind_jp, jp
-   integer(8) row_start, row_end, row_len
-   integer(8) row_start2, row_end2
+   character(len=EMSG_LENGTH) :: emsg
+   integer(8) i, j, i_nd, j_nd, k, k1, i_loc_dof, j_loc_dof
+   integer(8) i_el, i_dof, i_mshpt, j_dof, j_mshpt
+   integer(8) row_lo, row_hi, row_len
+   integer(8) row_lo2, row_hi2
    integer(8) ui
+   logical found
 
 
    ui = stdout
@@ -344,106 +342,138 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_r
    ! This code was converted from one in CSR format
    !  Determination of the row indices
 
+   ! For two dof to interact and require nonzero element in the FEM matrices,
+   ! they must both exist on the same element
+
    n_nonz = 0
-   do iel=1,mesh_raw%n_msh_elts
+   do i_el=1,mesh_raw%n_msh_elts
 
       do i_nd=1,N_ENTITY_PER_EL_AC
-         ip = mesh_raw%m_elnd_to_mshpt(i_nd,iel)
+         i_mshpt = mesh_raw%m_elnd_to_mshpt(i_nd,i_el)
 
-         do i_dof=1,3
-            ind_ip = this%m_eqs(i_dof,ip)
-            if (ind_ip .ne. 0) then
-               row_start = this%v_col_ptr(ind_ip)
-               row_end = this%v_col_ptr(ind_ip+1) - 1
+         do i_loc_dof=1,3
+            i_dof = this%m_eqs(i_loc_dof,i_mshpt)
 
-               do j_nd=1,N_ENTITY_PER_EL_AC
-                  jp = mesh_raw%m_elnd_to_mshpt(j_nd,iel)
+            if (i_dof .eq. 0) cycle  ! not a genuine dof
 
-                  do j_dof=1,3
-                     ind_jp = this%m_eqs(j_dof,jp)
-                     if (ind_jp .ne. 0) then
-                        ! Search if the entry (ind_ip,ind_jp) is already stored
-                        do k=row_start,row_end
-                           if(row_ind_tmp(k) .eq. 0) goto 20
-                           if(row_ind_tmp(k) .eq. ind_jp) goto 30
-                        enddo
+            row_lo = this%v_col_ptr(i_dof)
+            row_hi = this%v_col_ptr(i_dof+1) - 1
 
-                        print*, "csr_length_AC: There is a problem!", " Aborting..."
-                        stop
+            do j_nd=1,N_ENTITY_PER_EL_AC
+               j_mshpt = mesh_raw%m_elnd_to_mshpt(j_nd,i_el)
 
-20                      continue
+               do j_loc_dof=1,3
+                  j_dof = this%m_eqs(j_loc_dof,j_mshpt)
+                  if (j_dof .eq. 0) cycle ! not a genuine dof
 
-                        !  No entry exists for (ind_ip,ind_jp); create new one
+                  ! Now we know (i_dof, j_dof) can interact and should have a slot
+                  ! in the column for i_dof
+
+                  ! Search if the entry (i_dof,j_dof) is already stored
+                  found = .false.
+                  do k=row_lo,row_hi
+
+                     ! We've run out of nonzero entries in the row indices, and haven't found this element yet
+                     ! So create one
+                     if(row_ind_tmp(k) .eq. 0) then
+                        found = .true.
                         n_nonz =n_nonz + 1
-                        if (n_nonz .gt. n_nonz_max) then
-                           print*, "csr_length_AC:n_nonz > n_nonz_max: ",&
+
+                        if (n_nonz .le. n_nonz_max) then ! We have an empty slot. Go!
+                           row_ind_tmp(k) = j_dof
+                           exit
+                        else  ! should never happen if make_provisional is correct
+                           write(emsg, *) "csr_length_AC:n_nonz > n_nonz_max: ",&
                               n_nonz .gt. n_nonz_max
-                           print*, "csr_length_AC: Aborting..."
-                           stop
+                           call nberr%set(NBERR_BAD_SPARSE_FINAL, emsg)
+                           return
+
                         endif
 
-                        row_ind_tmp(k) = ind_jp
-30                      continue
 
                      endif
+
+                     ! Entry already exists, nothing to do
+                     if(row_ind_tmp(k) .eq. j_dof) then
+                        found = .true.
+                        exit
+                     endif
+
                   enddo
+
+                  if (found .neqv. .true.) then
+                     write(emsg, *) "csr length looking for missing spot"
+                     call nberr%set(NBERR_BAD_SPARSE_FINAL, emsg)
+                     return
+                  endif
+
                enddo
-            endif
+            enddo
          enddo
       enddo
    end do
 
+   ! Because most meshes will have interesting structure and we conservatively guessed the number
+   ! of possible nonzero entries, will likely be zero entries we can remove
 
+   if (n_nonz .lt. n_nonz_max) then ! there are unused entries in some columns
 
-   ! squeeze away the zero entries
-   ! added so as to handle more type of domains/meshes
-
-   if (n_nonz .lt. n_nonz_max) then
       do i=1,this%n_dof-1
-         row_start = this%v_col_ptr(i)
-         row_end = this%v_col_ptr(i+1) - 1
-         do j=row_start,row_end
-            if(row_ind_tmp(j) .eq. 0) then
-               row_start2 = this%v_col_ptr(i) + j - row_start
-               this%v_col_ptr(i+1) = row_start2
-               row_end2 = this%v_col_ptr(i+2) - 1
-               do k=row_end+1,row_end2
-                  k1 = row_start2 + k - (row_end+1)
+         ! find the initially allocated row slots for this column
+         row_lo = this%v_col_ptr(i)
+         row_hi = this%v_col_ptr(i+1) - 1
+
+         do j=row_lo,row_hi  ! search for any empties
+            if(row_ind_tmp(j) .eq. 0) then ! row indices j to row_hi are empty
+
+               row_lo2 = this%v_col_ptr(i) + j - row_lo ! index of the first nonempty
+               this%v_col_ptr(i+1) = row_lo2            ! will be the new first slot in the next column
+               row_hi2 = this%v_col_ptr(i+2) - 1        ! current last slot in the next column
+
+               do k=row_hi+1,row_hi2             ! whole next column is pulled back to start at row_lo2
+                  k1 = row_lo2 + k - (row_hi+1)
                   row_ind_tmp(k1) = row_ind_tmp(k)
-                  row_ind_tmp(k) = 0
+                  row_ind_tmp(k) = 0             ! and are filled in with zeros
                enddo
-               goto 40
+               !goto 40
+               exit
             endif
          enddo
-40       continue
+!40       continue
       enddo
+
+      ! now clean up the final column
+
       i = this%n_dof
-      row_start = this%v_col_ptr(i)
-      row_end = this%v_col_ptr(i+1) - 1
-      do j=row_start,row_end
+      row_lo = this%v_col_ptr(i)
+      row_hi = this%v_col_ptr(i+1) - 1
+
+      do j=row_lo,row_hi
          if(row_ind_tmp(j) .eq. 0) then
-            row_start2 = this%v_col_ptr(i) + j - row_start
-            this%v_col_ptr(i+1) = row_start2
-            goto 50
+            row_lo2 = this%v_col_ptr(i) + j - row_lo
+            this%v_col_ptr(i+1) = row_lo2  ! Just need to pull down the final column pointer to the last nonzero row
+            !goto 50
+            exit
          endif
       enddo
-50    continue
+!50    continue
    endif
 
-   max_row_len = 0
+   ! Now we know n_nonz and can set the correct length for the row indices array
+   call integer_alloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
+   this%v_row_ind = row_ind_tmp
+   this%n_nonz = n_nonz
+
+
+   ! find maximum row length (actually maximum col length)
+   max_col_len = 0
    do i=1,this%n_dof
-      row_start = this%v_col_ptr(i)
-      row_end = this%v_col_ptr(i+1) - 1
-      row_len = row_end - row_start + 1
-      if (row_len .gt. max_row_len) max_row_len = row_len
+      row_lo = this%v_col_ptr(i)
+      row_hi = this%v_col_ptr(i+1) - 1
+      row_len = row_hi - row_lo + 1
+      if (row_len .gt. max_col_len) max_col_len = row_len
    enddo
 
 
-   ! Now we know n_nonz
-   call integer_alloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
-
-   this%v_row_ind = row_ind_tmp
-
-   this%n_nonz = n_nonz
 
 end

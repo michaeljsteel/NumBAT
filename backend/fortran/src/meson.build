@@ -37,6 +37,7 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
+  #'quicksort.f90',
   'construct_solution_fields_ac.f90',
   'construct_solution_fields_em.f90',
   #'array_sol.f90',
@@ -105,7 +106,7 @@ nb_impl_fsrcs = files(
     'sparse_csc_ac.f90',
     'sort_csr.f90',
     'sort_int.f90',
-    'sort_n.f90',
+    #'sort_n.f90',
     'utils.f90',
     'solve_arpack_problem.f90',
     #'valpr_umf_64_ac.f90',
