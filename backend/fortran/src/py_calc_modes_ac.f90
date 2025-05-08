@@ -113,6 +113,7 @@ contains
       endif
 
 
+      ! determine location of all (potentially) nonzero entries in the FEM opK and opMass matrices
       call cscmat%make_csc_arrays(bdy_cdn, mesh_raw, nberr)
       RET_ON_NBERR(nberr)
 
