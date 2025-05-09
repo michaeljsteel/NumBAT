@@ -30,8 +30,9 @@ The electromagnetic wave problem is defined by the vector wave equation
 
    - \nabla \times (\nabla \times {\vec E}) + \omega^2 \epsilon_0 \, \epsilon_r(x,y) \vec E =0,
 
-where the *real-valued* electric field has the following form for modal propagation along :math:`z`:
+where :math:`\omega=2\pi/\lambda` is the optical angular frequency with :math:`\lambda` the free space wavelength. The waveguide properties are defined by the spatially varying relative dielectric constant :math:`\epsilon_r(x,y)`.
 
+The *real-valued* electric field :math:`\vec E(x,y,z,t)` has the following form for modal propagation along :math:`z`:
 
 .. math::
    :nowrap:
@@ -43,12 +44,11 @@ where the *real-valued* electric field has the following form for modal propagat
    {\vec {\mathcal{E}}}^* (\vecr) e^{ i  \omega t }
    \right) \\
       = &  \left(
-            a(z) \vece(x,y) e^{i (kz-\omega t) } + a^*(z) \vece^*(x,y) e^{-i (kz-\omega t) }
+            a \vece(x,y) e^{i (kz-\omega t) } + a^* \vece^*(x,y) e^{-i (kz-\omega t) }
             \right),
    \end{align*}
 
-
-in terms of the complex field amplitude :math:`\vcalE(\vecr)`, the mode profile :math:`\vece(x,y)` and the complex slowly-varying envelope function :math:`a(z)`. Note that some authors include a factor of :math:`\frac{1}{2}` in these definitions which leads to slightly different expressions for energy and power flow below.
+in terms of the wavenumber :math:`k`, complex field amplitude :math:`\vcalE(\vecr)`, mode profile :math:`\vece(x,y)` and the mode amplitude :math:`a`. Note that some authors include a factor of :math:`\frac{1}{2}` in these definitions which leads to slightly different expressions for the energy and power flow below.
 
 By Faraday's law the complex magnetic field amplitude is given by
 
@@ -56,7 +56,11 @@ By Faraday's law the complex magnetic field amplitude is given by
 
    {\vec {\cal B} } =  \frac{1}{i \omega} \nabla \times {\vec {\cal E}}.
 
+Dependent and independent variables in the modal dispersion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In |NUMBAT|, the electromagnetic mode problem is formulated with the optical angular frequency :math:`\omega` as the independent variable and the wavenumber or *propagation constant* :math:`k(\omega)` as the eigenvalue.  For a given frequency, |NUMBAT| thus finds the eigenvalues :math:`k_n(\omega)` and eigenmodes :math:`\vece_n(x,y)`. The algorithm finds the most-bound or "lowest" eigenvalues first. Thus the values :math:`k_n(\omega)` *decrease* with :math:`n` and there are only a finite number of guided mode solutions for a given structure and frequency :math:`\omega`. Note that the propagation constant is also often denoted by :math:`\beta_n(\omega)`.
 
+It is thus straightforward to generate dispersion relations :math:`k_n(\omega)` on an equal-spaced frequency grid. If you require the wavenumber on an equal-spaced grid, you will need to interpolate the :math:`k_n(\omega)` functions.
 
 Elastic  modal problem
 ----------------------------------
@@ -67,18 +71,31 @@ The elastic modal problem is defined by the wave equation
 
    \nabla \cdot \bar{T} + \Omega^2 \rho(x,y) \vec U = 0,
 
-where :math:`\vec u` is the elastic displacement and :math:`\bar{T}=\mathbf{c}(x,y) \bar{S}` is the stress tensor,
-defined in terms of the stiffness :math:`\mathbf{c}` and the strain tensor
+where :math:`\Omega` is the elastic angular frequency and `:math:`\vec U` is the elastic displacement.
+Further, :math:`\bar{T}=\mathbf{c}(x,y) \bar{S}` is the rank-2 stress tensor,
+defined in terms of the rank-4 stiffness tensor :math:`\mathbf{c}` and the rank-2 strain tensor
 :math:`\bar{S}=S_{ij} = \frac{1}{2}(\frac{\partial U_i}{\partial r_j} + \frac{\partial U_j}{\partial r_i})`.
 
-The displacement has the modal propagation form
+The waveguide properties are defined by the spatially varying density and stiffness functions.
+
+The displacement field has the modal propagation form
 
 .. math::
 
-   \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y)^* e^{-i (qz-\Omega t) } ,
+   \vec U = b(z) \, \vec u(x,y) e^{i (qz-\Omega t) } + b^*(z) \, \vec u(x,y)^* e^{-i (qz-\Omega t) } .
+
+where :math:`q` is the elastic wavenumber or propagation constant.
+
+Dependent and independent variables in the modal dispersion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In |NUMBAT|, the elastic mode problem is formulated in the *opposite sense* to the electromagnetic problem.
+In this case, the elastic wavenumber :math:`q` is the independent variable, and |NUMBAT| solves for the corresponding angular frequency eigenvalues :math:`\Omega_n(q)` and eigenmodes :math:`\vecu_n(x,y)`. With, the wavenumber as the independent variable, the eigenvalues :math:`q_n(\Omega)` *increase* with the mode index :math:`n`. In such a formulation, there is no upper bound to the number of physical eigenstates, other than the numerical resolution of the FEM grid. In practice, above frequencies of :math:`\Omega/(2\pi)` of a few tens of GHz, the elastic losses become so large that the propagation is restricted to distances of only a few microns.
+
+It is thus straightforward to generate dispersion relations :math:`\Omega_n(q)` on an equal-spaced frequency grid. If you require the wavenumber on an equal-spaced grid, you will need to interpolate the :math:`\Omega_n(q)` functions.
 
 
-For details on how these problems are framed as finite element problems, we refer to Ref. :cite:p:`Sturmberg:2019`.
+
+For details on how these problems are framed as finite element problems, we refer to Ref. :cite:p:`Sturmberg:2019`, though some details are provided in :ref:`chap-fem-formulation-label`.
 
 Modal properties
 -----------------------
@@ -189,135 +206,9 @@ The finite element method in |NUMBAT|
 =========================================
 
 |NUMBAT| solves both the electromagnetic and elastic modal properties using finite element method (FEM) algorithms.
+Chapter :ref:`chap-fem-formulation-label` provides a summary of the finite element formulation.
+
 For details see refs. :cite:p:`Sturmberg:2019`, :cite:p:`Dossou:2005` and :cite:p:`hladkyhennion:1997`.
-
-Here we give a brief outline of the essentials.
-
-
-Electromagnetic problem
------------------------------
-We closely follow the exposition in :cite:p:`Dossou:2005`.
-
-Expressed in the modal form :math:`\vecE(\vecr)= [\vecE_t, E_z]e^{i \beta z}`, the wave equation becomes the pair of equations:
-
-.. math::
-
-   \nabla_t \times \left(\frac{1}{\mu}(\nabla_t \times \vecE_t) \right)
-      - \omega^2 \epsilon \vecE_t = & \, \beta^2 \frac{1}{\mu} ( \nabla \hE_z- \vecE_t)
-
-   - \nabla_t \cdot (\frac{1}{\mu} \vecE_t) + \nabla_t \cdot(\frac{1}{\mu} \nabla_t \hE_z) + \omega^2 \epsilon \hE_z =& \, 0 ,
-
-where for convenience we take :math:`E_z = -\beta \hE_z`.
-
-In the so-called *weak-formulation*, we seek pairs :math:`(\vecE, \beta)` so that for all test functions :math:`\vecF(\vecr)`, the following equations hold
-
-.. math::
-
-   \left(\frac{1}{\mu} (\nabla_t \times \vecE_t), \nabla_t \times \vecF_t\right)
-      - \omega^2 \left(\epsilon \vecE_t, \vecF_t\right)
-           =  \, \beta^2 \left(\frac{1}{\mu} ( \nabla \hE_z- \vecE_t), \vecF_t \right)
-
-   \left(\frac{1}{\mu} \vecE_t,\nabla_t F_z  \right) -
-      \left(\frac{1}{\mu} \nabla_t \hE_z, \nabla_t F_z \right)
-      + \omega^2 \left (\epsilon \hE_z, F_z \right ) = \, 0 ,
-
-To build the FEM formulation, we introduce transverse vector basis functions :math:`\vphi_i(x,y)` and scalar longitudinal functions :math:`\psi_i(x,y)`  so that a general field has the form
-
-..  math::
-
-     \vecE = & \vecE_t + \unitz E_z \\
-         = & \sum_{i=1}^{N} e_{t,i} \, \vphi_i(\vecr)
-                + \unitz \sum_{i=1}^{N} \he_{z,i} \, \psi_i(\vecr) \\
-                = & [\vphi_1, \vphi_2, \ldots, \vphi_N ,\psi_1, \psi_2, \ldots, \psi_N, ] \begin{bmatrix} e_{t,1} \\ e_{t,2}   \\ \ldots \\ e_{t,N} \\
-                \he_{z,1} \\ \he_{z,2} \\ \ldots \\ \he_{z,N} \end{bmatrix} \\
-                = & [\bvphi ; \unitz \bpsi]
-                 \begin{bmatrix} \bfe_t \\ \bfhez \end{bmatrix}
-
-An arbitrary inner product :math:`(\calL_1 E, \calL_2 F)` with :math:`\calF = a \vphi_m+ b\psi_m \unitz` where :math:`a` and :math:`b` are zero or one, expands  to
-
-..  math::
-
-     (\calL_1 \vecE, \calL_2 \vecF) = & \int (\calL_2 \vecF)^* \cdot (\calL_1 \vecE) \, \dA \\
-      = & \int (\calL_2 a \vphi_m + b \psi_m \unitz)^* \cdot
-      ( \calL_1
-         [\bvphi ; \unitz \bpsi]
-                 \begin{bmatrix} \bfe_t \\ \mathbf{\hat{e}}_z \end{bmatrix} ) \\
-      = & a \int (\calL_2 \vphi_m )^* \cdot ( \calL_1 \vphi_n ) \, \dA \, e_{t,n}
-        + b \int (\calL_2 \psi_m \unitz )^* \cdot ( \calL_1 \vphi_n ) \, \dA\,  e_{t,n} \\
-       ~ & + a\int  (\calL_2 \vphi_m )^* \cdot ( \calL_1 \psi_n \unitz ) \, \dA\,\he_{z,n}
-        + b \int (\calL_2 \psi_m \unitz )^* \cdot ( \calL_1 \psi_n \unitz ) \, \dA\, \he_{z,n}
-      \\
-      = & \calL_{tt} \bfe_{t} +  \calL_{zt} \bfe_{z}
-           + \calL_{tz}\bfhez +  \calL_{zz} \bfhez.
-
-
-With these definitions we can identify the matrices
-
-..  math::
-
-    K_{mn} = & \int \left [ (\nabla_t \times \vphi_m )^*  \cdot   \frac{1}{\mu} (\nabla_t \times \vphi_n) - \omega^2 \vphi_m ^* \cdot ( \epsilon \vphi_n) \right ] \, \dA  \\
-    K_{zt} = & \int (\nabla_t \psi_m )^*  \cdot  \frac{1}{\mu}   \vphi_n \, \dA  \\
-    K_{zz} = & \omega^2 \int   \psi_m ^*  \cdot  \epsilon   \psi_n \, \dA  \\
-    M_{tt} = & - \int   \vphi_m ^*  \cdot    \vphi_n \, \dA  \\
-
-
-Then the eigenproblem to be solved is the generalised linear  problem
-
-..  math::
-
-    \begin{bmatrix} [K_{tt}] &[ 0] \\ [K_{zt}] & [K_{zz}] \end{bmatrix}
-    \begin{bmatrix} e_{t,h} \\ e_{z,h} \end{bmatrix}
-    = \beta^2 \begin{bmatrix} [M_{tt}] &[K_{zt}]^T \\ [0]  & [0] \end{bmatrix}
-      \begin{bmatrix} e_{t,h} \\ e_{z,h} \end{bmatrix} .
-
-By swapping the sides of the second row, the two matrices involved become symmetric:
-
-..  math::
-
-    \begin{bmatrix} [K_{tt}] &[ 0] \\ [0] & [0] \end{bmatrix}
-    \begin{bmatrix} e_{t,h} \\ e_{z,h} \end{bmatrix}
-    = \beta^2 \begin{bmatrix} [M_{tt}] &[K_{zt}]^T \\ [K_{zt}]  & [K_{zz}] \end{bmatrix}
-      \begin{bmatrix} e_{t,h} \\ e_{z,h} \end{bmatrix},
-
-which is ideally posed to solve using standard numerical libraries.
-
-
-Elastic problem
---------------------
-To formulate a FEM algorithm, the elastic eigenvalue problem is expressed in the so-called *weak form*.
-Over the elastic domain :math:`A`, we seek eigenpairs :math:`(\vecu_n(\vecr), \Omega_n)` such that for all test functions :math:`\vecv(\vecr)`, we have
-
-..  math::
-
-    \int_A \vecv^*(\vecr) \cdot \left( \nabla \cdot \bar{T} + \Omega^2 \rho \vecu(\vecr)\right) \, \dA = 0.
-
-The functions :math:`\vecu(\vecr)` and :math:`\vecv(\vecr)` are expanded in a finite set of :math:`N` basis functions :math:`\vecg_m`:
-
- ..  math::
-
-     \vecu = \sum_{m=1}^N u_m \vecg_m(\vecr),
-
-for some set of coefficients :math:`\vecu_h = (u_1,u_2,\dots u_N)`. In |NUMBAT|, the :math:`\vecg_m` are chosen as piecewise quadratic polynomials on a triangular grid.
-
-As shown in :cite:p:`Sturmberg:2019`, this problem statement ultimately leads to the linear generalised eigenproblem
-
-  .. math::
-
-     \mathrm{K} \vecu_h = \Omega^2 \mathrm{M} \vecu_h ,
-
-where the *stiffness* and *mass* matrices are defined as
-
-.. math::
-
-   K_{lm} = & \int_A (\nabla_s \vecg_l)^* : (\bar{c} : \nabla_s \vecg_m) \, \dA
-
-   M_{lm} = & \int_A \rho  \vecg_l^* \cdot  \vecg_m \, \dA
-
-This problem is then solved using standard linear algebra numerical libraries including ARPACK-NG, UMFPACK on top of the LAPACK and BLAS libraries .
-
-
-
-
 
 
 
