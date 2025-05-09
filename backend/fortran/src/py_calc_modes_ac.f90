@@ -102,14 +102,14 @@ contains
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
          call construct_fem_node_tables_ac (mesh_file, dimscale_in_m,  n_msh_elts, n_msh_pts, &
-         n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt, nberr)
+            n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt, nberr)
          RET_ON_NBERR(nberr)
 
          call mesh_raw%construct_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
          call mesh_raw%construct_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
-         v_elt_material, m_elnd_to_mshpt);
+            v_elt_material, m_elnd_to_mshpt);
       endif
 
 
@@ -131,12 +131,9 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      !  The CSC v_eig_indexing, i.e., ip_col_ptr, is 1-based
-      !  (but valpr.f will change the CSC v_eig_indexing to 0-based v_eig_indexing)
-      csc_index_offset = 0
 
       shift_omsq= (2*D_PI*shift_nu)**2
-      call assembly_ac (csc_index_offset, shift_omsq, q_ac, rho, c_tensor, &
+      call build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
       mesh_raw, cscmat, symmetry_flag, nberr)
       RET_ON_NBERR(nberr)
 
@@ -160,8 +157,13 @@ contains
       call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
 
+      ! prepare for zero indexed C calls in arpack/umfpack
+      ! TODO: add for EM case and possibly move into solve_arpack_problem depending on construct_solution_fields_ac
+      call cscmat%adjust_for_zero_offset_indexing()
+
       shortrun=0
-      call solve_arpack_problem (csc_index_offset, dim_krylov, n_modes, itermax,  arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr, shortrun)
+      csc_index_offset = 0  ! remove this
+      call solve_arpack_problem (csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr, shortrun)
       RET_ON_NBERR(nberr)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()
@@ -175,9 +177,9 @@ contains
       !  by increasing q_ac
 
       call construct_solution_fields_ac (shift_omsq,  n_modes, &
-      mesh_raw, cscmat,   &
+         mesh_raw, cscmat,   &
          v_evals_nu, arpack_evecs, femsol_ac, poln_fracs,  nberr)
-         RET_ON_NBERR(nberr)
+      RET_ON_NBERR(nberr)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()

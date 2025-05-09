@@ -156,7 +156,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call sort_csr (this%n_dof, this%n_nonz, max_col_len, this%v_row_ind, this%v_col_ptr)
+   call sort_csc (this%n_dof, this%n_nonz, max_col_len, this%v_row_ind, this%v_col_ptr)
 
    !call this%dump_csc_arrays()
 
@@ -166,15 +166,6 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
    call complex_alloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', nberr); RET_ON_NBERR(nberr)
 
 
-   !  convert from 1-based to 0-based
-   !  ----------------------------------------------------------------
-   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
-   !  But external calls to functions like valpr.f will need 0-based indexing.
-   !  So the indices need shifting by one.
-   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
-
-   this%v_row_ind = this%v_row_ind - 1
-   this%v_col_ptr = this%v_col_ptr - 1
 
    return
 
@@ -259,7 +250,7 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
    do i_el=1,mesh_raw%n_msh_elts                          ! for every element
       do nd_i=1,P2_NODES_PER_EL                           ! and all nodes in the element
          tag_mshpt = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)  ! find global mesh point label
-         do i_nd_xy=1,3                                    ! for each coordinate
+         do i_nd_xy=1,N_DOF_PER_NODE_AC                                    ! for each coordinate
             dof = this%m_eqs(i_nd_xy, tag_mshpt)           ! find index of absolute dof
             if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1           ! increment number of roles this dof plays in multiple elements
          enddo
@@ -301,7 +292,7 @@ end
  ! row/col names seem backward
  ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr)
+subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr)
 
    use numbatmod
    use alloc
@@ -320,7 +311,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_c
 
    integer(8), dimension(:), allocatable :: row_ind_tmp
 
-   integer(8), parameter :: N_ENTITY_PER_EL_AC = 6
+   !integer(8), parameter :: P2_NODES_PER_EL = 6
 
    character(len=EMSG_LENGTH) :: emsg
    integer(8) i, j, i_nd, j_nd, k, k1, i_loc_dof, j_loc_dof
@@ -346,10 +337,10 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_c
    n_nonz = 0
    do i_el=1,mesh_raw%n_msh_elts
 
-      do i_nd=1,N_ENTITY_PER_EL_AC
+      do i_nd=1,P2_NODES_PER_EL
          i_mshpt = mesh_raw%m_elnd_to_mshpt(i_nd,i_el)
 
-         do i_loc_dof=1,3
+         do i_loc_dof=1,N_DOF_PER_NODE_AC
             i_dof = this%m_eqs(i_loc_dof,i_mshpt)
 
             if (i_dof .eq. 0) cycle  ! not a genuine dof
@@ -357,10 +348,10 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_c
             row_lo = this%v_col_ptr(i_dof)
             row_hi = this%v_col_ptr(i_dof+1) - 1
 
-            do j_nd=1,N_ENTITY_PER_EL_AC
+            do j_nd=1,P2_NODES_PER_EL
                j_mshpt = mesh_raw%m_elnd_to_mshpt(j_nd,i_el)
 
-               do j_loc_dof=1,3
+               do j_loc_dof=1,N_DOF_PER_NODE_AC
                   j_dof = this%m_eqs(j_loc_dof,j_mshpt)
                   if (j_dof .eq. 0) cycle ! not a genuine dof
 
@@ -473,5 +464,24 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_c
    enddo
 
 
+
+end
+
+
+  !  convert from 1-based to 0-based
+   !  ----------------------------------------------------------------
+   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
+   !  But external calls to functions like valpr.f will need 0-based indexing.
+   !  So the indices need shifting by one.
+   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
+
+
+! TODO: maintain current offset flag to know if we need to apply shift
+subroutine SparseCSC_AC_adjust_for_zero_offset_indexing(this)
+
+   class(SparseCSC_AC) :: this
+
+   this%v_row_ind = this%v_row_ind - 1
+   this%v_col_ptr = this%v_col_ptr - 1
 
 end

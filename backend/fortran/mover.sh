@@ -21,4 +21,4 @@ done
 #jacobian_p1_2d.f jacobian_p2_2d.f
 #lattice_vec.f moving_boundary.f
 #photoelastic_int.f photoelastic_int_v2.f quad_triangle.f
-#sort_csr.f sort_int.f find_eigvals_order_AC.f find_eigvals_order.f
+#sort_csc.f sort_int.f find_eigvals_order_AC.f find_eigvals_order.f

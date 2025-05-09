@@ -1,4 +1,16 @@
-subroutine mat_el_v3 (basfuncs, beta, c_tensor_el, rho_el, mat_K, mat_M)
+! Construct the FEM matrix elements for the elastic problem at a particular element
+! We are solving
+! \mathrm{K} \vecu_h = \Omega^2 \mathrm{M} \vecu_h ,
+! where the *stiffness* K and *mass* M matrices are defined as
+!   K_{lm} = & \int_A (\nabla_s \vecg_l)^* : (\bar{c} : \nabla_s \vecg_m) \, \dA
+!   M_{lm} = & \int_A \rho  \vecg_l^* \cdot  \vecg_m \, \dA
+!
+! basfuncs contains the basis functions and overlap integrals evaluated at the current element
+! c_tensor_el and rho_el are the stiffness and density for this element
+! The K and M matrices are 18x18 from the 18 local degrees of freedom:
+!   6 nodes each with 3 displacement components on each triangle
+
+subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K, mat_M)
 
    use numbatmod
    use class_TriangleIntegrators

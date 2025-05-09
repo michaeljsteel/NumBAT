@@ -18,6 +18,12 @@ module numbatmod
    integer(8), parameter :: P2_NODES_PER_EL = 6
    integer(8), parameter :: P3_NODES_PER_EL = 10
 
+
+   ! elastic fem properties
+   integer(8), parameter :: N_DOF_PER_NODE_AC = 3  ! xyz components for each node
+   !integer(8), parameter :: N_DOF_PER_NODE_AC_PIEZO = 6  ! U_xyz and D_xyz components for each node
+
+
    ! Indexing of the P3 nodes
    integer(8), parameter :: P3_VERT_1 = 1
    integer(8), parameter :: P3_VERT_2 = 2

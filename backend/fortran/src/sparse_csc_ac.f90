@@ -86,7 +86,9 @@ module class_SparseCSC_AC
    procedure :: make_csc_arrays => SparseCSC_AC_make_csc_arrays
 
    procedure :: make_col_ptr_provisional => SparseCSC_AC_make_col_ptr_provisional
-   procedure :: make_arrays_final => SparseSC_make_arrays_final
+   procedure :: make_arrays_final => SparseCSC_AC_make_arrays_final
+
+   procedure :: adjust_for_zero_offset_indexing => SparseCSC_AC_adjust_for_zero_offset_indexing
 
 
    !procedure :: cscmat_contains_elt_row_col => SparseCSC_AC_cscmat_contains_elt_row_col

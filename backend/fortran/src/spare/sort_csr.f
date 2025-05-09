@@ -2,7 +2,7 @@
 c
 c***********************************************************************
 c
-      subroutine sort_csr (neq, nonz, max_row_len, col_ind,
+      subroutine sort_csc (neq, nonz, max_row_len, col_ind,
      *  row_ptr, arr, indx, istack)
 c
       implicit none
@@ -18,7 +18,7 @@ c
         row_start = row_ptr(i)
         row_end = row_ptr(i+1) - 1
         row_len = row_end - row_start + 1
-cc        print*, "sort_csr: i = ", i
+cc        print*, "sort_csc: i = ", i
         do j=row_start,row_end
 cc          print*, "    ", col_ind(j)
           k = j - row_start + 1
@@ -40,7 +40,7 @@ c      do i=1,neq
 c        row_start = row_ptr(i)
 c        row_end = row_ptr(i+1) - 1
 c        row_len = row_end - row_start + 1
-c        print*, "sort_csr: i = ", i
+c        print*, "sort_csc: i = ", i
 c        do j=row_start,row_end
 c          print*, " ####   ", col_ind(j)
 c        enddo

@@ -1,6 +1,6 @@
 ! sort the elements within each row of a CSR rep
 ! (actually used to sort elements within each column of a csc rep)
-subroutine sort_csr (n_dof, nonz, max_col_len, row_ind, col_ptr)
+subroutine sort_csc (n_dof, nonz, max_col_len, row_ind, col_ptr)
 
    use numbatmod
    use alloc

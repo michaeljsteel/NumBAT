@@ -2,7 +2,7 @@
  !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
  !  for the main linear equations
 
-subroutine assembly_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
+subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    perm_pp, perm_qq, mesh_raw, entities, cscmat, pbcs, nberr)
 
 

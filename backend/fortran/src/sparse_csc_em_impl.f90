@@ -258,7 +258,7 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call sort_csr (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr)
+   call sort_csc (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr)
 
    !call this%dump_csc_arrays()
 

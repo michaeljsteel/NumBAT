@@ -177,7 +177,7 @@ contains
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
       csc_index_offset = 0
-      call assembly_em (bdy_cdn, csc_index_offset, shift_ksqr, bloch_vec, pp, qq, &
+      call build_fem_ops_em (bdy_cdn, csc_index_offset, shift_ksqr, bloch_vec, pp, qq, &
       mesh_raw, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 

@@ -46,7 +46,7 @@ subroutine make_csc_arrays(mesh_raw, entities, cscmat, debug, errco, emsg)
    call integer_alloc_1d(iwork, 3*entities%n_entities, 'iwork', errco, emsg);
    RETONERROR(errco)
 
-   call sort_csr (cscmat%n_dof, cscmat%n_nonz, max_row_len, cscmat%v_row_ind, cscmat%v_col_ptr,  iwork)
+   call sort_csc (cscmat%n_dof, cscmat%n_nonz, max_row_len, cscmat%v_row_ind, cscmat%v_col_ptr,  iwork)
 
 
 end subroutine
