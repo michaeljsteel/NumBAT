@@ -202,13 +202,13 @@ Compare to some fiber literature and the hydrodynamic reprn.
 
 
 
-The finite element method in |NUMBAT|
+The method of solution in |NUMBAT|
 =========================================
 
-|NUMBAT| solves both the electromagnetic and elastic modal properties using finite element method (FEM) algorithms.
+|NUMBAT| solves both the electromagnetic and elastic modal properties using *finite element method* (FEM) algorithms.
 Chapter :ref:`chap-fem-formulation-label` provides a summary of the finite element formulation.
 
-For details see refs. :cite:p:`Sturmberg:2019`, :cite:p:`Dossou:2005` and :cite:p:`hladkyhennion:1997`.
+For further details, see refs. :cite:p:`Sturmberg:2019`, :cite:p:`Dossou:2005` and :cite:p:`hladkyhennion:1997`.
 
 
 
