@@ -2,7 +2,7 @@
  !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
  !  for the main linear equations
 
-subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
+subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
    perm_pp, perm_qq, mesh_raw, entities, cscmat, pbcs, nberr)
 
 
@@ -21,7 +21,7 @@ subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    type(NBError) :: nberr
 
 
-   integer(8) bdy_cdn, i_base
+   integer(8) bdy_cdn
 
    !if(E_H_field .eq. FEM_FORMULATION_E) then
    !   perm_qq = eps_eff*vacwavenum_k0**2
@@ -44,10 +44,6 @@ subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    type(BasisFunctions) :: basfuncs
 
    integer(8), dimension(:), allocatable :: i_work
-
-
-
-   integer(8) i_base2
 
    double precision xy_ref(2), wt
 
@@ -81,14 +77,6 @@ subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
    errco=0
 
    call integer_alloc_1d(i_work, 3*entities%n_entities, 'i_work', nberr); RET_ON_NBERR(nberr)
-
-   !  The CSC indexing, i.e., cscmat%v_col_ptr, is 1-based
-   !  But valpr.f may require the CSC indexing to be 0-based
-   if (i_base .eq. 0) then ! This is the active case
-      i_base2 = 1
-   else
-      i_base2 = 0
-   endif
 
 
    ! These are the K and M matrices in Kokou's paper expressed in CSC format
@@ -159,11 +147,11 @@ subroutine build_fem_ops_em (bdy_cdn, i_base, shift_ksqr, bloch_vec, &
                eqn_j = cscmat%m_eqs(dof_j,msh_pt_j)
 
                if (eqn_j .gt. 0) then
-                  col_start = cscmat%v_col_ptr(eqn_j) + i_base2
-                  col_end = cscmat%v_col_ptr(eqn_j+1) - 1 + i_base2
+                  col_start = cscmat%v_col_ptr(eqn_j)
+                  col_end = cscmat%v_col_ptr(eqn_j+1) - 1
                   !  unpack row into i_work
                   do i=col_start,col_end
-                     i_work(cscmat%v_row_ind(i) + i_base2) = i
+                     i_work(cscmat%v_row_ind(i) ) = i
                   enddo
 
                   ! evaluate this entity's P2 and P3 functions and derivatives

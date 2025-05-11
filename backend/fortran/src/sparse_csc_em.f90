@@ -71,6 +71,7 @@ module class_SparseCSC_EM
    procedure :: bound_cond_em => SparseCSC_EM_bound_cond_em
 
    procedure :: make_csc_arrays => SparseCSC_EM_make_csc_arrays
+   procedure :: adjust_for_zero_offset_indexing => SparseCSC_EM_adjust_for_zero_offset_indexing
 
    procedure :: make_col_ptr_provisional => SparseCSC_EM_make_col_ptr_provisional
    procedure :: make_arrays_final => SparseSC_make_arrays_final

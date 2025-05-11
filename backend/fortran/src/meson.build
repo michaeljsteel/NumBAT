@@ -97,8 +97,8 @@ nb_impl_fsrcs = files(
 #    'photoelastic_int_linear_impl.f90',
     'photoelastic_int_common_impl.f90',
 
-    'py_calc_modes_em.f90',
-    'py_calc_modes_ac.f90',
+    'calc_modes_em_impl.f90',
+    'calc_modes_ac_impl.f90',
     'periodicbcs_class.f90',
     'quad_triangle.f90',
     'quad_integrator.f90',

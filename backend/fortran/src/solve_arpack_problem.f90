@@ -289,7 +289,7 @@ end subroutine
 !  d = solved eigvals
 
 
-subroutine solve_arpack_problem (i_base, dim_krylov, n_modes, itermax, arp_tol, &
+subroutine solve_arpack_problem (dim_krylov, n_modes, itermax, arp_tol, &
    cscmat, v_evals, v_evecs, nberr, shortrun)
 
    !  cscmat%mOp_stiff is the inverse shift operator  Op = inv[A-SIGMA*M]*M, where M=Idenity
@@ -304,7 +304,7 @@ subroutine solve_arpack_problem (i_base, dim_krylov, n_modes, itermax, arp_tol, 
 
 
    integer(8), intent(in) :: itermax, dim_krylov
-   integer(8) n_dof, n_nonz, i_base, n_modes
+   integer(8) n_dof, n_nonz, n_modes
 
    !integer(8) row_ind(n_nonz), col_ptr(n_dof+1)
    !complex(8), intent(in) :: cscmat%mOp_stiff(n_nonz)
@@ -356,15 +356,6 @@ subroutine solve_arpack_problem (i_base, dim_krylov, n_modes, itermax, arp_tol, 
    ui = stdout
    errco = 0
    emsg = ""
-
-
-   if (i_base .ne. 0) then
-      write(emsg,*) "valpr_64: i_base != 0 : ", i_base, &
-         "valpr_64: UMFPACK requires 0-based indexing"
-      call nberr%set(NBERROR_103, emsg)
-      return
-
-   endif
 
    call vecs%init(n_modes, dim_krylov, n_dof, nberr); RET_ON_NBERR(nberr)
 

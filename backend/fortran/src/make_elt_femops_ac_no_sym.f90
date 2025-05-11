@@ -6,11 +6,11 @@
 !   M_{lm} = & \int_A \rho  \vecg_l^* \cdot  \vecg_m \, \dA
 !
 ! basfuncs contains the basis functions and overlap integrals evaluated at the current element
-! c_tensor_el and rho_el are the stiffness and density for this element
+! stiffness_C_IJ and rho_el are the stiffness and density for this element
 ! The K and M matrices are 18x18 from the 18 local degrees of freedom:
 !   6 nodes each with 3 displacement components on each triangle
 
-subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K, mat_M)
+subroutine make_elt_femops_ac_no_sym (basfuncs, beta, stiffness_C_IJ, rho_el, mat_K, mat_M)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -18,15 +18,15 @@ subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K
 
    complex(8) beta
    complex(8) mat_K(18,18), mat_M(18,18)
-   complex(8) c_tensor_el(6,6), rho_el
+   complex(8) stiffness_C_IJ(6,6), rho_el
 
    !  Local variables
    type(BasisFunctions) basfuncs
 
-   complex(8) z_tmp1
-   complex(8) z_mat_xyz(6,6,3,3), z_tensor, t_zmat_xyz
-   integer(8) i, j, i_p, j_p, i_xyz,  j_xyz
-   integer(8) i_u_xyz,  j_u_xyz, i_ind, j_ind
+   complex(8) t_G_ijbc, t_K_ij
+   complex(8) Gmat_ij_bc(6,6,3,3), t_stiffC_IJ, tG_ij_bc
+   integer(8) vnd_i, und_j, i_p, j_p, b_xyz,  c_xyz
+   integer(8) v_xyz_i,  u_xyz_j, vgt_I, vgt_J
    integer(8) S_index(3,3)
 
    !  Compute the Affine mappings from the current triangle to the
@@ -34,9 +34,9 @@ subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K
    !  Integration will be performed on the reference unit triangle
 
 
-   !  S_index(i_xyz,i_u_xyz): index of S_{i_xyz,i_u_xyz} in the Voigt notation
-   !  i_xyz represents the x,y, or z-derivative
-   !  i_u_xyz represents the x,y, or z-field component
+   !  S_index(b_xyz,v_xyz_i): index of S_{b_xyz,v_xyz_i} in the Voigt notation
+   !  b_xyz represents the x,y, or z-derivative
+   !  v_xyz_i represents the x,y, or z-field component
 
    S_index(1,1) = 1 !  S_xx => 1
    S_index(2,1) = 6 !  S_yx => 6
@@ -51,67 +51,70 @@ subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K
    S_index(3,3) = 3 !  S_zz => 3
 
 
+      mat_K = C_ZERO
+      mat_M = C_ZERO
 
-   !  z_mat_xyz: contains the overlap integrals of the x,y and z-derivatives
-   z_mat_xyz = C_ZERO
-   do i=1,P2_NODES_PER_EL
-      do j=1,P2_NODES_PER_EL
+      !=================  Construction of the matrix mat_M =================
+      ! See docs chap 9.
+      ! M_{i,sig,j,tau} = delta_{sig,tau} \int_A \rho  g_i g_j \dx \dy
+      !  Integral [rho * P(i) * P(i)]
+      do vnd_i=1,P2_NODES_PER_EL
 
-         do i_xyz=1,3
-            do j_xyz=1,3
+         do b_xyz=1,3  !  The components x, y and z
+            i_p = 3*(vnd_i-1) + b_xyz
 
-               if (i_xyz == 1 .and. j_xyz == 1) then             ! u_i_x^*  u_j_x
-                  t_zmat_xyz =  basfuncs%p2x_p2x(i,j)
+            c_xyz = b_xyz            ! only diagonal component entries are nonzero
+            do und_j=1,P2_NODES_PER_EL
+               j_p = 3*(und_j-1) + c_xyz
+               mat_M(i_p,j_p) = mat_M(i_p,j_p) + basfuncs%p2_p2(vnd_i, und_j) * rho_el
+            enddo
 
-               elseif (i_xyz == 1 .and. j_xyz == 2) then         ! u_i_x^*  u_j_y
-                  t_zmat_xyz = basfuncs%p2x_p2y(i,j)
+         enddo
+      enddo
 
-               elseif (i_xyz == 1 .and. j_xyz == 3) then         ! u_i_x^*  u_j_z
-                  t_zmat_xyz = C_IM_ONE* beta * basfuncs%p2_p2x(j,i)
 
-               elseif (i_xyz == 2 .and. j_xyz == 1) then         ! u_i_y^* u_j_x
-                  t_zmat_xyz = basfuncs%p2x_p2y(j,i)
+   ! Construction of the P2 derivative overlaps
+   ! This is exactly the matrix G_ijbc in chap 9
 
-               elseif (i_xyz == 2 .and. j_xyz == 2) then         ! u_i_y^* u_j_y
-                  t_zmat_xyz = basfuncs%p2y_p2y(i,j)
+   Gmat_ij_bc = C_ZERO
+   do vnd_i=1,P2_NODES_PER_EL      ! g_i
+      do und_j=1,P2_NODES_PER_EL   ! g_j
 
-               elseif (i_xyz == 2 .and. j_xyz == 3) then         ! u_i_y^* u_j_z
-                  t_zmat_xyz = C_IM_ONE* beta* basfuncs%p2_p2y(j,i)
+         do b_xyz=1,3              ! deriv of g_i
+            do c_xyz=1,3           ! deriv of g_j
 
-               elseif (i_xyz == 3 .and. j_xyz == 1) then         ! u_i_z^* u_j_x
-                  t_zmat_xyz = - C_IM_ONE* beta * basfuncs%p2_p2x(i,j)
+               if (b_xyz == 1 .and. c_xyz == 1) then             ! v_i_x^*  u_j_x
+                  tG_ij_bc =  basfuncs%p2x_p2x(vnd_i, und_j)
 
-               elseif (i_xyz == 3 .and. j_xyz == 2) then         ! u_i_z^* u_j_y
-                  t_zmat_xyz = - C_IM_ONE* beta * basfuncs%p2_p2y(i,j)
+               elseif (b_xyz == 1 .and. c_xyz == 2) then         ! v_i_x^*  u_j_y
+                  tG_ij_bc = basfuncs%p2x_p2y(vnd_i,und_j)
 
-               elseif (i_xyz == 3 .and. j_xyz == 3) then         ! u_i_z^* u_j_z
-                  t_zmat_xyz = beta**2 * basfuncs%p2_p2(i,j)
+               elseif (b_xyz == 1 .and. c_xyz == 3) then         ! v_i_x^*  u_j_z
+                  tG_ij_bc = C_IM_ONE* beta * basfuncs%p2_p2x(und_j,vnd_i)
+
+               elseif (b_xyz == 2 .and. c_xyz == 1) then         ! v_i_y^* u_j_x
+                  tG_ij_bc = basfuncs%p2x_p2y(und_j,vnd_i)
+
+               elseif (b_xyz == 2 .and. c_xyz == 2) then         ! v_i_y^* u_j_y
+                  tG_ij_bc = basfuncs%p2y_p2y(vnd_i,und_j)
+
+               elseif (b_xyz == 2 .and. c_xyz == 3) then         ! v_i_y^* u_j_z
+                  tG_ij_bc = C_IM_ONE* beta* basfuncs%p2_p2y(und_j,vnd_i)
+
+               elseif (b_xyz == 3 .and. c_xyz == 1) then         ! v_i_z^* u_j_x
+                  tG_ij_bc = - C_IM_ONE* beta * basfuncs%p2_p2x(vnd_i,und_j)
+
+               elseif (b_xyz == 3 .and. c_xyz == 2) then         ! v_i_z^* u_j_y
+                  tG_ij_bc = - C_IM_ONE* beta * basfuncs%p2_p2y(vnd_i,und_j)
+
+               elseif (b_xyz == 3 .and. c_xyz == 3) then         ! v_i_z^* u_j_z
+                  tG_ij_bc = beta**2 * basfuncs%p2_p2(vnd_i,und_j)
 
                endif
 
-               z_mat_xyz(i,j,i_xyz,j_xyz) = t_zmat_xyz
+               Gmat_ij_bc(vnd_i, und_j, b_xyz,c_xyz) = tG_ij_bc
 
             enddo
-         enddo
-
-      enddo
-   enddo
-
-   mat_K = C_ZERO
-   mat_M = C_ZERO
-
-   !=================  Construction of the matrix mat_M =================
-
-   !  Integral [rho * P(i) * P(i)]
-   do i=1,P2_NODES_PER_EL
-
-      do i_xyz=1,3  !  The components x, y and z
-         i_p = 3*(i-1) + i_xyz
-
-         do j=1,P2_NODES_PER_EL
-            j_xyz = i_xyz
-            j_p = 3*(j-1) + j_xyz
-            mat_M(i_p,j_p) = mat_M(i_p,j_p) + basfuncs%p2_p2(i,j) * rho_el
          enddo
 
       enddo
@@ -123,40 +126,48 @@ subroutine make_elt_femops_ac_no_sym (basfuncs, beta, c_tensor_el, rho_el, mat_K
    !  A.-C. Hladky-Hennion
    !  "Finite element analysis of the propagation of acoustic waves in waveguides,"
    !  Journal of Sound and Vibration, vol. 194, no. 2, pp. 119-136, 1996.
+   !
+   ! K_ij_sig_tau = c_sig_b_c_tau G_ij_bc
+   ! See chapter 9 for details
 
-   do i=1,P2_NODES_PER_EL
-      !  Components of the displacement vector
+   do vnd_i=1,P2_NODES_PER_EL         !  v_i nodes
+      do v_xyz_i=1,3              !  v_i components  (sig)
+         i_p = 3*(vnd_i-1) + v_xyz_i  !  row index
 
-      do i_u_xyz=1,3
-         i_p = 3*(i-1) + i_u_xyz
+         do und_j=1,P2_NODES_PER_EL         ! u_j nodes
+            do u_xyz_j=1,3              ! u_j components  (tau)
+               j_p = 3*(und_j-1) + u_xyz_j  ! column index
 
-         do j=1,P2_NODES_PER_EL
-            !  Components of the displacement vector
-            do j_u_xyz=1,3
-               j_p = 3*(j-1) + j_u_xyz
-               !  Derivatives
+               ! Do contraction  over stiffness tensor and Gmat
+               ! b and c are the inner indices in the contraction as in chap 9
 
-               do i_xyz=1,3
-                  i_ind = S_index(i_xyz,i_u_xyz)
+               t_K_ij = C_ZERO
+               do b_xyz=1,3
+                  vgt_I = S_index(b_xyz,v_xyz_i)  ! S_index is symmetric so order doesn't matter
 
-                  !  Derivatives
-                  do j_xyz=1,3
-                     j_ind = S_index(j_xyz,j_u_xyz)
-                     z_tensor = c_tensor_el(i_ind,j_ind)
-                     z_tmp1 = z_mat_xyz(i,j,i_xyz,j_xyz)
+                  do c_xyz=1,3
+                     vgt_J = S_index(c_xyz,u_xyz_j)
 
-                     if (i_u_xyz == 3) then
-                        z_tmp1 = -C_IM_ONE* z_tmp1
+                     t_stiffC_IJ = stiffness_C_IJ(vgt_I,vgt_J)
+
+                     t_G_ijbc = Gmat_ij_bc(vnd_i,und_j, b_xyz,c_xyz)
+
+                     ! Account for fact that the u_j_z dof represents the physical (u_{j,z} / i)
+                     ! So we need to multiply every u_j_z by i, and every v_j_z^* by -i
+                     ! See JLT paper
+                     if (v_xyz_i == 3) then
+                        t_G_ijbc = -C_IM_ONE* t_G_ijbc
                      endif
 
-                     if (j_u_xyz == 3) then
-                        z_tmp1 = C_IM_ONE* z_tmp1
+                     if (u_xyz_j == 3) then
+                        t_G_ijbc = C_IM_ONE* t_G_ijbc
                      endif
 
-                     mat_K(i_p,j_p) = mat_K(i_p,j_p) + z_tmp1 * z_tensor
+                     t_K_ij = t_K_ij + t_G_ijbc * t_stiffC_IJ
 
                   enddo
                enddo
+                mat_K(i_p,j_p) = t_K_ij
             enddo
          enddo
       enddo

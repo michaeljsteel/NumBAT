@@ -62,18 +62,45 @@ for some set of coefficients :math:`\vecu_h = (u_{1,x},u_{1,y},u_{1,z},u_{2,x},u
 with separate coefficients for each Cartesian component of the field. Here, :math:`\bfe_{\sigma}` stands for the Cartesian unit
 vectors :math:`\hat{x}, \hat{y}, \hat{z}`.
 
+Note that the basis functions are scalar and each component of the displacement field is represented by a distinct degree of freedom. (This could be written in a vector notation defining :math:`\vec g_{m,\sigma}(\vecrt) = g_m(\vecrt) \bfe_\sigma`, but there is no particular advantage in doing so.) Later, we see that this is handled differently in the electromagnetic problem where the basis functions are chosen to have a non-trivial vector character.
+
+FEM basis functions
+^^^^^^^^^^^^^^^^^^^^^^^
 In |NUMBAT|, the :math:`g_m(\vecrt)` are chosen as piecewise quadratic polynomials defined on each domain of an irregularly shaped
-triangular grid. These basis functions or *elements* are known as Lagrange P2 polynomials. The numerical task is to find eigenvector
+triangular grid. These basis functions or *elements* are known as Lagrange P2 polynomials illustrated in the figure below.
+
+.. _fig-femformulation-lagrange-scalar-p2-label:
+
+.. figure:: ./images/general/elastic_p2funcs.png
+    :width: 15cm
+
+    Lagrange P2 polynomial scalar basis functions.
+
+The standard polynomials are defined on the "unit" triangle with vertices or *nodes* at
+:math:`\vecr_1=(0,0)`, :math:`\vecr_2=(1,0)`, and :math:`\vecr_3=(0,1)`.
+Three additional nodes 4,5,6 label the mid-points at :math:`\vecr_4= (\frac{1}{2},0)`,
+:math:`\vecr_5= (0,\frac{1}{2})`, and :math:`\vecr_6=(\frac{1}{2},\frac{1}{2})`.
+
+Observe that each polynomial takes the value zero at all nodes except the one corresponding to its label:
+
+.. math::
+
+    g_i(\vecrt_j) = \delta_{ij},
+
+and so frequently we can identify the nodes and basis functions of the same index.
+
+The triangles in the FEM grid have arbitrary shapes and node locations, so that the values and overlap integrals of the functions are calculated for each triangle using an affine transformation.
+
+Determining the FEM matrices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The numerical task is to find eigenvector
 solutions for the vector of coefficients or *degrees of freedom* :math:`\vecu_h`.
 
-How many degrees of freedom are there? There are six P2 polynomials for each triangle in the grid which can be associated with the 3
-vertices (*nodes* 1,2,3) and 3 edge mid-points (nodes 4,5,6) of each triangle. Since most nodes belong to more than one triangle and
+How many degrees of freedom are there? There are six P2 polynomials for each triangle in the grid. Since most nodes belong to more than one triangle and
 also due to the application of boundary conditions at the edge of the domain, the precise number of degrees of freedom depends on
 the exact arrangement of triangles in the FEM grid, but will be of order :math:`n_\text{dof}=10 n_t` where :math:`n_t` is the number
 of triangles.
-
-Determining the FEM matrices
-------------------------------
 
 On inserting the field expansion into the weak form integral equation, the eigenproblem ultimately leads to the generalised linear
 eigenvalue equation (see :cite:p:`Sturmberg:2019`),
@@ -101,18 +128,20 @@ The mass operator comes from the second term in the weak-form wave equation:
                          &= \delta_{\sigma,\tau}   \int_A \rho(\vecrt)  g_i(\vecrt) g_j(\vecrt) \, \dx\dy
 
 
-The stiffness operator follows from the first term in the weak-form wave equation, but requires a bit more work to evaluate
+The stiffness operator implements the negative of the first term in the weak-form wave equation (negative since
+it has been moved to the other side of the equation).
+It requires a bit more work to evaluate:
 
 .. math::
 
 
-    K[\vecv, \vecu] & = \int_A \vecv^*(\vecrt) \cdot (\nabla \cdot \bar{T}[\vecu]) \, \dA \\
-        & = \int_A v^*_a (\nabla \cdot \bar{T}[\vecu])_a \, \dA \\
-        & = \int_A v^*_a (\partial_b T_{ab}) \, \dA \\
-        & = -\int_A (\partial_b v^*_a) T_{ab} \, \dA \\
-        & = -\int_A (\partial_b v^*_a) c_{abcd} S_{cd} \, \dA \\
-        & = -\int_A (\partial_b v^*_a) c_{abcd}  \tfrac{1}{2} (\partial_c u_d + \partial_d u_c) \, \dA \\
-        & = -\frac{c_{abcd}}{2}\int_A (\partial_b v^*_a)    (\partial_c u_d + \partial_d u_c) \, \dA \\
+    K[\vecv, \vecu] & = - \int_A \vecv^*(\vecrt) \cdot (\nabla \cdot \bar{T}[\vecu]) \, \dA \\
+        & = - \int_A v^*_a (\nabla \cdot \bar{T}[\vecu])_a \, \dA \\
+        & = - \int_A v^*_a (\partial_b T_{ab}) \, \dA \\
+        & = \int_A (\partial_b v^*_a) T_{ab} \, \dA \\
+        & = \int_A (\partial_b v^*_a) c_{abcd} S_{cd} \, \dA \\
+        & = \int_A (\partial_b v^*_a) c_{abcd}  \tfrac{1}{2} (\partial_c u_d + \partial_d u_c) \, \dA \\
+        & = \frac{c_{abcd}}{2}\int_A (\partial_b v^*_a)    (\partial_c u_d + \partial_d u_c) \, \dA \\
 
 
 Now to find :math:`K_{i,\sigma;j,\tau}` we can set
@@ -123,12 +152,12 @@ to obtain
 
 .. math::
     K_{i,\sigma;j,\tau}
-        & = -\frac{c_{abcd}}{2}  \int_A (\partial_b g_i \delta_{a,\sigma} e^{-iqz})
+        & = \frac{c_{abcd}}{2}  \int_A (\partial_b g_i \delta_{a,\sigma} e^{-iqz})
         (\partial_c g_j \delta_{d,\tau} e^{iqz} + \partial_d g_j \delta_{c,\tau} e^{iqz})  \, \dA \\
-        & = -\frac{c_{\sigma bcd}}{2}  \int_A (\partial_b g_i  e^{-iqz})
+        & = \frac{c_{\sigma bcd}}{2}  \int_A (\partial_b g_i  e^{-iqz})
         (\partial_c g_j \delta_{d,\tau} e^{iqz} + \partial_d g_j \delta_{c,\tau} e^{iqz})  \, \dA \\
-        & = -\frac{c_{\sigma bc\tau}}{2}  \int_A (\partial_b g_i  e^{-iqz}) (\partial_c g_j  e^{iqz})\, \dx\dy
-            -\frac{c_{\sigma b\tau d}}{2} \int_A (\partial_b g_i  e^{-iqz}) (\partial_d g_j e^{iqz})\, \dx\dy
+        & = \frac{c_{\sigma bc\tau}}{2}  \int_A (\partial_b g_i  e^{-iqz}) (\partial_c g_j  e^{iqz})\, \dx\dy
+            +\frac{c_{\sigma b\tau d}}{2} \int_A (\partial_b g_i  e^{-iqz}) (\partial_d g_j e^{iqz})\, \dx\dy
 
 
 Writing the integral :math:`\int_A f \dA = \langle f \rangle` these terms can be evaluated as
@@ -157,10 +186,10 @@ which at last gives
 
 .. math::
 
-    K_{i,\sigma;j,\tau} & = - \frac{c_{\sigma bc \tau}}{2} G^{ij}_{bc}  - \frac{c_{\sigma b \tau d}}{2} G^{ij}_{bd} \\
-                        & = - \frac{1}{2} \left(  c_{\sigma bc \tau} G^{ij}_{bc}  + c_{\sigma b \tau c}  G^{ij}_{bc} \right)\\
-                        & = - \frac{1}{2} \left(  c_{\sigma bc \tau} G^{ij}_{bc}  + c_{\sigma b c\tau }  G^{ij}_{bc} \right)\\
-                        & = -   c_{\sigma bc \tau} G^{ij}_{bc}
+    K_{i,\sigma;j,\tau} & =  \frac{c_{\sigma bc \tau}}{2} G^{ij}_{bc}  + \frac{c_{\sigma b \tau d}}{2} G^{ij}_{bd} \\
+                        & =  \frac{1}{2} \left(  c_{\sigma bc \tau} G^{ij}_{bc}  + c_{\sigma b \tau c}  G^{ij}_{bc} \right)\\
+                        & =  \frac{1}{2} \left(  c_{\sigma bc \tau} G^{ij}_{bc}  + c_{\sigma b c\tau }  G^{ij}_{bc} \right)\\
+                        & =    c_{\sigma bc \tau} G^{ij}_{bc}
 
 using the symmetries :math:`c_{ijkl}=c_{jikl}=c_{ijlk}`.
 
@@ -169,24 +198,27 @@ Evaluating a couple of these elements using the Voigt notation for the stiffness
 .. math::
 
     K_{x,i;x,j}
-        & = - c_{x bc x} G^{ij}_{bc} \\
-        & = -  \left [ c_{x xx x}  G^{ij}_{xx} +  c_{x xy x}  G^{ij}_{xy} +  c_{x xz x}  G^{ij}_{xz}
+        & =  c_{x bc x} G^{ij}_{bc} \\
+        & =   \left [ c_{x xx x}  G^{ij}_{xx} +  c_{x xy x}  G^{ij}_{xy} +  c_{x xz x}  G^{ij}_{xz}
                         +  c_{x yx x}  G^{ij}_{yx} +  c_{x yy x}  G^{ij}_{yy} \right . \\
         & ~~~~~~~~ + \left . c_{x yz x}  G^{ij}_{yz} + c_{x zx x}  G^{ij}_{zx} +  c_{x zy x}  G^{ij}_{zy} + c_{x zz x}  G^{ij}_{zz} \right] \\
-        & =-\left [ C_{11}  G^{ij}_{xx} +  C_{16}  G^{ij}_{xy} +  c_{15}  G^{ij}_{xz}
+        & =\left [ C_{11}  G^{ij}_{xx} +  C_{16}  G^{ij}_{xy} +  c_{15}  G^{ij}_{xz}
                         +  c_{66}  G^{ij}_{yx} +  c_{66}  G^{ij}_{yy} \right . \\
         & ~~~~~~~~ + \left . c_{65}  G^{ij}_{yz} + c_{51}  G^{ij}_{zx} +  c_{56}  G^{ij}_{zy} + c_{55}  G^{ij}_{zz} \right ]
 
     K_{x,i;y,j}
-        & = - c_{x bc y} G^{ij}_{bc} \\
-        & = -  \left [ c_{x xx y}  G^{ij}_{xx} +  c_{x xy y}  G^{ij}_{xy} +  c_{x xz y}  G^{ij}_{xz}
+        & =  c_{x bc y} G^{ij}_{bc} \\
+        & =   \left [ c_{x xx y}  G^{ij}_{xx} +  c_{x xy y}  G^{ij}_{xy} +  c_{x xz y}  G^{ij}_{xz}
                         +  c_{x yx y}  G^{ij}_{yx} +  c_{x yy y}  G^{ij}_{yy} \right . \\
         & ~~~~~~~~ + \left . c_{x yz y}  G^{ij}_{yz} + c_{x zx y}  G^{ij}_{zx} +  c_{x zy y}  G^{ij}_{zy} + c_{x zz y}  G^{ij}_{zz} \right] \\
-        &=-\left [ C_{16}  G^{ij}_{xx} +  C_{12}  G^{ij}_{xy} +  c_{14}  G^{ij}_{xz}
+        &=\left [ C_{16}  G^{ij}_{xx} +  C_{12}  G^{ij}_{xy} +  c_{14}  G^{ij}_{xz}
                         +  c_{66}  G^{ij}_{yx} +  c_{62}  G^{ij}_{yy} \right . \\
         & ~~~~~~~~ + \left . c_{64}  G^{ij}_{yz} + c_{56}  G^{ij}_{zx} +  c_{52}  G^{ij}_{zy} + c_{55}  G^{ij}_{zz} \right ]
 
 
+
+Solving the numerical problem
+---------------------------------
 
 The entire :math:`\rmK` and :math:`\rmM` matrices have dimension :math:`n_\text{dof} \times n_\text{dof}` and are filled
 output by performing the above operation for each triangle in turn. But since only degrees of freedom that share a triangle
@@ -221,9 +253,9 @@ Expressed in the modal form :math:`\vecE(\vecr)= [\vecE_t, E_z]e^{i \beta z}`, t
 
    - \nabla_t \cdot (\frac{1}{\mu} \vecE_t) + \nabla_t \cdot(\frac{1}{\mu} \nabla_t \hE_z) + \omega^2 \epsilon \hE_z =& \, 0 ,
 
-where for convenience we take :math:`E_z = -\beta \hE_z`.
+where for convenience we have introduced :math:`\hE_z E_z = -E_z/\beta`, and in practice the permeability is always $\mu=\mu_0$.
 
-In the so-called *weak-formulation*, we seek pairs :math:`(\vecE, \beta)` so that for all test functions :math:`\vecF(\vecr)`, the
+In the weak-form formulation, we seek pairs :math:`(\vecE, \beta)` so that for all test functions :math:`\vecF(\vecr)`, the
 following equations hold
 
 .. math::
@@ -236,18 +268,55 @@ following equations hold
       \left(\frac{1}{\mu} \nabla_t \hE_z, \nabla_t F_z \right)
       + \omega^2 \left (\epsilon \hE_z, F_z \right ) = \, 0 ,
 
-To build the FEM formulation, we introduce transverse vector basis functions :math:`\vphi_i(x,y)` and scalar longitudinal functions :math:`\psi_i(x,y)`  so that a general field has the form
+where for arbitrary terms :math:`\vec A, \vec B` the inner product is defined
+
+..  math::
+
+    (\vec A, \vec B) = \int (\vec B)^* \cdot (\vec A) \, \dA.
+
+
+Defining the FEM formulation
+------------------------------
+
+The basis sets used to construct the FEM formulation are more involved than for the elastic problem, with the transverse and longitudinal components represented differently.
+We introduce transverse vector basis functions :math:`\vphi_i(x,y)` and scalar longitudinal functions :math:`\psi_i(x,y)`  so that a general field has the form
 
 ..  math::
 
      \vecE = & \vecE_t + \unitz E_z \\
-         = & \sum_{i=1}^{N} e_{t,i} \, \vphi_i(\vecr)
+         = & \sum_{i=1}^{M} e_{t,i} \, \vphi_i(\vecr)
                 + \unitz \sum_{i=1}^{N} \he_{z,i} \, \psi_i(\vecr) \\
-                = & [\vphi_1, \vphi_2, \ldots, \vphi_N ,\psi_1, \psi_2, \ldots, \psi_N, ] \begin{bmatrix} e_{t,1} \\ e_{t,2}   \\ \ldots \\ e_{t,N} \\
+                = & [\vphi_1, \vphi_2, \ldots, \vphi_M,\psi_1, \psi_2, \ldots, \psi_N, ] \begin{bmatrix} e_{t,1} \\ e_{t,2}   \\ \ldots \\ e_{t,M} \\
                 \he_{z,1} \\ \he_{z,2} \\ \ldots \\ \he_{z,N} \end{bmatrix} \\
                 = & [\bvphi ; \unitz \bpsi]
                  \begin{bmatrix} \bfe_t \\ \bfhez \end{bmatrix}
 
+
+The basis functions
+^^^^^^^^^^^^^^^^^^^^^
+
+The longitudinal component of the field is represented by 10 P3 Lagrange polynomials. These have nodes at the three vertices, six one-third points along each edge, and the *barycentre* of the triangle at :math:`\vecr_{10}=(\frac{1}{3},\frac{1}{3})`:
+
+
+.. figure:: ./images/general/em_p3funcs.png
+    :width: 15cm
+
+    Lagrange P3 polynomial scalar basis functions.
+
+
+The transverse part of the field is represented by 12 basis functions composed from products of P2 polynomials and gradients of P1 polynomials.
+
+.. figure:: ./images/general/em_vecfuncs.png
+    :width: 15cm
+
+    Lagrange P3 polynomial scalar basis functions.
+
+
+Hence in the basis function expansion above, we have :math:`M=12` and :math:`N=10`.
+
+
+Determining the FEM matrices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 An arbitrary inner product :math:`(\calL_1 E, \calL_2 F)` with :math:`\calF = a \vphi_m+ b\psi_m \unitz` where :math:`a` and
 :math:`b` are zero or one, expands  to
 

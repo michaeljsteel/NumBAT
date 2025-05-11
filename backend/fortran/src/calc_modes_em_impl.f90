@@ -118,7 +118,6 @@ contains
 
       !  Variable used by valpr
       integer(8) dim_krylov
-      integer(8) csc_index_offset
 
       integer(8) n_core(2)  !  index of highest epsilon material, seems funky
       double precision vacwavenum_k0
@@ -176,8 +175,7 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      csc_index_offset = 0
-      call build_fem_ops_em (bdy_cdn, csc_index_offset, shift_ksqr, bloch_vec, pp, qq, &
+      call build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, pp, qq, &
       mesh_raw, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 
@@ -211,7 +209,10 @@ contains
 
       call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
 
-      call solve_arpack_problem( csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, &
+      call cscmat%adjust_for_zero_offset_indexing()
+
+
+      call solve_arpack_problem( dim_krylov, n_modes, itermax, arp_tol, cscmat, &
       v_evals_beta, arpack_evecs, nberr, shortrun); RET_ON_NBERR(nberr)
       if (shortrun .ne. 0) then
          write(*,*) 'Exiting with shortrun in py_calc_modes.f'

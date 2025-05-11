@@ -79,7 +79,6 @@ contains
       integer(8) ui_out
 
       complex(8) shift_omsq
-      integer(8) csc_index_offset
 
       integer(8) shortrun
 
@@ -162,8 +161,7 @@ contains
       call cscmat%adjust_for_zero_offset_indexing()
 
       shortrun=0
-      csc_index_offset = 0  ! remove this
-      call solve_arpack_problem (csc_index_offset, dim_krylov, n_modes, itermax, arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr, shortrun)
+      call solve_arpack_problem (dim_krylov, n_modes, itermax, arp_tol, cscmat, v_evals_nu, arpack_evecs, nberr, shortrun)
       RET_ON_NBERR(nberr)
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()

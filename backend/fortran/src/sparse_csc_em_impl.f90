@@ -267,18 +267,6 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
 
    call complex_alloc_1d(this%mOp_mass, this%n_nonz, 'cscmat%mOp_mass', nberr); RET_ON_NBERR(nberr)
 
-
-   !  convert from 1-based to 0-based
-   !  ----------------------------------------------------------------
-   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
-   !  But external calls to functions like valpr.f will need 0-based indexing.
-   !  So the indices need shifting by one.
-   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
-
-   this%v_row_ind = this%v_row_ind - 1
-   this%v_col_ptr = this%v_col_ptr - 1
-
-
 end subroutine
 
 
@@ -596,5 +584,25 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
 !   deallocate(row_ind_tmp)
 
    this%n_nonz = n_nonz
+
+end
+
+
+
+  !  convert from 1-based to 0-based
+   !  ----------------------------------------------------------------
+   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
+   !  But external calls to functions like valpr.f will need 0-based indexing.
+   !  So the indices need shifting by one.
+   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
+
+
+! TODO: maintain current offset flag to know if we need to apply shift
+subroutine SparseCSC_EM_adjust_for_zero_offset_indexing(this)
+
+   class(SparseCSC_EM) :: this
+
+   this%v_row_ind = this%v_row_ind - 1
+   this%v_col_ptr = this%v_col_ptr - 1
 
 end
