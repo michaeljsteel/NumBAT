@@ -111,7 +111,10 @@ module class_Mesh
       integer(8), dimension(:,:), allocatable :: v_ety_props
 
       ! Maps P2 edge nodes to surrounding vertices
-      integer(8) edge_ends(2,3)
+      integer(8) edge_end_nodes(2,3)
+
+      ! tmp workspace, emptied once constructed
+      integer(8), dimension(:), allocatable :: visited
 
    contains
 
@@ -223,7 +226,7 @@ module class_Mesh
    !    integer(8), dimension(:,:), allocatable :: v_ety_props
 
    !    ! Maps P2 edge nodes to surrounding vertices
-   !    integer(8) edge_ends(2,3)
+   !    integer(8) edge_end_nodes(2,3)
 
    ! contains
 
