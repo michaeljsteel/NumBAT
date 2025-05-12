@@ -8,10 +8,10 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
    use numbatmod
    use alloc
 
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_AC
 
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
    type(SparseCSC_AC) cscmat
    type(NBError) nberr
 

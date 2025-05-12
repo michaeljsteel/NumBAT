@@ -1,8 +1,8 @@
 
 
-subroutine MeshRawAC_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
+subroutine MeshAC_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
-   class(MeshRawAC) :: this
+   class(MeshAC) :: this
    integer(8) :: n_msh_elts, n_msh_pts, n_elt_mats
    type(NBError) nberr
 
@@ -21,10 +21,10 @@ end subroutine
 
 
  ! Seems identical to the EM version.
-subroutine MeshRawAC_construct_mesh_tables_from_py(this, &
+subroutine MeshAC_load_mesh_tables_from_py(this, &
    v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt)
 
-   class(MeshRawAC) :: this
+   class(MeshAC) :: this
 
    integer(8) :: v_mshpt_physindex(this%n_msh_pts)
    double precision :: v_mshpt_xy(2, this%n_msh_pts)
@@ -44,9 +44,9 @@ end subroutine
 
  ! Seems identical to the EM version.
  ! current not used
-subroutine MeshRawAC_construct_mesh_tables_from_scratch(this, mesh_file, dimscale_in_m,nberr)
+subroutine MeshAC_load_mesh_tables_from_scratch(this, mesh_file, dimscale_in_m,nberr)
 
-   class(MeshRawAC) :: this
+   class(MeshAC) :: this
 
    ! ins
    character(len=*) mesh_file
@@ -124,17 +124,17 @@ end
 
 
 ! boundary nodes have non zero GMsh physindex codes
-pure logical function  MeshRawAC_is_boundary_mesh_point(this, msh_pt) result(res)
+pure logical function  MeshAC_is_boundary_mesh_point(this, msh_pt) result(res)
 
-class(MeshRawAC), intent(in) :: this
+class(MeshAC), intent(in) :: this
 integer(8), intent(in) :: msh_pt
 
 res = this%v_mshpt_physindex(msh_pt) .ne. 0
 end function
 
-subroutine MeshRawAC_find_nodes_for_elt(this, i_el, el_nds_i, el_nds_xy)
+subroutine MeshAC_find_nodes_for_elt(this, i_el, el_nds_i, el_nds_xy)
 
-   class(MeshRawAC) :: this
+   class(MeshAC) :: this
    integer(8) i_el
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision el_nds_xy(2, P2_NODES_PER_EL)

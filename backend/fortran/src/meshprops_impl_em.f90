@@ -1,68 +1,22 @@
-subroutine MeshRawEM_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
-   class(MeshRawEM) :: this
-   integer(8) :: n_msh_elts, n_msh_pts, n_elt_mats
+subroutine MeshEM_allocate(this,  nberr)
+
+   class(MeshEM) :: this
    type(NBError) nberr
 
-   this%n_msh_pts = n_msh_pts
-   this%n_msh_elts = n_msh_elts
-   this%n_elt_mats = n_elt_mats
+   call integer_alloc_1d(this%v_elt_material, this%n_msh_elts, 'v_elt_material', nberr);
+   RET_ON_NBERR(nberr)
 
-   call integer_alloc_1d(this%v_elt_material, n_msh_elts, 'v_elt_material', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_2d(this%v_mshpt_xy, 2_8, this%n_msh_pts, 'v_mshpt_xy', nberr);
+   RET_ON_NBERR(nberr)
 
-   call double_alloc_2d(this%v_mshpt_xy, 2_8, n_msh_pts, 'v_mshpt_xy', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(this%v_mshpt_physindex, this%n_msh_pts, 'v_mshpt_physindex', nberr);
+   RET_ON_NBERR(nberr)
 
-   call integer_alloc_1d(this%v_mshpt_physindex, n_msh_pts, 'v_mshpt_physindex', nberr); RET_ON_NBERR(nberr)
-
-   call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'm_elnd_to_mshpt', nberr);
+   call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, this%n_msh_elts, 'm_elnd_to_mshpt', nberr);
    RET_ON_NBERR(nberr)
 
 end subroutine
-
- ! subroutine MeshRawEM_destructor(this)
- !    type(MeshRawEM) :: this
-
- ! end subroutine
-
-subroutine MeshRawEM_fill_python_arrays(this, &
-   v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
-
-   class(MeshRawEM) :: this
-
-   integer(8), intent(out) :: v_elt_material(:)
-   integer(8), intent(out) :: v_mshpt_physindex(:)
-   integer(8), intent(out) :: m_elnd_to_mshpt(:, :)
-   double precision, intent(out) :: v_mshpt_xy(:,:)
-
-   v_elt_material = this%v_elt_material
-   v_mshpt_physindex = this%v_mshpt_physindex
-   m_elnd_to_mshpt = this%m_elnd_to_mshpt
-   v_mshpt_xy = this%v_mshpt_xy
-
-end subroutine
-
- ! boundary nodes have non zero GMsh physindex codes
-pure logical function  MeshRawEM_is_boundary_mesh_point(this, msh_pt) result(res)
-   class(MeshRawEM), intent(in) :: this
-   integer(8), intent(in) :: msh_pt
-
-   res = this%v_mshpt_physindex(msh_pt) .ne. 0
-end function
-
-pure logical function MeshRawEM_is_boundary_node_at_element(this, i_nd, i_el) result(res)
-   class(MeshRawEM), intent(in) :: this
-   integer(8), intent(in)  :: i_nd, i_el
-   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el)) .ne. 0
-end function
-
- ! get node type by indirection through node table
-integer(8) function  MeshRawEM_node_phys_index_by_ref(this, i_nd, i_el) result(res)
-   class(MeshRawEM) :: this
-   integer(8) :: i_nd, i_el
-   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el))
-end function
-
-
 
 
 
@@ -79,19 +33,21 @@ end function
 
 !  -  Fills:  v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
 
-subroutine MeshRawEM_construct_mesh_tables(this, mesh_file, dimscale_in_m, nberr)
+subroutine MeshEM_load_mesh_tables(this, mesh_file, dimscale_in_m, &
+   n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
-   class(MeshRawEM) :: this
+   class(MeshEM) :: this
 
    ! ins
    character(len=*) mesh_file
    double precision dimscale_in_m
 
+   integer(8) n_msh_pts, n_msh_elts, n_elt_mats
    ! outs
    type(NBError) nberr
 
+   ! --------------------------------------------------
 
-   ! locals
    character(len=EMSG_LENGTH) :: emsg
    double precision xx(2)
 
@@ -101,25 +57,31 @@ subroutine MeshRawEM_construct_mesh_tables(this, mesh_file, dimscale_in_m, nberr
 
    integer(8) ui
 
-
-
    ui = 24
+
 
    !  check the mesh file is consistent with what we expect
    open (unit = ui, file=mesh_file, status='old')
    read(ui,*) n_msh_pts2, n_msh_elts2
 
-   if (this%n_msh_pts .ne. n_msh_pts2) then
-      write(emsg,*) "construct_fem_nodal_tables: n_msh_pts != n_msh_pts2 : ", this%n_msh_pts, n_msh_pts2
+   if (n_msh_pts .ne. n_msh_pts2) then
+      write(emsg,*) "construct_fem_nodal_tables: n_msh_pts != n_msh_pts2 : ", n_msh_pts, n_msh_pts2
       call nberr%set(-101_8, emsg)
       return
    endif
 
-   if (this%n_msh_elts .ne. n_msh_elts2) then
-      write(emsg,*) "construct_fem_nodal_tables: n_msh_elts != n_msh_elts2 : ", this%n_msh_elts, n_msh_elts2
+   if (n_msh_elts .ne. n_msh_elts2) then
+      write(emsg,*) "construct_fem_nodal_tables: n_msh_elts != n_msh_elts2 : ", n_msh_elts, n_msh_elts2
       call nberr%set(-102_8, emsg)
       return
    endif
+
+   this%n_msh_pts = n_msh_pts
+   this%n_msh_elts = n_msh_elts
+   this%n_elt_mats = n_elt_mats
+
+   call this%allocate(nberr)
+   RET_ON_NBERR(nberr)
 
 
 !  Read coordinates of the FEM mesh points
@@ -153,10 +115,10 @@ end
 
 
 
-subroutine MeshRawEM_find_nodes_for_elt(this, i_el, &
+subroutine MeshEM_find_nodes_for_elt(this, i_el, &
    el_nds_i, el_nds_xy, is_curved)
 
-   class(MeshRawEM) :: this
+   class(MeshEM) :: this
    integer(8) i_el
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision el_nds_xy(2,P2_NODES_PER_EL)
@@ -180,8 +142,43 @@ end subroutine
 
 
 
+subroutine MeshEM_fill_python_arrays(this, &
+   v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
+
+   class(MeshEM) :: this
+
+   integer(8), intent(out) :: v_elt_material(:)
+   integer(8), intent(out) :: v_mshpt_physindex(:)
+   integer(8), intent(out) :: m_elnd_to_mshpt(:, :)
+   double precision, intent(out) :: v_mshpt_xy(:,:)
+
+   v_elt_material = this%v_elt_material
+   v_mshpt_physindex = this%v_mshpt_physindex
+   m_elnd_to_mshpt = this%m_elnd_to_mshpt
+   v_mshpt_xy = this%v_mshpt_xy
+
+end subroutine
 
 
 
 
+ ! boundary nodes have non zero GMsh physindex codes
+pure logical function  MeshEM_is_boundary_mesh_point(this, msh_pt) result(res)
+   class(MeshEM), intent(in) :: this
+   integer(8), intent(in) :: msh_pt
 
+   res = this%v_mshpt_physindex(msh_pt) .ne. 0
+end function
+
+pure logical function MeshEM_is_boundary_mesh_point_by_elt_node(this, i_nd, i_el) result(res)
+   class(MeshEM), intent(in) :: this
+   integer(8), intent(in)  :: i_nd, i_el
+   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el)) .ne. 0
+end function
+
+ ! get node type by indirection through node table
+integer(8) function  MeshEM_node_phys_index_by_ref(this, i_nd, i_el) result(res)
+   class(MeshEM) :: this
+   integer(8) :: i_nd, i_el
+   res = this%v_mshpt_physindex(this%m_elnd_to_mshpt(i_nd, i_el))
+end function

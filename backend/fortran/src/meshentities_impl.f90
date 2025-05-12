@@ -9,9 +9,9 @@ subroutine MeshEntities_allocate(this, n_msh_elts, nberr)
 
    this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
 
-   call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
+   call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'v_xy', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'x_ety_props', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'v_tags', nberr); RET_ON_NBERR(nberr)
 
 
    !  Define endpoints of the 3 edges (mid-point) of the reference triangle
@@ -51,7 +51,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
    use alloc
 
    class(MeshEntities) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    type(NBError) nberr
 
@@ -62,6 +62,9 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
    !  ----------------------------------------------
 
    ui_out = stdout
+
+   call this%allocate(mesh_raw%n_msh_elts, nberr)
+   RET_ON_NBERR(nberr)
 
    call integer_alloc_1d(visited, this%n_entities, 'visited', nberr); RET_ON_NBERR(nberr)
 
@@ -118,7 +121,7 @@ end
 subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -146,7 +149,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
       do jedge=4, P2_NODES_PER_EL
 
          ! if edge node is on a physical bdy
-         if (mesh_raw%is_boundary_node_at_element(jedge,iel)) then
+         if (mesh_raw%is_boundary_mesh_point_by_elt_node(jedge,iel)) then
 
             ! find node indices (1,2,3) of vertices of the edge
             ed_vert_nda = this%edge_ends(1, jedge-3)
@@ -155,7 +158,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
             ! Check that both vertices are also bdy points
             ! (else would be a broken mesh)
 
-            if (.not. mesh_raw%is_boundary_node_at_element(ed_vert_nda,iel) .or. .not. mesh_raw%is_boundary_node_at_element(ed_vert_ndb,iel)) then
+            if (.not. mesh_raw%is_boundary_mesh_point_by_elt_node(ed_vert_nda,iel) .or. .not. mesh_raw%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,iel)) then
 
                write(emsg,*) "list_edge: v_tags = ", &
                   mesh_raw%node_phys_index_by_ref(ed_vert_nda,iel), &
@@ -164,7 +167,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
                   "node_phys_i(ed_vert_nda) = ", mesh_raw%m_elnd_to_mshpt(ed_vert_nda,iel), &
                   "node_phys_i(ed_vert_ndb) = ", mesh_raw%m_elnd_to_mshpt(ed_vert_ndb,iel), &
                   "node_phys_i(jedge) = ", mesh_raw%m_elnd_to_mshpt(jedge,iel)
-                  call nberr%set(NBERR_BAD_MESH_EDGES, emsg)
+               call nberr%set(NBERR_BAD_MESH_EDGES, emsg)
                return
 
             endif
@@ -218,7 +221,7 @@ end
 subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -378,7 +381,7 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
 
 
    class(MeshEntities) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -433,7 +436,7 @@ end
 subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
    class(MeshEntities) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    integer(8) visited(:)
 
@@ -567,35 +570,35 @@ end
 
 
 
-subroutine MeshEntitiesAC_allocate(this, n_msh_elts, nberr)
+! subroutine MeshEntitiesAC_allocate(this, n_msh_elts, nberr)
 
-   class(MeshEntitiesAC) :: this
-   integer(8) :: n_msh_elts, n_ddl_ub
-   type(NBError) nberr
+!    class(MeshEntitiesAC) :: this
+!    integer(8) :: n_msh_elts, n_ddl_ub
+!    type(NBError) nberr
 
-   ! upper bound for this%n_entities
-   n_ddl_ub = 9 * n_msh_elts
+!    ! upper bound for this%n_entities
+!    n_ddl_ub = 9 * n_msh_elts
 
-   this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
+!    this%n_entities = n_ddl_ub  ! provisional value for some memory allocs
 
-   call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
-
-
-   !  Define endpoints of the 3 edges (mid-point) of the reference triangle
-
-   !i = 1
-   this%edge_ends(1,1) = 1
-   this%edge_ends(2,1) = 2
-
-   !i = 2
-   this%edge_ends(1,2) = 2
-   this%edge_ends(2,2) = 3
-
-   !i = 3
-   this%edge_ends(1,3) = 1
-   this%edge_ends(2,3) = 3
+!    call double_alloc_2d(this%v_xy, 2_8, n_ddl_ub, 'xy_N_E_F', nberr); RET_ON_NBERR(nberr)
+!    call integer_alloc_2d(this%v_ety_props, 2_8, n_ddl_ub, 'type_N_E_F', nberr); RET_ON_NBERR(nberr)
+!    call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'table_N_E_F', nberr); RET_ON_NBERR(nberr)
 
 
-end subroutine
+!    !  Define endpoints of the 3 edges (mid-point) of the reference triangle
+
+!    !i = 1
+!    this%edge_ends(1,1) = 1
+!    this%edge_ends(2,1) = 2
+
+!    !i = 2
+!    this%edge_ends(1,2) = 2
+!    this%edge_ends(2,2) = 3
+
+!    !i = 3
+!    this%edge_ends(1,3) = 1
+!    this%edge_ends(2,3) = 3
+
+
+! end subroutine

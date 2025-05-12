@@ -47,7 +47,7 @@ module class_SparseCSC_AC
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_Mesh
    use class_PeriodicBCs
 
    private
@@ -101,3 +101,5 @@ module class_SparseCSC_AC
 #include "sparse_csc_ac_impl.f90"
 
 end module class_SparseCSC_AC
+
+

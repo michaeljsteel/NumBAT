@@ -3,8 +3,8 @@
  !  dof_props = 0  => interior ddl (ddl = Degree Of Freedom)
  !  dof_props != 0 => boundary ddl
 
- !  bdy_cdn = 0 => Dirichlet boundary condition (E-fi_eld: electric wall condition)
- !  bdy_cdn = 1 => Neumann boundary condition (E-fi_eld: magnetic wall condition)
+ !  bdy_cdn = 0 => Dirichlet boundary condition (E-fel_id: electric wall condition)
+ !  bdy_cdn = 1 => Neumann boundary condition (E-fel_id: magnetic wall condition)
  !  bdy_cdn = 2 => Periodic boundary condition
 
 
@@ -63,32 +63,34 @@
 
 subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
 
-   use numbatmod
-   use class_MeshRaw
+   !use numbatmod
+   !use class_Mesh
 
    class(SparseCSC_AC) :: this
+
    integer(8) bdy_cdn
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
    type(NBError) nberr
+
 
    ! locals
 
    integer(8) i_msh, n_dof
    logical is_bdy_mshpt
-   integer(8) :: vec3(3)
-   vec3 = (/ 1_8, 2_8, 3_8/)
+   integer(8) :: vec3(3) = (/ 1_8, 2_8, 3_8/)
 
 
    call integer_alloc_2d(this%m_eqs, 3_8, mesh_raw%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
-   if(bdy_cdn .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
+
+   if (bdy_cdn .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
 
       do i_msh=1,mesh_raw%n_msh_pts
-         !is_interior = mesh_raw%v_mshpt_physindex(i) == 0
          is_bdy_mshpt = mesh_raw%is_boundary_mesh_point(i_msh)
 
-         if (.not. is_bdy_mshpt ) then !  each element is associated to 3 interior DOF
+         if (.not. is_bdy_mshpt ) then !  each mshpt is associated to 3 interior DOF: ux, uy, uz
+
             ! Uncommented code implements this:
             !this%m_eqs(1,i_msh) = n_dof + 1
             !this%m_eqs(2,i_msh) = n_dof + 2
@@ -96,7 +98,8 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
 
             this%m_eqs(:,i_msh) = n_dof + vec3
             n_dof = n_dof + 3
-         else
+         else ! bdy points have no DOF
+
             ! Uncommented code implements this:
             !    this%m_eqs(1,i_msh) = 0
             !    this%m_eqs(2,i_msh) = 0
@@ -106,7 +109,7 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
          endif
       enddo
 
-   elseif(bdy_cdn .eq. BCS_NEUMANN) then !  all points have a degree of freedom
+   elseif (bdy_cdn .eq. BCS_NEUMANN) then !  all points have 3 dof: ux, uy, uz
 
       do i_msh=1,mesh_raw%n_msh_pts
          ! Uncommented code implements this:
@@ -128,7 +131,7 @@ end
 subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    class(SparseCSC_AC) :: this
-   type(MeshRawAC) :: mesh_raw
+   type(MeshAC) :: mesh_raw
 
    type(NBError) nberr
 
@@ -136,7 +139,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    ! ------------------------------------------
 
-   integer(8) n_nonz_max, max_col_len, n_nonz
+   integer(8) n_nonz_max, max_col_len
 
    call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
 
@@ -150,7 +153,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr);
+   call this%make_arrays_final (mesh_raw, n_nonz_max, max_col_len, nberr);
    RET_ON_NBERR(nberr)
 
    ! At this point, the row_indices for a given column are in random order
@@ -222,15 +225,16 @@ end subroutine
 ! Builds a first version of v_col_ptr
 ! with enough spaces in each column to allow interactions with every dof on
 ! neighbouring elements
-subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
-   use numbatmod
+subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, n_nonz_max)
+
+   ! use numbatmod
 
    class(SparseCSC_AC) :: this
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
 
-   integer(8), intent(out) :: nonz_max
+   integer(8), intent(out) :: n_nonz_max
 
-   integer(8) :: i_dof,  i_el, dof, i_nd_xy, tag_mshpt, nd_i
+   integer(8) :: i_dof,  el_i, dof, i_nd_xy, tag_mshpt, nd_i
    integer(8) :: last_ct, this_ct
 
    !TODO: try and use pointer alias for readability
@@ -247,12 +251,18 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
    ! (eg corner>=3, edge=1 or 2)
    ! Counting these gives an upper bound to the nonzero elements of the FEM matrices
 
-   do i_el=1,mesh_raw%n_msh_elts                          ! for every element
-      do nd_i=1,P2_NODES_PER_EL                           ! and all nodes in the element
-         tag_mshpt = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)  ! find global mesh point label
-         do i_nd_xy=1,N_DOF_PER_NODE_AC                                    ! for each coordinate
-            dof = this%m_eqs(i_nd_xy, tag_mshpt)           ! find index of absolute dof
-            if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1           ! increment number of roles this dof plays in multiple elements
+   do el_i=1,mesh_raw%n_msh_elts    ! for every element (triangle)
+      do nd_i=1,P2_NODES_PER_EL     ! and all nodes in the element
+
+         ! find global mesh point label
+         tag_mshpt = mesh_raw%m_elnd_to_mshpt(nd_i,el_i)
+
+         do i_nd_xy=1,N_DOF_PER_NODE_AC    ! for each coordinate dof
+            ! find index of absolute dof
+            dof = this%m_eqs(i_nd_xy, tag_mshpt)
+
+            ! increment number of roles this dof plays in multiple elements
+            if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1
          enddo
       enddo
    enddo
@@ -266,10 +276,10 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
    !      = 3*P2_NODES_PER_EL + (this%v_col_ptr(dof)-1 ) * (3*P2_NODES_PER_EL-3)
    !      = 3*P2_NODES_PER_EL + (this%v_col_ptr(dof)-1 ) * 3*(P2_NODES_PER_EL-1)
 
-   nonz_max = 0
-   do i_dof=1,this%n_dof
-      nonz_max = nonz_max + 3*P2_NODES_PER_EL + 3*(P2_NODES_PER_EL-1)*(this%v_col_ptr(i_dof)-1)
-   enddo
+   ! n_nonz_max = 0
+   ! do i_dof=1,this%n_dof
+   !    n_nonz_max = n_nonz_max + 3*P2_NODES_PER_EL + 3*(P2_NODES_PER_EL-1)*(this%v_col_ptr(i_dof)-1)
+   ! enddo
 
 
    !  Compressed Column Storage (CSC): determine the column pointer
@@ -282,7 +292,7 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, nonz_max)
       last_ct = this_ct
    enddo
 
-   nonz_max = this%v_col_ptr(this%n_dof+1) - 1
+   n_nonz_max = this%v_col_ptr(this%n_dof+1) - 1
 
 end
 
@@ -292,34 +302,28 @@ end
  ! row/col names seem backward
  ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, max_col_len, nberr)
+subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, max_col_len, nberr)
 
-   use numbatmod
+   !use numbatmod
    use alloc
 
-   use class_MeshRaw
+   !use class_Mesh
 
    class(SparseCSC_AC) :: this
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
 
+   integer(8) n_nonz_max, max_col_len
    type(NBError) nberr
 
-   integer(8) n_nonz_max,n_nonz
-
-   integer(8) max_col_len
-
+   ! -----------------------------------
 
    integer(8), dimension(:), allocatable :: row_ind_tmp
 
-   !integer(8), parameter :: P2_NODES_PER_EL = 6
-
-   character(len=EMSG_LENGTH) :: emsg
-   integer(8) i, j, i_nd, j_nd, k, k1, i_loc_dof, j_loc_dof
-   integer(8) i_el, i_dof, i_mshpt, j_dof, j_mshpt
+   integer(8)  i,j, i_nd, j_nd, k, k1, i_locdof, j_locdof
+   integer(8) el_i, i_dof, i_mshpt, j_dof, j_mshpt
    integer(8) row_lo, row_hi, row_len
-   integer(8) row_lo2, row_hi2
+   integer(8) row_lo2, row_hi2, n_nonz
    integer(8) ui
-   logical found
 
 
    ui = stdout
@@ -335,13 +339,13 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
    ! they must both exist on the same element
 
    n_nonz = 0
-   do i_el=1,mesh_raw%n_msh_elts
+   do el_i=1,mesh_raw%n_msh_elts
 
       do i_nd=1,P2_NODES_PER_EL
-         i_mshpt = mesh_raw%m_elnd_to_mshpt(i_nd,i_el)
+         i_mshpt = mesh_raw%m_elnd_to_mshpt(i_nd,el_i)
 
-         do i_loc_dof=1,N_DOF_PER_NODE_AC
-            i_dof = this%m_eqs(i_loc_dof,i_mshpt)
+         do i_locdof=1,N_DOF_PER_NODE_AC
+            i_dof = this%m_eqs(i_locdof,i_mshpt)
 
             if (i_dof .eq. 0) cycle  ! not a genuine dof
 
@@ -349,52 +353,22 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
             row_hi = this%v_col_ptr(i_dof+1) - 1
 
             do j_nd=1,P2_NODES_PER_EL
-               j_mshpt = mesh_raw%m_elnd_to_mshpt(j_nd,i_el)
+               j_mshpt = mesh_raw%m_elnd_to_mshpt(j_nd,el_i)
 
-               do j_loc_dof=1,N_DOF_PER_NODE_AC
-                  j_dof = this%m_eqs(j_loc_dof,j_mshpt)
+               do j_locdof=1,N_DOF_PER_NODE_AC
+                  j_dof = this%m_eqs(j_locdof,j_mshpt)
+
                   if (j_dof .eq. 0) cycle ! not a genuine dof
 
+                  !TODO: Identical to EM version
+                  !      remove redundancy
+                  ! create sub store_dof_in_csc_row_index(row_lo, row_hi, j_dof, row_ind_tmp, n_nonz, n_nonz_max, nberr)
                   ! Now we know (i_dof, j_dof) can interact and should have a slot
                   ! in the column for i_dof
 
-                  ! Search if the entry (i_dof,j_dof) is already stored
-                  found = .false.
-                  do k=row_lo,row_hi
 
-                     ! We've run out of nonzero entries in the row indices, and haven't found this element yet
-                     ! So create one
-                     if(row_ind_tmp(k) .eq. 0) then
-                        found = .true.
-                        n_nonz =n_nonz + 1
-
-                        if (n_nonz .le. n_nonz_max) then ! We have an empty slot. Go!
-                           row_ind_tmp(k) = j_dof
-                           exit
-                        else  ! should never happen if make_provisional is correct
-                           write(emsg, *) "csr_length_AC:n_nonz > n_nonz_max: ",&
-                              n_nonz .gt. n_nonz_max
-                           call nberr%set(NBERR_BAD_SPARSE_FINAL, emsg)
-                           return
-
-                        endif
-
-
-                     endif
-
-                     ! Entry already exists, nothing to do
-                     if(row_ind_tmp(k) .eq. j_dof) then
-                        found = .true.
-                        exit
-                     endif
-
-                  enddo
-
-                  if (found .neqv. .true.) then
-                     write(emsg, *) "csr length looking for missing spot"
-                     call nberr%set(NBERR_BAD_SPARSE_FINAL, emsg)
-                     return
-                  endif
+                  call store_dof_in_csc_row_index(row_lo, row_hi, j_dof, row_ind_tmp, n_nonz, n_nonz_max, nberr)
+                  RET_ON_NBERR(nberr)
 
                enddo
             enddo
@@ -405,6 +379,9 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
    ! Because most meshes will have interesting structure and we conservatively guessed the number
    ! of possible nonzero entries, will likely be zero entries we can remove
 
+
+   !TODO: this cleaning is identical to EM version
+   !      remove redundancy
    if (n_nonz .lt. n_nonz_max) then ! there are unused entries in some columns
 
       do i=1,this%n_dof-1
@@ -413,22 +390,21 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
          row_hi = this%v_col_ptr(i+1) - 1
 
          do j=row_lo,row_hi  ! search for any empties
-            if(row_ind_tmp(j) .eq. 0) then ! row indices j to row_hi are empty
 
-               row_lo2 = this%v_col_ptr(i) + j - row_lo ! index of the first nonempty
-               this%v_col_ptr(i+1) = row_lo2            ! will be the new first slot in the next column
-               row_hi2 = this%v_col_ptr(i+2) - 1        ! current last slot in the next column
+            if (row_ind_tmp(j) .ne. 0) cycle !  this elt is busy
 
-               do k=row_hi+1,row_hi2             ! whole next column is pulled back to start at row_lo2
-                  k1 = row_lo2 + k - (row_hi+1)
-                  row_ind_tmp(k1) = row_ind_tmp(k)
-                  row_ind_tmp(k) = 0             ! and are filled in with zeros
-               enddo
-               !goto 40
-               exit
-            endif
+            row_lo2 = this%v_col_ptr(i) + j - row_lo ! index of the first nonempty
+            this%v_col_ptr(i+1) = row_lo2            ! will be the new first slot in the next column
+            row_hi2 = this%v_col_ptr(i+2) - 1        ! current last slot in the next column
+
+            do k=row_hi+1,row_hi2             ! whole next column is pulled back to start at row_lo2
+               k1 = row_lo2 + k - (row_hi+1)
+               row_ind_tmp(k1) = row_ind_tmp(k)
+               row_ind_tmp(k) = 0             ! and are filled in with zeros
+            enddo
+            exit
+
          enddo
-!40       continue
       enddo
 
       ! now clean up the final column
@@ -441,11 +417,9 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
          if(row_ind_tmp(j) .eq. 0) then
             row_lo2 = this%v_col_ptr(i) + j - row_lo
             this%v_col_ptr(i+1) = row_lo2  ! Just need to pull down the final column pointer to the last nonzero row
-            !goto 50
             exit
          endif
       enddo
-!50    continue
    endif
 
    ! Now we know n_nonz and can set the correct length for the row indices array
@@ -468,12 +442,12 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, n_nonz, m
 end
 
 
-  !  convert from 1-based to 0-based
-   !  ----------------------------------------------------------------
-   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
-   !  But external calls to functions like valpr.f will need 0-based indexing.
-   !  So the indices need shifting by one.
-   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
+ !  convert from 1-based to 0-based
+ !  ----------------------------------------------------------------
+ !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
+ !  But external calls to functions like valpr.f will need 0-based indexing.
+ !  So the indices need shifting by one.
+ !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
 
 
 ! TODO: maintain current offset flag to know if we need to apply shift
@@ -485,3 +459,4 @@ subroutine SparseCSC_AC_adjust_for_zero_offset_indexing(this)
    this%v_col_ptr = this%v_col_ptr - 1
 
 end
+

@@ -15,8 +15,8 @@
 subroutine bound_cond_AC (bdy_cdn, mesh_raw, n_dof, in_dof)
 
    use numbatmod
-   use class_MeshRaw
-   type(MeshRawAC) mesh_raw
+   use class_Mesh
+   type(MeshAC) mesh_raw
 
    integer(8) bdy_cdn, n_dof
    integer(8) in_dof(3,mesh_raw%n_msh_pts)

@@ -60,7 +60,7 @@ module calc_em_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_EM
    use class_PeriodicBCs
 
@@ -100,7 +100,7 @@ contains
 
       ! locals
 
-      type(MeshRawEM) :: mesh_raw
+      type(MeshEM) :: mesh_raw
       type(MeshEntities) :: entities
       type(SparseCSC_EM) :: cscmat
       type(PeriodicBCs) :: pbcs
@@ -136,24 +136,18 @@ contains
 
       !  ----------------------------------------------------------------
 
-      call mesh_raw%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
+
+      !  Fills:  MeshEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
+      ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
+
+      call mesh_raw%load_mesh_tables(mesh_file, dimscale_in_m, n_msh_pts, n_msh_elts, n_elt_mats, nberr);
       RET_ON_NBERR(nberr)
 
-      call entities%allocate(n_msh_elts, nberr)
+      call entities%build_mesh_tables(mesh_raw, nberr);
       RET_ON_NBERR(nberr)
-
 
       ! These are never actually used for now so could disable
       call pbcs%allocate(mesh_raw, entities, nberr);
-      RET_ON_NBERR(nberr)
-
-      !  Fills:  MeshRawEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
-      ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
-      call mesh_raw%construct_mesh_tables(mesh_file, dimscale_in_m, nberr);
-      RET_ON_NBERR(nberr)
-
-      ! Fills entities
-      call entities%build_mesh_tables(mesh_raw, nberr);
       RET_ON_NBERR(nberr)
 
       !! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)

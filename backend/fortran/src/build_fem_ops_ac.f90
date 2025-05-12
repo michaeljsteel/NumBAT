@@ -6,11 +6,11 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_AC
    use class_BasisFunctions
 
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
    type(SparseCSC_AC) cscmat
    type(NBError) nberr
 

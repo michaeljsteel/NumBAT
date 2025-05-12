@@ -6,12 +6,12 @@ subroutine set_boundary_conditions(bdy_cdn,  &
    iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg )
 
    use numbatmod
-   use class_MeshRaw
+   use class_Mesh
 
    integer(8) :: bdy_cdn, n_dof
    integer(8) :: debug
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
 
 

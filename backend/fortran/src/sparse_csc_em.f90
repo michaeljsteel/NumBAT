@@ -47,7 +47,7 @@ module class_SparseCSC_EM
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_Mesh
    use class_PeriodicBCs
 
    private

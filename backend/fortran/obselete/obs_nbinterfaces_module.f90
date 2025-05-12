@@ -8,10 +8,10 @@
 
 !             use numbatmod
 !             use alloc
-!             use class_MeshRaw
+!             use class_Mesh
 !             use class_SparseCSC_EM
 
-!             type(MeshRawEM) :: mesh_raw
+!             type(MeshEM) :: mesh_raw
 !             type(MeshEntities) :: entities
 !             type(SparseCSC_EM) :: cscmat
 

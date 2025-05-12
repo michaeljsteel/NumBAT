@@ -3,17 +3,17 @@
 !#include "numbat_decl.h"
 
 
-subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entities, pbcs, nberr)
+subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw, entities, pbcs, nberr)
 
 
    class(SparseCSC_EM) :: this
-   type(PeriodicBCs) :: pbcs
 
-   integer(8) :: bdy_cdn !, n_dof
+   integer(8) :: bdy_cdn
    integer(8) :: debug
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
+   type(PeriodicBCs) :: pbcs
 
    type(NBError) nberr
 
@@ -21,11 +21,11 @@ subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw,  entiti
    !locals
    double precision, dimension(2,2) :: lat_vecs
 
-   if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
+   if (bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
       call this%bound_cond_em (bdy_cdn, entities, nberr)
 
-   elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
+   elseif(bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
       debug=0
       call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_mshpt_xy, lat_vecs, debug)
 
@@ -109,14 +109,14 @@ end subroutine
 subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
    class(SparseCSC_EM) :: this
-   type(MeshEntities) :: entities
 
-   integer(8) bdy_cdn, n_dof
+   type(MeshEntities) :: entities
+   integer(8) bdy_cdn
    type(NBError) nberr
 
    character(len=EMSG_LENGTH) :: emsg
 
-   integer(8) i, is_boundary, i_dim
+   integer(8) i, is_boundary, i_dim, n_dof
 
    call integer_alloc_2d(this%m_eqs, 3_8, entities%n_entities, 'm_eqs', nberr); RET_ON_NBERR(nberr)
 
@@ -128,13 +128,14 @@ subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
          is_boundary = entities%v_ety_props(1,i)
          i_dim = entities%v_ety_props(2,i)
 
-         if (i_dim .eq. 2) then !  each element is associated with 3 interior Degrees Of Freedom (DOF)
+         if (i_dim .eq. 2) then ! is a face
+            !  each ety has 3 dof:
             this%m_eqs(1,i) = n_dof + 1
             this%m_eqs(2,i) = n_dof + 2
             this%m_eqs(3,i) = n_dof + 3
             n_dof = n_dof + 3
 
-         elseif (i_dim .eq. 1) then  !  each edge is associated with 3 Degrees Of Freedom (DOF)
+         elseif (i_dim .eq. 1) then  ! is a P2 edge
             if (is_boundary .eq. 0) then
                this%m_eqs(1,i) = n_dof + 1
                this%m_eqs(2,i) = n_dof + 2
@@ -146,7 +147,7 @@ subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
                this%m_eqs(3,i) = 0
             endif
 
-         elseif (i_dim .eq. 0) then   !  each node is associated with 1 Degree Of Freedom (DOF)
+         elseif (i_dim .eq. 0) then   !  is a P3 edge
             if (is_boundary .eq. 0) then
                this%m_eqs(1,i) = n_dof + 1
                this%m_eqs(2,i) = 0
@@ -198,16 +199,16 @@ end
 subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs, nberr)
 
    class(SparseCSC_EM) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
 
    type(NBError) nberr
 
    integer(8) bdy_cdn
-    ! ------------------------------------------
+   ! ------------------------------------------
 
-   integer(8) n_nonz_max, max_row_len
+   integer(8) n_nonz_max, max_col_len
 
    call this%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
    RET_ON_NBERR(nberr)
@@ -222,14 +223,14 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, entities, n_nonz_max, max_row_len, nberr);
+   call this%make_arrays_final (mesh_raw, entities, n_nonz_max, max_col_len, nberr);
    RET_ON_NBERR(nberr)
 
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
    ! length of v_row_ind is determined inside csr_length and so allocated there
    !call csr_length (mesh_raw%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
-   !this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_row_len, errco, emsg)
+   !this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_col_len, errco, emsg)
    !RETONERROR(errco)
 
 
@@ -258,7 +259,7 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
    ! At this point, the row_indices for a given column are in random order
    ! Now we sort them column by column so the rows appear in ascending order within each column
    ! This is another reverse passing to a CSR routine
-   call sort_csc (this%n_dof, this%n_nonz, max_row_len, this%v_row_ind, this%v_col_ptr)
+   call sort_csc (this%n_dof, this%n_nonz, max_col_len, this%v_row_ind, this%v_col_ptr)
 
    !call this%dump_csc_arrays()
 
@@ -322,7 +323,7 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_no
 
 
    class(SparseCSC_EM) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
 
 
@@ -331,31 +332,31 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_no
    !integer(8) m_eqs(3,n_entty), v_col_ptr(n_dof+1)
 
 
-   integer(8)  k_el, active_dof, tag, i_nd, i_col, locdof
+   integer(8)  el_i, dof, tag, nd_i, i_dof, locdof
    integer(8) last_ct, this_ct
 
 
    this%v_col_ptr = 0
 
 
-   !  Count references to each dof
-   !  This is equivalent to counting how many elements a given entity falls on.
+   ! Each dof can play multiple roles according to how many elements it participates in
+   ! (eg corner>=3, edge=1 or 2)
+   ! Counting these gives an upper bound to the nonzero elements of the FEM matrices
 
-   !  Here v_col_ptr is just a convenient temporary memory holder.
-   !  The contents is not related to its actual definition as the coloumn pointer
+   do  el_i=1, mesh_raw%n_msh_elts   ! for every element (triangle)
 
-   do  k_el=1, mesh_raw%n_msh_elts          ! for every ety at every elt
+      do nd_i=1,N_ENTITY_PER_EL      ! and all nodes/etys in the elt
 
-      do i_nd=1,N_ENTITY_PER_EL
-         tag = entities%v_tags(i_nd,k_el)      ! find its tag
+         ! find global mesh point tag
+         tag = entities%v_tags(nd_i,el_i)
 
-         do locdof = 1,3                   ! for each of its 3 possible dof,
-            active_dof = this%m_eqs(locdof, tag)    ! find the index of that dof, n_nonzero means active
+         do locdof = 1,3  ! for each of its 3 possible dof,
+            ! find the index of that dof, n_nonzero means active
+            dof = this%m_eqs(locdof, tag)
 
-            ! count the number of times the dof is encountered
-            if (active_dof .ne. 0) this%v_col_ptr(active_dof) = this%v_col_ptr(active_dof)+1
+            ! increment number of roles this dof plays in multiple elements
+            if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1
          enddo
-
       enddo
    enddo
 
@@ -370,18 +371,20 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_no
    !   Each v_col_ptr(j)  = 1 + number of n_nonzeros left of column j
    !                      = v_col_ptr(j-1) + number of n_nonzeros column (j-1)
    !                                  where we set the virtual zero column as v_col_ptr(0)=1
+
+   ! Set v_col_ptr(i_dof) by counting the possible elements in the previous column
+   ! An upper bound for how many dof this one might interact with is:
+   !     3 dof for each N_ENTITY_PER_EL entities in its own elt, + 3 dof for each of the (N_ENTITY_PER_EL-1) neighbour entities
+   ! Some of these will be redundant by double counting, for example the edge and vertex nodes on two adjacent triangles
+   !   which are themselves touching
+   ! This is still _much_ smaller than interacting with every dof in the mesh
+
    last_ct = this%v_col_ptr(1)
    this%v_col_ptr(1) = 1          !  The first column begins with element 1 (every dof has some self energy so this is always true )
-   do i_col=2,this%n_dof+1
-      this_ct = this%v_col_ptr(i_col)    ! # of neigbours of entity i_col (including self)
+   do i_dof=2,this%n_dof+1
+      this_ct = this%v_col_ptr(i_dof)    ! # of neigbours of entity i_dof (including self)
 
-      ! Set v_col_ptr(i_col) by counting the possible elements in the previous column
-      ! An upper bound for how many dof this one might interact with is:
-      !     3 dof for each N_ENTITY_PER_EL entities in its own elt, + 3 dof for each of the (N_ENTITY_PER_EL-1) neighbour entities
-      ! Some of these will be redundant by double counting, for example the edge and vertex nodes on two adjacent triangles
-      !   which are themselves touching
-      ! This is still _much_ smaller than interacting with every dof in the mesh
-      this%v_col_ptr(i_col) = this%v_col_ptr(i_col-1) + 3*N_ENTITY_PER_EL + 3*(N_ENTITY_PER_EL-1)*(last_ct-1)
+      this%v_col_ptr(i_dof) = this%v_col_ptr(i_dof-1) + 3*N_ENTITY_PER_EL + 3*(N_ENTITY_PER_EL-1)*(last_ct-1)
       last_ct = this_ct
    enddo
 
@@ -390,55 +393,31 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_no
 end subroutine
 
 
-! subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, errco, emsg)
-
-
-!    class(SparseCSC_EM) :: this
-!    type(MeshRawEM) :: mesh_raw
-!    type(MeshEntities) :: entities
-
-!    integer(8) n_nonz_max, max_row_len
-!    integer(8) errco
-!    character(len=EMSG_LENGTH) emsg
-
-!    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
-!    ! length of v_row_ind is determined inside csr_length and so allocated there
-
-!    write(*,*) 'maf 1'
-
-!    call csr_length (mesh_raw%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
-!       this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_row_len, errco, emsg)
-!    RETONERROR(errco)
-
-
-
-!end subroutine
-
-
 
 ! This one is written in CSR format
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_row_len, nberr)
+subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_col_len, nberr)
 
 
    class(SparseCSC_EM) :: this
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
 
-   integer(8) n_nonz_max, max_row_len
+   integer(8) n_nonz_max, max_col_len
    type(NBError) nberr
 
 
    ! --------------------------------------------
 
    integer(8), dimension(:), allocatable :: row_ind_tmp
-
-   integer(8) i, j, j_nd, k, k1,  i_nd, i_tag, j_tag, i_locdof, j_locdof
-   integer(8) k_el, i_dof, j_dof
-   integer(8) col_start, col_end, row_len
-   integer(8) col_start2, col_end2, ui, stored
+   character(len=EMSG_LENGTH) :: emsg
+   integer(8) i, j, j_nd, k, k1,  nd_i, i_tag, j_tag, i_locdof, j_locdof
+   integer(8) el_i, i_dof, j_dof
+   integer(8) row_lo, row_hi, row_len
+   integer(8) row_lo2, row_hi2, ui
+   logical found
    integer(8) n_nonz
 
 
@@ -452,57 +431,43 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
    ! This code was converted from one in CSR format
    !  Determination of the row indices
 
-   !write(*,*) 'Total dof is ', n_entty, n_dof, n_nonz_max
+   ! For two dof to interact and require nonzero element in the FEM matrices,
+   ! they must both exist on the same element
+
    n_nonz = 0
-   do k_el=1,mesh_raw%n_msh_elts                    ! for each element
+   do el_i=1,mesh_raw%n_msh_elts        ! for each element
 
-      do i_nd=1,N_ENTITY_PER_EL               !   and its 14 entities
-         i_tag = entities%v_tags(i_nd, k_el)
+      do nd_i=1,N_ENTITY_PER_EL         !   and its 14 entities
+         i_tag = entities%v_tags(nd_i, el_i)
 
-         do i_locdof=1,3                     !   and their 3 potential dof
+         do i_locdof=1,3        !   and their 3 potential dof
             i_dof = this%m_eqs(i_locdof, i_tag)   !   When n_nonzero, this is the row number for this dof
 
-            if (i_dof .eq. 0) cycle     ! an inactive dof for this entity, go around again
+            if (i_dof .eq. 0) cycle   ! an inactive dof
 
 
 
-            col_start = this%v_col_ptr(i_dof)          ! range of elt indices which are in this row
-            col_end = this%v_col_ptr(i_dof+1) - 1
+            ! range of elt indices which are in this col
+            row_lo = this%v_col_ptr(i_dof)
+            row_hi = this%v_col_ptr(i_dof+1) - 1
 
-            !write(*,*) 'looking for partners of', k_el, i_nd, i_tag, i_locdof, &
-            !  i_dof, 'in cols', col_start, col_end, col_end-col_start+1
 
             do j_nd=1,N_ENTITY_PER_EL
-               j_tag = entities%v_tags(j_nd,k_el)
+               j_tag = entities%v_tags(j_nd,el_i)
 
                do j_locdof=1,3
                   j_dof = this%m_eqs(j_locdof, j_tag)
 
                   if (j_dof .eq. 0) cycle
 
+
+                  ! Now we know (i_dof, j_dof) can interact and should have a slot
+                  ! in the column for i_dof
+
                   !  Store the entry (i_dof,j_dof) if it's not already found
-                  stored = 0
+                  call store_dof_in_csc_row_index(row_lo, row_hi, j_dof, row_ind_tmp, n_nonz, n_nonz_max, nberr)
+                   RET_ON_NBERR(nberr)
 
-                  do k=col_start,col_end
-                     if (row_ind_tmp(k) .eq. 0) then  !goto 20 ! if we find a zero, we've seen all of the n_nonzeros, and none were a match
-                        !  No entry exists for (i_dof,j_dof); create new one
-                        n_nonz = n_nonz + 1
-
-                        row_ind_tmp(k) = j_dof
-                        stored = 1
-                        exit
-                     endif
-
-                     if (row_ind_tmp(k) .eq. j_dof) then !goto 30  ! already stored, bail out
-                        stored=1
-                        exit
-                     endif
-                  enddo
-
-                  if (stored .eq. 0) then ! shouldn't have got here
-                     call nberr%set(NBERROR_118,  "csr_length: There is a problem with row/col indexing!")
-                     return
-                  endif
 
                enddo
             enddo
@@ -518,26 +483,23 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
 
    ! But more of these can be eliminated. Not quite sure why.
 
-
-   !  squeeze away the zero entries
-   !  added so as to handle more type of domains/meshes
-
-
+   ! Because most meshes will have interesting structure and we conservatively guessed the number
+   ! of possible nonzero entries, will likely be zero entries we can remove
 
    do i=1,this%n_dof-1
-      col_start = this%v_col_ptr(i)
-      col_end = this%v_col_ptr(i+1) - 1
+      row_lo = this%v_col_ptr(i)
+      row_hi = this%v_col_ptr(i+1) - 1
 
-      do j=col_start,col_end
+      do j=row_lo,row_hi
          if(row_ind_tmp(j) .ne. 0) cycle   ! this elt is busy, check the next
 
          ! we've found a zero element in this col all the rest of this col will be zeros, so remove them all
 
-         col_start2 = this%v_col_ptr(i) + j - col_start
-         this%v_col_ptr(i+1) = col_start2         ! bring the start of the next col forward
-         col_end2 = this%v_col_ptr(i+2) - 1       ! find the end of that next col
-         do k=col_end+1,col_end2
-            k1 = col_start2 + k - (col_end+1)  ! shuffle the columns in that col forward into the empty space
+         row_lo2 = this%v_col_ptr(i) + j - row_lo
+         this%v_col_ptr(i+1) = row_lo2         ! bring the start of the next col forward
+         row_hi2 = this%v_col_ptr(i+2) - 1       ! find the end of that next col
+         do k=row_hi+1,row_hi2
+            k1 = row_lo2 + k - (row_hi+1)  ! shuffle the columns in that col forward into the empty space
             row_ind_tmp(k1) = row_ind_tmp(k)
             row_ind_tmp(k) = 0
          enddo
@@ -553,45 +515,42 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
 
    ! squeeze the last col
    i = this%n_dof
-   col_start = this%v_col_ptr(i)
-   col_end = this%v_col_ptr(i+1) - 1
-   do j=col_start,col_end
+   row_lo = this%v_col_ptr(i)
+   row_hi = this%v_col_ptr(i+1) - 1
+   do j=row_lo,row_hi
       if(row_ind_tmp(j) .eq. 0) then
-         col_start2 = this%v_col_ptr(i) + j - col_start
-         this%v_col_ptr(i+1) = col_start2
+         row_lo2 = this%v_col_ptr(i) + j - row_lo
+         this%v_col_ptr(i+1) = row_lo2
          exit
       endif
    enddo
 
 
-   ! Find the longest row
-   max_row_len = 0
-   do i=1,this%n_dof
-      col_start = this%v_col_ptr(i)
-      col_end = this%v_col_ptr(i+1) - 1
-      row_len = col_end - col_start + 1
-      if (row_len .gt. max_row_len) max_row_len = row_len
-   enddo
-
-
-
    ! Now we know n_nonz
    call integer_alloc_1d(this%v_row_ind, n_nonz, 'this%v_row_ind', nberr); RET_ON_NBERR(nberr)
 
-   this%v_row_ind(1:n_nonz) = row_ind_tmp(1:n_nonz)
-
+      this%v_row_ind = row_ind_tmp
    this%n_nonz = n_nonz
 
-end
+   ! Find the longest row
+   max_col_len = 0
+   do i=1,this%n_dof
+      row_lo = this%v_col_ptr(i)
+      row_hi = this%v_col_ptr(i+1) - 1
+      row_len = row_hi - row_lo + 1
+      if (row_len .gt. max_col_len) max_col_len = row_len
+   enddo
+
+   end
 
 
 
-  !  convert from 1-based to 0-based
-   !  ----------------------------------------------------------------
-   !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
-   !  But external calls to functions like valpr.f will need 0-based indexing.
-   !  So the indices need shifting by one.
-   !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
+ !  convert from 1-based to 0-based
+ !  ----------------------------------------------------------------
+ !  Our CSC indexing so far, i.e., ip_col_ptr, has been 1-based
+ !  But external calls to functions like valpr.f will need 0-based indexing.
+ !  So the indices need shifting by one.
+ !  (But not the data arrays: c[0] and fortran[1] refer to the same location, so that just works)
 
 
 ! TODO: maintain current offset flag to know if we need to apply shift

@@ -8,11 +8,11 @@
 ! table_edge seems to be unused
 subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
 
-   use class_MeshRaw
+   use class_Mesh
 
    implicit none
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
 
    integer(8) n_edge
 
@@ -52,7 +52,7 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
 
       ! for the edge nodes 4,5,6
       do j=4,mesh_raw%nodes_per_el   !  checks some condition on this eleemnt. what is it?
-         if (mesh_raw%is_boundary_node_at_element(j,i)) then  ! edge node is on a physical bdy
+         if (mesh_raw%is_boundary_mesh_point_by_elt_node(j,i)) then  ! edge node is on a physical bdy
 
 !            if (type_nod(m_elnd_to_mshpt(j,i)) .ne. 0) then  ! edge node is on a physical bdy
 
@@ -64,7 +64,7 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
             !if (type_nod(m_elnd_to_mshpt(j1,i)) .eq. 0 .or. &
             !type_nod(m_elnd_to_mshpt(j2,i)) .eq. 0) then
 
-            if (.not. mesh_raw%is_boundary_node_at_element(j1,i) .or. .not. mesh_raw%is_boundary_node_at_element(j2,i)) then
+            if (.not. mesh_raw%is_boundary_mesh_point_by_elt_node(j1,i) .or. .not. mesh_raw%is_boundary_mesh_point_by_elt_node(j2,i)) then
 
                !TODO: hook up error msg
                write(*,*) "list_edge: m_elnd_to_mshpt = ", &

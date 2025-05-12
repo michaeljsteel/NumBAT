@@ -4,7 +4,7 @@ module class_PeriodicBCs
 
     use numbatmod
     use alloc
-    use class_MeshRaw
+    use class_Mesh
 
     private
 

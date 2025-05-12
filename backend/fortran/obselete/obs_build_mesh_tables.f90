@@ -19,11 +19,11 @@ subroutine build_mesh_tables( n_msh_elts, n_msh_pts, nodes_per_el, n_ddl, &
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_Mesh
 
    integer(8) n_msh_elts, n_msh_pts, nodes_per_el, n_ddl
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
 
    integer(8), intent(out) :: errco

@@ -3,10 +3,10 @@ subroutine csc_make_col_ptr_provisional_AC (mesh_raw, cscmat,   nonz_max)
 
    use numbatmod
 
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_AC
 
-   type(MeshRawAC) mesh_raw
+   type(MeshAC) mesh_raw
    type(MeshEntitiesAC) entities
    type(SparseCSC_AC) cscmat
 

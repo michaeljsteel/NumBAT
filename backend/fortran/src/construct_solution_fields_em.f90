@@ -17,12 +17,12 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    cscmat, pbcs, bloch_vec, v_evals_beta, evecs_raw, evecs_final, mode_poln_fracs, nberr)
 
    use numbatmod
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_EM
    use class_PeriodicBCs
    use class_BasisFunctions
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
    type(SparseCSC_EM) :: cscmat
    type(PeriodicBCs) :: pbcs
@@ -314,10 +314,10 @@ end subroutine
 subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_exp)
 
    use numbatmod
-   use class_MeshRaw
+   use class_Mesh
    use class_PeriodicBCs
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
    double precision bloch_vec(2)

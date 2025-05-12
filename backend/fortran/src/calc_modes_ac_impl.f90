@@ -20,7 +20,7 @@ module calc_ac_impl
    use alloc
 
    use class_stopwatch
-   use class_MeshRaw
+   use class_Mesh
    use class_SparseCSC_AC
 
 contains
@@ -66,8 +66,8 @@ contains
 
       ! locals
 
-      type(MeshRawAC) mesh_raw
-      type(MeshEntitiesAC) entities
+      type(MeshAC) mesh_raw
+      !type(MeshEntitiesAC) entities
       type(SparseCSC_AC) cscmat
 
 
@@ -95,8 +95,8 @@ contains
       call mesh_raw%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
 
-      call entities%allocate(n_msh_elts, nberr)
-      RET_ON_NBERR(nberr)
+      !call entities%allocate(n_msh_elts, nberr)
+      !RET_ON_NBERR(nberr)
 
       if (build_acmesh_from_emmesh .eq. 0) then  ! NEVER HAPPENS
 
@@ -104,10 +104,10 @@ contains
             n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt, nberr)
          RET_ON_NBERR(nberr)
 
-         call mesh_raw%construct_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
+         call mesh_raw%load_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
-         call mesh_raw%construct_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
+         call mesh_raw%load_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
             v_elt_material, m_elnd_to_mshpt);
       endif
 

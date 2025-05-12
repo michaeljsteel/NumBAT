@@ -8,13 +8,13 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
 
    use numbatmod
    use alloc
-   use class_MeshRaw
+   use class_Mesh
    use class_PeriodicBCs
    use class_SparseCSC_EM
    use class_BasisFunctions
    use class_TriangleIntegrators
 
-   type(MeshRawEM) :: mesh_raw
+   type(MeshEM) :: mesh_raw
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
    type(SparseCSC_EM) :: cscmat

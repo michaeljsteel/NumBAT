@@ -102,6 +102,7 @@ nb_impl_fsrcs = files(
     'periodicbcs_class.f90',
     'quad_triangle.f90',
     'quad_integrator.f90',
+    'sparse_csc_common.f90',
     'sparse_csc_em.f90',
     'sparse_csc_ac.f90',
     'sort_csc.f90',
