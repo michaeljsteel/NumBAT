@@ -42,6 +42,13 @@
 
  "eta_66": 0.2136e-3,  // Acoustic loss tensor component [Pa s]
 
+ "piezo_active": 1,
+ "piezo_d_x5": 68.0e-12, 
+ "piezo_d_y2": 21.0e-12, 
+ "piezo_d_z1": -1.0e-12, 
+ "piezo_d_z3": 6.0e-12, 
+
+
  "_eta_22":  0.6547e-3,  // Acoustic loss tensor component [Pa s]
  "_eta_23":  0.2499e-3,  // Acoustic loss tensor component [Pa s]
  "_eta_24":  0.0687e-3,  // Acoustic loss tensor component [Pa s]

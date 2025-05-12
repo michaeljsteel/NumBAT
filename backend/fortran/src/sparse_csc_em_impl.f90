@@ -580,9 +580,6 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
 
    this%v_row_ind(1:n_nonz) = row_ind_tmp(1:n_nonz)
 
-
-!   deallocate(row_ind_tmp)
-
    this%n_nonz = n_nonz
 
 end

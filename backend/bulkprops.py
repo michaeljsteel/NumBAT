@@ -85,7 +85,7 @@ def chareq_christoffel(vkap, c_stiff, rho, v_p):
 def solve_christoffel(vkap, c_stiff, rho):
     """Solve eigenproblem of Christoffel equation in the direction vkap (a 2D unit vector). Returns for each of 3 modes:
         phase velocity                v_phase[m]
-        polarisation eigenvetors      evecs[:,m]
+        polarisation eigenvectors      evecs[:,m]
         group velocity vectors.       v_group[m:x/y/z]
 
     Modes are sorted by decreasing phase velocity.

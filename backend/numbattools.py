@@ -70,6 +70,11 @@ def process_fortran_return(resm, msg):
 
 
 
+def indent_string(s_in, indent=2):
+    s_ind = indent * ' '
+    s_out= s_ind + s_in 
+    s_out=s_out.replace('\n', '\n'+s_ind)
+    return s_out
 
 def run_subprocess(cmd, proc_name, cwd='', exit_on_fail=True):
     try:

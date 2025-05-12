@@ -132,6 +132,10 @@ class CrystalGroup(IntEnum):
     Cubic = auto()
     GeneralAnisotropic = auto()
 
+class PiezoSupport(IntEnum):
+    Unsupported = 1
+    Disabled = auto()
+    Enabled = auto()
 
 
 

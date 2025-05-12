@@ -15,14 +15,25 @@
 
 import math
 import numpy as np
+import pprint
 
 from nbtypes import unit_x, unit_y, unit_z
 import reporting
-import numbattools
+import numbattools as nbtools
 
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
 to_Voigt = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]])
+from_Voigt = [
+        None,
+        (0,0),
+        (1,1),
+        (2,2),
+        (1,2),
+        (0,2),
+        (0,1),
+        ]
+
 
 
 # These functions are indexed from 0.
@@ -64,10 +75,37 @@ def kvec_to_symmetric_gradient(kvec):
     ])
     return nabla_IJ
 
+def rotate_2tensor_elt(i, j, T_pq, mat_R):
+    '''
+    Calculates the element ij of the rotated tensor Tp from the original
+    rank-2 tensor T_pq in zero-indexed 3x3 notation under the rotation specified by the 3x3 matrix R.
+    '''
+
+    Tp_ij = 0
+
+    for q in range(3):
+        for r in range(3):
+            Tp_ij += mat_R[i, q] * mat_R[j, r] * T_pq[q,r]
+
+    return Tp_ij
+
+def rotate_3tensor_elt(i, j, k, T_pqr, mat_R):
+    '''
+    Calculates the element ijk of the rotated tensor Tp from the original
+    rank-3 tensor T_pqr in zero-indexed 3x3x3 notation under the rotation specified by the 3x3 matrix R.
+    '''
+
+    Tp_ijk = 0
+
+    for q in range(3):
+        for r in range(3):
+            for s in range(3):
+                    Tp_ijk += mat_R[i, q] * mat_R[j, r] * mat_R[k, s] * T_pqr[q,r,s]
+
+    return Tp_ijk
 
 
-
-def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
+def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R):
     '''
     Calculates the element ijkl of the rotated tensor Tp from the original
     rank-4 tensor T_PQ in 6x6 Voigt notation under the rotation specified by the 3x3 matrix R.
@@ -77,12 +115,12 @@ def rotate_tensor_elt(i, j, k, l, T_pqrs, mat_R):
 
     for q in range(3):
         for r in range(3):
-            V1 = to_Voigt[q, r]
+            V_I = to_Voigt[q, r]
             for s in range(3):
                 for t in range(3):
-                    V2 = to_Voigt[s, t]
+                    V_J = to_Voigt[s, t]
                     Tp_ijkl += mat_R[i, q] * mat_R[j, r] * \
-                        mat_R[k, s] * mat_R[l, t] * T_pqrs[V1, V2]
+                        mat_R[k, s] * mat_R[l, t] * T_PQ[V_I, V_J]
 
     return Tp_ijkl
 
@@ -117,7 +155,7 @@ def parse_rotation_axis(rot_axis_spec):
                 f'Rotation axis {rot_axis} must have length 3.')
 
     nvec = np.linalg.norm(rot_axis)
-    if numbattools.almost_zero(nvec):
+    if nbtools.almost_zero(nvec):
         reporting.report_and_exit(f'Rotation axis {rot_axis} has zero length.')
 
     return rot_axis/nvec
@@ -143,7 +181,7 @@ def make_rotation_matrix(rot_axis_spec, theta):
         [uz*ux*omct-uy*st, uz*uy*omct+ux*st, ct+uz**2*omct]
     ])
 
-    reporting.assertion(numbattools.almost_unity(
+    reporting.assertion(nbtools.almost_unity(
         np.linalg.det(mat_R)), 'Rotation matrix has unit determinant.')
 
     return mat_R
@@ -160,8 +198,56 @@ def rotate_3vector(vec3, mat_R):
     return np.matmul(mat_R, vec3)
 
 
+def _rotate_2tensor(T_ij, mat_R):
+    """
+    Rotate a material tensor by theta radians around a specified rotation_axis.
+    T_ij is a rank-2 tensor expressed in 3x3 zero-indexed standard notation.
 
-def _rotate_Voigt_tensor(T_PQ, mat_R):
+    The complete operation in 3x3 notation is
+    T'_ij  = sum_{pqr} R_ip R_jq R_kr 
+
+    Args:
+        T_ij  (array): Tensor to be rotated.
+
+        theta  (float): Angle to rotate by in radians.
+
+        rotation_axis  (str): Axis around which to rotate.
+    """
+
+    Tp_ij = np.zeros((3, 3), dtype=T_ij.dtype)
+
+    for i in range(3):
+        for j in range(3):
+                Tp_ij[i,j] = rotate_2tensor_elt(i, j, T_ij, mat_R)
+
+    return Tp_ij
+
+def _rotate_3tensor(T_ijk, mat_R):
+    """
+    Rotate a material tensor by theta radians around a specified rotation_axis.
+    T_ijk is a rank-3 tensor expressed in 3x3x3 zero-indexed standard notation.
+
+    The complete operation in 3x3x3 notation is
+    T'_ijk  = sum_{pqr} R_ip R_jq R_kr T_pqr.
+
+    Args:
+        T_ijk  (array): Tensor to be rotated.
+
+        theta  (float): Angle to rotate by in radians.
+
+        rotation_axis  (str): Axis around which to rotate.
+    """
+
+    Tp_ijk = np.zeros((3, 3, 3), dtype=T_ijk.dtype)
+
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                Tp_ijk[i,j,k] = rotate_3tensor_elt(i, j, k, T_ijk, mat_R)
+
+    return Tp_ijk
+
+def _rotate_Voigt_4tensor(T_PQ, mat_R):
     """
     Rotate an acoustic material tensor by theta radians around a specified rotation_axis.
     T_PQ is a rank-4 tensor expressed in 6x6 Voigt notation.
@@ -179,19 +265,112 @@ def _rotate_Voigt_tensor(T_PQ, mat_R):
         rotation_axis  (str): Axis around which to rotate.
     """
 
-    # mat_R = _make_rotation_matrix(theta, rotation_axis)
-
-    Tp_PQ = np.zeros((6, 6))
+    Tp_PQ = np.zeros((6, 6), dtype=T_PQ.dtype)
     for i in range(3):
         for j in range(3):
             V1 = to_Voigt[i, j]
             for k in range(3):
                 for l in range(3):
                     V2 = to_Voigt[k, l]
-                    Tp_PQ[V1, V2] = rotate_tensor_elt(i, j, k, l, T_PQ, mat_R)
+                    Tp_PQ[V1, V2] = rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R)
 
     return Tp_PQ
 
+
+def Voigt3_iJ_to_ijk(mat_iJ, fac2mul = False):
+    T_ijk = np.zeros([3,3,3], dtype=mat_iJ.dtype)
+
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                J = to_Voigt[j,k]
+                if J>=4 and fac2mul:
+                    T_ijk[i,j,k] = 2*mat_iJ[i,J]
+                else:
+                    T_ijk[i,j,k] = mat_iJ[i,J]
+    return T_ijk
+
+def Voigt3_ijk_to_iJ(mat_ijk, fac2mul = False):
+    T_iJ = np.zeros([3,7], dtype=mat_ijk.dtype)
+
+    for i in range(3):
+        for J in range(1,7):
+            (j,k) = from_Voigt[J]
+        if J<4 or fac2mul:
+            T_iJ[i,J] = mat_ijk[i,j,k] / 2 
+        else:
+            T_iJ[i,J] = mat_ijk[i,j,k] 
+    return T_iJ
+
+class VoigtTensor3_iJ(object):
+    '''A class for representing rank 3 tensors with iJ indexing 
+      (regular indexing in the first slot, Voigt in the last two slots)
+    '''
+
+    def __init__(self, json_symbol, physical_name='', physical_symbol='', 
+                 unit=None, transforms_with_factor_2 = False):
+
+        self.mat = np.zeros([3, 7], dtype=float)  # unit indexing in the last two indices
+
+        self._json_symbol = json_symbol  # eg 'piezo_d_IJ'
+        self._physical_name=physical_name
+        self._physical_symbol=physical_symbol
+        self._unit=unit
+        self._transforms_with_factor_2 = transforms_with_factor_2  # converts to _ijk form with stiffness facs
+
+    def rotate(self, mat_R):
+        T_ijk = Voigt3_iJ_to_ijk(self.mat, self._transforms_with_factor_2)
+        Tp_ijk = _rotate_3tensor(T_ijk, mat_R)
+        self.mat = Voigt3_ijk_to_iJ(Tp_ijk, self._transforms_with_factor_2)
+
+    #def to_Tijk(self):
+    #    return Voigt3_iJ_to_ijk(self.mat, self._transforms_with_factor_2)
+
+    #def from_Tijk(self, mat_ijk):
+    #    self.mat = Voigt3_ijk_to_iJ(mat_ijk, self._transforms_with_factor_2)
+
+    def as_transpose_iJ(self): # data expressed as dT_Ij[1:7][0:3]
+        return self.mat.T
+
+    def __str__(self):
+
+        sh = f'\n {self._physical_name} {self._physical_symbol}'
+        if self._unit is not None:
+            sh += f', unit: {self._unit[0]}.'
+        else:
+            sh += '.'
+
+        sh += f'\n   Voigt 3-tensor:\n'
+        with np.printoptions(precision=4):
+            if self._unit is not None:
+                sd = str(self.mat[0:, 1:]/self._unit[1])
+            else:
+                sd = str(self.mat[0:, 1:])
+
+        return sh + nbtools.indent_string(sd, indent=4)
+
+
+    def set_from_00matrix(self, mat00):
+        self.mat[:, 1:7] = mat00
+
+    def set_from_json(self, json_data):
+
+        for ci,xyz in enumerate(('x', 'y', 'z')):
+
+            for J in range(1,7):
+                elt = f'{self._json_symbol}_{xyz}{J}'
+                if elt in json_data:
+                    self.mat[ci][J] = json_data[elt]
+
+        print(self.mat)
+
+    def value(self):
+        '''Returns copy of Voigt matrix indexed as m[0..2, 0..5].'''
+        return self.mat[:, 1:].copy()
+
+    def refvalue(self):
+        '''Returns reference to internal Voigt matrix indexed as m[0..2, 0..5].'''
+        return self.mat[:, 1:]
 
 
 class VoigtTensor4(object):
@@ -210,6 +389,22 @@ class VoigtTensor4(object):
         self._physical_name=physical_name
         self._unit=unit
 
+    def __str__(self):
+
+        sh = f'\n {self._physical_name} {self.symbol}'
+        if self._unit is not None:
+            sh += f', unit: {self._unit[0]}.'
+        else:
+            sh += '.'
+
+        with np.printoptions(precision=4):
+            if self._unit is not None:
+                sd = str(self.mat[1:, 1:]/self._unit[1])
+            else:
+                sd = str(self.mat[1:, 1:])
+
+        return sh + nbtools.indent_string(sd, indent=4)
+
     # Allow direct indexing of Voigt tensor in [(i,j)] form
 
     def __getitem__(self, k):
@@ -217,19 +412,6 @@ class VoigtTensor4(object):
 
     def __setitem__(self, k, v):
         self.mat[k[0], k[1]] = v
-
-    def __str__(self):
-
-        with np.printoptions(precision=4):
-            s = f'\nVoigt tensor {self.material_name}, {self._physical_name} {self.symbol}'
-            if self._unit is not None:
-                s+=f', unit: {self._unit[0]}. \n'
-                s += str(self.mat[1:, 1:]/self._unit[1])
-            else:
-                s+='.\n'
-                s += str(self.mat[1:, 1:])
-
-        return s
 
     def dump_rawdata(self):
         print(f'\nVoigt tensor {self.material_name}, tensor {self.symbol}')
@@ -288,13 +470,13 @@ class VoigtTensor4(object):
         rtol = 1e-12
         tol = rtol * np.abs(self.mat).max()
         tmat = self.mat - self.mat.T
-        mat_is_sym = numbattools.almost_zero(np.linalg.norm(tmat), tol)
+        mat_is_sym = nbtools.almost_zero(np.linalg.norm(tmat), tol)
         reporting.assertion(
             mat_is_sym, f'Material matrix {self.material_name}-{self.symbol} is symmetric.\n' + str(self.mat))
 
-    def rotate(self, matR):
-        '''Rotates the crystal according to the SO(3) matrix matR.
+    def rotate(self, mat_R):
+        '''Rotates the crystal according to the SO(3) matrix mat_R.
         '''
 
-        rot_tensor = _rotate_Voigt_tensor(self.mat[1:, 1:], matR)
+        rot_tensor = _rotate_Voigt_4tensor(self.mat[1:, 1:], mat_R)
         self.mat[1:, 1:] = rot_tensor
