@@ -2,7 +2,7 @@
 
 
 subroutine set_boundary_conditions(bdy_cdn,  &
-   mesh_raw,  entities, n_dof, m_eqs, debug, &
+   mesh,  entities, n_dof, m_eqs, debug, &
    iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg )
 
    use numbatmod
@@ -11,14 +11,14 @@ subroutine set_boundary_conditions(bdy_cdn,  &
    integer(8) :: bdy_cdn, n_dof
    integer(8) :: debug
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
 
 
    integer(8) m_eqs(3, entities%n_entities)
 
-   integer(8) :: iperiod_N(mesh_raw%n_msh_pts), iperiod_N_E_F(entities%n_entities)
-   integer(8) :: inperiod_N(mesh_raw%n_msh_pts), inperiod_N_E_F(entities%n_entities)
+   integer(8) :: iperiod_N(mesh%n_msh_pts), iperiod_N_E_F(entities%n_entities)
+   integer(8) :: inperiod_N(mesh%n_msh_pts), inperiod_N_E_F(entities%n_entities)
    integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
@@ -32,11 +32,11 @@ subroutine set_boundary_conditions(bdy_cdn,  &
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 
-      call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_mshpt_xy, lat_vecs, debug)
+      call periodic_lattice_vec (mesh%n_msh_pts, mesh%v_mshpt_xy, lat_vecs, debug)
 
-      call periodic_node(mesh_raw%n_msh_elts, mesh_raw%n_msh_pts, &
-      P2_NODES_PER_EL, mesh_raw%node_phys_i, mesh_raw%v_mshpt_xy, iperiod_N, &
-         inperiod_N, mesh_raw%m_elnd_to_mshpt, lat_vecs)
+      call periodic_node(mesh%n_msh_elts, mesh%n_msh_pts, &
+      P2_NODES_PER_EL, mesh%node_phys_i, mesh%v_mshpt_xy, iperiod_N, &
+         inperiod_N, mesh%m_elnd_to_mshpt, lat_vecs)
 
       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, iperiod_N_E_F, &
          inperiod_N_E_F, lat_vecs)

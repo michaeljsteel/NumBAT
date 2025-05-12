@@ -3,7 +3,7 @@
  !  for the main linear equations
 
 subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
-   perm_pp, perm_qq, mesh_raw, entities, cscmat, pbcs, nberr)
+   perm_pp, perm_qq, mesh, entities, cscmat, pbcs, nberr)
 
 
    use numbatmod
@@ -14,7 +14,7 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
    use class_BasisFunctions
    use class_TriangleIntegrators
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
    type(SparseCSC_EM) :: cscmat
@@ -32,7 +32,7 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
    !endif
 
 
-   complex(8) perm_pp(mesh_raw%n_elt_mats), perm_qq(mesh_raw%n_elt_mats), shift_ksqr
+   complex(8) perm_pp(mesh%n_elt_mats), perm_qq(mesh%n_elt_mats), shift_ksqr
    double precision bloch_vec(2)
 
 
@@ -88,13 +88,13 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
    n_curved = 0
    z_phase_fact = 1.0
 
-   do i_el=1,mesh_raw%n_msh_elts              ! For each element
-      typ_e = mesh_raw%v_elt_material(i_el)    ! Find the material and local material properties
+   do i_el=1,mesh%n_msh_elts              ! For each element
+      typ_e = mesh%v_elt_material(i_el)    ! Find the material and local material properties
 
       tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
       tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
 
-      call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
+      call mesh%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
 
       if (is_curved) then
          n_curved = n_curved + 1

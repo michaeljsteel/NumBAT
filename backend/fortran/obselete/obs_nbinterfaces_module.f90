@@ -2,7 +2,7 @@
 ! module nbinterfaces
 
 !     interface
-!         subroutine make_csc_arraysb(mesh_raw, entities, cscmat, &
+!         subroutine make_csc_arraysb(mesh, entities, cscmat, &
 !             !v_row_ind, v_col_ptr,
 !             debug, errco, emsg)
 
@@ -11,7 +11,7 @@
 !             use class_Mesh
 !             use class_SparseCSC_EM
 
-!             type(MeshEM) :: mesh_raw
+!             type(MeshEM) :: mesh
 !             type(MeshEntities) :: entities
 !             type(SparseCSC_EM) :: cscmat
 

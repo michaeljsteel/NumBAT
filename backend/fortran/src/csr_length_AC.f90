@@ -1,7 +1,7 @@
 
 #include "numbat_decl.h"
 
-subroutine csr_length_AC (mesh_raw, cscmat, &
+subroutine csr_length_AC (mesh, cscmat, &
    n_nonz_max,&
   n_nonz, max_row_len, nberr)
 
@@ -11,7 +11,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
    use class_Mesh
    use class_SparseCSC_AC
 
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
    type(SparseCSC_AC) cscmat
    type(NBError) nberr
 
@@ -45,10 +45,10 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
    !  Determination of the row indices
 
   n_nonz = 0
-   do iel=1,mesh_raw%n_msh_elts
+   do iel=1,mesh%n_msh_elts
 
       do i_nd=1,N_ENTITY_PER_EL_AC
-         ip = mesh_raw%m_elnd_to_mshpt(i_nd,iel)
+         ip = mesh%m_elnd_to_mshpt(i_nd,iel)
 
          do i_dof=1,3
             ind_ip = cscmat%m_eqs(i_dof,ip)
@@ -57,7 +57,7 @@ subroutine csr_length_AC (mesh_raw, cscmat, &
                row_end = cscmat%v_col_ptr(ind_ip+1) - 1
 
                do j_nd=1,N_ENTITY_PER_EL_AC
-                  jp = mesh_raw%m_elnd_to_mshpt(j_nd,iel)
+                  jp = mesh%m_elnd_to_mshpt(j_nd,iel)
 
                   do j_dof=1,3
                      ind_jp = cscmat%m_eqs(j_dof,jp)

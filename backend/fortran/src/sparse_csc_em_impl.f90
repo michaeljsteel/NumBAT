@@ -3,7 +3,7 @@
 !#include "numbat_decl.h"
 
 
-subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw, entities, pbcs, nberr)
+subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh, entities, pbcs, nberr)
 
 
    class(SparseCSC_EM) :: this
@@ -11,7 +11,7 @@ subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw, entitie
    integer(8) :: bdy_cdn
    integer(8) :: debug
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
 
@@ -27,11 +27,11 @@ subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh_raw, entitie
 
    elseif(bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
       debug=0
-      call periodic_lattice_vec (mesh_raw%n_msh_pts, mesh_raw%v_mshpt_xy, lat_vecs, debug)
+      call periodic_lattice_vec (mesh%n_msh_pts, mesh%v_mshpt_xy, lat_vecs, debug)
 
-      call periodic_node(mesh_raw%n_msh_elts, mesh_raw%n_msh_pts, &
-         P2_NODES_PER_EL, mesh_raw%v_mshpt_physindex, mesh_raw%v_mshpt_xy, pbcs%iperiod_N, &
-         pbcs%inperiod_N, mesh_raw%m_elnd_to_mshpt, lat_vecs)
+      call periodic_node(mesh%n_msh_elts, mesh%n_msh_pts, &
+         P2_NODES_PER_EL, mesh%v_mshpt_physindex, mesh%v_mshpt_xy, pbcs%iperiod_N, &
+         pbcs%inperiod_N, mesh%m_elnd_to_mshpt, lat_vecs)
 
       call periodic_N_E_F (entities%n_entities, entities%v_ety_props, entities%v_xy, pbcs%iperiod_N_E_F, &
          pbcs%inperiod_N_E_F, lat_vecs)
@@ -196,10 +196,10 @@ end
 
 
 
-subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs, nberr)
+subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh, entities, pbcs, nberr)
 
    class(SparseCSC_EM) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
 
@@ -210,7 +210,7 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
 
    integer(8) n_nonz_max, max_col_len
 
-   call this%set_boundary_conditions(bdy_cdn, mesh_raw, entities, pbcs, nberr);
+   call this%set_boundary_conditions(bdy_cdn, mesh, entities, pbcs, nberr);
    RET_ON_NBERR(nberr)
 
 
@@ -218,18 +218,18 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh_raw, entities, pbcs,
 
    call integer_alloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', nberr); RET_ON_NBERR(nberr)
 
-   call this%make_col_ptr_provisional (mesh_raw, entities, n_nonz_max)
+   call this%make_col_ptr_provisional (mesh, entities, n_nonz_max)
 
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, entities, n_nonz_max, max_col_len, nberr);
+   call this%make_arrays_final (mesh, entities, n_nonz_max, max_col_len, nberr);
    RET_ON_NBERR(nberr)
 
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
    ! length of v_row_ind is determined inside csr_length and so allocated there
-   !call csr_length (mesh_raw%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
+   !call csr_length (mesh%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
    !this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_col_len, errco, emsg)
    !RETONERROR(errco)
 
@@ -319,11 +319,11 @@ end subroutine
 
 
 
-subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_nonz_max)
+subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh, entities, n_nonz_max)
 
 
    class(SparseCSC_EM) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
 
 
@@ -343,7 +343,7 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh_raw, entities, n_no
    ! (eg corner>=3, edge=1 or 2)
    ! Counting these gives an upper bound to the nonzero elements of the FEM matrices
 
-   do  el_i=1, mesh_raw%n_msh_elts   ! for every element (triangle)
+   do  el_i=1, mesh%n_msh_elts   ! for every element (triangle)
 
       do nd_i=1,N_ENTITY_PER_EL      ! and all nodes/etys in the elt
 
@@ -398,11 +398,11 @@ end subroutine
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max_col_len, nberr)
+subroutine SparseSC_make_arrays_final (this, mesh, entities, n_nonz_max, max_col_len, nberr)
 
 
    class(SparseCSC_EM) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
 
    integer(8) n_nonz_max, max_col_len
@@ -435,7 +435,7 @@ subroutine SparseSC_make_arrays_final (this, mesh_raw, entities, n_nonz_max, max
    ! they must both exist on the same element
 
    n_nonz = 0
-   do el_i=1,mesh_raw%n_msh_elts        ! for each element
+   do el_i=1,mesh%n_msh_elts        ! for each element
 
       do nd_i=1,N_ENTITY_PER_EL         !   and its 14 entities
          i_tag = entities%v_tags(nd_i, el_i)

@@ -13,7 +13,7 @@
 
 #include "numbat_decl.h"
 
-subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw, entities, &
+subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, entities, &
    cscmat, pbcs, bloch_vec, v_evals_beta, evecs_raw, evecs_final, mode_poln_fracs, nberr)
 
    use numbatmod
@@ -22,7 +22,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    use class_PeriodicBCs
    use class_BasisFunctions
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(SparseCSC_EM) :: cscmat
    type(PeriodicBCs) :: pbcs
@@ -37,9 +37,9 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
    type(NBError), intent(out) :: nberr
 
 
-   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_elts)          contains the values of the 3 components at P2 interpolation nodes
-   !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh_raw%n_msh_elts) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
-   complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh_raw%n_msh_elts)
+   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh%n_msh_elts)          contains the values of the 3 components at P2 interpolation nodes
+   !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh%n_msh_elts) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+   complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh%n_msh_elts)
    complex(8) v_evals_beta(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -86,19 +86,19 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
       z_evecs_final_max = D_ZERO   !  value and loc of max field modulus
       !i_evecs_final_max = 0
 
-      do i_el=1,mesh_raw%n_msh_elts
-         typ_e = mesh_raw%v_elt_material(i_el)
+      do i_el=1,mesh%n_msh_elts
+         typ_e = mesh%v_elt_material(i_el)
 
          mode_comp = D_ZERO
          val_exp = D_ONE
          evecs_final_el = D_ZERO
 
 
-         call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
+         call mesh%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
 
 
          if (bdy_cdn == BCS_PERIODIC) then
-            call make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_exp)
+            call make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
          endif
 
 
@@ -168,7 +168,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh_raw,
                z_tmp2 = evecs_final_el(xyz_i,nd_i)
                if (abs(z_evecs_final_max) < abs(z_tmp2)) then  !  found a new max
                   z_evecs_final_max = z_tmp2
-                  ! i_evecs_final_max = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)
+                  ! i_evecs_final_max = mesh%m_elnd_to_mshpt(nd_i,i_el)
                endif
             enddo
 
@@ -311,13 +311,13 @@ subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_
 end subroutine
 
 
-subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_exp)
+subroutine make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
 
    use numbatmod
    use class_Mesh
    use class_PeriodicBCs
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(PeriodicBCs) :: pbcs
    double precision bloch_vec(2)
@@ -337,7 +337,7 @@ subroutine make_pbc_phase_shifts(mesh_raw, entities, pbcs, i_el, bloch_vec, val_
    val_exp = D_ONE
 
    do nd_i=1,P2_NODES_PER_EL
-      mesh_pt = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)
+      mesh_pt = mesh%m_elnd_to_mshpt(nd_i,i_el)
       k = pbcs%iperiod_N(mesh_pt)
       if (k /= 0) mesh_pt=k
       el_nds_i(nd_i) = mesh_pt

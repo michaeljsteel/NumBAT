@@ -61,7 +61,7 @@
 
  !  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
 
-subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
+subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
 
    !use numbatmod
    !use class_Mesh
@@ -69,7 +69,7 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
    class(SparseCSC_AC) :: this
 
    integer(8) bdy_cdn
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
    type(NBError) nberr
 
 
@@ -80,14 +80,14 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
    integer(8) :: vec3(3) = (/ 1_8, 2_8, 3_8/)
 
 
-   call integer_alloc_2d(this%m_eqs, 3_8, mesh_raw%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_eqs, 3_8, mesh%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
 
    if (bdy_cdn .eq. BCS_DIRICHLET) then   !  all interior points have a degree of freedom
 
-      do i_msh=1,mesh_raw%n_msh_pts
-         is_bdy_mshpt = mesh_raw%is_boundary_mesh_point(i_msh)
+      do i_msh=1,mesh%n_msh_pts
+         is_bdy_mshpt = mesh%is_boundary_mesh_point(i_msh)
 
          if (.not. is_bdy_mshpt ) then !  each mshpt is associated to 3 interior DOF: ux, uy, uz
 
@@ -111,7 +111,7 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh_raw, nberr)
 
    elseif (bdy_cdn .eq. BCS_NEUMANN) then !  all points have 3 dof: ux, uy, uz
 
-      do i_msh=1,mesh_raw%n_msh_pts
+      do i_msh=1,mesh%n_msh_pts
          ! Uncommented code implements this:
          ! this%m_eqs(1,i_msh) = n_dof + 1
          ! this%m_eqs(2,i_msh) = n_dof + 2
@@ -128,10 +128,10 @@ end
 
 
 
-subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
+subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh, nberr)
 
    class(SparseCSC_AC) :: this
-   type(MeshAC) :: mesh_raw
+   type(MeshAC) :: mesh
 
    type(NBError) nberr
 
@@ -141,7 +141,7 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
 
    integer(8) n_nonz_max, max_col_len
 
-   call this%set_boundary_conditions(bdy_cdn, mesh_raw, nberr); RET_ON_NBERR(nberr)
+   call this%set_boundary_conditions(bdy_cdn, mesh, nberr); RET_ON_NBERR(nberr)
 
    this%n_nonz=0
 
@@ -149,11 +149,11 @@ subroutine SparseCSC_AC_make_csc_arrays(this, bdy_cdn, mesh_raw, nberr)
    call integer_alloc_1d(this%v_col_ptr, this%n_dof+1, 'v_col_ptr', nberr); RET_ON_NBERR(nberr)
 
    ! sets up a v_col_ptr assuming that every column has the maximum possible non-zero entries
-   call this%make_col_ptr_provisional (mesh_raw, n_nonz_max)
+   call this%make_col_ptr_provisional (mesh, n_nonz_max)
 
    ! v_col_ptr now has the right length for CSC and n_nonz_max is an upper bound for the number of n_nonzeros.
    ! Now get the row_indexes.
-   call this%make_arrays_final (mesh_raw, n_nonz_max, max_col_len, nberr);
+   call this%make_arrays_final (mesh, n_nonz_max, max_col_len, nberr);
    RET_ON_NBERR(nberr)
 
    ! At this point, the row_indices for a given column are in random order
@@ -225,12 +225,12 @@ end subroutine
 ! Builds a first version of v_col_ptr
 ! with enough spaces in each column to allow interactions with every dof on
 ! neighbouring elements
-subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, n_nonz_max)
+subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh, n_nonz_max)
 
    ! use numbatmod
 
    class(SparseCSC_AC) :: this
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
 
    integer(8), intent(out) :: n_nonz_max
 
@@ -251,11 +251,11 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh_raw, n_nonz_max)
    ! (eg corner>=3, edge=1 or 2)
    ! Counting these gives an upper bound to the nonzero elements of the FEM matrices
 
-   do el_i=1,mesh_raw%n_msh_elts    ! for every element (triangle)
+   do el_i=1,mesh%n_msh_elts    ! for every element (triangle)
       do nd_i=1,P2_NODES_PER_EL     ! and all nodes in the element
 
          ! find global mesh point label
-         tag_mshpt = mesh_raw%m_elnd_to_mshpt(nd_i,el_i)
+         tag_mshpt = mesh%m_elnd_to_mshpt(nd_i,el_i)
 
          do i_nd_xy=1,N_DOF_PER_NODE_AC    ! for each coordinate dof
             ! find index of absolute dof
@@ -302,7 +302,7 @@ end
  ! row/col names seem backward
  ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, max_col_len, nberr)
+subroutine SparseCSC_AC_make_arrays_final (this, mesh, n_nonz_max, max_col_len, nberr)
 
    !use numbatmod
    use alloc
@@ -310,7 +310,7 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, max_col_l
    !use class_Mesh
 
    class(SparseCSC_AC) :: this
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
 
    integer(8) n_nonz_max, max_col_len
    type(NBError) nberr
@@ -339,10 +339,10 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, max_col_l
    ! they must both exist on the same element
 
    n_nonz = 0
-   do el_i=1,mesh_raw%n_msh_elts
+   do el_i=1,mesh%n_msh_elts
 
       do i_nd=1,P2_NODES_PER_EL
-         i_mshpt = mesh_raw%m_elnd_to_mshpt(i_nd,el_i)
+         i_mshpt = mesh%m_elnd_to_mshpt(i_nd,el_i)
 
          do i_locdof=1,N_DOF_PER_NODE_AC
             i_dof = this%m_eqs(i_locdof,i_mshpt)
@@ -353,7 +353,7 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh_raw, n_nonz_max, max_col_l
             row_hi = this%v_col_ptr(i_dof+1) - 1
 
             do j_nd=1,P2_NODES_PER_EL
-               j_mshpt = mesh_raw%m_elnd_to_mshpt(j_nd,el_i)
+               j_mshpt = mesh%m_elnd_to_mshpt(j_nd,el_i)
 
                do j_locdof=1,N_DOF_PER_NODE_AC
                   j_dof = this%m_eqs(j_locdof,j_mshpt)

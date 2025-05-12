@@ -46,12 +46,12 @@ end subroutine
  ! !  n_msh_pts = (number of vertices) + (number of mid-edge point) = V + E;
  ! !
 
-subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
+subroutine MeshEntities_build_mesh_tables(this, mesh, nberr)
 
    use alloc
 
    class(MeshEntities) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    type(NBError) nberr
 
@@ -63,7 +63,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
 
    ui_out = stdout
 
-   call this%allocate(mesh_raw%n_msh_elts, nberr)
+   call this%allocate(mesh%n_msh_elts, nberr)
    RET_ON_NBERR(nberr)
 
    call integer_alloc_1d(visited, this%n_entities, 'visited', nberr); RET_ON_NBERR(nberr)
@@ -72,22 +72,22 @@ subroutine MeshEntities_build_mesh_tables(this, mesh_raw, nberr)
    ! We fill the different rows of v_tags in stages
 
    !  Fills:  v_tags[1,:]
-   call this%count_and_label_faces (mesh_raw%n_msh_elts)
+   call this%count_and_label_faces (mesh%n_msh_elts)
 
    !  Fills: n_edge, v_tags[2:4,:], visited[1:n_msh_pts]
    !         table_edge[1..4,:] (unused)
-   call this%count_and_label_edges (mesh_raw, visited, nberr); RET_ON_NBERR(nberr)
+   call this%count_and_label_edges (mesh, visited, nberr); RET_ON_NBERR(nberr)
 
    !  Fills: v_tags[5:,:], visited[1:n_msh_pts], n_msh_pts_3
-   call this%count_and_label_nodes_P3 (mesh_raw, visited, nberr); RET_ON_NBERR(nberr)
+   call this%count_and_label_nodes_P3 (mesh, visited, nberr); RET_ON_NBERR(nberr)
 
    ! Total number of labelled objects
    this%n_entities = this%n_edges + this%n_faces + this%n_msh_pts_p3
 
    !  Fills: entities%node_phys_i(1:2, 1:n_ddl), x_E_F(1:2, 1:n_ddl)
-   call this%analyse_face_and_edges (mesh_raw, visited)
+   call this%analyse_face_and_edges (mesh, visited)
 
-   call this%analyse_p3_nodes(mesh_raw, visited)
+   call this%analyse_p3_nodes(mesh, visited)
 
 end subroutine
 
@@ -118,10 +118,10 @@ end
 ! based on whichever is found first.
 
 ! table_edge seems to be unused
-subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
+subroutine MeshEntities_count_and_label_edges (this, mesh, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    integer(8) visited(:)
 
@@ -131,7 +131,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
    character(len=EMSG_LENGTH) :: emsg
 
    integer(8) n_edge
-   integer(8) table_edge(4,mesh_raw%n_msh_pts)
+   integer(8) table_edge(4,mesh%n_msh_pts)
    integer(8) iel, jedge
    integer(8) ed_vert_nda, ed_vert_ndb  ! edge vertices nodes
    integer(8) ed_mid_nd ! edge mid node
@@ -143,13 +143,13 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
 
    ! Check that boundary elements are well constructed.
    ! Not sure why this is an issue
-   do iel=1,mesh_raw%n_msh_elts  ! for each element
+   do iel=1,mesh%n_msh_elts  ! for each element
 
       ! for its edge nodes 4,5,6
       do jedge=4, P2_NODES_PER_EL
 
          ! if edge node is on a physical bdy
-         if (mesh_raw%is_boundary_mesh_point_by_elt_node(jedge,iel)) then
+         if (mesh%is_boundary_mesh_point_by_elt_node(jedge,iel)) then
 
             ! find node indices (1,2,3) of vertices of the edge
             ed_vert_nda = this%edge_ends(1, jedge-3)
@@ -158,15 +158,15 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
             ! Check that both vertices are also bdy points
             ! (else would be a broken mesh)
 
-            if (.not. mesh_raw%is_boundary_mesh_point_by_elt_node(ed_vert_nda,iel) .or. .not. mesh_raw%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,iel)) then
+            if (.not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_nda,iel) .or. .not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,iel)) then
 
                write(emsg,*) "list_edge: v_tags = ", &
-                  mesh_raw%node_phys_index_by_ref(ed_vert_nda,iel), &
-                  mesh_raw%node_phys_index_by_ref(ed_vert_ndb,iel), &
-                  mesh_raw%node_phys_index_by_ref(jedge,iel), &
-                  "node_phys_i(ed_vert_nda) = ", mesh_raw%m_elnd_to_mshpt(ed_vert_nda,iel), &
-                  "node_phys_i(ed_vert_ndb) = ", mesh_raw%m_elnd_to_mshpt(ed_vert_ndb,iel), &
-                  "node_phys_i(jedge) = ", mesh_raw%m_elnd_to_mshpt(jedge,iel)
+                  mesh%node_phys_index_by_ref(ed_vert_nda,iel), &
+                  mesh%node_phys_index_by_ref(ed_vert_ndb,iel), &
+                  mesh%node_phys_index_by_ref(jedge,iel), &
+                  "node_phys_i(ed_vert_nda) = ", mesh%m_elnd_to_mshpt(ed_vert_nda,iel), &
+                  "node_phys_i(ed_vert_ndb) = ", mesh%m_elnd_to_mshpt(ed_vert_ndb,iel), &
+                  "node_phys_i(jedge) = ", mesh%m_elnd_to_mshpt(jedge,iel)
                call nberr%set(NBERR_BAD_MESH_EDGES, emsg)
                return
 
@@ -180,7 +180,7 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
       !  for each edge node 4..6
       do jedge=4,P2_NODES_PER_EL
 
-         ed_mid_nd = mesh_raw%m_elnd_to_mshpt(jedge,iel)  ! find the node
+         ed_mid_nd = mesh%m_elnd_to_mshpt(jedge,iel)  ! find the node
          old_lab = visited(ed_mid_nd)
 
          if (old_lab .eq. 0) then        ! a new edge encountered
@@ -191,10 +191,10 @@ subroutine MeshEntities_count_and_label_edges (this, mesh_raw, visited, nberr)
             visited(ed_mid_nd) = new_lab  ! visited stores its edge number
 
             ed_vert_nda = this%edge_ends(1,jedge-3)
-            table_edge(1,n_edge) = mesh_raw%m_elnd_to_mshpt(ed_vert_nda,iel)
+            table_edge(1,n_edge) = mesh%m_elnd_to_mshpt(ed_vert_nda,iel)
 
             ed_vert_ndb = this%edge_ends(2,jedge-3)
-            table_edge(2,n_edge) = mesh_raw%m_elnd_to_mshpt(ed_vert_ndb,iel)
+            table_edge(2,n_edge) = mesh%m_elnd_to_mshpt(ed_vert_ndb,iel)
             table_edge(3,n_edge) = ed_mid_nd
             table_edge(4,n_edge) = new_lab
 
@@ -218,10 +218,10 @@ end
 
 
 
-subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr)
+subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh, visited, nberr)
 
    class(MeshEntities) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    integer(8) visited(:)
 
@@ -246,10 +246,10 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
    lab_off = this%n_edges + this%n_faces  ! assigned labels
    lab = 0
 
-   do iel=1,mesh_raw%n_msh_elts
+   do iel=1,mesh%n_msh_elts
 
       ! find the absolute node indices of this element
-      nod_el_p = mesh_raw%m_elnd_to_mshpt(:, iel)
+      nod_el_p = mesh%m_elnd_to_mshpt(:, iel)
 
       !  P3 element: Vertices
       do inod=1,3
@@ -265,7 +265,7 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
             ! find which vertex node of the owning elt matches
             inod2 = 0
             do j=1,3
-               nd2 = mesh_raw%m_elnd_to_mshpt(j,iel2)
+               nd2 = mesh%m_elnd_to_mshpt(j,iel2)
                if (nd .eq. nd2) inod2 = j
             enddo
 
@@ -290,10 +290,10 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
 
          !  Find absolute nodes of the vertices of the edge
          vnd = inod - 3
-         vert_1(1) = mesh_raw%m_elnd_to_mshpt(vnd, iel)
+         vert_1(1) = mesh%m_elnd_to_mshpt(vnd, iel)
          vnd = inod - 2
          if (vnd .gt. 3) vnd = vnd - 3
-         vert_1(2) = mesh_raw%m_elnd_to_mshpt(vnd,iel)
+         vert_1(2) = mesh%m_elnd_to_mshpt(vnd,iel)
 
          if (visited(nd) .eq. 0) then  ! new edge
             visited(nd) = iel          ! claim it for this elt
@@ -309,16 +309,16 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
 
             ! find which edge node of the owning elt matches
             do j=4,6
-               nd2=mesh_raw%m_elnd_to_mshpt(j,iel2)
+               nd2=mesh%m_elnd_to_mshpt(j,iel2)
 
                if (nd .eq. nd2) then
                   inod2 = j
                   !  Vertices of the edge
                   vnd = inod2 - 3
-                  vert_2(1) = mesh_raw%m_elnd_to_mshpt(vnd, iel2)
+                  vert_2(1) = mesh%m_elnd_to_mshpt(vnd, iel2)
                   vnd = inod2 - 2
                   if (vnd .gt. 3) vnd = vnd - 3
-                  vert_2(2) = mesh_raw%m_elnd_to_mshpt(vnd, iel2)
+                  vert_2(2) = mesh%m_elnd_to_mshpt(vnd, iel2)
                endif
 
             enddo
@@ -346,9 +346,9 @@ subroutine MeshEntities_count_and_label_nodes_P3 (this, mesh_raw, visited, nberr
                   write(emsg,*) "list_node_P3: problems: ", &
                      "Check the edge endpoints", &
                      "inod, m_elnd_to_mshpt(inod,iel) = ", inod, &
-                     mesh_raw%m_elnd_to_mshpt(inod,iel), &
+                     mesh%m_elnd_to_mshpt(inod,iel), &
                      "inod2, m_elnd_to_mshpt(inod2,iel2) = ", inod2, &
-                     mesh_raw%m_elnd_to_mshpt(inod2,iel2), &
+                     mesh%m_elnd_to_mshpt(inod2,iel2), &
                      "iel, iel2 = ", iel, iel2, &
                      "vert_1 = ", vert_1, &
                      "vert_2 = ", vert_2
@@ -377,11 +377,11 @@ end
 
 
 
-subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
+subroutine MeshEntities_analyse_face_and_edges (this, mesh, visited)
 
 
    class(MeshEntities) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    integer(8) visited(:)
 
@@ -394,12 +394,12 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh_raw, visited)
    visited= 0
 
 
-   do iel=1,mesh_raw%n_msh_elts
+   do iel=1,mesh%n_msh_elts
 
       ! find the elt's material and its node's locations
       do j=1,P2_NODES_PER_EL
-         nd = mesh_raw%m_elnd_to_mshpt(j,iel)
-         type_n(j) = mesh_raw%v_mshpt_physindex(nd)
+         nd = mesh%m_elnd_to_mshpt(j,iel)
+         type_n(j) = mesh%v_mshpt_physindex(nd)
          el_xy(:,j) = this%v_xy(:,nd)
       enddo
 
@@ -433,10 +433,10 @@ end
 
 
 
-subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
+subroutine MeshEntities_analyse_p3_nodes(this, mesh, visited)
 
    class(MeshEntities) :: this
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    integer(8) visited(:)
 
@@ -467,12 +467,12 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
    !  The first 4 entries of this%v_tags(*,i) correspond to face and P2 edges and have been done
    row_off = 4
-   do iel=1,mesh_raw%n_msh_elts
+   do iel=1,mesh%n_msh_elts
 
       ! do inod=1,P2_NODES_PER_EL
-      !    el_nodes(inod) = mesh_raw%m_elnd_to_mshpt(inod,iel)
+      !    el_nodes(inod) = mesh%m_elnd_to_mshpt(inod,iel)
       ! enddo
-      el_nodes = mesh_raw%m_elnd_to_mshpt(:, iel)
+      el_nodes = mesh%m_elnd_to_mshpt(:, iel)
 
       !  the 10 node of a P3 element
       ! do inod=1,P3_NODES_PER_EL
@@ -489,9 +489,9 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
             visited(nd) = iel
             !inod1 = el_nodes(inod)
             tag = p3_tags(inod)
-            this%v_xy(1, tag) = mesh_raw%v_mshpt_xy(1, nd)
-            this%v_xy(2, tag) = mesh_raw%v_mshpt_xy(2, nd)
-            this%v_ety_props(1, tag) = mesh_raw%v_mshpt_physindex(nd)
+            this%v_xy(1, tag) = mesh%v_mshpt_xy(1, nd)
+            this%v_xy(2, tag) = mesh%v_mshpt_xy(2, nd)
+            this%v_ety_props(1, tag) = mesh%v_mshpt_physindex(nd)
 
             !  Vertex => dimension zero
             this%v_ety_props(2, tag) = 0
@@ -509,18 +509,18 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
             ! The P3 edge nodes are 1/3 and 2/3 along the edge
             !  Endpoints of the edge
             k1 = el_nodes(inod-3)
-            xx1 = mesh_raw%v_mshpt_xy(1,k1)
-            yy1 = mesh_raw%v_mshpt_xy(2,k1)
+            xx1 = mesh%v_mshpt_xy(1,k1)
+            yy1 = mesh%v_mshpt_xy(2,k1)
 
             k1 = el_nodes(ip(1,inod-3))
-            xx2 = mesh_raw%v_mshpt_xy(1,k1)
-            yy2 = mesh_raw%v_mshpt_xy(2,k1)
+            xx2 = mesh%v_mshpt_xy(1,k1)
+            yy2 = mesh%v_mshpt_xy(2,k1)
 
             dx1 = (xx2-xx1) * one_third
             dy1 = (yy2-yy1) * one_third
 
             !  type of the mid-edge node of the initial P2 mesh
-            ind = mesh_raw%v_mshpt_physindex(nd)
+            ind = mesh%v_mshpt_physindex(nd)
 
             !  2 nodes per edge (for P3 element)
             do inod2=1,2
@@ -537,16 +537,16 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh_raw, visited)
 
       !  Coordinate of the vertices
       k1 = el_nodes(1)
-      xx1 = mesh_raw%v_mshpt_xy(1,k1)
-      yy1 = mesh_raw%v_mshpt_xy(2,k1)
+      xx1 = mesh%v_mshpt_xy(1,k1)
+      yy1 = mesh%v_mshpt_xy(2,k1)
 
       k1 = el_nodes(2)
-      xx2 = mesh_raw%v_mshpt_xy(1,k1)
-      yy2 = mesh_raw%v_mshpt_xy(2,k1)
+      xx2 = mesh%v_mshpt_xy(1,k1)
+      yy2 = mesh%v_mshpt_xy(2,k1)
 
       k1 = el_nodes(3)
-      xx3 = mesh_raw%v_mshpt_xy(1,k1)
-      yy3 = mesh_raw%v_mshpt_xy(2,k1)
+      xx3 = mesh%v_mshpt_xy(1,k1)
+      yy3 = mesh%v_mshpt_xy(2,k1)
 
       !  The tenth node is at the center of the triangle
       !  dimension(P3) = 10

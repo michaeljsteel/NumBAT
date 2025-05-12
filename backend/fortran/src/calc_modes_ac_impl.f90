@@ -66,7 +66,7 @@ contains
 
       ! locals
 
-      type(MeshAC) mesh_raw
+      type(MeshAC) mesh
       !type(MeshEntitiesAC) entities
       type(SparseCSC_AC) cscmat
 
@@ -92,7 +92,7 @@ contains
       ui_out = stdout
       call clock_main%reset()
 
-      call mesh_raw%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
+      call mesh%allocate(n_msh_pts, n_msh_elts, n_elt_mats, nberr)
       RET_ON_NBERR(nberr)
 
       !call entities%allocate(n_msh_elts, nberr)
@@ -104,16 +104,16 @@ contains
             n_elt_mats, v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt, nberr)
          RET_ON_NBERR(nberr)
 
-         call mesh_raw%load_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
+         call mesh%load_mesh_tables_from_scratch(mesh_file, dimscale_in_m, nberr);
          RET_ON_NBERR(nberr)
       else
-         call mesh_raw%load_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
+         call mesh%load_mesh_tables_from_py(v_mshpt_xy, v_mshpt_physindex, &
             v_elt_material, m_elnd_to_mshpt);
       endif
 
 
       ! determine location of all (potentially) nonzero entries in the FEM opK and opMass matrices
-      call cscmat%make_csc_arrays(bdy_cdn, mesh_raw, nberr)
+      call cscmat%make_csc_arrays(bdy_cdn, mesh, nberr)
       RET_ON_NBERR(nberr)
 
 
@@ -133,7 +133,7 @@ contains
 
       shift_omsq= (2*D_PI*shift_nu)**2
       call build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
-      mesh_raw, cscmat, symmetry_flag, nberr)
+      mesh, cscmat, symmetry_flag, nberr)
       RET_ON_NBERR(nberr)
 
       !  dim_krylov = 2*n_modes + n_modes/2 +3
@@ -175,7 +175,7 @@ contains
       !  by increasing q_ac
 
       call construct_solution_fields_ac (shift_omsq,  n_modes, &
-         mesh_raw, cscmat,   &
+         mesh, cscmat,   &
          v_evals_nu, arpack_evecs, femsol_ac, poln_fracs,  nberr)
       RET_ON_NBERR(nberr)
 

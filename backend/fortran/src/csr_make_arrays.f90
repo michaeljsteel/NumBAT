@@ -1,6 +1,6 @@
 #include "numbat_decl.h"
 
-subroutine make_csc_arrays(mesh_raw, entities, cscmat, debug, errco, emsg)
+subroutine make_csc_arrays(mesh, entities, cscmat, debug, errco, emsg)
 
    use numbatmod
    use alloc
@@ -9,7 +9,7 @@ subroutine make_csc_arrays(mesh_raw, entities, cscmat, debug, errco, emsg)
    use class_Mesh
    use class_SparseCSC_EM
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
    type(MeshEntities) :: entities
    type(SparseCSC_EM) :: cscmat
 
@@ -31,13 +31,13 @@ subroutine make_csc_arrays(mesh_raw, entities, cscmat, debug, errco, emsg)
    call integer_alloc_1d(cscmat%v_col_ptr, cscmat%n_dof+1, 'v_col_ptr', errco, emsg); RETONERROR(errco)
 
    write(*,*) 'that enty loc', entities%v_xy(1,181), entities%v_xy(2,181)
-   call csr_make_col_ptr_loose (mesh_raw%n_msh_elts, entities%n_entities, cscmat%n_dof, entities%v_tags, &
+   call csr_make_col_ptr_loose (mesh%n_msh_elts, entities%n_entities, cscmat%n_dof, entities%v_tags, &
       cscmat%m_eqs, cscmat%v_col_ptr, nonz_max)
 
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
    ! length of v_row_ind is determined inside csr_length and so allocated there
-   call csr_length (mesh_raw%n_msh_elts, entities%n_entities, cscmat%n_dof,  entities%v_tags, cscmat%m_eqs, &
+   call csr_length (mesh%n_msh_elts, entities%n_entities, cscmat%n_dof,  entities%v_tags, cscmat%m_eqs, &
       cscmat%v_row_ind, cscmat%v_col_ptr, &
       nonz_max, cscmat%n_nonz, max_row_len, debug, errco, emsg)
    RETONERROR(errco)

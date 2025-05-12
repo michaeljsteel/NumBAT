@@ -10,7 +10,7 @@
 
 ! Mode polarisation fractions are currently turned off
 
-subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat,  &
+subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh, cscmat,  &
    v_evals_nu, evecs_raw, evecs_final, mode_poln_fracs, nberr)
 
 
@@ -20,7 +20,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
    use class_Mesh
    use class_SparseCSC_AC
 
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
    type(SparseCSC_AC) cscmat
    type(NBError) nberr
 
@@ -35,9 +35,9 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
    complex(8) evecs_raw(cscmat%n_dof,n_modes)
 
-   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh_raw%n_msh_elts)
+   !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh%n_msh_elts)
    ! contains the values of the 3 components at P2 interpolation nodes
-   complex(8) evecs_final(3,P2_NODES_PER_EL,n_modes,mesh_raw%n_msh_elts)
+   complex(8) evecs_final(3,P2_NODES_PER_EL,n_modes,mesh%n_msh_elts)
    complex(8) v_evals_nu(n_modes) !, v_tmp(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
 
@@ -85,15 +85,15 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
       z_evecs_final_max = 0.0d0 !  value and loc of max field modulus
 
-      do i_el=1,mesh_raw%n_msh_elts            ! for each elt
-         typ_e = mesh_raw%v_elt_material(i_el)
+      do i_el=1,mesh%n_msh_elts            ! for each elt
+         typ_e = mesh%v_elt_material(i_el)
 
          mode_comp = D_ZERO
 
-         call mesh_raw%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy)
+         call mesh%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy)
 
          do nd_i=1,P2_NODES_PER_EL           ! for each of 6 nodes of that elt
-            msh_pt_i = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
+            msh_pt_i = mesh%m_elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
 
             do nd_xyz=1,3                    ! for each xyz component of this mesh pt
                dof = cscmat%m_eqs(nd_xyz, msh_pt_i)  ! the actual fem dof
@@ -164,9 +164,9 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh_raw, cscmat, 
 
 
       ! !  Normalization so that the maximum field component is 1
-      ! do i_el=1,mesh_raw%n_msh_elts
+      ! do i_el=1,mesh%n_msh_elts
       !    do nd_i=1,P2_NODES_PER_EL
-      !       i1 = mesh_raw%m_elnd_to_mshpt(nd_i,i_el)
+      !       i1 = mesh%m_elnd_to_mshpt(nd_i,i_el)
 
 
 

@@ -6,22 +6,22 @@
 
 
 ! table_edge seems to be unused
-subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
+subroutine label_edges (mesh, m_elnd_to_mshpt, n_edge, visited)
 
    use class_Mesh
 
    implicit none
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
    integer(8) n_edge
 
-   integer(8) visited(mesh_raw%n_msh_pts)
-   integer(8) m_elnd_to_mshpt(14,mesh_raw%n_msh_elts)
+   integer(8) visited(mesh%n_msh_pts)
+   integer(8) m_elnd_to_mshpt(14,mesh%n_msh_elts)
 
    ! ---------------------------------------------
 
-   integer(8) table_edge(4,mesh_raw%n_msh_pts)
+   integer(8) table_edge(4,mesh%n_msh_pts)
    integer(8) i, j, k, j1, j2, n_face, debug
    integer(8) list_end(2,3)
 
@@ -41,18 +41,18 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
    list_end(1,i) = 1
    list_end(2,i) = 3
 
-   n_face = mesh_raw%n_msh_elts
+   n_face = mesh%n_msh_elts
    debug = 0
 
 
    visited= 0
 
    n_edge = 0
-   do i=1,mesh_raw%n_msh_elts
+   do i=1,mesh%n_msh_elts
 
       ! for the edge nodes 4,5,6
-      do j=4,mesh_raw%nodes_per_el   !  checks some condition on this eleemnt. what is it?
-         if (mesh_raw%is_boundary_mesh_point_by_elt_node(j,i)) then  ! edge node is on a physical bdy
+      do j=4,mesh%nodes_per_el   !  checks some condition on this eleemnt. what is it?
+         if (mesh%is_boundary_mesh_point_by_elt_node(j,i)) then  ! edge node is on a physical bdy
 
 !            if (type_nod(m_elnd_to_mshpt(j,i)) .ne. 0) then  ! edge node is on a physical bdy
 
@@ -64,16 +64,16 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
             !if (type_nod(m_elnd_to_mshpt(j1,i)) .eq. 0 .or. &
             !type_nod(m_elnd_to_mshpt(j2,i)) .eq. 0) then
 
-            if (.not. mesh_raw%is_boundary_mesh_point_by_elt_node(j1,i) .or. .not. mesh_raw%is_boundary_mesh_point_by_elt_node(j2,i)) then
+            if (.not. mesh%is_boundary_mesh_point_by_elt_node(j1,i) .or. .not. mesh%is_boundary_mesh_point_by_elt_node(j2,i)) then
 
                !TODO: hook up error msg
                write(*,*) "list_edge: m_elnd_to_mshpt = ", &
-                  mesh_raw%type_node_by_ref(j1,i), &
-                  mesh_raw%type_node_by_ref(j2,i), &
-                  mesh_raw%type_node_by_ref(j,i)
-               write(*,*) "type_nod(j1) = ", mesh_raw%m_elnd_to_mshpt(j1,i)
-               write(*,*) "type_nod(j2) = ", mesh_raw%m_elnd_to_mshpt(j2,i)
-               write(*,*) "type_nod(j) = ", mesh_raw%m_elnd_to_mshpt(j,i)
+                  mesh%type_node_by_ref(j1,i), &
+                  mesh%type_node_by_ref(j2,i), &
+                  mesh%type_node_by_ref(j,i)
+               write(*,*) "type_nod(j1) = ", mesh%m_elnd_to_mshpt(j1,i)
+               write(*,*) "type_nod(j2) = ", mesh%m_elnd_to_mshpt(j2,i)
+               write(*,*) "type_nod(j) = ", mesh%m_elnd_to_mshpt(j,i)
                write(*,*) "list_edge: Aborting..."
                stop
             endif
@@ -82,9 +82,9 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
       enddo
 
       !  scan the element edge
-      do j=4,mesh_raw%nodes_per_el
+      do j=4,mesh%nodes_per_el
 
-         j1 = mesh_raw%m_elnd_to_mshpt(j,i)  ! find the node
+         j1 = mesh%m_elnd_to_mshpt(j,i)  ! find the node
          k = visited(j1)
 
          if (k .eq. 0) then        ! a new edge encountered
@@ -94,10 +94,10 @@ subroutine label_edges (mesh_raw, m_elnd_to_mshpt, n_edge, visited)
             visited(j1) = n_edge   ! visited stores its edge number
 
             j2 = list_end(1,j-3)
-            table_edge(1,n_edge) = mesh_raw%m_elnd_to_mshpt(j2,i)
+            table_edge(1,n_edge) = mesh%m_elnd_to_mshpt(j2,i)
 
             j2 = list_end(2,j-3)
-            table_edge(2,n_edge) = mesh_raw%m_elnd_to_mshpt(j2,i)
+            table_edge(2,n_edge) = mesh%m_elnd_to_mshpt(j2,i)
             table_edge(3,n_edge) = j1
 
             !  Table of connectivity for the face (with respect to the triangle element)

@@ -10,7 +10,7 @@
 !                           typ_e=n_core(1) or typ_e=n_core(2)
 !
 subroutine mode_energy (nval, nel,  n_core, &
-   mesh_raw, nb_typ_el, eps_eff,  sol, mode_pol)
+   mesh, nb_typ_el, eps_eff,  sol, mode_pol)
 
    use class_Mesh
    use numbatmod
@@ -20,7 +20,7 @@ subroutine mode_energy (nval, nel,  n_core, &
    complex(8) sol(3,N_DOF_PER_EL,nval,nel)
    complex(8) eps_eff(nb_typ_el), mode_pol(4,nval)
 
-   type(MeshEM) :: mesh_raw
+   type(MeshEM) :: mesh
 
 !
 !  variables for quadrature interpolation
@@ -66,12 +66,12 @@ subroutine mode_energy (nval, nel,  n_core, &
 
    do iel=1,nel
 
-      typ_e = mesh_raw%v_elt_material(iel)
+      typ_e = mesh%v_elt_material(iel)
       do inode=1,P2_NODES_PER_EL
-         global = mesh_raw%m_elnd_to_mshpt(inode,iel)
+         global = mesh%m_elnd_to_mshpt(inode,iel)
          nod_el_p(inode) = global
-         xel(1,inode) = mesh_raw%v_mshpt_xy(1,global)
-         xel(2,inode) = mesh_raw%v_mshpt_xy(2,global)
+         xel(1,inode) = mesh%v_mshpt_xy(1,global)
+         xel(2,inode) = mesh%v_mshpt_xy(2,global)
       enddo
 
       do iq=1,nquad

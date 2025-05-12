@@ -100,7 +100,7 @@ contains
 
       ! locals
 
-      type(MeshEM) :: mesh_raw
+      type(MeshEM) :: mesh
       type(MeshEntities) :: entities
       type(SparseCSC_EM) :: cscmat
       type(PeriodicBCs) :: pbcs
@@ -140,18 +140,18 @@ contains
       !  Fills:  MeshEM: v_mshpt_xy, v_mshpt_physindex, v_elt_material, m_elnd_to_mshpt
       ! This knows the position and material of each elt and mesh point but not their connectedness or edge/face nature
 
-      call mesh_raw%load_mesh_tables(mesh_file, dimscale_in_m, n_msh_pts, n_msh_elts, n_elt_mats, nberr);
+      call mesh%load_mesh_tables(mesh_file, dimscale_in_m, n_msh_pts, n_msh_elts, n_elt_mats, nberr);
       RET_ON_NBERR(nberr)
 
-      call entities%build_mesh_tables(mesh_raw, nberr);
+      call entities%build_mesh_tables(mesh, nberr);
       RET_ON_NBERR(nberr)
 
       ! These are never actually used for now so could disable
-      call pbcs%allocate(mesh_raw, entities, nberr);
+      call pbcs%allocate(mesh, entities, nberr);
       RET_ON_NBERR(nberr)
 
       !! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
-      call cscmat%make_csc_arrays(bdy_cdn, mesh_raw, entities, pbcs, nberr); RET_ON_NBERR(nberr)
+      call cscmat%make_csc_arrays(bdy_cdn, mesh, entities, pbcs, nberr); RET_ON_NBERR(nberr)
 
 
       write(ui_out,*)
@@ -170,7 +170,7 @@ contains
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
       call build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, pp, qq, &
-      mesh_raw, entities, cscmat, pbcs, nberr)
+      mesh, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -223,21 +223,21 @@ contains
 
       !  The eigenvectors will be stored in the array femsol_evecs
       !  The eigenvalues and eigenvectors are renumbered according to evalue sorting
-      call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh_raw, &
+      call construct_solution_fields_em(bdy_cdn, shift_ksqr, n_modes, mesh, &
       entities, cscmat, pbcs, bloch_vec, v_evals_beta, arpack_evecs, &
       femsol_evecs, poln_fracs, nberr)
       RET_ON_NBERR(nberr)
 
 
       !TODO: does this serve any purpose any more? Just poln_fracs?
-      call mode_energy (n_modes, n_msh_elts, n_core, mesh_raw, &
+      call mode_energy (n_modes, n_msh_elts, n_core, mesh, &
       n_elt_mats, eps_eff, femsol_evecs, poln_fracs)
 
 
 
       ! prepare to return data to python end
-      call array_material_EM (n_msh_elts, n_elt_mats, v_refindex_n, mesh_raw%v_elt_material, ls_material)
-      call mesh_raw%fill_python_arrays(v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
+      call array_material_EM (n_msh_elts, n_elt_mats, v_refindex_n, mesh%v_elt_material, ls_material)
+      call mesh%fill_python_arrays(v_elt_material, v_mshpt_physindex, m_elnd_to_mshpt, v_mshpt_xy)
 
 
       write(ui_out,'(A,A)') '         ', clock_spare%to_string()

@@ -1,7 +1,7 @@
 
 #include "numbat_decl.h"
 subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
-   mesh_raw, cscmat, symmetry_flag, nberr)
+   mesh, cscmat, symmetry_flag, nberr)
 
 
    use numbatmod
@@ -10,7 +10,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
    use class_SparseCSC_AC
    use class_BasisFunctions
 
-   type(MeshAC) mesh_raw
+   type(MeshAC) mesh
    type(SparseCSC_AC) cscmat
    type(NBError) nberr
 
@@ -18,7 +18,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
    integer(8) symmetry_flag
    complex(8) shift_omsq, q_ac
 
-   complex(8) rho(mesh_raw%n_elt_mats), c_tensor(6,6,mesh_raw%n_elt_mats)
+   complex(8) rho(mesh%n_elt_mats), c_tensor(6,6,mesh%n_elt_mats)
 
 
    integer(8), dimension(:), allocatable :: i_work
@@ -41,19 +41,19 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
    character(len=EMSG_LENGTH) :: emsg
 
 
-   call integer_alloc_1d(i_work, 3*mesh_raw%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(i_work, 3*mesh%n_msh_pts, 'i_work', nberr); RET_ON_NBERR(nberr)
 
 
    cscmat%mOp_stiff = C_ZERO
    cscmat%mOp_mass = C_ZERO
 
-   do el_i=1,mesh_raw%n_msh_elts              ! For each elt
-      typ_e = mesh_raw%v_elt_material(el_i)    ! Find the material and its local material properties
+   do el_i=1,mesh%n_msh_elts              ! For each elt
+      typ_e = mesh%v_elt_material(el_i)    ! Find the material and its local material properties
 
       rho_el = rho(typ_e)
       c_tensor_el = c_tensor(:,:,typ_e)
 
-      call mesh_raw%find_nodes_for_elt(el_i, el_nds_i, el_nds_xy)
+      call mesh%find_nodes_for_elt(el_i, el_nds_i, el_nds_xy)
 
       call basfuncs%set_affine_for_elt(el_nds_xy, nberr)
       RET_ON_NBERR(nberr)
@@ -69,7 +69,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
       endif
 
       do nd_j=1,P2_NODES_PER_EL  ! iterating columns
-         msh_pt_j = mesh_raw%m_elnd_to_mshpt(nd_j,el_i)
+         msh_pt_j = mesh%m_elnd_to_mshpt(nd_j,el_i)
 
          do nd_dof_j=1,3
             dof_j = cscmat%m_eqs(nd_dof_j,msh_pt_j)
@@ -84,7 +84,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
                enddo
 
                do nd_i=1,P2_NODES_PER_EL   ! iterating rows
-                  msh_pt_i = mesh_raw%m_elnd_to_mshpt(nd_i,el_i)
+                  msh_pt_i = mesh%m_elnd_to_mshpt(nd_i,el_i)
 
                   do nd_dof_i=1,3
                      dof_i = cscmat%m_eqs(nd_dof_i,msh_pt_i)
