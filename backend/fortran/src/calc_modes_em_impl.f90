@@ -201,7 +201,8 @@ contains
 
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
 
-      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); RET_ON_NBERR(nberr)
+      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); 
+RET_ON_NBERR(nberr)
 
       call cscmat%adjust_for_zero_offset_indexing()
 

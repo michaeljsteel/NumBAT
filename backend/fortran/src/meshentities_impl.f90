@@ -11,7 +11,8 @@ subroutine MeshEntities_allocate(this, n_msh_elts, nberr)
 
    call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'v_tags', nberr); RET_ON_NBERR(nberr)
    call double_alloc_2d(this%v_xy, 2_8, max_est_entities, 'v_xy', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_ety_props, 2_8, max_est_entities, 'x_ety_props', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%v_ety_props, 2_8, max_est_entities, 'x_ety_props', nberr); 
+RET_ON_NBERR(nberr)
 
 
    call integer_alloc_1d(this%visited, max_est_entities, 'visited', nberr); RET_ON_NBERR(nberr)
@@ -124,7 +125,8 @@ subroutine MeshEntities_check_bdy_elements_are_consistent(this, mesh, nberr)
             ! Check that both vertices are also bdy points
             ! (else would be a broken mesh)
 
-            if (.not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_nda,el_i) .or. .not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,el_i)) then
+            if (.not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_nda,el_i) &
+.or. .not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,el_i)) then
 
                write(emsg,*) "list_edge: v_tags = ", &
                   mesh%node_phys_index_by_ref(ed_vert_nda,el_i), &
