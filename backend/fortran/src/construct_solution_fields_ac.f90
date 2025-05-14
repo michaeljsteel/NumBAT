@@ -69,7 +69,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh, cscmat,  &
    enddo
 
    ! order with smallest eigenvalue first (order=1)
-   call find_eigvals_order (n_modes, v_evals_nu, v_eig_index, 1, nberr)
+   call find_eigvals_order (n_modes, v_evals_nu, v_eig_index, 1_8, nberr)
    call zvec_reorder_by_index(v_evals_nu, v_eig_index, n_modes)
 
 

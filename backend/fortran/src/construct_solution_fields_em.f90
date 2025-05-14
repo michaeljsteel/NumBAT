@@ -303,7 +303,7 @@ subroutine rescale_and_sort_eigensolutions(n_modes, shift_ksqr, v_evals_beta, v_
    enddo
 
    !  order v_evals_beta by magnitudes and store in v_eig_index
-   call find_eigvals_order (n_modes, v_evals_beta, v_eig_index, 0, nberr)
+   call find_eigvals_order (n_modes, v_evals_beta, v_eig_index, 0_8, nberr)
 
    ! Apply the reordering
    call zvec_reorder_by_index(v_evals_beta, v_eig_index, n_modes)

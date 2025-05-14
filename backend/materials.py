@@ -161,17 +161,17 @@ class PiezoElectricProperties:
 
         l_eps_l = v_kap @ self._diel_epsS_ij @ v_kap * SI_permittivity_eps0
 
-        print('shapes 1', e_Kj.shape, v_kap.shape, e_Kj_lj.shape)
-        print('shapes 2', e_iL.shape, v_kap.shape, li_e_iL.shape)
+        #print('shapes 1', e_Kj.shape, v_kap.shape, e_Kj_lj.shape)
+        #print('shapes 2', e_iL.shape, v_kap.shape, li_e_iL.shape)
 
-        print('e_Kj_lj', e_Kj_lj)
-        print('li_e_iL', li_e_iL)
-        print('l_eps_', l_eps_l)
+        #print('e_Kj_lj', e_Kj_lj)
+        #print('li_e_iL', li_e_iL)
+        #print('l_eps_', l_eps_l)
 
         cE_KL_stiff = self._tens_cE_IJ.value() + np.outer(e_Kj_lj, li_e_iL) / l_eps_l
 
-        print('cE_stiff', cE_KL_stiff)
-        print('cE_diff', cE_KL_stiff-self._tens_cE_IJ.value())
+        #print('cE_stiff', cE_KL_stiff)
+        #print('cE_diff', cE_KL_stiff-self._tens_cE_IJ.value())
 
         # convert to a voigt4
         return  cE_KL_stiff
