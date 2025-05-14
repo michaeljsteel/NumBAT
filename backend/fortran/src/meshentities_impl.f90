@@ -463,11 +463,10 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
    class(MeshEntities) :: this
    type(MeshEM) :: mesh
 
-
-
    integer(8)  k1, n, ind, ip(2,3), nd, tag
-   integer(8) el_i, nd_i,  nd_i2, ety_off
-   integer(8) el_nodes(6), p3_tags(N_ENTITY_PER_EL)
+   integer(8) el_i, nd_i,  nd_i2, ety_off, nd_tag
+   integer(8) el_node_tags(P2_NODES_PER_EL)
+   integer(8) p3_tags(N_ENTITY_PER_EL)
 
    double precision xx1, xx2, xx3, yy1, yy2, yy3
    double precision dx1, dy1
@@ -493,49 +492,52 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
    ety_off = 4
    do el_i=1, mesh%n_msh_elts
 
-      el_nodes = mesh%m_elnd_to_mshpt(:, el_i)
+      el_node_tags = mesh%m_elnd_to_mshpt(:, el_i)
 
       !  the 10 node of a P3 element
       ! do nd_i=1,P3_NODES_PER_EL
       !    p3_tags(nd_i) = this%v_tags(nd_i+ety_off,el_i)
       ! enddo
       !p3_tags(1:P3_NODES_PER_EL)  = this%v_tags(ety_off+1:ety_off+10, el_i)
+
       p3_tags(1:P3_NODES_PER_EL)  = this%v_tags(ety_off+1: ety_off+P3_NODES_PER_EL, el_i)
 
 
 
-      !  scan the P3 vertices
+      !  first scan the vertices
       do nd_i=1,3
-         nd = el_nodes(nd_i)
+         nd_tag = el_node_tags(nd_i)
 
-         if (this%visited(nd) .eq. 0) then  ! once per tag is enough
-            this%visited(nd) = el_i
-            !nd_i1 = el_nodes(nd_i)
+         if (this%visited(nd_tag) .eq. 0) then  ! once per tag is enough
+            this%visited(nd_tag) = el_i
+
+            !nd_i1 = el_node_tags(nd_i)
+
             tag = p3_tags(nd_i)
-            this%v_xy(1, tag) = mesh%v_mshpt_xy(1, nd)
-            this%v_xy(2, tag) = mesh%v_mshpt_xy(2, nd)
-            this%v_ety_props(1, tag) = mesh%v_mshpt_physindex(nd)
+            this%v_xy(1, tag) = mesh%v_mshpt_xy(1, nd_tag)
+            this%v_xy(2, tag) = mesh%v_mshpt_xy(2, nd_tag)
+            this%v_ety_props(1, tag) = mesh%v_mshpt_physindex(nd_tag)
 
             !  Vertex => dimension zero
             this%v_ety_props(2, tag) = 0
          endif
       enddo
 
-      !  scan the P3 nodes located on the edges, tags 4..9 + ety_off
+      !  now scan the P3 nodes at 1/3 and 2/3 on each edge
       do nd_i=4,6
 
-         nd =el_nodes(nd_i)
+         nd_tag =el_node_tags(nd_i)
 
-         if(this%visited(nd) .eq. 0) then
-            this%visited(nd) = el_i
+         if(this%visited(nd_tag) .eq. 0) then
+            this%visited(nd_tag) = el_i
 
             ! The P3 edge nodes are 1/3 and 2/3 along the edge
             !  Endpoints of the edge
-            k1 = el_nodes(nd_i-3)
+            k1 = el_node_tags(nd_i-3)
             xx1 = mesh%v_mshpt_xy(1,k1)
             yy1 = mesh%v_mshpt_xy(2,k1)
 
-            k1 = el_nodes(ip(1,nd_i-3))
+            k1 = el_node_tags(ip(1,nd_i-3))
             xx2 = mesh%v_mshpt_xy(1,k1)
             yy2 = mesh%v_mshpt_xy(2,k1)
 
@@ -543,7 +545,7 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
             dy1 = (yy2-yy1) * one_third
 
             !  type of the mid-edge node of the initial P2 mesh
-            ind = mesh%v_mshpt_physindex(nd)
+            ind = mesh%v_mshpt_physindex(nd_tag)
 
             !  2 nodes per edge (for P3 element)
             do nd_i2=1,2
@@ -559,15 +561,15 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
       enddo
 
       !  Coordinate of the vertices
-      k1 = el_nodes(1)
+      k1 = el_node_tags(1)
       xx1 = mesh%v_mshpt_xy(1,k1)
       yy1 = mesh%v_mshpt_xy(2,k1)
 
-      k1 = el_nodes(2)
+      k1 = el_node_tags(2)
       xx2 = mesh%v_mshpt_xy(1,k1)
       yy2 = mesh%v_mshpt_xy(2,k1)
 
-      k1 = el_nodes(3)
+      k1 = el_node_tags(3)
       xx3 = mesh%v_mshpt_xy(1,k1)
       yy3 = mesh%v_mshpt_xy(2,k1)
 
