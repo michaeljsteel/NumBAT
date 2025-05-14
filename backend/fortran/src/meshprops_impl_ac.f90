@@ -12,7 +12,8 @@ subroutine MeshAC_allocate(this, n_msh_pts, n_msh_elts, n_elt_mats, nberr)
 
    call double_alloc_2d(this%v_mshpt_xy, 2_8, n_msh_pts, 'v_mshpt_xy', nberr); RET_ON_NBERR(nberr)
 
-   call integer_alloc_1d(this%v_mshpt_physindex, n_msh_pts, 'v_mshpt_physindex', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_1d(this%v_mshpt_physindex, n_msh_pts, 'v_mshpt_physindex', nberr); 
+RET_ON_NBERR(nberr)
 
    call integer_alloc_2d(this%m_elnd_to_mshpt, P2_NODES_PER_EL, n_msh_elts, 'm_elnd_to_mshpt', nberr);
    RET_ON_NBERR(nberr)
