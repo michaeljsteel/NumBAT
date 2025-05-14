@@ -24,7 +24,23 @@ module numbatmod
    !integer(8), parameter :: N_DOF_PER_NODE_AC_PIEZO = 6  ! U_xyz and D_xyz components for each node
 
 
-   ! Indexing of the P3 nodes
+   ! sequencing of the P3 nodes
+
+   ! indices into MeshEntities%v_xy
+   !   ** these elements start at these values +1 **
+   integer(8), parameter :: ETY_TAG_OFFSET_FACE = 0         ! uses slot 1
+   integer(8), parameter :: ETY_TAG_OFFSET_P2_EDGES = 1     ! uses slots 2,3,4  
+   integer(8), parameter :: ETY_TAG_OFFSET_P3_VERTICES = 4  ! uses slots 5,6,7  
+   integer(8), parameter :: ETY_TAG_OFFSET_P3_NODES = 7     ! uses slots 8..13
+   integer(8), parameter :: ETY_TAG_OFFSET_P3_INTERIOR = 13 ! uses slots 8..14
+
+   ! indices into MeshEntities%v_ety_props
+   integer(8), parameter :: ETY_PROP_PHYSTYPE = 1 
+   integer(8), parameter :: ETY_PROP_DIMENSION = 2 
+
+
+
+
    integer(8), parameter :: P3_VERT_1 = 1
    integer(8), parameter :: P3_VERT_2 = 2
    integer(8), parameter :: P3_VERT_3 = 3

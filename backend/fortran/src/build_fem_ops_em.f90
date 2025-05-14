@@ -2,7 +2,7 @@
  !  Construct the left hand and right hand matrices  mOp_stiff_re/im and mat_2
  !  for the main linear equations
 
-subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
+subroutine build_fem_ops_em (shift_ksqr, &
    perm_pp, perm_qq, mesh, entities, cscmat, pbcs, nberr)
 
 
@@ -21,8 +21,6 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
    type(NBError) :: nberr
 
 
-   integer(8) bdy_cdn
-
    !if(E_H_field .eq. FEM_FORMULATION_E) then
    !   perm_qq = eps_eff*vacwavenum_k0**2
    !   pp = 1.0d0
@@ -33,8 +31,6 @@ subroutine build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, &
 
 
    complex(8) perm_pp(mesh%n_elt_mats), perm_qq(mesh%n_elt_mats), shift_ksqr
-   double precision bloch_vec(2)
-
 
    ! -----------------
    integer(8) errco

@@ -169,7 +169,7 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      call build_fem_ops_em (bdy_cdn, shift_ksqr, bloch_vec, pp, qq, &
+      call build_fem_ops_em (shift_ksqr, pp, qq, &
       mesh, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 

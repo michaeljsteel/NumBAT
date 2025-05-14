@@ -20,8 +20,6 @@ module class_Mesh
       ! Else is zero
       ! If physical lines are only defined on outer boundary,
       ! it serves as a check for being an outer boundary mesh point
-
-
       ! ranges: [0..max_phys_index]
       integer(8), dimension(:), allocatable :: v_mshpt_physindex
 
@@ -66,12 +64,15 @@ module class_Mesh
 ! ---------------------------------------
 
 
-! v_tags[1..14, 1..n_msh_elts] assigns a unique integer label to each entity
-! v_tags[1, :]     - label of each face of the elt
-! v_tags[2..4, :]  - label of P2 edges 1..3 of the elt (common edges to two elements get the same label)
-! v_tags[5..7, :] - label of P3 vertices 1..3 of the elt (common vertices to two elements get the same label)
-! v_tags[8..13, :] - label of P3 vertices 4..9 of the elt which surround each P2 edge (common vertices to two elements get the same label)
-! v_tags[14, :] - label of P3 interior node 10 of the elt
+! v_tags[1..14, 1..n_msh_elts] assigns a unique integer label to each _distinct_ entity
+! some elements have the same value because they are the same physical mesh point
+! accessed from a different element/node combo
+
+! v_tags[1, :]     - tag of each face of the elt  (Not actually a DoF?)
+! v_tags[2..4, :]  - tag of P2 edges 1..3 of the elt (common edges to two elements get the same tag)
+! v_tags[5..7, :]  - tag of P3 vertices 1..3 of the elt (common vertices to two elements get the same tag)
+! v_tags[8..13, :] - tag of P3 nodes 4..9 of the elt which surround each P2 edge (common vertices to two elements get the same tag)
+! v_tags[14, :]    - tag of P3 interior node 10 of the elt
 
 
    type, public  :: MeshEntities
@@ -91,7 +92,7 @@ module class_Mesh
 
 
       ! Positions indexed by tag
-      ! [2 x N_ENTITY_PER_EL]
+      ! [2 x n_entities ]
       ! [:, 1] - barycentre of the face
       ! [:, 2..4] - P2 edge positions cloned from MeshEM%v_mshpt_xy
       ! [:, 5..7] - P3 vertex positions cloned from MeshEM%v_mshpt_xy
@@ -100,6 +101,8 @@ module class_Mesh
       double precision, dimension(:,:), allocatable :: v_xy
 
 
+      ! row 1: what physical type is corresponding node of entity. (essentially is boundary or not)
+      ! row 2: what dimensionality is entity
       !   [2 x N_ENTITY_PER_EL]
       !   [1, :]  for face: interior (0)
       !   [1, :]  for edge: take from MeshEM%v_mshpt_physindex
@@ -120,12 +123,14 @@ module class_Mesh
 
       procedure :: allocate => MeshEntities_allocate
       procedure :: build_mesh_tables => MeshEntities_build_mesh_tables
-      procedure :: count_and_label_faces => MeshEntities_count_and_label_faces
-      procedure :: count_and_label_edges => MeshEntities_count_and_label_edges
-      procedure :: count_and_label_nodes_P3 => MeshEntities_count_and_label_nodes_P3
+      procedure :: count_faces => MeshEntities_count_faces
+      procedure :: count_edges => MeshEntities_count_edges
+      procedure :: count_nodes_P3 => MeshEntities_count_nodes_P3
       procedure :: analyse_face_and_edges => MeshEntities_analyse_face_and_edges
       procedure :: analyse_p3_nodes => MeshEntities_analyse_p3_nodes
 
+
+      procedure :: check_bdy_elements_are_consistent => MeshEntities_check_bdy_elements_are_consistent
 
    end type MeshEntities
 
@@ -188,58 +193,6 @@ module class_Mesh
 
    end type MeshAC
 
-
-   ! type, public  :: MeshEntitiesAC
-
-   !    integer(8) n_faces       ! num faces
-   !    integer(8) n_edges       ! num physically distinct edges
-   !    integer(8) n_msh_pts_p3  ! num physically distinct P3 points
-   !    integer(8) n_entities    ! total num of physically distinct things (sum of last 3)
-
-   !    ! v_tags[i, j]
-   !    !  [N_ENTITY_PER_EL x n_msh_elts] = [14 x n_msh_elts]
-   !    !  tn[1, j] = j  ! index of element
-   !    !    -
-   !    !  Each element has 1 face, 3 edges and 10 P3 nodes
-   !    !  so v_tags has dimensions 14 x n_msh_elts
-   !    integer(8), dimension(:,:), allocatable :: v_tags
-
-
-   !    ! Positions indexed by tag
-   !    ! [2 x N_ENTITY_PER_EL] = [2 x 14]
-   !    ! [:, 1] - barycentre of the face
-   !    ! [:, 2..4] - P2 edge positions cloned from MeshEM%v_mshpt_xy
-   !    ! [:, 5..7] - P3 vertex positions cloned from MeshEM%v_mshpt_xy
-   !    ! [:, 8..13] - P3 edge positions built from MeshEM%v_mshpt_xy at 1/3, 2/3 intervals
-   !    ! [:, 14] - P3 interior at barycentre
-   !    double precision, dimension(:,:), allocatable :: v_xy
-
-
-   !    !   [2 x N_ENTITY_PER_EL]
-   !    !   [1, :]  for face: interior (0)
-   !    !   [1, :]  for edge: take from MeshEM%node_phys_i
-   !    !   [1, :]  for P3 vertex: take from MeshEM%node_phys_i
-   !    !   [1, :]  for P3 edges: take from P2 edge in MeshEM%node_phys_i
-   !    !   [1, :]  for P3 interior point:  0
-
-   !    !   [2, :]  dimension: face(2), P2 edge (1), P3 edges and interior (0)
-   !    integer(8), dimension(:,:), allocatable :: v_ety_props
-
-   !    ! Maps P2 edge nodes to surrounding vertices
-   !    integer(8) edge_end_nodes(2,3)
-
-   ! contains
-
-   !    procedure :: allocate => MeshEntitiesAC_allocate
-   !    ! procedure :: build_mesh_tables => MeshEntitiesAC_build_mesh_tables
-   !    ! procedure :: count_and_label_faces => MeshEntitiesAC_count_and_label_faces
-   !    ! procedure :: count_and_label_edges => MeshEntitiesAC_count_and_label_edges
-   !    ! procedure :: count_and_label_nodes_P3 => MeshEntitiesAC_count_and_label_nodes_P3
-   !    ! procedure :: analyse_face_and_edges => MeshEntitiesAC_analyse_face_and_edges
-   !    ! procedure :: analyse_p3_nodes => MeshEntitiesAC_analyse_p3_nodes
-
-
-   ! end type MeshEntitiesAC
 
 contains
 

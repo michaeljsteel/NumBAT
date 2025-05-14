@@ -1,8 +1,5 @@
 
 
-!#include "numbat_decl.h"
-
-
 subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh, entities, pbcs, nberr)
 
 
@@ -412,12 +409,10 @@ subroutine SparseSC_make_arrays_final (this, mesh, entities, n_nonz_max, max_col
    ! --------------------------------------------
 
    integer(8), dimension(:), allocatable :: row_ind_tmp
-   character(len=EMSG_LENGTH) :: emsg
    integer(8) i, j, j_nd, k, k1,  nd_i, i_tag, j_tag, i_locdof, j_locdof
    integer(8) el_i, i_dof, j_dof
    integer(8) row_lo, row_hi, row_len
    integer(8) row_lo2, row_hi2, ui
-   logical found
    integer(8) n_nonz
 
 
