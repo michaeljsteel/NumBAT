@@ -231,27 +231,32 @@ end subroutine
 ! Generate the vector basis function for the bf_j bf_j of transverse entity ety_trans and its transverse curl (purely z-component)
 ! in terms of the P1 and P2 scalar functions
 
+! 
+! eta_1 = 1-x-y, Grad eta_1 = (-1,-1)
+! eta_2 = x,     Grad eta_2 = (1,0)
+! eta_2 = y,     Grad eta_3 = (0,1)
+
 ! formulas
 ! ety_trans=1, face element
 !    3 edge functions at P2 nodes 4, 5, 6
-!       j=1, node 4: phi_4 Grad eta_3
-!       j=2, node 5: phi_5 Grad eta_1
-!       j=3, node 6: phi_6 Grad eta_2
+!       j=1, node 4: phi_4 Grad eta_3  = phi_4 (0,1)
+!       j=2, node 5: phi_5 Grad eta_1  = phi_5 (-1,-1)
+!       j=3, node 6: phi_6 Grad eta_2  = phi_6 (1,0)
 
 ! ety_trans=2, edge 1, end nodes 1&2
-!       j=1, : phi_1 Grad phi_2
-!       j=2, : phi_2 Grad phi_1
-!       j=3, : phi_4 (Grad phi_1-Grad phi_2)
+!       j=1, : phi_1 Grad eta_2        = phi_1 (1,0)
+!       j=2, : phi_2 Grad eta_1        = phi_2 (-1,-1)
+!       j=3, : phi_4 (Grad eta_1-Grad eta_2) = phi_4 (2,1)
 
-! ety_trans=3, edge 2, end nodes 2&3
-!       j=1, : phi_2 Grad phi_3
-!       j=2, : phi_3 Grad phi_2
-!       j=3, : phi_5 (Grad phi_2-Grad phi_3)
+! ety_trans=3, edge 2, endnodes 2&3
+!       j=1, : phi_2 Grad eta_3                  =phi_2 (0, 1)
+!       j=2, : phi_3 Grad eta_2                  =phi_3 (1, 0) 
+!       j=3, : phi_5 (Grad eta_2 - Grad eta_3)   =phi_5 (1, -1)
 
 ! ety_trans=4, edge 3, end nodes 3&1
-!       j=1, : phi_3 Grad phi_1
-!       j=2, : phi_1 Grad phi_3
-!       j=3, : phi_6 (Grad phi_1-Grad phi_3)
+!       j=1, : phi_3 Grad eta_1                 = phi_3 (-1,-1)
+!       j=2, : phi_1 Grad eta_3                 = phi_1 (0,1)
+!       j=3, : phi_6 (Grad eta_1-Grad eta_3)    = phi_3 (-1,-2)
 
 subroutine  BasisFunctions_evaluate_vector_elts(this, bf_j, ety_trans, vec_phi, curlt_phi)
    use numbatmod

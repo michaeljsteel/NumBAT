@@ -150,7 +150,7 @@ contains
       call pbcs%allocate(mesh, entities, nberr);
       RET_ON_NBERR(nberr)
 
-      !! Builds the m_eqs table which maps element DOFs to the equation handling them, according to the BC (Dirichlet/Neumann)
+      !! Builds the m_global_dofs table which identifies all pairs of DOF that can interact
       call cscmat%make_csc_arrays(bdy_cdn, mesh, entities, pbcs, nberr); RET_ON_NBERR(nberr)
 
 
@@ -169,8 +169,7 @@ contains
 
       !  Build the actual matrices A (cscmat%mOp_stiff) and M(cscmat%mOp_mass) for the arpack solving.
 
-      call build_fem_ops_em (shift_ksqr, pp, qq, &
-      mesh, entities, cscmat, pbcs, nberr)
+      call build_fem_ops_em (shift_ksqr, pp, qq, mesh, entities, cscmat, pbcs, nberr)
       RET_ON_NBERR(nberr)
 
       dim_krylov = 2*n_modes + n_modes/2 +3
@@ -201,7 +200,7 @@ contains
 
       call complex_alloc_2d(overlap_L, n_modes, n_modes, 'overlap_L', nberr); RET_ON_NBERR(nberr)
 
-      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr); 
+      call complex_alloc_2d(arpack_evecs, cscmat%n_dof, n_modes, 'arpack_evecs', nberr);
 RET_ON_NBERR(nberr)
 
       call cscmat%adjust_for_zero_offset_indexing()

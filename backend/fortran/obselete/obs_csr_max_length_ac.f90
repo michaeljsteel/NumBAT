@@ -39,7 +39,7 @@ subroutine csc_make_col_ptr_provisional_AC (mesh, cscmat,   nonz_max)
       do i=1,nddl_0
          ip = mesh%m_elnd_to_mshpt(i,iel)
          do k=1,3
-            ind_ip = cscmat%m_eqs(k,ip)
+            ind_ip = cscmat%m_global_dofs(k,ip)
             if (ind_ip .ne. 0) lb(ind_ip) = lb(ind_ip)+1
          enddo
       enddo

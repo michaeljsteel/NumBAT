@@ -8,7 +8,7 @@
 
 ! The dense matrix M has dimension N x N
 ! For the EM problem, N=n_dof
-! m_eqs [3,n_ddl] indicates which of the possible 3 x n_ddl dof are active
+! m_global_dofs [3,n_ddl] indicates which of the possible 3 x n_ddl dof are active
 !       n_dof is the number of nonzero entries, ie. number of dof
 !       Its entries assign an index to all active dof which is the column number of its equation
 
@@ -62,7 +62,7 @@ module class_SparseCSC_AC
    ! ranges: [0..n_dof]
    ! 0 value means no dof is associated with this site and local dof, due to bdy conditions
    ! natural name would be m_global_dof
-   integer(8), dimension(:,:), allocatable :: m_eqs
+   integer(8), dimension(:,:), allocatable :: m_global_dofs
 
    ! row indices for each nonzero element in the sparse representation
    ! size: [n_nonz], ranges: [1..n_dof]

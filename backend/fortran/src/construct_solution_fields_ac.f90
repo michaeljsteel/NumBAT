@@ -3,7 +3,7 @@
 !  Difference from array_evecs_final_AC.f is that the u_z fi_eld is multiplied by i
 !  which gives you the correct physical displacement fi_eld.
 
-!  evecs_raw(*,i) : contains the imaginary and real parts of the solution for points such that cscmat%m_eqs(i) != 0
+!  evecs_raw(*,i) : contains the imaginary and real parts of the solution for points such that cscmat%m_global_dofs(i) != 0
 !  evecs_final(i) : contains solution for all points
 !  The dimension of the geometric domain is : dim_32 = 2
 !  The dimension of the vector fi_eld is : dim2 = 3
@@ -96,7 +96,7 @@ subroutine construct_solution_fields_ac (shift_omsq, n_modes, mesh, cscmat,  &
             msh_pt_i = mesh%m_elnd_to_mshpt(nd_i,i_el)  ! map to the actual mesh pt
 
             do nd_xyz=1,3                    ! for each xyz component of this mesh pt
-               dof = cscmat%m_eqs(nd_xyz, msh_pt_i)  ! the actual fem dof
+               dof = cscmat%m_global_dofs(nd_xyz, msh_pt_i)  ! the actual fem dof
                if (dof .gt. 0) then
                   evecs_final_el(nd_xyz, nd_i) = evecs_raw(dof, md_i2)
                else

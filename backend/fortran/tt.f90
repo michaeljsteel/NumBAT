@@ -2,13 +2,13 @@
 
 ! This one is written in CSC format
 
-subroutine csc_make_col_ptr_loose (nel, n_ddl, ety_tags, neq,  m_eqs, v_col_ptr, nonz_max)
+subroutine csc_make_col_ptr_loose (nel, n_ddl, ety_tags, neq,  m_global_dofs, v_col_ptr, nonz_max)
 
    use numbatmod
 
    integer(8) nel, neq, n_ddl, nonz_max
    integer(8) ety_tags (14,nel)
-   integer(8) m_eqs(3,n_ddl), v_col_ptr(neq+1)
+   integer(8) m_global_dofs(3,n_ddl), v_col_ptr(neq+1)
 
 
    integer(8) k, iel, active_dof, tag, i_nd, i_eq, dof
@@ -26,7 +26,7 @@ subroutine csc_make_col_ptr_loose (nel, n_ddl, ety_tags, neq,  m_eqs, v_col_ptr,
       do i_nd=1,NDDL_0_EM
          tag = ety_tags(i_nd,iel)      ! find its tag
          do dof = 1,3                   ! for each of its 3 possible dof,
-            active_dof = m_eqs(dof, tag)    ! find the index of that dof, nonzero means active
+            active_dof = m_global_dofs(dof, tag)    ! find the index of that dof, nonzero means active
             if (active_dof .ne. 0) v_col_ptr(active_dof) = v_col_ptr(active_dof)+1  ! count the number of times the dof is encountered
             if (v_col_ptr(active_dof) .eq. 8) write(*,*) 'An 8 eqn dof', iel, i_nd, tag, dof, active_dof
          enddo
@@ -66,7 +66,7 @@ end
 ! row/col names seem backward
 ! this seems to be a row-like csr converted to a column-like csr with no name changes?
 
-subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_eqs, &
+subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_global_dofs, &
    col_ind, row_ptr, &  ! these names are swtiched from the call, but matched to the weird reverse naming in this file
    nonz_max, nonz, max_row_len, debug, errco, emsg)
 
@@ -75,7 +75,7 @@ subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_eqs, &
 
    integer(8) n_msh_elts, n_ddl, neq
    integer(8) ety_tags(14,n_msh_elts)
-   integer(8) m_eqs(3,n_ddl)
+   integer(8) m_global_dofs(3,n_ddl)
 
 
    integer(8), dimension(:), allocatable, intent(inout) :: col_ind
@@ -117,7 +117,7 @@ subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_eqs, &
          i_tag = ety_tags(i_nd, iel)
 
          do i_locdof=1,3                     !   and their 3 potential dof
-            i_dof = m_eqs(i_locdof, i_tag)   !   When nonzero, this is the row number for this dof
+            i_dof = m_global_dofs(i_locdof, i_tag)   !   When nonzero, this is the row number for this dof
 
             if (i_dof .eq. 0) cycle     ! an inactive dof for this entity, go around again
 
@@ -130,7 +130,7 @@ subroutine csr_length (n_msh_elts, n_ddl, neq,  ety_tags, m_eqs, &
                j_tag = ety_tags(j_nd,iel)
 
                do j_locdof=1,3
-                  j_dof = m_eqs(j_locdof, j_tag)
+                  j_dof = m_global_dofs(j_locdof, j_tag)
 
                   if (j_dof .eq. 0) cycle
 

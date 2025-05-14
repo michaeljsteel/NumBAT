@@ -1,13 +1,9 @@
 
- !  On entry, evecs_raw is the raw eigenvectors from the arpack evecs_finaln
+ !  On entry, evecs_raw is the raw eigenvectors from the arpack eigensolution
 
  !  On exit:
- !  evecs_raw(*,i) : contains the imaginary and real parts of the evecs_finalution for points such that cscmat%m_eqs(i) /= 0
- !  evecs_final(i) : contains evecs_finalution for all points indexed as evecs_final(xyz_comp, 23 nodes per el, n_modes, n_msh_eltsts)
-
- !  This is 2D 3-vector component FEM:
-
-
+ !  evecs_raw(*,i) : contains the imaginary and real parts of the arpack eigensolution for all active dof
+ !  evecs_final(i) : contains eigensolution for all field points indexed as evecs_final(xyz_comp, 23 nodes per el, n_modes, n_msh_eltsts)
 
  !  Eigenmodes stored in v_evals_beta and xy_ref are reordered according to v_eig_index to sort by largest eigenvalue
 
@@ -39,6 +35,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
 
    !  evecs_final(3, 1..P2_NODES_PER_EL,n_modes, mesh%n_msh_elts)          contains the values of the 3 components at P2 interpolation nodes
    !  evecs_final(3, P2_NODES_PER_EL+1..N_DOF_PER_EL,n_modes, mesh%n_msh_elts) contains the values of Ez component at P3 interpolation nodes (per element: 6 edge-nodes and 1 interior node)
+
    complex(8) evecs_final(3,N_DOF_PER_EL,n_modes,mesh%n_msh_elts)
    complex(8) v_evals_beta(n_modes)
    complex(8) mode_poln_fracs(4,n_modes)
@@ -55,7 +52,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
    integer(8) el_nds_i(P2_NODES_PER_EL)
    double precision xy_nds_P2(2,P2_NODES_PER_EL), el_nds_xy(2,P2_NODES_PER_EL)
 
-   complex(8) evecs_final_el(3,N_DOF_PER_EL) ! evecs_finalution for this mode and elt
+   complex(8) evecs_final_el(3,N_DOF_PER_EL) ! evecs_final solution for one mode and elt
 
 
    double precision vec_phi_x(2), curlt_phi_x, phi_P3_x
@@ -65,8 +62,8 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
 
    logical is_curved
    integer(8) m, nd_i, typ_e, xyz_i
-   integer(8) i_el, md_i, md_i2, ety_j, ety_id, n_eq, dof_j
-
+   integer(8) i_el, md_i, md_i_reindexed, ety_j, ety_tag, absdof, locdof_j
+   integer(8) owning_node, nd_p3, ety_p3
    complex(8) z_tmp2, z_evecs_final_max
 
    errco = 0
@@ -80,7 +77,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
    mode_poln_fracs  =  D_ZERO
 
    do md_i=1,n_modes
-      md_i2 = v_eig_index(md_i)   !  index of the mode in eigenvalue sorted sequence
+      md_i_reindexed = v_eig_index(md_i)   !  index of the mode in eigenvalue sorted sequence
 
 
       z_evecs_final_max = D_ZERO   !  value and loc of max field modulus
@@ -97,9 +94,9 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
          call mesh%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
 
 
-         if (bdy_cdn == BCS_PERIODIC) then
-            call make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
-         endif
+         ! if (bdy_cdn == BCS_PERIODIC) then
+         !    call make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
+         ! endif
 
 
          call basfuncs%build_vector_elt_map(el_nds_i)
@@ -114,50 +111,56 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
 
             ! transverse part:  evecs_final_el(1:2, 1..P2_NODES)
             do ety_j=1,N_ETY_TRANSVERSE  ! for the transverse field entities on this elt
-               ety_id = entities%v_tags(ety_j,i_el)    ! find the global ety id
+               ety_tag = entities%v_tags(ety_j, i_el)    ! find the global ety id
 
-               do dof_j=1,3                            ! the entity can have up to 3 dof
-                  n_eq = cscmat%m_eqs(dof_j,ety_id)   ! eq num for this dof
+               do locdof_j=1,3                            ! the entity can have up to 3 dof
+                  absdof = cscmat%m_global_dofs(locdof_j, ety_tag)   ! eq num for this dof
 
-                  if (n_eq > 0) then
+                  if (absdof > 0) then
 
                      ! The vector elements are built from P2 scalar functions which are nonzero
                      !  at a P2 node, only for the function corresponding to that node
-                     ! So we should only evaluate basis functions which are made
-                     !  from that function (there are two)
+                     ! So we should only evaluate basis functions which are relevant at that node
                      !TODO: create a basfuncs%get_scalar_index_of_vector_elt function
-                     m  = basfuncs%vector_elt_map(2, dof_j, ety_j)
 
-                     if (m == nd_i) then
+                     owning_node  = basfuncs%vector_elt_map(2, locdof_j, ety_j)
 
-                        call basfuncs%evaluate_vector_elts(dof_j, ety_j, vec_phi_x, curlt_phi_x)
+                     if (owning_node == nd_i) then
+
+                        call basfuncs%evaluate_vector_elts(locdof_j, ety_j, vec_phi_x, curlt_phi_x)
 
                         ! pbc version
-                        !evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(n_eqs, md_i2) * vec_phi_x* val_exp(ety_j)
-                        evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(n_eq, md_i2) * vec_phi_x
+                        !evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(absdofs, md_i_reindexed) * vec_phi_x* val_exp(ety_j)
+                        evecs_final_el(1:2,nd_i) = evecs_final_el(1:2,nd_i) + evecs_raw(absdof, md_i_reindexed) * vec_phi_x
 
                      endif
                   endif
                enddo
             enddo
 
-            !  Longtiudinal part:  evecs_final_el(3, 1..P2_NODES)
+            !  Longitudinal part:  evecs_final_el(3, 1..P2_NODES)
             !  Contribution to the longitudinal component
-            !  The initial P3 value of Ez isinterpolated over P2 nodes
-            do ety_j=N_ETY_TRANSVERSE+1,N_ENTITY_PER_EL
+            !  The initial P3 value of Ez is interpolated over P2 nodes
+            do nd_p3=1, P3_NODES_PER_EL  ! from 5..14 = 10 P3 nodes
+               ety_p3 = ETY_TAG_OFFSET_P3_VERTICES + nd_p3
 
-               dof_j=1                                ! There is only 1 DOF for each of the P3 nodes
-               ety_id = entities%v_tags(ety_j,i_el)
-               n_eq = cscmat%m_eqs(dof_j,ety_id)     ! Find the index of this dof at this entity
-               if (n_eq > 0) then
+               !do ety_j=N_ETY_TRANSVERSE+1,N_ENTITY_PER_EL  ! from 5..14 = 10 P3 nodes
 
-                  m  = ety_j-N_ETY_TRANSVERSE
-                  phi_P3_x = basfuncs%phi_P3_ref(m)
+               ety_tag = entities%v_tags(ety_p3, i_el)
+
+               locdof_j=1                                  ! There is only 1 DOF for each of the P3 nodes
+               absdof = cscmat%m_global_dofs(locdof_j, ety_tag)     ! Find the index of this dof at this entity
+
+               if (absdof > 0) then
+
+                  !      m  = ety_j-N_ETY_TRANSVERSE
+                  !     phi_P3_x = basfuncs%phi_P3_ref(m)
+                  phi_P3_x = basfuncs%phi_P3_ref(nd_p3)
 
                   !pbc version
-                  !evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x * val_exp(ety_j)
+                  !evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(absdof, md_i_reindexed) * phi_P3_x * val_exp(ety_j)
 
-                  evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(n_eq, md_i2) * phi_P3_x
+                  evecs_final_el(3,nd_i) = evecs_final_el(3,nd_i) + evecs_raw(absdof, md_i_reindexed) * phi_P3_x
 
                endif
             enddo
@@ -181,21 +184,23 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
          mode_comp(1:3) = mode_comp(1:3) * abs(basfuncs%det)/dble(P2_NODES_PER_EL)
 
 
-         !  Longtiudinal part:  evecs_final_el(3, P3_NODES...)
+         !  Longitudinal part:  evecs_final_el(3, P3_NODES...)
          !   x and comps of the P3_NODES are left empty
          !  Saving the P3 values of Ez at: the 6 edge nodes and the interior node
+         ! This is a straight copy
          do nd_i=P2_NODES_PER_EL+1,N_DOF_PER_EL
 
             !evecs_final_el(1:3,nd_i) = D_ZERO
 
             !ety_j = N_ETY_TRANSVERSE+nd_i-P2_NODES_PER_EL+3
             ety_j = nd_i + 1  ! make space for the face element
-            dof_j = 1
-            ety_id = entities%v_tags(ety_j,i_el)
-            n_eq = cscmat%m_eqs(dof_j,ety_id)
+            locdof_j = 1
+            ety_tag = entities%v_tags(ety_j,i_el)
+            absdof = cscmat%m_global_dofs(locdof_j,ety_tag)
 
-            if (n_eq > 0) then
-               evecs_final_el(3,nd_i) = evecs_raw(n_eq, md_i2)* val_exp(ety_j)
+            if (absdof > 0) then
+               !evecs_final_el(3,nd_i) = evecs_raw(absdof, md_i_reindexed)* val_exp(ety_j)
+               evecs_final_el(3,nd_i) = evecs_raw(absdof, md_i_reindexed)
             endif
 
 
@@ -234,7 +239,7 @@ subroutine construct_solution_fields_em (bdy_cdn, shift_ksqr, n_modes, mesh, ent
 
       !  Normalization for this mode so that the maximum field component has magnitude 1
       evecs_final(:,:,md_i,:) = evecs_final(:,:,md_i,:)/z_evecs_final_max
-      evecs_raw(1:cscmat%n_dof,md_i2) = evecs_raw(1:cscmat%n_dof,md_i2)/z_evecs_final_max
+      evecs_raw(1:cscmat%n_dof,md_i_reindexed) = evecs_raw(1:cscmat%n_dof,md_i_reindexed)/z_evecs_final_max
 
    enddo
 
@@ -324,7 +329,7 @@ subroutine make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
 
    complex(8) val_exp(N_ENTITY_PER_EL)
 
-   integer(8) i_el, nd_i, mesh_pt, j1, ety_id, j, k
+   integer(8) i_el, nd_i, mesh_pt, j1, ety_tag, j, k
 
    integer(8) el_nds_i(P2_NODES_PER_EL)
 
@@ -346,13 +351,13 @@ subroutine make_pbc_phase_shifts(mesh, entities, pbcs, i_el, bloch_vec, val_exp)
    !  val_exp: Bloch mod ephase factor between the origin point and destination point
    !  For a pair of periodic points, one is chosen as origin and the other is the destination
    do j=1,N_ENTITY_PER_EL
-      ety_id = entities%v_tags(j,i_el)
-      j1 = pbcs%iperiod_N_E_F(ety_id)
+      ety_tag = entities%v_tags(j,i_el)
+      j1 = pbcs%iperiod_N_E_F(ety_tag)
       if (j1 /= 0) then
          !do k=1,dim_32
-         !  delta_xy_ref(k) = entities.v_mshpt_xy(k,ety_id) - entities.v_mshpt_xy(k,j1)
+         !  delta_xy_ref(k) = entities.v_mshpt_xy(k,ety_tag) - entities.v_mshpt_xy(k,j1)
          !enddo
-         delta_xy_ref = entities%v_xy(:,ety_id) - entities%v_xy(:,j1)
+         delta_xy_ref = entities%v_xy(:,ety_tag) - entities%v_xy(:,j1)
          r_tmp1 = ddot(2, bloch_vec, 1, delta_xy_ref, 1)
          val_exp(j) = exp(C_IM_ONE * r_tmp1)
       endif

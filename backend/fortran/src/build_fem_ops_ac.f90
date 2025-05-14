@@ -30,7 +30,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
    integer(8) i, k, el_i
    integer(8) nd_i, msh_pt_i, dof_i, nd_dof_i
    integer(8) nd_j, msh_pt_j, dof_j, nd_dof_j
-   integer(8) col_start, col_end
+   integer(8) row_lo, row_hi
 
    complex(8) mat_K(18,18), mat_M(18,18)
    complex(8) c_tensor_el(6,6), rho_el
@@ -72,14 +72,14 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
          msh_pt_j = mesh%m_elnd_to_mshpt(nd_j,el_i)
 
          do nd_dof_j=1,3
-            dof_j = cscmat%m_eqs(nd_dof_j,msh_pt_j)
+            dof_j = cscmat%m_global_dofs(nd_dof_j,msh_pt_j)
 
             if (dof_j .gt. 0) then
-               col_start = cscmat%v_col_ptr(dof_j)
-               col_end = cscmat%v_col_ptr(dof_j+1) - 1
+               row_lo = cscmat%v_col_ptr(dof_j)
+               row_hi = cscmat%v_col_ptr(dof_j+1) - 1
 
                !  unpack row into i_work
-               do i=col_start,col_end
+               do i=row_lo,row_hi
                   i_work(cscmat%v_row_ind(i)) = i
                enddo
 
@@ -87,7 +87,7 @@ subroutine build_fem_ops_ac (shift_omsq, q_ac, rho, c_tensor, &
                   msh_pt_i = mesh%m_elnd_to_mshpt(nd_i,el_i)
 
                   do nd_dof_i=1,3
-                     dof_i = cscmat%m_eqs(nd_dof_i,msh_pt_i)
+                     dof_i = cscmat%m_global_dofs(nd_dof_i,msh_pt_i)
 
                      if (dof_i .gt. 0) then
                         K_elt = mat_K(3*(nd_i-1) + nd_dof_i, 3*(nd_j-1) + nd_dof_j)

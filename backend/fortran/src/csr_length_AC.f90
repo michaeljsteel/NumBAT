@@ -51,7 +51,7 @@ subroutine csr_length_AC (mesh, cscmat, &
          ip = mesh%m_elnd_to_mshpt(i_nd,iel)
 
          do i_dof=1,3
-            ind_ip = cscmat%m_eqs(i_dof,ip)
+            ind_ip = cscmat%m_global_dofs(i_dof,ip)
             if (ind_ip .ne. 0) then
                row_start = cscmat%v_col_ptr(ind_ip)
                row_end = cscmat%v_col_ptr(ind_ip+1) - 1
@@ -60,7 +60,7 @@ subroutine csr_length_AC (mesh, cscmat, &
                   jp = mesh%m_elnd_to_mshpt(j_nd,iel)
 
                   do j_dof=1,3
-                     ind_jp = cscmat%m_eqs(j_dof,jp)
+                     ind_jp = cscmat%m_global_dofs(j_dof,jp)
                      if (ind_jp .ne. 0) then
                         ! Search if the entry (ind_ip,ind_jp) is already stored
                         do k=row_start,row_end

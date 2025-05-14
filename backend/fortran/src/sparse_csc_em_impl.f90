@@ -34,7 +34,7 @@ subroutine SparseCSC_EM_set_boundary_conditions(this, bdy_cdn, mesh, entities, p
          pbcs%inperiod_N_E_F, lat_vecs)
 
       call periodic_cond ( bdy_cdn, entities%n_entities, this%n_dof, entities%v_ety_props, &
-         pbcs%iperiod_N_E_F, this%m_eqs, debug)
+         pbcs%iperiod_N_E_F, this%m_global_dofs, debug)
 
    endif
 
@@ -77,7 +77,7 @@ end subroutine
 !  Output Parameters:
 
 !    n_dof: Total number of equations (DOFs).
-!    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
+!    m_global_dofs: An array mapping each DOF to its equation number, considering the boundary conditions.
 
 !  Local Variables:
 !  i: Loop index.
@@ -96,12 +96,18 @@ end subroutine
 !     For elements (i_dim = 2) and edges (i_dim = 1): Each has 3 DOFs.
 !     For nodes (i_dim = 0): Each node has 1 DOF.
 
-!  matrix m_eqs is built up based on properties of the entities established
+!  matrix m_global_dofs is built up based on properties of the entities established
 !    in MeshEntities
 !
 ! dof_props holds the is_boundary and dimensionality of each entity
 
-!  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
+!  m_global_dofs assigns an index to each degree of freedom, if it exists, for each entity
+
+! Total DOF:
+!   face 3
+!   edges 3 x3
+!   P3 nodes 10
+!   Total: 22  !
 
 subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
@@ -113,51 +119,51 @@ subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
    character(len=EMSG_LENGTH) :: emsg
 
-   integer(8) i, is_boundary, i_dim, n_dof
+   integer(8) ety_i, is_boundary, i_dim, n_dof
 
-   call integer_alloc_2d(this%m_eqs, 3_8, entities%n_entities, 'm_eqs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_global_dofs, 3_8, entities%n_entities, 'm_global_dofs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
 
    if (bdy_cdn .eq. BCS_DIRICHLET) then  !  all points have a degree of freedom
 
-      do i=1,entities%n_entities
-         is_boundary = entities%v_ety_props(1,i)
-         i_dim = entities%v_ety_props(2,i)
+      do ety_i=1,entities%n_entities
+         is_boundary = entities%v_ety_props(ETY_PROP_PHYSTYPE, ety_i)
+         i_dim = entities%v_ety_props(ETY_PROP_DIMENSION, ety_i)    ! this is not really a dimension, but an identifier: face, P2 edge, or P3 node
 
-         if (i_dim .eq. 2) then ! is a face
+         if (i_dim .eq. 2) then ! is a face       ! A face has a set of 3 vec states, like a P2 edge
             !  each ety has 3 dof:
-            this%m_eqs(1,i) = n_dof + 1
-            this%m_eqs(2,i) = n_dof + 2
-            this%m_eqs(3,i) = n_dof + 3
+            this%m_global_dofs(1, ety_i) = n_dof + 1
+            this%m_global_dofs(2, ety_i) = n_dof + 2
+            this%m_global_dofs(3, ety_i) = n_dof + 3
             n_dof = n_dof + 3
 
-         elseif (i_dim .eq. 1) then  ! is a P2 edge
+         elseif (i_dim .eq. 1) then  ! is a P2 edge, for 3 vec dofs each, making 12 P2-related DOF?
             if (is_boundary .eq. 0) then
-               this%m_eqs(1,i) = n_dof + 1
-               this%m_eqs(2,i) = n_dof + 2
-               this%m_eqs(3,i) = n_dof + 3
+               this%m_global_dofs(1, ety_i) = n_dof + 1
+               this%m_global_dofs(2, ety_i) = n_dof + 2
+               this%m_global_dofs(3, ety_i) = n_dof + 3
                n_dof = n_dof + 3
             else                     !  fixed by boundary so no dof
-               this%m_eqs(1,i) = 0
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
+               this%m_global_dofs(1, ety_i) = 0
+               this%m_global_dofs(2, ety_i) = 0
+               this%m_global_dofs(3, ety_i) = 0
             endif
 
-         elseif (i_dim .eq. 0) then   !  is a P3 edge
+         elseif (i_dim .eq. 0) then   !  is a P3 node, 1 dof for each of 10 nodes (since scalar field)
             if (is_boundary .eq. 0) then
-               this%m_eqs(1,i) = n_dof + 1
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
+               this%m_global_dofs(1, ety_i) = n_dof + 1
+               this%m_global_dofs(2, ety_i) = 0
+               this%m_global_dofs(3, ety_i) = 0
                n_dof = n_dof + 1
             else
-               this%m_eqs(1,i) = 0
-               this%m_eqs(2,i) = 0
-               this%m_eqs(3,i) = 0
+               this%m_global_dofs(1, ety_i) = 0
+               this%m_global_dofs(2, ety_i) = 0
+               this%m_global_dofs(3, ety_i) = 0
             endif
          else
             write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
-               "bdy_cdn = ", bdy_cdn, "i = ", i
+               "bdy_cdn = ", bdy_cdn, "i = ", ety_i
             call nberr%set(NBERR_BAD_BOUNDARY_CONDITION, emsg)
             return
          endif
@@ -165,21 +171,21 @@ subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
    elseif(bdy_cdn .eq. BCS_NEUMANN) then !all points have a degree of freedom
 
-      do i=1,entities%n_entities
-         i_dim = entities%v_ety_props(2,i)
+      do ety_i=1,entities%n_entities
+         i_dim = entities%v_ety_props(ETY_PROP_DIMENSION, ety_i)
          if (i_dim .eq. 2 .or. i_dim .eq. 1) then !  Each element or edge is associated with 3 Degrees Of Freedom (DOF)
-            this%m_eqs(1,i) = n_dof + 1
-            this%m_eqs(2,i) = n_dof + 2
-            this%m_eqs(3,i) = n_dof + 3
+            this%m_global_dofs(1, ety_i) = n_dof + 1
+            this%m_global_dofs(2, ety_i) = n_dof + 2
+            this%m_global_dofs(3, ety_i) = n_dof + 3
             n_dof = n_dof + 3
          elseif (i_dim .eq. 0) then
-            this%m_eqs(1,i) = n_dof + 1
-            this%m_eqs(2,i) = 0
-            this%m_eqs(3,i) = 0
+            this%m_global_dofs(1, ety_i) = n_dof + 1
+            this%m_global_dofs(2, ety_i) = 0
+            this%m_global_dofs(3, ety_i) = 0
             n_dof = n_dof + 1
          else
             write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
-               "bdy_cdn = ", bdy_cdn, "i = ", i
+               "bdy_cdn = ", bdy_cdn, "i = ", ety_i
 
             call nberr%set(NBERR_BAD_BOUNDARY_CONDITION, emsg)
             return
@@ -226,7 +232,7 @@ subroutine SparseCSC_EM_make_csc_arrays(this, bdy_cdn, mesh, entities, pbcs, nbe
 
    ! csr_length labels v_row_ind and v_col_ptr in reverse to here!
    ! length of v_row_ind is determined inside csr_length and so allocated there
-   !call csr_length (mesh%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_eqs, &
+   !call csr_length (mesh%n_msh_elts, entities%n_entities, this%n_dof,  entities%v_tags, this%m_global_dofs, &
    !this%v_row_ind, this%v_col_ptr, n_nonz_max, this%n_nonz, max_col_len, errco, emsg)
    !RETONERROR(errco)
 
@@ -326,7 +332,7 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh, entities, n_nonz_m
 
    integer(8) n_nonz_max
    !integer(8) ety_tags (14,nel)
-   !integer(8) m_eqs(3,n_entty), v_col_ptr(n_dof+1)
+   !integer(8) m_global_dofs(3,n_entty), v_col_ptr(n_dof+1)
 
 
    integer(8)  el_i, dof, tag, nd_i, i_dof, locdof
@@ -349,7 +355,7 @@ subroutine SparseCSC_EM_make_col_ptr_provisional (this, mesh, entities, n_nonz_m
 
          do locdof = 1,3  ! for each of its 3 possible dof,
             ! find the index of that dof, n_nonzero means active
-            dof = this%m_eqs(locdof, tag)
+            dof = this%m_global_dofs(locdof, tag)
 
             ! increment number of roles this dof plays in multiple elements
             if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1
@@ -436,7 +442,7 @@ subroutine SparseSC_make_arrays_final (this, mesh, entities, n_nonz_max, max_col
          i_tag = entities%v_tags(nd_i, el_i)
 
          do i_locdof=1,3        !   and their 3 potential dof
-            i_dof = this%m_eqs(i_locdof, i_tag)   !   When n_nonzero, this is the row number for this dof
+            i_dof = this%m_global_dofs(i_locdof, i_tag)   !   When n_nonzero, this is the row number for this dof
 
             if (i_dof .eq. 0) cycle   ! an inactive dof
 
@@ -451,7 +457,7 @@ subroutine SparseSC_make_arrays_final (this, mesh, entities, n_nonz_max, max_col
                j_tag = entities%v_tags(j_nd,el_i)
 
                do j_locdof=1,3
-                  j_dof = this%m_eqs(j_locdof, j_tag)
+                  j_dof = this%m_global_dofs(j_locdof, j_tag)
 
                   if (j_dof .eq. 0) cycle
 

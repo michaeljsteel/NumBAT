@@ -35,7 +35,7 @@
  !  Output Parameters:
 
  !    n_dof: Total number of equations (DOFs).
- !    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
+ !    m_global_dofs: An array mapping each DOF to its equation number, considering the boundary conditions.
 
  !  Local Variables:
  !  i: Loop index.
@@ -54,12 +54,12 @@
  !     For elements (i_dim = 2) and edges (i_dim = 1): Each has 3 DOFs.
  !     For nodes (i_dim = 0): Each node has 1 DOF.
 
- !  matrix m_eqs is built up based on properties of the entities established
+ !  matrix m_global_dofs is built up based on properties of the entities established
  !    in MeshEntities
  !
  ! dof_props holds the is_boundary and dimensionality of each entity
 
- !  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
+ !  m_global_dofs assigns an index to each degree of freedom, if it exists, for each entity
 
 subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
 
@@ -80,7 +80,7 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
    integer(8) :: vec3(3) = (/ 1_8, 2_8, 3_8/)
 
 
-   call integer_alloc_2d(this%m_eqs, 3_8, mesh%n_msh_pts, 'm_eqs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_global_dofs, 3_8, mesh%n_msh_pts, 'm_global_dofs', nberr); RET_ON_NBERR(nberr)
 
    n_dof = 0
 
@@ -92,20 +92,20 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
          if (.not. is_bdy_mshpt ) then !  each mshpt is associated to 3 interior DOF: ux, uy, uz
 
             ! Uncommented code implements this:
-            !this%m_eqs(1,i_msh) = n_dof + 1
-            !this%m_eqs(2,i_msh) = n_dof + 2
-            !this%m_eqs(3,i_msh) = n_dof + 3
+            !this%m_global_dofs(1,i_msh) = n_dof + 1
+            !this%m_global_dofs(2,i_msh) = n_dof + 2
+            !this%m_global_dofs(3,i_msh) = n_dof + 3
 
-            this%m_eqs(:,i_msh) = n_dof + vec3
+            this%m_global_dofs(:,i_msh) = n_dof + vec3
             n_dof = n_dof + 3
          else ! bdy points have no DOF
 
             ! Uncommented code implements this:
-            !    this%m_eqs(1,i_msh) = 0
-            !    this%m_eqs(2,i_msh) = 0
-            !    this%m_eqs(3,i_msh) = 0
+            !    this%m_global_dofs(1,i_msh) = 0
+            !    this%m_global_dofs(2,i_msh) = 0
+            !    this%m_global_dofs(3,i_msh) = 0
 
-            this%m_eqs(:,i_msh) = 0
+            this%m_global_dofs(:,i_msh) = 0
          endif
       enddo
 
@@ -113,11 +113,11 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
 
       do i_msh=1,mesh%n_msh_pts
          ! Uncommented code implements this:
-         ! this%m_eqs(1,i_msh) = n_dof + 1
-         ! this%m_eqs(2,i_msh) = n_dof + 2
-         ! this%m_eqs(3,i_msh) = n_dof + 3
+         ! this%m_global_dofs(1,i_msh) = n_dof + 1
+         ! this%m_global_dofs(2,i_msh) = n_dof + 2
+         ! this%m_global_dofs(3,i_msh) = n_dof + 3
 
-         this%m_eqs(:,i_msh) = n_dof + vec3
+         this%m_global_dofs(:,i_msh) = n_dof + vec3
          n_dof = n_dof + 3
       enddo
 
@@ -259,7 +259,7 @@ subroutine SparseCSC_AC_make_col_ptr_provisional (this, mesh, n_nonz_max)
 
          do i_nd_xy=1,N_DOF_PER_NODE_AC    ! for each coordinate dof
             ! find index of absolute dof
-            dof = this%m_eqs(i_nd_xy, tag_mshpt)
+            dof = this%m_global_dofs(i_nd_xy, tag_mshpt)
 
             ! increment number of roles this dof plays in multiple elements
             if (dof .ne. 0) this%v_col_ptr(dof) = this%v_col_ptr(dof)+1
@@ -345,7 +345,7 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh, n_nonz_max, max_col_len, 
          i_mshpt = mesh%m_elnd_to_mshpt(i_nd,el_i)
 
          do i_locdof=1,N_DOF_PER_NODE_AC
-            i_dof = this%m_eqs(i_locdof,i_mshpt)
+            i_dof = this%m_global_dofs(i_locdof,i_mshpt)
 
             if (i_dof .eq. 0) cycle  ! not a genuine dof
 
@@ -356,7 +356,7 @@ subroutine SparseCSC_AC_make_arrays_final (this, mesh, n_nonz_max, max_col_len, 
                j_mshpt = mesh%m_elnd_to_mshpt(j_nd,el_i)
 
                do j_locdof=1,N_DOF_PER_NODE_AC
-                  j_dof = this%m_eqs(j_locdof,j_mshpt)
+                  j_dof = this%m_global_dofs(j_locdof,j_mshpt)
 
                   if (j_dof .eq. 0) cycle ! not a genuine dof
 

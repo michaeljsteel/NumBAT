@@ -2,7 +2,7 @@
 
 
 subroutine set_boundary_conditions(bdy_cdn,  &
-   mesh,  entities, n_dof, m_eqs, debug, &
+   mesh,  entities, n_dof, m_global_dofs, debug, &
    iperiod_N, iperiod_N_E_F, inperiod_N, inperiod_N_E_F, errco, emsg )
 
    use numbatmod
@@ -15,7 +15,7 @@ subroutine set_boundary_conditions(bdy_cdn,  &
    type(MeshEntities) :: entities
 
 
-   integer(8) m_eqs(3, entities%n_entities)
+   integer(8) m_global_dofs(3, entities%n_entities)
 
    integer(8) :: iperiod_N(mesh%n_msh_pts), iperiod_N_E_F(entities%n_entities)
    integer(8) :: inperiod_N(mesh%n_msh_pts), inperiod_N_E_F(entities%n_entities)
@@ -28,7 +28,7 @@ subroutine set_boundary_conditions(bdy_cdn,  &
 
    if ( bdy_cdn .eq. BCS_DIRICHLET .or.  bdy_cdn .eq. BCS_NEUMANN) then
 
-      call bound_cond_em (bdy_cdn, entities%n_entities, entities%v_ety_props, n_dof, m_eqs, errco, emsg)
+      call bound_cond_em (bdy_cdn, entities%n_entities, entities%v_ety_props, n_dof, m_global_dofs, errco, emsg)
 
    elseif( bdy_cdn .eq. BCS_PERIODIC) then  !  Periodic  conditions (never in NumBAT)
 
@@ -42,7 +42,7 @@ subroutine set_boundary_conditions(bdy_cdn,  &
          inperiod_N_E_F, lat_vecs)
 
       call periodic_cond ( bdy_cdn, entities%n_entities, n_dof, entities%v_ety_props, &
-         iperiod_N_E_F, m_eqs, debug)
+         iperiod_N_E_F, m_global_dofs, debug)
 
    endif
 

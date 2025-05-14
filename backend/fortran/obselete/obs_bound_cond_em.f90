@@ -35,7 +35,7 @@
 !  Output Parameters:
 
 !    n_dof: Total number of equations (DOFs).
-!    m_eqs: An array mapping each DOF to its equation number, considering the boundary conditions.
+!    m_global_dofs: An array mapping each DOF to its equation number, considering the boundary conditions.
 
 !  Local Variables:
 !  i: Loop index.
@@ -54,19 +54,19 @@
 !     For elements (i_dim = 2) and edges (i_dim = 1): Each has 3 DOFs.
 !     For nodes (i_dim = 0): Each node has 1 DOF.
 
-!  matrix m_eqs is built up based on properties of the entities established
+!  matrix m_global_dofs is built up based on properties of the entities established
 !    in MeshEntities
 !
 ! dof_props holds the is_boundary and dimensionality of each entity
 
-!  m_eqs assigns an index to each degree of freedom, if it exists, for each entity
+!  m_global_dofs assigns an index to each degree of freedom, if it exists, for each entity
 
-subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, n_dof, m_eqs, errco, emsg)
+subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, n_dof, m_global_dofs, errco, emsg)
 
    use numbatmod
 
    integer(8) bdy_cdn, n_ddl, n_dof
-   integer(8) m_eqs(3,n_ddl), dof_props(2,n_ddl)
+   integer(8) m_global_dofs(3,n_ddl), dof_props(2,n_ddl)
    integer(8),  intent(out) :: errco
    character(len=EMSG_LENGTH), intent(out) :: emsg
 
@@ -80,33 +80,33 @@ subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, n_dof, m_eqs, errco, emsg)
          i_dim = dof_props(2,i)
 
          if (i_dim .eq. 2) then !  each element is associated with 3 interior Degrees Of Freedom (DOF)
-            m_eqs(1,i) = n_dof + 1
-            m_eqs(2,i) = n_dof + 2
-            m_eqs(3,i) = n_dof + 3
+            m_global_dofs(1,i) = n_dof + 1
+            m_global_dofs(2,i) = n_dof + 2
+            m_global_dofs(3,i) = n_dof + 3
             n_dof = n_dof + 3
 
          elseif (i_dim .eq. 1) then  !  each edge is associated with 3 Degrees Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               m_eqs(1,i) = n_dof + 1
-               m_eqs(2,i) = n_dof + 2
-               m_eqs(3,i) = n_dof + 3
+               m_global_dofs(1,i) = n_dof + 1
+               m_global_dofs(2,i) = n_dof + 2
+               m_global_dofs(3,i) = n_dof + 3
                n_dof = n_dof + 3
             else                     !  fixed by boundary so no dof
-               m_eqs(1,i) = 0
-               m_eqs(2,i) = 0
-               m_eqs(3,i) = 0
+               m_global_dofs(1,i) = 0
+               m_global_dofs(2,i) = 0
+               m_global_dofs(3,i) = 0
             endif
 
          elseif (i_dim .eq. 0) then   !  each node is associated with 1 Degree Of Freedom (DOF)
             if (is_boundary .eq. 0) then
-               m_eqs(1,i) = n_dof + 1
-               m_eqs(2,i) = 0
-               m_eqs(3,i) = 0
+               m_global_dofs(1,i) = n_dof + 1
+               m_global_dofs(2,i) = 0
+               m_global_dofs(3,i) = 0
                n_dof = n_dof + 1
             else
-               m_eqs(1,i) = 0
-               m_eqs(2,i) = 0
-               m_eqs(3,i) = 0
+               m_global_dofs(1,i) = 0
+               m_global_dofs(2,i) = 0
+               m_global_dofs(3,i) = 0
             endif
          else
             write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &
@@ -121,14 +121,14 @@ subroutine bound_cond_em (bdy_cdn, n_ddl, dof_props, n_dof, m_eqs, errco, emsg)
       do i=1,n_ddl
          i_dim = dof_props(2,i)
          if (i_dim .eq. 2 .or. i_dim .eq. 1) then !  Each element or edge is associated with 3 Degrees Of Freedom (DOF)
-            m_eqs(1,i) = n_dof + 1
-            m_eqs(2,i) = n_dof + 2
-            m_eqs(3,i) = n_dof + 3
+            m_global_dofs(1,i) = n_dof + 1
+            m_global_dofs(2,i) = n_dof + 2
+            m_global_dofs(3,i) = n_dof + 3
             n_dof = n_dof + 3
          elseif (i_dim .eq. 0) then
-            m_eqs(1,i) = n_dof + 1
-            m_eqs(2,i) = 0
-            m_eqs(3,i) = 0
+            m_global_dofs(1,i) = n_dof + 1
+            m_global_dofs(2,i) = 0
+            m_global_dofs(3,i) = 0
             n_dof = n_dof + 1
          else
             write(emsg,*) "bound_cond: i_dim has invalid value : ", i_dim, &

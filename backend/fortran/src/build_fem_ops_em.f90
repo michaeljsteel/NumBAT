@@ -54,10 +54,10 @@ subroutine build_fem_ops_em (shift_ksqr, &
    double precision phi3_z_j, gradt_phi3_j(2)
 
 
-   integer(8) i,  k,  i_el, iq, typ_e
-   integer(8) ety_i, msh_pt_i, eqn_i, dof_i
-   integer(8) ety_j, msh_pt_j, eqn_j, dof_j
-   integer(8) col_start, col_end
+   integer(8) i,  k,  el_i, iq, mat_el
+   integer(8) ety_i, msh_pt_i, absdof_i, locdof_i
+   integer(8) ety_j, msh_pt_j, absdof_j, locdof_j
+   integer(8) row_lo, row_hi
 
    double precision ddot, r_tmp1, r_tmp2
    complex(8) M_tt, M_zz, M_tz, M_zt
@@ -65,10 +65,7 @@ subroutine build_fem_ops_em (shift_ksqr, &
    complex(8) tperm_pp, tperm_qq
    complex(8) K_elt, M_elt
 
-   !complex(8) val_exp(N_ENTITY_PER_EL),
    complex(8) z_phase_fact
-!   double precision delta_xx(2)
-
 
    errco=0
 
@@ -84,13 +81,13 @@ subroutine build_fem_ops_em (shift_ksqr, &
    n_curved = 0
    z_phase_fact = 1.0
 
-   do i_el=1,mesh%n_msh_elts              ! For each element
-      typ_e = mesh%v_elt_material(i_el)    ! Find the material and local material properties
+   do el_i=1,mesh%n_msh_elts              ! For each element
+      mat_el = mesh%v_elt_material(el_i)    ! Find the material and local material properties
 
-      tperm_pp = perm_pp(typ_e)             !  1 (E-mode), 1/eps_r (H-mode)
-      tperm_qq = perm_qq(typ_e)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
+      tperm_pp = perm_pp(mat_el)             !  1 (E-mode), 1/eps_r (H-mode)
+      tperm_qq = perm_qq(mat_el)             !  eps_r * k0^2 (E-mode), k0^2 (H-mode)
 
-      call mesh%find_nodes_for_elt(i_el, el_nds_i, el_nds_xy, is_curved)
+      call mesh%find_nodes_for_elt(el_i, el_nds_i, el_nds_xy, is_curved)
 
       if (is_curved) then
          n_curved = n_curved + 1
@@ -112,7 +109,7 @@ subroutine build_fem_ops_em (shift_ksqr, &
       !    !  val_exp: Bloch mod ephase factor between the origin point and destination point
       !    !  For a pair of periodic points, one is chosen as origin and the other is the destination
       !    do j=1,N_ENTITY_PER_EL
-      !       ip = entities%v_tags(j,i_el)
+      !       ip = entities%v_tags(j,el_i)
       !       mesh_pt = pbcs%iperiod_N_E_F(ip)
       !       if (mesh_pt .ne. 0) then
       !          delta_xx(:) = entities%v_xy(:,ip) - entities%v_xy(:,mesh_pt)
@@ -124,11 +121,12 @@ subroutine build_fem_ops_em (shift_ksqr, &
 
       do iq=1,quadint%n_quad ! for each quadrature point in reference triangle
 
-         ! find quad point in reference triangle
+         ! find quad point location and weight in reference triangle
          call quadint%get_quad_point(iq, xy_ref, wt)
+
          ! Evaluate the basis functions and gradients at the quadrature point
          ! Gradients are evaluated in the actual triangle
-         call basfuncs%evaluate_at_position(i_el, xy_ref, is_curved, el_nds_xy, nberr)
+         call basfuncs%evaluate_at_position(el_i, xy_ref, is_curved, el_nds_xy, nberr)
          RET_ON_NBERR(nberr)
 
 
@@ -137,35 +135,36 @@ subroutine build_fem_ops_em (shift_ksqr, &
 
          ! iterating columns
          do ety_j=1,N_ENTITY_PER_EL
-            msh_pt_j = entities%v_tags(ety_j, i_el) ! global name for the corresopnding mesh point
+            msh_pt_j = entities%v_tags(ety_j, el_i) ! global name for the corresponding mesh point
 
-            do dof_j=1,3  ! max of 3 basis functions associated with any node
-               eqn_j = cscmat%m_eqs(dof_j,msh_pt_j)
+            do locdof_j=1,3  ! max of 3 basis functions associated with any node
+               absdof_j = cscmat%m_global_dofs(locdof_j, msh_pt_j)
 
-               if (eqn_j .gt. 0) then
-                  col_start = cscmat%v_col_ptr(eqn_j)
-                  col_end = cscmat%v_col_ptr(eqn_j+1) - 1
+               if (absdof_j .gt. 0) then
+                  row_lo = cscmat%v_col_ptr(absdof_j)
+                  row_hi = cscmat%v_col_ptr(absdof_j+1) - 1
+
                   !  unpack row into i_work
-                  do i=col_start,col_end
+                  do i=row_lo,row_hi
                      i_work(cscmat%v_row_ind(i) ) = i
                   enddo
 
                   ! evaluate this entity's P2 and P3 functions and derivatives
                   ! at the current quad point
-                  call basfuncs%find_derivatives(dof_j, ety_j, vec_phi2_j, curlt_phi2_j, phi3_z_j, gradt_phi3_j)
+                  call basfuncs%find_derivatives(locdof_j, ety_j, vec_phi2_j, curlt_phi2_j, phi3_z_j, gradt_phi3_j)
 
 
                   ! iterating rows
                   do ety_i=1,N_ENTITY_PER_EL
                      !z_phase_fact = val_exp(ety_j) * conjg(val_exp(ety_i))
-                     msh_pt_i = entities%v_tags(ety_i,i_el)
+                     msh_pt_i = entities%v_tags(ety_i,el_i)
 
-                     do dof_i=1,3
-                        eqn_i = cscmat%m_eqs(dof_i,msh_pt_i)
+                     do locdof_i=1,3
+                        absdof_i = cscmat%m_global_dofs(locdof_i,msh_pt_i)
 
-                        if (eqn_i .gt. 0) then
+                        if (absdof_i .gt. 0) then
 
-                           call basfuncs%find_derivatives(dof_i, ety_i, vec_phi2_i, curlt_phi2_i, phi3_z_i, gradt_phi3_i)
+                           call basfuncs%find_derivatives(locdof_i, ety_i, vec_phi2_i, curlt_phi2_i, phi3_z_i, gradt_phi3_i)
 
 
                            !!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -178,7 +177,7 @@ subroutine build_fem_ops_em (shift_ksqr, &
                            ! Here we are building Eqs. 13
                            ! We use capital E, F for transverse vector parts
                            !        lower    e,f for hatted longitudinal part
-                           ! F_i, f_i are the test functions indexed by rows
+                           ! F_j, f_j are the test functions indexed by rows
                            ! E_i, e_i are the soln functions indexed by cols
                            if (ety_i .le. N_ETY_TRANSVERSE .and. ety_j .le. N_ETY_TRANSVERSE) then    ! [tt] part
                               ! K_tt =   (curlt E_j).(curlt F_i)-k^2 eps (E_j, F_i)
@@ -238,7 +237,7 @@ subroutine build_fem_ops_em (shift_ksqr, &
                            !
                            K_elt = K_elt - shift_ksqr*M_elt
 
-                           k = i_work(eqn_i)
+                           k = i_work(absdof_i)
                            if (k .gt. 0 .and. k .le. cscmat%n_nonz) then   !is this test necessary?
                               cscmat%mOp_stiff(k) = cscmat%mOp_stiff(k) + K_elt
                               cscmat%mOp_mass(k) = cscmat%mOp_mass(k) + M_elt

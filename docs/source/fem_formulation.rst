@@ -305,6 +305,7 @@ The longitudinal component of the field is represented by 10 P3 Lagrange polynom
 
 
 The transverse part of the field is represented by 12 basis functions composed from products of P2 polynomials and gradients of P1 polynomials.
+Three functions (shown in each row in the figure below) are associated with each of the barycentre and the three edge mid-points.
 
 .. figure:: ./images/general/em_vecfuncs.png
     :width: 15cm

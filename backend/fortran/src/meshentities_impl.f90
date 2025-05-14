@@ -11,7 +11,7 @@ subroutine MeshEntities_allocate(this, n_msh_elts, nberr)
 
    call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'v_tags', nberr); RET_ON_NBERR(nberr)
    call double_alloc_2d(this%v_xy, 2_8, max_est_entities, 'v_xy', nberr); RET_ON_NBERR(nberr)
-   call integer_alloc_2d(this%v_ety_props, 2_8, max_est_entities, 'x_ety_props', nberr); 
+   call integer_alloc_2d(this%v_ety_props, 2_8, max_est_entities, 'x_ety_props', nberr);
 RET_ON_NBERR(nberr)
 
 
@@ -402,7 +402,8 @@ subroutine MeshEntities_count_nodes_P3 (this, mesh, nberr)
 end
 
 
-
+! Note that P2 vertices are not explicitly accounted for.
+! They seem to be treated as 'faces' and then we get 3 DOF in sparse_csc_em_impl.f90
 subroutine MeshEntities_analyse_face_and_edges (this, mesh)
 
 
@@ -516,12 +517,12 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
             !nd_i1 = el_node_tags(nd_i)
 
             tag = p3_tags(nd_i)
-            this%v_xy(1, tag) = mesh%v_mshpt_xy(1, nd_tag)
-            this%v_xy(2, tag) = mesh%v_mshpt_xy(2, nd_tag)
-            this%v_ety_props(1, tag) = mesh%v_mshpt_physindex(nd_tag)
+            this%v_xy(:, tag) = mesh%v_mshpt_xy(:, nd_tag)
+            !this%v_xy(2, tag) = mesh%v_mshpt_xy(2, nd_tag)
+            this%v_ety_props(ETY_PROP_PHYSTYPE, tag) = mesh%v_mshpt_physindex(nd_tag)
 
             !  Vertex => dimension zero
-            this%v_ety_props(2, tag) = 0
+            this%v_ety_props(ETY_PROP_DIMENSION, tag) = 0
          endif
       enddo
 
@@ -547,20 +548,21 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
             dy1 = (yy2-yy1) * one_third
 
             !  type of the mid-edge node of the initial P2 mesh
-            ind = mesh%v_mshpt_physindex(nd_tag)
 
             !  2 nodes per edge (for P3 element)
             do nd_i2=1,2
                k1 = p3_tags(nd_i2+2*(nd_i-4)+3)
                this%v_xy(1,k1) = xx1 + nd_i2*dx1
                this%v_xy(2,k1) = yy1 + nd_i2*dy1
-               this%v_ety_props(1,k1) = ind
+               this%v_ety_props(ETY_PROP_PHYSTYPE,k1) = mesh%v_mshpt_physindex(nd_tag) !  inherit phystype from the mid-edge node of the initial P2 mesh
 
-               !  Node => dimension zero
-               this%v_ety_props(2,k1) = 0
+               this%v_ety_props(ETY_PROP_DIMENSION,k1) = 0      ! these are points, so zero dimension
             enddo
          endif
       enddo
+
+
+      !  Finally do the interior node
 
       !  Coordinate of the vertices
       k1 = el_node_tags(1)
@@ -575,20 +577,15 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
       xx3 = mesh%v_mshpt_xy(1,k1)
       yy3 = mesh%v_mshpt_xy(2,k1)
 
-      !  The tenth node is at the center of the triangle
-      !  dimension(P3) = 10
-      n = 10
+      !  Acess the interior node
+      k1 = p3_tags(P3_INTERIOR)
 
-      k1 = p3_tags(n)
+      this%v_xy(1, k1) = (xx1+xx2+xx3)*one_third
+      this%v_xy(2, k1) = (yy1+yy2+yy3)*one_third
 
-      this%v_xy(1,k1) = (xx1+xx2+xx3)*one_third
-      this%v_xy(2,k1) = (yy1+yy2+yy3)*one_third
-
-      !  interior node
-      this%v_ety_props(1,k1) = 0
-
-      !  Node => dimension zero
-      this%v_ety_props(2,k1) = 0
+      ! is a point, non-boundary and dimension 0
+      this%v_ety_props(ETY_PROP_PHYSTYPE, k1) = 0
+      this%v_ety_props(ETY_PROP_DIMENSION, k1) = 0
 
    enddo
 
