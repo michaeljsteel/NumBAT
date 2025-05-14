@@ -53,9 +53,6 @@ intel:
 	cp build_intel/nb_fortran.so .
 
 mac:
-ifneq ($(UNAME_S), Darwin)  # TODO: make this a make function?
-	$(error 'We do not seem to be building on Mac. Check you are choosing the right target')
-endif
 	- rm -rf build_mac
 	meson setup --reconfigure --buildtype=release build_mac \
 		--native-file nb-darwin-native-file.ini
