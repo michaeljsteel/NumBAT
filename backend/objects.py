@@ -245,7 +245,7 @@ class Structure:
         # Convert our Gmsh .geo file into Gmsh .msh
         gmsh_exe =  numbat.NumBATApp().path_gmsh()
         args =f' -2 -order 2 -v 0 -o {msh_inst_fname}.msh {msh_inst_fname}.geo'
-        cmd = [gmsh_exe]
+        cmd = [str(gmsh_exe)]
         cmd.extend(args.split())
         run_subprocess(cmd, 'Gmsh', cwd=self.msh_location_out)
 

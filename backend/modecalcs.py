@@ -15,9 +15,9 @@
 
 
 
-import copy
 import numpy as np
 
+#import yep
 from numbattools import process_fortran_return
 
 
@@ -179,6 +179,7 @@ class EMSimulation(Simulation):
             str({0: "Dirichlet", 1: "Neumann", 2: "Periodic"}[bnd_cdn_i]),
         )
 
+        #yep.start('emsolve.prof')
         resm = nb_fortran.calc_em_modes(
             self.n_modes,
             self.lambda_m,
@@ -197,6 +198,7 @@ class EMSimulation(Simulation):
             opt_props.v_refindexn,
             shortrun
         )
+        #yep.stop()
 
         # self.node_physindex: GMsh physical line or surface number (a small nonneg int). Maps to fortran type_nod
         # self.type_el: material index of each element into list self.v_refindexn (unit-based)

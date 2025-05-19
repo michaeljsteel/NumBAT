@@ -3,6 +3,11 @@
 ! vect2 = mat * vect1
 
 !TODO: Is there not a standard library function in SparseSuite for this?
+! oneMKL has a routine for this operation
+
+! But profiling shows it uses only 2-3% of the runtime on decent size problems.
+! Almost everything is inside blas gemv and sparsesuite umf routines
+! So there is little to be gained by replacing this function with something fancier.
 
 subroutine z_mxv_csc (n_dof, vect1, vect2, nonz, row_ind, col_ptr, mat)
 

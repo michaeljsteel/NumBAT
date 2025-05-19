@@ -12,7 +12,7 @@ subroutine MeshEntities_allocate(this, n_msh_elts, nberr)
    call integer_alloc_2d(this%v_tags, 14_8, n_msh_elts, 'v_tags', nberr); RET_ON_NBERR(nberr)
    call double_alloc_2d(this%v_xy, 2_8, max_est_entities, 'v_xy', nberr); RET_ON_NBERR(nberr)
    call integer_alloc_2d(this%v_ety_props, 2_8, max_est_entities, 'x_ety_props', nberr);
-RET_ON_NBERR(nberr)
+   RET_ON_NBERR(nberr)
 
 
    call integer_alloc_1d(this%visited, max_est_entities, 'visited', nberr); RET_ON_NBERR(nberr)
@@ -76,7 +76,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh, nberr)
    call this%count_faces (mesh%n_msh_elts)
 
    !  Fills: n_edge, v_tags[2:4,:]
-   call this%count_edges (mesh, nberr); RET_ON_NBERR(nberr)
+   call this%count_edges (mesh)
 
    !  Fills: v_tags[5:,:], visited[1:n_msh_pts], n_msh_pts_3
    call this%count_nodes_P3 (mesh, nberr); RET_ON_NBERR(nberr)
@@ -126,7 +126,7 @@ subroutine MeshEntities_check_bdy_elements_are_consistent(this, mesh, nberr)
             ! (else would be a broken mesh)
 
             if (.not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_nda,el_i) &
-.or. .not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,el_i)) then
+               .or. .not. mesh%is_boundary_mesh_point_by_elt_node(ed_vert_ndb,el_i)) then
 
                write(emsg,*) "list_edge: v_tags = ", &
                   mesh%node_phys_index_by_ref(ed_vert_nda,el_i), &
@@ -171,12 +171,9 @@ end
 ! based on whichever is found first.
 ! v_tags[ety_i, el_i] = v_tags[ety_j, el_j] if they are the same mesh point
 
-subroutine MeshEntities_count_edges (this, mesh, nberr)
-
+subroutine MeshEntities_count_edges (this, mesh)
    class(MeshEntities) :: this
    type(MeshEM) :: mesh
-
-   type(NBError) nberr
 
    ! -----------------------------------------------
    integer(8) n_edge
@@ -263,8 +260,6 @@ subroutine MeshEntities_count_nodes_P3 (this, mesh, nberr)
    integer(8) row_off, lab, lab_off
    integer(8) vert_1(2), vert_2(2)
    integer(8) row_off_vert, row_off_P3_edges, row_off_P3_interior
-
-   integer(8) nd_vert
 
    this%visited = 0
 
@@ -412,7 +407,7 @@ subroutine MeshEntities_analyse_face_and_edges (this, mesh)
 
 
    double precision, parameter :: one_third = 1.d0/3.d0
-   integer(8) el_i, j, nd, tag, nd_j
+   integer(8) el_i, j, tag, nd_j
    integer(8) phystype_nds(10)
    double precision el_nds_xy(2,6)
    integer(8) el_nds_i(P2_NODES_PER_EL)
@@ -466,7 +461,7 @@ subroutine MeshEntities_analyse_p3_nodes(this, mesh)
    class(MeshEntities) :: this
    type(MeshEM) :: mesh
 
-   integer(8)  k1, n, ind, ip(2,3), nd, tag
+   integer(8)  k1, ip(2,3), tag
    integer(8) el_i, nd_i,  nd_i2, ety_off, nd_tag
    integer(8) el_node_tags(P2_NODES_PER_EL)
    integer(8) p3_tags(N_ENTITY_PER_EL)
