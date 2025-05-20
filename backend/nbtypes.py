@@ -130,6 +130,7 @@ class CrystalGroup(IntEnum):
     Unknown = auto()
     Trigonal = auto()
     Cubic = auto()
+    Hexagonal = auto()
     GeneralAnisotropic = auto()
 
 class PiezoSupport(IntEnum):

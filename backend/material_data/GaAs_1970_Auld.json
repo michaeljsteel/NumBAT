@@ -9,7 +9,10 @@
  "Re_n": 3.3701928728190023,  // Real part of refractive index []
  "Im_n": 0.0,  // Imaginary part of refractive index []
  "s": 5307,  // Density [kg/m3]
+
  "crystal_class": "Cubic",
+ "crystal_sym": "4'3m",
+
  "c_11": 118.8e9,  // Stiffness tensor component [Pa]
  "c_12": 53.8e9,  // Stiffness tensor component [Pa]
  "c_44": 59.4e9,  // Stiffness tensor component [Pa]
@@ -18,5 +21,10 @@
  "p_44": -0.072,  // Photoelastic tensor component []
  "eta_11": 7.49e-3,  // Acoustic loss tensor component [Pa s]
  "eta_12": 6.57e-3,  // Acoustic loss tensor component [Pa s]
- "eta_44": 0.72e-3  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.72e-3,  // Acoustic loss tensor component [Pa s]
+
+ "piezo_active": 1,      // Cubic 4'3m symmetry, only x4 indep
+ "piezo_d_x4": 2.6e-12, 
+ "_piezo_d_y5": 2.6e-12, 
+ "_piezo_d_z6": 2.6e-12
 }

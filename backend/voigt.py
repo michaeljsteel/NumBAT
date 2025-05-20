@@ -15,7 +15,7 @@
 
 import math
 import numpy as np
-import pprint
+import copy
 
 from nbtypes import unit_x, unit_y, unit_z
 import reporting
@@ -204,7 +204,7 @@ def _rotate_2tensor(T_ij, mat_R):
     T_ij is a rank-2 tensor expressed in 3x3 zero-indexed standard notation.
 
     The complete operation in 3x3 notation is
-    T'_ij  = sum_{pqr} R_ip R_jq R_kr 
+    T'_ij  = sum_{pqr} R_ip R_jq R_kr
 
     Args:
         T_ij  (array): Tensor to be rotated.
@@ -297,17 +297,17 @@ def Voigt3_ijk_to_iJ(mat_ijk, fac2mul = False):
         for J in range(1,7):
             (j,k) = from_Voigt[J]
         if J<4 or fac2mul:
-            T_iJ[i,J] = mat_ijk[i,j,k] / 2 
+            T_iJ[i,J] = mat_ijk[i,j,k] / 2
         else:
-            T_iJ[i,J] = mat_ijk[i,j,k] 
+            T_iJ[i,J] = mat_ijk[i,j,k]
     return T_iJ
 
 class VoigtTensor3_iJ(object):
-    '''A class for representing rank 3 tensors with iJ indexing 
+    '''A class for representing rank 3 tensors with iJ indexing
       (regular indexing in the first slot, Voigt in the last two slots)
     '''
 
-    def __init__(self, json_symbol, physical_name='', physical_symbol='', 
+    def __init__(self, json_symbol, physical_name='', physical_symbol='',
                  unit=None, transforms_with_factor_2 = False):
 
         self.mat = np.zeros([3, 7], dtype=float)  # unit indexing in the last two indices
@@ -315,7 +315,7 @@ class VoigtTensor3_iJ(object):
         self._json_symbol = json_symbol  # eg 'piezo_d_IJ'
         self._physical_name=physical_name
         self._physical_symbol=physical_symbol
-        self._unit=unit
+        self.unit=unit
         self._transforms_with_factor_2 = transforms_with_factor_2  # converts to _ijk form with stiffness facs
 
     def rotate(self, mat_R):
@@ -335,15 +335,15 @@ class VoigtTensor3_iJ(object):
     def __str__(self):
 
         sh = f'\n {self._physical_name} {self._physical_symbol}'
-        if self._unit is not None:
-            sh += f', unit: {self._unit[0]}.'
+        if self.unit is not None:
+            sh += f', unit: {self.unit[0]}.'
         else:
             sh += '.'
 
-        sh += f'\n   Voigt 3-tensor:\n'
+        sh += '\n   Voigt 3-tensor:\n'
         with np.printoptions(precision=4):
-            if self._unit is not None:
-                sd = str(self.mat[0:, 1:]/self._unit[1])
+            if self.unit is not None:
+                sd = str(self.mat[0:, 1:]/self.unit[1])
             else:
                 sd = str(self.mat[0:, 1:])
 
@@ -362,7 +362,24 @@ class VoigtTensor3_iJ(object):
                 if elt in json_data:
                     self.mat[ci][J] = json_data[elt]
 
-        print(self.mat)
+    def set_elt_from_json(self, s_iJ, json_data):
+
+        elt = f'{self._json_symbol}_{s_iJ}'
+        e_i = {'x':0, 'y':1, 'z':2}[s_iJ[0]]
+        e_J = int(s_iJ[1])
+        self.mat[e_i, e_J] =  json_data[elt]
+
+    def elt_iJ(self, s_iJ):
+        e_i = {'x':0, 'y':1, 'z':2}[s_iJ[0]]
+        e_J = int(s_iJ[1])
+        return self.mat[e_i, e_J]
+
+    def set_elt_iJ(self, s_iJ, val):
+        e_i = {'x':0, 'y':1, 'z':2}[s_iJ[0]]
+        e_J = int(s_iJ[1])
+        self.mat[e_i, e_J] = val
+
+
 
     def value(self):
         '''Returns copy of Voigt matrix indexed as m[0..2, 0..5].'''
@@ -372,34 +389,37 @@ class VoigtTensor3_iJ(object):
         '''Returns reference to internal Voigt matrix indexed as m[0..2, 0..5].'''
         return self.mat[:, 1:]
 
+    def copy(self):
+        return copy.deepcopy(self)
 
 class VoigtTensor4(object):
     '''A class for representing rank 4 tensors in the compact Voigt representation.
 
     Internally uses 1-based indexing like the notation. Externally it passes zero-based values.'''
 
-    def __init__(self, material_name, symbol, src_dict=None, physical_name='', unit=None):
+    def __init__(self, src_dict, json_symbol, physical_name='', physical_symbol='', unit=None):
 
         self.mat = np.zeros([7, 7], dtype=float)  # unit indexing
 
-        self.material_name = material_name
-        self.symbol = symbol  # eg 'c', 'p', 'eta'
+        self.physical_name = physical_name
+        self.json_symbol = json_symbol  # eg 'c', 'p', 'eta'
 
         self._json_data = src_dict
-        self._physical_name=physical_name
-        self._unit=unit
+        self.physical_symbol=physical_symbol
+        self.unit=unit
 
     def __str__(self):
 
-        sh = f'\n {self._physical_name} {self.symbol}'
-        if self._unit is not None:
-            sh += f', unit: {self._unit[0]}.'
+        sh = f'\n {self.physical_name} {self.physical_symbol}'
+        if self.unit is not None:
+            sh += f', unit: {self.unit[0]}.'
         else:
-            sh += '.'
+            sh += '., unit: dimensionless.'
 
+        sh += '\n   Voigt 4-tensor:\n'
         with np.printoptions(precision=4):
-            if self._unit is not None:
-                sd = str(self.mat[1:, 1:]/self._unit[1])
+            if self.unit is not None:
+                sd = str(self.mat[1:, 1:]/self.unit[1])
             else:
                 sd = str(self.mat[1:, 1:])
 
@@ -414,7 +434,7 @@ class VoigtTensor4(object):
         self.mat[k[0], k[1]] = v
 
     def dump_rawdata(self):
-        print(f'\nVoigt tensor {self.material_name}, tensor {self.symbol}')
+        print(f'\nVoigt tensor {self.physical_name}, tensor {self.json_symbol}')
         print(self.mat[1:, 1:])
 
     def value(self):
@@ -425,15 +445,24 @@ class VoigtTensor4(object):
         '''Returns reference to internal Voigt matrix indexed as m[0..5, 0..5].'''
         return self.mat[1:, 1:]
 
+
+    def set_from_00matrix(self, mat00):
+        if self.mat.dtype != mat00.dtype:
+            self.mat = np.zeros([7, 7], dtype=mat00.dtype)
+        self.mat[1:7, 1:7] = mat00
+
+    def copy(self):
+        return copy.deepcopy(self)
+
     def read_from_json(self, m, n, optional=False):
         '''Looks for data in the _json_data dict in form c_12, eta_23, etc.'''
 
-        elt = f'{self.symbol}_{m}{n}'
+        elt = f'{self.json_symbol}_{m}{n}'
 
         if elt not in self._json_data:
             if not optional:
                 reporting.report_and_exit(
-                    f'Failed to read required tensor element {elt} for material {self.material_name}')
+                    f'Failed to read required tensor element {elt} for material {self.physical_name}')
             else:
                 return False
 
@@ -472,7 +501,7 @@ class VoigtTensor4(object):
         tmat = self.mat - self.mat.T
         mat_is_sym = nbtools.almost_zero(np.linalg.norm(tmat), tol)
         reporting.assertion(
-            mat_is_sym, f'Material matrix {self.material_name}-{self.symbol} is symmetric.\n' + str(self.mat))
+            mat_is_sym, f'Material matrix {self.physical_name}-{self.physical_symbol} is symmetric.\n' + str(self.mat))
 
     def rotate(self, mat_R):
         '''Rotates the crystal according to the SO(3) matrix mat_R.

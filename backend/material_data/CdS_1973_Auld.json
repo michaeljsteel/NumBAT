@@ -1,0 +1,59 @@
+{
+    "format": "NumBATMaterial-fmt-2.0",
+    "material_name": "CdS_1973_Auld",  // Name of this file, will be used as identifier
+ "chemical": "Cadmium sulfide",  // Chemical composition
+ "author": "B. A. Auld",  // Author of data
+ "date": "1973",  // Year of data publication/creation
+ "institution": "Stanford University",  // Source institution
+ "doi": "ISBN-10. 0898747821",
+ "Re_n": 2.30,  // Real part of refractive index (n_o) []
+ "_Re_no": 2.30,  // Real part of refractive index (n_e) []
+ "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+ "s": 4820,  // Density [kg/m3]
+
+ "crystal_class": "Hexagonal",   // Hex 6mm
+ "crystal_sym": "6mm",   // Hex 6mm
+
+ "c_11": 9.07e10,  // Stiffness tensor component [Pa]
+ "c_33": 9.38e10,  // Stiffness tensor component [Pa]
+ "c_44": 1.504e10,  // Stiffness tensor component [Pa]
+ "c_12": 5.81e10,  // Stiffness tensor component [Pa]
+ "c_13": 5.1e10,  // Stiffness tensor component [Pa]
+
+ "p_11": 0.0,  // Photoelastic tensor component []
+ "p_12": 0.0,  // Photoelastic tensor component []
+ "p_13": 0.0,  // Photoelastic tensor component []
+ "p_14": 0.0,  // Photoelastic tensor component []
+ "p_31": 0.0,  // Photoelastic tensor component []
+ "p_33": 0.0,  // Photoelastic tensor component []
+ "p_41": 0.0,  // Photoelastic tensor component []
+ "p_44": 0.0,  // Photoelastic tensor component []
+
+ "piezo_active": 1,      // Trigonal 3m symmetry, these are indepenent
+ "piezo_d_x5": -14.0e-12, 
+ "piezo_d_z1": -5.0e-12, 
+ "piezo_d_z3": 10.3e-12, 
+
+ "eta_11": 0.0,
+ "eta_12": 0.0,
+ "eta_13": 0.0,
+ "eta_14": 0.0,
+ "eta_33": 0.0,
+ "eta_44": 0.0,
+
+ "_eta_22":  0.6547e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_23":  0.2499e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_24":  0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_55":  0.1765e-3,  // Acoustic loss tensor component [Pa s]
+ "_eta_56": -0.0687e-3,  // Acoustic loss tensor component [Pa s]
+ 
+ "orientation_x-cut": "0,0,1,90",
+ "orientation_y-cut": "ident",
+ "orientation_z-cut": "1,0,0,-90",
+
+ "orientation_negx-cut": "0,0,1,-90",
+ "orientation_negy-cut": "1,0,0,180",
+ "orientation_negz-cut": "1,0,0,90"
+
+}

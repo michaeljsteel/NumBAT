@@ -7,7 +7,7 @@ import matplotlib.cm as mplcm
 import matplotlib.ticker as ticker
 
 import numpy as np
-import copy 
+import copy
 import reporting
 
 from bulkprops import solve_christoffel
@@ -40,14 +40,54 @@ def plot_bulk_dispersion_2D(material, pref, label=None, show_poln=True):
     cm = "cool"  # Color map for polarisation coding
     add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, cm, show_poln)
 
+    # markers to reproduce Auld Fig 7.2
+    #c11=material.stiffness_c_IJ[1,1]
+    #c12=material.stiffness_c_IJ[1,2]
+    #c44=material.stiffness_c_IJ[4,4]
+    #rho=material.rho
+    #anA=2*c44/(c11-c12)
+    #l1=np.sqrt(rho/(c11+c44*(1-1/anA)))
+    #l2=np.sqrt(rho/c11)
+    #l3=np.sqrt(rho/c44)
+    #l4=np.sqrt(rho*anA/c44)
+    #ax_sl.plot([l1/np.sqrt(2)*1e3], [l1/np.sqrt(2)*1e3], 'x') 
+    #ax_sl.plot([0], [l2*1e3], 'x') 
+    #ax_sl.plot([l3/np.sqrt(2)*1e3], [l3/np.sqrt(2)*1e3], 'x') 
+    #ax_sl.plot([l4/np.sqrt(2)*1e3], [l4/np.sqrt(2)*1e3], 'x') 
+
+    # markers to reproduce Auld Fig 7.3
+    #c11=material._stiffness_c_IJ_orig[1,1]
+    #c12=material._stiffness_c_IJ_orig[1,2]
+    #c44=material._stiffness_c_IJ_orig[4,4]
+    #rho=material.rho
+    #anA=2*c44/(c11-c12)
+#
+#    l1=np.sqrt(rho/c44)*1e3
+#    l3=np.sqrt(rho*anA/c44)*1e3
+#    l4=np.sqrt(rho/c11)*1e3
+#    l5=np.sqrt(3*rho*anA/((2+anA)*c44))*1e3
+#    l6=np.sqrt(rho/(c11+c44*((anA-1)/anA)))*1e3
+#    l7=np.sqrt(3*rho/(3*c11+4*c44*((anA-1)/anA)))*1e3
+#    th=np.atan(1/np.sqrt(2))
+#    ax_sl.plot([0], [l1], 'x')
+#    ax_sl.plot([l1], [0], 'x')
+#    ax_sl.plot([l3], [0], 'o')
+#    ax_sl.plot([0], [-l4], 'v')
+#    ax_sl.plot([-l6], [0], 'o')
+#    ax_sl.plot([l5*np.cos(th)], [l5*np.sin(th)], 'o') 
+#    ax_sl.plot([l7*np.cos(th)], [l7*np.sin(th)], 'o') 
+
+    
     #label = self.material_name
     if label is not None:
         ax_vp.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
 
-    _add_3d_dispersion_curves_to_axes(material, ax_ivp_3d)
+    add_3d_dispersion_curves_to_axes(material, ax_ivp_3d)
 
-    fig.savefig(pref + "-bulkdisp.png")
+    fname = pref + "-bulkdisp.png"
+    fig.savefig(fname)
     plt.close(fig)
+    return fname
 
 
 
@@ -57,37 +97,39 @@ def plot_bulk_dispersion_3D(material, pref):
     fig, axs = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
     ax_vp, ax_vg = axs
 
-    _add_3d_dispersion_curves_to_axes(material, ax_vp, ax_vg)
+    add_3d_dispersion_curves_to_axes(material, ax_vp, ax_vg)
 
-    fig.savefig(pref + "-bulkdisp3D.png")
+    fname = pref + "-bulkdisp3D.png"
+    fig.savefig(fname)
     plt.close(fig)
+    return fname
 
 
-def _add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
+def add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
     ''' Draw phase and group velocity surfaces on 3D axes.
- 
+
     :param ax_ivp: 3D axes for the slowness (reciprocal phase velocity).
     :param ax_vg: 3D axes for the group velocity.
     '''
     axs = []
- 
+
     if ax_ivp is not None: axs.append(ax_ivp)
     if ax_vg is not None: axs.append(ax_vg)
- 
+
     # Make data
     tpts = 50
     ppts = 100
     vphi = np.linspace(0, 2 * np.pi, ppts)
     vtheta = np.linspace(0, np.pi, tpts)
- 
+
     ivx = np.zeros([tpts, ppts, 3])
     ivy = np.zeros([tpts, ppts, 3])
     ivz = np.zeros([tpts, ppts, 3])
- 
+
     ivgx = np.zeros([tpts, ppts, 3])
     ivgy = np.zeros([tpts, ppts, 3])
     ivgz = np.zeros([tpts, ppts, 3])
- 
+
     for ip, phi in enumerate(vphi):
         for itheta, theta in enumerate(vtheta):
             vkap = np.array(
@@ -98,43 +140,43 @@ def _add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
                 ]
             )
             v_vphase, vecs, v_vgroup = solve_christoffel(vkap, material.stiffness_c_IJ, material.rho)
- 
+
             # slowness curve  eta(vkap) = 1/v_phase(vkap)
             ivx[itheta, ip, :] = vkap[0] / v_vphase
             ivy[itheta, ip, :] = vkap[1] / v_vphase
             ivz[itheta, ip, :] = vkap[2] / v_vphase
- 
+
             ivgx[itheta, ip, :] = v_vgroup[:, 0]
             ivgy[itheta, ip, :] = v_vgroup[:, 1]
             ivgz[itheta, ip, :] = v_vgroup[:, 2]
- 
+
     for i in range(3):
         if ax_ivp:
             ax_ivp.plot_surface( ivx[:, :, i], ivy[:, :, i], ivz[:, :, i], alpha=0.25)
- 
+
         if ax_vg:
             ax_vg.plot_surface( ivgx[:, :, i], ivgy[:, :, i], ivgz[:, :, i], alpha=0.25)
- 
+
     if ax_ivp:
         ax_ivp.set_xlabel(r"$1/v_x^{(p)}$ [s/km]", fontsize=8, labelpad=1)
         ax_ivp.set_ylabel(r"$1/v_y^{(p)}$ [s/km]", fontsize=8, labelpad=1)
         ax_ivp.set_zlabel(r"$1/v_z^{(p)}$ [s/km]", fontsize=8, labelpad=1)
- 
+
     if ax_vg:
         ax_vg.set_xlabel(r"$v_x^{(g)}$ [km/s]", fontsize=8, labelpad=1)
         ax_vg.set_ylabel(r"$v_y^{(g)}$ [km/s]", fontsize=8, labelpad=1)
         ax_vg.set_zlabel(r"$v_z^{(g)}$ [km/s]", fontsize=8, labelpad=1)
- 
+
     for ax in axs:
         for a in ("x", "y", "z"):
             ax.tick_params(axis=a, labelsize=8, pad=0)
         for t_ax in [ax.xaxis, ax.yaxis, ax.zaxis]:
             t_ax.line.set_linewidth(0.5)
- 
+
         # ax.set_aspect('equal')
- 
- 
- 
+
+
+
 
 
 def plot_material_photoelastic_IJ(prefix, v_comps, mat):
@@ -189,17 +231,19 @@ def plot_material_photoelastic_IJ(prefix, v_comps, mat):
 
 
 
-def make_crystal_axes_plot(pref):
+def make_crystal_axes_plot(pref, crystal_axes):
     """Build crystal coordinates diagram using call to external asymptote application."""
-    
+
     fn = tempfile.NamedTemporaryFile(suffix=".asy", mode="w+t", delete=False)
 
-    asy_cmds = asy_draw_crystal_axes(self._crystal_axes)
+    asy_cmds = asy_draw_crystal_axes(crystal_axes)
     fn.write(asy_cmds)
     fn.close()
 
     # run .asy
     subprocess.run(["asy", fn.name, "-o", f"{pref}-crystal"], check=False)
+    fname_out = f"{pref}-crystal.png"
+    return fname_out
 
 
 def asy_draw_crystal_axes(crystal_axes):
@@ -247,7 +291,7 @@ triple bvec={s_bvec};
 triple cvec={s_cvec};
 """
 
-    s3 = """triple corig=(0,.5,2)*blen;
+    s3 = """triple corig=(0,.0,0)*blen;
 draw(corig--avec+corig, red, Arrow3(arrsize), L=Label("$c_x$", position=EndPoint));
 draw(corig--bvec+corig, red, Arrow3(arrsize), L=Label("$c_y$", position=EndPoint));
 draw(corig--cvec+corig, red, Arrow3(arrsize), L=Label("$c_z$", position=EndPoint));
@@ -258,6 +302,7 @@ triple k1=k0+(0,0,2);
 draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
 """
 
+# used to be triple corig=(0,.5,.2)*blen;
     return s1 + s2 + s3
 
 
@@ -364,7 +409,10 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, c
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-            v_vphase, vecs, v_vgroup = solve_christoffel( vkap, material.stiffness_c_IJ, material.rho)
+            t_stiffness = material.get_stiffness_for_kappa(vkap)
+            v_vphase, vecs, v_vgroup = solve_christoffel(vkap,
+                                                         t_stiffness,
+                                                         material.rho)
 
             v_vel[ik, :] = v_vphase  # phase velocity
             v_vgx[ik, :] = v_vgroup[:, 0]  # group velocity components
@@ -433,7 +481,9 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, c
     for vr in range(1,8):
         ax_vp.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
         ax_vg.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
-        ax_sl.plot( np.cos(v_theta) / vr , np.sin(v_theta) / vr, ':', c='gray', lw=.25)
+
+    for ivr in np.arange(0,.4,.05):
+        ax_sl.plot( np.cos(v_theta) * ivr , np.sin(v_theta) * ivr, ':', c='gray', lw=.25)
 
     # fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_vp, shrink=.5,
     #             pad=.025, location='top', label='$\hat{e} \cdot \hat{\kappa}$')
