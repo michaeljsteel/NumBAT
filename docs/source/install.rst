@@ -124,7 +124,11 @@ Building |NUMBAT| itself
    Ensure that your ``numpy`` version  is from the 1.26.x and not the new 2.0.0 line.
 
 #. If you wish to be able to rebuild the documentation, we need some additional modules ::
-     $ pip3 install sphinx sphinxcontrib-bibtex setuptools
+
+     $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc
+
+   You may also need to install the main pandoc package for your distribution.
+
 
 #. Create a working directory for your |NUMBAT| work and move into it. From now, we will refer to this location as ``<NumBAT>``.
 

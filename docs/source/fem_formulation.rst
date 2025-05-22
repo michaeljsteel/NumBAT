@@ -85,7 +85,7 @@ Observe that each polynomial takes the value zero at all nodes except the one co
 
 .. math::
 
-    g_i(\vecrt_j) = \delta_{ij},
+    g_i(\vecr_j) = \delta_{ij},
 
 and so frequently we can identify the nodes and basis functions of the same index.
 

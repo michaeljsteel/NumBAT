@@ -97,12 +97,14 @@ It is thus straightforward to generate dispersion relations :math:`\Omega_n(q)` 
 
 For details on how these problems are framed as finite element problems, we refer to Ref. :cite:p:`Sturmberg:2019`, though some details are provided in :ref:`chap-fem-formulation-label`.
 
-Modal properties
+Mode normalisation
 -----------------------
 
+To calculate nonlinear quantities correctly, it is necessary to account for the energy flux in each mode. This can be done either by scaling the field amplitudes so that they carry a fixed energy flux (say 1 W) and accounting for this in the nonlinear coefficients, or by allowing an arbitrary field normalisation and explicitly including the power flux into the gain calculation. The code in |NUMBAT| follows this second approach which has the advantage that the numerical fields can be scaled to suit other purposes (for instance convenient plotting scales) without affecting the nonlinear coefficient calculations.
+
+
 For propagation in a given mode :math:`\vec e_n` or :math:`\vec U_n`, the optical (:math:`o`)
-and elastic (:math:`a`) energy fluxes in Watts and linear energy densities in (J/m) are given by the
-following expressions
+and elastic (:math:`a`) energy fluxes in Watts and linear energy densities in (J/m) are given by the following expressions
 
 .. math::
 
@@ -147,11 +149,12 @@ Note that in general these functions are complex, rather than purely real or ima
 Then, at least for backward SBS, the peak SBS gain of the Stokes wave :math:`\Gamma` is given by
 
 .. math::
-   \Gamma = \frac{2\omega \Omega}{\alpha_t} \frac{|Q_\mathrm{tot}|^2}{P^{(s)}P^{(p)}{\cal E}^{(a)}},
+   \Gamma = \frac{2\omega \Omega}{\alpha_t}
+      \frac{|Q_\mathrm{tot}|^2}{{\cal P}^{(s)}{\cal P}^{(p)}{\cal E}^{(a)}},
 
-where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`.
+where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`. As anticipated above, the modal power fluxes appear in the denominator of this expression.
 
-Here :math:`\alpha_t` is the temporal elastic loss coefficient in :math:`\mathrm{s}^{-1}`.
+The quantity :math:`\alpha_t` is the *temporal* elastic loss coefficient in :math:`\mathrm{s}^{-1}`.
 It is related to the spatial attenuation coefficient by
 :math:`\alpha_s = \alpha_t /v_{\mathrm{p}}^{(\mathrm{a})}` with :math:`v_{\mathrm{p}}^{(\mathrm{a})}` being the elastic phase velocity.
 
@@ -195,9 +198,11 @@ Connecting these to output quantities from code
 Equivalent forms of equations
 -----------------------------------
 
-TODO: show forms without the normalisation energies and with cubic style effective area.
+   - TODO: show forms without the normalisation energies and with cubic style effective area.
 
-Compare to some fiber literature and the hydrodynamic reprn.
+   - Compare to some fiber literature and the hydrodynamic reprn.
+
+   - Connect to optical forces picture
 
 
 
