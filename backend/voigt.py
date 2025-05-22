@@ -433,6 +433,18 @@ class VoigtTensor4(object):
     def __setitem__(self, k, v):
         self.mat[k[0], k[1]] = v
 
+    def elt_s_IJ(self, s_IJ):
+        eI=int(s_IJ[0])
+        eJ=int(s_IJ[1])
+        assert(eI>=1 and eI<=6 and eJ>=1 and eJ<=6)
+        return self.mat[eI,eJ]
+
+    def set_elt_s_IJ(self, s_IJ, val):
+        eI=int(s_IJ[0])
+        eJ=int(s_IJ[1])
+        assert(eI>=1 and eI<=6 and eJ>=1 and eJ<=6)
+        self.mat[eI,eJ] = val
+
     def dump_rawdata(self):
         print(f'\nVoigt tensor {self.physical_name}, tensor {self.json_symbol}')
         print(self.mat[1:, 1:])
