@@ -26,12 +26,14 @@ import re
 import traceback
 
 import numpy as np
+import scipy.optimize as sciopt
 
 from nbtypes import CrystalGroup, unit_x, unit_y, unit_z, SI_permittivity_eps0
 import reporting
 import voigt
 from bulkprops import solve_christoffel
 import numbattools as nbtools
+
 
 import plotting.materials as plms
 
@@ -367,6 +369,7 @@ class Material(object):
                 s += dent + f"Poisson ratio:  {self.nuPoisson:.3f}"
                 s += dent + f"Velocity long.: {self.Vac_longitudinal():.3f} m/s"
                 s += dent + f"Velocity shear: {self.Vac_shear():.3f} m/s"
+                s += dent + f"Velocity Rayleigh: {self.Vac_Rayleigh():.3f} m/s"
             else:
                 s += dent + "Stiffness c_IJ:" + str(self.stiffness_c_IJ) + "\n"
 
@@ -391,9 +394,22 @@ class Material(object):
             if self._piezo:
                 s += str (self._piezo)
 
-        except Exception:
-            s = "Unknown/undefined elastic parameters in material " + self.material_name
+        except Exception as err:
+            s = f"Unknown/undefined elastic parameters in material {self.material_name}" + str(err) 
         return s
+
+    def Vac_Rayleigh(self):
+        """For an isotropic material, returns the Rayleigh wave elastic phase velocity."""
+        assert self.is_isotropic()
+
+        Vs = self.Vac_shear()
+        Vl = self.Vac_longitudinal()
+
+        if not self.rho or self.rho == 0:  # Catch vacuum cases
+            return 0.0
+        else:
+            return find_Rayleigh_velocity(Vs, Vl)
+
 
     def Vac_longitudinal(self):
         """For an isotropic material, returns the longitudinal (P-wave) elastic phase velocity."""
@@ -118989,4 +119005,31 @@ def isotropic_stiffness(E, v):
 
 
 
+
+def disprel_rayleigh(vR, vl):
+
+    return vR**6 - 8 * vR**4 + vR**2 * (24 - 16 / vl**2) + 16 * (1 / vl**2 - 1)
+
+def find_Rayleigh_velocity(Vs, Vl):
+    """ Find Rayleigh velocity v_q for isotropic mode with velocities Vs and Vl."""
+
+    vl = Vl/Vs
+
+    ## m_qs = np.zeros(len(v_Omega))
+    #v_col = None
+#
+#    # Calculation works in units of Vs
+    vRlo = 0.001
+    vRhi = 1
+
+    dr_rayleigh = lambda vR: disprel_rayleigh(vR, vl)
+
+    vres = sciopt.root_scalar(dr_rayleigh, bracket=(vRlo, vRhi))
+
+    if not vres.converged:
+        raise ValueError(vres.flag)
+    else:
+        vR = vres.root
+
+    return vR * Vs
 
