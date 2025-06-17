@@ -1,7 +1,7 @@
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.0.1',
+  version: '2.1.0',
   meson_version: '>1.4.0'
 )
 

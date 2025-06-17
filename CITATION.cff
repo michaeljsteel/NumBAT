@@ -9,5 +9,5 @@ authors:
   - family-names: Dossou
     given-names: Kokou
 title: "NumBAT - The Numerical Brillouin Analysis Tool"
-version: 2.0.1
+version: 2.1.0
 url:"https://github.com/michaeljsteel/NumBAT"

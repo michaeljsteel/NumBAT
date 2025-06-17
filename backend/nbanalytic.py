@@ -727,8 +727,9 @@ class ElasticFreeSlab:
     ):
         self._mats = mat_s  # slab material
         self._Vs = mat_s.Vac_shear()
-
         self._Vl = mat_s.Vac_longitudinal()
+        self._Vl_norm = self._Vl/self._Vs
+
         # self._Vl = self._Vs*1.9056
         self.width = wid
 
@@ -890,16 +891,18 @@ class ElasticFreeSlab:
                 # else: # a tan function infinity, update but don't keep
                 #    pass
             fi_m1 = fi
-        # print(qbraks)
-        # fig,axs=plt.subplots()
-        # axs.plot(v_q*1e-6, v_disprel)
-        # axs.plot(v_q*1e-6,0*v_q,':')
-        # axs.set_ylim(-1e6,1e6)
+
+        #if not len(qbraks):
+        #    print('no brackets, writing disprel')
+        #    fig,axs=plt.subplots()
+        #    axs.plot(v_q*1e-6, v_disprel)
+        #    axs.plot(v_q*1e-6,0*v_q,':')
+        #    #axs.set_ylim(-1e6,1e6)
         # #axs.set_xlim(0,20)
-        # for qb in qbraks:
-        #     axs.plot(qb[0]*self.width,0,'x', ms=20)
-        # fig.savefig('qscan.png')
-        # sys.exit(0)
+        #    for qb in qbraks:
+        #        axs.plot(qb[0]*self.width,0,'x', ms=20)
+        #    fig.savefig('qscan.png')
+        #    sys.exit(0)
 
         return qbraks
 
@@ -989,6 +992,25 @@ class ElasticFreeSlab:
 
         return ombraks
 
+    def find_Lamb_q_at_Omega_oddmode_zero_asymptotic_small_qw(self, Omega):
+        om = Omega * self.width/self._Vs 
+        rv = self._Vl_norm 
+        vsq = om * np.sqrt((1-1/rv**2)/3) + om*om * (1/(6*rv**2)-9/40)
+        V_asy = self._Vs*np.sqrt(vsq)
+        q = Omega/ V_asy 
+        return q
+
+    def find_Lamb_Omega_at_q_oddmode_zero_asymptotic_small_qw(self, q, even_modes=True):
+        # returns q(Omega) for small qw
+        if even_modes:
+            return 0; # don't know answer yet
+        else:
+            X = q*self.width
+            rv = self._Vl_norm 
+            V_asy = self._Vs*np.sqrt( X**2*(1-rv**2)/3 )
+            Omega = q * V_asy 
+            return Omega
+
     def find_Lamb_Omegas_at_q(self, q, max_modes, even_modes=True):
         """Find disperison of Lamb"""
         # q must be smaller than Omega/V_l
@@ -1051,6 +1073,8 @@ class ElasticFreeSlab:
         # qbraks = self._find_Lamb_q_brackets_smart(Omega, drfunc)
         qbraks = self._find_Lamb_q_brackets(Omega, drfunc, self.q_bracketing_resolution)
 
+        #if not len(qbraks):
+        #    print("No brackets for Omega ", Omega)
         # Search in reverse order to find highest qs first
         qbraks.reverse()
         for qbrak in qbraks:
