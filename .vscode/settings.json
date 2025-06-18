@@ -198,7 +198,7 @@
         "zjkl",
         "zwrapper"
     ],
-    "python.defaultInterpreterPath": " C:\\Users\\mq98002769\\nbpy-313\\scripts\\python.exe",
+    "python.defaultInterpreterPath": "C:\\Users\\mq98002769\\nbpy-313\\scripts\\python.exe",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend",

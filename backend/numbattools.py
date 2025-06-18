@@ -56,6 +56,7 @@ def int2D_simp(mat, dx=1.0, dy=1.0):
     return sciint.simpson(sciint.simpson(mat)) * dx * dy
 
 def process_fortran_return(resm, msg):
+    """Check return values of any Fortran function with errco, emsg style return codes"""
 
     fort_err, fort_mesg = resm[-2:]
     if fort_err:
@@ -72,7 +73,7 @@ def process_fortran_return(resm, msg):
 
 def indent_string(s_in, indent=2):
     s_ind = indent * ' '
-    s_out= s_ind + s_in 
+    s_out= s_ind + s_in
     s_out=s_out.replace('\n', '\n'+s_ind)
     return s_out
 

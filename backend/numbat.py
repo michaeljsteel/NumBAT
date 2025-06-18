@@ -25,6 +25,8 @@ import objects
 from modecalcs import Simulation
 import meshing.templates as mshtemplates
 
+from fortran import nb_fortran
+import nbversion
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
@@ -191,6 +193,16 @@ class _NumBATApp:
 
         if int(pyver[0])<3 or int(pyver[1])<10:
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.11 or later.')
+
+        s_fortver = str(nb_fortran.get_fortran_compiled_nb_version(), "utf-8")
+        version_match = s_fortver == nbversion.NUMBAT_VERSION_STR_MMM
+        if not version_match:
+            reporting.report_and_exit(
+                f'NumBAT has detected different versions for the Python (ver={nbversion.NUMBAT_VERSION_STR_MMM}) and Fortran components (ver={s_fortver}).\n Most likely, you need to rebuild the Fortran module.'
+                )
+
+    def version(self):
+        return nbversion.NUMBAT_VERSION_STR_MMM
 
 
 # always returns the singleton NumBATApp object

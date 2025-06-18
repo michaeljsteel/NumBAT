@@ -1,18 +1,21 @@
 
 #include "numbat_decl.h"
 
+
 module numbatmod
 
    !  Use intel compiler to check passing conventions
-#ifdef __INTEL_COMPILER
+   #ifdef __INTEL_COMPILER
    use ifport
-#endif
+   #endif
 
    use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
-      stdout=>output_unit, &
-      stderr=>error_unit
+   stdout=>output_unit, &
+   stderr=>error_unit
 
    implicit none
+
+   #include "nbversion_incl.h"
 
    integer(8), parameter :: P1_NODES_PER_EL = 3
    integer(8), parameter :: P2_NODES_PER_EL = 6
@@ -29,14 +32,14 @@ module numbatmod
    ! indices into MeshEntities%v_xy
    !   ** these elements start at these values +1 **
    integer(8), parameter :: ETY_TAG_OFFSET_FACE = 0         ! uses slot 1
-   integer(8), parameter :: ETY_TAG_OFFSET_P2_EDGES = 1     ! uses slots 2,3,4  
-   integer(8), parameter :: ETY_TAG_OFFSET_P3_VERTICES = 4  ! uses slots 5,6,7  
+   integer(8), parameter :: ETY_TAG_OFFSET_P2_EDGES = 1     ! uses slots 2,3,4
+   integer(8), parameter :: ETY_TAG_OFFSET_P3_VERTICES = 4  ! uses slots 5,6,7
    integer(8), parameter :: ETY_TAG_OFFSET_P3_NODES = 7     ! uses slots 8..13
    integer(8), parameter :: ETY_TAG_OFFSET_P3_INTERIOR = 13 ! uses slots 8..14
 
    ! indices into MeshEntities%v_ety_props
-   integer(8), parameter :: ETY_PROP_PHYSTYPE = 1 
-   integer(8), parameter :: ETY_PROP_DIMENSION = 2 
+   integer(8), parameter :: ETY_PROP_PHYSTYPE = 1
+   integer(8), parameter :: ETY_PROP_DIMENSION = 2
 
 
 

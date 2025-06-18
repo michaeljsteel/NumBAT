@@ -1,3 +1,13 @@
+! Let python know the compiled version of the code
+! To check git changes that have been pulled but not built
+subroutine get_fortran_compiled_nb_version(ver_str)
+   use numbatmod
+
+   character(len=EMSG_LENGTH), intent(out) :: ver_str
+
+   write(ver_str, '(A)') NUMBAT_VERSION_STR_MMM
+
+   end subroutine
 
 subroutine calc_em_modes(n_modes, lambda, dimscale_in_m, bloch_vec, shift_ksqr, &    !  inputs
    E_H_field, bdy_cdn, itermax, arp_tol, debug, &
