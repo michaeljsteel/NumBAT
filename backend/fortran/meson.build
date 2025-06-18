@@ -1,9 +1,14 @@
+
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.1.0',
+#  version: project_version,
   meson_version: '>1.4.0'
 )
+
+version_output = run_command(find_program('python3'), files('../nbversion.py'))
+project_version = version_output.stdout().strip()
+
 
 ccomp = meson.get_compiler('c')
 fcomp = meson.get_compiler('fortran')
