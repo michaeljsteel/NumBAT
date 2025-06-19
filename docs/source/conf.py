@@ -49,15 +49,19 @@ from pathlib import Path
 #
 
 #sys.path.insert(0, str(Path.home() / 'research/numbat/nb_releases/nb_latest/backend'))
-#sys.path.insert(0, '../backend')
+
+sys.path.insert(0, '../../backend')   # This file is run from docs/source
+
 #sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
 #sys.path.insert(0, r'%HOMEPATH%\numbat\nb_releases\nb_latest\backend')
 
-sys.path.insert(0, str(Path.home() / 'research/numbat/devel_1/backend'))
+#sys.path.insert(0, str(Path.home() / 'research/numbat/devel_1/backend'))
+#print('path is', sys.path)
+#import os
+#print(os.getcwd())
 
 from nbversion import *
 
-print('path is', sys.path)
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
