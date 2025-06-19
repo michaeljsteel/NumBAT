@@ -5,9 +5,9 @@
 module numbatmod
 
    !  Use intel compiler to check passing conventions
-   #ifdef __INTEL_COMPILER
+#ifdef __INTEL_COMPILER
    use ifport
-   #endif
+#endif
 
    use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
    stdout=>output_unit, &
@@ -15,7 +15,7 @@ module numbatmod
 
    implicit none
 
-   #include "nbversion_incl.h"
+#include "nbversion_incl.h"
 
    integer(8), parameter :: P1_NODES_PER_EL = 3
    integer(8), parameter :: P2_NODES_PER_EL = 6
