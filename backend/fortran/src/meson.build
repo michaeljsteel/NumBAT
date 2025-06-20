@@ -10,7 +10,7 @@ nb_module_fsrcs = files(
 )
 
 nb_pyinterface_fsrcs = files(
-    'ac_alpha_analytic.f90',
+    'ac_alpha_analytic_f2py_entry.f90',
     'ac_alpha_quadrature.f90',
     'ac_mode_energy_analytic.f90',
     'ac_mode_energy_quadrature.f90',
@@ -37,6 +37,7 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
+    'ac_alpha_analytic.f90',
   #'quicksort.f90',
   'construct_solution_fields_ac.f90',
   'construct_solution_fields_em.f90',
