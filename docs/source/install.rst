@@ -621,7 +621,7 @@ At long last, we are ready to build |NUMBAT| itself.
     $ cd <NumBAT>/backend
     $ python .\nb_install_tester.py
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`sec-troubleshooting-windows-label`.
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`sec-troubleshooting-windows-label`. But before moving, please read the following section on creating a specalised |NUMBAT| command terminal.
 
 #. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
 
@@ -677,7 +677,7 @@ We will actually run two installers: one for the free GMsh mesh generation tool,
 
 #. Download the `Windows build of Gmsh <https://gmsh.info>`_ and unzip the tree into ``usr_local\packages\gmsh``.  The Gmsh executable should now be at ``<NumBAT>\usr_local\packages\gmsh\gmsh.exe``.
 
-#. Download the `Windows installer for |NUMBAT| <https://github.com/michaeljsteel/NumBAT>`_ from the |NUMBAT| github page. The link to the installer can be found at the bottom of the *Readme* section and also under the *Releases* heading in the right-hand column of the page.
+#. Download the `Windows installer for NumBAT <https://github.com/michaeljsteel/NumBAT>`_ from the |NUMBAT| github page. The link to the installer can be found at the bottom of the *Readme* section and also under the *Releases* heading in the right-hand column of the page.
 
    Run the installer choosing an install directory in the ``<NumBAT_BASE>\nb_releases`` folder.
 
@@ -692,9 +692,10 @@ We will actually run two installers: one for the free GMsh mesh generation tool,
 
       $ make tut01
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please check the instructions above again, and if still stuck, follow the instructions under :ref:`sec-helpinstall-label` to seek assistance.
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.
 
-.. _sec-troubleshooting-windowsterminal-label:
+   If not, please check the instructions above again, and if still stuck, please read the :ref:`troubleshooting <sec-troubleshooting-windows-label>` section to attempt to diagnose the problem. Then follow the instructions at :ref:`sec-helpinstall-label` to seek assistance.
+
 
 
 
@@ -706,28 +707,27 @@ We will actually run two installers: one for the free GMsh mesh generation tool,
 Troubleshooting a Windows installation
 -------------------------------------------
 
-#. My build of |NUMBAT| completes but the  ``nb_install_tester.py`` program complains the |NUMBAT| fortran ``nb_fortran.pyd`` dynamically linked library (DLL) can't be loaded.
+#.  My build of |NUMBAT| completes but the  ``nb_install_tester.py`` program complains the |NUMBAT| fortran ``nb_fortran.pyd`` dynamically linked library (DLL) can't be loaded.
 
-  This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
+    This is usually due to another DLL required by |NUMBAT| not being found, either because it is in an unexpected location or missing altogether.  This can be a little painful to diagnose. The following procedure is relatively straightforward.
 
-  #. Download the *Dependencies* tool available as a zip file install from  `github <https://github.com/lucasg/Dependencies>`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
+    #.  Download the *Dependencies* tool available as a zip file install from  `github <https://github.com/lucasg/Dependencies>`_. This tool displays all the DLL dependencies of a given file and whether or not they have been located in the file system. Extract the zip file to a folder named ``dependencies`` in ``<NumBAT_BASE>\usr_local\packages``.
 
-  #. Now we can apply the tool to the |NUMBAT| python dll.
+    #.  Now we can apply the tool to the |NUMBAT| python dll.
 
-    Start the ``DependenciesGui.exe`` tool::
+        Start the ``DependenciesGui.exe`` tool ::
 
-      $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+           $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
 
-    Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
+        Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
 
+        Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
 
-    Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+    #.  Alternatively, you can try the command line version of this tool ::
 
-  #. Alternatively, you can try the command line version of this tool::
+           $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 5 -modules nb_fortran.pyd
 
-      $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 5 -modules nb_fortran.pyd
-
-  #. If you find a missing DLL by one of these methods, please :ref:`let us know <sec-helpinstall-label>`. It may suggest a problem with the pre-built installer or the documentation instructions.
+  If you find a missing DLL by one of these methods, please :ref:`let us know <sec-helpinstall-label>`. It may suggest a problem with the pre-built installer or the documentation instructions.
 
 
 
