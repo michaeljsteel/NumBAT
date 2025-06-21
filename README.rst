@@ -69,7 +69,7 @@ For detailed instructions, please see the Installation chapter in the `HTML docu
 
 Binary install
 ^^^^^^^^^^^^^^^^^^
-On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.0.0.1>`_. This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
+On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.1.0>`_. This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
 
 You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
 
