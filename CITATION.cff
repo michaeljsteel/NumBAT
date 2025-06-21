@@ -1,5 +1,3 @@
-# This CITATION.cff file was generated with cffinit.
-
 cff-version: 1.2.0
 title: NumBAT - The Numerical Brillouin Analysis Tool
 message: 'If you use this software, please cite it as below.'

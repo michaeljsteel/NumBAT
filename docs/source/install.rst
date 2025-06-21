@@ -18,6 +18,12 @@ The Linux builds can also be run under virtual machines on MacOS and Windows if 
 
 In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/|NUMBAT|>`_. Please always download the latest release from the github page.
 
+You can now skip forward to the section for your operating system.
+
+
+Installing on Linux
+================================
+
 
 Install locations
 ---------------------
@@ -29,16 +35,20 @@ such as ``/usr/local/`` or ``/opt/local/`` though you may certainly choose to do
 Here and throughout this documentation, we use the string ``<NumBAT>`` to indicate the root |NUMBAT| install directory (e.g. ``/usr/local/NumBAT``, ``/home/mike/NumBAT``, ``/home/myuserid/research/NumBAT``).
 
 
+Requirements
+---------------------
+|NUMBAT| is developed and tested using relatively recent operating system, compiler and libraries. You should not need the very latest releases, but in general compilation will be smoother on an up-to-date system. In particular, we recommend using:
 
-Installing on Linux
-================================
+  - an OS release from 2023 or later (eg Ubuntu 24.04/24.10)
+  - gcc compiler of version 13.0 or later
+  - python 3.11 or later
 
+|NUMBAT| is currently developed and tested on Ubuntu 25.04 with the following
+package versions: Python 3.13, Numpy 2.0, Arpack-NG, Suitesparse 7.1.0,
+and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS linear algebra library. We
+strongly recommend linking |NUMBAT| against an optimised version, such as the MKL
+library provided in the free Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries (AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
 
-|NUMBAT| has been developed and tested on Ubuntu 23.04 with the following
-package versions: Python 3.11.4, Numpy 1.24.2, Arpack-NG, Suitesparse 7.1.0,
-and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS and :eq: libraries. We
-strongly recommend linking |NUMBAT| against optimised versions, such as the MKL
-library provided in the  free Intel OneAPI library.
 
 |NUMBAT| has also been successfully installed by users on Debian and
 RedHat/Fedora, and with different versions of packages, but these installations
@@ -52,11 +62,6 @@ ability to run ``sudo``) on your machine.
 The following steps use package syntax for Ubuntu/Debian systems. For other
 Linux flavours, you may need to use different package manager syntax and/or
 slightly different package names.
-
-The code depends critically on matrix-vector operations provided by Lapack and
-Blas libraries. We strongly recommend using an optimised library such as the
-Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries
-(AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
 
 Required libraries
 --------------------------
@@ -121,8 +126,6 @@ Building |NUMBAT| itself
       $ pip3 install numpy matplotlib scipy psutils
 
 
-   Ensure that your ``numpy`` version  is from the 1.26.x and not the new 2.0.0 line.
-
 #. If you wish to be able to rebuild the documentation, we need some additional modules ::
 
      $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc
@@ -159,19 +162,20 @@ Building |NUMBAT| itself
 
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
 
+#. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
 
 
 
-Other build configurations
---------------------------
+Using the Intel Fortran compiler
+----------------------------------
 
 The default compiler for Linux is GCC's ``gfortran``.
 
-It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's free OneAPI HPC toolkit.
+It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's free OneAPI HPC toolkit. You may find some modest performance improvements.
 
-To do so,
+To use the Intel compiler,
 
-#. Install the Intel OneAPI Base and HPC Toolkits.
+#. If you have not already done so, install the Intel OneAPI Base and HPC Toolkits as described above.
 #. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.)
 #. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make gcc``, please use::
 
@@ -204,14 +208,11 @@ Here are a few traps to watch out for:
 
 #. Please ensure to use relatively recent libraries for all the Python components. This includes using
 
-   - Python: 3.10 or later
+   - Python: 3.11 or later
    - ``matplotlib``: 3.9.0 or later
    - ``scipy``:  1.13.0 or later
-   - ``numpy``:  1.26.2 or later
+   - ``numpy``:  2.0 or later
 
-#. But try not to use very recently released major upgrades.
-
-   Notably the 2.0.0 series of ``numpy``, which was only released in mid-June 2024 includes major changes to ``numpy`` architecture and is  not yet supported.
 
 #. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
 
@@ -226,7 +227,7 @@ Here are a few traps to watch out for:
 
    - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
 
-#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, useful information can be obtained from the GNU debugger ``gdb`` as follows:
+#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, you have quite possibly found a bug that should be reported to us. Useful information about a crash can be obtained from the GNU debugger ``gdb`` as follows:
 
     #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
 
@@ -243,7 +244,7 @@ Here are a few traps to watch out for:
 Installing on MacOS
 ================================
 
-|NUMBAT| can also be installed on MacOS, though this is currently somewhat experimental and has only been performed on certain versions of MacOS.  Any comments on difficulties and solutions will be appreciated.
+|NUMBAT| can also be installed on MacOS, though this is currently somewhat experimental and has only been performed on certain versions of MacOS.  We are keen to increase our support of the MacOS build. Any comments on difficulties and solutions will be appreciated, so please don't hesitate to get in touch using the directions at :ref:`sec-helpinstall-label`.
 
 The following steps have worked for us:
 
@@ -351,7 +352,9 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
     $ cd <NumBAT>/backend
     $ python ./nb_install_tester.py
 
-#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|
+#. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.
+
+#. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
 
 
 Installing on Windows
