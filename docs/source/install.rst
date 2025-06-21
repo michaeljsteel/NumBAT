@@ -387,27 +387,28 @@ If you are building |NUMBAT| from scratch, you definitely need to install Make. 
 
 If you are using the pre-compiled version, this step is not essential but it can make exploring the tutorials more convenient and we recommend it.
 
-  #. To install ``make``, enter
+To install ``make``, enter ::
 
-     $ winget install ezwinports.make
+      $ winget install ezwinports.make
 
     and then start a new terminal (so that the PATH variable is updated to find ``make.exe``.)
 
 
 Setting up the |NUMBAT| Python environment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+|NUMBAT| is entirely driven from Python, either as scripts or Jupyter notebooks.
 
 You can use an existing Python installation if you have a sufficiently recent version (>3.11.0) installed, or download a new Python installer. Note that |NUMBAT| is a self-contained tree and will not add any files to your Python installation.
 
 
-  #. If you do not have a suitable current Python, download and run the installer for a recent version
+#. If you do not have a suitable current Python, download and run the installer for a recent version
   from the `Python website <https://www.python.org/downloads/windows/>`_.
 
-  By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
+   By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
   say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
-  #. Create a python virtual environment for working with |NUMBAT|.
+#. Create a python virtual environment for working with |NUMBAT|.
       You can use any name and location for your environment.
 
     To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app)
@@ -416,15 +417,13 @@ You can use an existing Python installation if you have a sufficiently recent ve
         $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
 
-  #. Activate the new python virtual environment ::
+#. Activate the new python virtual environment ::
 
        $ %HOMEPATH%\npby3\Scripts\activate
 
-  #. Install the necessary python tools and libraries ::
+#. Install the necessary python tools and libraries ::
 
-     $ pip3 install numpy matplotlib scipy psutil ninja meson==1.4.1
-
-   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+     $ pip3 install numpy matplotlib scipy psutil
 
 
 Next steps
