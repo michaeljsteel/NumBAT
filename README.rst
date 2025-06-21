@@ -86,8 +86,9 @@ If you find NumBAT useful in your work, we would appreciate a citation as follow
 B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and M. J. Steel, "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", J. Lightwave Technol. **37**, 3791-3804 (2019).
 
 **BibTeX:**
+
 ```BibTeX
-@article{numbat2017
+@article{numbat2017,
    authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and M. J. Steel},
    title={Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides},
    journal={Journal of Lightwave Technology},
