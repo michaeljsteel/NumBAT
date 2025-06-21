@@ -13,10 +13,12 @@ project(
 ccomp = meson.get_compiler('c')
 fcomp = meson.get_compiler('fortran')
 
-message('@0@'.format(ccomp.get_id()))
-message('@0@'.format(fcomp.get_id()))
+#message('@0@'.format(ccomp.get_id()))
+#message('@0@'.format(fcomp.get_id()))
 
-message('compid', ccomp.get_id())
+message('C compiler:', ccomp.get_id())
+message('F compiler:', fcomp.get_id())
+
 message('host:', host_machine.system())
 
 
