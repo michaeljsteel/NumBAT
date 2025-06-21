@@ -77,13 +77,19 @@ Citations
 If you find NumBAT useful in your work, we would appreciate a citation as follows:
 
 @article{numbat2017
-   authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and Michael J. Steel,
-   title={Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides}
-   journal={Journal of Lightwave Technology}
-   volume={37}
-   year={2019}
-   pages={3791--3804}
-   doi={10.1109/JLT.2019.2920844}
-   url={https://github.com/michaeljsteel/NumBAT}
+   authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and Michael J. Steel},
 
+   title={Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides},
+
+   journal={Journal of Lightwave Technology},
+
+   volume={37},
+
+   year={2019},
+
+   pages={3791--3804},
+
+   doi={10.1109/JLT.2019.2920844},
+
+   url={https://github.com/michaeljsteel/NumBAT}
 }
