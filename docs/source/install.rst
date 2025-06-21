@@ -16,10 +16,13 @@ Information for all platforms
 While |NUMBAT| is developed on Linux, it can also be built natively on both MacOS and Windows.
 The Linux builds can also be run under virtual machines on MacOS and Windows if desired.
 
-In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/|NUMBAT|>`_. Please always download the latest release from the github page.
+In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please always download the latest release from the github page.
 
-You can now skip forward to the section for your operating system.
+You can now skip forward to the section for your operating system: Linux (:ref:`sec-linuxinstall-label`),
+MacOS (:ref:`sec-macinstall-label`) or Windows (:ref:`sec-wininstall-label`).
 
+
+.. _sec-linuxinstall-label:
 
 Installing on Linux
 ================================
@@ -198,48 +201,10 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
-.. _sec-troubleshooting-label:
 
 
-Troubleshooting Linux and MacOS installs
--------------------------------------------
-Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
-Here are a few traps to watch out for:
+.. _sec-macinstall-label:
 
-#. Please ensure to use relatively recent libraries for all the Python components. This includes using
-
-   - Python: 3.11 or later
-   - ``matplotlib``: 3.9.0 or later
-   - ``scipy``:  1.13.0 or later
-   - ``numpy``:  2.0 or later
-
-
-#. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
-
-#. In general, the GCC build is more tested and forgiving than the build with the Intel compilers and we recommend the GCC option.  However, we do recommend using the Intel OneAPI math libraries as described above. This is the easiest way to get very high performance LAPACK and BLAS libraries with a well-designed directory tree.
-
-#. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
-
-   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``.
-
-
-     You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
-
-   - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
-
-#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, you have quite possibly found a bug that should be reported to us. Useful information about a crash can be obtained from the GNU debugger ``gdb`` as follows:
-
-    #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
-
-    #. Ensure that ``gdb`` is installed.
-
-    #. Rerun the script that causes the crash. You should now have a core dump in the directory determined in step 1.
-
-    #. Execute ``gdb`` as follows::
-
-        $ gdb <path_to_numbat_python_env>  <path_to_core file>
-
-    #. In gdb, enter ``bt`` for *backtrace* and try to identify the point in the code at which the crash has occurred.
 
 Installing on MacOS
 ================================
@@ -357,21 +322,86 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 #. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
 
 
+.. _sec-troubleshooting-label:
+
+Troubleshooting Linux and MacOS installs
+-------------------------------------------
+Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
+Here are a few traps to watch out for:
+
+#. Please ensure to use relatively recent libraries for all the Python components. This includes using
+
+   - Python: 3.11 or later
+   - ``matplotlib``: 3.9.0 or later
+   - ``scipy``:  1.13.0 or later
+   - ``numpy``:  2.0 or later
+
+
+#. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
+
+#. In general, the GCC build is more tested and forgiving than the build with the Intel compilers and we recommend the GCC option.  However, we do recommend using the Intel OneAPI math libraries as described above. This is the easiest way to get very high performance LAPACK and BLAS libraries with a well-designed directory tree.
+
+#. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
+
+   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``.
+
+
+     You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
+
+   - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
+
+#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, you have quite possibly found a bug that should be reported to us. Useful information about a crash can be obtained from the GNU debugger ``gdb`` as follows:
+
+    #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
+
+    #. Ensure that ``gdb`` is installed.
+
+    #. Rerun the script that causes the crash. You should now have a core dump in the directory determined in step 1.
+
+    #. Execute ``gdb`` as follows::
+
+        $ gdb <path_to_numbat_python_env>  <path_to_core file>
+
+    #. In gdb, enter ``bt`` for *backtrace* and try to identify the point in the code at which the crash has occurred.
+
+
+
+
+.. _sec-wininstall-label:
+
 Installing on Windows
 ================================
 
-There are several approaches for installing |NUMBAT| on Windows. You can build the entire system from scratch, as with the Linux and MacOS installs, or you can use a pre-built installer available from the github page.
+There are two methods for installing |NUMBAT| on Windows. You can build the entire system from scratch, as with the Linux and MacOS installs, or you can use a pre-built installer available from the github page.
 
-In both cases, you need to set up the python environment.  This is described first below, followed by the two alternative
-methods of installing |NUMBAT| itself.
+For both methods, there are some common steps, including setting up the python environment and installing the open-source GMsh tool.
+These commons steps are described first.
 
-Setting up Python on Windows
--------------------------------------
+Common installation steps for both methods
+-----------------------------------------------------
 
-Python installers can be downloaded from the `Python website <https://www.python.org/downloads/windows/>`_.
+Installing Make
+^^^^^^^^^^^^^^^^^^^^^^
+GNU Make is a build tool that helps execute large numbers of commands simply.
+
+If you are building |NUMBAT| from scratch, you definitely need to install Make. (The installation is very small.)
+
+If you are using the pre-compiled version, this step is not essential but it can make exploring the tutorials more convenient and we recommend it.
+
+  #. To install ``make``, enter
+
+     $ winget install ezwinports.make
+
+    and then start a new terminal (so that the PATH variable is updated to find ``make.exe``.)
 
 
-  #. If you do not have a current Python, download and run the installer for a recent version
+Setting up the |NUMBAT| Python environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can use an existing Python installation if you have a sufficiently recent version (>3.11.0) installed, or download a new Python installer. Note that |NUMBAT| is a self-contained tree and will not add any files to your Python installation.
+
+
+  #. If you do not have a suitable current Python, download and run the installer for a recent version
   from the `Python website <https://www.python.org/downloads/windows/>`_.
 
   By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
@@ -393,21 +423,17 @@ Python installers can be downloaded from the `Python website <https://www.python
 
   #. Install the necessary python tools and libraries ::
 
-     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja meson==1.4.1
+     $ pip3 install numpy matplotlib scipy psutil ninja meson==1.4.1
 
    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet
-   supported by some other packages we use.
 
-  #. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing
+Next steps
+^^^^^^^^^^^^^^^
+You can proceed to install |NUMBAT| using either Method 1 (building fully from source), or Method 2 (using the pre-built installer from the github page).
 
-     $ winget install ezwinports.make
 
-    and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
-
-  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
-
+.. _sec-wininstallmeth1-label:
 
 Installing |NUMBAT| Method 1: full build from source
 ----------------------------------------------------------
@@ -543,9 +569,19 @@ Building |NUMBAT|
 """"""""""""""""""""""
 At long last, we are ready to build |NUMBAT| itself.
 
+#. Your command prompt needs to have your |NUMBAT| python environment activated.
 
+   If you have opened a new prompt since setting up the python environment, enter ::
 
-#. Move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
+       $ %HOMEPATH%\npby3\Scripts\activate
+
+#. We need two additional python modules to run the build process ::
+
+     $ pip3 install ninja meson==1.4.1
+
+   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+
+#. In your command prmopt, move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
     $ cd <NumBAT_BASE>
     $ cd nb_releases\nb_latest
@@ -597,9 +633,12 @@ At long last, we are ready to build |NUMBAT| itself.
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`sec-troubleshooting-windows-label`.
 
 
+.. _sec-wininstallmeth2-label:
+
 Installing |NUMBAT| Method 2: pre-built Windows installer
 -------------------------------------------------------------
-*Note*: The installer will allow you to run |NUMBAT| problems and make changes to the code on the Python side only. (For most people, this is fine.)
+*Note*: The installer will allow you to run |NUMBAT| problems and make changes to the code on the Python side only.
+You won't be able to make changes to the Fortran finite element code. (For most people, this is completely fine.)
 The installer is not updated as frequently as the main source tree.
 
 
