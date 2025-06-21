@@ -25,7 +25,9 @@ Implementation
 ---------------
 NumBAT uses the finite element method to solve modal fields for both the optical and elastic fields, as solutions to Maxwell's equations and the elastic wave equation respectively.
 
-The core finite element solvers are written in modern Fortran. All interaction with NumBAT is performed through the python front end, either using `.py` scripts or Jupyter notebooks.
+The core finite element solvers are written in modern Fortran. Meshing is performed using the Gmsh open source tool.
+
+All user interaction with NumBAT is performed through a sophisticated python front end, either using `.py` scripts or Jupyter notebooks.
 
 
 Example results
@@ -67,9 +69,9 @@ For detailed instructions, please see the Installation chapter in the `HTML docu
 
 Binary install
 ^^^^^^^^^^^^^^^^^^
-On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.0.0.1>`_.
+On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.0.0.1>`_. This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
 
-You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and gmsh to work with NumBAT.
+You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
 
 
 Citations
