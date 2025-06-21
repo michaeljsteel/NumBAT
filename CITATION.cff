@@ -1,21 +1,29 @@
-cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
-authors:
-  - family-names: "Steel"
-    given-names: "Michael J."
-    orcid: https://orcid.org/0000-0003-3541-6439
-  - family-names: "Sturmberg"
-    given-names: "Bjorn C. P."
-  - family-names: "Dossou"
-    given-names: "Kokou B."
-  - family-names: "Smith"
-    given-names: "Mike J. A."
-  - family-names: Morrison"
-    given-names: "Blair"
-  - family-names: "Poulton"
-    given-names: "Christopher G."
+# This CITATION.cff file was generated with cffinit.
 
-title: "NumBAT - The Numerical Brillouin Analysis Tool"
+cff-version: 1.2.0
+title: NumBAT - The Numerical Brillouin Analysis Tool
+message: 'If you use this software, please cite it as below.'
+type: software
+authors:
+  - family-names: Steel
+    given-names: Michael J.
+    orcid: 'https://orcid.org/0000-0003-3541-6439'
+  - family-names: Sturmberg
+    given-names: Bjorn C. P.
+  - family-names: Dossou
+    given-names: Kokou B.
+  - family-names: Smith
+    given-names: Mike J. A.
+  - family-names: Morrison"
+    given-names: Blair
+  - family-names: Poulton
+    given-names: Christopher G.
+url: 'https://github.com/michaeljsteel/NumBAT'
+keywords:
+  - stimulated Brillouin scattering
+  - finite element method
+  - SBS
+  - nonlinear optics
+license: GPL-3.0
 version: 2.1.0
-doi: "10.1109/JLT.2019.2920844"
-url: "https://github.com/michaeljsteel/NumBAT"
+doi: 10.1109/JLT.2019.2920844
