@@ -18,8 +18,7 @@ The Linux builds can also be run under virtual machines on MacOS and Windows if 
 
 In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please always download the latest release from the github page.
 
-You can now skip forward to the section for your operating system: Linux (:ref:`sec-linuxinstall-label`),
-MacOS (:ref:`sec-macinstall-label`) or Windows (:ref:`sec-wininstall-label`).
+You can now skip forward to the section for your operating system: :ref:`Linux <sec-linuxinstall-label>`, :ref:`MacOS <sec-macinstall-label>` or :ref:`Windows <sec-wininstall-label>`.
 
 
 .. _sec-linuxinstall-label:
@@ -430,7 +429,7 @@ You can use an existing Python installation if you have a sufficiently recent ve
 
 Next steps
 ^^^^^^^^^^^^^^^
-You can proceed to install |NUMBAT| using either Method 1 (building fully from source), or Method 2 (using the pre-built installer from the github page).
+You can proceed to install |NUMBAT| using either :ref:`Method 1 <sec-wininstallmeth1-label>` (building fully from source), or :ref:`Method 2 <sec-wininstallmeth2-label>` (using the pre-built installer from the github page).
 
 
 .. _sec-wininstallmeth1-label:
