@@ -391,7 +391,7 @@ To install ``make``, enter ::
 
       $ winget install ezwinports.make
 
-    and then start a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+and then start a new terminal (so that the PATH variable is updated to find ``make.exe``.)
 
 
 Setting up the |NUMBAT| Python environment
@@ -408,8 +408,7 @@ You can use an existing Python installation if you have a sufficiently recent ve
   say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
-#. Create a python virtual environment for working with |NUMBAT|.
-      You can use any name and location for your environment.
+#.  Create a python virtual environment for working with |NUMBAT|. You can use any name and location for your environment.
 
     To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app)
     from the Start Menu and  enter ::
@@ -417,18 +416,18 @@ You can use an existing Python installation if you have a sufficiently recent ve
         $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
 
-#. Activate the new python virtual environment ::
+#.  Activate the new python virtual environment ::
 
        $ %HOMEPATH%\npby3\Scripts\activate
 
-#. Install the necessary python tools and libraries ::
+#.  Install the necessary python tools and libraries ::
 
-     $ pip3 install numpy matplotlib scipy psutil
+       $ pip3 install numpy matplotlib scipy psutil
 
 
 Next steps
 ^^^^^^^^^^^^^^^
-You can proceed to install |NUMBAT| using either :ref:`Method 1 <sec-wininstallmeth1-label>` (building fully from source), or :ref:`Method 2 <sec-wininstallmeth2-label>` (using the pre-built installer from the github page).
+You can proceed to install |NUMBAT| by either :ref:`building fully from source <sec-wininstallmeth1-label>`, or :ref:`using the pre-built installer <sec-wininstallmeth2-label>`  from the |NUMBAT|| page.
 
 
 .. _sec-wininstallmeth1-label:
@@ -437,7 +436,7 @@ Installing |NUMBAT| Method 1: full build from source
 ----------------------------------------------------------
 
 
-The Windows version of |NUMBAT| is built using the native Windows toolchain including Visual Studio and the Intel Fortran compiler. There is a substantial number of steps and tools required, but it should go relatively smoothly.
+The Windows version of |NUMBAT| is built using the native Windows toolchain including Visual Studio and the Intel Fortran compiler. Since a standard Windows installation, is not set up as a development environment, there are a number of steps and tools required, but it should go relatively smoothly.
 
 
 Windows build tools
@@ -599,18 +598,12 @@ At long last, we are ready to build |NUMBAT| itself.
 
    This should take 2 to 3 minutes.
 
-.. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-..    $ cd backend\fortran
-..    $ make -f Makefile.win
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-windows-label` for further ideas.
 
+#. If you hit a compile error you can't easily resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
-
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
-
-#. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
-
-#. Copy the .dlls built earlier to this directory::
+#. If the compilation has succeeded, copy the .dlls built earlier into the current directory (that is, to ``<NumBAT>\backend\fortran``)::
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 
@@ -630,6 +623,36 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please see the suggestions at :ref:`sec-troubleshooting-windows-label`.
 
+#. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
+
+Creating a self-contained command terminal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you plan to build the fortran code frequently,
+both the python and Intel oneAPI paths need to be set up in your terminal.
+Doing this manually requires typing::
+
+    $ %HOMEPATH%\npby3\Scripts\activate
+    $ c:\Program Files (x86)\Intel\oneAPI\setvars.bat
+
+This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
+
+Here is a procedure for doing this
+
+  #. Copy the launcher file  ``numbat_cmd.bat`` to your |NUMBAT| root directory::
+
+       $ copy <NumBAT>\share\numbat_cmd.bat <NumBAT_BASE>
+
+  #. Create a desktop shortcut to the Windows command terminal by using File Explorer to open the folder ``c:\Windows\System32``, typing ``cmd.exe`` in the search box at top right, and then right-clicking *Send to Desktop*.
+
+  #. Right click on the new shortcut and open its *Properties* dialog.
+
+  #. Select the *General* tab and change the name field at the top to *NumBAT Terminal*.
+
+  #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat``
+
+  #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
+
 
 .. _sec-wininstallmeth2-label:
 
@@ -639,6 +662,7 @@ Installing |NUMBAT| Method 2: pre-built Windows installer
 You won't be able to make changes to the Fortran finite element code. (For most people, this is completely fine.)
 The installer is not updated as frequently as the main source tree.
 
+We will actually run two installers: one for the free GMsh mesh generation tool, and one for |NUMBAT| itself.
 
 #. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
     say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
@@ -670,35 +694,9 @@ The installer is not updated as frequently as the main source tree.
 
 #. If this program runs without error, congratulations! You are now ready  to proceed to the next chapter to begin using |NUMBAT|.  If not, please check the instructions above again, and if still stuck, follow the instructions under :ref:`sec-helpinstall-label` to seek assistance.
 
+.. _sec-troubleshooting-windowsterminal-label:
 
 
-Creating a self-contained command terminal
----------------------------------------------
-
-If you plan to build the fortran code frequently,
-both the python and Intel oneAPI paths need to be set up in your terminal.
-Doing this manually requires typing::
-
-    $ %HOMEPATH%\npby3\Scripts\activate
-    $ c:\Program Files (x86)\Intel\oneAPI\setvars.bat
-
-This quickly becomes tedious. To automatically activate your python environment and ensure all other necessary paths are correctly setup, it is helpful to create a dedicated launcher for the desktop that executes the required commands on first opening the terminal.
-
-Here is a procedure for doing this
-
-  #. Copy the launcher file  ``numbat_cmd.bat`` to your |NUMBAT| root directory::
-
-       $ copy <NumBAT>\share\numbat_cmd.bat <NumBAT_BASE>
-
-  #. Create a desktop shortcut to the Windows command terminal by using File Explorer to open the folder ``c:\Windows\System32``, typing ``cmd.exe`` in the search box at top right, and then right-clicking *Send to Desktop*.
-
-  #. Right click on the new shortcut and open its *Properties* dialog.
-
-  #. Select the *General* tab and change the name field at the top to *NumBAT Terminal*.
-
-  #. Select the *Shortcut* tab and change the *Target* field to ``%windir%\System32\cmd.exe "/K" %HOMEPATH%\numbat\numbat_cmd.bat``
-
-  #. Click the *Change Icon* button and select the |NUMBAT| icon at ``<NumBAT>\docs\source\numbat.ico``.
 
 
 
@@ -727,7 +725,9 @@ Troubleshooting a Windows installation
 
   #. Alternatively, you can try the command line version of this tool::
 
-      $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 1 -modules nb_fortran.pyd
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\Dependencies.exe -depth 5 -modules nb_fortran.pyd
+
+  #. If you find a missing DLL by one of these methods, please :ref:`let us know <sec-helpinstall-label>`. It may suggest a problem with the pre-built installer or the documentation instructions.
 
 
 
@@ -740,17 +740,13 @@ a virtual machine using either `Microsoft Hyper-V
 <https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_, or a similar tool on MacOS.
 
 Then |NUMBAT| can be installed using exactly the same procedure as described
-above for standard Linux installations.  It is also possible to build |NUMBAT|
-using the `Windows Subsystem for Linux
-<https://msdn.microsoft.com/en-au/commandline/wsl/install_guide>`_, but dealing
-with installing the additional required packages may be quite painful.
-
+above for standard Linux installations.
 
 
 Building the documentation
 ===============================
 
-You can rebuild the documentation you are currently reading by moving into the ``<NumBAT>/docs`` directory and running either ``make html`` or ``make latexpdf``.
+If you should want to, you can rebuild the documentation you are currently reading by moving into the ``<NumBAT>/docs`` directory and running either ``make html`` or ``make latexpdf``.
 
 In each case, the output is placed in the ``<NumBAT>/docs/build`` directory.
 
