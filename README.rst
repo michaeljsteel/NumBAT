@@ -3,7 +3,7 @@ Welcome to NumBAT!
 
 NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
-NumBAT was developed by Michael Steel, Bjorn Sturmberg, Kokou Dossou, and Christopher Poulton in a collaboration between Macquarie University and the University of Technology Sydney, as part of the Australian Research Council Discovery Project DP160101691.
+
 
 Capabilities
 --------------
@@ -74,24 +74,26 @@ On Windows, you can also try the `binary installer <https://github.com/michaeljs
 You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
 
 
-Citations
-----------
+Credits
+------------------------
+NumBAT was developed by Michael Steel, Bjorn Sturmberg, Kokou Dossou, and Christopher Poulton in a collaboration between Macquarie University and the University of Technology Sydney, as part of the Australian Research Council Discovery Project DP160101691.
+
+How to cite
+-------------
 If you find NumBAT useful in your work, we would appreciate a citation as follows:
 
+**Optica Style**
+B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and M. J. Steel, "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", J. Lightwave Technol. **37**, 3791-3804 (2019).
+
+**BibTeX:**
+```BibTeX
 @article{numbat2017
-   authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and Michael J. Steel},
-
+   authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and M. J. Steel},
    title={Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides},
-
    journal={Journal of Lightwave Technology},
-
    volume={37},
-
    year={2019},
-
    pages={3791--3804},
-
    doi={10.1109/JLT.2019.2920844},
-
    url={https://github.com/michaeljsteel/NumBAT}
 }
