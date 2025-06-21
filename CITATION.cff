@@ -1,13 +1,21 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-  - family-names: Steel
-    given-names: Michael J.
+  - family-names: "Steel"
+    given-names: "Michael J."
     orcid: https://orcid.org/0000-0003-3541-6439
-  - family-names: Sturmberg
-    given-names: Bjorn
-  - family-names: Dossou
-    given-names: Kokou
+  - family-names: "Sturmberg"
+    given-names: "Bjorn C. P."
+  - family-names: "Dossou"
+    given-names: "Kokou B."
+  - family-names: "Smith"
+    given-names: "Mike J. A."
+  - family-names: Morrison"
+    given-names: "Blair"
+  - family-names: "Poulton"
+    given-names: "Christopher G."
+
 title: "NumBAT - The Numerical Brillouin Analysis Tool"
 version: 2.1.0
-url:"https://github.com/michaeljsteel/NumBAT"
+doi: "10.1109/JLT.2019.2920844"
+url: "https://github.com/michaeljsteel/NumBAT"

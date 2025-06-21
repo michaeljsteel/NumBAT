@@ -1,9 +1,32 @@
 Welcome to NumBAT!
 --------------------
 
-NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to calculate the interactions of optical and acoustic waves in waveguides.
+NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
 NumBAT was developed by Michael Steel, Bjorn Sturmberg, Kokou Dossou, and Christopher Poulton in a collaboration between Macquarie University and the University of Technology Sydney, as part of the Australian Research Council Discovery Project DP160101691.
+
+Capabilities
+--------------
+NumBAT's capabilities are constantly growing. The current feature set includes:
+  - eigenmode calculation and visualisation of optical waveguide modes
+  - eigenmode calculation and visualisation of elastic waveguide modes
+  - calculation of stimulated Brillouin gain coefficients for both the photoelastic and moving boundary effects
+  - an extensible library of waveguide material files
+  - support for full elastic anisotropy
+  - templates for a large range of waveguide structures and a simple framework for defining user templates to support novel waveguide designs
+
+Support for piezoelectric effects is in development.
+
+
+NumBAT is essentially an eigenmode solver. It does *not* perform longitudinal integration of the SBS coupled mode equations, but the gain coefficients it produces can easily be used as parameters in standard ODE solvers to find the longitudinal evolution of the optical and elastic fields.
+
+
+Implementation
+---------------
+NumBAT uses the finite element method to solve modal fields for both the optical and elastic fields, as solutions to Maxwell's equations and the elastic wave equation respectively.
+
+The core finite element solvers are written in modern Fortran. All interaction with NumBAT is performed through the python front end, either using `.py` scripts or Jupyter notebooks.
+
 
 Example results
 -----------------
@@ -48,3 +71,19 @@ On Windows, you can also try the `binary installer <https://github.com/michaeljs
 
 You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and gmsh to work with NumBAT.
 
+
+Citations
+----------
+If you find NumBAT useful in your work, we would appreciate a citation as follows:
+
+@article{numbat2017
+   authors={B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and Michael J. Steel,
+   title={Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides}
+   journal={Journal of Lightwave Technology}
+   volume={37}
+   year={2019}
+   pages={3791--3804}
+   doi={10.1109/JLT.2019.2920844}
+   url={https://github.com/michaeljsteel/NumBAT}
+
+}
