@@ -7,11 +7,14 @@ def:
 
 
 win:
-	- rmdir /s /q build_win
+#	- rmdir /s /q build_win
 	meson setup --reconfigure --buildtype=release build_win --native-file nb-win-native-file.ini
 	meson compile -C build_win
 	-copy build_win\nb_fortran.dll nb_fortran.pyd
 
+fastwin:
+	meson compile -C build_win
+	-copy build_win\nb_fortran.dll nb_fortran.pyd
 
 
 gccdebug:

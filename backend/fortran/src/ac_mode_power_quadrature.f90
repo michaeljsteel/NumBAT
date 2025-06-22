@@ -5,10 +5,10 @@
 
 ! P_z = Re \int_A \dxdy (-2 i \Omega) c_zjkl u_j^* d_k u_l
 !
-subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
+subroutine ac_mode_power_quadrature_impl (n_modes, n_msh_elts, n_msh_pts, &
    v_mshpt_xy, m_elnd_to_mshpt,  &
    n_elt_mats, v_elt_material, stiffC_zjkl, &
-   q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, errco, emsg)
+   q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, nberr)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -24,13 +24,11 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    complex(8) Omega_AC(n_modes)
    complex(8) soln_ac_u(3,P2_NODES_PER_EL,n_modes,n_msh_elts)
    double precision, dimension(n_modes) :: v_power_Sz_r
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) ::  emsg
 
+   type(NBError) nberr
 
 
    ! Locals
-   type(NBError) nberr
    complex(8), dimension(n_modes) :: v_power_Sz
    double precision el_nds_xy(2,P2_NODES_PER_EL)
 
@@ -52,28 +50,10 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    double precision t_quadwt
 
-!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt
-!f2py intent(in) v_elt_material, x, n_elt_mats, stiffC_zjkl, q_AC
-!f2py intent(in) soln_ac_u, Omega_AC
-
-!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-!f2py depend(v_elt_material) n_msh_pts
-!f2py depend(v_mshpt_xy) n_msh_pts
-!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
-!f2py depend(stiffC_zjkl) n_elt_mats
-!f2py depend(Omega_AC) n_modes
-
-!f2py intent(out) v_power_Sz_r
-
-
-
-   errco=0
-   call nberr%reset()
-
    call quadint%setup_reference_quadratures()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
 
    v_power_Sz = C_ZERO
@@ -98,7 +78,7 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
       do iq=1,quadint%n_quad
 
          call quadint%get_quad_point(iq, t_xy, t_quadwt)
-         RET_ON_NBERR_UNFOLD(nberr)
+         RET_ON_NBERR(nberr)
 
          call basfuncs%evaluate_at_position(i_el, t_xy, is_curved, el_nds_xy, nberr)
          RET_ON_NBERR(nberr)
@@ -183,4 +163,4 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    v_power_Sz_r = real(- 2.0d0 * C_IM_ONE* Omega_AC * v_power_Sz)
 
-end subroutine ac_mode_power_quadrature
+end subroutine ac_mode_power_quadrature_impl

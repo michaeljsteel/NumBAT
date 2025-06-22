@@ -10,39 +10,40 @@ nb_module_fsrcs = files(
 )
 
 nb_pyinterface_fsrcs = files(
-    'ac_alpha_analytic_f2py_entry.f90',
-    'ac_alpha_quadrature.f90',
-    'ac_mode_energy_analytic.f90',
-    'ac_mode_energy_quadrature.f90',
-    'ac_mode_power_analytic.f90',
-    'ac_mode_power_quadrature.f90',
-    #'ac_mode_power_int_v2.f90',
+    'f2py_entry_functions.f90',
+
     'array_material_em.f90',
     'array_material_ac.f90',
     'array_size.f90',
-    'em_mode_energy_int.f90',
-    'em_mode_act_energy_quadrature.f90',
-    'em_mode_power_sz_quadrature.f90',
-    #'em_mode_energy_int_v2_ez.f90',
+
     'em_mode_power_sz_analytic.f90',
+
     'h_mode_field_ez.f90',
     'moving_boundary.f90',
     'photoelastic_int_common.f90',
-    #'photoelastic_int_linear_new.f90',
-    #'photoelastic_int_curvilinear.f90',
-    #'photoelastic_int_curvilinear_old.f90',
     'py_entry_cm.f90',
-    #'pyinterfaces.f90'
 )
 
 
 nb_impl_fsrcs = files(
     'ac_alpha_analytic.f90',
+    'ac_alpha_quadrature.f90',
+
+    'ac_mode_energy_analytic.f90',
+    'ac_mode_energy_quadrature.f90',
+
+    'ac_mode_power_analytic.f90',
+    'ac_mode_power_quadrature.f90',
+
+    'em_mode_energy_int.f90',
+    'em_mode_act_energy_quadrature.f90',
+    'em_mode_power_sz_quadrature.f90',
+
   #'quicksort.f90',
   'construct_solution_fields_ac.f90',
   'construct_solution_fields_em.f90',
   #'array_sol.f90',
-    'ac_mode_power_analytic_impl.f90',
+    'ac_mode_power_analytic_matel_powerflow.f90',
 
     'build_fem_ops_ac.f90',
     'build_fem_ops_em.f90',

@@ -3,8 +3,9 @@
  ! Calculate the m_energy integral of an EM mode with itself using
  ! numerical quadrature.
  !
-subroutine EM_mode_energy_int (k_0, n_modes, n_msh_elts, n_msh_pts,&
-   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_energy, errco, emsg)
+subroutine EM_mode_energy_int_impl (k_0, n_modes, n_msh_elts, n_msh_pts,&
+   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_energy, nberr)
+
    !
    !     k_0 = 2 pi / lambda, where lambda in meters.
    !
@@ -19,8 +20,8 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_elts, n_msh_pts,&
    complex(8) v_beta(n_modes)
    complex(8), dimension(n_modes) :: m_energy
    double precision k_0
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) ::  emsg
+
+   type(NBError) :: nberr
 
    !     Local variables
 
@@ -44,29 +45,12 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_elts, n_msh_pts,&
    logical do_P3
    double precision t_quadwt
 
-   type(NBError) :: nberr
 
-
-   !f2py intent(in) k_0, n_modes, n_msh_elts, n_msh_pts
-   !f2py intent(in) P2_NODES_PER_EL, m_elnd_to_mshpt
-   !f2py intent(in) x, v_beta, soln_em_e
-   !
-   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-   !f2py depend(x) n_msh_pts
-   !f2py depend(v_beta) n_modes
-   !f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_elts
-   !
-   !f2py intent(out) m_energy
-
-
-   call nberr%reset()
-   errco = 0
-   emsg = ""
 
    call quadint%setup_reference_quadratures()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
 
    n_curved = 0
@@ -88,7 +72,7 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_elts, n_msh_pts,&
       do iq=1,quadint%n_quad
 
          call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
-         RET_ON_NBERR_UNFOLD(nberr)
+         RET_ON_NBERR(nberr)
 
 
          ! transformed weighting of this quadrature point including triangle area transform
@@ -177,4 +161,4 @@ subroutine EM_mode_energy_int (k_0, n_modes, n_msh_elts, n_msh_pts,&
       enddo
    enddo
 
-end subroutine EM_mode_energy_int
+end subroutine EM_mode_energy_int_impl

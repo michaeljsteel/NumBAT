@@ -6,10 +6,10 @@
 ! \alpha = \Omega^2/Energy_aC \int  eta_ijkl d_i u_j^* d_k u_l
 
 
-subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
+subroutine ac_alpha_quadrature_impl (n_modes, n_msh_elts, n_msh_pts, &
    v_mshpt_xy, m_elnd_to_mshpt, n_elt_mats, v_elt_material, eta_ijkl, &
    q_AC, Omega_AC, soln_ac_u, &
-   v_ac_mode_energy, v_alpha_r, errco, emsg)
+   v_ac_mode_energy, v_alpha_r, nberr)
 
 
    use numbatmod
@@ -28,8 +28,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    complex(8) eta_ijkl(3,3,3,3,n_elt_mats)
 
    double precision, dimension(n_modes), intent(out) :: v_alpha_r
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError) nberr
 
    ! Locals
    complex(8), dimension(n_modes) :: v_alpha
@@ -49,36 +48,17 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    logical is_curved
    complex(8) t_eta
 
-   type(NBError) nberr
    type(QuadIntegrator) quadint
    type(PyFrontEnd) frontend
    type(BasisFunctions) basfuncs
 
    double precision t_quadwt, t_qwt
 
-!f2py intent(in) n_modes, n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt
-!f2py intent(in) v_elt_material, x, n_elt_mats, eta_ijkl, q_AC
-!f2py intent(in) soln_ac_u, debug, Omega_AC, v_ac_mode_energy
-
-!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-!f2py depend(v_elt_material) n_msh_pts
-!f2py depend(v_mshpt_xy) n_msh_pts
-!f2py depend(soln_ac_u) P2_NODES_PER_EL, n_modes, n_msh_elts
-!f2py depend(eta_ijkl) n_elt_mats
-!f2py depend(Omega_AC) n_modes
-!f2py depend(v_ac_mode_energy) n_modes
-
-!f2py intent(out) v_alpha
-
-
-   errco=0
-   emsg = ""
-   call nberr%reset()
 
    call quadint%setup_reference_quadratures()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
    v_alpha = C_ZERO
 
@@ -91,8 +71,8 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
       RET_ON_NBERR(nberr)
 
       is_curved = frontend%elt_is_curved()
-      if (is_curved) n_curved = n_curved + 1
 
+      if (is_curved) n_curved = n_curved + 1
       bas_ovrlp  = D_ZERO
 
       ! For each quadrature point evaluate v_alpha of Lagrange polynomials
@@ -100,7 +80,7 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
       do iq=1,quadint%n_quad
 
          call quadint%get_quad_point(iq, t_xy, t_quadwt)
-         RET_ON_NBERR_UNFOLD(nberr)
+         RET_ON_NBERR(nberr)
 
          call basfuncs%evaluate_at_position(i_el, t_xy, is_curved, el_nds_xy, nberr)
          RET_ON_NBERR(nberr)
@@ -217,4 +197,4 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    v_alpha_r = real(v_alpha * Omega_AC**2 / v_ac_mode_energy)
 
-end subroutine ac_alpha_quadrature
+end subroutine ac_alpha_quadrature_impl

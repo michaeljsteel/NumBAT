@@ -46,6 +46,7 @@ if host_machine.system() == 'linux'
         + min_gcc_version
         + '.',
       )
+    endif
   endif
 
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
@@ -180,13 +181,6 @@ srcs = [
 ]
 
 nblib = shared_module(
-  'nb_fortran',
-  srcs,
-  include_directories: incs,
-  name_prefix: '',
-  override_options: ['b_lundef=false'],
-  dependencies: [lib_arpack, lib_umfpack, lib_blas, libs_extra, dep_py],
-)le(
   'nb_fortran',
   srcs,
   include_directories: incs,

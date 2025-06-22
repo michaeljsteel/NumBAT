@@ -400,6 +400,7 @@ Setting up the |NUMBAT| Python environment
 
 You can use an existing Python installation if you have a sufficiently recent version (>3.11.0) installed, or download a new Python installer. Note that |NUMBAT| is a self-contained tree and will not add any files to your Python installation.
 
+**Note: if you are using the pre-built |NUMBAT| installer, for binary compatibility you *must* use Python version 3.13.**
 
 #. If you do not have a suitable current Python, download and run the installer for a recent version
   from the `Python website <https://www.python.org/downloads/windows/>`_.
@@ -662,6 +663,8 @@ Installing |NUMBAT| Method 2: pre-built Windows installer
 You won't be able to make changes to the Fortran finite element code. (For most people, this is completely fine.)
 The installer is not updated as frequently as the main source tree.
 
+**Note: the pre-built installer will only work with Python version 3.13. If you do not have this version installed, please follow the instructions for installing Python earlier in this section.  **
+
 We will actually run two installers: one for the free GMsh mesh generation tool, and one for |NUMBAT| itself.
 
 #. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
@@ -687,6 +690,8 @@ We will actually run two installers: one for the free GMsh mesh generation tool,
 
       $ %HOMEPATH%\npby3\Scripts\activate
       $ cd tutorials
+
+   Remember, you must activate a python environment that uses Python 3.13.
 
 #. You should now be able to run a |NUMBAT| calculation::
 

@@ -6,9 +6,9 @@
 !  E_em = \int eps/2 |E|^2 dV + \int mu/2 |H|^2 dV
 !       = 2 eps_0 \int dV eps_r |E|^2
 
-subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
+subroutine em_mode_act_energy_quadrature_impl (n_modes, n_msh_elts, n_msh_pts, &
    m_elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material, &
-   v_refindex, soln_em_e, m_energy, errco, emsg)
+   v_refindex, soln_em_e, m_energy, nberr)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -21,13 +21,10 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    complex(8) v_refindex(n_elt_mats)
    complex(8) soln_em_e(3,N_DOF_PER_EL,n_modes,n_msh_elts)
    complex(8), dimension(n_modes), intent(out) :: m_energy
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
-
-   ! Locals
 
    type(NBError) nberr
 
+   ! Locals
    complex(8) t_eps
    complex(8) bas_ovrlap(P2_NODES_PER_EL)
    integer(8)  typ_e
@@ -42,28 +39,17 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    type(QuadIntegrator) quadint
    type(PyFrontEnd) frontend
 
-
    double precision t_quadwt
-
-
-!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-!f2py depend(v_mshpt_xy) n_msh_pts
-!f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_elts
-!f2py depend(v_refindex) n_elt_mats
-!f2py depend(v_elt_material) n_msh_elts
 
 
    do_P3 = .false.
    m_energy = D_ZERO
    n_curved = 0
 
-   errco=0
-   call nberr%reset()
-
    call quadint%setup_reference_quadratures()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
    do i_el=1,n_msh_elts
 
@@ -79,7 +65,7 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
       do iq=1,quadint%n_quad
          call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
-         RET_ON_NBERR_UNFOLD(nberr)
+         RET_ON_NBERR(nberr)
 
          t_quadwt = quadint%get_current_quadweight()
 
@@ -108,4 +94,4 @@ subroutine em_mode_act_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
    m_energy = 2.0 * SI_EPS_0 * m_energy
 
-end subroutine em_mode_act_energy_quadrature
+end subroutine em_mode_act_energy_quadrature_impl

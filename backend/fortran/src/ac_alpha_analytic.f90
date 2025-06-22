@@ -23,7 +23,7 @@ end subroutine
 
 subroutine ac_alpha_analytic_impl (n_modes, n_msh_elts, n_msh_pts, &
    m_elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material,  &
-   eta_ijkl, q_AC, Omega_AC, soln_ac_u, v_ac_mode_energy, v_alpha_r, nberr) 
+   eta_ijkl, q_AC, Omega_AC, soln_ac_u, v_ac_mode_energy, v_alpha_r, nberr)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -64,10 +64,6 @@ subroutine ac_alpha_analytic_impl (n_modes, n_msh_elts, n_msh_pts, &
    type(PyFrontEnd) frontend
    type(BasisFunctions) basfuncs
 
-
-   !@errco = 0
-   !emsg = ""
-   !call nberr%reset()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
    RET_ON_NBERR(nberr)
