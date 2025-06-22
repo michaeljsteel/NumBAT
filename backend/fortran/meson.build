@@ -8,14 +8,14 @@ project(
 #version_output = run_command(find_program('python3'), files('../nbversion.py'))
 #project_version = version_output.stdout().strip()
 
-ccomp = meson.get_compiler('c')
-fcomp = meson.get_compiler('fortran')
+c_comp = meson.get_compiler('c')
+f_comp = meson.get_compiler('fortran')
 
-#message('@0@'.format(ccomp.get_id()))
-#message('@0@'.format(fcomp.get_id()))
+#message('@0@'.format(c_comp.get_id()))
+#message('@0@'.format(f_comp.get_id()))
 
-message('C compiler:', ccomp.get_id())
-message('F compiler:', fcomp.get_id())
+message('C compiler:', c_comp.get_id())
+message('F compiler:', f_comp.get_id())
 
 message('host:', host_machine.system())
 
@@ -30,9 +30,9 @@ dir_usrlocal_inc = dir_usrlocal / 'include'
 
 if host_machine.system() == 'linux'
 
-  if c_compiler.get_id() == 'gcc'
+  if c_comp.get_id() == 'gcc'
     # Get the compiler version as a version object
-    gcc_version = c_compiler.version()
+    gcc_version = c_comp.version()
 
     # Define the minimum required version
     min_gcc_version = '13.0'
@@ -55,7 +55,7 @@ if host_machine.system() == 'linux'
   if use_mkl
     dir_oneapi = get_option(plat_pref + 'dir_oneapi')
     dir_mkl = dir_oneapi / 'mkl/latest/lib'
-    dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
+    dep_blas = c_comp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
   else
     dep_blas = dependency('blas', required: true)
   endif
@@ -63,8 +63,8 @@ if host_machine.system() == 'linux'
 elif host_machine.system() == 'darwin'
   inc_nblocal = include_directories([dir_usrlocal_inc])
   dep_blas = [
-    ccomp.find_library('lapack', dirs: '/opt/local/lib/lapack'),
-    ccomp.find_library('blas', dirs: '/opt/local/lib/lapack'),
+    c_comp.find_library('lapack', dirs: '/opt/local/lib/lapack'),
+    c_comp.find_library('blas', dirs: '/opt/local/lib/lapack'),
   ]
 
 else
@@ -73,16 +73,16 @@ else
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
   inc_nblocal = include_directories([dir_usrlocal_inc])
-  dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
+  dep_blas = c_comp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
 endif
 
-if ccomp.get_id() == 'intel-llvm'
-  lib_oneapi = ccomp.find_library('ifport', dirs: dir_mkl)
+if c_comp.get_id() == 'intel-llvm'
+  lib_oneapi = c_comp.find_library('ifport', dirs: dir_mkl)
   libs_extra = [lib_oneapi]
 endif
 
-lib_arpack = ccomp.find_library('arpack', dirs: dir_usrlocal_lib)
-lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
+lib_arpack = c_comp.find_library('arpack', dirs: dir_usrlocal_lib)
+lib_umfpack = c_comp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
 # enforce implicit none
 if host_machine.system() == 'windows'
@@ -95,7 +95,7 @@ if host_machine.system() == 'windows'
     language: 'c',
   )
 
-elif ccomp.get_id() == 'intel-llvm'
+elif c_comp.get_id() == 'intel-llvm'
   # intel on linux
   add_global_arguments(
     ['-implicitnone'],
