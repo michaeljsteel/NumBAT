@@ -73,7 +73,7 @@ else
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
   inc_nblocal = include_directories([dir_usrlocal_inc])
-  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
+  dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
 endif
 
 if ccomp.get_id() == 'intel-llvm'
