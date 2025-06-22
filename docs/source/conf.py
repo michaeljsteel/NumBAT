@@ -105,8 +105,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'NumBAT'
-copyright = u'2016-2025, Bjorn Sturmberg, Blair Morrison, Mike Smith, Christopher Poulton and Michael Steel'
-author = u'Bjorn Sturmberg, Blair Morrison, Mike Smith, Christopher Poulton and Michael Steel'
+copyright = u'2016-2025, Michael Steel, Bjorn Sturmberg, Blair Morrison, Mike Smith, and Christopher Poulton'
+author = u'Michael Steel, Bjorn Sturmberg, Blair Morrison, Mike Smith, and Christopher Poulton'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

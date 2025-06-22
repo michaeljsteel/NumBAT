@@ -127,7 +127,6 @@ Building |NUMBAT| itself
 
       $ pip3 install numpy matplotlib scipy psutils
 
-
 #. If you wish to be able to rebuild the documentation, we need some additional modules ::
 
      $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc
@@ -200,10 +199,51 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
+.. _sec-troubleshooting-label:
 
 
-.. _sec-macinstall-label:
+Troubleshooting Linux and MacOS installs
+-------------------------------------------
+Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
+Here are a few traps to watch out for:
 
+#. Please ensure to use relatively recent libraries for all the Python components. This includes using
+
+   - Python: 3.10 or later
+   - ``matplotlib``: 3.9.0 or later
+   - ``scipy``:  1.13.0 or later
+   - ``numpy``:  1.26.2 or later
+
+#. But try not to use very recently released major upgrades.
+
+   Notably the 2.0.0 series of ``numpy``, which was only released in mid-June 2024 includes major changes to ``numpy`` architecture and is  not yet supported.
+
+#. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
+
+#. In general, the GCC build is more tested and forgiving than the build with the Intel compilers and we recommend the GCC option.  However, we do recommend using the Intel OneAPI math libraries as described above. This is the easiest way to get very high performance LAPACK and BLAS libraries with a well-designed directory tree.
+
+#. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
+
+   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``.
+
+
+     You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
+
+   - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
+
+#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, useful information can be obtained from the GNU debugger ``gdb`` as follows:
+
+    #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
+
+    #. Ensure that ``gdb`` is installed.
+
+    #. Rerun the script that causes the crash. You should now have a core dump in the directory determined in step 1.
+
+    #. Execute ``gdb`` as follows::
+
+        $ gdb <path_to_numbat_python_env>  <path_to_core file>
+
+    #. In gdb, enter ``bt`` for *backtrace* and try to identify the point in the code at which the crash has occurred.
 
 Installing on MacOS
 ================================
@@ -379,19 +419,7 @@ These commons steps are described first.
 Common installation steps for both methods
 -----------------------------------------------------
 
-Installing Make
-^^^^^^^^^^^^^^^^^^^^^^
-GNU Make is a build tool that helps execute large numbers of commands simply.
-
-If you are building |NUMBAT| from scratch, you definitely need to install Make. (The installation is very small.)
-
-If you are using the pre-compiled version, this step is not essential but it can make exploring the tutorials more convenient and we recommend it.
-
-To install ``make``, enter ::
-
-      $ winget install ezwinports.make
-
-and then start a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+Python installers can be downloaded from the `Python website <https://www.python.org/downloads/windows/>`_.
 
 
 Setting up the |NUMBAT| Python environment
@@ -409,29 +437,35 @@ You can use an existing Python installation if you have a sufficiently recent ve
   say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
-#.  Create a python virtual environment for working with |NUMBAT|. You can use any name and location for your environment.
+  #. Create a python virtual environment for working with |NUMBAT|.
+      You can use any name and location for your environment.
 
-    To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app)
-    from the Start Menu and  enter ::
+   To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app) from the Start Menu and  enter ::
 
-        $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
+       $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
 
-#.  Activate the new python virtual environment ::
+  #. Activate the new python virtual environment ::
 
        $ %HOMEPATH%\npby3\Scripts\activate
 
-#.  Install the necessary python tools and libraries ::
+  #. Install the necessary python tools and libraries ::
 
-       $ pip3 install numpy matplotlib scipy psutil
+     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja meson==1.4.1
 
+   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-Next steps
-^^^^^^^^^^^^^^^
-You can proceed to install |NUMBAT| by either :ref:`building fully from source <sec-wininstallmeth1-label>`, or :ref:`using the pre-built installer <sec-wininstallmeth2-label>`  from the |NUMBAT|| page.
+   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet
+   supported by some other packages we use.
 
+  #. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing
 
-.. _sec-wininstallmeth1-label:
+     $ winget install ezwinports.make
+
+    and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+
+  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
+
 
 Installing |NUMBAT| Method 1: full build from source
 ----------------------------------------------------------
@@ -480,8 +514,14 @@ NumBAT code and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 We can now build the supporting libraries, and then |NUMBAT| itself.
 
-#. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
-    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
+#. We will need the Gnu ``make`` tool. This can be installed by typing ::
+
+     $ winget install ezwinports.make
+
+   and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+
+
+#. Choose a location for the base directory for building |NUMBAT| and supporting libraries, say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
 
 #. Use the Start Menu to open the *Intel OneAPI Command Prompt for Intel 64 for Visual Studio 2022*.
    This is simply a Windows terminal with some Intel compiler environment variables pre-defined.
@@ -554,8 +594,7 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select
-the *Build solution* option. This will take a few minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select the *Build solution* option. This will take a few minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
@@ -584,7 +623,9 @@ At long last, we are ready to build |NUMBAT| itself.
     $ cd <NumBAT_BASE>
     $ cd nb_releases\nb_latest
 
-   From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
+   From this point, we refer to the current directory as ``<NumBAT>``.
+
+   In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
 #. Setup the environment variables for the Intel compiler::
 
@@ -604,11 +645,11 @@ At long last, we are ready to build |NUMBAT| itself.
 
 #. If you hit a compile error you can't easily resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
-#. If the compilation has succeeded, copy the .dlls built earlier into the current directory (that is, to ``<NumBAT>\backend\fortran``)::
+#. Copy the .dlls built earlier to this directory::
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 
-#. Copy Intel oneAPI .dlls to this directory::
+#. Also, copy the following Intel oneAPI .dlls to this directory::
 
     $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.2.dll" .
     $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.2.dll" .
@@ -720,13 +761,14 @@ Troubleshooting a Windows installation
 
     #.  Now we can apply the tool to the |NUMBAT| python dll.
 
-        Start the ``DependenciesGui.exe`` tool ::
+    Start the ``DependenciesGui.exe`` tool::
 
-           $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+      $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
 
-        Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
+    Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
 
-        Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+
+    Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
 
     #.  Alternatively, you can try the command line version of this tool ::
 
