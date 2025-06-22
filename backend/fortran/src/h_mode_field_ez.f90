@@ -3,7 +3,7 @@
  ! Calculate the H-field soln_H1 from the E-field soln_k1 of a mode
  ! The z-component of the E-field is not normalised
 
-subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, &
+subroutine h_mode_field_ez_impl (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, &
  v_mshpt_xy, v_beta, soln_k1, soln_H1)
 
    use numbatmod
@@ -28,21 +28,10 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt
    integer(8) i, j, j1
    integer(8) iel, ival, inod
    integer(8) ui
-   !complex(8) z_tmp1
 
    double precision mat_B(2,2), mat_T(2,2), det_b
    integer(8), parameter :: ZCOMP = 3
 
-   !f2py intent(in) k_0, n_modes, n_msh_elts, n_msh_pts
-   !f2py intent(in) P2_NODES_PER_EL, m_elnd_to_mshpt
-   !f2py intent(in) x, v_beta, soln_k1
-   !
-   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-   !f2py depend(x) n_msh_pts
-   !f2py depend(v_beta) n_modes
-   !f2py depend(soln_k1) P2_NODES_PER_EL, n_modes, n_msh_elts
-   !
-   !f2py intent(out) soln_H1
 
    ui = stdout
 
@@ -130,4 +119,4 @@ subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt
       enddo
    enddo
 
-end subroutine H_mode_field_Ez
+end subroutine h_mode_field_ez_impl

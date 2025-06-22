@@ -7,11 +7,11 @@
 
 
 
-subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_ac_u, ival_p, &
+subroutine photoelastic_int_common_impl (is_curvilinear, nval_em_p, nval_em_s, nval_ac_u, ival_p, &
    ival_s, ival_ac, &
    n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, &
    n_elt_mats, v_elt_material, p_tensor, beta_ac, soln_em_p, soln_em_s, soln_ac_u,&
-   v_eps_rel, Q_PE, errco, emsg)
+   v_eps_rel, Q_PE, nberr)
 
    use numbatmod
    use alloc
@@ -30,13 +30,14 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    complex(8) beta_ac
 
+   complex(8) v_eps_rel(n_elt_mats)
    complex(8), intent(out) :: Q_PE(nval_em_p, nval_em_s, nval_ac_u)
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) ::  emsg
+   type(NBError) nberr
 
    !---------------------------
+   integer(8) :: errco
+   character(len=EMSG_LENGTH)  ::  emsg
 
-   type(NBError) nberr
 
    double precision nds_xy(2,P2_NODES_PER_EL)
 
@@ -48,7 +49,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    integer(8) i_el, nd_i, nd_j, nd_l, xyz_i, xyz_j, xyz_k, xyz_l
    integer(8) ind_ip, ind_jp, ind_lp
    integer(8) ui
-   complex(8) v_eps_rel(n_elt_mats), eps
+   complex(8) eps
    complex(8) zt1
 
    integer(8) v_ival_p(nval_em_p), v_ival_s(nval_EM_s), v_ival_u(nval_ac_u)
@@ -62,24 +63,6 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    errco = 0
    emsg = ""
 
-   !fo2py intent(in) nval_em_p, nval_em_s, nval_ac_u
-   !fo2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !fo2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt, p_tensor, beta_ac, debug
-   !fo2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u, v_eps_rel
-   !
-   ! Need these dependencies to get f2py calling to work
-   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-   !f2py depend(v_elt_material) n_msh_pts
-   !f2py depend(x) n_msh_pts
-   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
-   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_elts
-   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac_u, n_msh_elts
-   !f2py depend(p_tensor) n_elt_mats
-   !f2py depend(v_eps_rel) n_elt_mats
-   !
-   !fo2py intent(out) Q_PE
-   !fo2py intent(out) errco
-   !fo2py intent(out) emsg
 
 
 
@@ -96,7 +79,7 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
    call complex_alloc_4d(basis_overlap, 3*P2_NODES_PER_EL, 3*P2_NODES_PER_EL, 3_8, 3*P2_NODES_PER_EL, &
       'basis_overlap', nberr)
-      RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
    Q_PE = D_ZERO
 
@@ -119,7 +102,10 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
 
          call make_P2_overlaps_i_j_dk_l_quadrature(beta_ac, typ_e, is_curved, &
             eps, p_tensor, n_elt_mats, nds_xy, quadint, basis_overlap, errco, emsg)
-         RETONERROR(errco)
+         if (errco .ne. 0) then
+            call nberr%set(errco, emsg)
+            return
+         endif
       else
 
          call make_P2_overlaps_i_j_dk_l_analytic(beta_ac, typ_e, &
@@ -178,4 +164,4 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    Q_PE = - Q_PE * SI_EPS_0
 
 
-end subroutine photoelastic_int_common
+end subroutine photoelastic_int_common_impl

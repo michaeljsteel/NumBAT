@@ -49,12 +49,12 @@ if host_machine.system() == 'linux'
     endif
   endif
 
-  use_mkl = false
+  use_mkl_gcc = false
   inc_nblocal = include_directories([dir_usrlocal_inc,])
+  dir_oneapi = get_option(plat_pref + 'dir_oneapi')
+  dir_mkl = dir_oneapi / 'mkl/latest/lib'
 
-  if use_mkl
-    dir_oneapi = get_option(plat_pref + 'dir_oneapi')
-    dir_mkl = dir_oneapi / 'mkl/latest/lib'
+  if use_mkl_gcc
     dep_blas = c_comp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
   else
     dep_blas = dependency('blas', required: true)
@@ -76,7 +76,7 @@ else
   dep_blas = c_comp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
 endif
 
-if c_comp.get_id() == 'intel-llvm'
+if c_comp.get_id() == 'intel-llvm' # using intel compiler
   lib_oneapi = c_comp.find_library('ifport', dirs: dir_mkl)
   libs_extra = [lib_oneapi]
 endif

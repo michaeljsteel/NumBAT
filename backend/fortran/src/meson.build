@@ -17,9 +17,6 @@ nb_pyinterface_fsrcs = files(
     'array_size.f90',
 
 
-    'h_mode_field_ez.f90',
-    'moving_boundary.f90',
-    'photoelastic_int_common.f90',
     'py_entry_cm.f90',
 )
 
@@ -39,6 +36,12 @@ nb_impl_fsrcs = files(
 
     'em_mode_power_sz_quadrature.f90',
     'em_mode_power_sz_analytic.f90',
+
+    'h_mode_field_ez.f90',
+
+    'moving_boundary.f90',
+    'photoelastic_int_common.f90',
+
 
   #'quicksort.f90',
   'construct_solution_fields_ac.f90',

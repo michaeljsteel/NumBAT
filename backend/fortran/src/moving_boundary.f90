@@ -11,14 +11,14 @@
 !
 
 
-subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
+subroutine moving_boundary_impl (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac, &
    n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, &
    n_elt_mats, v_elt_material, typ_select_in, typ_select_out, &
-   soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, Q_MB, errco, emsg)
+   soln_em_p, soln_em_s, soln_ac_u, v_eps_rel, Q_MB, nberr)
 
    use numbatmod
-   integer(8) n_msh_elts, n_msh_pts,n_elt_mats
    integer(8) nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_ac
+   integer(8) n_msh_elts, n_msh_pts,n_elt_mats
 
    integer(8) v_elt_material(n_msh_elts)
    integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
@@ -32,10 +32,11 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
 
    complex(8) v_eps_rel(n_elt_mats)
    complex(8), intent(out) :: Q_MB(nval_em_p, nval_em_s, nval_ac)
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) ::  emsg
+
+   type(NBError) nberr
 
    !     Local variables
+   character(len=EMSG_LENGTH) ::  emsg
    integer(8) nb_visited(n_msh_pts)
    integer(8) ls_edge_endpoint(2,n_msh_pts)
    integer(8) edge_direction(n_msh_pts)
@@ -47,10 +48,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    double precision xy_1(2), xy_2(2), xy_3(2), ls_xy(2,3)
    double precision edge_vec(2), edge_perp(2), vec_0(2)
    double precision edge_length, r_tmp
-   !complex(8) ls_n_dot(3)
-   !complex(8)  ls_n_cross(3,3)
-   !complex(8) vec(3,3)
-   !integer(8) ivals_ac, ivals_s, ivals_p
+
 
    complex(8) evec_p(3), evec_sc(3), uvec_ac(3)
 
@@ -64,22 +62,6 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
    complex(8) n_cross_ev_p(3), n_cross_ev_sc(3)
    complex(8) n_dot_ev_p, n_dot_ev_sc, n_dot_uv_ac
 
-
-   !f2py intent(in) nval_em_p, nval_em_s, nval_ac
-   !f2py intent(in) ival_p, ival_s, ival_ac, n_elt_mats
-   !f2py intent(in) n_msh_elts, n_msh_pts, P2_NODES_PER_EL, m_elnd_to_mshpt, debug
-   !f2py intent(in) v_elt_material, x, soln_em_p, soln_em_s, soln_ac_u
-   !f2py intent(in) typ_select_in, typ_select_out, v_eps_rel, debug
-
-   !f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
-   !f2py depend(v_elt_material) n_msh_pts
-   !f2py depend(x) n_msh_pts
-   !f2py depend(soln_em_p) P2_NODES_PER_EL, nval_em_p, n_msh_elts
-   !f2py depend(soln_em_s) P2_NODES_PER_EL, nval_em_s, n_msh_elts
-   !f2py depend(soln_ac_u) P2_NODES_PER_EL, nval_ac, n_msh_elts
-   !f2py depend(v_eps_rel) n_elt_mats
-   !
-   !fo2py intent(out) Q_MB
 
 
    ! typ_select_in: Only the elements i_el with v_elt_material(i_el)=typ_select_in will be analysed
@@ -189,8 +171,8 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
          elseif( r_tmp > 0) then
             edge_direction(j) = -1
          else
-            errco = NBERR_BAD_MB_EDGES
             write(emsg,*) "edge_orientation: illegal, edge_perp is perpendicular to vec_0"
+            call nberr%set(NBERR_BAD_MB_EDGES, emsg)
             return
          endif
       enddo
@@ -340,7 +322,7 @@ subroutine moving_boundary (nval_em_p, nval_em_s, nval_ac, ival_p, ival_s, ival_
       enddo
    enddo
 
-end subroutine moving_boundary
+end subroutine moving_boundary_impl
 
 
 
