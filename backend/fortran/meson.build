@@ -1,24 +1,23 @@
-
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.1.1',  # this has to match the version in nbversion.py
-  meson_version: '>1.4.0'
+  version: '2.1.1', # this has to match the version in nbversion.py
+  meson_version: '>1.4.0',
 )
 
-version_output = run_command(find_program('python3'), files('../nbversion.py'))
-project_version = version_output.stdout().strip()
-
+#version_output = run_command(find_program('python3'), files('../nbversion.py'))
+#project_version = version_output.stdout().strip()
 
 ccomp = meson.get_compiler('c')
 fcomp = meson.get_compiler('fortran')
 
-message('@0@'.format(ccomp.get_id()))
-message('@0@'.format(fcomp.get_id()))
+#message('@0@'.format(ccomp.get_id()))
+#message('@0@'.format(fcomp.get_id()))
 
-message('compid', ccomp.get_id())
+message('C compiler:', ccomp.get_id())
+message('F compiler:', fcomp.get_id())
+
 message('host:', host_machine.system())
-
 
 libs_extra = []
 
@@ -30,10 +29,30 @@ dir_usrlocal_lib = dir_usrlocal / 'lib'
 dir_usrlocal_inc = dir_usrlocal / 'include'
 
 if host_machine.system() == 'linux'
+
+  if c_compiler.get_id() == 'gcc'
+    # Get the compiler version as a version object
+    gcc_version = c_compiler.version()
+
+    # Define the minimum required version
+    min_gcc_version = '13.0'
+
+    # Compare the versions
+    if gcc_version.version_compare('< ' + min_gcc_version)
+      error(
+        'GCC version '
+        + gcc_version.to_string()
+        + ' is too old. NumBAT requires a minimum version of '
+        + min_gcc_version
+        + '.',
+      )
+    endif
+  endif
+
   use_mkl = false
   inc_nblocal = include_directories([dir_usrlocal_inc,])
 
-  if use_mkl 
+  if use_mkl
     dir_oneapi = get_option(plat_pref + 'dir_oneapi')
     dir_mkl = dir_oneapi / 'mkl/latest/lib'
     dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
@@ -48,19 +67,17 @@ elif host_machine.system() == 'darwin'
     ccomp.find_library('blas', dirs: '/opt/local/lib/lapack'),
   ]
 
-else # Windows
+else
+  # Windows
 
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
   inc_nblocal = include_directories([dir_usrlocal_inc])
-  dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
-  header_include_directories:inc_nblocal)
+  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
 endif
 
 if ccomp.get_id() == 'intel-llvm'
-  lib_oneapi = ccomp.find_library('ifport',
-                                  dirs: dir_mkl
-                                  )
+  lib_oneapi = ccomp.find_library('ifport', dirs: dir_mkl)
   libs_extra = [lib_oneapi]
 endif
 
@@ -69,25 +86,54 @@ lib_umfpack = ccomp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
 # enforce implicit none
 if host_machine.system() == 'windows'
-    add_global_arguments(['/warn:declarations'], language: 'fortran',)
-    add_global_arguments(['/warn:no-format', '/warn:no-misleading-indentation'], language: 'c',)
+  add_global_arguments(
+    ['/warn:declarations'],
+    language: 'fortran',
+  )
+  add_global_arguments(
+    ['/warn:no-format', '/warn:no-misleading-indentation'],
+    language: 'c',
+  )
 
-elif ccomp.get_id() == 'intel-llvm'   # intel on linux
-    add_global_arguments(['-implicitnone'], language: 'fortran',)
-    add_global_arguments(['-Wno-format', '-Wno-misleading-indentation' ], language: 'c',)   # numpy f2py has bad format strings that do no harm
+elif ccomp.get_id() == 'intel-llvm'
+  # intel on linux
+  add_global_arguments(
+    ['-implicitnone'],
+    language: 'fortran',
+  )
+  add_global_arguments(
+    ['-Wno-format', '-Wno-misleading-indentation'],
+    language: 'c',
+  ) # numpy f2py has bad format strings that do no harm
 
-else  # gcc on linux and mac
+else
+  # gcc on linux and mac
   #add_global_arguments(['-fimplicit-none', '-std=f2023', '-fall-intrinsics'], language: 'fortran',)
-    add_global_arguments(['-fimplicit-none'], language: 'fortran',)
-    add_global_arguments(['-Wno-format'], language: 'c',)   # numpy f2py has bad format strings that do no harm
+  add_global_arguments(
+    ['-fimplicit-none'],
+    language: 'fortran',
+  )
+  add_global_arguments(
+    ['-Wno-format'],
+    language: 'c',
+  ) # numpy f2py has bad format strings that do no harm
 endif
 
 if host_machine.system() == 'windows'
-  add_global_arguments(['-fpp'], language: 'fortran',)
-  add_global_arguments(['-D UPPERCASE_FORTRAN','-D NO_APPEND_FORTRAN', '-D __INTEL_COMPILER'], language: 'c')
+  add_global_arguments(
+    ['-fpp'],
+    language: 'fortran',
+  )
+  add_global_arguments(
+    ['-D UPPERCASE_FORTRAN', '-D NO_APPEND_FORTRAN', '-D __INTEL_COMPILER'],
+    language: 'c',
+  )
   add_global_arguments(['-D __INTEL_COMPILER'], language: 'cpp')
 else
-  add_global_arguments(['-cpp'], language: 'fortran',)
+  add_global_arguments(
+    ['-cpp'],
+    language: 'fortran',
+  )
 endif
 
 add_global_arguments(
@@ -96,8 +142,6 @@ add_global_arguments(
   ],
   language: 'c',
 )
-
-
 
 comp_f2py = find_program('f2py')
 
@@ -120,7 +164,6 @@ r = run_command(
 )
 dir_f2py = r.stdout().strip()
 src_f2py_fortobj = dir_f2py / 'fortranobject.c'
-
 
 incs_f2py = include_directories([dir_numpy, dir_f2py])
 
