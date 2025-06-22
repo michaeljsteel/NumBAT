@@ -30,17 +30,20 @@ dir_usrlocal_lib = dir_usrlocal / 'lib'
 dir_usrlocal_inc = dir_usrlocal / 'include'
 
 if host_machine.system() == 'linux'
-  dir_oneapi = get_option(plat_pref + 'dir_oneapi')
-  dir_mkl = dir_oneapi / 'mkl/latest/lib'
-
+  use_mkl = false
   inc_nblocal = include_directories([dir_usrlocal_inc,])
-  lib_blas = ccomp.find_library('mkl_rt',
-    dirs: dir_mkl,
-    header_include_directories: inc_nblocal)
+
+  if use_mkl 
+    dir_oneapi = get_option(plat_pref + 'dir_oneapi')
+    dir_mkl = dir_oneapi / 'mkl/latest/lib'
+    dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl, header_include_directories: inc_nblocal)
+  else
+    dep_blas = dependency('blas', required: true)
+  endif
 
 elif host_machine.system() == 'darwin'
   inc_nblocal = include_directories([dir_usrlocal_inc])
-  lib_blas = [
+  dep_blas = [
     ccomp.find_library('lapack', dirs: '/opt/local/lib/lapack'),
     ccomp.find_library('blas', dirs: '/opt/local/lib/lapack'),
   ]
@@ -50,7 +53,7 @@ else # Windows
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
   inc_nblocal = include_directories([dir_usrlocal_inc])
-  lib_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
+  dep_blas = ccomp.find_library('mkl_rt', dirs: dir_mkl,
   header_include_directories:inc_nblocal)
 endif
 
@@ -141,5 +144,5 @@ nblib = shared_module(
   include_directories: incs,
   name_prefix: '',
   override_options: ['b_lundef=false'],
-  dependencies: [lib_arpack, lib_umfpack, lib_blas, libs_extra, dep_py],
+  dependencies: [lib_arpack, lib_umfpack, dep_blas, libs_extra, dep_py],
 )

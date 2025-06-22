@@ -120,9 +120,6 @@ Building |NUMBAT| itself
 
       $ pip3 install numpy matplotlib scipy psutils
 
-
-   Ensure that your ``numpy`` version  is from the 1.26.x and not the new 2.0.0 line.
-
 #. If you wish to be able to rebuild the documentation, we need some additional modules ::
 
      $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc
@@ -204,10 +201,10 @@ Here are a few traps to watch out for:
 
 #. Please ensure to use relatively recent libraries for all the Python components. This includes using
 
-   - Python: 3.10 or later
+   - Python: 3.11 or later
    - ``matplotlib``: 3.9.0 or later
    - ``scipy``:  1.13.0 or later
-   - ``numpy``:  1.26.2 or later
+   - ``numpy``:  2.0.1 or later
 
 #. But try not to use very recently released major upgrades.
 
@@ -368,42 +365,32 @@ Setting up Python on Windows
 Python installers can be downloaded from the `Python website <https://www.python.org/downloads/windows/>`_.
 
 
-  #. If you do not have a current Python, download and run the installer for a recent version
+#. If you do not have a current Python, download and run the installer for a recent version
   from the `Python website <https://www.python.org/downloads/windows/>`_.
 
   By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
   say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
-  #. Create a python virtual environment for working with |NUMBAT|.
-      You can use any name and location for your environment.
+#. Create a python virtual environment for working with |NUMBAT|.
+   You can use any name and location for your environment.
 
-    To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app)
-    from the Start Menu and  enter ::
+   To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app) from the Start Menu and  enter ::
 
-        $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
+       $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
 
-  #. Activate the new python virtual environment ::
+#. Activate the new python virtual environment ::
 
        $ %HOMEPATH%\npby3\Scripts\activate
 
-  #. Install the necessary python tools and libraries ::
+#. Install the necessary python tools and libraries ::
 
-     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja meson==1.4.1
+     $ pip3 install numpy matplotlib scipy psutil ninja meson==1.4.1
 
    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet
-   supported by some other packages we use.
-
-  #. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing
-
-     $ winget install ezwinports.make
-
-    and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
-
-  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
+#. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
 
 
 Installing |NUMBAT| Method 1: full build from source
@@ -453,8 +440,14 @@ NumBAT code and libraries
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 We can now build the supporting libraries, and then |NUMBAT| itself.
 
-#. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
-    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
+#. We will need the Gnu ``make`` tool. This can be installed by typing ::
+
+     $ winget install ezwinports.make
+
+   and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+
+
+#. Choose a location for the base directory for building |NUMBAT| and supporting libraries, say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
 
 #. Use the Start Menu to open the *Intel OneAPI Command Prompt for Intel 64 for Visual Studio 2022*.
    This is simply a Windows terminal with some Intel compiler environment variables pre-defined.
@@ -527,8 +520,7 @@ This library performs an iterative algorithm for finding matrix eigensolutions.
 
 3. If that completes correctly, use Windows Explorer to open ``<NumBAT_BASE>\usr_local\packages\arpack-ng\build\arpack.sln`` with Visual Studio 2022.
 
-4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select
-the *Build solution* option. This will take a few minutes.
+4. In the pull-down menu in the ribbon, select the *Release* build. Then from the *Build* menu select the *Build solution* option. This will take a few minutes.
 
 5. Return to the command terminal and  cd to ``<NumBAT_BASE>\usr_local``. Then execute the following commands::
 
@@ -547,7 +539,9 @@ At long last, we are ready to build |NUMBAT| itself.
     $ cd <NumBAT_BASE>
     $ cd nb_releases\nb_latest
 
-   From this point, we refer to the current directory as ``<NumBAT>``.  In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
+   From this point, we refer to the current directory as ``<NumBAT>``.  
+
+   In other words, ``<NumBAT> = <NumBAT_BASE>\nb_releases\nb_latest``.
 
 #. Setup the environment variables for the Intel compiler::
 
@@ -562,22 +556,16 @@ At long last, we are ready to build |NUMBAT| itself.
 
    This should take 2 to 3 minutes.
 
-.. #. Move to the ``<NumBAT>\backend\fortran\`` directory and open the file ``<NumBAT>\backend\fortran\Makefile.win`` in a text editor and change any absolute paths that involve your username. Now at last, we can build |NUMBAT| by running the following in the root ``<NumBAT>`` directory. ::
 
-..    $ cd backend\fortran
-..    $ make -f Makefile.win
-
-
-
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-windows-label` for further ideas.
 
 #. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
-#. Copy the .dlls built earlier to this directory::
+#. While still in the ``backend\fortran`` directory, copy all the .dlls built earlier to this directory::
 
     $ copy ..\..\..\..\usr_local\lib\*.dll .
 
-#. Copy Intel oneAPI .dlls to this directory::
+#. Also, copy the following Intel oneAPI .dlls to this directory::
 
     $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.2.dll" .
     $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.2.dll" .
@@ -676,14 +664,14 @@ Troubleshooting a Windows installation
 
   #. Now we can apply the tool to the |NUMBAT| python dll.
 
-    Start the ``DependenciesGui.exe`` tool::
+     Start the ``DependenciesGui.exe`` tool::
 
-      $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
+        $ <NUMBAT_BASE>\usr_local\packages\dependencies\DependenciesGUI.exe
 
-    Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
+     Browse to your |NUMBAT| folder and open ``backend\fortran\nb_fortran.pyd``.
 
 
-    Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
+     Examine the output and note any red highlighted entries. These indicate required DLLs that have not been found.  If one or more such lines appear, read through the install instructions again and ensure that any commands to copy DLLs to particular locations have been executed.
 
   #. Alternatively, you can try the command line version of this tool::
 
