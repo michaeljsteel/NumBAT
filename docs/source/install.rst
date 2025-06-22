@@ -428,7 +428,7 @@ Setting up the |NUMBAT| Python environment
 
 You can use an existing Python installation if you have a sufficiently recent version (>3.11.0) installed, or download a new Python installer. Note that |NUMBAT| is a self-contained tree and will not add any files to your Python installation.
 
-**Note: if you are using the pre-built |NUMBAT| installer, for binary compatibility you *must* use Python version 3.13.**
+**Note: if you are using the pre-built |NUMBAT| installer, for binary compatibility you *must* use Python version 3.13 and numpy version 2.2.**
 
 #. If you do not have a suitable current Python, download and run the installer for a recent version
   from the `Python website <https://www.python.org/downloads/windows/>`_.
