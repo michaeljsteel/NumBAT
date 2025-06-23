@@ -55,6 +55,15 @@ def int2D_trapz(mat, dx=1.0, dy=1.0):
 def int2D_simp(mat, dx=1.0, dy=1.0):
     return sciint.simpson(sciint.simpson(mat)) * dx * dy
 
+
+def signed_log10(mat, logmax=5, tol=1e-14):
+    lmat = np.log10(np.abs(mat)+tol) + logmax
+    lmat = np.where(lmat>0, lmat, 0)
+    lmat *= np.sign(mat)
+    return lmat
+
+
+
 def process_fortran_return(resm, msg):
     """Check return values of any Fortran function with errco, emsg style return codes"""
 

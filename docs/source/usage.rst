@@ -43,7 +43,7 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
   #. Calculate the electromagnetic fields for the Stokes mode. As the pump and Stokes frequencies are very similar, the Stokes modes can be found with high precision by a simple complex conjugate transformation of the pump fields.
   #. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``modecalcs.calc_AC_modes()`` returns an ``ACSimResult`` object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
   #. Display the elastic frequencies in Hz using ``modecalcs.nu_AC_all()``.
-  #. Use ``integration.gain_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
+  #. Use ``integration.get_gains_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
   #. Extract desired values from the gain properties and print them to the screen.
 
 You may have noticed from this description that the eigenproblems for the

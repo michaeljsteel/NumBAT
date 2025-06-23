@@ -111,21 +111,25 @@ for (i, nu) in enumerate(AC_freqs_GHz): print(f'{i:3d}  {np.real(nu):.4e}')
 
 # Calculate total SBS gain, photoelastic and moving boundary contributions, as
 # well as other important quantities
-SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, Q_factors, alpha = integration.gain_and_qs(
-    sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
-    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
+gain_box= integration.get_gains_and_qs(
+        sim_EM_pump,
+        sim_EM_Stokes,
+        sim_AC,
+        q_AC,
+        EM_mode_index_pump=EM_mode_index_pump,
+        EM_mode_index_Stokes=EM_mode_index_Stokes,
+        AC_mode_index=AC_mode_index,
+    )
 
 freq_min = .01e9
 freq_max = 20e9
-plotgain.plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
-    EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index, freq_min=freq_min, freq_max=freq_max,
-    )
+gain_box.plot_spectra(freq_min=freq_min,freq_max=freq_max)
 
 # Mask negligible gain values to improve clarity of print out.
 threshold = -1e-3
-masked_PE = np.ma.masked_inside(SBS_gain_PE[EM_mode_index_pump,EM_mode_index_Stokes,:], 0, threshold)
-masked_MB = np.ma.masked_inside(SBS_gain_MB[EM_mode_index_pump,EM_mode_index_Stokes,:], 0, threshold)
-masked = np.ma.masked_inside(SBS_gain[EM_mode_index_pump,EM_mode_index_Stokes,:], 0, threshold)
+masked_PE = np.ma.masked_inside(gain_box.gain_PE_all(), 0, threshold)
+masked_MB = np.ma.masked_inside(gain_box.gain_MB_all(), 0, threshold)
+masked = np.ma.masked_inside(gain_box.gain_total_all(), 0, threshold)
 
 # Display these in terminal
 print("\n Displaying results with negligible components masked out")
@@ -140,23 +144,26 @@ sim_AC.plot_modes(mode_indices=[maxGainloc,6],
                          num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
-print("-----------------")
-print("Displaying results for maximum gain value found:")
-maxGainloc=np.argmax(abs(masked.data))
-print("Greatest SBS_gain  [1/(Wm)] total \n", masked.data[maxGainloc])
-print("displaying corresponding acoustic mode number (i.e., AC_field_#) for reference \n",maxGainloc )
-print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_mode_index_pump] )
-print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes] )
-print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM/1e12 )
-print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc] )
-print("AC loss alpha [1/s] \n", alpha[maxGainloc] )
-print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc]/(1e9*2*math.pi) )
-print("AC linewidth [MHz] \n", linewidth_Hz[maxGainloc]/1e6)
+print("\n\n-----------------")
+print('Displaying results for maximum (physically realisable) "gain" value found:')
+print(f"Greatest total SBS_gain  [1/(Wm)] = {masked.data[maxGainloc]:4e}) for  acoustic mode number {maxGainloc}.")
+print(f"EM Pump Power [Watts]:       {np.real(sim_EM_pump.EM_mode_power[EM_mode_index_pump]):.5e}")
+print(f"EM Stokes Power [Watts]:     {np.real(sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]):.5e}")
+print(f"EM angular frequency [THz]:  {sim_EM_pump.omega_EM / 1e12:.5e}")
+print(f"AC Energy Density [J/m]:     {sim_AC.AC_mode_energy[maxGainloc]:.5e}")
+print(f"AC loss alpha [1/s]:         {gain_box.alpha[maxGainloc]:.5e}")
+print(f"AC frequency [GHz]:          {np.real(sim_AC.Omega_AC[maxGainloc]) / (1e9 * 2 * math.pi):.5e}")
+print(f"AC linewidth [MHz]:          {gain_box.linewidth_Hz[maxGainloc] / 1e6:.5e}")
 
 #since the overlap is not returned directly we'll have to deduce it
-absQtot2 = (alpha[maxGainloc]*sim_EM_pump.EM_mode_power[EM_mode_index_pump]*sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]*sim_AC.AC_mode_energy[maxGainloc]*masked.data[maxGainloc])/(2*sim_EM_pump.omega_EM*sim_AC.Omega_AC[maxGainloc])
-
-absQtot = pow(absQtot2,1/2)
-print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot )
+absQtot2 = (
+    gain_box.alpha[maxGainloc]
+    * sim_EM_pump.EM_mode_power[EM_mode_index_pump]
+    * sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]
+    * sim_AC.AC_mode_energy[maxGainloc]
+    * masked.data[maxGainloc]
+) / (2 * sim_EM_pump.omega_EM * sim_AC.Omega_AC[maxGainloc])
+absQtot = pow(absQtot2, 1 / 2)
+print(f"Total coupling |Qtot| [J/m]: {np.real(absQtot):.4e}")
 
 print(nbapp.final_report())

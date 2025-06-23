@@ -32,6 +32,7 @@ from femmesh import FemMesh
 from fortran import nb_fortran
 
 from simresult import EMSimResult, ACSimResult
+import reporting
 
 class Simulation:
     """Class for calculating the electromagnetic and/or acoustic modes of a ``Struct`` object."""
@@ -764,4 +765,6 @@ def ac_mode_calculation(wg, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **arg
 
 # deprecated
 def bkwd_Stokes_modes(sim):
+    reporting.deprecated_function('numbat.bkwd_backwd_modes()',
+        'SimResult.clone_as_backward_modes()')
     return sim.bkwd_Stokes_modes()

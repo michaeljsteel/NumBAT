@@ -90,7 +90,7 @@ print("n_eff = ", np.round(n_eff_sim, 4))
 # sys.exit("We interrupt your regularly scheduled computation to bring you something completely different... for now")
 
 # calculate the EM modes for the Stokes
-sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 
 # Generate images for the EM modes involved in the calculation
 # note: use field_type='EM_H' for magnetic H field
@@ -156,20 +156,16 @@ print("Plotting acoustic modes")
 sim_AC.plot_modes(mode_indices=range(15), num_ticks=3, quiver_points=40, colorbar=True)
 
 # Displaying results for the maximum found in the selection
-print("-----------------")
+print("\n\n-----------------")
 print('Displaying results for maximum (physically realisable) "gain" value found:')
-print("Greatest SBS_gain  [1/(Wm)] total \n", masked.data[maxGainloc])
-print(
-    "displaying corresponding acoustic mode number (i.e., AC_field_#) for reference \n",
-    maxGainloc,
-)
-print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_mode_index_pump])
-print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes])
-print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM / 1e12)
-print("AC Energy Density [J*m^{-1}] \n", sim_AC.AC_mode_energy[maxGainloc])
-print("AC loss alpha [1/s] \n", gain_box.alpha[maxGainloc])
-print("AC frequency [GHz] \n", sim_AC.Omega_AC[maxGainloc] / (1e9 * 2 * math.pi))
-print("AC linewidth [MHz] \n", gain_box.linewidth_Hz[maxGainloc] / 1e6)
+print(f"Greatest total SBS_gain  [1/(Wm)] = {masked.data[maxGainloc]:4e}) for  acoustic mode number {maxGainloc}.")
+print(f"EM Pump Power [Watts]:       {np.real(sim_EM_pump.EM_mode_power[EM_mode_index_pump]):.5e}")
+print(f"EM Stokes Power [Watts]:     {np.real(sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes]):.5e}")
+print(f"EM angular frequency [THz]:  {sim_EM_pump.omega_EM / 1e12:.5e}")
+print(f"AC Energy Density [J/m]:     {sim_AC.AC_mode_energy[maxGainloc]:.5e}")
+print(f"AC loss alpha [1/s]:         {gain_box.alpha[maxGainloc]:.5e}")
+print(f"AC frequency [GHz]:          {np.real(sim_AC.Omega_AC[maxGainloc]) / (1e9 * 2 * math.pi):.5e}")
+print(f"AC linewidth [MHz]:          {gain_box.linewidth_Hz[maxGainloc] / 1e6:.5e}")
 
 # since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (
@@ -180,6 +176,6 @@ absQtot2 = (
     * masked.data[maxGainloc]
 ) / (2 * sim_EM_pump.omega_EM * sim_AC.Omega_AC[maxGainloc])
 absQtot = pow(absQtot2, 1 / 2)
-print("Total coupling |Qtot| [W*m^{-1}*s] \n", absQtot)
+print(f"Total coupling |Qtot| [J/m]: {np.real(absQtot):.4e}")
 
 print(nbapp.final_report())

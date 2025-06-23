@@ -185,7 +185,7 @@ sim_EM_pump = wguide.calc_EM_modes(
 # sim_EM_pump = npzfile['sim_EM_pump'].tolist()
 
 print("starting EM Stokes modes")
-sim_EM_Stokes = modecalcs.fwd_Stokes_modes(sim_EM_pump)
+sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 # np.savez('wguide_data2', sim_EM_Stokes=sim_EM_Stokes)
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()

@@ -444,8 +444,6 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
         d_kw['norm'] = tsnorm
     elif logamp:
-        #act_zlo = np.nanmin(cont_field)
-        #act_zhi = np.nanmax(cont_field)
         vma = logmax
         if cont_signed:
             vmi = -logmax
