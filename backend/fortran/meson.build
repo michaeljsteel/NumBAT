@@ -1,7 +1,7 @@
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.1.1', # this has to match the version in nbversion.py
+  version: '2.1.2', # this has to match the version in nbversion.py
   meson_version: '>1.4.0',
 )
 
