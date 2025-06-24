@@ -5,8 +5,8 @@ project(
   meson_version: '>1.4.0',
 )
 
-#version_output = run_command(find_program('python3'), files('../nbversion.py'))
-#project_version = version_output.stdout().strip()
+version_output = run_command(find_program('python3'), files('../nbversion.py'))
+project_version = version_output.stdout().strip()
 
 c_comp = meson.get_compiler('c')
 f_comp = meson.get_compiler('fortran')

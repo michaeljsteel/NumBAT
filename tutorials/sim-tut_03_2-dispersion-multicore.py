@@ -114,8 +114,9 @@ if multiproc:
         pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 else:
     pooled_mode_freqs = []
-    for ik, nk, nu_k in qsets:
-        pooled_mode_freqs.append(solve_ac_mode_freqs((ik, nk, nu_k)))
+    for qset in qsets:
+        pooled_mode_freqs.append(solve_ac_mode_freqs(qset))
+
 
 # We will pack the above values into a single array for plotting purposes, initialise first
 m_nu_ac = np.zeros((n_qs, num_modes_AC+1))
