@@ -17,9 +17,10 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(SPHINXOPTS) source
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) source
 
-.PHONY: mike
-mike:
+.PHONY: both
+both:
 	make clean
+	make html
 	make latexpdf
 
 .PHONY: view

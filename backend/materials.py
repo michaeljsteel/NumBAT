@@ -113,7 +113,7 @@ class PiezoElectricProperties:
         # cE denotes stiffness tensor at fixed electric field E
         # epsT denotes dielecric tensor at fixed stress T
 
-        self.active =  'piezo_active' in d_piezo
+        self.active = d_piezo.get('piezo_active',0)
 
         #
         self._tens_cE_IJ = stiffness_cE_IJ
@@ -242,7 +242,7 @@ class PiezoElectricProperties:
         pass
 
     def __str__(self):
-        s='Piezoelectric properties:'
+        s='\nPiezoelectric properties:'
         if self.active:
             s+= '\n Piezo effects enabled'
         else:
@@ -351,6 +351,7 @@ class Material(object):
             s += dent + f"Ref. index:     {self.refindex_n:.4f} "
 
             s += dent + f"Crystal class:  {self.crystal_class.name}"
+            s += dent + f"Crystal group:  {self.crystal_group}"
 
             if self.is_isotropic():
                 s += (

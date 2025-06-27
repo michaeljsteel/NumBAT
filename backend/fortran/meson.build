@@ -5,7 +5,7 @@ project(
   meson_version: '>1.4.0',
 )
 
-version_output = run_command(find_program('python3'), files('../nbversion.py'))
+version_output = run_command(find_program('python3'), files('../nbversion.py'), check: true)
 project_version = version_output.stdout().strip()
 
 c_comp = meson.get_compiler('c')
@@ -39,13 +39,7 @@ if host_machine.system() == 'linux'
 
     # Compare the versions
     if gcc_version.version_compare('< ' + min_gcc_version)
-      error(
-        'GCC version '
-        + gcc_version.to_string()
-        + ' is too old. NumBAT requires a minimum version of '
-        + min_gcc_version
-        + '.',
-      )
+      error('GCC version ' + gcc_version + ' is too old. NumBAT requires a minimum version of ' + min_gcc_version + '.')
     endif
   endif
 

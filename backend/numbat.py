@@ -328,5 +328,8 @@ def NumBATPlotPrefs():
 
 #     return styles
 
+def version():
+        return nbversion.NUMBAT_VERSION_STR_MMM
+
 def load_simulation(prefix):
     return Simulation.load_simulation(prefix)

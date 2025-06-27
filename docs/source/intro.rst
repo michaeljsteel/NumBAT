@@ -75,9 +75,21 @@ All requests should be sent to ``michael.steel@mq.edu.au``.
       containing the following information:
 
       * Your platform (Linux, Windows, MacOS) and specific operating system
-      * How recently you have updated your |NUMBAT| code
-      * A python script that demonstrates the issue you are trying to solve
-        Please make the script as short in both code length and execution time as possible while still exhibiting the issue of concern.
+
+      * The version number of your |NUMBAT| installation. 
+        You can determine this by typing the following command in your terminal ::
+           
+            python -c 'import numbat;print(numbat.version())'
+
+      * A short python script which demonstrates the issue you are trying to solve.
+        Please make the script as short in both code length and execution time as 
+        possible while still exhibiting the issue of concern.
+
+**Note**: 
+|NUMBAT| is updated frequently with new features, API and bug fixes.
+Consequently, please understand that we can only provide assistance for issues with 
+the *current* github version of |NUMBAT|.  Please be sure that your script runs against 
+the current github tree and that your problem is still present with that version.
 
 
 

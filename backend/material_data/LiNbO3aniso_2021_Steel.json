@@ -42,7 +42,7 @@
 
  "eta_66": 0.2136e-3,  // Acoustic loss tensor component [Pa s]
 
- "piezo_active": 1,      // Trigonal 3m symmetry, these are indepenent
+ "piezo_active": 0,      // Trigonal 3m symmetry, these are indepenent
  "piezo_d_x5": 68.0e-12, 
  "piezo_d_y2": 21.0e-12, 
  "piezo_d_z1": -1.0e-12, 
