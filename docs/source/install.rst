@@ -129,7 +129,7 @@ Building |NUMBAT| itself
 
 #. If you wish to be able to rebuild the documentation, we need some additional modules ::
 
-     $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc
+     $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc ipython pygments
 
    You may also need to install the main pandoc package for your distribution.
 
@@ -152,7 +152,7 @@ Building |NUMBAT| itself
         $ make intel
 
 
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-linuxmacos-label` for further ideas.
 
 #. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
@@ -189,7 +189,7 @@ Compiling and installing |NUMBAT| itself does not rely on having root access to 
 is certainly simpler if you have root or the assistance of your system admin.
 
 If this is not possible, you can certainly proceed by building and installing all the required libraries into your own tree within your home directory.
-It may be helpful to create a tree like the following so that the relevant paths mirror those of a system install::
+It may be helpful to create a tree like the following so that the relevant paths mirror those of a system install ::
 
    $HOME/
     |---my_sys/
@@ -199,51 +199,6 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
-.. _sec-troubleshooting-label:
-
-
-Troubleshooting Linux and MacOS installs
--------------------------------------------
-Performing a full build of |NUMBAT| and all its libraries from scratch is a non-trivial task and it's possible you will hit a few stumbles.
-Here are a few traps to watch out for:
-
-#. Please ensure to use relatively recent libraries for all the Python components. This includes using
-
-   - Python: 3.10 or later
-   - ``matplotlib``: 3.9.0 or later
-   - ``scipy``:  1.13.0 or later
-   - ``numpy``:  1.26.2 or later
-
-#. But try not to use very recently released major upgrades.
-
-   Notably the 2.0.0 series of ``numpy``, which was only released in mid-June 2024 includes major changes to ``numpy`` architecture and is  not yet supported.
-
-#. Be sure to follow the instructions above about setting up the virtual environment for |NUMBAT| excusively. This will help prevent incompatible Python modules being added over time.
-
-#. In general, the GCC build is more tested and forgiving than the build with the Intel compilers and we recommend the GCC option.  However, we do recommend using the Intel OneAPI math libraries as described above. This is the easiest way to get very high performance LAPACK and BLAS libraries with a well-designed directory tree.
-
-#. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
-
-   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``.
-
-
-     You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
-
-   - You may have actually encountered a bug in the |NUMBAT| build process. Contact us for assistance as described in the introduction.
-
-#. If |NUMBAT| crashes during execution with a ``Segmentation fault``, useful information can be obtained from the GNU debugger ``gdb`` as follows:
-
-    #. Make sure that core dumps are enabled on your system. This `article <https://medium.com/@sourabhedake/core-dumps-how-to-enable-them-73856a437711>`_ provides an excellent guide on how to do so.
-
-    #. Ensure that ``gdb`` is installed.
-
-    #. Rerun the script that causes the crash. You should now have a core dump in the directory determined in step 1.
-
-    #. Execute ``gdb`` as follows::
-
-        $ gdb <path_to_numbat_python_env>  <path_to_core file>
-
-    #. In gdb, enter ``bt`` for *backtrace* and try to identify the point in the code at which the crash has occurred.
 
 Installing on MacOS
 ================================
@@ -347,7 +302,7 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
    $ make mac
 
-#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-label` for further ideas.
+#. If all is well, this will run to completion. If you encounter errors, please check that all the instructions above have been followed accurately. If you are still stuck, see :ref:`sec-troubleshooting-linuxmacos-label` for further ideas.
 
 #. If you hit a compile error you can't resolve, please see the instructions at :ref:`sec-helpinstall-label` on how to seek help.
 
@@ -361,7 +316,7 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 #. Once again, if you run into trouble, please don't hesitate to get in touch for help using the instructions at :ref:`sec-helpinstall-label`. Please do send all the requested information, as it usually allows us to solve your problem faster.
 
 
-.. _sec-troubleshooting-label:
+.. _sec-troubleshooting-linuxmacos-label:
 
 Troubleshooting Linux and MacOS installs
 -------------------------------------------
@@ -430,11 +385,9 @@ You can use an existing Python installation if you have a sufficiently recent ve
 
 **Note: if you are using the pre-built |NUMBAT| installer, for binary compatibility you *must* use Python version 3.13 and numpy version 2.2.**
 
-#. If you do not have a suitable current Python, download and run the installer for a recent version
-  from the `Python website <https://www.python.org/downloads/windows/>`_.
+  #. If you do not have a suitable current Python, download and run the installer for a recent version from the `Python website <https://www.python.org/downloads/windows/>`_.
 
-   By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``,
-  say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
+   By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``, say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
   #. Create a python virtual environment for working with |NUMBAT|.
@@ -704,7 +657,7 @@ Installing |NUMBAT| Method 2: pre-built Windows installer
 You won't be able to make changes to the Fortran finite element code. (For most people, this is completely fine.)
 The installer is not updated as frequently as the main source tree.
 
-**Note: the pre-built installer will only work with Python version 3.13. If you do not have this version installed, please follow the instructions for installing Python earlier in this section.  **
+**Note: the pre-built installer will only work with Python version 3.13. If you do not have this version installed, please follow the instructions for installing Python earlier in this section.**
 
 We will actually run two installers: one for the free GMsh mesh generation tool, and one for |NUMBAT| itself.
 
@@ -826,4 +779,4 @@ Before writing for help (see contact details in :ref:`chap-intro-label`), please
 
     #. If the problem is a crash while running a |NUMBAT| script, please attach the python script file and a description of how to observe the problem.
 
-    #. If on Linux or MacOS, follow the instructions under :ref:`sec-troubleshooting-label` to generate a debugging trace with GDB and send a screen shot of the trace.
+    #. If on Linux or MacOS, follow the instructions under :ref:`sec-troubleshooting-linuxmacos-label` to generate a debugging trace with GDB and send a screen shot of the trace.
