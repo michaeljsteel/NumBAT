@@ -182,7 +182,7 @@ def add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
 def plot_material_photoelastic_IJ(prefix, v_comps, mat):
     npts = 200
 
-    fig, ax = plt.subplots(dpi=200, subplot_kw={'projection':'polar'}, figsize=(4,4))
+    fig, ax = plt.subplots(dpi=200, subplot_kw={'projection':'polar'}, figsize=(3,3))
     # fig.subplots_adjust(hspace=.35, wspace=0)
 
     d_p_vecs = {}  # map of "IJ" strings -> (el_IJ, np.zeros(npts))
@@ -221,13 +221,27 @@ def plot_material_photoelastic_IJ(prefix, v_comps, mat):
     ax.set_rmax(0.4)
     ax.set_rmin(-0.2)
     ax.set_rticks(np.arange(-0.2,0.4+.0001,.1))
+    ax.tick_params(labelsize=8)
 
     ax.set_rlabel_position(90)
     ax.set_thetagrids(np.arange(0,360-1e-5,30))
     ax.grid(True)
 
     #ax.set_ylim(-.2,.4)
-    ax.legend()
+    #ax.legend(fontsize=6)
+
+     # Move the legend to the right outside the plot
+    # bbox_to_anchor: (x, y) coordinates in axes fraction.
+    # (1.05, 1) means just outside the top right corner of the plot area.
+    # loc='upper left' specifies where the anchor point of the legend box is.
+    # In this case, the upper left corner of the legend box is anchored at (1.05, 1).
+    ax.legend(fontsize=6, bbox_to_anchor=(1.1, 1), loc='upper left', borderaxespad=0.)
+
+    #plt.tight_layout(rect=[0, 0, 1, 1]) # Adjust tight_layout to make space for legend
+                                       # [left, bottom, right, top] in figure coordinates.
+                                       # Adjust 'right' to be less than 1 to give space.
+                                       # Or better, let tight_layout figure it out, but
+                                       # sometimes manual adjustment is needed.
 
 
 
