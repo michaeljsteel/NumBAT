@@ -18,10 +18,11 @@ The Linux builds can also be run under virtual machines on MacOS and Windows if 
 
 In all cases, the current source code for |NUMBAT| is hosted `here on Github <https://github.com/michaeljsteel/NumBAT>`_. Please always download the latest release from the github page.
 
-You can now skip forward to the section for your operating system: :ref:`Linux <sec-linuxinstall-label>`, :ref:`MacOS <sec-macinstall-label>` or :ref:`Windows <sec-wininstall-label>`.
+You can now skip forward to the section for your operating system: :ref:`Linux <sec-linuxinstall-label>`, :ref:`MacOS <sec-macosinstall-label>` or :ref:`Windows <sec-wininstall-label>`.
 
 
 .. _sec-linuxinstall-label:
+
 
 Installing on Linux
 ================================
@@ -199,6 +200,7 @@ It may be helpful to create a tree like the following so that the relevant paths
               |---bin/
 
 
+.. _sec-macosinstall-label:
 
 Installing on MacOS
 ================================
