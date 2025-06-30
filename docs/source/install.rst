@@ -76,19 +76,13 @@ Required libraries
 
 #. Install the required libraries using your distribution's package manager.
 
-   On Ubuntu, perform the following::
+   On Ubuntu, perform the following ::
 
-    $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev
-
-    $ sudo apt-get install meson pkg-config ninja-build
+    $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev meson pkg-config ninja-build
 
     $ sudo add-apt-repository universe
 
-    $ sudo apt-get install libarpack2-dev libparpack2-dev
-
-    $ sudo apt-get install libatlas-base-dev libblas-dev liblapack-dev
-
-    $ sudo apt-get install libsuitesparse-dev
+    $ sudo apt-get install libarpack2-dev libparpack2-dev libatlas-base-dev libblas-dev liblapack-dev  libsuitesparse-dev
 
 #. If you wish to use the Intel OneAPI math libraries, you need both of the following:
 
