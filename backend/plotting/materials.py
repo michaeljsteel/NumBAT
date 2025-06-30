@@ -12,13 +12,36 @@ import reporting
 
 from bulkprops import solve_christoffel
 
-def make_axes_square(ext0, ax):
+def make_axes_square(ext0, ax, flip_x=False, flip_y=False):
     ext = 1.1 * ext0
-    ax.set_xlim(-ext, ext)
-    ax.set_ylim(-ext, ext)
+    xlims = (ext, -ext) if flip_x else (-ext, ext)
+    ylims = (ext, -ext) if flip_y else (-ext, ext)
+    ax.set_xlim(xlims)
+    ax.set_ylim(ylims)
     ax.set_aspect("equal")
 
-def plot_bulk_dispersion_2D(material, pref, label=None, show_poln=True):
+def plot_bulk_dispersion_ivp(material, pref, label=None, show_poln=True,
+                            flip_x=False, flip_y=False):
+
+    ax_vp, ax_sl, ax_vg, ax_ivp_3d = None, None, None, None
+
+    fig, ax_sl = plt.subplots(1, 1, dpi=300)
+    setup_bulk_dispersion_2D_plot(ax_vp, ax_sl, ax_vg, ax_ivp_3d)
+
+    cm = "cool"  # Color map for polarisation coding
+    add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
+                                    show_poln, flip_x, flip_y)
+
+    if label is not None:
+        ax_sl.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
+
+    fname = pref + "-bulkdisp-ivp.png"
+    fig.savefig(fname)
+    plt.close(fig)
+    return fname
+
+def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
+                            flip_x=False, flip_y=False):
     """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal
     (x-z) plane for the crystal axes current orientation.
 
@@ -33,12 +56,25 @@ def plot_bulk_dispersion_2D(material, pref, label=None, show_poln=True):
 
     """
 
-    fig, axs = setup_bulk_dispersion_2D_plot()
+    #fig, axs = setup_bulk_dispersion_2D_plot()
 
-    ax_sl, ax_vp, ax_vg, ax_ivp_3d = axs
+    #ax_sl, ax_vp, ax_vg, ax_ivp_3d = axs
+    fig, axs = plt.subplots(2, 2, figsize=(7, 6), dpi=300)
+    fig.subplots_adjust(hspace=0.35, wspace=0)
+
+    ax_vp, ax_sl, ax_vg = axs[0, 0], axs[0, 1], axs[1, 0]
+
+    axs[1, 1].set_axis_off()  # Hide axis 2,2
+
+    axs[1, 1].remove()
+    ax_ivp_3d = fig.add_subplot(2, 2, 4, projection="3d")
+
+    setup_bulk_dispersion_2D_plot(ax_vp, ax_sl, ax_vg, ax_ivp_3d)
+
 
     cm = "cool"  # Color map for polarisation coding
-    add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, cm, show_poln)
+    add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
+                                     show_poln, flip_x, flip_y)
 
     # markers to reproduce Auld Fig 7.2
     #c11=material.stiffness_c_IJ[1,1]
@@ -50,10 +86,10 @@ def plot_bulk_dispersion_2D(material, pref, label=None, show_poln=True):
     #l2=np.sqrt(rho/c11)
     #l3=np.sqrt(rho/c44)
     #l4=np.sqrt(rho*anA/c44)
-    #ax_sl.plot([l1/np.sqrt(2)*1e3], [l1/np.sqrt(2)*1e3], 'x') 
-    #ax_sl.plot([0], [l2*1e3], 'x') 
-    #ax_sl.plot([l3/np.sqrt(2)*1e3], [l3/np.sqrt(2)*1e3], 'x') 
-    #ax_sl.plot([l4/np.sqrt(2)*1e3], [l4/np.sqrt(2)*1e3], 'x') 
+    #ax_sl.plot([l1/np.sqrt(2)*1e3], [l1/np.sqrt(2)*1e3], 'x')
+    #ax_sl.plot([0], [l2*1e3], 'x')
+    #ax_sl.plot([l3/np.sqrt(2)*1e3], [l3/np.sqrt(2)*1e3], 'x')
+    #ax_sl.plot([l4/np.sqrt(2)*1e3], [l4/np.sqrt(2)*1e3], 'x')
 
     # markers to reproduce Auld Fig 7.3
     #c11=material._stiffness_c_IJ_orig[1,1]
@@ -74,17 +110,17 @@ def plot_bulk_dispersion_2D(material, pref, label=None, show_poln=True):
 #    ax_sl.plot([l3], [0], 'o')
 #    ax_sl.plot([0], [-l4], 'v')
 #    ax_sl.plot([-l6], [0], 'o')
-#    ax_sl.plot([l5*np.cos(th)], [l5*np.sin(th)], 'o') 
-#    ax_sl.plot([l7*np.cos(th)], [l7*np.sin(th)], 'o') 
+#    ax_sl.plot([l5*np.cos(th)], [l5*np.sin(th)], 'o')
+#    ax_sl.plot([l7*np.cos(th)], [l7*np.sin(th)], 'o')
 
-    
+
     #label = self.material_name
     if label is not None:
         ax_vp.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
 
     add_3d_dispersion_curves_to_axes(material, ax_ivp_3d)
 
-    fname = pref + "-bulkdisp.png"
+    fname = pref + "-bulkdisp-all.png"
     fig.savefig(fname)
     plt.close(fig)
     return fname
@@ -320,29 +356,24 @@ draw(k0--k1,green, Arrow3(arrsize), L=Label("$k$"));
     return s1 + s2 + s3
 
 
-def setup_bulk_dispersion_2D_plot():
+def setup_bulk_dispersion_2D_plot(ax_vp, ax_sl, ax_vg, ax_ivp3d):
     """Plots both slowness and ray normal contours."""
 
-    fig, axs = plt.subplots(2, 2, figsize=(7, 6), dpi=300)
-    fig.subplots_adjust(hspace=0.35, wspace=0)
+    if ax_vp is not None:
+        ax_vp.set_xlabel(r"$v^{(p)}_{x}$ [km/s]")
+        ax_vp.set_ylabel(r"$v^{(p)}_{z}$ [km/s]")
 
-    ax_vp, ax_sl, ax_vg = axs[0, 0], axs[0, 1], axs[1, 0]
+    if ax_sl is not None:
+        ax_sl.set_xlabel(r"$1/v^{(p)}_{x}$ [s/km]")
+        ax_sl.set_ylabel(r"$1/v^{(p)}_{z}$ [s/km]")
 
-    axs[1, 1].set_axis_off()  # Hide axis 2,2
+    if ax_vg is not None:
+        ax_vg.set_xlabel(r"$v^{(g)}_{x}$ [km/s]")
+        ax_vg.set_ylabel(r"$v^{(g)}_{z}$ [km/s]")
 
-    axs[1, 1].remove()
-    ax_ivp3d = fig.add_subplot(2, 2, 4, projection="3d")
+    axs = [ax for ax in (ax_vp, ax_sl, ax_vg) if ax is not None]
 
-    ax_vp.set_xlabel(r"$v^{(p)}_{x}$ [km/s]")
-    ax_vp.set_ylabel(r"$v^{(p)}_{z}$ [km/s]")
-
-    ax_sl.set_xlabel(r"$1/v^{(p)}_{x}$ [s/km]")
-    ax_sl.set_ylabel(r"$1/v^{(p)}_{z}$ [s/km]")
-
-    ax_vg.set_xlabel(r"$v^{(g)}_{x}$ [km/s]")
-    ax_vg.set_ylabel(r"$v^{(g)}_{z}$ [km/s]")
-
-    for ax in axs.flat[:3]:  # Don't write to axis 2,2
+    for ax in axs:  # Don't write to axis 2,2
         ax.axhline(0, c="gray", lw=0.5)
         ax.axvline(0, c="gray", lw=0.5)
         ax.tick_params(width=0.5)
@@ -350,8 +381,8 @@ def setup_bulk_dispersion_2D_plot():
             item.set_fontsize(10)
         for t_ax in ["top", "bottom", "left", "right"]:
             ax.spines[t_ax].set_linewidth(0.5)
-    axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
-    return fig, axs
+    #axs = ax_sl, ax_vp, ax_vg, ax_ivp3d
+    #return fig, axs
 
 
 def setup_bulk_dispersion_2D_plot_2x1():
@@ -392,7 +423,8 @@ def setup_bulk_dispersion_2D_plot_2x1():
     return fig, axs
 
 
-def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, cm, show_poln=True):
+def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
+                                     show_poln=True, flip_x=False, flip_y=False):
     npolpts = 28
     npolskip = 10  # make bigger
     npts = npolpts * npolskip  # about 1000
@@ -401,6 +433,7 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, c
     v_velc = np.zeros([npts, 3])
     v_vgx = np.zeros([npts, 3])
     v_vgz = np.zeros([npts, 3])
+
 
     cmm = mpl.colormaps[cm]
     with open(pref + "-bulkdisp.dat", "w") as fout:
@@ -423,8 +456,11 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, c
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-            t_stiffness = material.get_stiffness_for_kappa(vkap)
-            v_vphase, vecs, v_vgroup = solve_christoffel(vkap,
+            vkapflip = vkap.copy()
+            #if flipkapz:
+            #    vkapflip[2] = -vkapflip[2]
+            t_stiffness = material.get_stiffness_for_kappa(vkapflip)
+            v_vphase, vecs, v_vgroup = solve_christoffel(vkapflip,
                                                          t_stiffness,
                                                          material.rho)
 
@@ -460,44 +496,59 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_sl, ax_vp, ax_vg, c
                         ptm = radsl * np.array([np.cos(kphi), np.sin(kphi)])
                         pt0 = np.real(ptm - vecs[0:3:2, i] * irad)
                         pt1 = np.real(ptm + vecs[0:3:2, i] * irad)
-                        ax_sl.plot( (pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
-                        ax_sl.plot( ptm[0], ptm[1], "o", c=polc, markersize=srad * ycomp[i])
+                        if ax_sl:
+                            ax_sl.plot( (pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
+                            ax_sl.plot( ptm[0], ptm[1], "o", c=polc, markersize=srad * ycomp[i])
 
                         ptm = radvp * np.array([np.cos(kphi), np.sin(kphi)])
                         pt0 = np.real(ptm - vecs[0:3:2, i] * rad)
                         pt1 = np.real(ptm + vecs[0:3:2, i] * rad)
 
-                        ax_vp.plot( (pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
-                        ax_vp.plot( ptm[0], ptm[1], "o", c=polc, markersize=srad * ycomp[i])
+                        if ax_vp:
+                            ax_vp.plot( (pt0[0], pt1[0]), (pt0[1], pt1[1]), c=polc, lw=lwstick)
+                            ax_vp.plot( ptm[0], ptm[1], "o", c=polc, markersize=srad * ycomp[i])
 
     # the main curves for v_p, 1/v_p and v_g
     lw=.5
     for i in range(3):
-        ax_vp.scatter( np.cos(v_kphi) * v_vel[:, i], np.sin(v_kphi) * v_vel[:, i],
+        if ax_vp:
+            ax_vp.scatter( np.cos(v_kphi) * v_vel[:, i], np.sin(v_kphi) * v_vel[:, i],
                       c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm, lw=lw)
 
-        ax_sl.scatter( np.cos(v_kphi) / v_vel[:, i], np.sin(v_kphi) / v_vel[:, i],
+        if ax_sl:
+            ax_sl.scatter( np.cos(v_kphi) / v_vel[:, i], np.sin(v_kphi) / v_vel[:, i],
                       c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm, lw=lw)
 
-
-        ax_vg.scatter( v_vgx[:, i], v_vgz[:, i], c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm, lw=lw)
+        if ax_vg:
+            ax_vg.scatter( v_vgx[:, i], v_vgz[:, i], c=v_velc[:, i], vmin=0, vmax=1, s=0.5, cmap=cm, lw=lw)
 
     # Tick location seems to need help here
-    for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
+    active_axes = []
+    for ax in (ax_vp, ax_vg):
+        if ax is not None:
+            active_axes.extend([ax.xaxis, ax.yaxis])
+
+    for tax in active_axes:
         tax.set_major_locator( ticker.MultipleLocator( 2.0 ))# , offset=0
 
-    make_axes_square(np.abs(1 / v_vel).max(), ax_sl)
-    make_axes_square(np.abs(v_vel).max(), ax_vp)
-    make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
+    if ax_sl is not None:
+        make_axes_square(np.abs(1 / v_vel).max(), ax_sl, flip_x, flip_y)
+    if ax_vp is not None:
+        make_axes_square(np.abs(v_vel).max(), ax_vp, flip_x, flip_y)
+    if ax_vg is not None:
+        make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg, flip_x, flip_y)
 
     # Add radial speed grid
     v_theta = np.linspace(0, 2*np.pi, 300)
     for vr in range(1,8):
-        ax_vp.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
-        ax_vg.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
+        if ax_vp is not None:
+            ax_vp.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
+        if ax_vg is not None:
+            ax_vg.plot( np.cos(v_theta) * vr , np.sin(v_theta) * vr, ':', c='gray', lw=.25)
 
     for ivr in np.arange(0,.4,.05):
-        ax_sl.plot( np.cos(v_theta) * ivr , np.sin(v_theta) * ivr, ':', c='gray', lw=.25)
+        if ax_sl is not None:
+            ax_sl.plot( np.cos(v_theta) * ivr , np.sin(v_theta) * ivr, ':', c='gray', lw=.25)
 
     # fig.colorbar(mplcm.ScalarMappable(cmap=cm), ax=ax_vp, shrink=.5,
     #             pad=.025, location='top', label='$\hat{e} \cdot \hat{\kappa}$')
@@ -522,7 +573,7 @@ def add_bulk_slowness_curves_to_axes_2x1(
         for ik, kphi in enumerate(v_kphi):
             vkap = np.array([np.cos(kphi), 0.0, np.sin(kphi)])
 
-            # solve_christoffel returns:
+            # sol   ve_christoffel returns:
             # eigvecs are sorted by phase velocity
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3

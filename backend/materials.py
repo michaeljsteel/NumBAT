@@ -115,12 +115,13 @@ class PiezoElectricProperties:
 
         self.active = d_piezo.get('piezo_active',0)
 
-        #
+        # incoming base tensors
         self._tens_cE_IJ = stiffness_cE_IJ
+        self._diel_epsT_ij = diel_epsT_ij   # zero stress dielectric tensor, we take this as the provided "ordinary eps_r"
 
+        # Remainder are derived piezo quantities
         # piezoelectric strain quantities
         self._tens_d_iJ = None      # strain piezo tensor in Voigt form
-        self._diel_epsT_ij = None   # zero stress dielectric tensor, we take this as the provided "ordinary eps_r"
 
         # piezoelectric stress quantities
         self._tens_e_iJ = None      # stress piezo tensor in Voigt form       = d_iJ cE_JI
@@ -135,16 +136,9 @@ class PiezoElectricProperties:
         #self._tens_dbar_Ij = None   # transpose \underscore{d} in Voigt form
         #self._tens_ebar_Ij = None   # transpose \underscore{d} in Voigt form
 
+        self._store_original_tensors()
 
-        # Units of [Coulomb/m^2], order 1
-        self._tens_e_iJ = voigt.VoigtTensor3_iJ('piezo_e', 'Stress piezo coefficient', 'e_iJ', ('C/m^2', 1.0))
-        self._tens_e_iJ.set_from_00matrix(self._tens_d_iJ.value() @ self._tens_cE_IJ.value() )  # Auld 8.40
-
-
-        self._make_eps_S(stiffness_cE_IJ, diel_epsT_ij)
-
-        self.store_original_tensors()
-
+        self._make_derived_tensors()
 
 
     def _load_piezo_d_IJ_from_json(self, d_piezo):
@@ -213,12 +207,21 @@ class PiezoElectricProperties:
 
 
 
+        self._make_stress_e_coeff()
 
-    def _make_eps_S(self, cE_IJ, epsT_ij):
+        self._make_eps_S(stiffness_cE_IJ, diel_epsT_ij)
+
+
+    def _make_derived_tensors(self):
         d_iJ = self._tens_d_iJ
-      #  mat_dbar_Ij = mat_d_iJ.T
+        epsT_ij = self._diel_epsT_ij
+        cE_IJ = self._tens_cE_IJ
 
         self._diel_epsS_ij = epsT_ij - d_iJ.value() @ cE_IJ.value() @ d_iJ.value().T   # Auld 8.41
+
+        # Units of [Coulomb/m^2], order 1
+        self._tens_e_iJ = voigt.VoigtTensor3_iJ('piezo_e', 'Stress piezo coefficient', 'e_iJ', ('C/m^2', 1.0))
+        self._tens_e_iJ.set_from_00matrix(self._tens_d_iJ.value() @ self._tens_cE_IJ.value() )  # Auld 8.40
 
     def rotate(self, matR):
         '''Rotate piezo matrices by SO(3) matrix matR'''
@@ -228,11 +231,14 @@ class PiezoElectricProperties:
 
         self._diel_epsS_ij = voigt._rotate_2tensor(self._diel_epsS_ij, matR)
 
-    def store_original_tensors(self):
+    def reset_orientation(self):
+        self._tens_d_iJ = self._tens_d_iJ_orig.copy()
+        self._diel_epsT_ij = self._diel_epsT_ij_orig.copy()
+
+    def _store_original_tensors(self):
         '''Save tensors to optionally restore after rotations.'''
         self._tens_d_iJ_orig = copy.deepcopy(self._tens_d_iJ)
-        #self._tens_dbar_Ij_orig = self._tens_dbar_Ij.copy()
-        self._diel_epsS_iJjorig = copy.deepcopy(self._diel_epsS_ij)
+        self._diel_epsT_ij_orig = copy.deepcopy(self._diel_epsT_ij)
 
 
     def d_iJ_to_d_ijk(self):
@@ -242,17 +248,18 @@ class PiezoElectricProperties:
         pass
 
     def __str__(self):
-        s='\nPiezoelectric properties:'
+        s='\n\n Piezoelectric properties:'
         if self.active:
-            s+= '\n Piezo effects enabled'
+            s+= '\n  Piezo effects enabled'
         else:
-            s+= '\n Piezo effects disabled'
+            s+= '\n  Piezo effects disabled'
 
-        s += '\n' + str(self._tens_d_iJ)
-        #s+=str(self._diel_epsT_iJ)
-        s += '\n' + str(self._tens_e_iJ)
+        with np.printoptions(precision=4, floatmode="fixed", sign=" ", suppress=True ):
+            s += '\n' + str(self._tens_d_iJ)
+            #s+=str(self._diel_epsT_iJ)
+            s += '\n' + str(self._tens_e_iJ)
 
-        s += '\n\n Dielectric tensor epsS_ij\n' + nbtools.indent_string(str(self._diel_epsS_ij), 4)
+            s += '\n\n Dielectric tensor epsS_ij\n' + nbtools.indent_string(str(self._diel_epsS_ij), 4)
 
         return s
 
@@ -315,10 +322,12 @@ class Material(object):
         return self._piezo is not None
 
     def enable_piezoelectric_effects(self):
-        self._piezo.active = True
+        if self.piezo_supported():
+            self._piezo.active = True
 
     def disable_piezoelectric_effects(self):
-        self._piezo.active = False
+        if self.piezo_supported():
+            self._piezo.active = False
 
 
 
@@ -372,7 +381,6 @@ class Material(object):
                 s += dent + f"Velocity shear: {self.Vac_shear():.3f} m/s"
                 s += dent + f"Velocity Rayleigh: {self.Vac_Rayleigh():.3f} m/s"
             else:
-                s += dent + "Stiffness c_IJ:" + str(self.stiffness_c_IJ) + "\n"
 
                 # find wave properties for z propagation
                 v_phase, v_evecs, v_vgroup = solve_christoffel( unit_z, self.stiffness_c_IJ, self.rho)
@@ -380,6 +388,8 @@ class Material(object):
                 with np.printoptions(
                     precision=4, floatmode="fixed", sign=" ", suppress=True
                 ):
+                    s += dent + "Stiffness c_IJ:" + str(self.stiffness_c_IJ) + "\n"
+
                     for m in range(3):
                         vgabs = np.linalg.norm(v_vgroup[m])
                         s += (
@@ -396,7 +406,7 @@ class Material(object):
                 s += str (self._piezo)
 
         except Exception as err:
-            s = f"Unknown/undefined elastic parameters in material {self.material_name}" + str(err) 
+            s = f"Unknown/undefined elastic parameters in material {self.material_name}" + str(err)
         return s
 
     def Vac_Rayleigh(self):
@@ -516,7 +526,7 @@ class Material(object):
 
         dpiezo = {k:v for k,v in json_data.items() if k.startswith('piezo')}
         if dpiezo:
-            dpiezo[ 'crystal_sym'] = self.crystal_group
+            dpiezo['crystal_sym'] = self.crystal_group
             self._piezo = PiezoElectricProperties(dpiezo, self.stiffness_c_IJ, self.eps_diel_ij)
 
         self._store_original_tensors()
@@ -118829,6 +118839,7 @@ class Material(object):
         self.stiffness_c_IJ = copy.deepcopy(self._stiffness_c_IJ_orig)
         self.photoel_p_IJ = copy.deepcopy(self._photoel_p_IJ_orig)
         self.viscosity_eta_IJ = copy.deepcopy(self._viscosity_eta_IJ_orig)
+        self._piezo.reset_orientation()
 
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
@@ -118923,8 +118934,16 @@ class Material(object):
 
         self.stiffness_c_IJ.check_symmetries()
 
+    def plot_bulk_dispersion(self, pref, label=None, show_poln=True, flip_x=False, flip_y=False):
+        return self.plot_bulk_dispersion_all(pref, label, show_poln, flip_x, flip_y)
 
-    def plot_bulk_dispersion(self, pref, label=None, show_poln=True):
+    def plot_bulk_dispersion_ivp(self, pref, label=None, show_poln=True,
+                                 flip_x=False, flip_y=False):
+        return plms.plot_bulk_dispersion_ivp(self, pref, label, show_poln,
+                                             flip_x, flip_y)
+
+    def plot_bulk_dispersion_all(self, pref, label=None, show_poln=True,
+                                 flip_x=False, flip_y=False):
         """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal
         (x-z) plane for the crystal axes current orientation.
 
@@ -118940,7 +118959,10 @@ class Material(object):
         Returns filename of the generated image.
         """
 
-        return plms.plot_bulk_dispersion_2D(self, pref, label, show_poln)
+        return plms.plot_bulk_dispersion_2D_all(self, pref, label, show_poln,
+                                                flip_x, flip_y)
+
+
 
     def plot_bulk_dispersion_3D(self, pref):
         """
