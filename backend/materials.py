@@ -118839,7 +118839,9 @@ class Material(object):
         self.stiffness_c_IJ = copy.deepcopy(self._stiffness_c_IJ_orig)
         self.photoel_p_IJ = copy.deepcopy(self._photoel_p_IJ_orig)
         self.viscosity_eta_IJ = copy.deepcopy(self._viscosity_eta_IJ_orig)
-        self._piezo.reset_orientation()
+
+        if self._piezo:
+            self._piezo.reset_orientation()
 
         self.set_crystal_axes(unit_x, unit_y, unit_z)
 
