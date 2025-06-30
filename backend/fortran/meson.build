@@ -44,7 +44,7 @@ if host_machine.system() == 'linux'
   endif
 
   use_mkl_gcc = false
-  inc_nblocal = include_directories([dir_usrlocal_inc,])
+  inc_nblocal = include_directories([dir_usrlocal_inc,'/usr/include/suitesparse/'])
   dir_oneapi = get_option(plat_pref + 'dir_oneapi')
   dir_mkl = dir_oneapi / 'mkl/latest/lib'
 
