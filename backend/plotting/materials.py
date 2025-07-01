@@ -456,13 +456,12 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-            vkapflip = vkap.copy()
-            #if flipkapz:
-            #    vkapflip[2] = -vkapflip[2]
-            t_stiffness = material.get_stiffness_for_kappa(vkapflip)
-            v_vphase, vecs, v_vgroup = solve_christoffel(vkapflip,
-                                                         t_stiffness,
-                                                         material.rho)
+            t_stiffness = material.get_stiffness_for_kappa(vkap)
+
+            #if ik==0:
+            #    print('got stiff', t_stiffness)
+
+            v_vphase, vecs, v_vgroup = solve_christoffel(vkap, t_stiffness, material.rho)
 
             v_vel[ik, :] = v_vphase  # phase velocity
             v_vgx[ik, :] = v_vgroup[:, 0]  # group velocity components

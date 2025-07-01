@@ -65,7 +65,7 @@ def kvec_to_symmetric_gradient(kvec):
     '''
     kx, ky, kz = kvec
 
-    nabla_IJ = np.array([
+    nabla_Ij = np.array([
         [kx,   0.0, 0.0],
         [0.0,  ky,  0.0],
         [0.0,  0.0, kz],
@@ -73,7 +73,7 @@ def kvec_to_symmetric_gradient(kvec):
         [kz,   0.0, kx],
         [ky,   kx, 0.0]
     ])
-    return nabla_IJ
+    return nabla_Ij
 
 def rotate_2tensor_elt(i, j, T_pq, mat_R):
     '''
@@ -278,12 +278,14 @@ def _rotate_Voigt_4tensor(T_PQ, mat_R):
 
 
 def Voigt3_iJ_to_ijk(mat_iJ, fac2mul = False):
+    "Takes Voigt indexed (0..2) x (1..6) iJ matrix to 3x3 (0..2,0..2,0..2) indexed matrix"
     T_ijk = np.zeros([3,3,3], dtype=mat_iJ.dtype)
 
+    #fac2mul=False
     for i in range(3):
         for j in range(3):
             for k in range(3):
-                J = to_Voigt[j,k]
+                J = to_Voigt[j,k] + 1  # +1 because toVoigt runs from 0..5
                 if J>=4 and fac2mul:
                     T_ijk[i,j,k] = 2*mat_iJ[i,J]
                 else:
@@ -291,15 +293,17 @@ def Voigt3_iJ_to_ijk(mat_iJ, fac2mul = False):
     return T_ijk
 
 def Voigt3_ijk_to_iJ(mat_ijk, fac2mul = False):
+    "Takes 3x3 (0..2,0..2,0..2) indexed matrix to Voigt indexed (0..2) x (1..6) iJ matrix"
     T_iJ = np.zeros([3,7], dtype=mat_ijk.dtype)
 
+    #fac2mul=False
     for i in range(3):
         for J in range(1,7):
             (j,k) = from_Voigt[J]
-        if J<4 or fac2mul:
-            T_iJ[i,J] = mat_ijk[i,j,k] / 2
-        else:
-            T_iJ[i,J] = mat_ijk[i,j,k]
+            if J>=4 and fac2mul:
+                T_iJ[i,J] = mat_ijk[i,j,k] / 2
+            else:
+                T_iJ[i,J] = mat_ijk[i,j,k]
     return T_iJ
 
 class VoigtTensor3_iJ(object):
@@ -319,10 +323,15 @@ class VoigtTensor3_iJ(object):
         self._transforms_with_factor_2 = transforms_with_factor_2  # converts to _ijk form with stiffness facs
 
     def rotate(self, mat_R):
-        T_ijk = Voigt3_iJ_to_ijk(self.mat, self._transforms_with_factor_2)
-        Tp_ijk = _rotate_3tensor(T_ijk, mat_R)
-        self.mat = Voigt3_ijk_to_iJ(Tp_ijk, self._transforms_with_factor_2)
+        with np.printoptions(precision=4):
+            #print('rot3 a\n', self.mat)
+            T_ijk = Voigt3_iJ_to_ijk(self.mat, self._transforms_with_factor_2)
+            Tp_ijk = _rotate_3tensor(T_ijk, mat_R)
+            self.mat = Voigt3_ijk_to_iJ(Tp_ijk, self._transforms_with_factor_2)
 
+            #print('rot3 b\n', T_ijk)
+            #print('rot3 c\n', Tp_ijk)
+            #print('rot3 d\n', self.mat)
     #def to_Tijk(self):
     #    return Voigt3_iJ_to_ijk(self.mat, self._transforms_with_factor_2)
 

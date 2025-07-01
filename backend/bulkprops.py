@@ -56,16 +56,19 @@ def power_flux_christoffel(kapv, v_p, evec, c_stiff):
 
 
 def Gamma_christoffel(vkap, c_stiff, rho):
-    """Returns Gamma_ij = 1/V0^2   mD.Cij.md^T/rho  in units of (km/s)^2
-    vkap is unit wavevector.
-    V0=1km/s
+    """Returns Gamma_ij = 1/V0^2   (l_iK . c_KL . l_Lj) /rho  in units of (km/s)^2
 
-    See Auld V1. Sec 7.D
+    vkap is unit wavevector
+    V0=1km/s
+    c_KL (c_stiff) is Voigt stiffness
+    l_iK is 3x6 symmetric gradient of unit wavevector
+
+    See Auld V1. Eq. 6.10 and Sec 7.D
     """
 
-    mD = voigt.kvec_to_symmetric_gradient(vkap).T
+    l_iK = voigt.kvec_to_symmetric_gradient(vkap).T
     v0sq = 1.0e6
-    m_Gamma = np.matmul(np.matmul(mD, c_stiff.value()), mD.T) / (v0sq * rho)
+    m_Gamma = np.matmul(np.matmul(l_iK, c_stiff.value()), l_iK.T) / (v0sq * rho)
 
     return m_Gamma
 
@@ -77,13 +80,15 @@ def chareq_christoffel(vkap, c_stiff, rho, v_p):
     See Auld V1. Sec 7.D
     """
 
+    # we are working with unit vector vkap, so \omega = |q| v_p = v_p
+
     op_chris = Gamma_christoffel(vkap, c_stiff, rho) - v_p**2 * np.eye(3)
 
     return scipy.linalg.det(op_chris)
 
 
 def solve_christoffel(vkap, c_stiff, rho):
-    """Solve eigenproblem of Christoffel equation in the direction vkap (a 2D unit vector). 
+    """Solve eigenproblem of Christoffel equation in the direction vkap (a 2D unit vector).
 
     Returns for each of 3 modes:
         phase velocity                v_phase[m]

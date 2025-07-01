@@ -114,23 +114,24 @@ class PiezoElectricProperties:
         # epsT denotes dielecric tensor at fixed stress T
 
         self.active = d_piezo.get('piezo_active',0)
+        self.supported = True
 
         # incoming base tensors
         self._tens_cE_IJ = stiffness_cE_IJ
         self._diel_epsT_ij = diel_epsT_ij   # zero stress dielectric tensor, we take this as the provided "ordinary eps_r"
 
+        # strain piezo tensor in Voigt form
+        # Units of [Coulomb/Newton], order 1e-12
+        self._tens_d_iJ = voigt.VoigtTensor3_iJ('piezo_d', 'Strain piezo coefficient', 'd_iJ', ('pC/N', 1e-12), transforms_with_factor_2=True)
+
+        self._load_piezo_d_IJ_from_json(d_piezo)
+
         # Remainder are derived piezo quantities
-        # piezoelectric strain quantities
-        self._tens_d_iJ = None      # strain piezo tensor in Voigt form
 
         # piezoelectric stress quantities
         self._tens_e_iJ = None      # stress piezo tensor in Voigt form       = d_iJ cE_JI
         self._diel_epsS_ij = None   # zero strain dielectric tensor,          = epsT_ij - d_iJ cE_JI dbar_Ij
 
-        # Units of [Coulomb/Newton], order 1e-12
-        self._tens_d_iJ = voigt.VoigtTensor3_iJ('piezo_d', 'Strain piezo coefficient', 'd_iJ', ('pC/N', 1e-12), transforms_with_factor_2=True)
-
-        self._load_piezo_d_IJ_from_json(d_piezo)
 
 
         #self._tens_dbar_Ij = None   # transpose \underscore{d} in Voigt form
@@ -186,9 +187,10 @@ class PiezoElectricProperties:
 
 
 
-    def make_piezo_stiffened_stiffness_for_kappa(self, v_kap):
+    def make_piezo_stiffened_stiffness_for_kappa(self, v_kap0):
         '''Returns piezo-stiffened stiffness (!) for propagation along direction v_kappa. See Auld 8.147'''
 
+        v_kap = - v_kap0
         e_iL = self._tens_e_iJ.value()      # [0..2, 0..5]
         e_Kj = self._tens_e_iJ.value().T    # [0..5, 0..2]
 
@@ -197,25 +199,28 @@ class PiezoElectricProperties:
 
         l_eps_l = v_kap @ self._diel_epsS_ij @ v_kap * SI_permittivity_eps0
 
-        cE_KL_stiff = self._tens_cE_IJ.value() + np.outer(e_Kj_lj, li_e_iL) / l_eps_l
+        stiffening = np.outer(e_Kj_lj, li_e_iL) / l_eps_l
+        cE_KL_stiff = self._tens_cE_IJ.value() + stiffening
 
         # convert to a voigt4
         vt_cE_KL_stiff = self._tens_cE_IJ.copy()
         vt_cE_KL_stiff.set_from_00matrix(cE_KL_stiff)
 
+
+        #print('stiffe', np.abs(e_iL), np.abs(e_Kj_lj), np.abs(li_e_iL), np.abs(l_eps_l))
         return  vt_cE_KL_stiff
 
 
 
-        self._make_stress_e_coeff()
+        #self._make_stress_e_coeff()
 
-        self._make_eps_S(stiffness_cE_IJ, diel_epsT_ij)
+        #self._make_eps_S(stiffness_cE_IJ, diel_epsT_ij)
 
 
     def _make_derived_tensors(self):
-        d_iJ = self._tens_d_iJ
-        epsT_ij = self._diel_epsT_ij
         cE_IJ = self._tens_cE_IJ
+        epsT_ij = self._diel_epsT_ij
+        d_iJ = self._tens_d_iJ
 
         self._diel_epsS_ij = epsT_ij - d_iJ.value() @ cE_IJ.value() @ d_iJ.value().T   # Auld 8.41
 
@@ -226,19 +231,34 @@ class PiezoElectricProperties:
     def rotate(self, matR):
         '''Rotate piezo matrices by SO(3) matrix matR'''
 
-        self._tens_d_iJ.rotate(matR)
-        self._tens_e_iJ.rotate(matR)
+        if not self.supported:
+            return
 
-        self._diel_epsS_ij = voigt._rotate_2tensor(self._diel_epsS_ij, matR)
+        self._tens_cE_IJ.rotate(matR)
+
+        #self._diel_epsT_ij.rotate(matR)
+        self._diel_epsT_ij = voigt._rotate_2tensor(self._diel_epsT_ij, matR)
+
+        self._tens_d_iJ.rotate(matR)
+
+        self._make_derived_tensors()
+
+        #self._tens_e_iJ.rotate(matR)
+
+        #self._diel_epsS_ij = voigt._rotate_2tensor(self._diel_epsS_ij, matR)
 
     def reset_orientation(self):
-        self._tens_d_iJ = self._tens_d_iJ_orig.copy()
+        self._tens_cE_IJ = self._tens_cE_IJ_orig.copy()
         self._diel_epsT_ij = self._diel_epsT_ij_orig.copy()
+        self._tens_d_iJ = self._tens_d_iJ_orig.copy()
+
+        self._make_derived_tensors()
 
     def _store_original_tensors(self):
         '''Save tensors to optionally restore after rotations.'''
-        self._tens_d_iJ_orig = copy.deepcopy(self._tens_d_iJ)
+        self._tens_cE_IJ_orig = copy.deepcopy(self._tens_cE_IJ)
         self._diel_epsT_ij_orig = copy.deepcopy(self._diel_epsT_ij)
+        self._tens_d_iJ_orig = copy.deepcopy(self._tens_d_iJ)
 
 
     def d_iJ_to_d_ijk(self):
@@ -494,7 +514,17 @@ class Material(object):
         # Imaginary part of refractive index []
         Im_n = json_data["Im_n"]
         self.refindex_n = Re_n + 1j * Im_n  # Complex refractive index []
-        self.eps_diel_ij = np.eye(3) * self.refindex_n**2
+
+        if "Re_nx" in json_data and "Re_ny" in json_data and "Re_nz" in json_data:
+            epsx = json_data['Re_epsx']
+            epsy = json_data['Re_epsy']
+            epsz = json_data['Re_epsz']
+            self.eps_diel_ij = np.diag([epsx + 0j, epsy, epsz])
+            self.refindex_n = (np.sqrt(epsx)+np.sqrt(epsy)+np.sqrt(epsz))/3 + 0j
+        else:
+            self.eps_diel_ij = np.eye(3) * self.refindex_n**2
+
+
 
         self.rho = json_data["s"]  # Density [kg/m3]
 
