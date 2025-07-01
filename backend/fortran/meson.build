@@ -166,11 +166,11 @@ message([dir_numpy, dir_f2py])
 incs = [inc_nblocal, incs_f2py]
 
 srcs = [
+  nb_module_fsrcs,
   src_f2py_fortobj,
   nb_pyf,
   nb_fortmodc,
   nb_pyinterface_fsrcs,
-  nb_module_fsrcs,
   nb_impl_fsrcs,
   src_sswrap,
 ]

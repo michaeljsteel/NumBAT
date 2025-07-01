@@ -596,3 +596,30 @@ subroutine photoelastic_int_common (is_curvilinear, nval_em_p, nval_em_s, nval_a
    call finalise_pyerror(nberr, errco, emsg)
 
 end subroutine photoelastic_int_common
+
+
+
+subroutine array_size (n_msh_pts, n_msh_elts, n_modes, &
+   int_size, cmplx_size, real_size, n_ddl, errco, emsg)
+
+   use numbatmod
+
+      integer(8), intent(in) :: n_msh_pts, n_msh_elts, n_modes
+
+   integer(8), intent(out) :: int_size, cmplx_size, real_size, n_ddl
+
+   integer(8), intent(out):: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
+
+     type(NBError) nberr
+
+     call initialise_pyerror(nberr) ! use these to keep f2py quiet. It doesn't like method calls
+
+   call array_size_impl(n_msh_pts, n_msh_elts, n_modes, &
+   int_size, cmplx_size, real_size, n_ddl, nberr)
+
+   call finalise_pyerror(nberr, errco, emsg)
+
+
+
+end subroutine
