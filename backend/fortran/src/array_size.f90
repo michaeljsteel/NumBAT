@@ -239,7 +239,7 @@ subroutine array_size_impl (n_msh_pts, n_msh_elts, n_modes, &
          "n_msh_pts > int_max : ", &
          (3*n_msh_pts+n_msh_elts+nnodes*n_msh_elts), int_size, &
          "increase the size of int_max"
-         call nberr%set(-2, emsg)
+         call nberr%set(-2_8, emsg)
       return
    endif
 
@@ -247,7 +247,7 @@ subroutine array_size_impl (n_msh_pts, n_msh_elts, n_modes, &
       write(emsg,*) "py_calc_modes(_AC): (7*n_msh_pts)>cmplx_max : ", &
          (7*n_msh_pts), cmplx_size, &
          "increase the size of cmplx_max"
-         call nberr%set(-2, emsg)
+         call nberr%set(-2_8, emsg)
       return
    endif
 
