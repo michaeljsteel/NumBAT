@@ -121,7 +121,8 @@ subroutine SparseCSC_EM_bound_cond_em (this, bdy_cdn, entities, nberr)
 
    integer(8) ety_i, is_boundary, i_dim, n_dof
 
-   call integer_alloc_2d(this%m_global_dofs, 3_8, entities%n_entities, 'm_global_dofs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_global_dofs, 3_8, entities%n_entities, 'm_global_dofs', nberr)
+   RET_ON_NBERR(nberr)
 
    n_dof = 0
 

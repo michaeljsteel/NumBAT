@@ -80,7 +80,8 @@ subroutine SparseCSC_AC_set_boundary_conditions(this, bdy_cdn, mesh, nberr)
    integer(8) :: vec3(3) = (/ 1_8, 2_8, 3_8/)
 
 
-   call integer_alloc_2d(this%m_global_dofs, 3_8, mesh%n_msh_pts, 'm_global_dofs', nberr); RET_ON_NBERR(nberr)
+   call integer_alloc_2d(this%m_global_dofs, 3_8, mesh%n_msh_pts, 'm_global_dofs', nberr)
+   RET_ON_NBERR(nberr)
 
    n_dof = 0
 
