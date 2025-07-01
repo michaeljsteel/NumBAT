@@ -14,7 +14,6 @@ nb_pyinterface_fsrcs = files(
 
     'array_material_em.f90',
     'array_material_ac.f90',
-    'array_size.f90',
 
 
     'py_entry_cm.f90',
@@ -22,6 +21,8 @@ nb_pyinterface_fsrcs = files(
 
 
 nb_impl_fsrcs = files(
+    'array_size.f90',
+
     'ac_alpha_analytic.f90',
     'ac_alpha_quadrature.f90',
 

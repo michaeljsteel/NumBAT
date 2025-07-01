@@ -2,19 +2,18 @@
 #include "numbat_decl.h"
 
 
-subroutine array_size (n_msh_pts, n_msh_elts, n_modes, &
-   int_size, cmplx_size, real_size, n_ddl, errco, emsg)
+subroutine array_size_impl (n_msh_pts, n_msh_elts, n_modes, &
+   int_size, cmplx_size, real_size, n_ddl, nberr)
 
    use numbatmod
    integer(8), intent(in) :: n_msh_pts, n_msh_elts, n_modes
 
    integer(8), intent(out) :: int_size, cmplx_size, real_size, n_ddl
 
-   integer(8),  intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+   type(NBError) nberr
 
-
-!  Local variables
+   !  Local variables
+   character(len=EMSG_LENGTH) :: emsg
    integer(8) nnodes, npt, npt_p3
    integer(8) nvect, ordre_ls
    integer(8) nonz, nonz_max, max_row_len
@@ -240,7 +239,7 @@ subroutine array_size (n_msh_pts, n_msh_elts, n_modes, &
          "n_msh_pts > int_max : ", &
          (3*n_msh_pts+n_msh_elts+nnodes*n_msh_elts), int_size, &
          "increase the size of int_max"
-      errco = -2
+         call nberr%set(-2, emsg)
       return
    endif
 
@@ -248,10 +247,10 @@ subroutine array_size (n_msh_pts, n_msh_elts, n_modes, &
       write(emsg,*) "py_calc_modes(_AC): (7*n_msh_pts)>cmplx_max : ", &
          (7*n_msh_pts), cmplx_size, &
          "increase the size of cmplx_max"
-      errco = -2
+         call nberr%set(-2, emsg)
       return
    endif
 
 
-end subroutine array_size
+end subroutine array_size_impl
 
