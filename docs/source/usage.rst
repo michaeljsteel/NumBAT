@@ -124,7 +124,7 @@ As with our first example above, most |NUMBAT| scripts proceed with a standard s
  * solving electromagnetic and acoustic modes
  * calculating gain and other derived quantities
 
-The following section provides some information about specifying material properties and waveguide structures, as well as the key parameters for controlling the finite-element meshing.  Information on how to add new structures to |NUMBAT| is provided in :ref:`sec-newmesh-label`.
+The following section provides some information about specifying material properties and waveguide structures, as well as the key parameters for controlling the finite-element meshing.  Information on how to add new structures to |NUMBAT| is provided in :ref:`_sec-user-defined-waveguides-label`.
 
 
 Materials
