@@ -746,9 +746,37 @@ class CircOnion1(UserGeometryBase):
     def init_geometry(self):
         self.set_properties("circ_onion1", is_curvi=True)
 
+        self.set_required_parameters(["inc_a_x"], num_req_mats=2)
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
+
+        self.set_parameter_help(
+            {
+                "inc_a_x": "diameter of central (a) cylinder",
+                "material_a": "material of central (a) cylinder",
+                "lc_bkg": "mesh spacing on outer boundary",
+                "lc_refine_2": "mesh refinement on cylinders",
+            }
+        )
+
     def apply_parameters(self):
         subs = make_onion_subs()
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param("domain_x")
+        dom_y = self.get_param("domain_y")
+        rad_a = self.get_param("inc_a_x") / 2.0
+
+        msg = ""
+
+        diam_outer = 2 * (rad_a )
+
+        if diam_outer >= dom_x:
+            msg += "Outer cylinder has total diameter larger than domain width (domain_x).\n"
+        if diam_outer >= dom_y:
+            msg += "Outer cylinder has total diameter larger than domain height (domain_y).\n"
+        dims_ok = not len(msg)
+        return dims_ok, msg
 
     def draw_mpl_frame(self, ax, styles):
         draw_onion_frame(ax, self, styles)
@@ -758,11 +786,41 @@ class CircOnion2(UserGeometryBase):
     """NumBAT geometry template for a two-layer circular waveguide in a circular domain."""
 
     def init_geometry(self):
-        self.set_properties("circ_onion2", 3, True)
+        self.set_properties("circ_onion2", is_curvi=True)
+        self.set_required_parameters(["inc_a_x", "inc_b_x"], num_req_mats=3)
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
+
+        self.set_parameter_help(
+            {
+                "inc_a_x": "diameter of central (a) cylinder",
+                "inc_b_x": "annular radius of second (b) ring",
+                "material_a": "material of central (a) cylinder",
+                "material_b": "material of second (b) ring",
+                "lc_bkg": "mesh spacing on outer boundary",
+                "lc_refine_2": "mesh refinement on cylinders",
+            }
+        )
 
     def apply_parameters(self):
         subs = make_onion_subs()
         return subs
+
+    def check_dimensions(self):
+        dom_x = self.get_param("domain_x")
+        dom_y = self.get_param("domain_y")
+        rad_a = self.get_param("inc_a_x") / 2.0
+        rad_ann_b = self.get_param("inc_b_x")
+
+        msg = ""
+
+        diam_outer = 2 * (rad_a + rad_ann_b )
+
+        if diam_outer >= dom_x:
+            msg += "Outer cylinder has total diameter larger than domain width (domain_x).\n"
+        if diam_outer >= dom_y:
+            msg += "Outer cylinder has total diameter larger than domain height (domain_y).\n"
+        dims_ok = not len(msg)
+        return dims_ok, msg
 
     def draw_mpl_frame(self, ax, styles):
         draw_onion_frame(ax, self, styles)
@@ -1111,6 +1169,7 @@ class RibDoubleCoated(UserGeometryBase):
                 "rib_h",
                 "slab_w",
                 "slab_h",
+                "slab_b_h",
                 "coat_w",
                 "coat_h",
                 "coat2_w",
@@ -1134,6 +1193,7 @@ class RibDoubleCoated(UserGeometryBase):
                 "rib_h": "height of raised rib region",
                 "slab_w": "width of slab substrate region",
                 "slab_h": "height of slab substrate region",
+                "slab_b_h": "height of second slab substrate region",
                 "coat_w": "horizontal thickness of inner coating layer",
                 "coat_h": "vertical thickness of inner coating layer",
                 "coat2_w": "horizontal thickness of outer coating layer",
@@ -1157,7 +1217,7 @@ class RibDoubleCoated(UserGeometryBase):
             ("slaby = 10;", "slaby = %f;", "slab_h"),
             ("coatx = 2;", "coatx = %f;", "coat_w"),
             ("coaty = 2;", "coaty = %f;", "coat_h"),
-            ("slab2y = 5;", "slab2y = %f;", "slab_b_y"),
+            ("slab2y = 5;", "slab2y = %f;", "slab_b_h"),
             ("coat2x = 4;", "coat2x = %f;", "coat2_w"),
             ("coat2y = 4;", "coat2y = %f;", "coat2_h"),
             ("lc_bkg = 0.05;", "lc = %f;", "lc_bkg"),
