@@ -15,9 +15,9 @@
  "crystal_class": "Trigonal",
  "crystal_sym": "3m",
 
- "Re_epsx": 44.95,
- "Re_epsy": 44.95,
- "Re_epsz": 24.06,
+ "eps_re_x": 44.95,
+ "eps_re_y": 44.95,
+ "eps_re_z": 24.06,
 
  "c_11": 198.83e9,  // Stiffness tensor component [Pa]
  "c_12": 54.64e9,  // Stiffness tensor component [Pa]
@@ -37,6 +37,8 @@
  "p_44": 0.145,  // Photoelastic tensor component []
 
  "piezo_active": 1,       // Trigonal 3m symmetry, these are indepenent
+
+ "piezo_d_or_e": "e",
 
  "piezo_d_x5": 68.0e-12,  // These are used in preference to e values if they are available
  "piezo_d_y2": 21.0e-12,

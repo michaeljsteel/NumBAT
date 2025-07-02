@@ -69,7 +69,7 @@ class MaterialLibrary:
             mat = self._materials[matname]
         except KeyError:
             reporting.report_and_exit(
-                f"Material {matname} not found in material_data folder.\nEither the material file is missing or the name field in the material file has been incorrectly specified."
+                f"Material {matname} not found in material_data folder.\nEither the material file is missing or the name field in the material file has been incorrectly specified.\nNote that material names should not include the .json extension."
             )
 
         return mat
@@ -124,7 +124,7 @@ class PiezoElectricProperties:
         # Units of [Coulomb/Newton], order 1e-12
         self._tens_d_iJ = voigt.VoigtTensor3_iJ('piezo_d', 'Strain piezo coefficient', 'd_iJ', ('pC/N', 1e-12), transforms_with_factor_2=True)
 
-        self._load_piezo_d_IJ_from_json(d_piezo)
+        self._load_piezo_d_iJ_from_json(d_piezo)
 
         # Remainder are derived piezo quantities
 
@@ -142,18 +142,38 @@ class PiezoElectricProperties:
         self._make_derived_tensors()
 
 
-    def _load_piezo_d_IJ_from_json(self, d_piezo):
-        if d_piezo['crystal_sym'] == 'no sym':
-            self._tens_d_iJ.set_from_json(d_piezo)
-        else:
-            self._fill_piezo_elt_mappings(self._tens_d_iJ, d_piezo)
+    def _load_piezo_d_iJ_from_json(self, d_piezo):
+        """Constructs the d_iJ tensor from json file.
 
-    def _fill_piezo_elt_mappings(self, tens_d_iJ, d_piezo):
+        File can specify either d_iJ elements or e_iJ elements according to value of piezo_d_or_e.
+        In the latter case, d_iJ is constructed and then later e_iJ is rebuilt according to standard from d_iJ recipe.
+        """
+
+        if d_piezo['crystal_sym'] == 'no sym':  # specify every nonzero element
+            d_or_e = d_piezo.get('piezo_d_or_e', 'd')
+
+            if d_or_e == 'e': # load as e_iJ, then construct d_iJ (and rebuild e_iJ later)
+                tens_e_iJ = voigt.VoigtTensor3_iJ('piezo_e', 'Stress piezo coefficient', 'd_iJ', ('C/m^2', 1), transforms_with_factor_2=True)
+                tens_e_iJ.set_from_json(d_piezo)
+                compliance = self._tens_cE_IJ.inverse()
+                d_iJ_00 = tens_e_iJ.value() @ compliance.value()
+                self._tens_d_iJ.set_from_00matrix(d_iJ_00)
+            else:
+                self._tens_d_iJ.set_from_json(d_piezo)
+
+        else:
+
+            self._fill_piezo_elt_mappings(d_piezo)
+
+    def _fill_piezo_elt_mappings(self, d_piezo):
         sym_group = d_piezo['crystal_sym']
 
         elts_indep=[]
         elts_dep=[]
 
+        from_e = d_piezo.get('piezo_d_or_e', 'd') =='e'
+
+        # Tables are based on d_iJ rules
         if sym_group == "3m":
             elts_indep = 'x5', 'y2', 'z1', 'z3'
             elts_dep = {
@@ -162,6 +182,7 @@ class PiezoElectricProperties:
                 'y4': ('x5', 1.0),
                 'z2': ('z1', 1.0),
                 }
+            if from_e: elts_dep['x6'] = ('y2', -1.0)
 
         elif sym_group == "4'3m":
             elts_indep = 'x4',
@@ -177,14 +198,31 @@ class PiezoElectricProperties:
                 'z2': ('z1', 1.0)
                 }
 
-        for elt in elts_indep:
-            tens_d_iJ.set_elt_from_json(elt, d_piezo)
+        # we know the elements, now load from d or e
 
-        for d_iJ,v in elts_dep.items():
-            (s_iJ, fac) = v
-            val =tens_d_iJ.elt_iJ(s_iJ)*fac
-            tens_d_iJ.set_elt_iJ(d_iJ, val)
+        if not from_e:
 
+            for elt in elts_indep:
+                self._tens_d_iJ.set_elt_from_json(elt, d_piezo)
+
+            for d_iJ,v in elts_dep.items():
+                (s_iJ, fac) = v
+                val =self._tens_d_iJ.elt_iJ(s_iJ)*fac
+                self._tens_d_iJ.set_elt_iJ(d_iJ, val)
+        else:
+            tens_e_iJ = voigt.VoigtTensor3_iJ('piezo_e', 'Stress piezo coefficient', 'd_iJ', ('C/m^2', 1), transforms_with_factor_2=True)
+
+            for elt in elts_indep:
+                tens_e_iJ.set_elt_from_json(elt, d_piezo)
+
+            for e_iJ,v in elts_dep.items():
+                (s_iJ, fac) = v
+                val = tens_e_iJ.elt_iJ(s_iJ)*fac
+                tens_e_iJ.set_elt_iJ(e_iJ, val)
+
+            compliance = self._tens_cE_IJ.inverse()
+            d_iJ_00 = tens_e_iJ.value() @ compliance.value()
+            self._tens_d_iJ.set_from_00matrix(d_iJ_00)
 
 
     def make_piezo_stiffened_stiffness_for_kappa(self, v_kap0):
@@ -408,7 +446,10 @@ class Material(object):
                 with np.printoptions(
                     precision=4, floatmode="fixed", sign=" ", suppress=True
                 ):
-                    s += dent + "Stiffness c_IJ:" + str(self.stiffness_c_IJ) + "\n"
+                    s += dent + str(self.stiffness_c_IJ)
+
+                    s += dent + str(self.compliance())
+                    s += '\n'
 
                     for m in range(3):
                         vgabs = np.linalg.norm(v_vgroup[m])
@@ -424,9 +465,11 @@ class Material(object):
 
             if self._piezo:
                 s += str (self._piezo)
+            s += '\n'
 
         except Exception as err:
             s = f"Unknown/undefined elastic parameters in material {self.material_name}" + str(err)
+            raise
         return s
 
     def Vac_Rayleigh(self):
@@ -510,18 +553,30 @@ class Material(object):
         # general comment for any purpose
         self.comment = json_data.get("comment", "")
 
-        Re_n = json_data["Re_n"]  # Real part of refractive index []
-        # Imaginary part of refractive index []
-        Im_n = json_data["Im_n"]
-        self.refindex_n = Re_n + 1j * Im_n  # Complex refractive index []
 
-        if "Re_nx" in json_data and "Re_ny" in json_data and "Re_nz" in json_data:
-            epsx = json_data['Re_epsx']
-            epsy = json_data['Re_epsy']
-            epsz = json_data['Re_epsz']
-            self.eps_diel_ij = np.diag([epsx + 0j, epsy, epsz])
+        if "eps_re_x" in json_data and "eps_re_y" in json_data and "eps_re_z" in json_data:
+
+            epsx = json_data['eps_re_x'] + 0j
+            epsy = json_data['eps_re_y'] + 0j
+            epsz = json_data['eps_re_z'] + 0j
+            if "eps_im_x" in json_data:
+                epsx += 1j* json_data['eps_im_x']
+
+            if "eps_im_y" in json_data:
+                epsy += 1j* json_data['eps_im_y']
+
+            if "eps_im_z" in json_data:
+                epsz += 1j* json_data['eps_im_z']
+
+
+            self.eps_diel_ij = np.diag([epsx, epsy, epsz])
             self.refindex_n = (np.sqrt(epsx)+np.sqrt(epsy)+np.sqrt(epsz))/3 + 0j
+
         else:
+            Re_n = json_data["Re_n"]  # Real part of refractive index []
+            # Imaginary part of refractive index []
+            Im_n = json_data["Im_n"]
+            self.refindex_n = Re_n + 1j * Im_n  # Complex refractive index []
             self.eps_diel_ij = np.eye(3) * self.refindex_n**2
 
 
@@ -566,6 +621,10 @@ class Material(object):
         self._photoel_p_IJ_orig = self.photoel_p_IJ.copy()
         self._viscosity_eta_IJ_orig = self.viscosity_eta_IJ.copy()
         self._eps_diel_ij_orig = self.eps_diel_ij.copy()
+
+    def compliance(self):
+        tens_s = self.stiffness_c_IJ.inverse('Compliance', 's_IJ', ('TPa^{-1}', 1.e-12))
+        return tens_s
 
     def is_vacuum(self):
         """Returns True if the material is the vacuum."""

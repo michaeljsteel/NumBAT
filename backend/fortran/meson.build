@@ -104,7 +104,8 @@ else
   # gcc on linux and mac
   #add_global_arguments(['-fimplicit-none', '-std=f2023', '-fall-intrinsics'], language: 'fortran',)
   add_global_arguments(
-    ['-fimplicit-none', '-ffree-line-length-none'],
+    #['-fimplicit-none', '-ffree-line-length-none'],
+    ['-fimplicit-none'],
     language: 'fortran',
   )
   add_global_arguments(

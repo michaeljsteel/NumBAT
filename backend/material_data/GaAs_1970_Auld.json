@@ -24,7 +24,5 @@
  "eta_44": 0.72e-3,  // Acoustic loss tensor component [Pa s]
 
  "piezo_active": 1,      // Cubic 4'3m symmetry, only x4 indep
- "piezo_d_x4": 2.6e-12, 
- "_piezo_d_y5": 2.6e-12, 
- "_piezo_d_z6": 2.6e-12
+ "piezo_d_x4": 2.6e-12
 }

@@ -125,5 +125,5 @@ ftut19:
 clean:
 	-rm *.png *.npz
 	-rm -rf ./tut*fields ./ftut*fields ./__pycache__
-	-rm -rf ./tut*out ./tut*.txt ./ftut*.txt
+	-rm -rf ./tut*out ./tut*.txt ./ftut*.txt ./tmp*
 

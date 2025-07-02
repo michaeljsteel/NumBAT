@@ -10,8 +10,6 @@ subroutine ac_alpha_analytic (n_modes, n_msh_elts, n_msh_pts, &
    v_ac_mode_energy, v_alpha_r, errco, emsg)
 
    use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
 
    integer(8) n_modes
    integer(8) n_msh_elts, n_msh_pts, n_elt_mats
@@ -60,8 +58,6 @@ subroutine ac_alpha_quadrature (n_modes, n_msh_elts, n_msh_pts, &
 
 
    use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
 
    integer(8) n_modes
    integer(8) n_msh_elts, n_msh_pts,  n_elt_mats
@@ -111,8 +107,6 @@ subroutine ac_mode_energy_analytic (n_modes, n_msh_elts, n_msh_pts, &
    rho, Omega_AC, soln_ac_u, v_energy_r, errco, emsg)
 
    use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
 
    integer(8) n_modes
    integer(8) n_msh_elts, n_msh_pts, n_elt_mats
@@ -158,8 +152,6 @@ subroutine AC_mode_energy_quadrature (n_modes, n_msh_elts, n_msh_pts, v_mshpt_xy
    rho, Omega_AC, soln_ac_u, v_energy_r, errco, emsg)
 
    use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
 
    integer(8) n_modes
    integer(8) n_msh_elts, n_msh_pts, n_elt_mats
@@ -209,9 +201,6 @@ subroutine ac_mode_power_analytic (n_modes, n_msh_elts, n_msh_pts,  &
    q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, errco, emsg)
 
    use numbatmod
-   use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
 
    integer(8) n_modes, n_msh_elts, n_msh_pts
    double precision v_mshpt_xy(2,n_msh_pts)
@@ -264,8 +253,8 @@ subroutine ac_mode_power_quadrature (n_modes, n_msh_elts, n_msh_pts, &
    q_AC, Omega_AC, soln_ac_u, v_power_Sz_r, errco, emsg)
 
    use numbatmod
-   use class_TriangleIntegrators
-   use class_BasisFunctions
+   !use class_TriangleIntegrators
+   !use class_BasisFunctions
 
    integer(8) n_modes, n_msh_elts, n_msh_pts
    double precision v_mshpt_xy(2,n_msh_pts)

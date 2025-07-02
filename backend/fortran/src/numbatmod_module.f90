@@ -9,9 +9,7 @@ module numbatmod
    use ifport
 #endif
 
-   use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, &
-   stdout=>output_unit, &
-   stderr=>error_unit
+   use, intrinsic :: iso_fortran_env, only : stdin=>input_unit, stdout=>output_unit, stderr=>error_unit
 
    implicit none
 

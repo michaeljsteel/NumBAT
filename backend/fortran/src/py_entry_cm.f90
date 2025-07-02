@@ -108,12 +108,10 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
 
    type(NBError) nberr
 
-   !call nberr%reset()
-     call initialise_pyerror(nberr) ! use these to keep f2py quiet. It doesn't like method calls
-
-
    !f2py intent(in) m_elnd_to_mshpt, v_elt_material, v_mshpt_xy
    !f2py intent(out) m_elnd_to_mshpt, v_elt_material, v_mshpt_xy
+
+   call initialise_pyerror(nberr) ! use these to keep f2py quiet. It doesn't like method calls
 
    call calc_ac_modes_impl(n_modes, q_ac, dimscale_in_m, shift_nu, &
       bdy_cdn, itermax, arp_tol, &
@@ -122,7 +120,6 @@ subroutine calc_ac_modes(n_modes, q_ac, dimscale_in_m, shift_nu, &
       m_elnd_to_mshpt, v_elt_material, v_mshpt_physindex, v_mshpt_xy, &
       v_evals_nu, femsol_ac, poln_fracs, nberr)
 
-   !call nberr%to_py(errco, emsg)
    call finalise_pyerror(nberr, errco, emsg)
 
 end subroutine
@@ -140,13 +137,9 @@ subroutine conv_gmsh(geo_name, assertions_on, errco, emsg)
 
    type(NBError) nberr
 
-   !call nberr%reset()
-
    call initialise_pyerror(nberr) ! use these to keep f2py quiet. It doesn't like method calls
 
    call conv_gmsh_impl(geo_name, assertions_on, nberr)
-
-   !call nberr%to_py(errco, emsg)
 
    call finalise_pyerror(nberr, errco, emsg)
 

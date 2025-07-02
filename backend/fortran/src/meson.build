@@ -11,13 +11,9 @@ nb_module_fsrcs = files(
 
 nb_pyinterface_fsrcs = files(
     'f2py_entry_functions.f90',
-
-    'array_material_em.f90',
-    'array_material_ac.f90',
-
-
     'py_entry_cm.f90',
-)
+    'array_material_em.f90',
+ )
 
 
 nb_impl_fsrcs = files(

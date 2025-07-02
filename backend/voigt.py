@@ -15,6 +15,7 @@
 
 import math
 import numpy as np
+import numpy.linalg as npla
 import copy
 
 from nbtypes import unit_x, unit_y, unit_z
@@ -343,13 +344,13 @@ class VoigtTensor3_iJ(object):
 
     def __str__(self):
 
-        sh = f'\n {self._physical_name} {self._physical_symbol}'
+        sh = f'\n  {self._physical_name} {self._physical_symbol}'
         if self.unit is not None:
             sh += f', unit: {self.unit[0]}.'
         else:
             sh += '.'
 
-        sh += '\n   Voigt 3-tensor:\n'
+        sh += '\n    Voigt 3-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
                 sd = str(self.mat[0:, 1:]/self.unit[1])
@@ -407,6 +408,7 @@ class VoigtTensor4(object):
     Internally uses 1-based indexing like the notation. Externally it passes zero-based values.'''
 
     def __init__(self, src_dict, json_symbol, physical_name='', physical_symbol='', unit=None):
+        """unit is a symbol, scale value tuple:  eg ('GPa', 1.e9)"""
 
         self.mat = np.zeros([7, 7], dtype=float)  # unit indexing
 
@@ -419,13 +421,13 @@ class VoigtTensor4(object):
 
     def __str__(self):
 
-        sh = f'\n {self.physical_name} {self.physical_symbol}'
+        sh = f'\n  {self.physical_name} {self.physical_symbol}'
         if self.unit is not None:
             sh += f', unit: {self.unit[0]}.'
         else:
             sh += '., unit: dimensionless.'
 
-        sh += '\n   Voigt 4-tensor:\n'
+        sh += '\n    Voigt 4-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
                 sd = str(self.mat[1:, 1:]/self.unit[1])
@@ -530,3 +532,21 @@ class VoigtTensor4(object):
 
         rot_tensor = _rotate_Voigt_4tensor(self.mat[1:, 1:], mat_R)
         self.mat[1:, 1:] = rot_tensor
+
+    def inverse(self, physical_name='', physical_symbol='', unit=None):
+        """Return a new Voigt-4 tensor that is the inverse of this one."""
+
+        m_data = self.value()
+        m_dinv = npla.inv(m_data)
+
+        vt_inv = self.copy()
+        vt_inv.set_from_00matrix(m_dinv)
+
+        if physical_name:
+            vt_inv.physical_name=physical_name
+        if physical_symbol:
+            vt_inv.physical_symbol=physical_symbol
+        if unit:
+            vt_inv.unit=unit
+
+        return vt_inv

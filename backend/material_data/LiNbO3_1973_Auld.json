@@ -6,9 +6,21 @@
  "date": "1973",  // Year of data publication/creation
  "institution": "Stanford University",  // Source institution
  "doi": "ISBN-10. 0898747821",
- "Re_n": 2.30,  // Real part of refractive index (n_o) []
+
+ "_Re_n": 2.30,  // Real part of refractive index (n_o) []
  "_Re_no": 2.30,  // Real part of refractive index (n_e) []
  "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
+
+ "eps_re_x": 44.0,
+ "eps_re_y": 44.0,
+ "eps_re_z": 29.0,
+
+ "eps_im_x": 0.0,
+ "eps_im_y": 0.0,
+ "eps_im_z": 0.0,
+
+
+
  "Im_n": 0.0,  // Imaginary part of refractive index []
  "s": 4700,  // Density [kg/m3]
 
@@ -34,6 +46,9 @@
  "p_44": 0.121,  // Photoelastic tensor component []
 
  "piezo_active": 1,      // Trigonal 3m symmetry, these are indepenent
+
+ "piezo_d_or_e": "d",
+
  "piezo_d_x5": 68.0e-12, 
  "piezo_d_y2": 21.0e-12, 
  "piezo_d_z1": -1.0e-12, 
