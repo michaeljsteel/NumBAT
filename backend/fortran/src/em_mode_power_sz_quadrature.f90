@@ -7,8 +7,8 @@
 !   S_z = 2 Re[\zhat \dot \int dx dy E^* \cross H] =  2 Re[ zhat \dot  \int dx dy E_t^* \cross H_t]
 !       = 2/(\mu_0\omega) Re[E_t^* \dot (\beta E_t + i \nabla_t E_z) ]
 
-subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
-   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_power, errco, emsg)
+subroutine em_mode_power_sz_quadrature_impl (k_0, n_modes, n_msh_elts, n_msh_pts, &
+   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_power, nberr)
 
    use numbatmod
    use class_TriangleIntegrators
@@ -23,12 +23,9 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
    complex(8) v_beta(n_modes)
    complex(8), dimension(n_modes) :: m_power
 
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) ::  emsg
-
-   ! Local variables
    type(NBError) nberr
 
+   ! Local variables
    ! Coeffs of transverse components on P2 functions, and longitudinal component on P3 functions
    !   [phi1_x, phi1_y, phi2_x, phi2_y, .., phi6_x, phi6_y, psi1, psi2, .., psi10]
    complex(8) vec_r(2*P2_NODES_PER_EL+10)
@@ -69,14 +66,12 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
 !f2py intent(out) m_power
 !
 
-   errco = 0
-   emsg = ""
    call nberr%reset()
 
    call quadint%setup_reference_quadratures()
 
    call frontend%init_from_py(n_msh_elts, n_msh_pts, m_elnd_to_mshpt, v_mshpt_xy, nberr)
-   RET_ON_NBERR_UNFOLD(nberr)
+   RET_ON_NBERR(nberr)
 
    m_power = D_ZERO
 
@@ -96,7 +91,7 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
       do iq=1,quadint%n_quad
 
          call quadint%build_transforms_at(iq, nds_xy, is_curved, do_P3, nberr)
-         RET_ON_NBERR_UNFOLD(nberr)
+         RET_ON_NBERR(nberr)
 
          t_quadwt = quadint%get_current_quadweight()
 
@@ -195,4 +190,4 @@ subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
 
    m_power = m_power/ (k_0 * SI_C_SPEED * SI_MU_0)
 
-end subroutine em_mode_power_sz_quadrature
+end subroutine em_mode_power_sz_quadrature_impl

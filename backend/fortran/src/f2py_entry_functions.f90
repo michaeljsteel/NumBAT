@@ -427,6 +427,66 @@ end subroutine em_mode_power_sz_analytic
 
 
 
+
+subroutine em_mode_power_sz_quadrature (k_0, n_modes, n_msh_elts, n_msh_pts, &
+   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_power, errco, emsg)
+
+   use numbatmod
+   use class_TriangleIntegrators
+
+   double precision k_0  ! k_0 = 2 pi / lambda, where lambda in meters.
+
+   integer(8) n_modes, n_msh_elts, n_msh_pts
+   integer(8) m_elnd_to_mshpt(P2_NODES_PER_EL, n_msh_elts)
+   double precision v_mshpt_xy(2, n_msh_pts)
+   complex(8) soln_em_e(3, N_DOF_PER_EL, n_modes, n_msh_elts)
+   complex(8) beta
+   complex(8) v_beta(n_modes)
+   complex(8), dimension(n_modes) :: m_power
+
+   integer(8), intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) ::  emsg
+
+   type(NBError) nberr
+
+
+   !f2py intent(in) k_0, n_modes, n_msh_elts, n_msh_pts
+!f2py intent(in) P2_NODES_PER_EL, m_elnd_to_mshpt
+!f2py intent(in) x, v_beta, soln_em_e
+!
+!f2py depend(m_elnd_to_mshpt) P2_NODES_PER_EL, n_msh_elts
+!f2py depend(x) n_msh_pts
+!f2py depend(v_beta) n_modes
+!f2py depend(soln_em_e) P2_NODES_PER_EL, n_modes, n_msh_elts
+!
+!f2py intent(out) m_power
+
+
+   call initialise_pyerror(nberr) ! use these to keep f2py quiet. It doesn't like method calls
+    
+   call em_mode_power_sz_quadrature_impl (k_0, n_modes, n_msh_elts, n_msh_pts, &
+   m_elnd_to_mshpt, v_mshpt_xy, v_beta, soln_em_e, m_power, nberr)
+
+   call finalise_pyerror(nberr, errco, emsg)
+
+end subroutine em_mode_power_sz_quadrature 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 subroutine h_mode_field_ez (k_0, n_modes, n_msh_elts, n_msh_pts, m_elnd_to_mshpt, &
  v_mshpt_xy, v_beta, soln_k1, soln_H1)
 
