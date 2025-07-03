@@ -576,6 +576,7 @@ class EMSimResult(SimResult):
         """
 
 
+        self.clean_for_pickle()
         backwd_modes = copy.deepcopy(self)
         backwd_modes.fem_evecs = np.conj(backwd_modes.fem_evecs)
         backwd_modes.eigs_kz = -1.0 * backwd_modes.eigs_kz
@@ -592,9 +593,7 @@ class EMSimResult(SimResult):
 
         """
 
-
         self.clean_for_pickle()
-
         fwd_modes = copy.deepcopy(self)
         return fwd_modes
 
