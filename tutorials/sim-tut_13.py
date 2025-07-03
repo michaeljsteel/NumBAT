@@ -76,7 +76,7 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
 
         arad_SI = arad * 1e-9  # fix this messiness
         rod_ac = ElasticRod(rho, c11, c12, c44, arad_SI)
-        v_Om_modes = rod_ac.find_nu_for_q(q, nu_hi, p, nmodes)[1]
+        v_Om_modes = rod_ac.find_nu_at_q(q, nu_hi, p, nmodes)[1]
         # v_Om_modes = findroots_elastic_rod_chareq(Vl, nu_hi, p, q, #nmodes, rho, c11, c12, c44, arad)
         return (p, iq, v_Om_modes)
 
