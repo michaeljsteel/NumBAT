@@ -22,6 +22,8 @@ import csv
 import numpy as np
 from scipy import interpolate
 import matplotlib
+import copy
+import voigt
 
 from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max, process_fortran_return
@@ -261,7 +263,7 @@ def get_gains_and_qs(
         new_call_format=True,
 
     )
-
+    
     gain = GainProps()
     gain._set_sim_AC(sim_AC)
     gain._set_gain_tot(SBS_gain)
@@ -437,7 +439,7 @@ def gain_and_qs(
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
 
-    sim_AC.fem_evecs[2, :, :, :] = 0   # Explain!
+    #sim_AC.fem_evecs[2, :, :, :] = 0   # Explain!
 
     # Calc Q_photoelastic Eq. 33
 
@@ -473,6 +475,42 @@ def gain_and_qs(
     (Q_PE,) = process_fortran_return(
         resm, "finding linear element photoelastic couplings"
     )
+
+ #    for ii in range(3):
+ #        for jj in range(3):
+ #            for kk in range(3):
+ #                for ll in range(3):
+ #                    pijkl_comp = copy.deepcopy(elastic_props.p_ijkl)
+ #                    pijkl_comp[ii,jj,kk,ll]=0.0
+ #                    pijkl_switch = elastic_props.p_ijkl - pijkl_comp
+ #
+ #                    resm = nb_fortran.photoelastic_int_common(
+ #                        True or is_curvi,
+ #                        sim_EM_pump.n_modes,
+ #                        sim_EM_Stokes.n_modes,
+ #                        sim_AC.n_modes,
+ #                        EM_mode_index_pump_fortran,
+ #                        EM_mode_index_Stokes_fortran,
+ #                        AC_mode_index_fortran,
+ #                        fem_ac.n_msh_el,
+ #                        fem_ac.n_msh_pts,
+ #                        fem_ac.m_elnd_to_mshpt,
+ #                        fem_ac.v_mshpt_xy,
+ #                        elastic_props.n_mats_ac,
+ #                        fem_ac.v_el_2_mat_idx,
+ #                        pijkl_switch,
+ #                        q_AC,
+ #                        trimmed_EM_pump_field,
+ #                        trimmed_EM_Stokes_field,
+ #                        sim_AC.fem_evecs,
+ #                        acoustic_eps_effs,)
+ #
+ #                    (t_Qpe,) = process_fortran_return( resm, "finding linear element photoelastic couplings")
+ #                    II = voigt.to_Voigt[ii,jj]
+ #                    JJ = voigt.to_Voigt[kk,ll]
+ #                    print('got Qpe', II, JJ, t_Qpe[0,0,1])
+ #
+
 
 
     # Calc Q_moving_boundary Eq. 41
