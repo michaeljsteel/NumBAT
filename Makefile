@@ -43,3 +43,9 @@ cleanmesh:
 	-rm backend/fortran/msh/build/*.msh
 	-rm backend/fortran/msh/build/*.geo
 	-rm backend/fortran/msh/build/*.mail
+
+setup_ubuntu: 
+	sudo add-apt-repository universe 
+	sudo apt-get install make meson pkg-config ninja-build 
+	sudo apt-get install gcc gfortran gmsh python3-venv python3-dev 
+	sudo apt-get install libarpack2-dev libparpack2-dev libatlas-base-dev libblas-dev liblapack-dev  libsuitesparse-dev
