@@ -119,7 +119,7 @@ if host_machine.system() == 'windows'
     language: 'fortran',
   )
   add_global_arguments(
-    ['-D UPPERCASE_FORTRAN', '-D NO_APPEND_FORTRAN', '-D __INTEL_COMPILER'],
+    ['-D UPPERCASE_FORTRAN', '-D NO_APPEND_FORTRAN', '-D __INTEL_COMPILER', '-Wno-format', '-Wno-misleading-indentation'],
     language: 'c',
   )
   add_global_arguments(['-D __INTEL_COMPILER'], language: 'cpp')
@@ -161,7 +161,7 @@ src_f2py_fortobj = dir_f2py / 'fortranobject.c'
 
 incs_f2py = include_directories([dir_numpy, dir_f2py])
 
-message([dir_numpy, dir_f2py])
+#message([dir_numpy, dir_f2py])
 
 incs = [inc_nblocal, incs_f2py]
 
