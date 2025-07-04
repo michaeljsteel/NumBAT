@@ -227,11 +227,14 @@ class _NumBATPlotPrefs:
     # Add color combinations here
     # See https://matplotlib.org/stable/users/explain/colors/colormaps.html
 
+                  #  signed, unsigned, vector arrow
     color_tup_1 = ('seismic', 'OrRd', 'dimgray')
     color_tup_2 = ('PRGn', 'GnBu', 'brown')
     color_tup_3 = ('BrBG', 'YlOrBr', 'black')
-    color_tup_4 = ('PuOr', 'YlOrBr', 'black')
-    color_tup_5 = ('coolwarm', 'Reds', 'black')
+    color_tup_4 = ('PuOr', 'YlOrBr', 'dimgray')
+    color_tup_5 = ('coolwarm', 'Reds', 'dimgray')
+    color_tup_6 = ('PiYG', 'GnBu', 'dimgray')
+    color_tup_7 = ('RdYlGn', 'GnBu', 'dimgray')
 
 
 
@@ -240,7 +243,7 @@ class _NumBATPlotPrefs:
 
         # Select color combinations here
         coltup_em = self.color_tup_1
-        coltup_ac = self.color_tup_4
+        coltup_ac = self.color_tup_7
 
         # electromagnetic plots
         (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
@@ -256,8 +259,8 @@ class _NumBATPlotPrefs:
             ) = coltup_ac
 
 
-        self.vecplot_arrow_scale = 40  # larger makes smaller arrows
-        self.vecplot_arrow_linewidth = 0.0025       # width of the shaft in fractions of plot width
+        self.vecplot_arrow_scale = 10  # larger makes smaller arrows
+        self.vecplot_arrow_linewidth = 0.005       # width of the shaft in fractions of plot width
         self.vecplot_arrow_headwidth = 2             # multiple of shaft width
 
 

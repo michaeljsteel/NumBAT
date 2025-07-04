@@ -311,8 +311,9 @@ class FieldTag:
         return self._f_code
 
     def get_tex_plot_label(self):
-        lab = {'Fx': r'Re($F_x$)', 'Fy': r'Re($F_y$)', 'Fz': r'Im($F_z$)', 'Fxr': r'Re($F_x$)',
-               'Fyr': r'Re($F_y$)', 'Fzi': r'Im($F_z$)', 'Fxi': r'Im($F_x$)', 'Fyi': r'Im($F_y$)', 'Fzr': r'Re($F_z$)',
+        lab = {'Fx': r'Re[ $F_x$ ]', 'Fy': r'Re[ $F_y$ ]', 'Fz': r'Im[ $F_z$ ]',
+               'Fxr': r'Re[ $F_x$ ]', 'Fyr': r'Re[ $F_y$ ]', 'Fzi': r'Im[ $F_z$ ]',
+               'Fxi': r'Im[ $F_x$ ]', 'Fyi': r'Im[ $F_y$ ]', 'Fzr': r'Re[ $F_z$ ]',
                'Fa': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fa gives |F|^2
         return lab.replace('F', self._F)
 

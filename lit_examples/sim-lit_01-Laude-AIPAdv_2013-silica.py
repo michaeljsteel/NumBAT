@@ -47,9 +47,9 @@ nbapp=numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2013_Laude"),
-                        lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                        lc_bkg=.05, lc_refine_1=2.5*refine_fac, lc_refine_2=2.5*refine_fac)
 
-wguide.plot_mesh(prefix)
+#wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.
 n_eff = 1.3
@@ -63,8 +63,8 @@ if recalc:
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
-    sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4, mode_indices=[EM_mode_index_pump],
-                         ylim_min=0.4, ylim_max=0.4, )
+    sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, mode_indices=[EM_mode_index_pump],
+                         ylim_min=0.2, ylim_max=0.2, )
 else:
     sim_EM_pump = numbat.load_simulation(prefix+'_pump')
     sim_EM_Stokes = numbat.load_simulation(prefix+'_pump')
@@ -89,9 +89,31 @@ if recalc:
 else:
     sim_AC = numbat.load_simulation(prefix+'_ac')
 
+print('maintest',
+    np.max(np.abs(sim_AC.fem_evecs[0,:6,0,:])),
+    np.max(np.abs(sim_AC.fem_evecs[1,:6,0,:])),
+    np.max(np.abs(sim_AC.fem_evecs[2,:6,0,:])),
+      '\n',
+    np.max(np.abs(sim_AC.fem_evecs[0,:6,1,:])),
+    np.max(np.abs(sim_AC.fem_evecs[1,:6,1,:])),
+    np.max(np.abs(sim_AC.fem_evecs[2,:6,1,:])),
+    )
+
+
 
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
+
+print('maintest2',
+    np.max(np.abs(sim_AC.fem_evecs[0,:6,0,:])),
+    np.max(np.abs(sim_AC.fem_evecs[1,:6,0,:])),
+    np.max(np.abs(sim_AC.fem_evecs[2,:6,0,:])),
+      '\n',
+    np.max(np.abs(sim_AC.fem_evecs[0,:6,1,:])),
+    np.max(np.abs(sim_AC.fem_evecs[1,:6,1,:])),
+    np.max(np.abs(sim_AC.fem_evecs[2,:6,1,:])),
+    )
+
 
 print('Gains by acoustic mode:')
 print('Ac. mode | Freq (GHz) | G_tot (1/mW) | G_PE (1/mW) | G_MB (1/mW)')
@@ -103,7 +125,8 @@ for (m, nu) in enumerate(v_nu):
 
 
 # find indices selection of nplot highest gain modes to plot
-nplot=min(20, len(v_nu))
+#nplot=min(20, len(v_nu))
+nplot=min(100, len(v_nu))
 high_g_indices = np.abs(gain_box.gain_total_all()).argsort()[-nplot:]
 high_g_indices.sort()
 

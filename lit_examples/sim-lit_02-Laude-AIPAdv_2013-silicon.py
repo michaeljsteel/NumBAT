@@ -48,7 +48,7 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("Si_2013_Laude"),
-                        lc_bkg=.1, lc_refine_1=8*refine_fac, lc_refine_2=8.0*refine_fac)
+                        lc_bkg=.05, lc_refine_1=3*refine_fac, lc_refine_2=3.0*refine_fac)
 wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.

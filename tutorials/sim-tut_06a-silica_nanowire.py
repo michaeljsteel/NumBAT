@@ -94,7 +94,7 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
-simres_AC.plot_modes()
+simres_AC.plot_modes(quiver_points=20)
 
 set_q_factor = 1000.
 #set_q_factor = None

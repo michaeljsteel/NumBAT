@@ -87,11 +87,11 @@ class TidyAxes:
     def _set_defaults_for_num_axes(self, nax):
         props = {}
 
-        if nax in (4,6):
-            props['ax_label_fs'] = 10
+        if nax in (4,6):  # includes layout for two row mode plots
+            props['ax_label_fs'] = 8
             props['ax_label_xpad'] = ''
             props['ax_label_ypad'] = ''
-            props['ax_ticklabel_fs'] = 10
+            props['ax_ticklabel_fs'] = 8
             props['ax_tickwidth'] = .25
             props['ax_linewidth'] = 1
         elif nax == 2:
@@ -194,7 +194,9 @@ class Decorator(object):
         sp_base_fs = 24
 
         self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .6,
-                             'base_fs': mp_base_fs, 'title_fs': mp_base_fs-2, 'subtitle_fs': mp_base_fs-5,
+                             'base_fs': mp_base_fs,
+                             'title_fs': mp_base_fs-2,
+                             'subtitle_fs': mp_base_fs-7,  # used for component labels
                              'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
                              'data_label_fs': mp_base_fs-8,
                              'cbar_tick_fs': mp_base_fs-12,
@@ -700,7 +702,7 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
 
     x0 = .05
     yhi = .99
-    dy = .10
+    dy = .12
     y0 = yhi-dy
 
     ax.set_xlim(0, 1)
@@ -730,11 +732,10 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
         lines.append( r'$k$: ' + f'{sim_result.kz_EM(mode_index)/1.e6:.5f} ' + r'μm$^{{-1}}$')
 
         neff = sim_result.neff(mode_index)
+        lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f}')
         if sim_result.ngroup_EM_available():
             ng = sim_result.ngroup_EM(mode_index)
-            lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f},' + f'$n_g$: {ng:.6f}')
-        else:
-            lines.append( r'$\bar{{n}}$: ' + f'{neff:.6f}')
+            lines.append( f'$n_g$: {ng:.6f}')
     else:
         q_AC = sim_result.q_AC
         nu_AC = np.real(sim_result.nu_AC(mode_index))
