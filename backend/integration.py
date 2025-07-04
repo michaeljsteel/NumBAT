@@ -439,8 +439,6 @@ def gain_and_qs(
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
 
-    #sim_AC.fem_evecs[2, :, :, :] = 0   # Explain!
-
     # Calc Q_photoelastic Eq. 33
 
     is_curvi = False
