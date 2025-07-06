@@ -1,0 +1,32 @@
+# NumBAT user preferences
+
+# $schema: .vscode/empty.schema.json
+
+#applications = {  }
+
+title = "NumBAT user preferences"
+
+[all_plots]
+em_colormap_signed = 'seismic'
+em_colormap_unsigned = 'OrRd'
+em_vector_arrow_color = 'dimgray'
+
+ac_colormap_signed = 'RdYlGn'
+ac_colormap_unsigned = 'GnBu'
+ac_vector_arrow_color = 'dimgray'
+
+refindex_colormap = 'cool'
+
+vector_arrow_scale = 10
+vecplot_arrow_linewidth = 0.005
+vecplot_arrow_headwidth = 2
+
+# properties of waveguide boundary frames
+# edge color : gray, dimgray, black, brown
+wg_frame_edge_color = 'darkred'
+wg_frame_linewidth_wholefig = 0.75
+wg_frame_linewidth_subfig = 0.25
+
+[multi_plots]
+
+[single_plots]

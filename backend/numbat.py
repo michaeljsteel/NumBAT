@@ -19,6 +19,7 @@ import shutil
 import time
 import datetime
 from pathlib import Path
+import tomllib
 
 import reporting
 import objects
@@ -31,9 +32,12 @@ import nbversion
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
 
-def _confirm_file_exists(nm, fn, envvar=''):
+g_numbat_plot_prefs = None
+
+
+def _confirm_file_exists(nm, filetype, fn, envvar=''):
     if not Path(fn).exists():
-        s=f"Can't find the {nm} executable at {fn}."
+        s=f"NumBAT can't find the {nm} {filetype} at {fn}."
         if envvar:
             s += f'You may need to set the environment variable {envvar}.'
         reporting.report_and_exit(s)
@@ -50,7 +54,13 @@ class _NumBATApp:
     #        print('newing nba with insta', cls.instance)
     #    return cls.instance
 
-    def __init__(self, outprefix='nbtmp', outdir='.'):
+    def __init__(self, outprefix='nbtmp', outdir='.',
+                 user_settings_file='',
+                 ignore_user_settings=False
+                 ):
+
+
+        global g_numbat_plot_prefs
 
         _NumBATApp.__instance = self
 
@@ -62,6 +72,8 @@ class _NumBATApp:
         self._start_time=time.time()
         self._codedir = Path(__file__).parents[0]
 
+        self._user_settings={}
+
         # location of top level numbat tree containing other libraries etc. Mainly for windows
         # this seems a bit flaky depending on installations
         self._nbrootdir =  os.getenv(_envvar_numbat_root,
@@ -70,9 +82,16 @@ class _NumBATApp:
         self._plot_extension = '.png'
         #self._plot_extension = '.pdf'
 
+        g_numbat_plot_prefs = _NumBATPlotPrefs(
+            user_settings_file, ignore_user_settings
+            )
+
         self._check_versions()
+
         self._setup_paths()
+
         reporting.init_logger()
+
         mshtemplates.initialise_waveguide_templates(self)
 
     @staticmethod
@@ -162,6 +181,7 @@ class _NumBATApp:
     def wg_structure_help(self, inc_shape):
         mshtemplates.print_waveguide_help(inc_shape)
 
+
     def _setup_paths(self):
         # numbat paths
         if not Path(self._outdir).is_dir():
@@ -185,7 +205,7 @@ class _NumBATApp:
         else:
             pass
 
-        _confirm_file_exists('Gmsh', self._paths['gmsh'], _envvar_gmsh_binary)
+        _confirm_file_exists('Gmsh', 'executable', self._paths['gmsh'], _envvar_gmsh_binary)
 
 
     def _check_versions(self):
@@ -237,55 +257,96 @@ class _NumBATPlotPrefs:
     color_tup_7 = ('RdYlGn', 'GnBu', 'dimgray')
 
 
+    def __init__(self, user_settings_file='', ignore_user_settings=False):
 
+        self. _load_user_settings( user_settings_file, ignore_user_settings)
+        self._set_defaults()
 
-    def __init__(self):
+    # TODO: do this with logger
+    def _load_user_settings(self, user_settings_file='', ignore_user_settings=False):
+        if ignore_user_settings:
+            print('Ignoring any user setting files and using NumBAT default preferences.')
+            return
+
+        user_file=None
+        if user_settings_file:
+            _confirm_file_exists('User settings', '.toml file',
+                             user_settings_file)
+            user_file=Path(user_settings_file)
+        else: # Look for standard locations
+            home_dir = Path.home()
+            locs = [Path('./numbat.toml'),
+                    Path(home_dir / '.numbat.toml')
+                    ]
+            for loc in locs:
+                if loc.exists():
+                    user_file = loc
+                    break
+
+        if user_file is not None:
+            print(f'Loading plot preferences from {user_file}.')
+            with open(user_file, 'rb') as fin:
+                self._user_settings = tomllib.load(fin)
+
+    def _set_defaults(self):
+
+        d_all = self._user_settings['all_plots']
+        d_multi = self._user_settings['multi_plots']
+        d_single = self._user_settings['single_plots']
 
         # Select color combinations here
         coltup_em = self.color_tup_1
         coltup_ac = self.color_tup_7
 
-        # electromagnetic plots
-        (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
-            self.cmap_em_field_unsigned,   # |E|^2, |H|^2,
-            self.vecplot_arrow_color_em
-            ) = coltup_em
+        self.cmap_em_field_signed = d_all.get('em_colormap_signed', coltup_em[0])
+        self.cmap_em_field_unsigned = d_all.get('em_colormap_unsigned', coltup_em[1])
+        self.vecplot_arrow_color_em = d_all.get('em_vector_arrow_color', coltup_em[2])
+
+        self.cmap_ac_field_signed = d_all.get('ac_colormap_signed', coltup_ac[0])
+        self.cmap_ac_field_unsigned = d_all.get('ac_colormap_unsigned', coltup_ac[1])
+        self.vecplot_arrow_color_ac = d_all.get('ac_vector_arrow_color', coltup_ac[2])
 
 
-        # acoustic plots
-        (self.cmap_ac_field_signed,        # ux, uy, uz
-            self.cmap_ac_field_unsigned,   # |u|^2
-            self.vecplot_arrow_color_ac
-            ) = coltup_ac
+        # # electromagnetic plots
+        # (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
+        #     self.cmap_em_field_unsigned,   # |E|^2, |H|^2,
+        #     self.vecplot_arrow_color_em
+        #     ) = coltup_em
 
 
-        self.vecplot_arrow_scale = 10  # larger makes smaller arrows
-        self.vecplot_arrow_linewidth = 0.005       # width of the shaft in fractions of plot width
-        self.vecplot_arrow_headwidth = 2             # multiple of shaft width
+        # # acoustic plots
+        # (self.cmap_ac_field_signed,        # ux, uy, uz
+        #     self.cmap_ac_field_unsigned,   # |u|^2
+        #     self.vecplot_arrow_color_ac
+        #     ) = coltup_ac
 
+        self.cmap_ref_index = d_all.get('refindex_colormap', 'cool')
 
+        # larger makes smaller arrows
+        self.vecplot_arrow_scale = d_all.get('vector_arrow_scale', 10)
+
+        # width of the shaft in fractions of plot width
+        self.vecplot_arrow_linewidth = d_all.get('vector_arrow_linewidth', 0.005)
+
+        # multiple of shaft width
+        self.vecplot_arrow_headwidth = d_all.get('vector_arrow_headwidth', 2)
 
         #self.vecplot_arrow_head = 2
         #self.vecplot_arrow_len = 2
 
-
-
         # colormap for refractive index plots
-        self.cmap_ref_index = 'cool'
 
 
         # properties of waveguide boundary frames
 
-        # EDGE_COLOR="gray"
-        # EDGE_COLOR="dimgray"
-        # EDGE_COLOR="black"
-        # EDGE_COLOR="brown"
-        EDGE_COLOR="darkred"
+        # EDGE_COLOR="gray" "dimgray" "black" "brown" "darkred"
 
-        self.WG_FRAME_EDGE_COLOR = EDGE_COLOR
+        self.WG_FRAME_EDGE_COLOR = d_all.get('wg_frame_edge_color', 'darkred')
 
-        self.WG_FRAME_LINEWIDTH_WHOLEFIG = 0.75   # if field plot is whole figure
-        self.WG_FRAME_LINEWIDTH_SUBFIG = 0.25      # if field plot is a part figure
+        # if field plot is whole figure
+        self.WG_FRAME_LINEWIDTH_WHOLEFIG = d_all.get('wg_frame_linewidth_color', 0.75)
+        # if field plot is a part figure
+        self.WG_FRAME_LINEWIDTH_SUBFIG = d_all.get('wg_frame_linewidth_subfig', 0.25)
 
 
 
@@ -315,8 +376,13 @@ class _NumBATPlotPrefs:
         return self.vecplot_arrow_linewidth
 
 
+
+
+
 def NumBATPlotPrefs():
-    return _NumBATPlotPrefs()
+    return g_numbat_plot_prefs
+
+
 
 # def NumBAT_color_styles():
 

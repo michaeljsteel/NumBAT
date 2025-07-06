@@ -2,14 +2,14 @@
 
 NUMBAT_VERSION_MAJ=2
 NUMBAT_VERSION_MIN=1
-NUMBAT_VERSION_MIC=2
+NUMBAT_VERSION_MIC=3
+
+######################################
+# No changes below here
 
 NUMBAT_VERSION_STR_MMM = f'{NUMBAT_VERSION_MAJ}.{NUMBAT_VERSION_MIN}.{NUMBAT_VERSION_MIC}'
 NUMBAT_VERSION_STR_MM = f'{NUMBAT_VERSION_MAJ}.{NUMBAT_VERSION_MIN}'
 
-######################################
-
-# No changes below here
 
 if __name__ == '__main__':
 
