@@ -46,7 +46,7 @@ EM_mode_index_pump = 0
 EM_mode_index_Stokes = 0
 AC_mode_index = 'All'
 
-prefix, refine_fac = starter.read_args(8, sys.argv)
+prefix, refine_fac = starter.read_args(8, sys.argv, refine=3)
 
 nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
@@ -67,8 +67,8 @@ def ac_mode_freqs(wid_x):
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
                      slot_w=wid_x, rib_w=rib_w, rib_h=rib_h, slab_w=slab_a_x, slab_h=slab_a_y, coat_t=coat_t,
                       material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_ribs, material_d=mat_coat,
-                            lc_bkg=.05/refine_fac, lc_refine_1=5*refine_fac,
-                            lc_refine_2=5*refine_fac, lc_refine_3=5*refine_fac)
+                            #lc_bkg=.05/refine_fac, lc_refine_1=5*refine_fac, lc_refine_2=5*refine_fac, lc_refine_3=5*refine_fac)
+                            lc_bkg=.05/refine_fac, lc_refine_1=5, lc_refine_2=5, lc_refine_3=5)
 
     pref = prefix+f'_{wid_x:.1f}'
     wguide.plot_refractive_index_profile(pref)
@@ -87,7 +87,8 @@ def ac_mode_freqs(wid_x):
     shift_Hz = 4e9
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
-    #sim_AC.plot_modes(prefix=pref)
+    if wid_x == 150.0:
+        sim_AC.plot_modes(prefix=pref)
 
     # Calculate gain
     set_q_factor = 1000.
@@ -112,7 +113,7 @@ def ac_mode_freqs(wid_x):
     return mode_freqs
 
 
-n_widths = 41
+n_widths = 21
 wid_min = 150
 wid_max = 300
 wid_x_list = np.linspace(wid_min, wid_max, n_widths)

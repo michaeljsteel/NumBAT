@@ -68,9 +68,9 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
-                           lc_bkg=.1,  # in vacuum background
-                           lc_refine_1=5.0,  # on cylinder surfaces
-                           lc_refine_2=5.0)  # on cylinder center
+                           lc_bkg=.05,  # in vacuum background
+                           lc_refine_1=2.5,  # on cylinder surfaces
+                           lc_refine_2=2.5)  # on cylinder center
 
 # Step 6
 # Optionally output plots of the mesh and refractive index distribution

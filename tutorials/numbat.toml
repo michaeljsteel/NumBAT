@@ -27,6 +27,8 @@ wg_frame_edge_color = 'darkred'
 wg_frame_linewidth_wholefig = 0.75
 wg_frame_linewidth_subfig = 0.25
 
+mode_index_label_fs = 10
+
 [multi_plots]
 
 [single_plots]

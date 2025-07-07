@@ -87,7 +87,7 @@ gain_box = integration.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
-gain_box.plot_spectra(freq_min=0, freq_max=30e9, )
+gain_box.plot_spectra(freq_min=0, freq_max=30e9, logy=True)
 
 # SBS_gain_tot, SBS_gain_PE, SBS_gain_MB are 3D arrays indexed by pump, Stokes and acoustic mode
 # Extract those of interest as a 1D array:

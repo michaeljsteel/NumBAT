@@ -44,7 +44,7 @@ prefix, refine_fac = starter.read_args(6, sys.argv, sub='b')
 nbapp = numbat.NumBATApp(prefix)
 
 refine_fac = 1;
-lc_bkg = .1 * refine_fac
+lc_bkg = .05 * refine_fac
 
 lc_norm = 1
 lc_corner = 1
@@ -163,6 +163,6 @@ gain_box = integration.get_gains_and_qs(
 freq_min = 5e9  # Hz
 freq_max = 42e9  # Hz
 
-gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True)
 
 print(nbapp.final_report())

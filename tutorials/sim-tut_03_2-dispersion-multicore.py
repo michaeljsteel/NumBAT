@@ -52,7 +52,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
                            #lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
-                           lc_bkg=.1, lc_refine_1=2.0*refine_fac, lc_refine_2=2.0*refine_fac)
+                           lc_bkg=.05, lc_refine_1=1.0*refine_fac, lc_refine_2=1.0*refine_fac)
 
 #wguide.plot_mesh(prefix)
 

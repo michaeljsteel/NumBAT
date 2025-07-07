@@ -20,7 +20,7 @@ sys.path.append(str(Path("../backend")))
 
 import numbat
 import materials
-from numbattools import launch_worker_threads_and_wait, launch_worker_processes_and_wait
+from nbthread import launch_worker_threads_and_wait, launch_worker_processes_and_wait
 from nbanalytic import ElasticRod, chareq_elastic_rod
 from nbtypes import twopi
 
@@ -470,7 +470,7 @@ def do_main():
         mat_core = mat_SiO2_GeO2
         mat_clad = mat_SiO2
         mat_bkg = mat_vac
-        prefix = pref0 + "-em-smf28"
+        prefix = pref0 + "-smf28"
     else:
         ssys = "chalc rod in silica"
         dcore = 300  # 150 nm core diameter
@@ -478,7 +478,7 @@ def do_main():
         mat_core = mat_As2S3
         mat_clad = mat_SiO2
         mat_bkg = mat_vac
-        prefix = pref0 + "-em-sil"
+        prefix = pref0 + "-sil"
 
     nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 

@@ -20,7 +20,7 @@ sys.path.append(str(Path('../backend')))
 
 import numbat
 import materials
-from numbattools import launch_worker_processes_and_wait
+from nbthread import launch_worker_processes_and_wait
 from nbanalytic import TwoLayerFiberEM, EMPoln
 
 import starter
@@ -269,7 +269,7 @@ def do_main():
 
     start = time.time()
 
-    pref0, refine_fac = starter.read_args(12, sys.argv)
+    pref0, refine_fac = starter.read_args(12, sys.argv, refine=3)
 
     # Geometric Parameters - all in nm.
 

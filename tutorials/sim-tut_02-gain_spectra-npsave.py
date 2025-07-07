@@ -57,7 +57,7 @@ nbapp = numbat.NumBATApp(prefix)
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            material_bkg=materials.make_material("Vacuum"),
                            material_a=materials.make_material("Si_2016_Smith"),
-                           lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
+                           lc_bkg=.05, lc_refine_1=2.5*refine_fac, lc_refine_2=2.5*refine_fac)
 
 
 #wguide.check_mesh()
@@ -105,13 +105,13 @@ simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-#simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, mode_indices=range(4))
+simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
+                          ylim_max=0.2, mode_indices=range(4))
 
 # Plot the H field of the pump mode
-#simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, mode_indices=range(4),
-#                          field_type='EM_H')
+simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
+                          ylim_max=0.2, mode_indices=range(4),
+                          field_type='EM_H')
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
@@ -136,7 +136,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-#simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
+simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
 
 #if reuse_old_fields:
 # Calculate the acoustic loss from our fields.

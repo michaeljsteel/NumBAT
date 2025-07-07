@@ -68,14 +68,12 @@ EM_mode_index_pump = 0
 EM_mode_index_Stokes = 0
 AC_mode_index = 'All'
 
-prefix, refine_fac = starter.read_args(5, sys.argv)
+prefix, refine_fac = starter.read_args(5, sys.argv, refine=1.5)
 
 nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
 
-# Warning: The fine grids in this list will take considerable time to run!
-#lc_list = [4, 10, 20, 50, 100, 200, 300, 400]
-lc_list = [1, 2, 4, 8, 16, 32, 64]
+lc_list = [1, 2, 4, 8, 16, 32]
 nu_lcs = len(lc_list)
 lc_bkg_list = .25*np.ones(nu_lcs)
 x_axis = lc_list
@@ -84,13 +82,14 @@ time_list = []
 
 for i_lc, lc_ref in enumerate(lc_list):
     start = time.time()
-    print("\n Running simulation", i_lc+1, "/", nu_lcs)
+    print(f'\nRunning simulation {i_lc+1}/{nu_lcs} with mesh reduction factor {lc_ref} x {refine_fac} = {lc_ref*refine_fac}.')
     lc_bkg = lc_bkg_list[i_lc]
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material("Si_2016_Smith"),
-                               lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac,
-                                              lc_refine_2=(lc_ref/2)*refine_fac)
+                               #lc_bkg=lc_bkg, lc_refine_1=lc_ref*refine_fac,
+                               #               lc_refine_2=(lc_ref/2)*refine_fac)
+                               lc_bkg=lc_bkg/lc_ref, lc_refine_1=refine_fac, lc_refine_2=refine_fac/2)
 
     # Expected effective index of fundamental guided mode.
     n_eff = wguide.get_material('a').refindex_n-0.1

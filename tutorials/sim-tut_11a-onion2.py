@@ -126,6 +126,6 @@ gain_box = integration.get_gains_and_qs(
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 4.e9
 freq_max = 10.e9
-gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max )
+gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True )
 
 print(nbapp.final_report())

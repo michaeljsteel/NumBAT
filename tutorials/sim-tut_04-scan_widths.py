@@ -41,7 +41,7 @@ EM_mode_index_pump = 0
 EM_mode_index_Stokes = 0
 AC_mode_index = 'All'
 
-prefix, refine_fac = starter.read_args(4, sys.argv, refine=3)
+prefix, refine_fac = starter.read_args(4, sys.argv, refine=2)
 
 nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
@@ -91,7 +91,7 @@ for width in waveguide_widths:
                                material_bkg=materials.make_material("Vacuum"),
                                material_a=materials.make_material(
                                    "Si_2016_Smith"),
-                               lc_bkg=.1, lc_refine_1=8.0*refine_fac, lc_refine_2=8.0*refine_fac)
+                               lc_bkg=.05, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 
     l_wguides.append((width, wguide))
 
