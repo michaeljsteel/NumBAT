@@ -85,25 +85,31 @@ class TidyAxes:
         self._props[k]=v
 
     def _set_defaults_for_num_axes(self, nax):
+        user_prefs = numbat.NumBATPlotPrefs()
+
         props = {}
 
         if nax in (4,6):  # includes layout for two row mode plots
             props['ax_label_fs'] = 8
-            props['ax_label_xpad'] = ''
-            props['ax_label_ypad'] = ''
+            props['ax_label_xpad'] = 3
+            props['ax_label_ypad'] = 1
             props['ax_ticklabel_fs'] = 8
             props['ax_tickwidth'] = .25
             props['ax_linewidth'] = 1
         elif nax == 2:
             props['ax_label_fs'] = 12
             props['ax_label_pad'] = 5
+            props['ax_label_xpad'] = 3
+            props['ax_label_ypad'] = 1
             props['ax_ticklabel_fs'] =  10
             props['ax_tickwidth'] = 1
             props['ax_linewidth'] = 1
         else:
-            props['ax_label_fs'] =  18
+            props['ax_label_fs'] =  14
             props['ax_label_pad'] = 5
-            props['ax_ticklabel_fs'] =  16
+            props['ax_label_xpad'] = 3
+            props['ax_label_ypad'] = 1
+            props['ax_ticklabel_fs'] =  14
             props['ax_tickwidth'] =  1
             props['ax_linewidth'] =  1
 
@@ -120,6 +126,9 @@ class TidyAxes:
 
         props['cb_shrink'] = 0  # possible?
         props['cb_pad'] = 0.    # possible?
+
+        #props['mode_index_label_fs'] = user_prefs['all_plots']['mode_index_label_fs']
+        props['mode_index_label_fs'] = user_prefs.mode_index_label_fs
 
 
         self._props = props

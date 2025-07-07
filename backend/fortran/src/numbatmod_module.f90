@@ -62,8 +62,8 @@ module numbatmod
    integer(8),  parameter :: EMSG_LENGTH = 2048
    integer(8),  parameter :: FNAME_LENGTH = 1024
 
-   integer(8), parameter :: MAX_N_PTS = 250000
-   integer(8), parameter :: MAX_N_ELTS = 120000
+   integer(8), parameter :: MAX_N_PTS = 300000
+   integer(8), parameter :: MAX_N_ELTS = 150000
 
    integer(8), parameter :: MAX_LONG_ADJ = 2500000
 

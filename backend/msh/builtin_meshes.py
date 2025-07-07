@@ -682,7 +682,7 @@ class Onion3(UserGeometryBase):
 
     def init_geometry(self):
 
-        self.set_properties("onion3", desc, is_curvi=True)
+        self.set_properties("onion3", is_curvi=True)
 
         self.set_required_parameters(["inc_a_x", "inc_b_x", "inc_c_x"], num_req_mats=4)
         self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
@@ -731,6 +731,52 @@ class CircOnion(UserGeometryBase):
 
     def init_geometry(self):
         self.set_properties("circ_onion", is_curvi=True)
+        self.set_required_parameters([
+            "inc_a_x", "inc_b_x", "inc_c_x", "inc_d_x", "inc_e_x",
+            "inc_f_x", "inc_g_x", "inc_h_x", "inc_i_x", "inc_j_x",
+            "inc_k_x", "inc_l_x", "inc_m_x", "inc_n_x", "inc_o_x"], num_req_mats=16)
+
+
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
+
+        self.set_parameter_help(
+            {
+                "inc_a_x": "diameter of central (a) cylinder",
+                "inc_b_x": "annular radius of second (b) ring",
+                "inc_c_x": "annular radius of third (c) ring",
+                "inc_d_x": "annular radius of fourth (d) ring",
+                "inc_e_x": "annular radius of fifth (e) ring",
+                "inc_f_x": "annular radius of sixth (f) ring",
+                "inc_g_x": "annular radius of seventh (g) ring",
+                "inc_h_x": "annular radius of eigth (h) ring",
+                "inc_i_x": "annular radius of ninth (i) ring",
+                "inc_j_x": "annular radius of tenth (j) ring",
+                "inc_k_x": "annular radius of eleventh (k) ring",
+                "inc_l_x": "annular radius of twelth (l) ring",
+                "inc_m_x": "annular radius of thirteenth (m) ring",
+                "inc_n_x": "annular radius of fourteenth (n) ring",
+                "inc_o_x": "annular radius of fifteenth (o) ring",
+
+                "material_a_x": "material central (a) cylinder",
+                "material_b_x": "material of second (b) ring",
+                "material_c_x": "material of third (c) ring",
+                "material_d_x": "material of fourth (d) ring",
+                "material_e_x": "material of fifth (e) ring",
+                "material_f_x": "material of sixth (f) ring",
+                "material_g_x": "material of seventh (g) ring",
+                "material_h_x": "material of eigth (h) ring",
+                "material_i_x": "material of ninth (i) ring",
+                "material_j_x": "material of tenth (j) ring",
+                "material_k_x": "material of eleventh (k) ring",
+                "material_l_x": "material of twelth (l) ring",
+                "material_m_x": "material of thirteenth (m) ring",
+                "material_n_x": "material of fourteenth (n) ring",
+                "material_o_x": "material of fifteenth (o) ring",
+
+                "lc_bkg": "mesh spacing on outer boundary",
+                "lc_refine_2": "mesh refinement on rings",
+            }
+        )
 
     def apply_parameters(self):
         subs = make_onion_subs()
@@ -746,6 +792,18 @@ class CircOnion1(UserGeometryBase):
     def init_geometry(self):
         self.set_properties("circ_onion1", is_curvi=True)
 
+        self.set_required_parameters(["inc_a_x"], num_req_mats=2)
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
+
+        self.set_parameter_help(
+            {
+                "inc_a_x": "diameter of central (a) cylinder",
+                "material_a": "material of central (a) cylinder",
+                "lc_bkg": "mesh spacing on outer boundary",
+                "lc_refine_2": "mesh refinement on cylinders",
+            }
+        )
+
     def apply_parameters(self):
         subs = make_onion_subs()
         return subs
@@ -753,16 +811,63 @@ class CircOnion1(UserGeometryBase):
     def draw_mpl_frame(self, ax, styles):
         draw_onion_frame(ax, self, styles)
 
+    def check_dimensions(self):
+        dom_x = self.get_param("domain_x")
+        dom_y = self.get_param("domain_y")
+        rad_a = self.get_param("inc_a_x") / 2.0
+
+        msg = ""
+
+        diam_outer = 2 * (rad_a )
+
+        if diam_outer >= dom_x:
+            msg += "Outer cylinder has total diameter larger than domain width (domain_x).\n"
+        if diam_outer >= dom_y:
+            msg += "Outer cylinder has total diameter larger than domain height (domain_y).\n"
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
 
 class CircOnion2(UserGeometryBase):
     """NumBAT geometry template for a two-layer circular waveguide in a circular domain."""
 
     def init_geometry(self):
-        self.set_properties("circ_onion2", 3, True)
+        self.set_properties("circ_onion2", is_curvi=True)
 
+        self.set_required_parameters(["inc_a_x", "inc_b_x"], num_req_mats=3)
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_2"])
+
+        self.set_parameter_help(
+            {
+                 "inc_a_x": "diameter of central (a) cylinder",
+                "inc_b_x": "annular radius of second (b) ring",
+                "material_a": "material of central (a) cylinder",
+                "material_b": "material of second (b) ring",
+                "lc_bkg": "mesh spacing on outer boundary",
+                "lc_refine_2": "mesh refinement on cylinders",
+            }
+        )
     def apply_parameters(self):
         subs = make_onion_subs()
         return subs
+
+
+    def check_dimensions(self):
+        dom_x = self.get_param("domain_x")
+        dom_y = self.get_param("domain_y")
+        rad_a = self.get_param("inc_a_x") / 2.0
+        rad_ann_b = self.get_param("inc_b_x")
+
+        msg = ""
+
+        diam_outer = 2 * (rad_a + rad_ann_b )
+
+        if diam_outer >= dom_x:
+            msg += "Outer cylinder has total diameter larger than domain width (domain_x).\n"
+        if diam_outer >= dom_y:
+            msg += "Outer cylinder has total diameter larger than domain height (domain_y).\n"
+        dims_ok = not len(msg)
+        return dims_ok, msg
 
     def draw_mpl_frame(self, ax, styles):
         draw_onion_frame(ax, self, styles)
@@ -1240,7 +1345,7 @@ class RibMkII(UserGeometryBase):
 
         self.set_required_parameters( ["rib_w", "rib_h", "slab1_h"], num_req_mats=3)
 
-        self.set_allowed_parameters(["lc_bkg", "lc_refine_1", 
+        self.set_allowed_parameters(["lc_bkg", "lc_refine_1",
                                      "slab2_h", "slab3_h", "slab4_h", "slab5_h", "nslabs"], num_allowed_mats=7) # How specify mats_?
 
         nslabs, nelts = _process_rib_mk_2(self._d_params)

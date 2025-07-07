@@ -264,6 +264,12 @@ class _NumBATPlotPrefs:
 
     # TODO: do this with logger
     def _load_user_settings(self, user_settings_file='', ignore_user_settings=False):
+        self._user_settings = {
+            'all_plots':{},
+            'multi_plots':{},
+            'single_plots':{}
+                               }
+
         if ignore_user_settings:
             print('Ignoring any user setting files and using NumBAT default preferences.')
             return
@@ -306,6 +312,8 @@ class _NumBATPlotPrefs:
         self.cmap_ac_field_unsigned = d_all.get('ac_colormap_unsigned', coltup_ac[1])
         self.vecplot_arrow_color_ac = d_all.get('ac_vector_arrow_color', coltup_ac[2])
 
+
+        self.mode_index_label_fs = d_all.get('mode_index_label_fs', 10)
 
         # # electromagnetic plots
         # (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz

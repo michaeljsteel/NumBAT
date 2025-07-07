@@ -29,7 +29,7 @@ from nbtypes import SI_GHz
 import reporting
 
 from plottools import save_and_close_figure
-from plotmodes import Decorator
+from plotmodes import Decorator, TidyAxes
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
@@ -139,10 +139,14 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     fig, ax = plt.subplots()
 
+    tidy = TidyAxes(nax=1)
+    mode_fs = tidy._props['mode_index_label_fs']
+
     lw = decorator.get_property('ax_linewidth')
     fs = decorator.get_property('ax_label_fs')
     ts = decorator.get_property('ax_tick_fs')
 
+    #print('pgs 1', lw, fs, ts)
     mode_indices = []
     if AC_mode_index is None or AC_mode_index == 'All':
         mode_indices = range(num_modes)
@@ -182,11 +186,15 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         decorator.add_title(ax)
         decorator.extra_axes_commands(ax)
 
+        tidy.apply_to_axes(ax)
+
         save_and_close_figure(fig, f'{pathpref}-mode_comps{suffix}.{pdf_png}')
 
         if save_txt:
             save_array = np.array([nu_grid, v_gain_global]).T
             np.savetxt(f'{pathpref}-mode_comps{suffix}-Total.csv' , save_array, delimiter=',')
+
+    plt.close(fig)
 
     v_gain_global_tot = np.zeros(num_interp_pts)
     v_gain_global_PE = np.zeros(num_interp_pts)
@@ -216,7 +224,6 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     else:
         maxG = gain_MB
 
-    plt.close(fig)
     fig, ax = plt.subplots()
 
     modelabs = []
@@ -257,8 +264,10 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             Gm = {'All': max(gain_m, gain_PE_m, gain_MB_m),
                   'Total': gain_m, 'PE': gain_PE_m, 'MB': gain_MB_m}[show_gains]
             xloc = nu0_m*1e-9 + .01*(nu_max_GHz-nu_min_GHz)
+
+
             if Gm > mark_modes_threshold*maxG and nu_min_GHz < xloc < nu_max_GHz:
-                ax.text(xloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
+                ax.text(xloc, abs(Gm), m, fontsize=mode_fs, horizontalalignment='left',
                         verticalalignment='top')
                 modelabs.append((xloc, Gm, m))
             # keep extra small ones for the log display
@@ -280,6 +289,8 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     decorator.extra_axes_commands(ax)
     decorator.add_title(ax)
+
+    tidy.apply_to_axes(ax)
 
     save_and_close_figure(fig, f'{pathpref}{suffix}.{pdf_png}')
 
@@ -314,10 +325,10 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         ax.set_ylabel('Amplification (dB)', size=fs)
         ax.tick_params(labelsize=ts)
         for (nuloc, Gm, m) in modelabs:
-            ax.text(nuloc, abs(Gm)*v_scale, m, fontsize=fs, horizontalalignment='left',
+            ax.text(nuloc, abs(Gm)*v_scale, m, fontsize=mode_fs, horizontalalignment='left',
                     verticalalignment='top')
 
-        #save_and_close_figure(fig, f'{pathpref}-gain_spectra-dB{suffix}.{pdf_png}')
+        tidy.apply_to_axes(ax)
         save_and_close_figure(fig, f'{pathpref}-dB{suffix}.{pdf_png}')
 
         if save_txt:
@@ -337,9 +348,10 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
         ax.set_ylabel('|Gain| (1/Wm)', size=fs)
         ax.tick_params(labelsize=ts)
         for (nuloc, Gm, m) in modelabs_logy:
-            ax.text(nuloc, abs(Gm), m, fontsize=fs, horizontalalignment='left',
+            ax.text(nuloc, abs(Gm), m, fontsize=mode_fs, horizontalalignment='left',
                     verticalalignment='top')
 
+        tidy.apply_to_axes(ax)
         save_and_close_figure(fig, f'{pathpref}-logy{suffix}.{pdf_png}')
 
     return v_gain_global, v_gain_global_PE, v_gain_global_MB

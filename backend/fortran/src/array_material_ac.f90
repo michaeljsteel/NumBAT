@@ -1,6 +1,6 @@
 subroutine array_material_AC (nel, nb_typ_el, type_el, rho, c_tensor, p_tensor, eta_tensor, ls_material)
 
-      use numbatmod
+   use numbatmod
    implicit none
    integer(8) nel, nb_typ_el
    integer(8) type_el(nel)
