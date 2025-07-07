@@ -1,6 +1,6 @@
 # startup arg parser for all literature examples
 
-def read_args(enum, argv, sub=''):
+def read_args(enum, argv, sub='', refine=5):
 
     prefix_str = f'lit_{enum:02d}'
     prefix_str+=sub
@@ -11,7 +11,7 @@ def read_args(enum, argv, sub=''):
         refine_fac=1
     else:
         s_fmode = ''
-        refine_fac=5
+        refine_fac=refine
 
     print('\n\nCommencing NumBAT literature example %d%s%s'%(enum,sub, s_fmode))
     return prefix_str, refine_fac

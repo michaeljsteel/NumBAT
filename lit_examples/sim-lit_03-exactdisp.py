@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 import numbat
 import materials
-from numbattools import launch_worker_threads_and_wait
+from nbthread import launch_worker_threads_and_wait
 from nbanalytic import TwoLayerFiberEM, ElasticRod
 
 import starter
@@ -599,6 +599,9 @@ def do_main():
 
     pref0, refine_fac = starter.read_args(13, sys.argv)
 
+    #prefix =pref0+'-exactdisp'
+    prefix = 'lit_03-exactdisp'
+
     nbapp = numbat.NumBATApp(prefix)
 
     # Geometric Parameters - all in nm.
@@ -608,8 +611,6 @@ def do_main():
     mat_SiO2= materials.make_material("SiO2_2016_Smith")
     mat_vac= materials.make_material("Vacuum")
 
-    prefix =pref0+'-exactdisp'
-    prefix = 'lit_03-exactdisp'
 
 
     # Elastic problem of a single rod in vacuum

@@ -929,11 +929,13 @@ class Pedestal(UserGeometryBase):
 
         self.set_required_parameters(
             [
-                "inc_a_x",
-                "inc_b_x",
-                "inc_c_x",
+                "ped_base_w",
+                "ped_top_w",
+
                 "slab_a_x",
-                "slab_b_x",
+                "slab_a_y",
+
+                #"slab_b_x",
                 "pillar_x",
                 "pillar_y",
             ],
@@ -943,14 +945,18 @@ class Pedestal(UserGeometryBase):
 
         self.set_parameter_help(
             {
-                "inc_a_x": "width of the top of the rib",
-                "inc_a_y": "height of the top of the rib",
-                "slab_a_x": "width of the middle of the rib",
-                "slab_a_y": "height of the middle of the rib",
+                "ped_base_w": "width of the base of the pedestal",
+                "ped_top_w": "width of the top of the pedestal",
+                "ped_h": "height of the pedestal",
+                "pillar_x": "width of the supporting pillar",
+                "pillar_y": "height of the supporting pillar",
+                "slab_a_x": "width of the slab",
+                "slab_a_y": "height of the slab",
+
                 "material_bkg": "material of background",
                 "material_a": "material of rib",
-                "material_b": "material of slab",
-                "material_c": "material of pillar",
+                "material_b": "material of pillar",
+                "material_c": "material of slab",
                 "lc": "grid points arounds boundary as fraction of domain_x",
                 "lc_refine1": "refined density along upper rib",
                 "lc_refine2": "refined density along buried rib",
@@ -962,12 +968,12 @@ class Pedestal(UserGeometryBase):
         subs = [
             ("dx_in_nm = 100;", "dx_in_nm = %f;", "domain_x"),
             ("dy_in_nm = 50;", "dy_in_nm = %f;", "domain_y"),
-            ("a1 = 20;", "a1 = %f;", "inc_a_x"),
-            ("a1y = 10;", "a1y = %f;", "inc_a_y"),
-            ("a1top = 15;", "a1top = %f;", "inc_b_x"),
+            ("a1top = 15;", "a1top = %f;", "ped_top_w"),
+            ("a1 = 20;", "a1 = %f;", "ped_base_w"),
+            ("a1y = 10;", "a1y = %f;", "ped_h"),
             ("slabx = 80;", "slabx = %f;", "slab_a_x"),
             ("slaby = 10;", "slaby = %f;", "slab_a_y"),
-            ("slabxtop = 60;", "slabxtop = %f;", "slab_b_x"),
+#            ("slabxtop = 60;", "slabxtop = %f;", "slab_b_x"),
             ("px = 2;", "px = %f;", "pillar_x"),
             ("py = 5;", "py = %f;", "pillar_y"),
             ("lc = 0.1;", "lc = %f;", "lc_bkg"),

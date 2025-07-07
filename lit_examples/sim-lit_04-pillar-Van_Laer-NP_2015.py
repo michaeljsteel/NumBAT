@@ -21,15 +21,16 @@ import starter
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-domain_x = 4*wl_nm
-domain_y = 0.5*domain_x
-inc_a_x = 450
-inc_a_y = 230
+domain_x = 2*wl_nm
+domain_y = 0.7*domain_x
+ped_base_w = 450
+ped_h = 230
+ped_top_w = 150
 inc_shape = 'pedestal'
 pillar_x = 15
 pillar_y = 300
 slab_a_x = 2000
-slab_a_y = 800
+slab_a_y = 500
 
 num_modes_EM_pump = 20
 num_modes_EM_Stokes = num_modes_EM_pump
@@ -47,16 +48,21 @@ Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer"))
 Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
 
 # Use all specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
+print('domain', domain_x)
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, 
+                              ped_top_w=ped_top_w,
+                              ped_base_w=ped_base_w, ped_h=ped_h,
                         slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                         pillar_x=pillar_x, pillar_y=pillar_y,
                         material_bkg=materials.make_material("Vacuum"),            # background
                         material_a=Si_110,                        # rib
-                        material_b=materials.make_material("SiO2_2015_Van_Laer"),  # slab
-                        material_c=materials.make_material("SiO2_2015_Van_Laer"),  # pillar
-                        lc_bkg=.1, lc_refine_1=10.0*refine_fac, lc_refine_2=10.0*refine_fac)
+                        material_b=materials.make_material("SiO2_2015_Van_Laer"),  # pillar
+                        material_c=materials.make_material("SiO2_2015_Van_Laer"),  # slab
+                        lc_bkg=.05, lc_refine_1=4.0*refine_fac, lc_refine_2=4.0*refine_fac)
 
-wguide.plot_mesh(prefix)
+#wguide.plot_mesh(prefix)
+wguide.plot_refractive_index_profile(prefix)
+
 
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1

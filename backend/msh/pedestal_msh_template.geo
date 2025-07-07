@@ -1,4 +1,4 @@
-// Template mesh geometry file for a rib waveguide.
+// Template mesh geometry file for a pedestal waveguide.
 
 // Force Gmsh to use legacy msh file format v2
 Mesh.MshFileVersion = 2.2;
@@ -7,29 +7,30 @@ d = 1; // grating period
 dx_in_nm = 100;
 dy_in_nm = 50;
 dy = dy_in_nm/dx_in_nm;
-a1 = 20;
-a1top = 15;
-a1y = 10;
 
-rib_whalf = (a1/(2*dx_in_nm))*d;
-rib_hhalf = (a1y/(2*dx_in_nm))*d;
-rib_wtophalf = (a1top/(2*dx_in_nm))*d;
+a1 = 20;    // ped base width
+a1top = 15; //ped top width
+a1y = 10;   //ped height
+
+pedestal_whalf = (a1/(2*dx_in_nm))*d;
+pedestal_hhalf = (a1y/(2*dx_in_nm))*d;
+pedestal_wtophalf = (a1top/(2*dx_in_nm))*d;
 
 slabx = 80;
 slaby = 10;
 slab_w = slabx/dx_in_nm;
 slab_h = slaby/dx_in_nm;
 
-px = 2;
-py = 5;
+px = 2;  //pillar width
+py = 5;  //pillar height
 p_w = px/dx_in_nm;
 p_h = py/dx_in_nm;
 
 lc = 0.1; // background and unitcell edge
-lc_refine_1 = lc/1; // rib
+lc_refine_1 = lc/1; // pedestal
 lc_refine_2 = lc/1; // slab
 
-hy = dy/2 + (slab_h/2) + rib_hhalf; // 
+hy = dy/2 + (slab_h/2) + pedestal_hhalf; // 
 hx = 0.;
 
 //Border
@@ -44,11 +45,11 @@ Point(6) = {+slab_w/2, -hy+slab_h+dy/2, 0, lc_refine_2};
 Point(13) = {-slab_w/2, -hy+dy/2,       0, lc_refine_2};
 Point(14) = {+slab_w/2, -hy+dy/2,       0, lc_refine_2};
 
-// Supported rib
-Point(7) = {-hx-rib_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
-Point(8) = {-hx+rib_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
-Point(9) = {-hx-rib_wtophalf, -hy+2*rib_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
-Point(10) = {-hx+rib_wtophalf, -hy+2*rib_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
+// Supported pedestal
+Point(7) = {-hx-pedestal_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(8) = {-hx+pedestal_whalf, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(9) = {-hx-pedestal_wtophalf, -hy+2*pedestal_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
+Point(10) = {-hx+pedestal_wtophalf, -hy+2*pedestal_hhalf+slab_h+p_h+dy/2, 0, lc_refine_1};
 
 // Pillar
 Point(19) = {-hx-p_w, -hy+slab_h+dy/2, 0, lc_refine_2};
@@ -57,17 +58,17 @@ Point(21) = {-hx-p_w, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
 Point(22) = {-hx+p_w, -hy+slab_h+p_h+dy/2, 0, lc_refine_1};
 
 // Pillar surrounds (air)
-Point(23) = {-hx-rib_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
-Point(24) = {-hx+rib_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
+Point(23) = {-hx-pedestal_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
+Point(24) = {-hx+pedestal_whalf, -hy+slab_h+dy/2, 0, lc_refine_1};
 
 // X-axis
 Point(11) = {-d/2,       -hy+slab_h+dy/2, 0, lc};
 Point(12) = {d/2,        -hy+slab_h+dy/2, 0, lc};
 
-Point(15) = {-hx+rib_whalf, dy/2, 0, lc};
-Point(16) = {-hx-rib_whalf, dy/2, 0, lc};
-Point(17) = {-hx+rib_whalf, -dy/2, 0, lc};
-Point(18) = {-hx-rib_whalf, -dy/2, 0, lc};
+Point(15) = {-hx+pedestal_whalf, dy/2, 0, lc};
+Point(16) = {-hx-pedestal_whalf, dy/2, 0, lc};
+Point(17) = {-hx+pedestal_whalf, -dy/2, 0, lc};
+Point(18) = {-hx-pedestal_whalf, -dy/2, 0, lc};
 
 Line(6) = {7, 9};
 Line(8) = {10, 8};
@@ -126,6 +127,6 @@ Plane Surface(76) = {75};
 Line Loop(77) = {16, -20, -60, 59, -8, 34, 36};
 Plane Surface(78) = {77};
 Physical Surface(1) = {62, 64, 78, 76, 68, 72};  // bkg
-Physical Surface(2) = {66};  // rib
+Physical Surface(2) = {66};  // pedestal
 Physical Surface(3) = {74};  // slab
 Physical Surface(4) = {70};  // pillar

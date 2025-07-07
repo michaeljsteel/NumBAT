@@ -60,3 +60,10 @@ backend/fortran/.hgignore
 backend/fortran/.ninja_deps
 backend/fortran/build.ninja
 backend/fortran/.ninja_log
+
+docs/source/images/tutorial/*
+docs/source/images/josab_tutorial/*
+docs/source/images/lit_examples/*
+docs/source/images/meshes/*
+docs/source/images/*.png
+

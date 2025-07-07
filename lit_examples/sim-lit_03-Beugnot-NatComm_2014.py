@@ -69,11 +69,11 @@ AC_mode_index = 'All'
 # Expected effective index of fundamental guided mode.
 n_eff = 1.44 # just a little under the core index
 
-prefix, refine_fac = starter.read_args(3, sys.argv)
+prefix, refine_fac = starter.read_args(3, sys.argv, refine=3)
 
 nbapp = numbat.NumBATApp(prefix, prefix+'-out')
 
-prefix = 'lit_03_m4'
+prefix = 'lit_03'
 
 freq_min = 5e9
 freq_max = 11e9
@@ -121,7 +121,7 @@ def modes_n_gain(diam):
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
                             #lc_bkg=.1, lc_refine_1=4.0, lc_refine_2=4.0)
-                            lc_bkg=.2/refine_fac, lc_refine_1=refine_fac, lc_refine_2=refine_fac)
+                            lc_bkg=.05/refine_fac, lc_refine_1=refine_fac, lc_refine_2=refine_fac)
     #wguide.plot_mesh(prefix+'_%3d'%int(inc_a_x))
     #wguide.check_mesh()
 
@@ -164,7 +164,7 @@ def modes_n_gain(diam):
 
         sim_EM_pump.plot_modes(mode_indices=range(10),
                                   prefix=prefix+f'-diam-{round(diam):04d}')
-        sim_AC.plot_modes(mode_indices=range(10), prefix=prefix+f'-diam-{round(diam):04d}')
+        sim_AC.plot_modes(mode_indices=range(30), prefix=prefix+f'-diam-{round(diam):04d}')
         for m in range(num_modes_AC):
             print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gain_box.gain_total(m):.3e}, ',
                  f'{gain_box.gain_PE(m):.4e}, {gain_box.gain_MB(m):.4e}')

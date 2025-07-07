@@ -3,7 +3,8 @@ mkdir -p tutorial
 mkdir -p josab_tutorial
 mkdir -p lit_examples
 
-for tdir in  02 06a 06b 07 08 11a 14_0 14_5 14_10
+for tdir in  02 06a 06b 07 08 11a 
+    #14_0 14_5 14_10
 do
 mkdir -p tutorial/tut_${tdir}-fields
 done
@@ -12,18 +13,19 @@ cd tutorial
 
 for im in tut_01-mesh.png tut_01-refractive_index.png \
         tut_02-gain_spectra-logy.png tut_02-gain_spectra.png tut_02-gain_spectra_zoom.png  \
+        tut_02-fields/AC_mode_03.png tut_02-fields/AC_mode_04.png tut_02-fields/EM_E_mode_00.png tut_02-fields/EM_H_mode_00.png \
         tut_03a-dispersion_symmetrised.png tut_03b-dispersion_multicore.png \
         tut_06a-gain_spectra.png tut_06a-gain_spectra-logy.png tut_06a-refractive_index.png tut_06b-refractive_index.png \
+        tut_06a-fields/AC_mode_05.png tut_06a-fields/AC_mode_08.png tut_06a-fields/EM_E_mode_00.png \
         tut_08-acdisp_slotwidth.png \
         tut_09-gain_spectra.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \
+        tut_11a-fields/AC_mode_17.png tut_11a-fields/AC_mode_32.png tut_11a-fields/AC_mode_39.png tut_11a-fields/AC_mode_44.png tut_11a-fields/AC_mode_66.png tut_11a-fields/AC_mode_69.png tut_11a-fields/EM_E_mode_00.png  \
         tut_12-sil-emdisp_ng.png tut_12-sil-emdisp_Vb.png tut_12-sil-emdisp_Vneff.png tut_12-smf28-emdisp_ng.png tut_12-smf28-emdisp_Vb.png tut_12-smf28-emdisp_Vneff.png \
-        tut_13-smf28-acdisp_qneff.png tut_13-smf28-acdisp_qnu.png \
-        tut_14_0-fields tut_14_10-fields tut_14_5-fields tut_14-emdisp_ng.png tut_14-emdisp_Vneff.png \
-        tut_02-fields/AC_mode_03.png tut_02-fields/AC_mode_04.png tut_02-fields/EM_E_mode_00.png tut_02-fields/EM_H_mode_00.png \
-        tut_06a-fields/AC_mode_05.png tut_06a-fields/AC_mode_08.png tut_06a-fields/EM_E_mode_00.png \
-        tut_11a-fields/AC_mode_17.png tut_11a-fields/AC_mode_32.png tut_11a-fields/AC_mode_39.png tut_11a-fields/AC_mode_44.png tut_11a-fields/AC_mode_66.png tut_11a-fields/AC_mode_69.png tut_11a-fields/EM_E_mode_00.png \
-        tut_14_0-fields/EM_E_mode_00.png tut_14_0-fields/EM_E_mode_01.png tut_14_0-fields/EM_E_mode_02.png tut_14_0-fields/EM_E_mode_03.png tut_14_10-fields/EM_E_mode_00.png tut_14_10-fields/EM_E_mode_01.png tut_14_10-fields/EM_E_mode_02.png tut_14_10-fields/EM_E_mode_03.png tut_14_5-fields/EM_E_mode_00.png tut_14_5-fields/EM_E_mode_01.png tut_14_5-fields/EM_E_mode_02.png tut_14_5-fields/EM_E_mode_03.png
+        tut_13-smf28-acdisp_qneff.png tut_13-smf28-acdisp_qnu.png 
+
+#        tut_14_0-fields tut_14_10-fields tut_14_5-fields tut_14-emdisp_ng.png tut_14-emdisp_Vneff.png \
+#        tut_14_0-fields/EM_E_mode_00.png tut_14_0-fields/EM_E_mode_01.png tut_14_0-fields/EM_E_mode_02.png tut_14_0-fields/EM_E_mode_03.png tut_14_10-fields/EM_E_mode_00.png tut_14_10-fields/EM_E_mode_01.png tut_14_10-fields/EM_E_mode_02.png tut_14_10-fields/EM_E_mode_03.png tut_14_5-fields/EM_E_mode_00.png tut_14_5-fields/EM_E_mode_01.png tut_14_5-fields/EM_E_mode_02.png tut_14_5-fields/EM_E_mode_03.png
     do
         cp -R ../../../../tutorials/$im $im
     done
@@ -79,21 +81,23 @@ for ndir in 01 02 03-diam-1050 04b 05 06a 07 08
 do
 mkdir -p lit_examples/lit_${ndir}-fields
 done
+mkdir -p lit_examples/lit_03-out/lit_03-diam-1050-fields
 
+cd lit_examples
 #lit_03-gain_spectra-logy_w1000.png lit_03-gain_tot-diam_scan.png \
 for im in lit_01-gain_spectra-logy.png lit_01-fields/EM_E_mode_00.png \
     lit_01-fields/AC_mode_04.png lit_01-fields/AC_mode_55.png \
     lit_01-fields/AC_mode_52.png \
     lit_02-gain_spectra-logy.png lit_02-fields/AC_mode_23.png lit_02-fields/AC_mode_296.png \
-    lit_03-gain_spectra-logy_w1050.png \
     lit_03-gain_tot-diam_scan.png \
     lit_03-dwide-gain_tot-diam_scan.png \
     lit_03-exactdisp_wide-acdisp_qnu_exact.png \
-    lit_03-diam-1050-fields/EM_E_mode_00.png \
-    lit_03-diam-1050-fields/AC_mode_02.png \
-    lit_03-diam-1050-fields/AC_mode_05.png \
-    lit_03-diam-1050-fields/AC_mode_21.png \
-    lit_03-diam-1050-fields/AC_mode_28.png \
+    lit_03-out/lit_03-gain_spectra-logy_w1050.png \
+    lit_03-out/lit_03-diam-1050-fields/EM_E_mode_00.png \
+    lit_03-out/lit_03-diam-1050-fields/AC_mode_02.png \
+    lit_03-out/lit_03-diam-1050-fields/AC_mode_05.png \
+    lit_03-out/lit_03-diam-1050-fields/AC_mode_21.png \
+    lit_03-out/lit_03-diam-1050-fields/AC_mode_28.png \
     lit_04b-fields/EM_E_mode_00.png \
     lit_04b-fields/AC_mode_38.png lit_04a-gain_spectra.png \
     lit_05-fields/EM_E_mode_00.png lit_05-fields/AC_mode_06.png \
@@ -107,5 +111,5 @@ for im in lit_01-gain_spectra-logy.png lit_01-fields/EM_E_mode_00.png \
     lit_08-fields/AC_mode_23.png lit_08-gain_spectra.png \
     lit_09-gain_spectra.png lit_10a-gain_spectra.png lit_10b-gain_spectra.png
 do
-    cp -pR ../../../lit_examples/$im lit_examples/$im
+    cp -pR ../../../../lit_examples/$im $im
 done
