@@ -1111,12 +1111,13 @@ class RibDoubleCoated(UserGeometryBase):
                 "rib_h",
                 "slab_w",
                 "slab_h",
+                "slab_b_h",
                 "coat_w",
                 "coat_h",
                 "coat2_w",
                 "coat2_h",
             ],
-            num_req_mats=5,
+            num_req_mats=6,
         )
         self.set_allowed_parameters(
             [
@@ -1132,8 +1133,9 @@ class RibDoubleCoated(UserGeometryBase):
             {
                 "rib_w": "width of raised rib region",
                 "rib_h": "height of raised rib region",
-                "slab_w": "width of slab substrate region",
-                "slab_h": "height of slab substrate region",
+                "slab_w": "width of upper slab substrate region",
+                "slab_h": "height of upper slab substrate region",
+                "slab_b_h": "height of lower slab substrate region",
                 "coat_w": "horizontal thickness of inner coating layer",
                 "coat_h": "vertical thickness of inner coating layer",
                 "coat2_w": "horizontal thickness of outer coating layer",
@@ -1157,7 +1159,7 @@ class RibDoubleCoated(UserGeometryBase):
             ("slaby = 10;", "slaby = %f;", "slab_h"),
             ("coatx = 2;", "coatx = %f;", "coat_w"),
             ("coaty = 2;", "coaty = %f;", "coat_h"),
-            ("slab2y = 5;", "slab2y = %f;", "slab_b_y"),
+            ("slab2y = 5;", "slab2y = %f;", "slab_b_h"),
             ("coat2x = 4;", "coat2x = %f;", "coat2_w"),
             ("coat2y = 4;", "coat2y = %f;", "coat2_h"),
             ("lc_bkg = 0.05;", "lc = %f;", "lc_bkg"),
