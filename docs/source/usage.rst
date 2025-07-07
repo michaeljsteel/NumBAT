@@ -63,7 +63,7 @@ in the standard SI base units.
 .. figure::  images/tutorial/tut_01-mesh.png
    :width: 16cm
 
-.. figure::  images/tutorial/tut_01-ref_index.png
+.. figure::  images/tutorial/tut_01-refractive_index.png
    :width: 10cm
 
 
@@ -216,7 +216,7 @@ The dimensions are set with ``inc_a_x`` and ``inc_a_y``.
 .. figure:: images/meshes/rect_wg-mesh-annotated.png
    :width: 16cm
 
-.. figure:: images/meshes/rect_wg-ref_index.png
+.. figure:: images/meshes/rect_wg-refractive_index.png
    :width: 10cm
 
    Rectangular waveguide using shape ``rectangular`` (template ``oneincl_msh``).
@@ -226,7 +226,7 @@ The dimensions are set with ``inc_a_x`` and ``inc_a_y``.
 .. figure:: images/meshes/circ_wg-mesh-annotated.png
    :width: 16cm
 
-.. figure:: images/meshes/circ_wg-ref_index.png
+.. figure:: images/meshes/circ_wg-refractive_index.png
    :width: 10cm
 
    Elliptical waveguide using shape ``circular`` (template ``oneincl_msh``).
@@ -237,7 +237,7 @@ The dimensions are set with ``inc_a_x`` and ``inc_a_y``.
 .. figure:: images/meshes/triangular_wg-mesh-annotated.png
    :width: 16cm
 
-.. figure:: images/meshes/triangular_wg-ref_index.png
+.. figure:: images/meshes/triangular_wg-refractive_index.png
    :width: 10cm
 
    Triangular waveguide using shape ``triangular``.
@@ -254,7 +254,7 @@ horizontally by ``two_inc_sep`` and the right waveguide has a vertical offset of
 .. figure::  images/meshes/twoincl_rect_wg-mesh.png
    :width: 16cm
 
-.. figure:: images/meshes/twoincl_rect_wg-ref_index.png
+.. figure:: images/meshes/twoincl_rect_wg-refractive_index.png
    :width: 10cm
 
    Coupled rectangular waveguides using shape ``rectangular`` (template ``twoincl_msh``).
@@ -262,7 +262,7 @@ horizontally by ``two_inc_sep`` and the right waveguide has a vertical offset of
 .. figure::  images/meshes/twoincl_circ_wg-mesh.png
    :width: 16cm
 
-.. figure:: images/meshes/twoincl_circ_wg-ref_index.png
+.. figure:: images/meshes/twoincl_circ_wg-refractive_index.png
    :width: 10cm
 
 
@@ -278,7 +278,7 @@ These structures consist of a rib on one or more substrate layers with zero to t
 .. figure::  images/meshes/rib_wg-mesh-annotated.png
    :width: 16cm
 
-.. figure:: images/meshes/rib_wg-ref_index.png
+.. figure:: images/meshes/rib_wg-refractive_index.png
    :width: 10cm
 
    A conventional rib waveguide using shape ``rib`` (template ``rib``).
@@ -288,7 +288,7 @@ These structures consist of a rib on one or more substrate layers with zero to t
 .. figure:: images/meshes/rib_coated_wg-mesh-annotated.png
    :width: 16cm
 
-.. figure:: images/meshes/rib_coated_wg-ref_index.png
+.. figure:: images/meshes/rib_coated_wg-refractive_index.png
    :width: 10cm
 
    A coated rib waveguide using shape ``rib_coated`` (template ``rib_coated``).
@@ -299,7 +299,7 @@ These structures consist of a rib on one or more substrate layers with zero to t
 .. figure:: images/meshes/rib_double_coated_wg-mesh.png
    :width: 16cm
 
-.. figure:: images/meshes/rib_double_coated_wg-ref_index.png
+.. figure:: images/meshes/rib_double_coated_wg-refractive_index.png
    :width: 10cm
 
    A rib waveguide on two substrates using shape ``rib_double_coated`` (template ``rib_double_coated``).

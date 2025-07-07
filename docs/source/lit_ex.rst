@@ -60,7 +60,7 @@ Hence we have used a more standard set of values for silica.
 
 The optical fundamental fields are in close agreement with values for the effective index of :math:`n_\text{eff}=1.2710` (|NUMBAT|) and 1.2748 (paper).
 
-.. figure:: images/lit_examples/lit_01-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_01-fields/EM_E_mode_00.png
    :width: 10cm
 
    Fundamental optical mode profiles calculated in |NUMBAT|.
@@ -83,7 +83,7 @@ paper are inconsistent.  The axial plot is the correct one for this mode.
    Laude and Beugnot for backward SBS in a silica waveguide of diameter 1.05 micron. Mode  C  corresponds to the peak marked in the spectrum above.
 
 
-.. figure:: images/lit_examples/lit_01-fields/AC_field_04.png
+.. figure:: images/lit_examples/lit_01-fields/AC_mode_04.png
    :width: 13cm
 
    |NUMBAT| calculation of a high gain elastic mode, marked as C in the paper.
@@ -103,8 +103,8 @@ paper are inconsistent.  The axial plot is the correct one for this mode.
 
 
 
-.. .. figure:: images/lit_examples/lit_01-fields/AC_field_55.png
-.. figure:: images/lit_examples/lit_01-fields/AC_field_52.png
+.. .. figure:: images/lit_examples/lit_01-fields/AC_mode_55.png
+.. figure:: images/lit_examples/lit_01-fields/AC_mode_52.png
    :width: 13cm
 
    |NUMBAT| calculation of a high gain elastic mode, marked as D in the paper.
@@ -150,7 +150,7 @@ In this case the effective index for the optical fundamental mode are :math:`n_\
    Field profiles for mode G  calculated in
    Laude and Beugnot for backward SBS in a silicon waveguide.
 
-.. figure:: images/lit_examples/lit_02-fields/AC_field_23.png
+.. figure:: images/lit_examples/lit_02-fields/AC_mode_23.png
    :width: 12cm
 
    High gain elastic mode calculated by |NUMBAT|, marked as G in paper.
@@ -163,7 +163,7 @@ In this case the effective index for the optical fundamental mode are :math:`n_\
    Laude and Beugnot for backward SBS in a silicon waveguide.
 
 
-.. figure:: images/lit_examples/lit_02-fields/AC_field_296.png
+.. figure:: images/lit_examples/lit_02-fields/AC_mode_296.png
    :width: 12cm
 
    High gain elastic  mode calculated by |NUMBAT|, marked as H in paper.
@@ -263,7 +263,7 @@ The following table shows the frequency eigenvalues for a number of the modes re
      - 9.2444
 
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_03-diam-1050-fields/EM_E_mode_00.png
 
    |NUMBAT| electric field for the fundamental optical mode.
 
@@ -273,22 +273,22 @@ The following table shows the frequency eigenvalues for a number of the modes re
    Calculated elastic mode profiles for the 1.05 micron nanowire in J.-C. Beugnot *et al.* marked in the measured gain spectrum above. The top row are surface modes, the bottom row are hybrid modes.
 
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_field_02.png
+.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_02.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 5.382 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_field_05.png
+.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_05.png
    :width: 12cm
 
    |NUMBAT| azimuthal shear mode corresponding to the 5.772 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_field_21.png
+.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_21.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 8.40 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_field_28.png
+.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_28.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 9.235 GHz surface mode above.
@@ -334,13 +334,13 @@ The following example shows an approximate way to avoid the problem for now.
     :lines: 0-
 
 
-.. figure:: images/lit_examples/lit_04b-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_04b-fields/EM_E_mode_00.png
    :width: 12cm
 
    Fundamental optical mode fields.
 
 
-.. figure:: images/lit_examples/lit_04b-fields/AC_field_38.png
+.. figure:: images/lit_examples/lit_04b-fields/AC_mode_38.png
    :width: 12cm
 
    Dominant high gain elastic mode.
@@ -378,13 +378,13 @@ energy being excessively concentrated in the substrate.
     :lines: 0-
 
 
-.. figure:: images/lit_examples/lit_05-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_05-fields/EM_E_mode_00.png
    :width: 12cm
 
    Fundamental optical mode fields.
 
 
-.. figure:: images/lit_examples/lit_05-fields/AC_field_06.png
+.. figure:: images/lit_examples/lit_05-fields/AC_mode_06.png
    :width: 12cm
 
    Dominant high gain elastic mode.
@@ -407,13 +407,13 @@ This was described in O. Florez *et al.*, `Brillouin self-cancellation
     :lines: 0-
 
 
-.. figure:: images/lit_examples/lit_06a-fields/AC_field_04.png
+.. figure:: images/lit_examples/lit_06a-fields/AC_mode_04.png
    :width: 12cm
 
    :math:`TR_{21}` elastic mode fields of a nanowire with diameter 550 nm.
 
 
-.. figure:: images/lit_examples/lit_06a-fields/AC_field_05.png
+.. figure:: images/lit_examples/lit_06a-fields/AC_mode_05.png
    :width: 12cm
 
    :math:`R_{01}` elastic mode fields of a nanowire with diameter 550 nm.
@@ -482,13 +482,13 @@ as described in E. Kittlaus *et al.*, `Large Brillouin amplification in silicon
     :lines: 0-
 
 
-.. figure:: images/lit_examples/lit_07-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_07-fields/EM_E_mode_00.png
    :width: 12cm
 
    Fundamental optical mode fields.
 
 
-.. figure:: images/lit_examples/lit_07-fields/AC_field_19.png
+.. figure:: images/lit_examples/lit_07-fields/AC_mode_19.png
    :width: 12cm
 
    Dominant high gain elastic mode.
@@ -512,19 +512,19 @@ This example (``sim-lit_08-Kittlaus-NatComm_2017.py``), also from the Yale group
     :lines: 0-
 
 
-.. figure:: images/lit_examples/lit_08-fields/EM_E_field_00.png
+.. figure:: images/lit_examples/lit_08-fields/EM_E_mode_00.png
    :width: 12cm
 
    Fundamental (symmetric TE-like) optical mode fields.
 
 
-.. figure:: images/lit_examples/lit_08-fields/EM_E_field_01.png
+.. figure:: images/lit_examples/lit_08-fields/EM_E_mode_01.png
    :width: 12cm
 
    2nd lowest order (anti-symmetric TE-like) optical mode fields.
 
 
-.. figure:: images/lit_examples/lit_08-fields/AC_field_23.png
+.. figure:: images/lit_examples/lit_08-fields/AC_mode_23.png
    :width: 12cm
 
    Dominant high gain elastic mode.

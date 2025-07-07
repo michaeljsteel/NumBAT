@@ -27,12 +27,12 @@ Figure 15 in the paper shows the fundamental optical field of a silica 1 micron 
 The corresponding results generated with ``sim-josab-01.py`` are as follows:
 
 
-.. figure:: ./images/josab_tutorial/josab_01-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_01-fields/EM_E_mode_01.png
    :width: 15cm
 
    Fundamental optical mode fields.
 
-.. figure:: ./images/josab_tutorial/josab_01-fields/AC_field_28.png
+.. figure:: ./images/josab_tutorial/josab_01-fields/AC_mode_28.png
    :width: 15cm
 
    Elastic mode with largest SBS gain.
@@ -62,16 +62,16 @@ The corresponding results generated with ``sim-josab-02.py`` are as follows:
 
 The fields and gain parameters are as follows:
 
-.. figure:: ./images/josab_tutorial/josab_02a-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_02a-fields/EM_E_mode_00.png
    :width: 15cm
 
    Fundamental optical mode fields.
 
-.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_field_02.png
+.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_mode_02.png
 
    Fundamental elastic mode fields for mode 2.
 
-.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_02a-fields/AC_mode_06.png
    :width: 15cm
 
    Fundamental elastic mode fields for mode 6.
@@ -105,18 +105,18 @@ Let's see the results for the silica cylinder first:
 
    Gain spectrum for forward SBS of the silica cylinder.
 
-.. figure:: ./images/josab_tutorial/josab_03-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/EM_E_mode_01.png
    :width: 15cm
 
    Fundamental optical mode field.
 
 
-.. figure:: ./images/josab_tutorial/josab_03-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/AC_mode_06.png
    :width: 15cm
 
    Elastic mode of maximum gain.
 
-.. figure:: ./images/josab_tutorial/josab_03-fields/AC_field_12.png
+.. figure:: ./images/josab_tutorial/josab_03-fields/AC_mode_12.png
    :width: 15cm
 
    Elastic mode of second highest gain.
@@ -139,12 +139,12 @@ The corresponding results for the silicon waveguide can be generated with ``sim-
 
    Gain spectrum for forward SBS of the silicon waveguide.
 
-.. figure:: ./images/josab_tutorial/josab_04-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_04-fields/EM_E_mode_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ./images/josab_tutorial/josab_04-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_04-fields/AC_mode_06.png
    :width: 15cm
 
    Elastic mode of maximum gain.
@@ -167,18 +167,18 @@ For the problem of intermodal FBS, the paper considers coupling between the two 
 
    Gain spectrum for intermodal forward SBS of the silica waveguide.
 
-.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_mode_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_field_01.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/EM_E_mode_01.png
    :width: 15cm
 
    Second order optical mode field.
 
 
-.. figure:: ./images/josab_tutorial/josab_05-fields/AC_field_06.png
+.. figure:: ./images/josab_tutorial/josab_05-fields/AC_mode_06.png
    :width: 15cm
 
    Elastic mode field of maximum gain.
@@ -202,17 +202,17 @@ in an intermodal configuration:
    Gain spectrum for intermodal forward SBS of the silicon waveguide.
 
 
-.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_field_00.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_mode_00.png
    :width: 15cm
 
    Fundamental optical mode field.
 
-.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_field_02.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/EM_E_mode_02.png
    :width: 15cm
 
    Second order optical mode field.
 
-.. figure:: ./images/josab_tutorial/josab_06-fields/AC_field_02.png
+.. figure:: ./images/josab_tutorial/josab_06-fields/AC_mode_02.png
    :width: 15cm
 
    Elastic mode field of maximum gain.

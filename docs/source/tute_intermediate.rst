@@ -46,23 +46,23 @@ The accompanying tutorial ``sim-tut_11b-onion3.py`` introduces one additional la
 
    Gain spectrum for the two-layer structure in ``tut_11a``.
 
-.. figure:: ./images/tutorial/tut_11a-fields/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_11a-fields/EM_E_mode_00.png
    :width: 10cm
 
    Mode profile for fundamental optical mode.
 
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_17.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_17.png
    :width: 10cm
 
    Mode profile for acoustic mode 17.
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_32.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_32.png
    :width: 10cm
 
    Mode profile for acoustic mode 32.
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_39.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_39.png
    :width: 10cm
 
    Mode profile for acoustic mode 39.
@@ -72,17 +72,17 @@ The accompanying tutorial ``sim-tut_11b-onion3.py`` introduces one additional la
 
    Gain spectrum for the three-layer structure in ``tut_11b``.
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_44.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_44.png
    :width: 10cm
 
    Mode profile for acoustic mode 44.
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_66.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_66.png
    :width: 10cm
 
    Mode profile for acoustic mode 66.
 
-.. figure:: ./images/tutorial/tut_11a-fields/AC_field_69.png
+.. figure:: ./images/tutorial/tut_11a-fields/AC_mode_69.png
    :width: 10cm
 
    Mode profile for acoustic mode 66.
@@ -187,13 +187,13 @@ partner state at a nearby frequency.
 
 
 
-.. figure:: ./images/tutorial/tut_13-acdisp_qnu.png
+.. figure:: ./images/tutorial/tut_13-smf28-acdisp_qnu.png
    :width: 10cm
 
    Elastic frequency as a function of normalised wavenumber for a chalcogenide rod
    in vacuum.
 
-.. figure:: ./images/tutorial/tut_13-acdisp_qneff.png
+.. figure:: ./images/tutorial/tut_13-smf28-acdisp_qneff.png
    :width: 10cm
 
    Elastic "effective index" defined as the ratio of the bulk shear velocity to the phase velocity
@@ -221,12 +221,12 @@ azimuthally symmetric :math:`\mathrm{TE}_0` mode rather than the usual
 two-layer fibres.
 
 
-.. figure:: ./images/tutorial/tut_14_0-fields/EM_E_field_00.png
+.. .. figure:: ./images/tutorial/tut_14_0-fields/EM_E_mode_00.png
    :width: 10cm
 
    Fundamental electromagnetic mode profile for the concentric Bragg fibre.
 
-.. .. figure:: ./images/tutorial/tut_14-fields/AC_field_00.png
+.. .. figure:: ./images/tutorial/tut_14-fields/AC_mode_00.png
    :width: 10cm
 
    Fundamental acoustic mode profile for the concentric Bragg fibre.

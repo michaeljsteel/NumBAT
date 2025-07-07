@@ -87,18 +87,18 @@ a number of useful parameters are also displayed at the top-left of each mode
 profile. These parameters can also be extracted using a range of function calls on a
 ``Mode`` object (see the API docs).
 
-.. figure:: ./images/tutorial/tut_02-fields/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_02-fields/EM_E_mode_00.png
    :width: 12cm
 
-   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_field_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
+   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_mode_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
 
-.. figure:: ./images/tutorial/tut_02-fields/EM_H_field_00.png
+.. figure:: ./images/tutorial/tut_02-fields/EM_H_mode_00.png
    :width: 12cm
 
    Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.  Note that the :math:`H_z` component is :math:`\pi/2` out of phase with the transverse components.
 
 
-.. figure:: ./images/tutorial/tut_02-fields/AC_field_03.png
+.. figure:: ./images/tutorial/tut_02-fields/AC_mode_03.png
    :width: 12cm
 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=3` acoustic mode with gain
@@ -107,7 +107,7 @@ profile. These parameters can also be extracted using a range of function calls 
    (listed in the upper-left corner) corresponds to the first peak in the gain spectrum.
 
 
-.. figure:: ./images/tutorial/tut_02-fields/AC_field_04.png
+.. figure:: ./images/tutorial/tut_02-fields/AC_mode_04.png
    :width: 10cm
 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=4` acoustic mode with gain dominated by the photo-elastic effect (red curve in gain spectra).
@@ -288,7 +288,7 @@ to explore the Brillouin gain properties in a range of different structures,
 in this case a silica circular nanowire surrounded by vacuum.
 
 
-.. figure:: ./images/tutorial/tut_06a-ref_index.png
+.. figure:: ./images/tutorial/tut_06a-refractive_index.png
    :width: 10cm
 
    Refractive index profile of the silica nanowire.
@@ -323,19 +323,19 @@ smaller than either contribution.
 
    The same data displayed on a log plot using ``logy=True``.
 
-.. figure:: ./images/tutorial/tut_06a-fields/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_06a-fields/EM_E_mode_00.png
    :width: 10cm
 
    Electromagnetic mode profile of the pump and Stokes field in the :math:`x`-polarised
    fundamental mode of the waveguide.
 
 
-.. figure:: ./images/tutorial/tut_06a-fields/AC_field_05.png
+.. figure:: ./images/tutorial/tut_06a-fields/AC_mode_05.png
    :width: 10cm
 
    Mode profiles for acoustic mode 5 which is visible as a MB-dominated peak in the gain spectrum.
 
-.. figure:: ./images/tutorial/tut_06a-fields/AC_field_08.png
+.. figure:: ./images/tutorial/tut_06a-fields/AC_mode_08.png
    :width: 10cm
 
    Mode profiles for acoustic mode 8 which is visible as a PE-dominated peak in the gain spectrum.
@@ -371,13 +371,13 @@ Here are a few of these.
 
 .. subfigure:: AA|BC
 
-   .. image:: ./images/tutorial/tut_07-refractive_index.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-refractive_index.png
       :width: 14cm
 
-   .. image:: ./images/tutorial/tut_07-refractive_index_xcut.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-refractive_index_xcut.png
       :width: 8cm
 
-   .. image:: ./images/tutorial/tut_07-refractive_index_ycut.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-refractive_index_ycut.png
       :width: 8cm
 
    Refractive index profiles (2D,
@@ -388,13 +388,13 @@ Here are a few of these.
 .. subfigure:: AA|BC
 
 
-   .. image:: ./images/tutorial/tut_07-elastic_velocity_v0.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png
       :width: 14cm
 
-   .. image:: ./images/tutorial/tut_07-elastic_velocity_xcut.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-elastic_velocity_xcut.png
       :width: 8cm
 
-   .. image:: ./images/tutorial/tut_07-elastic_velocity_linecut.png
+   .. image:: ./images/tutorial/tut_07-out/tut_07-elastic_velocity_linecut.png
       :width: 8cm
 
    Elastic velocity profiles (2D, :math:`x`-cut at :math:`y=0.1`, 1D slice between the points :math:`(-0.3, -0.2)` and :math:`(0.3, 0.2)`) of the slot index waveguide.
@@ -430,23 +430,23 @@ by choosing an alternative outer material.
 
 
 
-.. figure:: ./images/tutorial/tut_07-out/EM_E_field_00.png
+.. figure:: ./images/tutorial/tut_07-out/EM_E_mode_00.png
    :width: 12cm
 
    Electromagnetic mode profile of the pump and Stokes field.
 
 
-.. figure:: ./images/tutorial/tut_07-out/AC_field_02.png
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_02.png
    :width: 12cm
 
    Acoustic mode profiles for mode 2.
 
-.. figure:: ./images/tutorial/tut_07-out/AC_field_04.png
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_04.png
    :width: 12cm
 
    Acoustic mode profiles for mode 4.
 
-.. figure:: ./images/tutorial/tut_07-out/AC_field_03.png
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_03.png
    :width: 12cm
 
    Acoustic mode profiles for mode 3.
@@ -471,18 +471,18 @@ scan is accelerated by the use of multi-processing.
    Acoustic frequencies as function of covering layer thickness.
 
 
-.. figure:: ./images/tutorial/tut_08-out/AC_field_00.png
+.. figure:: ./images/tutorial/tut_08-out/AC_mode_00.png
    :width: 12cm
 
    Modal profiles of lowest acoustic mode.
 
 
-.. figure:: ./images/tutorial/tut_08-out/AC_field_01.png
+.. figure:: ./images/tutorial/tut_08-out/AC_mode_01.png
    :width: 12cm
 
    Modal profiles of second acoustic mode.
 
-.. figure:: ./images/tutorial/tut_08-out/AC_field_02.png
+.. figure:: ./images/tutorial/tut_08-out/AC_mode_02.png
    :width: 12cm
 
    Modal profiles of third acoustic mode.
