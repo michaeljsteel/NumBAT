@@ -306,7 +306,7 @@ def do_rib(nbapp):
 
     slab_a_x = 3000
     slab_a_y = 400
-    slab_b_y = 100
+    slab_b_h = 100
     coat_x = 70
     coat_y = 70
     coat2_x = 140
@@ -329,7 +329,7 @@ def do_rib(nbapp):
 
 
     wguide3 = nbapp.make_structure('rib_double_coated',un_x,un_y, rib_w=inc_a_x, rib_h=inc_a_y,
-                                   slab_w=slab_a_x, slab_h=slab_a_y,
+                                   slab_w=slab_a_x, slab_h=slab_a_y, slab_b_h=slab_b_h,
                                    coat_w=coat_x, coat_h=coat_y, coat2_w=coat2_x, coat2_h=coat2_y,
                                    material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b, material_c=mat_c,
                                    material_d=mat_d, material_e=mat_e,
@@ -352,28 +352,32 @@ def do_slot(nbapp):
     inc_b_x = 300  # pillar width
     coat_y = 50  # pillar coat thickness
 
-    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                                inc_b_x=inc_b_x,
+    wguide1 = nbapp.make_structure('slot', un_x,un_y, 
+                                slab_w=slab_a_x, slab_h=slab_a_y,
+                                   rib_w=inc_b_x,
+                                   rib_h=inc_a_y,
+                                slot_w=inc_b_x,
                             material_bkg=mat_bkg, material_a=mat_bkg,
                                 material_b=mat_b,
                                 material_c=mat_c,
-                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10, lc_refine_3=10)
+                            lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide1.plot_mesh('slot_wg')
 
     un_x = 4000
     un_y = 1000
 
-    wguide2 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'slot_coated',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                                inc_b_x=inc_b_x,
-                                coat_y=coat_y,
+    wguide2 = nbapp.make_structure( 'slot_coated', un_x, un_y, 
+                                slab_w=slab_a_x, slab_h=slab_a_y,
+                                   rib_w=inc_b_x,
+                                   rib_h=inc_a_y,
+                                slot_w=inc_b_x,
+                                coat_t=coat_y,
                             material_bkg=mat_bkg, material_a=mat_bkg,
                                 material_b=mat_b,
                                 material_c=mat_c,
                                 material_d=mat_d,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10,
-                                lc_refine_3=10, lc_refine_4=20)
+                                lc_refine_3=10)
     wguide2.plot_mesh('slot_coated_wg')
     #wguide1.check_mesh()
     #wguide2.check_mesh()
@@ -614,12 +618,15 @@ def do_trapezoid(nbapp):
     slab_a_x = 1000
     slab_a_y = 300
 
-    wguide3 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'trapezoidal_rib',
-                                slab_a_x=slab_a_x, slab_a_y=slab_a_y,
+    wguide3 = nbapp.make_structure( 'trapezoidal_rib', un_x, un_y,
+                                slab_width=slab_a_x, slab_thickness=slab_a_y,
+                                   rib_top_width=inc_a_x/2, rib_base_width=inc_a_x,
+                                   rib_height=inc_a_y,
                             material_bkg=mat_bkg, material_a=mat_a,
-                                material_b=mat_b,
+                                material_b=mat_b, material_c=mat_c,
                             lc_bkg=.05, lc_refine_1=10, lc_refine_2=10)
-    wguide3.plot_mesh('trapezoidal_rib_wg')
+    #wguide3.plot_mesh('trapezoidal_rib_wg')
+    wguide3.plot_mesh('trapezoidal_rib-mesh-annotated')
     #wguide3.check_mesh()
 
 def do_pedestal(nbapp):
@@ -638,9 +645,15 @@ def do_pedestal(nbapp):
     slab_a_y = 300
 
 
-    wguide1 = nbapp.make_structure(un_x,inc_a_x,un_y,inc_a_y,'pedestal',
-                                inc_b_x = inc_b_x, slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                            material_bkg=mat_bkg, material_a=mat_a, material_b=mat_b,
+    wguide1 = nbapp.make_structure('pedestal', un_x, un_y,
+                                   inc_a_x, #inc_a_y, 
+                                   inc_b_x = inc_b_x, 
+                                   inc_c_x = inc_b_x, 
+                                   slab_a_x=slab_a_x, #slab_a_y=slab_a_y,
+                                   slab_b_x=slab_a_x, #slab_b_y=slab_a_y,
+                            material_bkg=mat_bkg, material_a=mat_a, 
+                                   material_b=mat_b,
+                                   material_c=mat_c,
                             pillar_x=pillar_x, pillar_y=pillar_y,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     wguide1.plot_mesh('pedestal_wg')
@@ -653,9 +666,9 @@ def do_main():
     #do_twoincl(nbapp)
     #do_rib(nbapp)
     #do_slot(nbapp)
-    do_onion(nbapp)
+    #do_onion(nbapp)
     #do_trapezoid(nbapp)
-    #do_pedestal(nbapp)
+    do_pedestal(nbapp)
 
 
 if __name__=='__main__':

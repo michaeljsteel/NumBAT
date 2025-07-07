@@ -36,7 +36,7 @@ Example results
 .. figure:: ./docs/source/images/tutorial/tut_06-gain_spectra.png
    :width: 5cm
 
-.. figure:: ./docs/source/images/tutorial/tut_06-fields/AC_field_08.png
+.. figure:: ./docs/source/images/tutorial/tut_06-fields/AC_mode_08.png
    :width: 5cm
 
 

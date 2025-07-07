@@ -149,7 +149,7 @@ sim_AC.plot_modes(mode_indices=range(15), num_ticks=3, quiver_points=40, colorba
 print("-----------------")
 print("Displaying results for maximum (physically realisable) \"gain\" value found:")
 print("Greatest SBS_gain  [1/(Wm)] total \n", masked.data[maxGainloc])
-print("displaying corresponding acoustic mode number (i.e., AC_field_#) for reference \n",maxGainloc )
+print("displaying corresponding acoustic mode number (i.e., AC_mode_#) for reference \n",maxGainloc )
 print("EM Pump Power [Watts] \n", sim_EM_pump.EM_mode_power[EM_mode_index_pump] )
 print("EM Stokes Power [Watts] \n", sim_EM_Stokes.EM_mode_power[EM_mode_index_Stokes] )
 print("EM angular frequency [THz] \n", sim_EM_pump.omega_EM/1e12 )
