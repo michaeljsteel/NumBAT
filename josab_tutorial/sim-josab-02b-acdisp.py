@@ -84,20 +84,25 @@ for i_ac, q_ac in enumerate(np.linspace(0.0,q_AC,nu_ks)):
         for i in range(len(prop_AC_modes)):
             Om = prop_AC_modes[i]*1e-9
             if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:
-                sym_A, = plt.plot(np.real(q_ac/q_AC), Om, 'or')
+                sym_A, = ax.plot(np.real(q_ac/q_AC), Om, 'or')
             if sym_list[i][0] == -1 and sym_list[i][1] == 1 and sym_list[i][2] == -1:
-                sym_B1, = plt.plot(np.real(q_ac/q_AC), Om, 'vc')
+                sym_B1, = ax.plot(np.real(q_ac/q_AC), Om, 'vc')
             if sym_list[i][0] == 1 and sym_list[i][1] == -1 and sym_list[i][2] == -1:
-                sym_B2, = plt.plot(np.real(q_ac/q_AC), Om, 'sb')
+                sym_B2, = ax.plot(np.real(q_ac/q_AC), Om, 'sb')
             if sym_list[i][0] == -1 and sym_list[i][1] == -1 and sym_list[i][2] == 1:
-                sym_B3, = plt.plot(np.real(q_ac/q_AC), Om, '^g')
+                sym_B3, = ax.plot(np.real(q_ac/q_AC), Om, '^g')
+
+    else:
+        for i in range(len(prop_AC_modes)):
+            Om = prop_AC_modes[i]*1e-9
+            ax.plot(np.real(q_ac/q_AC), Om, 'ob')
 
 
 ax.set_ylim(0,15)
 ax.set_xlim(0,1)
 
 if symmetries_working:
-    plt.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc='lower right')
+    ax.legend([sym_A, sym_B1, sym_B2, sym_B3],['A',r'B$_1$',r'B$_2$',r'B$_3$'], loc='lower right')
 
 plt.xlabel(r'Axial wavevector (normalised)')
 plt.ylabel(r'Frequency (GHz)')

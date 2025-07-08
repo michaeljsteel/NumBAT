@@ -186,6 +186,7 @@ m_gain_MB= np.zeros((num_interp_pts, num_diams))
 m_gaindB = np.zeros((num_interp_pts, num_diams))
 
 for idiam, gains in enumerate(gain_specs):
+    print('idiam', idiam, gains)
     (nu_gain_tot, nu_gain_PE, nu_gain_MB)  = gains
     m_gain_tot[:,idiam] = nu_gain_tot
     m_gain_PE[:,idiam] = nu_gain_PE

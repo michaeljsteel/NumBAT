@@ -115,7 +115,10 @@ gain_box= integration.get_gains_and_qs(
 
 freq_min = .01e9
 freq_max = 20e9
-gain_box.plot_spectra(freq_min=freq_min,freq_max=freq_max)
+#freq_min = 5.25e9
+#freq_max = 5.75e9
+
+gain_box.plot_spectra(freq_min=freq_min,freq_max=freq_max, logy=True)
 
 
 # Mask negligible gain values to improve clarity of print out.
@@ -148,6 +151,7 @@ print(f"AC Energy Density [J/m]:     {sim_AC.AC_mode_energy[maxGainloc]:.5e}")
 print(f"AC loss alpha [1/s]:         {gain_box.alpha[maxGainloc]:.5e}")
 print(f"AC frequency [GHz]:          {np.real(sim_AC.Omega_AC[maxGainloc]) / (1e9 * 2 * math.pi):.5e}")
 print(f"AC linewidth [MHz]:          {gain_box.linewidth_Hz[maxGainloc] / 1e6:.5e}")
+print(f"Mechanical Q:                {np.real(sim_AC.Omega_AC[maxGainloc]/(2*np.pi*gain_box.linewidth_Hz[maxGainloc])):.3f}")
 
 # since the overlap is not returned directly we'll have to deduce it
 absQtot2 = (

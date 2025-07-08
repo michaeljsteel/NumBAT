@@ -180,7 +180,7 @@ class GainProps(object):
         self,
         freq_min=0.0,
         freq_max=50e9,
-        num_interp_pts=3000,
+        num_interp_pts=0,
         dB=False,
         dB_peak_amp=10,
         mode_comps=False,
