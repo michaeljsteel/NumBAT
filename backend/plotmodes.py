@@ -45,24 +45,14 @@ def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
 
     if label: filestart += '_'+label
 
-    return filestart + nbapp.plotfile_ext()
+    fn = filestart + nbapp.plotfile_ext()
+    return fn
 
 # TODO: allow a suffix to label multiple cut planes
 def modeplot_filename_1D(field_code, plps, mode_index, cut, label=''):
 
     return modeplot_filename_2D(field_code, plps, mode_index, label, cut)
-    # nbapp = numbat.NumBATApp()
 
-    # pref=plps['prefix']
-    # suf = plps['suffix']
-    # comp = field_code.as_str()
-
-    # fullpref = str(nbapp.outdir_fields_path(prefix=pref))
-    # filestart = f'{fullpref}/{comp}_field_{mode_index:02d}{suf}_{cut}cut'
-
-    # if label: filestart += '_'+label
-
-    # return filestart + nbapp.plotfile_ext()
 
 def field_type_to_intensity_code(ft):
     return {FieldType.EM_E: FieldTag('Eabs'), FieldType.EM_H: FieldTag(

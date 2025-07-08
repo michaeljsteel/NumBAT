@@ -26,7 +26,7 @@ class PlotPrefs:
 
     def __init__(self, user_settings_file='', ignore_user_settings=False):
 
-        self._plot_extension = 'png'
+        self._plot_extension = '.png'
         self. _load_user_settings( user_settings_file, ignore_user_settings)
         self._set_defaults()
 

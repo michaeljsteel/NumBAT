@@ -252,7 +252,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz
 
     tidy.apply_to_axes(ax)
 
-    save_and_close_figure(fig, f'{pathpref}{suffix}.{plot_fileext}')
+    save_and_close_figure(fig, f'{pathpref}{suffix}{plot_fileext}')
 
 
     if save_txt:
