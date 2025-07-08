@@ -120,11 +120,17 @@ class PlotPrefs:
         d_multi['ax_ticklabel_fs'] = 8
         d_multi['ax_tickwidth'] = 0.25
         d_multi['ax_linewidth'] = 1
+        d_multi['title_fs'] = 16
+        d_multi['subtitle_fs'] = 11
+
+
 
         d_single['ax_label_fs'] = 14
         d_single['ax_ticklabel_fs'] = 14
         d_single['ax_tickwidth'] = 1
         d_single['ax_linewidth'] = 1
+        d_single['title_fs'] = 22
+        d_single['subtitle_fs'] = 21
 
 
         d_multi.update(self._user_settings['multi_plots'])
@@ -173,10 +179,12 @@ class TidyAxes:
 
         props = {}
 
-        axtags = ('ax_label_fs', 'ax_ticklabel_fs', 'ax_tickwidth', 'ax_linewidth')
+        #axtags = ('ax_label_fs', 'ax_ticklabel_fs', 'ax_tickwidth', 'ax_linewidth')
         if nax in (4,6):  # includes layout for two row mode plots
-            for s in axtags:
-                props[s] = user_prefs.d_multi[s]
+            #for s in axtags:
+            #    props[s] = user_prefs.d_multi[s]
+            props.update(user_prefs.d_multi)
+
 
             props['ax_label_xpad'] = 3
             props['ax_label_ypad'] = 1
@@ -187,8 +195,10 @@ class TidyAxes:
           #  props['ax_linewidth'] = 1
 
         elif nax == 2:
-            for s in axtags:
-                props[s] = user_prefs.d_multi[s]
+            # for s in axtags:
+            #     props[s] = user_prefs.d_multi[s]
+            props.update(user_prefs.d_multi)
+
 
             props['ax_label_xpad'] = 3
             props['ax_label_ypad'] = 1
@@ -199,8 +209,9 @@ class TidyAxes:
             #props['ax_tickwidth'] = 1
             #props['ax_linewidth'] = 1
         else:
-            for s in axtags:
-                props[s] = user_prefs.d_single[s]
+            #for s in axtags:
+            #    props[s] = user_prefs.d_single[s]
+            props.update(user_prefs.d_single)
 
             props['ax_label_pad'] = 5
             props['ax_label_xpad'] = 3

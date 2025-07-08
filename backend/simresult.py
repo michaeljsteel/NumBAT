@@ -551,7 +551,6 @@ class EMSimResult(SimResult):
     def bkwd_Stokes_modes(self):
         reporting.deprecated_function('numbat.bkwd_backwd_modes()',
                                       'SimResult.clone_as_backward_modes()')
-        self.clean_for_pickle()
         return self.clone_as_backward_modes()
 
     def fwd_Stokes_modes(self):
@@ -575,7 +574,7 @@ class EMSimResult(SimResult):
                     are travelling in the negative z-direction.
         """
 
-
+        self.clean_for_pickle()
         backwd_modes = copy.deepcopy(self)
         backwd_modes.fem_evecs = np.conj(backwd_modes.fem_evecs)
         backwd_modes.eigs_kz = -1.0 * backwd_modes.eigs_kz
@@ -592,9 +591,7 @@ class EMSimResult(SimResult):
 
         """
 
-
         self.clean_for_pickle()
-
         fwd_modes = copy.deepcopy(self)
         return fwd_modes
 

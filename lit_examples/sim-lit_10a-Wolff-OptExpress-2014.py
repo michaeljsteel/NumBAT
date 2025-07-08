@@ -6,14 +6,13 @@
 
 import sys
 import copy
-
 import time
 import numpy as np
-
 from pathlib import Path
+
 sys.path.append(str(Path('../backend')))
+
 import materials
-import modecalcs
 import integration
 from nbtypes import SI_GHz
 import numbat
@@ -59,7 +58,7 @@ reuse_fields = False  # calculate from scratch
 
 Ge_110 = copy.deepcopy(materials.make_material("Ge_cubic_2014_Wolff"))
 print("Initial Ge_100:", Ge_110.full_str())
-Ge_110.rotate_axis("y-axis", np.pi / 4.0, save_rotated_tensors=True)
+Ge_110.rotate("y-axis", np.pi / 4.0, save_rotated_tensors=True)
 print("Rotated Ge_110:", Ge_110.full_str())
 
 prefix, refine_fac = starter.read_args(10, sys.argv, sub="a")

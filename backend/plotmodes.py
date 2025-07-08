@@ -265,7 +265,7 @@ def plot_set_title(ax, comp_label, plps, decorator, tidy):
     if plps.get('add_title', True):
         ##ax.set_title(comp_label, fontsize=decorator.get_property('subtitle_fs'),
           #           pad=decorator.get_property('subtitle_pad'))
-        ax.set_title(comp_label, fontsize=tidy.props['subtitle_fs'],
+        ax.set_title(comp_label, fontsize=tidy._props['subtitle_fs'],
                      pad=decorator.get_property('subtitle_pad'))
 
 def get_quiver_skip_range(npts, skip):

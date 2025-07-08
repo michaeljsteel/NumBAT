@@ -58,7 +58,7 @@ EM_mode_index_Stokes = 0
 AC_mode_index = 'All'
 
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
-Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
+Si_110.rotate('y-axis', np.pi/4, save_rotated_tensors=True)
 
 mat_vac = materials.make_material("Vacuum")
 mat_rib = Si_110

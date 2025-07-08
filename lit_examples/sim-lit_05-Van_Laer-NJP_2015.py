@@ -41,12 +41,12 @@ nbapp = numbat.NumBATApp(prefix)
 
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
-Si_110.rotate_axis('y-axis', np.pi/4, save_rotated_tensors=True)
+Si_110.rotate('y-axis', np.pi/4, save_rotated_tensors=True)
 # Use all specified parameters to create a waveguide object.
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
-                        material_a=Si_110, symmetry_flag=False,
-                        lc_bkg=.1, lc_refine_1=15.0*refine_fac, lc_refine_2=15.0*refine_fac)
+                        material_a=Si_110, 
+                        lc_bkg=.05, lc_refine_1=7.0*refine_fac, lc_refine_2=7.0*refine_fac)
 wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.

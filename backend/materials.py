@@ -744,7 +744,7 @@ class Material(object):
 
     # deprecated
     def rotate_axis(self, rotation_axis, theta, save_rotated_tensors=False):
-        reporting.register_warning("rotate_axis function is depprecated. Use rotate()")
+        reporting.register_warning("rotate_axis function is deprecated. Use rotate()")
         self.rotate(rotation_axis, theta, save_rotated_tensors)
 
     def rotate(self, rot_axis_spec, theta, save_rotated_tensors=False):

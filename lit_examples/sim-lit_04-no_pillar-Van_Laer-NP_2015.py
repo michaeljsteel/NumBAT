@@ -67,7 +67,7 @@ nbapp = numbat.NumBATApp(prefix)
 # Rotate crystal axis of Si from <100> to <110>, starting with same Si_2016_Smith data.
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
 # Si_110 = copy.deepcopy(materials.materials_dict["Si_2015_Van_Laer"])
-Si_110.rotate_axis('z-axis', np.pi/4)
+Si_110.rotate('z-axis', np.pi/4)
 # Use all specified parameters to create a waveguide object.
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                               material_bkg=materials.make_material("Vacuum"),

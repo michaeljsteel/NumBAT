@@ -87,33 +87,35 @@ start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550  # Wavelength of EM wave in vacuum.
-# Waveguide widths.
-inc_a_x = 1500
-inc_a_y = 80
+
 # Shape of the waveguide.
 # Use double coated geometry to control meshing around rib waveguide.
 inc_shape = 'rib_double_coated'
 
-slab_a_x = 2850
-slab_a_y = 135
+# Waveguide widths.
+rib_w = 1500
+rib_h = 80
+
+slab_w = 2850
+slab_h = 135
 
 # Unit cell must be large to ensure fields are zero at boundary.
 domain_x = 5000
 domain_y = 0.7*domain_x
 
 # areas included purely
-slab_b_y = 500
+slab_b_h = 500
 coat_x = 50
 coat_y = 100
 coat2_x = 100
 coat2_y = 200
 
-lc_bkg = .1  # background
-lc_refine_1 = 10  # edge of rib
-lc_refine_2 = 10   # edge of slab_a
-lc_refine_3 = 10    # edge of coat
-lc_refine_4 = 10    # edge of slab_b
-lc_refine_5 = 10     # edge of coat2
+lc_bkg = .05  # background
+lc_refine_1 = 5  # edge of rib
+lc_refine_2 = 5   # edge of slab_a
+lc_refine_3 = 5    # edge of coat
+lc_refine_4 = 5    # edge of slab_b
+lc_refine_5 = 5     # edge of coat2
 
 
 # ##working set
@@ -156,7 +158,7 @@ AC_mode_index = 'All'
 
 # Si_110 = copy.deepcopy(materials.make_material("Si_2015_Van_Laer")
 Si_110 = copy.deepcopy(materials.make_material("Si_2016_Smith"))
-Si_110.rotate_axis('z-axis', np.pi/4, save_rotated_tensors=True)
+Si_110.rotate('z-axis', np.pi/4, save_rotated_tensors=True)
 
 prefix, refine_fac = starter.read_args(8, sys.argv)
 
@@ -164,12 +166,13 @@ nbapp = numbat.NumBATApp(prefix)
 
 vac = materials.make_material("Vacuum")
 # Use specified parameters to create a waveguide object.
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
-                              slab_a_x=slab_a_x, slab_a_y=slab_a_y, slab_b_y=slab_b_y,
-                              coat_x=coat_x, coat_y=coat_y, coat2_x=coat2_x, coat2_y=coat2_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
+                              rib_w=rib_w, rib_h=rib_h,
+                              slab_w=slab_w, slab_h=slab_h, slab_b_h=slab_b_h,
+                              coat_w=coat_x, coat_h=coat_y, coat2_w=coat2_x, coat2_h=coat2_y,
                               material_bkg=vac,
                               material_a=Si_110, material_b=Si_110, material_c=vac,
-                              material_d=vac, material_e=vac, symmetry_flag=False,
+                              material_d=vac, material_e=vac,
                               lc_bkg=lc_bkg, lc_refine_1=lc_refine_1, lc_refine_2=lc_refine_2,
                               lc_refine_3=lc_refine_3, lc_refine_4=lc_refine_4, lc_refine_5=lc_refine_5)
 wguide.plot_mesh(prefix)
@@ -196,14 +199,14 @@ sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        ylim_min=0.435, ylim_max=0.435, field_type='EM_E', num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
-                       comps=('Ex', 'Ey', 'Ez', 'Eabs', 'Et'), n_points=2000, colorbar=True)
+                       comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)
 
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
                        ylim_min=0.435, ylim_max=0.435, field_type='EM_H', num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
-                       comps=('Hx', 'Hy', 'Hz', 'Habs', 'Ht'), n_points=2000, colorbar=True)
+                       comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)
 
 # Print the wavevectors of EM modes.
 print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))

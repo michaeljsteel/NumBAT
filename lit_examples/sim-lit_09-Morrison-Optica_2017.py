@@ -15,7 +15,6 @@ sys.path.append(str(Path('../backend')))
 import numbat
 
 import materials
-import modecalcs
 import integration
 from nbtypes import SI_GHz
 
@@ -32,16 +31,16 @@ wl_nm = 1550 # Wavelength of EM wave in vacuum.
 domain_x = 6*wl_nm
 domain_y = 0.75*domain_x
 # Waveguide widths.
-inc_a_x = 1900
-inc_a_y = 680
+rib_w = 1900
+rib_h = 680
 # Shape of the waveguide.
 inc_shape = 'rib_coated'
 
-slab_a_x = 4000
-slab_a_y = 1000
+slab_w = 4000
+slab_h = 1000
 
-coat_x = 200
-coat_y = 1000
+coat_w = 200
+coat_h = 1000
 
 
 # Number of electromagnetic modes to solve for.
@@ -65,13 +64,13 @@ nbapp = numbat.NumBATApp(prefix)
 # Use specified parameters to create a waveguide object.
 # Note use of rough mesh for demonstration purposes.
 
-wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
-                        slab_a_x=slab_a_x, slab_a_y=slab_a_y, coat_x=coat_x, coat_y=coat_y,
+wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, rib_w=rib_w, rib_h=rib_h,
+                        slab_w=slab_w, slab_h=slab_h, coat_w=coat_w, coat_h=coat_h,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("As2S3_2017_Morrison"), # waveguide
                         material_b=materials.make_material("SiO2_2016_Smith"),     # slab
                         material_c=materials.make_material("SiO2_2016_Smith"),     # coating
-                        lc_bkg=.1, lc_refine_1=10.0, lc_refine_2=10.0, lc_refine_3=10)
+                        lc_bkg=.05, lc_refine_1=5.0, lc_refine_2=5.0, lc_refine_3=5)
 wguide.plot_mesh(prefix)
 
 # Expected effective index of fundamental guided mode.
