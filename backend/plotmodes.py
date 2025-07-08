@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from collections.abc import Iterable
 import copy
 
 import numpy as np
@@ -26,6 +25,7 @@ import matplotlib.colors as mplcolors
 import numbat
 from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plottools import save_and_close_figure
+from plotting.plotprefs import TidyAxes
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
@@ -72,128 +72,6 @@ def field_type_to_vector_code(ft):
     return  {FieldType.EM_E: FieldTag('Et'), FieldType.EM_H: FieldTag(
         'Ht'), FieldType.AC: FieldTag('ut')}[ft]
 
-
-class TidyAxes:
-
-    def __init__(self, nax=1, props={}):
-
-        self._nax = nax
-        self._set_defaults_for_num_axes(nax)
-        self._props.update(props)
-
-    def update_property(self, k, v):
-        self._props[k]=v
-
-    def _set_defaults_for_num_axes(self, nax):
-        user_prefs = numbat.NumBATPlotPrefs()
-
-        props = {}
-
-        if nax in (4,6):  # includes layout for two row mode plots
-            props['ax_label_fs'] = 8
-            props['ax_label_xpad'] = 3
-            props['ax_label_ypad'] = 1
-            props['ax_ticklabel_fs'] = 8
-            props['ax_tickwidth'] = .25
-            props['ax_linewidth'] = 1
-        elif nax == 2:
-            props['ax_label_fs'] = 12
-            props['ax_label_pad'] = 5
-            props['ax_label_xpad'] = 3
-            props['ax_label_ypad'] = 1
-            props['ax_ticklabel_fs'] =  10
-            props['ax_tickwidth'] = 1
-            props['ax_linewidth'] = 1
-        else:
-            props['ax_label_fs'] =  14
-            props['ax_label_pad'] = 5
-            props['ax_label_xpad'] = 3
-            props['ax_label_ypad'] = 1
-            props['ax_ticklabel_fs'] =  14
-            props['ax_tickwidth'] =  1
-            props['ax_linewidth'] =  1
-
-        props['aspect'] = 0.0
-
-        props['axes_color'] = 'gray'
-
-        props['cb_linewidth'] = 1
-        props['cb_label_fs'] = 10
-        props['cb_ticklabel_fs'] = 8
-        props['cb_tickwidth'] = 0.25
-
-        props['cb_edgecolor'] = 'gray'
-
-        props['cb_shrink'] = 0  # possible?
-        props['cb_pad'] = 0.    # possible?
-
-        #props['mode_index_label_fs'] = user_prefs['all_plots']['mode_index_label_fs']
-        props['mode_index_label_fs'] = user_prefs.mode_index_label_fs
-
-
-        self._props = props
-
-    def apply_to_axes(self, axs):
-
-        if not isinstance(axs, Iterable):
-            axs = (axs,)
-
-        pr = self._props
-
-        #for ax in axs:  #TODO: for some reason, this is not working and have to index explicitly?!
-        for i in range(len(axs)):
-            ax = axs[i]
-
-            # Shape
-            if pr['aspect'] >0 : ax.set_aspect(pr['aspect'])
-
-            # Ticks
-            ax.tick_params(labelsize=pr['ax_ticklabel_fs'],
-                           width=pr['ax_tickwidth'])
-
-            # Axis labels
-            ax.xaxis.label.set_size(pr['ax_label_fs'])
-            ax.yaxis.label.set_size(pr['ax_label_fs'])
-
-            xpad = self._props['ax_label_xpad']
-            ypad = self._props['ax_label_ypad']
-            if xpad:
-                xlab = ax.xaxis.get_label_text()
-                ax.set_xlabel(xlab, labelpad=xpad)
-            if ypad:
-                ylab = ax.yaxis.get_label_text()
-                ax.set_ylabel(ylab, labelpad=ypad)
-
-            # Axes visibility
-            for axis in ['top','bottom','left','right']:
-                ax.spines[axis].set_linewidth(pr['ax_linewidth'])
-                ax.spines[axis].set_color(pr['axes_color'])
-
-    def hide_axes(self, ax):
-        ax.set_axis_off()
-
-    def apply_to_cbars(self, cbs):
-        if not isinstance(cbs, Iterable):
-            cbs = (cbs,)
-
-        pr = self._props
-        for cb in cbs:
-
-            lab = cb.ax.get_ylabel()  # don't seem to be able to set label size except by setting label again
-            cb.set_label(lab, size=pr['cb_label_fs'])
-
-            cb.outline.set_linewidth(pr['cb_linewidth'])
-            cb.outline.set_color(pr['cb_edgecolor'])
-
-
-            cb.ax.tick_params(labelsize=pr['cb_ticklabel_fs'],
-                           width=pr['cb_tickwidth'])
-
-            # Not sure how to do these
-
-            #if pr['cb_shrink'] >0 :
-            #    cb.set_shrink(pr['cb_shrink'])
-            #    cb.set_pad(pr['cb_pad'])
 
 
 class Decorator(object):
@@ -383,11 +261,12 @@ def plot_set_ticks(ax, plps):
 #                  linewidth=decorator.get_property('axes.linewidth'))
 
 
-def plot_set_title(ax, comp_label, plps, decorator):
+def plot_set_title(ax, comp_label, plps, decorator, tidy):
     if plps.get('add_title', True):
-        ax.set_title(comp_label, fontsize=decorator.get_property('subtitle_fs'),
+        ##ax.set_title(comp_label, fontsize=decorator.get_property('subtitle_fs'),
+          #           pad=decorator.get_property('subtitle_pad'))
+        ax.set_title(comp_label, fontsize=tidy.props['subtitle_fs'],
                      pad=decorator.get_property('subtitle_pad'))
-
 
 def get_quiver_skip_range(npts, skip):
     if npts % 2:
@@ -594,8 +473,8 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
 
     vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(cc)
-    vecarrow_scale = numbat.NumBATPlotPrefs().vector_field_arrow_scale()
-    vecarrow_lw = numbat.NumBATPlotPrefs().vector_field_arrow_linewidth()
+    vecarrow_scale = numbat.NumBATPlotPrefs().vecplot_arrow_scale
+    vecarrow_lw = numbat.NumBATPlotPrefs().vecplot_arrow_linewidth
     vecarrow_hw = numbat.NumBATPlotPrefs().vecplot_arrow_headwidth
 
 
@@ -695,7 +574,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
     #plot_set_axes_style(ax, plps, decorator)
 
     if plps['title']:
-        plot_set_title(ax, comp_label, plps, decorator)
+        plot_set_title(ax, comp_label, plps, decorator, tidy)
 
     decorator.add_waveguide_border(ax)
     decorator.extra_axes_commands(ax)

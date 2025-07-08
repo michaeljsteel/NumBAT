@@ -109,9 +109,9 @@ simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
                           ylim_max=0.2, mode_indices=range(4))
 
 # Plot the H field of the pump mode
-simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-                          ylim_max=0.2, mode_indices=range(4),
-                          field_type='EM_H')
+#simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
+#                          ylim_max=0.2, mode_indices=range(4),
+#                          field_type='EM_H')
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(0) - simres_EM_Stokes.kz_EM(0))
@@ -136,15 +136,16 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
+#simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
 
 #if reuse_old_fields:
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
+fixed_Q=300
 gain = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
-    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
+    EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=fixed_Q)
 # Save the gain calculation results
 #np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
 #else:

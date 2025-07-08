@@ -22,8 +22,6 @@ import csv
 import numpy as np
 from scipy import interpolate
 import matplotlib
-import copy
-import voigt
 
 from nbtypes import SI_permittivity_eps0
 from numbattools import np_min_max, process_fortran_return
@@ -187,7 +185,6 @@ class GainProps(object):
         dB_peak_amp=10,
         mode_comps=False,
         logy=False,
-        pdf_png="png",
         save_txt=False,
         prefix="",
         suffix="",
@@ -216,7 +213,6 @@ class GainProps(object):
             dB_peak_amp,
             mode_comps,
             logy,
-            pdf_png,
             save_txt,
             prefix,
             suffix,
@@ -263,7 +259,7 @@ def get_gains_and_qs(
         new_call_format=True,
 
     )
-    
+
     gain = GainProps()
     gain._set_sim_AC(sim_AC)
     gain._set_gain_tot(SBS_gain)
@@ -415,7 +411,7 @@ def gain_and_qs(
 
     fem_ac = sim_AC.fem_mesh
     struc = sim_EM_pump.structure
-    opt_props = struc.optical_props
+    #opt_props = struc.optical_props
     el_props = struc.elastic_props
 
     nnodes = fem_ac.n_nodes
@@ -438,7 +434,6 @@ def gain_and_qs(
 
     alpha = simres_AC.alpha_t_AC_all()
     elastic_props = sim_AC.structure.elastic_props
-
     # Calc Q_photoelastic Eq. 33
 
     is_curvi = False

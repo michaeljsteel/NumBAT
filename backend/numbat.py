@@ -19,12 +19,12 @@ import shutil
 import time
 import datetime
 from pathlib import Path
-import tomllib
 
 import reporting
 import objects
 from modecalcs import Simulation
 import meshing.templates as mshtemplates
+from plotting.plotprefs import PlotPrefs
 
 from fortran import nb_fortran
 import nbversion
@@ -43,16 +43,20 @@ def _confirm_file_exists(nm, filetype, fn, envvar=''):
         reporting.report_and_exit(s)
 
 class _NumBATApp:
-    my_num_instances = 0
+    _num_instances = 0
 
     __instance = None
 
-    #def __new__(cls):
-    #    print('seeking nba')
-    #    if not hasattr(cls, 'instance'):
-    #        cls.instance = super(NumBATApp, cls).__new__(cls)
-    #        print('newing nba with insta', cls.instance)
-    #    return cls.instance
+    @staticmethod
+    def get_instance(outprefix='', outdir='',
+                     user_settings_file='',
+                     ignore_user_settings=False):
+
+        # instance gets attached inside __init__
+        if _NumBATApp.__instance is None:
+            _NumBATApp(outprefix, outdir, user_settings_file, ignore_user_settings)
+
+        return _NumBATApp.__instance
 
     def __init__(self, outprefix='nbtmp', outdir='.',
                  user_settings_file='',
@@ -63,45 +67,41 @@ class _NumBATApp:
         global g_numbat_plot_prefs
 
         _NumBATApp.__instance = self
+        _NumBATApp._num_instances += 1
 
-        _NumBATApp.my_num_instances += 1
-
-        self._outprefix=outprefix
-        self._outdir=outdir
-        self._paths={}
+        reporting.init_logger()
         self._start_time=time.time()
+        self._check_versions()
+
+
+        self._paths={}
         self._codedir = Path(__file__).parents[0]
 
-        self._user_settings={}
-
-        # location of top level numbat tree containing other libraries etc. Mainly for windows
-        # this seems a bit flaky depending on installations
-        self._nbrootdir =  os.getenv(_envvar_numbat_root,
-                                          default=Path(__file__).resolve().parents[3])
-
-        self._plot_extension = '.png'
-        #self._plot_extension = '.pdf'
-
-        g_numbat_plot_prefs = _NumBATPlotPrefs(
-            user_settings_file, ignore_user_settings
-            )
-
-        self._check_versions()
 
         self._setup_paths()
 
-        reporting.init_logger()
+
+        self._outprefix=outprefix
+        self._outdir=outdir
+
+        self._user_settings={}
+
+
+        #self._plot_extension = '.png'
+        #self._plot_extension = '.pdf'
+
+        g_numbat_plot_prefs = PlotPrefs(user_settings_file, ignore_user_settings)
+
+
+
 
         mshtemplates.initialise_waveguide_templates(self)
 
-    @staticmethod
-    def get_instance(outprefix='', outdir=''):
-        if _NumBATApp.__instance is None:
-            _NumBATApp(outprefix, outdir)  # instance gets attached inside __init__
-        return _NumBATApp.__instance
+
 
     def plotfile_ext(self):
-        return self._plot_extension
+        return g_numbat_plot_prefs._plot_extension
+
 
     def is_linux(self):
         return platform.system()=='Linux'
@@ -184,11 +184,16 @@ class _NumBATApp:
 
     def _setup_paths(self):
         # numbat paths
-        if not Path(self._outdir).is_dir():
-            try:
-                Path(self._outdir).mkdir()
-            except OSError as ex:
-                reporting.report_and_exit(f"Can't open output directory {self._outdir}: {str(ex)}")
+        # if not Path(self._outdir).is_dir():
+        #     try:
+        #         Path(self._outdir).mkdir()
+        #     except OSError as ex:
+        #         reporting.report_and_exit(f"Can't open output directory {self._outdir}: {str(ex)}")
+
+         # location of top level numbat tree containing other libraries etc. Mainly for windows
+        # this seems a bit flaky depending on installations
+        nbrootdir =  os.getenv(_envvar_numbat_root,
+                               default=Path(__file__).resolve().parents[3])
 
         # paths to other tools
         if self.is_linux():
@@ -196,14 +201,12 @@ class _NumBATApp:
             self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=gmpath))
 
         if self.is_windows():
-            gmpath = Path(self._nbrootdir, 'usr_local/packages/gmsh/gmsh.exe')
-            self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=gmpath))
+            gmpath = Path(nbrootdir, 'usr_local/packages/gmsh/gmsh.exe')
 
         elif self.is_macos():
-            self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=
-                                            '/Applications/Gmsh.app/Contents/MacOS/gmsh'))
-        else:
-            pass
+            gmpath = '/Applications/Gmsh.app/Contents/MacOS/gmsh'
+
+        self._paths['gmsh'] = Path(os.getenv(_envvar_gmsh_binary, default=gmpath))
 
         _confirm_file_exists('Gmsh', 'executable', self._paths['gmsh'], _envvar_gmsh_binary)
 
@@ -226,162 +229,21 @@ class _NumBATApp:
 
 
 # always returns the singleton NumBATApp object
-def NumBATApp(outprefix='', outdir='.'):
+def NumBATApp(outprefix='', outdir='.',
+              user_settings_file='',
+              ignore_user_settings=False):
     '''Returns the same singleton NumBATApp object on every call.'''
 
-    nba = _NumBATApp.get_instance(outprefix, outdir)
+    nba = _NumBATApp.get_instance(outprefix, outdir, user_settings_file, ignore_user_settings)
     return nba
 
 
 def assert_numbat_object_created():
-    if _NumBATApp.my_num_instances != 1:
-        reporting.report_and_exit('In NumBAT 2.0, you must now create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
+    if _NumBATApp._num_instances != 1:
+        reporting.report_and_exit('You must create a NumBAT object before calling any other NumBAT functions.  See the tutorials for examples.')
 
 
 
-#TODO: move this to plottools.py and
-# make the NumBATPlotPrefs call return a reference to object in plottools.py
-class _NumBATPlotPrefs:
-    """Selection of color scales and line properties for different field plots."""
-
-    # Add color combinations here
-    # See https://matplotlib.org/stable/users/explain/colors/colormaps.html
-
-                  #  signed, unsigned, vector arrow
-    color_tup_1 = ('seismic', 'OrRd', 'dimgray')
-    color_tup_2 = ('PRGn', 'GnBu', 'brown')
-    color_tup_3 = ('BrBG', 'YlOrBr', 'black')
-    color_tup_4 = ('PuOr', 'YlOrBr', 'dimgray')
-    color_tup_5 = ('coolwarm', 'Reds', 'dimgray')
-    color_tup_6 = ('PiYG', 'GnBu', 'dimgray')
-    color_tup_7 = ('RdYlGn', 'GnBu', 'dimgray')
-
-
-    def __init__(self, user_settings_file='', ignore_user_settings=False):
-
-        self. _load_user_settings( user_settings_file, ignore_user_settings)
-        self._set_defaults()
-
-    # TODO: do this with logger
-    def _load_user_settings(self, user_settings_file='', ignore_user_settings=False):
-        self._user_settings = {
-            'all_plots':{},
-            'multi_plots':{},
-            'single_plots':{}
-                               }
-
-        if ignore_user_settings:
-            print('Ignoring any user setting files and using NumBAT default preferences.')
-            return
-
-        user_file=None
-        if user_settings_file:
-            _confirm_file_exists('User settings', '.toml file',
-                             user_settings_file)
-            user_file=Path(user_settings_file)
-        else: # Look for standard locations
-            home_dir = Path.home()
-            locs = [Path('./numbat.toml'),
-                    Path(home_dir / '.numbat.toml')
-                    ]
-            for loc in locs:
-                if loc.exists():
-                    user_file = loc
-                    break
-
-        if user_file is not None:
-            print(f'Loading plot preferences from {user_file}.')
-            with open(user_file, 'rb') as fin:
-                self._user_settings = tomllib.load(fin)
-
-    def _set_defaults(self):
-
-        d_all = self._user_settings['all_plots']
-        d_multi = self._user_settings['multi_plots']
-        d_single = self._user_settings['single_plots']
-
-        # Select color combinations here
-        coltup_em = self.color_tup_1
-        coltup_ac = self.color_tup_7
-
-        self.cmap_em_field_signed = d_all.get('em_colormap_signed', coltup_em[0])
-        self.cmap_em_field_unsigned = d_all.get('em_colormap_unsigned', coltup_em[1])
-        self.vecplot_arrow_color_em = d_all.get('em_vector_arrow_color', coltup_em[2])
-
-        self.cmap_ac_field_signed = d_all.get('ac_colormap_signed', coltup_ac[0])
-        self.cmap_ac_field_unsigned = d_all.get('ac_colormap_unsigned', coltup_ac[1])
-        self.vecplot_arrow_color_ac = d_all.get('ac_vector_arrow_color', coltup_ac[2])
-
-
-        self.mode_index_label_fs = d_all.get('mode_index_label_fs', 10)
-
-        # # electromagnetic plots
-        # (self.cmap_em_field_signed,        # Ex, Ey, Ez, Hx, Hy, Hz
-        #     self.cmap_em_field_unsigned,   # |E|^2, |H|^2,
-        #     self.vecplot_arrow_color_em
-        #     ) = coltup_em
-
-
-        # # acoustic plots
-        # (self.cmap_ac_field_signed,        # ux, uy, uz
-        #     self.cmap_ac_field_unsigned,   # |u|^2
-        #     self.vecplot_arrow_color_ac
-        #     ) = coltup_ac
-
-        self.cmap_ref_index = d_all.get('refindex_colormap', 'cool')
-
-        # larger makes smaller arrows
-        self.vecplot_arrow_scale = d_all.get('vector_arrow_scale', 10)
-
-        # width of the shaft in fractions of plot width
-        self.vecplot_arrow_linewidth = d_all.get('vector_arrow_linewidth', 0.005)
-
-        # multiple of shaft width
-        self.vecplot_arrow_headwidth = d_all.get('vector_arrow_headwidth', 2)
-
-        #self.vecplot_arrow_head = 2
-        #self.vecplot_arrow_len = 2
-
-        # colormap for refractive index plots
-
-
-        # properties of waveguide boundary frames
-
-        # EDGE_COLOR="gray" "dimgray" "black" "brown" "darkred"
-
-        self.WG_FRAME_EDGE_COLOR = d_all.get('wg_frame_edge_color', 'darkred')
-
-        # if field plot is whole figure
-        self.WG_FRAME_LINEWIDTH_WHOLEFIG = d_all.get('wg_frame_linewidth_color', 0.75)
-        # if field plot is a part figure
-        self.WG_FRAME_LINEWIDTH_SUBFIG = d_all.get('wg_frame_linewidth_subfig', 0.25)
-
-
-
-    def cmap_field_signed(self, ftag):
-        if ftag.is_EM():
-            return self.cmap_em_field_signed
-        else:
-            return self.cmap_ac_field_signed
-
-    def cmap_field_unsigned(self, ftag):
-        if ftag.is_EM():
-            return self.cmap_em_field_unsigned
-        else:
-            return self.cmap_ac_field_unsigned
-
-    def vector_field_arrow_color(self, ftag):
-        if ftag.is_EM():
-            return self.vecplot_arrow_color_em
-        else:
-            return self.vecplot_arrow_color_ac
-
-
-    def vector_field_arrow_scale(self):
-        return self.vecplot_arrow_scale
-
-    def vector_field_arrow_linewidth(self):
-        return self.vecplot_arrow_linewidth
 
 
 
@@ -390,20 +252,6 @@ class _NumBATPlotPrefs:
 def NumBATPlotPrefs():
     return g_numbat_plot_prefs
 
-
-
-# def NumBAT_color_styles():
-
-
-#     #EDGE_COLOR="mediumblue"
-#     #EDGE_COLOR="darkblue"
-
-#     styles = {'WG_FRAME_EDGE_COLOR': WG_FRAME_EDGE_COLOR,
-#               'WG_FRAME_LINEWIDTH': WG_FRAME_LINEWIDTH,
-#               }
-
-
-#     return styles
 
 def version():
         return nbversion.NUMBAT_VERSION_STR_MMM

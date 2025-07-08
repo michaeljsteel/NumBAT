@@ -32,10 +32,10 @@ from plottools import save_and_close_figure
 from plotmodes import Decorator, TidyAxes
 
 
-def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
+def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz, q_AC,
                  EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index, freq_min=0., freq_max=50e9, num_interp_pts=3000,
                  dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
-                 pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
+                  save_txt=False, prefix='', suffix='', decorator=None,
                  show_gains='All'):
     reporting.deprecated_function('plotgain.gain_spectra',
                                   'Gain.plot_spectra')
@@ -43,11 +43,11 @@ def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz, q_AC,
     #                           + 'Please now use Gain.plot_spectra() and observe the changes in calling convention described in the Release notes.')
 
 
-def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
+def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz,
                       EM_mode_index_pump, EM_mode_index_Stokes, AC_mode_index='All',
                       freq_min=0., freq_max=50e9, num_interp_pts=3000,
                       dB=False, dB_peak_amp=10, mode_comps=False, logy=False,
-                      pdf_png='png', save_txt=False, prefix='', suffix='', decorator=None,
+                      save_txt=False, prefix='', suffix='', decorator=None,
                       show_gains='All', mark_modes_threshold=0.02):
     r""" Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 
@@ -61,7 +61,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
             SBS_gain_MB  (array): Photoelastic gain of modes.
 
-            linewidth_Hz  (array): Linewidth of each mode [Hz].
+            v_linewidth_Hz  (array): Linewidth of each mode [Hz].
 
             EM_mode_index_pump  (int or 'All'): Which EM pump mode(s) to consider.
 
@@ -84,8 +84,6 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
             logy  (bool): PLot y-axis on log scale.
 
-            pdf_png  (str): Save figures as 'png' or 'pdf'.
-
             save_txt  (bool): Save spectra data to txt file.
 
             prefix  (str): String to be appended to start of file name.
@@ -100,10 +98,15 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     # process = psutil.Process()
 
-    if not prefix: prefix=numbat.NumBATApp().outprefix()
+    nbapp = numbat.NumBATApp()
+    plot_prefs = numbat.NumBATPlotPrefs()
+    plot_fileext = plot_prefs._plot_extension
 
-    pref = f'{prefix}-gain_spectra'
-    pathpref = str(Path(numbat.NumBATApp().outdir(), pref))
+    #if not prefix: prefix=nbapp.outprefix()
+    ##pref = f'{prefix}-gain_spectra'
+    #pathpref = str(Path(numbat.NumBATApp().outdir(), pref))
+
+    pathpref = nbapp.outpath(prefix) + '-gain_spectra'
 
     if decorator is None:
         decorator = Decorator()
@@ -112,7 +115,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     # This is expensive but helps to get the peaks in most cases.
     tune_steps = 50000
     # Need to do smarter interpolation to make this number lower
-    tune_range = 10e9  # Hz
+    tune_range = 10 * SI_GHz
 
     # Construct an odd range of freqs guaranteed to include central resonance frequency.
     if tune_steps % 2 == 0:
@@ -123,16 +126,12 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     nu_grid = np.linspace(freq_min, freq_max, num_interp_pts)
 
     nu_grid_GHz = nu_grid / SI_GHz
-    nu_min_GHz = nu_grid_GHz[0]
-    nu_max_GHz = nu_grid_GHz[-1]
-    if freq_min:
-        nu_min_GHz = freq_min * 1e-9
-    if freq_max:
-        nu_max_GHz = freq_max * 1e-9
+    nu_min_GHz = freq_min / SI_GHz if freq_min else nu_grid_GHz[0]
+    nu_max_GHz = freq_max / SI_GHz if freq_max else nu_grid_GHz[-1]
 
     # Linewidth of Lorentzian is half the FWHM style linewidth.
-    linewidth = linewidth_Hz/2
-    num_modes = len(linewidth)
+    v_linewidth = v_linewidth_Hz/2
+    num_modes = len(v_linewidth)
 
     # Plot decomposition of spectra into individual modes.
     v_gain_global = np.zeros(num_interp_pts)
@@ -146,7 +145,6 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     fs = decorator.get_property('ax_label_fs')
     ts = decorator.get_property('ax_tick_fs')
 
-    #print('pgs 1', lw, fs, ts)
     mode_indices = []
     if AC_mode_index is None or AC_mode_index == 'All':
         mode_indices = range(num_modes)
@@ -157,44 +155,9 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             reporting.report_and_exit(
                 'AC_mode_index in gain_spectra() must be "All" or a list of mode numbers.')
 
-    # Total gain via sum over all modes in the vicinity of their peak
-    for m in mode_indices:  # TODO: this is same as top of next big loop? DELETE?
-        # build lorentzian centered on mode m
-        v_nu_loc = np.real(sim_AC.nu_AC(m) + detuning_range)
-        v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
-        v_gain_loc = np.real(SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, m]) * v_Lorentz
-        #lor_glob = np.interp(nu_grid, v_nu_loc, v_Lorentz)
-
-        if mode_comps:
-            ax.plot(v_nu_loc, np.abs(v_gain_loc), linewidth=lw)
-            if save_txt:
-                save_array = np.array([v_nu_loc, v_gain_loc]).T
-                np.savetxt(f'{pathpref}-mode_comps{suffix}-{m}.csv', save_array, delimiter=',')
-        # set up an interpolation for summing all the gain peaks
-        v_gain_global += np.interp(nu_grid, v_nu_loc, v_gain_loc)
-
-    #return_interp_values = v_gain_global
-
-    if mode_comps:  # TODO: delete this as no longer important?
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global),
-                'b', linewidth=lw, label="Total")
-        ax.legend(loc=0)
-        ax.set_xlim(nu_min_GHz, nu_max_GHz)
-        ax.set_xlabel('Frequency (GHz)', size=fs)
-        ax.set_ylabel('|Gain| (1/Wm)', size=fs)
-        ax.tick_params(labelsize=ts)
-        decorator.add_title(ax)
-        decorator.extra_axes_commands(ax)
-
-        tidy.apply_to_axes(ax)
-
-        save_and_close_figure(fig, f'{pathpref}-mode_comps{suffix}.{pdf_png}')
-
-        if save_txt:
-            save_array = np.array([nu_grid, v_gain_global]).T
-            np.savetxt(f'{pathpref}-mode_comps{suffix}-Total.csv' , save_array, delimiter=',')
-
-    plt.close(fig)
+    v_gain_global = {'Total': np.zeros(num_interp_pts),
+                     'PE': np.zeros(num_interp_pts),
+                     'MB': np.zeros(num_interp_pts)}
 
     v_gain_global_tot = np.zeros(num_interp_pts)
     v_gain_global_PE = np.zeros(num_interp_pts)
@@ -208,8 +171,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
     do_PE = show_gains in ('PE', 'All')
     do_MB = show_gains in ('MB', 'All')
 
-    maxG = 0  # this should be largest of the plotted gains
-    # only maximise over the freqs that will be plotted
+    # Find max gain over the freq range that will be plotted
     mask = np.where((sim_AC.nu_AC_all() > freq_min) *
                     (sim_AC.nu_AC_all() < freq_max), 1, 0)
 
@@ -231,40 +193,35 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     for m in mode_indices:
         nu0_m = np.real(sim_AC.nu_AC(m))
+        nu0_m_GHz = nu0_m / SI_GHz
 
         if not freq_min < nu0_m < freq_max:
             continue
         v_nu_loc = nu0_m + detuning_range
 
-        v_Lorentz = linewidth[m]**2/(linewidth[m]**2 + detran2)
+        v_Lorentz = v_linewidth[m]**2/(v_linewidth[m]**2 + detran2)
 
-        if do_tot:
-            gain_m = abs(np.real(SBS_gain[EM_mode_index_pump, EM_mode_index_Stokes, m]))
-            v_gain_loc = gain_m * v_Lorentz
+        gsets = (
+            (do_tot, SBS_gain, 'ob', 'Total'),
+            (do_PE, SBS_gain_PE, 'or', 'PE' ),
+            (do_MB, SBS_gain_MB, 'og', 'MB'),
+            )
+
+        gain_peaks={}
+        for (do_g, m_gain, style, gcont) in gsets:
+            t_gain = abs(np.real(m_gain[EM_mode_index_pump, EM_mode_index_Stokes, m]))
+            v_gain_loc = t_gain * v_Lorentz
             interp_spectrum = np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            v_gain_global_tot += interp_spectrum
-            if gain_m > mark_modes_threshold*maxG:
-                ax.plot(nu0_m*1e-9, gain_m, 'ob')
+            v_gain_global[gcont] += interp_spectrum
+            if t_gain > mark_modes_threshold*maxG:
+                ax.plot(nu0_m_GHz, t_gain, style)
+            gain_peaks[gcont] = t_gain
 
-        if do_PE:
-            gain_PE_m = abs(np.real(SBS_gain_PE[EM_mode_index_pump, EM_mode_index_Stokes, m]))
-            v_gain_loc = gain_PE_m * v_Lorentz
-            v_gain_global_PE += np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            if gain_PE_m > mark_modes_threshold*maxG:
-                ax.plot(nu0_m*1e-9, gain_PE_m, 'or')
-
-        if do_MB:
-            gain_MB_m = abs(np.real(SBS_gain_MB[EM_mode_index_pump, EM_mode_index_Stokes, m]))
-            v_gain_loc = gain_MB_m * v_Lorentz
-            v_gain_global_MB += np.interp(nu_grid, v_nu_loc, v_gain_loc)
-            if gain_MB_m > mark_modes_threshold*maxG:
-                ax.plot(nu0_m*1e-9, gain_MB_m, 'og')
 
         if show_mode_indices:  # mark modes with gains larger than 5% of the maximum found
-            Gm = {'All': max(gain_m, gain_PE_m, gain_MB_m),
-                  'Total': gain_m, 'PE': gain_PE_m, 'MB': gain_MB_m}[show_gains]
-            xloc = nu0_m*1e-9 + .01*(nu_max_GHz-nu_min_GHz)
-
+            gain_peaks['All'] = max(gain_peaks.values())
+            Gm = gain_peaks[show_gains]
+            xloc = nu0_m_GHz + .01*(nu_max_GHz-nu_min_GHz)
 
             if Gm > mark_modes_threshold*maxG and nu_min_GHz < xloc < nu_max_GHz:
                 ax.text(xloc, abs(Gm), m, fontsize=mode_fs, horizontalalignment='left',
@@ -274,12 +231,15 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
             if Gm > mark_modes_threshold*maxG/1000 and nu_min_GHz < xloc < nu_max_GHz:
                 modelabs_logy.append((xloc, Gm, m))
 
-    if do_PE:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_PE), 'r', linewidth=lw, label='PE')
-    if do_MB:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_MB), 'g', linewidth=lw, label='MB')
-    if do_tot:
-        ax.plot(nu_grid_GHz, np.abs(v_gain_global_tot), 'b', linewidth=lw, label='Total gain')
+
+    gpsets = ( (do_PE, 'PE', 'r', 'PE'),
+               (do_MB, 'MB', 'g', 'MB'),
+               (do_tot,'Total', 'b', 'Total gain') )
+
+    # plain graph
+    for do_g, gcont, col, lab in gpsets:
+        if do_g:
+            ax.plot(nu_grid_GHz, np.abs(v_gain_global[gcont]), col, linewidth=lw, label=lab)
 
     ax.legend(loc=0)
     ax.set_xlim(nu_min_GHz, nu_max_GHz)
@@ -292,33 +252,29 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
 
     tidy.apply_to_axes(ax)
 
-    save_and_close_figure(fig, f'{pathpref}{suffix}.{pdf_png}')
+    save_and_close_figure(fig, f'{pathpref}{suffix}.{plot_fileext}')
 
 
     if save_txt:
-        save_array = np.array([nu_grid, v_gain_global_tot]).T
+        save_array = np.array([nu_grid, v_gain_global['Total']]).T
         np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-Total.csv', save_array, delimiter=',')
-        save_array = np.array([nu_grid, v_gain_global_PE]).T
+        save_array = np.array([nu_grid, v_gain_global['PE']]).T
         np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-PE.csv',  save_array, delimiter=',')
-        save_array = np.array([nu_grid, v_gain_global_MB]).T
+        save_array = np.array([nu_grid, v_gain_global['MB']]).T
         np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-MB.csv',  save_array, delimiter=',')
 
-
+    # dB graph
     if dB:
         fig, ax = plt.subplots()
 
-        max_G = np.max(abs(v_gain_global_tot))
+        max_G = np.max(abs(v_gain_global['Total']))
         Leff = math.log(10**(dB_peak_amp*.1))/max_G
-        # dB_const = dB_peak_amp/(4.34*max_G)
-        # ax.plot(nu_grid_GHz, np.abs(10*np.log10(np.exp(abs(interp_values)*dB_const))), 'b', linewidth=3, label="Total")
         v_scale = dB_peak_amp * Leff*math.log10(math.exp(1.0))
-        #v_amp = v_scale * abs(v_gain_global_tot)
-        if do_PE:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
-        if do_MB:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")
-        if do_tot:
-            ax.plot(nu_grid_GHz, v_scale*abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
+
+        for do_g, gcont, col, lab in gpsets:
+            if do_g:
+                ax.plot(nu_grid_GHz, v_scale*np.abs(v_gain_global[gcont]), col, linewidth=lw, label=lab)
+
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz, nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)', size=fs)
@@ -329,7 +285,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                     verticalalignment='top')
 
         tidy.apply_to_axes(ax)
-        save_and_close_figure(fig, f'{pathpref}-dB{suffix}.{pdf_png}')
+        save_and_close_figure(fig, f'{pathpref}-dB{suffix}.{plot_fileext}')
 
         if save_txt:
             dB_const=1.0
@@ -337,11 +293,13 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                 nu_grid, 10*np.log10(np.exp(abs(v_gain_global_tot)*dB_const)))
             np.savetxt(f'{pathpref}-gain_spectra-dB{suffix}.csv', save_array, delimiter=',')
 
+    # log scale graph
     if logy:
         fig, ax = plt.subplots()
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_PE), 'r', linewidth=lw, label="PE")
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_MB), 'g', linewidth=lw, label="MB")
-        ax.semilogy(nu_grid_GHz, abs(v_gain_global_tot), 'b', linewidth=lw, label="Total")
+        for do_g, gcont, col, lab in gpsets:
+            if do_g:
+                ax.semilogy(nu_grid_GHz, np.abs(v_gain_global[gcont]), col, linewidth=lw, label=lab)
+
         ax.legend(loc=0)
         ax.set_xlim(nu_min_GHz, nu_max_GHz)
         ax.set_xlabel('Frequency (GHz)', size=fs)
@@ -352,7 +310,7 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, linewidth_Hz,
                     verticalalignment='top')
 
         tidy.apply_to_axes(ax)
-        save_and_close_figure(fig, f'{pathpref}-logy{suffix}.{pdf_png}')
+        save_and_close_figure(fig, f'{pathpref}-logy{suffix}.{plot_fileext}')
 
     return v_gain_global, v_gain_global_PE, v_gain_global_MB
 
