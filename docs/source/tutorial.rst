@@ -114,27 +114,6 @@ We now walk through a number of simple simulations that demonstrate the basic us
     \clearpage
 
 
-Intermediate tutorials
-======================
-
-The next set of tutorials begin to explore some more advanced features.
-
-.. toctree::
-   :maxdepth: 1
-
-
-   notebooks/jup_09a_bulk_anisotropy
-
-   notebooks/jup_09b_linb_crystal_props
-
-.. raw:: latex
-
-    \clearpage
-
-.. toctree::
-   :maxdepth: 1
-
-   tute_intermediate
 
 
 

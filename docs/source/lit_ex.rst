@@ -206,7 +206,7 @@ in a micron scale optical fibre described in J.-C. Beugnot *et al.*,
    Measured gain spectrum for a 1.05 micron silica nanowire in J.-C. Beugnot *et al.*
 
 .. .. figure:: images/lit_examples/lit_03-gnarrow_gain_spectra-logy_w1050.png
-.. figure:: images/lit_examples/lit_03-gnarrow-gain_spectra-logy_w1050.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-gain_spectra-logy_w1050.png
    :width: 12cm
 
    |NUMBAT| calculated gain spectrum for the 1.05 micron silica nanowire.
@@ -263,7 +263,7 @@ The following table shows the frequency eigenvalues for a number of the modes re
      - 9.2444
 
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/EM_E_mode_00.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-diam-1050-fields/EM_E_mode_00.png
 
    |NUMBAT| electric field for the fundamental optical mode.
 
@@ -273,22 +273,22 @@ The following table shows the frequency eigenvalues for a number of the modes re
    Calculated elastic mode profiles for the 1.05 micron nanowire in J.-C. Beugnot *et al.* marked in the measured gain spectrum above. The top row are surface modes, the bottom row are hybrid modes.
 
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_02.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-diam-1050-fields/AC_mode_02.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 5.382 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_05.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-diam-1050-fields/AC_mode_05.png
    :width: 12cm
 
    |NUMBAT| azimuthal shear mode corresponding to the 5.772 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_21.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-diam-1050-fields/AC_mode_21.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 8.40 GHz surface mode above.
 
-.. figure:: images/lit_examples/lit_03-diam-1050-fields/AC_mode_28.png
+.. figure:: images/lit_examples/lit_03-out/lit_03-diam-1050-fields/AC_mode_28.png
    :width: 12cm
 
    |NUMBAT| radial shear mode corresponding to the 9.235 GHz surface mode above.
@@ -309,7 +309,7 @@ It is also illuminating to look at the elastic dispersion for a wide range of mi
 
    |NUMBAT| gain spectrum over wide range of diameters. (Note swapped axes for consistency with Beugnot *et al.*.)
 
-.. figure:: images/lit_examples/lit_03-exactdisp_wide-acdisp_qnu_exact.png
+.. .. figure:: images/lit_examples/lit_03-exactdisp_wide-acdisp_qnu_exact.png
 
    Exact analytic dispersion relation for modes of elastic rod in air for comparison with gain spectra.
 

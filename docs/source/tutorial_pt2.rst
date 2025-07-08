@@ -1,0 +1,33 @@
+
+
+.. include:: numbatdefs.txt
+
+.. _chap-tutorialpt2-label:
+
+*****************
+Tutorial part 2
+*********************
+
+
+Advanced Tutorials
+=======================
+
+This second set of tutorials begin to explore some more advanced features including anisotropy,
+complex waveguide shapes and validation of |NUMBAT| results using analytically solvable problems.
+
+.. toctree::
+   :maxdepth: 1
+
+
+   notebooks/jup_09a_bulk_anisotropy
+
+   notebooks/jup_09b_linb_crystal_props
+
+.. raw:: latex
+
+    \clearpage
+
+.. toctree::
+   :maxdepth: 1
+
+   tute_intermediate

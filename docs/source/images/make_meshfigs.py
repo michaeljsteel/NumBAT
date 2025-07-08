@@ -634,9 +634,9 @@ def do_pedestal(nbapp):
     un_y = 2000
 
     # layer thicknesses
-    inc_a_x = 500
-    inc_a_y = 100
-    inc_b_x = 350
+    ped_top_w = 350
+    ped_base_w = 500
+    ped_h = 100
 
     pillar_x = 20
     pillar_y = 200
@@ -646,11 +646,10 @@ def do_pedestal(nbapp):
 
 
     wguide1 = nbapp.make_structure('pedestal', un_x, un_y,
-                                   inc_a_x, #inc_a_y, 
-                                   inc_b_x = inc_b_x, 
-                                   inc_c_x = inc_b_x, 
-                                   slab_a_x=slab_a_x, #slab_a_y=slab_a_y,
-                                   slab_b_x=slab_a_x, #slab_b_y=slab_a_y,
+                                   ped_top_w = ped_top_w, 
+                                   ped_base_w = ped_base_w,
+                                   ped_h = ped_h,
+                                   slab_a_x=slab_a_x, slab_a_y=slab_a_y,
                             material_bkg=mat_bkg, material_a=mat_a, 
                                    material_b=mat_b,
                                    material_c=mat_c,
@@ -662,12 +661,12 @@ def do_main():
 
     nbapp = numbat.NumBATApp()
 
-    do_oneincl(nbapp)
-    do_twoincl(nbapp)
-    do_rib(nbapp)
-    do_slot(nbapp)
-    do_onion(nbapp)
-    do_trapezoid(nbapp)
+    #do_oneincl(nbapp)
+    #do_twoincl(nbapp)
+    #do_rib(nbapp)
+    #do_slot(nbapp)
+    #do_onion(nbapp)
+    #do_trapezoid(nbapp)
     do_pedestal(nbapp)
 
 

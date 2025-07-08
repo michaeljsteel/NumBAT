@@ -929,15 +929,14 @@ class Pedestal(UserGeometryBase):
 
         self.set_required_parameters(
             [
-                "ped_base_w",
                 "ped_top_w",
-
+                "ped_base_w",
+                "ped_h",
+                "pillar_x",
+                "pillar_y",
                 "slab_a_x",
                 "slab_a_y",
 
-                #"slab_b_x",
-                "pillar_x",
-                "pillar_y",
             ],
             num_req_mats=4,
         )
@@ -945,8 +944,8 @@ class Pedestal(UserGeometryBase):
 
         self.set_parameter_help(
             {
-                "ped_base_w": "width of the base of the pedestal",
                 "ped_top_w": "width of the top of the pedestal",
+                "ped_base_w": "width of the base of the pedestal",
                 "ped_h": "height of the pedestal",
                 "pillar_x": "width of the supporting pillar",
                 "pillar_y": "height of the supporting pillar",

@@ -26,6 +26,10 @@ Release date: |today|
 
    tutorial
 
+   waveguides
+
+   tutorial_pt2
+
    josab
 
    lit_ex
