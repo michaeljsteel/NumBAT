@@ -1,29 +1,7 @@
 
 .. include:: numbatdefs.txt
 
-Tutorial 9a -- Anisotropic Elastic Materials
---------------------------------------------
-This tutorial, contained in ``sim-tut_09a-anisotropy.py`` improves the treatment of the silicon rectangular waveguide by accounting for the anisotropic elastic properties of silicon (simply by referencing a different material file for silicon).
 
-The data below compares the gain spectrum compared to that found with the simpler
-isotropic stiffness model used in Tutorial 2.
-The results are very similar but the isotropic model shows two smaller peaks at high
-frequency.
-
-.. figure:: ./images/tutorial/tut_09-gain_spectra.png
-   :width: 10cm
-
-   Gain spectrum with anisotropic stiffness model of silicon.
-
-.. figure:: ./images/tutorial/tut_02-gain_spectra.png
-   :width: 10cm
-
-   Gain spectrum from Tutorial 2 with  isotropic stiffness model of silicon.
-
-
-.. raw:: latex
-
-    \clearpage
 
 
 

@@ -102,6 +102,7 @@ v_diams = np.arange(diam_min, diam_max+d_diam/2, d_diam).round().astype(int) # m
 num_diams = len(v_diams)
 print('Using', num_diams, 'diameters:', v_diams)
 num_interp_pts = 2000
+v_diams=(2400,)
 
 
 prefix+=postfix
@@ -159,12 +160,14 @@ def modes_n_gain(diam):
             freq_min, freq_max, num_interp_pts=num_interp_pts, logy=True,
             prefix = prefix, suffix=f'_w{int(inc_a_x):04d}')
 
-    if abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
+    if True or abs(diam - diam_0)<1e-10:  # print fields for 1 micron guide
         #pass
 
         sim_EM_pump.plot_modes(mode_indices=range(10),
                                   prefix=prefix+f'-diam-{round(diam):04d}')
-        sim_AC.plot_modes(mode_indices=range(30), prefix=prefix+f'-diam-{round(diam):04d}')
+        #sim_AC.plot_modes(mode_indices=range(30), prefix=prefix+f'-diam-{round(diam):04d}')
+        sim_AC.plot_modes(mode_indices='All', prefix=prefix+f'-diam-{round(diam):04d}')
+        print('\nMode index | Frequency (GHz) | Total gain (1/m.W) | PE gain (1/m.W) | MB gain (1/m.W)')
         for m in range(num_modes_AC):
             print(f'{m}, {sim_AC.nu_AC(m)*1e-9:.4f}, {gain_box.gain_total(m):.3e}, ',
                  f'{gain_box.gain_PE(m):.4e}, {gain_box.gain_MB(m):.4e}')
@@ -186,7 +189,6 @@ m_gain_MB= np.zeros((num_interp_pts, num_diams))
 m_gaindB = np.zeros((num_interp_pts, num_diams))
 
 for idiam, gains in enumerate(gain_specs):
-    print('idiam', idiam, gains)
     (nu_gain_tot, nu_gain_PE, nu_gain_MB)  = gains
     m_gain_tot[:,idiam] = nu_gain_tot
     m_gain_PE[:,idiam] = nu_gain_PE
