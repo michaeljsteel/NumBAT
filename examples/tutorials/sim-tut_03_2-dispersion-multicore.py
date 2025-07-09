@@ -12,7 +12,7 @@ import numpy as np
 import copy
 
 from pathlib import Path
-sys.path.append(str(Path('../backend')))
+sys.path.append(str(Path('../../backend')))
 
 
 import numbat

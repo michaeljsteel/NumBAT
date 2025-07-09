@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from pathlib import Path
-sys.path.append(str(Path('../backend')))
+sys.path.append(str(Path('../../backend')))
 import numbat
 import materials
 import modecalcs

@@ -10,7 +10,7 @@ import copy
 import numpy as np
 
 from pathlib import Path
-sys.path.append(str(Path('../backend')))
+sys.path.append(str(Path('../../backend')))
 import numbat
 import materials
 import modecalcs
@@ -45,7 +45,7 @@ Si_110.rotate('y-axis', np.pi/4, save_rotated_tensors=True)
 # Use all specified parameters to create a waveguide object.
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
-                        material_a=Si_110, 
+                        material_a=Si_110,
                         lc_bkg=.05, lc_refine_1=7.0*refine_fac, lc_refine_2=7.0*refine_fac)
 wguide.plot_mesh(prefix)
 

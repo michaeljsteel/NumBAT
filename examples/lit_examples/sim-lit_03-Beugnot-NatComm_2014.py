@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from pathlib import Path
-sys.path.append(str(Path('../backend')))
+sys.path.append(str(Path('../../backend')))
 import numbat
 import materials
 import modecalcs
@@ -84,7 +84,7 @@ if 'widerange' in sys.argv[1:]:
     diam_min = 600
     diam_max = 3500
     #diam_steps = 301
-    diam_steps = 51
+    diam_steps = 101
     widerange = True
 
     postfix = '-dwide'
@@ -102,7 +102,6 @@ v_diams = np.arange(diam_min, diam_max+d_diam/2, d_diam).round().astype(int) # m
 num_diams = len(v_diams)
 print('Using', num_diams, 'diameters:', v_diams)
 num_interp_pts = 2000
-v_diams=(2400,)
 
 
 prefix+=postfix

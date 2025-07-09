@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PolyCollection
 
 from pathlib import Path
-sys.path.append(str(Path('../backend')))
+sys.path.append(str(Path('../../backend')))
 
 
 import numbat
