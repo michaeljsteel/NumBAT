@@ -91,20 +91,10 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz
             suffix  (str): String to be appended to end of file name.
     """
 
-    # TODO: there are a lot of calls to ax.plot() in here to get every resonance on its
-    # own grid and matplotlib leaks badly. Do that now by just plotting the top value
-
-    # TODO: give a no plot option 'calc_gain_spectra'
-
-    # process = psutil.Process()
-
     nbapp = numbat.NumBATApp()
+
     plot_prefs = numbat.NumBATPlotPrefs()
     plot_fileext = plot_prefs._plot_extension
-
-    #if not prefix: prefix=nbapp.outprefix()
-    ##pref = f'{prefix}-gain_spectra'
-    #pathpref = str(Path(numbat.NumBATApp().outdir(), pref))
 
     pathpref = nbapp.outpath(prefix) + '-gain_spectra'
 

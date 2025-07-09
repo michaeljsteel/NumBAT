@@ -16,14 +16,11 @@ installdeps:
 	# sphinx
 
 examples:
-	cd tutorials && make 
-	cd lit_examples && make 
-	cd josab_tutorial && make 
+	cd examples && make 
 
 fastexamples:
-	cd tutorials && make allfast
-	cd lit_examples && make allfast
-	cd josab_tutorial && make allfast
+	cd examples && make fastexamples
+
 
 testinstall:
 	cd tests && nosetests3
@@ -34,9 +31,7 @@ manual:
 
 clean:
 		make -C backend/fortran clean
-		make -C tutorials clean
-		make -C lit_examples clean
-		make -C josab_tutorial clean
+		make -C examples clean
 		make -C docs clean
 
 cleanmesh:

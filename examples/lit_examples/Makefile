@@ -20,7 +20,7 @@ flit02:
 
 lit03: 
 	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py
-	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py widerange
+#	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py widerange
 #	$(PYTHON) sim-lit_03-exactdisp.py
 flit03: 
 	$(PYTHON) sim-lit_03-Beugnot-NatComm_2014.py fast=1
