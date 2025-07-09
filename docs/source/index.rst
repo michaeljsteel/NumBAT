@@ -28,6 +28,8 @@ Release date: |today|
 
    waveguides
 
+   bulk_crystal_modes
+
    tutorial_pt2
 
    josab

@@ -9,6 +9,8 @@ do
 mkdir -p tutorial/tut_${tdir}-fields
 done
 
+BASE="../../../../examples"
+
 cd tutorial
 
 for im in tut_01-mesh.png tut_01-refractive_index.png \
@@ -27,7 +29,7 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
 #        tut_14_0-fields tut_14_10-fields tut_14_5-fields tut_14-emdisp_ng.png tut_14-emdisp_Vneff.png \
 #        tut_14_0-fields/EM_E_mode_00.png tut_14_0-fields/EM_E_mode_01.png tut_14_0-fields/EM_E_mode_02.png tut_14_0-fields/EM_E_mode_03.png tut_14_10-fields/EM_E_mode_00.png tut_14_10-fields/EM_E_mode_01.png tut_14_10-fields/EM_E_mode_02.png tut_14_10-fields/EM_E_mode_03.png tut_14_5-fields/EM_E_mode_00.png tut_14_5-fields/EM_E_mode_01.png tut_14_5-fields/EM_E_mode_02.png tut_14_5-fields/EM_E_mode_03.png
     do
-        cp -R ../../../../tutorials/$im $im
+        cp -R ${BASE}/tutorials/$im $im
     done
 
     mkdir -p tut_04-out tut_05-out tut_07-out tut_08-out
@@ -41,16 +43,16 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
         tut_07-out/tut_07-refractive_index_ycut.png tut_07-out/tut_07-elastic_velocity_v0.png \
         tut_07-out/tut_07-elastic_velocity_xcut.png  tut_07-out/tut_07-elastic_velocity_linecut.png 
     do
-        cp -pR ../../../../tutorials/$im $im
+        cp -pR ${BASE}/tutorials/$im $im
     done
 
-    cp -pR ../../../../tutorials/tut_07-out/tut_07-fields/EM_E_mode_00.png tut_07-out
-    cp -pR ../../../../tutorials/tut_07-out/tut_07-fields/AC_mode_02.png  tut_07-out
-    cp -pR ../../../../tutorials/tut_07-out/tut_07-fields/AC_mode_03.png  tut_07-out
-    cp -pR ../../../../tutorials/tut_07-out/tut_07-fields/AC_mode_04.png  tut_07-out
-    cp -pR ../../../../tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_00.png tut_08-out
-    cp -pR ../../../../tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_01.png tut_08-out
-    cp -pR ../../../../tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_02.png tut_08-out
+    cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/EM_E_mode_00.png tut_07-out
+    cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/AC_mode_02.png  tut_07-out
+    cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/AC_mode_03.png  tut_07-out
+    cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/AC_mode_04.png  tut_07-out
+    cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_00.png tut_08-out
+    cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_01.png tut_08-out
+    cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_02.png tut_08-out
 
 cd ..
 
@@ -72,7 +74,7 @@ for im in josab_01-fields/EM_E_mode_01.png josab_01-fields/AC_mode_28.png josab_
     josab_05-gain_spectra.png josab_05-fields/EM_E_mode_00.png josab_05-fields/EM_E_mode_01.png josab_05-fields/AC_mode_06.png \
     josab_06-gain_spectra.png josab_06-fields/AC_mode_02.png josab_06-fields/EM_E_mode_00.png josab_06-fields/EM_E_mode_02.png
     do
-      cp -pR ../../../../josab_tutorial/$im $im
+        cp -pR ${BASE}/josab_tutorial/$im $im
     done
 
 cd ..
@@ -111,5 +113,5 @@ for im in lit_01-gain_spectra-logy.png lit_01-fields/EM_E_mode_00.png \
     lit_08-fields/AC_mode_23.png lit_08-gain_spectra.png \
     lit_09-gain_spectra.png lit_10a-gain_spectra.png lit_10b-gain_spectra.png
 do
-    cp -pR ../../../../lit_examples/$im $im
+    cp -pR ${BASE}/lit_examples/$im $im
 done

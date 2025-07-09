@@ -102,7 +102,7 @@ We now walk through a number of simple simulations that demonstrate the basic us
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    tute_elem
 
