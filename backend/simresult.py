@@ -268,8 +268,10 @@ class SimResult:
         domain_s = ftag.domain_type_as_str()
         field_s = ftag.field_type_as_str()
 
-
-        md_range = mode_indices if mode_indices is not None else range(self.n_modes)
+        if mode_indices == 'All' or mode_indices is None:
+            md_range = range(self.n_modes)
+        else:
+            md_range = mode_indices
 
         ntoplot = len(md_range)
 
@@ -310,6 +312,7 @@ class SimResult:
         #     }
         # )
 
+        print('doing mode range', md_range)
         for m in progressBar(md_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps,
                                            ftag.as_field_type(), plot_params = plot_params)
