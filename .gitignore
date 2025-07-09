@@ -34,28 +34,25 @@ backend/fortran/build/*
 backend/fortran/mbuild_*
 backend/fortran/src/*.pdf
 
-josab_tutorial/*.png
-lit_examples/*.png
-tutorials/*.png
-tutorials/*.txt
+examples/josab_tutorial/*.png
+examples/lit_examples/*.png
+examples/tutorials/*.png
+examples/tutorials/*.txt
+examples/tutorials/tut_03b-disp
 
-tutorials/tut_*/*
-lit_examples/lit_*/*
-josab_tutorial/josab_*/*
+examples/tutorials/tut_*/*
+examples/lit_examples/lit_*/*
+examples/josab_tutorial/josab_*/*
 
-josab_tutorial/*-fields
-lit_examples/*-fields
-tutorials/*-fields
+examples/josab_tutorial/*-fields
+examples/lit_examples/*-fields
+examples/tutorials/*-fields
 
 
 docs/build/*
 *.mod
 *.so
 
-tutorials/.sim-tut_17-rotations.py.swp
-tutorials/core*
-tutorials/tut_03b-disp
-tutorials/roumani.py
 backend/fortran/.hgignore
 backend/fortran/.ninja_deps
 backend/fortran/build.ninja
