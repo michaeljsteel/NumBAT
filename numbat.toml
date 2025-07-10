@@ -1,0 +1,55 @@
+# NumBAT user preferences
+
+# $schema: .vscode/empty.schema.json
+
+#applications = {  }
+
+title = "NumBAT user preferences"
+
+[all_plots]
+
+# mode profile colormaps
+em_colormap_signed = 'seismic'
+em_colormap_unsigned = 'OrRd'
+em_vector_arrow_color = 'dimgray'
+
+ac_colormap_signed = 'RdYlGn'
+ac_colormap_unsigned = 'GnBu'
+ac_vector_arrow_color = 'dimgray'
+
+vector_arrow_scale = 10
+vecplot_arrow_linewidth = 0.005
+vecplot_arrow_headwidth = 2
+
+# refractive index plots
+refindex_colormap = 'cool'
+
+# properties of waveguide boundary frames
+# edge color : gray, dimgray, black, brown
+wg_frame_edge_color = 'darkred'
+wg_frame_linewidth_wholefig = 0.75
+wg_frame_linewidth_subfig = 0.25
+
+# gain plots
+mode_index_label_fs = 10
+
+
+[multi_plots]
+# mode profile annotations
+ax_label_fs = 8
+ax_ticklabel_fs = 8
+ax_tickwidth = 0.25
+ax_linewidth = 1
+title_fs = 16
+subtitle_fs = 11
+
+
+[single_plots]
+# mode profile annotations
+ax_label_fs = 14
+ax_ticklabel_fs = 14
+ax_tickwidth = 1
+ax_linewidth = 1
+title_fs = 22
+subtitle_fs = 21
+
