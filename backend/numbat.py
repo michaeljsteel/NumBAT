@@ -15,10 +15,21 @@
 
 import platform
 import os
+import sys
 import shutil
 import time
 import datetime
 from pathlib import Path
+
+try:
+    from fortran import nb_fortran
+except ImportError:
+    print("""
+          NumBAT can't load the backend Fortran module that implements the finite element solvers!
+          Are you sure you have compiled the module?
+          See the installation chapter of the manual for details.
+          """)
+    sys.exit(1)
 
 import reporting
 import objects
@@ -26,7 +37,7 @@ from modecalcs import Simulation
 import meshing.templates as mshtemplates
 from plotting.plotprefs import PlotPrefs
 
-from fortran import nb_fortran
+
 import nbversion
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
