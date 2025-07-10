@@ -17,7 +17,7 @@ forward Brillouin scattering, and intermodal forward Brillouin scattering.
 
 
 As the calculations in this paper used |NUMBAT| with essentially the same code in these
-tutorials, we do not bother to include the original figures.
+examples/tutorials, we do not bother to include the original figures.
 
 
 

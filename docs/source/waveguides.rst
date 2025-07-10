@@ -7,9 +7,9 @@
 Materials, waveguides and meshing
 ******************************************
 
-Now that we have a basic understanding of using |NUMBAT|, this chapter provides detailed information on describing a large of range materials and waveguide designs.
+Now that we have a basic understanding of using |NUMBAT|, this chapter provides detailed information on how to specify a large of range materials and waveguide designs.
 
-We then continue with more advanced tutorials in the next chapter.
+We will return to more advanced examples/tutorials in the next chapter.
 
 Materials
 ----------------------

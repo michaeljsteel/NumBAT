@@ -7,20 +7,20 @@
 Tutorial
 ***********
 
-This chapter provides a sequence of graded tutorials for learning |NUMBAT|,
-exploring its applications and validating it against literature results and
-analytic solutions where possible. Before attempting your own calculations with
+This chapter provides a first set of graded examples/tutorials for learning |NUMBAT|
+and exploring its applications. Before attempting your own calculations with
 |NUMBAT|, we strongly advise working through the sequence of tutorial exercises
 which are largely based on literature results.
 
-We will meet a significant number of |NUMBAT| functions in these tutorials, though certainly not all.  The full Python interface is documented in the section :ref:`chap-pythonapi-label`.
+We will meet a significant number of |NUMBAT| functions in these examples/tutorials, though certainly not all.  The full Python interface is documented in the section :ref:`chap-pythonapi-label`.
 
 You may then choose to explore relevant examples drawn from a recent
 tutorial paper by Dr Mike Smith and colleagues, and a range of other literature
-studies,  which are provided in the following two chapters,
+studies,  which are provided in the subsequent chapters,
 :ref:`chap-josab-label` and :ref:`chap-literature-label`.
 
-
+Those chapters include examples of validating |NUMBAT| against literature results and
+analytic solutions where possible.
 
 Some Key Symbols
 =====================
@@ -77,7 +77,7 @@ For example, elastic frequencies :math:`\nu` are expressed in Hz, not GHz.
     The :math:`m=0` mode has the *lowest* frequency
     :math:`\nu` of any mode for a given wavenumber :math:`q`.
 
-    The integer(8) :math:`m` therefore has no particular correspondence to
+    The integer :math:`m` therefore has no particular correspondence to
     the conventional two index mode indices for fibre or rectangular waveguides.
 
 
@@ -98,7 +98,7 @@ For example, elastic frequencies :math:`\nu` are expressed in Hz, not GHz.
 Elementary Tutorials
 =======================
 
-We now walk through a number of simple simulations that demonstrate the basic use of |NUMBAT| located in the ``<NumBAT>/tutorials`` directory.
+We now walk through a number of simple simulations that demonstrate the basic use of |NUMBAT| located in the ``<NumBAT>/examples/tutorials`` directory.
 
 
 .. toctree::

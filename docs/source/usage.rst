@@ -20,31 +20,44 @@ Tutorial 1 -- Basic SBS Gain Calculation
 
 Simulations with |NUMBAT| are generally carried out using a python script file.
 
-This example, contained in ``<NumBAT>tutorials/sim-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
+This example, contained in ``<NumBAT>examples/tutorials/sim-tut_01-first_calc.py`` calculates the backward SBS gain for a rectangular silicon waveguide surrounded by air.
 
-Move into the tutorials directory and then run the script by entering::
+Move into the examples/tutorials directory and then run the script by entering::
 
     $ python3 sim-tut_01-first_calc.py
 
 
 After a short while, you should see some values for the SBS gain printed to the screen.
-In many more tutorials in the subsequent chapters, we will meet much more convenient forms of output, but for now let's focus on the steps involved in this basic calculation.
+In many more examples/tutorials in the subsequent chapters, we will meet much more convenient forms of output, but for now let's focus on the steps involved in this basic calculation.
 
 The sequence of operations (annotated in the source code below as Step 1, Step 2, etc) is:
 
-  #. Add the |NUMBAT| install directory to Python's module search path and then import the |NUMBAT| python modules.
-  #. Set parameters to define the structure shape and dimensions.
-  #. Set parameters determining the range of electromagnetic and elastic modes to be solved.
-  #. Create the primary ``NumBATApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
-  #. Construct the waveguide with ``objects.Structure`` out of a number of ``materials.Material`` objects.
-  #. Generate output files containing images of the finite element mesh and final refractive index. These are illustrated in figures below.
-  #. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``modecalcs.calc_EM_modes()`` returns an ``EMSimResult`` object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods we will meet in later tutorials. The calculation is provided with a rough estimate of the effective index to guide the solver the find guided eigenmodes in the desired part of the spectrum. After the calculation, we can obtain the exact effective index of the fundamental mode using ``modecalcs.neff()``.
-  #. Display the propagation constants in units of :math:`\text{m}^{-1}` of the EM modes using ``modecalcs.kz_EM_all()``
-  #. Calculate the electromagnetic fields for the Stokes mode. As the pump and Stokes frequencies are very similar, the Stokes modes can be found with high precision by a simple complex conjugate transformation of the pump fields.
-  #. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``modecalcs.calc_AC_modes()`` returns an ``ACSimResult`` object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
-  #. Display the elastic frequencies in Hz using ``modecalcs.nu_AC_all()``.
-  #. Use ``integration.get_gains_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
-  #. Extract desired values from the gain properties and print them to the screen.
+
+#. Add the |NUMBAT| install directory to Python's module search path and then import the |NUMBAT| python modules.
+
+#. Set parameters to define the structure shape and dimensions.
+
+#. Set parameters determining the range of electromagnetic and elastic modes to be solved.
+
+#. Create the primary ``NumBATApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
+
+#. Construct the waveguide with ``nbapp.make_structure`` out of a number of ``materials.Material`` objects.
+
+#. Generate output files containing images of the finite element mesh and final refractive index. These are illustrated in figures below.
+
+#. Solve the electromagnetic problem at a given *free space* wavelength :math:`\lambda`. The function ``modecalcs.calc_EM_modes()`` returns an ``EMSimResult`` object containing electromagnetic mode profiles, propagation constants, and potentially other data which can be accessed through various methods we will meet in later examples/tutorials. The calculation is provided with a rough estimate of the effective index to guide the solver the find guided eigenmodes in the desired part of the spectrum. After the calculation, we can obtain the exact effective index of the fundamental mode using ``modecalcs.neff()``.
+
+#. Display the propagation constants in units of :math:`\text{m}^{-1}` of the EM modes using ``modecalcs.kz_EM_all()``
+
+#. Calculate the electromagnetic fields for the Stokes mode. As the pump and Stokes frequencies are very similar, the Stokes modes can be found with high precision by a simple complex conjugate transformation of the pump fields.
+
+#. Identify the desired elastic wavenumber from the difference of the pump and Stokes propagation constants and solve the elastic problem.  ``modecalcs.calc_AC_modes()`` returns an ``ACSimResult`` object containing the elastic mode profiles, frequencies and potentially other data at the specified propagation constant ``k_AC``.
+
+#. Display the elastic frequencies in Hz using ``modecalcs.nu_AC_all()``.
+
+#. Use ``integration.get_gains_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
+
+#. Extract desired values from the gain properties and print them to the screen.
 
 You may have noticed from this description that the eigenproblems for the
 electromagnetic and acoustic problems are framed in opposite senses. The
@@ -72,11 +85,11 @@ in the standard SI base units.
 
 Here's the full source code for this tutorial:
 
-.. literalinclude:: ../../tutorials/sim-tut_01-first_calc.py
+.. literalinclude:: ../../examples/tutorials/sim-tut_01-first_calc.py
     :lines: 0-
 
 
-In the next three chapters, we meet many more examples that show the different
+In the next few chapters, we meet many more examples that show the different
 capabilities of |NUMBAT| and provided comparisons against analytic and
 experimental results from the literature.
 
@@ -118,11 +131,16 @@ Script Structure
 ----------------------------
 
 As with our first example above, most |NUMBAT| scripts proceed with a standard structure:
- * importing |NUMBAT| modules
- * defining materials
- * defining waveguide geometries and associating them with material properties
- * solving electromagnetic and acoustic modes
- * calculating gain and other derived quantities
+
+* importing |NUMBAT| modules
+
+* defining materials
+
+* defining waveguide geometries and associating them with material properties
+
+* solving electromagnetic and acoustic modes
+
+* calculating gain and other derived quantities
 
 The next chapter provides detailed information about specifying material properties and waveguide structures, as well as the key parameters for controlling the finite-element meshing.
 Information on how to add new structures to |NUMBAT| is provided in :ref:`sec-newmesh-label`.

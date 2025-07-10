@@ -199,7 +199,7 @@ It may be helpful to create a tree like the following so that the relevant paths
 Installing on MacOS
 ================================
 
-|NUMBAT| can also be installed on MacOS, though this is currently somewhat experimental and has only been performed on certain versions of MacOS.  We are keen to increase our support of the MacOS build. Any comments on difficulties and solutions will be appreciated, so please don't hesitate to get in touch using the directions at :ref:`sec-helpinstall-label`.
+|NUMBAT| can also be installed on MacOS, though this is less tested than other versions.  We are keen to increase our support of the MacOS build. Any comments on difficulties and solutions will be appreciated, so please don't hesitate to get in touch using the directions at :ref:`sec-helpinstall-label`.
 
 The following steps have worked for us:
 
@@ -275,18 +275,13 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
     $ pip3 install numpy matplotlib scipy psutil meson ninja
 
-#. Check that the python installs work.
+#. Check that the python installs work. ::
 
-   $ python3.12
-   >>> import matplotlib
-   >>> import numpy
-   >>> import scipy
-   >>> import psutil
-
-#. Install the |NUMBAT| matplotlib style file::
-
-   $ mkdir -p $HOME/.matplotlib/stylelib/
-   $ cp <NumBAT>/backend/|NUMBAT|style.mplstyle $HOME/.matplotlib/stylelib
+     $ python3.12
+     >>> import matplotlib
+     >>> import numpy
+     >>> import scipy
+     >>> import psutil
 
 #. Move to the |NUMBAT| fortran directory::
 
@@ -333,7 +328,7 @@ Here are a few traps to watch out for:
 
 #. If you encounter an error about "missing symbols" in the NumBAT fortran module, there are usually two possibilities:
 
-   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``.
+   - A shared library (a file ending in ``.so``) is not being loaded correctly because it can't be found in the standard search path. To detect this, run ``ldd nb_fortran.so`` in the ``backend/fortran`` directory and look for any lines containing ``not found``. (On MacOS, use ``otools -L nb_fortran.so`` instead of ``ldd``.)
 
 
      You may need to add the directory containing the relevant libraries to your ``LD_LIBRARY_PATH`` in your shell setup files (eg. ``~/.bashrc`` or equivalent).
@@ -381,39 +376,37 @@ You can use an existing Python installation if you have a sufficiently recent ve
 
 **Note: if you are using the pre-built |NUMBAT| installer, for binary compatibility you *must* use Python version 3.13 and numpy version 2.2.**
 
-  #. If you do not have a suitable current Python, download and run the installer for a recent version from the `Python website <https://www.python.org/downloads/windows/>`_.
+#. If you do not have a suitable current Python, download and run the installer for a recent version from the `Python website <https://www.python.org/downloads/windows/>`_.
 
    By default, this will install Python in the directory ``%HOMEPATH%\AppData\Local\Programs\Python\<PythonVer>``, say ``%HOMEPATH%\AppData\Local\Programs\Python\Python312``.
 
 
-  #. Create a python virtual environment for working with |NUMBAT|.
-      You can use any name and location for your environment.
+#. Create a python virtual environment for working with |NUMBAT|.
+    You can use any name and location for your environment.
 
    To specify a virtual environment tree called `nbpy3`, open a command prompt (or your favourite Windows terminal app) from the Start Menu and  enter ::
 
-       $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
+    $ %HOMEPATH%\AppData\Local\Programs\Python\Python312\python.exe -m venv nbpy3
 
 
-  #. Activate the new python virtual environment ::
+#. Activate the new python virtual environment ::
 
-       $ %HOMEPATH%\npby3\Scripts\activate
+    $ %HOMEPATH%\npby3\Scripts\activate
 
-  #. Install the necessary python tools and libraries ::
+#. Install the necessary python tools and libraries ::
 
-     $ pip3 install numpy==1.26.4 matplotlib scipy psutil ninja meson==1.4.1
+    $ pip3 install numpy  matplotlib scipy psutil ninja meson==1.4.1
 
-   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
 
-   Similarly we specify a version of ``numpy`` from the 1.26 series as the new 2.0 version is not yet
-   supported by some other packages we use.
 
-  #. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing
+#. Finally, we will also need the Gnu ``make`` tool. This can be installed by typing ::
 
      $ winget install ezwinports.make
 
-    and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
+   and then starting a new terminal (so that the PATH variable is updated to find ``make.exe``.)
 
-  #. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
+#. Now you can proceed to install |NUMBAT| using either Method 1,  building fully from source, or Method 2, using the pre-built installer from the github page.
 
 
 Installing |NUMBAT| Method 1: full build from source
@@ -428,35 +421,35 @@ Windows build tools
 
 The following tools are all free but will use several GB of disk space.
 
-    - *Visual Studio*:
-        This is the primary Microsoft development environment.
+- *Visual Studio*:
+    This is the primary Microsoft development environment.
 
-        To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
+    To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
 
-    - *Intel OneAPI Base Toolkit*:
-        This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
+- *Intel OneAPI Base Toolkit*:
+    This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
 
-        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
-
-
-    - *Intel OneAPI HPC Toolkit*
-        This adds the Intel Fortran compiler amongst other HPC tools.
-
-        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
+    Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
 
 
-    - *Git*
-        This is a source control that we use to download |NUMBAT| and some other tools.
+- *Intel OneAPI HPC Toolkit*
+    This adds the Intel Fortran compiler amongst other HPC tools.
+
+    Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
 
 
-        Download and run the  `latest Git for Windows release <https://git-scm.com/download/win>`_, accepting all defaults.
+- *Git*
+    This is a source control that we use to download |NUMBAT| and some other tools.
 
-        Some users may prefer to use a graphical interface such as `GitHub Desktop <https://desktop.github.com/>`_. This is fine too.
 
-    - *CMake*
-        This is a cross-platform build tool we will need for building some of the libraries.
+    Download and run the  `latest Git for Windows release <https://git-scm.com/download/win>`_, accepting all defaults.
 
-        Download and run the  `latest release <https://cmake.org/download/>`_ accepting all defaults.
+    Some users may prefer to use a graphical interface such as `GitHub Desktop <https://desktop.github.com/>`_. This is fine too.
+
+- *CMake*
+    This is a cross-platform build tool we will need for building some of the libraries.
+
+    Download and run the  `latest release <https://cmake.org/download/>`_ accepting all defaults.
 
 
 NumBAT code and libraries
@@ -657,12 +650,11 @@ The installer is not updated as frequently as the main source tree.
 
 We will actually run two installers: one for the free GMsh mesh generation tool, and one for |NUMBAT| itself.
 
-#. Choose a location for the base directory for building |NUMBAT| and supporting libraries,
-    say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
+#. Choose a location for the base directory for building |NUMBAT| and supporting libraries, say ``c:\Users\<myname>\numbat``, which we will refer to as ``<NumBAT_BASE>``.
 
 #. Use the Start Menu to open a Windows terminal.
 
-#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands::
+#. In the terminal window, change to the ``<NumBAT_BASE>`` directory, then execute the following commands ::
 
     $ mkdir nb_releases
     $ mkdir usr_local
@@ -676,14 +668,14 @@ We will actually run two installers: one for the free GMsh mesh generation tool,
 
 #. In your Windows terminal, change directory to the newly installed |NUMBAT| folder.
 
-#. Activate your python environment and then move to the |NUMBAT| tutorials directory::
+#. Activate your python environment and then move to the |NUMBAT| examples/tutorials directory ::
 
       $ %HOMEPATH%\npby3\Scripts\activate
-      $ cd tutorials
+      $ cd examples/tutorials
 
    Remember, you must activate a python environment that uses Python 3.13.
 
-#. You should now be able to run a |NUMBAT| calculation::
+#. You should now be able to run a |NUMBAT| calculation ::
 
       $ make tut01
 
@@ -733,7 +725,7 @@ Installing the Linux version via a Virtual Machine
 Another way to run |NUMBAT| on  Windows or MacOS is by installing Ubuntu as
 a virtual machine using either `Microsoft Hyper-V
 <https://wiki.ubuntu.com/Hyper-V>`_ or `Oracle Virtual Box
-<https://ubuntu.com/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_, or a similar tool on MacOS.
+<https://ubuntu.com/examples/tutorials/how-to-run-ubuntu-desktop-on-a-virtual-machine-using-virtualbox#1-overview>`_, or a similar tool on MacOS.
 
 Then |NUMBAT| can be installed using exactly the same procedure as described
 above for standard Linux installations.
@@ -767,7 +759,7 @@ Before writing for help (see contact details in :ref:`chap-intro-label`), please
 
        This will create the file ``./nb_buildconfig.txt`` in the main directory with useful details about your build configuration and environment.
 
-       **If on Windows**, do the same using the file ``.\backend\nb_runconfig_test.bat`` instead.
+       *If on Windows*, do the same using the file ``.\backend\nb_runconfig_test.bat`` instead.
 
     #. In your email, indicate the date on which you last downloaded |NUMBAT| from github.
 

@@ -4,9 +4,9 @@
 Tutorial 2 -- SBS Gain Spectra
 ----------------------------------
 The first example we met in the previous chapter only printed numerical data to the screen with no graphical output.
-This example, contained in ``<NUMBAT>/tutorials/sim-tut_02-gain_spectra-npsave.py`` considers the same silicon-in-air structure but adds plotting of fields, gain spectra and techniques for saving and reusing data from earlier calculations.
+This example, contained in ``<NUMBAT>/examples/tutorials/sim-tut_02-gain_spectra-npsave.py`` considers the same silicon-in-air structure but adds plotting of fields, gain spectra and techniques for saving and reusing data from earlier calculations.
 
-As before, move to the ``<NUMBAT>/tutorials`` directory, and then run the calculation by entering::
+As before, move to the ``<NUMBAT>/examples/tutorials`` directory, and then run the calculation by entering::
 
     $ python3 sim-tut_02-gain_spectra-npsave.py
 
@@ -26,7 +26,7 @@ Or using the makefile technique, simply ::
 
 
 The calculation should complete in a minute or so.
-You will find a number of new files  in the ``tutorials`` directory beginning
+You will find a number of new files in the current directory beginning
 with the prefix ``tut_02`` (or ``ftut_02`` if you ran in fast mode).
 
 Gain Spectra
@@ -80,22 +80,24 @@ on :math:`\log` and dB scales:
 
 This example has also generated plots of some of the electromagnetic and acoustic modes
 that were found in solving the eigenproblems. These are created using
-the calls to ``plotting.plot_modes()`` and stored in the sub-directory ``tut_02-fields``.
+the calls to ``plot_modes()`` and stored in the sub-directory ``tut_02-fields``.
 
 Note that
 a number of useful parameters are also displayed at the top-left of each mode
 profile. These parameters can also be extracted using a range of function calls on a
-``Mode`` object (see the API docs).
+``Mode`` object (see the API docs). Observe that |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero). The same is true for the magnetic field components and the elastic displacement fields.
+
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_E_mode_00.png
    :width: 12cm
 
-   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_mode_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.  |NUMBAT| chooses the phase of the mode profile such that the transverse components are real. Note that the :math:`E_z` component is :math:`\pi/2` out of phase with the transverse components. (Since the structure is lossless, the imaginary parts of the transverse field, and the real part of :math:`E_z` are zero).
+   Electric field profile of the fundamental (:math:`m=0`) optical mode profile stored in ``tut_02-fields/EM_E_mode_00.png``. The plots show the modulus of the whole electric field :math:`|{\vec E}|^2`, a vector plot of the transverse field :math:`{\vec E}_t=(E_x,E_y)`, and the three components of the electric field.
+
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_H_mode_00.png
    :width: 12cm
 
-   Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.  Note that the :math:`H_z` component is :math:`\pi/2` out of phase with the transverse components.
+   Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.
 
 
 .. figure:: ./images/tutorial/tut_02-fields/AC_mode_03.png
@@ -113,7 +115,7 @@ profile. These parameters can also be extracted using a range of function calls 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=4` acoustic mode with gain dominated by the photo-elastic effect (red curve in gain spectra).
    Note that the frequency of :math:`\Omega/(2\pi)=13.45` GHz corresponds to the second peak in the gain spectrum.
 
-
+A number of plot settings including colormaps and font sizes can be controlled using the ``numbat.toml`` file.  This is discussed in :ref:`_chap-technical-label`_.
 
 Miscellaneous comments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -136,7 +138,7 @@ Here are some further elements to note about this example:
 
 The full code for this simulation is as follows:
 
-.. literalinclude:: ../../tutorials/sim-tut_02-gain_spectra-npsave.py
+.. literalinclude:: ../../examples/tutorials/sim-tut_02-gain_spectra-npsave.py
     :lines: 0-
 
 .. raw:: latex
@@ -146,7 +148,7 @@ The full code for this simulation is as follows:
 
 Tutorial 3a -- Investigating Dispersion and np.save/np.load
 ------------------------------------------------------------
-This example, contained in ``tutorials/sim-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q` and frequency :math:`\Omega`-- for the problem in the previous tutorial.
+This example, contained in ``examples/tutorials/sim-tut_03_1-dispersion-npload.py`` calculates the elastic dispersion diagram -- the relation between the acoustic wave number :math:`q` and frequency :math:`\Omega`-- for the problem in the previous tutorial.
 This is done by scanning over the elastic wavenumber ``q_AC`` and finding the eigenfrequencies for each value.
 
 
@@ -162,7 +164,7 @@ using the ``Simulation.save_simulation()`` method, while the present example rec
 This can be a very useful technique when trying to adjust the appearance
 of plots without having to repeat the whole calculation effort.
 
-*Note*: from now on, we do not include the code for each tutorial and refer the reader to the relevant files in the ``<NumBAT>/tutorials`` directory.
+*Note*: from now on, we do not include the code for each tutorial and refer the reader to the relevant files in the ``<NumBAT>/examples/tutorials`` directory.
 
 
 .. figure:: ./images/tutorial/tut_03a-dispersion_symmetrised.png

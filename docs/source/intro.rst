@@ -38,9 +38,10 @@ available at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 Development team
 ================
 
-|NUMBAT| was developed by Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Chris
+|NUMBAT| was originally developed by Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Chris
 Poulton and Michael Steel in a collaboration between Macquarie University, the
 University of Technology Sydney, and the University of Sydney.
+Continuing development is by Michael Steel at Macquarie University.
 
 We thank Christian Wolff, Mike Smith and Mikolaj Schmidt for contributions.
 
@@ -68,27 +69,26 @@ Seeking assistance
 We will do our best to support users of |NUMBAT| within the time available.
 All requests should be sent to ``michael.steel@mq.edu.au``.
 
-   * For assistance with installing and building |NUMBAT|, please see the instructions
+* For assistance with installing and building |NUMBAT|, please see the instructions
      in :ref:`sec-helpinstall-label` and collect all the required information before writing.
 
-   * For assistance with calculations once |NUMBAT| is working, please send an email
-      containing the following information:
+* For assistance with calculations once |NUMBAT| is working, please send an email containing the following information:
 
-      * Your platform (Linux, Windows, MacOS) and specific operating system
+   * Your platform (Linux, Windows, MacOS) and specific operating system
 
-      * The version number of your |NUMBAT| installation. 
-        You can determine this by typing the following command in your terminal ::
-           
-            python -c 'import numbat;print(numbat.version())'
+   * The version number of your |NUMBAT| installation.
+      You can determine this by typing the following command in your terminal ::
 
-      * A short python script which demonstrates the issue you are trying to solve.
-        Please make the script as short in both code length and execution time as 
-        possible while still exhibiting the issue of concern.
+         python -c 'import numbat;print(numbat.version())'
 
-**Note**: 
+   * A short python script which demonstrates the issue you are trying to solve.
+      Please make the script as short in both code length and execution time as
+      possible while still exhibiting the issue of concern.
+
+**Note**:
 |NUMBAT| is updated frequently with new features, API and bug fixes.
-Consequently, please understand that we can only provide assistance for issues with 
-the *current* github version of |NUMBAT|.  Please be sure that your script runs against 
+Consequently, please understand that we can only provide assistance for issues with
+the *current* github version of |NUMBAT|.  Please be sure that your script runs against
 the current github tree and that your problem is still present with that version.
 
 
@@ -103,23 +103,40 @@ A number of API changes have been made in |NUMBAT| 2.0 to tidy up the interface 
 You will need to make some changes to existing files to run in |NUMBAT| 2.0.  Your best guide to new capabilities and API changes is to look through the code in the tutorial examples.
 
 Some key changes you will need to make are as follows:
- * On Linux, the fortran Makefile is now designed to work with a virtual environment python to avoid dependencies on your system python.
- * There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
- * It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
- * The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.
- * The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
- * The waveguide class ``Struct`` has been renamed to ``Structure``.
- * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
- * The parameter names for some waveguide types have changed to become more intuitive than the generic ``inc_a_x`` approach.  You can find details for a given structure using ``NumBATApp().wg_structure_help(inc_shape)``.
- * The interface for creating materials has changed. You now call the ``materials. make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``
- * To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
- * The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
- * The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
- * Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
-      * The frequency arguments ``freq_min`` and ``freq_max`` should now be passed in units of Hz, not GHz.
-      * The argument ``k_AC`` has been removed.
- * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
- * All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
+
+* On Linux, the fortran Makefile is now designed to work with a virtual environment python to avoid dependencies on your system python.
+
+* There is a new core |NUMBAT| module ``numbat`` that should be imported before any other |NUMBAT| modules.
+
+* It should no longer be necessary to import the ``object`` or ``Numbat`` (note different case) modules.
+
+* The first call to any |NUMBAT| code should be to create a |NUMBAT| application object by calling ``nbapp = numbat.NumBATApp()``.
+
+* The default output prefix can now be set as an argument to ``numbat.NumBATApp()``. All output can be directed to a sub-folder of the starting directory with a second argument: ``nbapp = numbat.NumBATApp('tmp', 'tmpdir')``.
+
+* The waveguide class ``Struct`` has been renamed to ``Structure``.
+
+* A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
+
+* The parameter names for some waveguide types have changed to become more intuitive than the generic ``inc_a_x`` approach.  You can find details for a given structure using ``NumBATApp().wg_structure_help(inc_shape)``.
+
+* The interface for creating materials has changed. You now call the ``materials.make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``.
+
+* To access an existing material in an  existing ``Structure`` object (say, in a variable called ``wguide``) use ``wguide.get_material(`` *label* ``)`` For example, ``mat_a = wguide.get_material('b')`` where the allowed labels are ``bkg`` and the letters ``a`` to ``r``.
+
+* The member name for refractive index in a ``Material`` object has changed from ``n`` to ``refindex_n``.
+
+* The member name for density in a ``Material`` object has changed from ``n`` to ``rho``.
+
+* Due to a change in parameters, the function ``plotting.gain_spectra`` is deprecated and replaced by ``plotting.plot_gain_spectra`` with the following changes:
+
+   * The frequency arguments ``freq_min`` and ``freq_max`` should now be passed in units of Hz, not GHz.
+
+   * The argument ``k_AC`` has been removed.
+
+* In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
+
+* All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
 
 
 About our mascot

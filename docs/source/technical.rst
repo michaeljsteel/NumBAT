@@ -4,8 +4,22 @@
 .. _chap-technical-label:
 
 *******************
-Technical details
+Additional details
 *******************
+
+
+User plot preferences
+-------------------------------------------
+A large number of plotting properties can be controlled using the ``numbat.toml`` file.
+
+A sample file is provided in the root directory of the |NUMBAT| installation.
+
+To provide an adjustable set of global settings copy this into your home directory,
+either as ``~/.numbat.toml`` on Linux or MacOS, or ``numbat.toml`` on Windows.
+
+You can also places copies of this file in any working directory to override
+your normal defaults for a particular set of calculations.
+
 
 Specifying and using anistropic materials
 

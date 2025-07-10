@@ -14,12 +14,15 @@ Background theory
 What does |NUMBAT| actually calculate?
 =======================================
 |NUMBAT| performs three main types of calculations given a particular waveguide design:
- * solve the electromagnetic modal problem  using the finite element method (FEM).
- * solve the elastic modal problem  using FEM.
- * calculate Brillouin gain coefficients and linewidths for a given triplet of two optical and one elastic mode, and use this to generate gain spectra.
+
+* solve the electromagnetic modal problem  using the finite element method (FEM).
+
+* solve the elastic modal problem  using FEM.
+
+* calculate Brillouin gain coefficients and linewidths for a given triplet of two optical and one elastic mode, and use this to generate gain spectra.
 
 
-Here we specify the precise mathematical problems been solved.
+Here we specify the precise mathematical problems being solved.
 For further details, see the |NUMBAT| paper :cite:p:`Sturmberg:2019` in the Journal of Lightwave Technology  at `<https://dx.doi.org/10.1109/JLT.2019.2920844>`_.
 
 Electromagnetic modal problem
@@ -71,7 +74,7 @@ The elastic modal problem is defined by the wave equation
 
    \nabla \cdot \bar{T} + \Omega^2 \rho(x,y) \vec U = 0,
 
-where :math:`\Omega` is the elastic angular frequency and `:math:`\vec U` is the elastic displacement.
+where :math:`\Omega` is the elastic angular frequency and :math:`\vec U(x,y,z)` is the elastic displacement field.
 Further, :math:`\bar{T}=\mathbf{c}(x,y) \bar{S}` is the rank-2 stress tensor,
 defined in terms of the rank-4 stiffness tensor :math:`\mathbf{c}` and the rank-2 strain tensor
 :math:`\bar{S}=S_{ij} = \frac{1}{2}(\frac{\partial U_i}{\partial r_j} + \frac{\partial U_j}{\partial r_i})`.
@@ -89,9 +92,9 @@ where :math:`q` is the elastic wavenumber or propagation constant.
 Dependent and independent variables in the modal dispersion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In |NUMBAT|, the elastic mode problem is formulated in the *opposite sense* to the electromagnetic problem.
-In this case, the elastic wavenumber :math:`q` is the independent variable, and |NUMBAT| solves for the corresponding angular frequency eigenvalues :math:`\Omega_n(q)` and eigenmodes :math:`\vecu_n(x,y)`. With, the wavenumber as the independent variable, the eigenvalues :math:`q_n(\Omega)` *increase* with the mode index :math:`n`. In such a formulation, there is no upper bound to the number of physical eigenstates, other than the numerical resolution of the FEM grid. In practice, above frequencies of :math:`\Omega/(2\pi)` of a few tens of GHz, the elastic losses become so large that the propagation is restricted to distances of only a few microns.
+In this case, the elastic wavenumber :math:`q` is the independent variable, and |NUMBAT| solves for the corresponding angular frequency eigenvalues :math:`\Omega_n(q)` and eigenmodes :math:`\vecu_n(x,y)`. With the wavenumber as the independent variable, the eigenvalues :math:`q_n(\Omega)` *increase* with the mode index :math:`n`. In such a formulation, there is no upper bound to the number of physical eigenstates, other than the numerical resolution of the FEM grid. In practice, above frequencies of :math:`\Omega/(2\pi)` of a few tens of GHz, the elastic losses become so large that the propagation is restricted to distances of only a few microns.
 
-It is thus straightforward to generate dispersion relations :math:`\Omega_n(q)` on an equal-spaced frequency grid. If you require the wavenumber on an equal-spaced grid, you will need to interpolate the :math:`\Omega_n(q)` functions.
+It is thus straightforward to generate dispersion relations :math:`\Omega_n(q)` on an equal-spaced wavenumber grid. If you require the frequency on an equal-spaced grid, you will need to interpolate the :math:`\Omega_n(q)` functions.
 
 
 
@@ -104,7 +107,7 @@ To calculate nonlinear quantities correctly, it is necessary to account for the 
 
 
 For propagation in a given mode :math:`\vec e_n` or :math:`\vec U_n`, the optical (:math:`o`)
-and elastic (:math:`a`) energy fluxes in Watts and linear energy densities in (J/m) are given by the following expressions
+and elastic (:math:`a` for *acoustic*) energy fluxes in Watts, and linear energy densities in (J/m), are given by the following expressions
 
 .. math::
 
@@ -175,7 +178,7 @@ SBS equations of motion
 
 With the above conventions, the dynamical equations for the slowly-varying amplitudes are
 
-..  math::
+.. math::
 
     \frac{1}{v_g^{p}} \frac{\partial }{\partial t} a_p +   \frac{\partial }{\partial z} a_p & = -i \frac{\omega_p Q_{\mathrm{tot}}}{{\cal P}_o} a_s b     \\
     \frac{1}{v_g^{s}} \frac{\partial }{\partial t} a_s -    \frac{\partial }{\partial z} a_s & = i  \frac{\omega_s Q_{\mathrm{tot}}^*}{{\cal P}_o} a_p b^*   \\
@@ -198,11 +201,11 @@ Connecting these to output quantities from code
 Equivalent forms of equations
 -----------------------------------
 
-   - TODO: show forms without the normalisation energies and with cubic style effective area.
+* TODO: show forms without the normalisation energies and with cubic style effective area.
 
-   - Compare to some fiber literature and the hydrodynamic reprn.
+* Compare to some fiber literature and the hydrodynamic reprn.
 
-   - Connect to optical forces picture
+*  Connect to optical forces picture
 
 
 
@@ -234,19 +237,17 @@ featuring contributions from many of the leading researchers in the field.
 These books provide detailed background and the history, theory, observation and application
 of Brillouin scattering in guided wave systems.
 
-#. *Brillouin Scattering, Parts 1 and 2*, eds: B.J. Eggleton, M.J. Steel, C.G. Poulton, (Academic, 2022). https://doi.org/10.1016/S0080-8784(22)00024-2
+#. *Brillouin Scattering, Parts 1 and 2*, eds: B.J. Eggleton, M.J. Steel, C.G. Poulton, (Academic, 2022). `<https://doi.org/10.1016/S0080-8784(22)00024-2>`_
 
 Reviews
 --------------------
 There are several excellent reviews covering the theory and experiment of Brillouin photonics.
 
+#. A. Kobyakov, M. Sauer, and D. Chowdhury, "Stimulated Brillouin scattering in optical fibers," *Adv. Opt. Photon.* **2**, 1-59 (2010), `<https://doi.org/10.1364/AOP.2.000001>`_.
 
-#. A. Kobyakov, M. Sauer, and D. Chowdhury, "Stimulated Brillouin scattering in optical fibers," *Adv. Opt. Photon.* **2**, 1-59 (2010). https://doi.org/10.1364/AOP.2.000001
+#. B.J. Eggleton, C.G. Poulton, P.T. Rakich, M.J. Steel and G. P. Bahl, "Brillouin integrated photonics," *Nat. Photonics* **13**, 664–677 (2019), https://doi.org/10.1038/s41566-019-0498-z.
 
-#. B.J. Eggleton, C.G. Poulton, P.T. Rakich, M.J. Steel and G. P. Bahl, "Brillouin integrated photonics," *Nat. Photonics* **13**, 664–677 (2019). https://doi.org/10.1038/s41566-019-0498-z
-
-#. G.S. Wiederhecker, P. Dainese, T.P. Mayer Alegre, "Brillouin optomechanics in nanophotonic structures," *APL Photonics* **4**, 071101 (2019).
-   https://doi.org/10.1063/1.5088169
+#. G.S. Wiederhecker, P. Dainese, T.P. Mayer Alegre, "Brillouin optomechanics in nanophotonic structures," *APL Photonics* **4**, 071101 (2019), https://doi.org/10.1063/1.5088169.
 
 
 Theoretical development
@@ -255,14 +256,13 @@ The following papers feature more depth on the theory of SBS in waveguides.
 Chapters 2 and 3 of the *Brillouin Scattering* book listed above are also thorough
 resources for this material.
 
-#. P.T. Rakich, C. Reinke, R. Camacho, P. Davids, and Z. Wang, "Giant Enhancement of Stimulated Brillouin Scattering in the Subwavelength Limit,"
-   *Phys. Rev. X* **2**, 011008 (2012).  https://doi.org/10.1103/PhysRevX.2.011008
+#. P.T. Rakich, C. Reinke, R. Camacho, P. Davids, and Z. Wang, "Giant Enhancement of Stimulated Brillouin Scattering in the Subwavelength Limit," *Phys. Rev. X* **2**, 011008 (2012).  https://doi.org/10.1103/PhysRevX.2.011008
 
 #. C. Wolff, M.J. Steel, B.J. Eggleton, and C.G. Poulton "Stimulated Brillouin scattering in integrated photonic waveguides: Forces, scattering mechanisms, and coupled-mode analysis," *Phys. Rev. A* **92**, 013836 (2015). https://doi.org/10.1103/PhysRevA.92.013836
 
 #. J.E. Sipe and M.J. Steel, "A Hamiltonian treatment of stimulated Brillouin scattering in nanoscale integrated waveguides," *New J. Phys.* **18**, 045004 (2016).  https://doi.org/10.1088/1367-2630/18/4/045004
 
-#. B.C.P Sturmberg at al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019). https://dx.doi.org/10.1109/JLT.2019.2920844
+#. B.C.P Sturmberg et al., "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", *J. Lightwave Technol.*  **37**, 3791-3804 (2019). https://dx.doi.org/10.1109/JLT.2019.2920844
 
 #. C. Wolff, M.J.A. Smith, B. Stiller, and C.G. Poulton, "Brillouin scattering—theory and experiment: tutorial," *J. Opt. Soc. Am. B* **38**, 1243-1269 (2021).  https://doi.org/10.1364/JOSAB.416747
 

@@ -223,7 +223,7 @@ two-layer fibres.
 
 Tutorial 15 -- Coupled waveguides
 ----------------------------------
-This tutorial, contained in ``tutorials/sim-tut_14-coupled-wg.py`` demonstrates the supermode behaviour
+This tutorial, contained in ``examples/tutorials/sim-tut_14-coupled-wg.py`` demonstrates the supermode behaviour
 of both electromagnetic and elastic modes in a pair of closely adjacent waveguides.
 
 
