@@ -20,7 +20,7 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550
-domain_x = 2.5*lambda_nm
+domain_x = 1000
 domain_y = domain_x
 inc_a_x = 300
 inc_a_y = 280
@@ -43,6 +43,8 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                            lc_bkg=.05, lc_refine_1=2.0*refine_fac, lc_refine_2=2.0*refine_fac)
 
 # wguide.check_mesh()
+wguide.plot_refractive_index_profile(prefix)
+
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material('a').refindex_n-0.1
 

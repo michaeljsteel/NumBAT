@@ -31,11 +31,12 @@ def finish_plot(fig, ax1, ax2, ylabl, ylabr, suffix):
 
     ax2.yaxis.tick_left()
     ax2.yaxis.set_label_position("left")
+
     ax1.yaxis.tick_right()
-    ax1.spines['right'].set_color('red')
-    ax1.yaxis.label.set_color('red')
+    ax1.spines['right'].set_color('brown')
+    ax1.yaxis.label.set_color('brown')
     ax1.yaxis.set_label_position("right")
-    ax1.tick_params(axis='y', colors='red')
+    ax1.tick_params(axis='y', colors='brown')
 
     ax1.set_xscale('log')
     ax2.set_xscale('log')

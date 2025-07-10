@@ -95,13 +95,13 @@ profile. These parameters can also be extracted using a range of function calls 
 
 
 .. figure:: ./images/tutorial/tut_02-fields/EM_H_mode_00.png
-   :width: 12cm
+   :width: 14cm
 
    Magnetic field profile of the fundamental (:math:`m=0`) optical mode profile showing modulus of the whole magnetic field :math:`|{\vec H}|^2`, vector plot of the transverse field :math:`{\vec H}_t=(H_x,H_y)`, and the three components of the magnetic field.
 
 
 .. figure:: ./images/tutorial/tut_02-fields/AC_mode_03.png
-   :width: 12cm
+   :width: 14cm
 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=3` acoustic mode with gain
    dominated by the moving boundary effect (green curve in gain spectra). As with the optical fields, the :math:`u_z` component is :math:`\pi/2` out of phase with the transverse components.
@@ -110,36 +110,44 @@ profile. These parameters can also be extracted using a range of function calls 
 
 
 .. figure:: ./images/tutorial/tut_02-fields/AC_mode_04.png
-   :width: 10cm
+   :width: 12cm
 
    Displacement field :math:`\vec u(\vec r)` of the :math:`m=4` acoustic mode with gain dominated by the photo-elastic effect (red curve in gain spectra).
    Note that the frequency of :math:`\Omega/(2\pi)=13.45` GHz corresponds to the second peak in the gain spectrum.
 
-A number of plot settings including colormaps and font sizes can be controlled using the ``numbat.toml`` file.  This is discussed in :ref:`_chap-technical-label`_.
+A number of plot settings including colormaps and font sizes can be controlled using the ``numbat.toml`` file.  This is discussed in :ref:`chap-technical-label`.
 
 Miscellaneous comments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Here are some further elements to note about this example:
 
-  #.  When using the ``fast=`` mode, the output data and fields directory begin with ``ftut_02`` rather than ``tut_02``.
-  #. It is frequently useful to be able to save and load the results of simulations to adjust plots without having to repeat the entire calculation. Here the flag ``reuse_old_fields`` determines whether the calculation should be done afresh and use previously saved data. This is performed using the ``save_simulation()`` and ``load_simulation()`` calls.
-  #. Plots of the modal field profiles are obtained using the ``plot_modes`` methods of the EM and elastic sim result objects. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``field_type`` argument. The selection of mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
-     Later we will see how an alternative approach in which we extract a ``Mode`` object from a ``Simulation`` which represents a single mode that is able to plot itself. This can be more convenient.
-  #. The overall amplitude of the modal fields is arbitrary.
-     In |NUMBAT|, the maximum value of the electric field is normalised to be 1.0, and this may be interpreted as a quantity in units of V/m, :math:`\sqrt{\mathrm{W}}` or other units as desired.
-     Importantly, when plotted, the *magnetic* field :math:`\vec H(\vec r)` is multiplied by the impedance of free space :math:`Z_0=\sqrt{\mu_0/\epsilon_0}` so that the plotted quantities :math:`Z_0 \vec H(\vec r)` and :math:`\vec E(\vec r)` *have the same units*, and the relative amplitudes of the electric and magnetic field plots can be compared meaningfully.
-  #. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[F_x]`, :math:`\text{Im}[F_y]` and :math:`\text{Re}[F_z]` components of the fields :math:`\vec F \in [\vec E, \vec H, \vec u]`. In a lossless non-leaky problem, these fields should normally be zero at all points and therefore not useful to plot.
-  #. By default, plots are exported as ``png`` format. Pass the option ``pdf_png=pdf`` to plot functions to generate a ``pdf`` output.
-  #. Plots of both spectra and modes are generated with a best attempt at font sizes, line widths etc, but the range of potential cases make it impossible to find a selection that works in all cases. Most plot functions therefore support the passing of a ``plotting.Decorator`` object that can vary the settings of these parameters and also pass additional commands to write on the plot axes. See the plotting API for details. This should be regarded as a relatively advanced |NUMBAT| feature.
-  #. Vector field plots often require tweaking to get an attractive set of vector arrows.  The ``quiver_points`` option controls the number of arrows drawn along each direction.
-  #. The plot functions and the ``Decorator`` class support many options. Consult the API chapter for details on how to fine tune your plots.
+#.  When using the ``fast=`` mode, the output data and fields directory begin with ``ftut_02`` rather than ``tut_02``.
+
+#. It is frequently useful to be able to save and load the results of simulations to adjust plots without having to repeat the entire calculation. Here the flag ``reuse_old_fields`` determines whether the calculation should be done afresh and use previously saved data. This is performed using the ``save_simulation()`` and ``load_simulation()`` calls.
+
+#. Plots of the modal field profiles are obtained using the ``plot_modes`` methods of the EM and elastic sim result objects. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``field_type`` argument. The selection of mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
+   Later we will see how an alternative approach in which we extract a ``Mode`` object from a ``Simulation`` which represents a single mode that is able to plot itself. This can be more convenient.
+
+#. The overall amplitude of the modal fields is arbitrary.
+   In |NUMBAT|, the maximum value of the electric field is normalised to be 1.0, and this may be interpreted as a quantity in units of V/m, :math:`\sqrt{\mathrm{W}}` or other units as desired.
+   Importantly, when plotted, the *magnetic* field :math:`\vec H(\vec r)` is multiplied by the impedance of free space :math:`Z_0=\sqrt{\mu_0/\epsilon_0}` so that the plotted quantities :math:`Z_0 \vec H(\vec r)` and :math:`\vec E(\vec r)` *have the same units*, and the relative amplitudes of the electric and magnetic field plots can be compared meaningfully.
+
+#. The ``suppress_imimre`` option suppresses plotting of the :math:`\text{Im}[F_x]`, :math:`\text{Im}[F_y]` and :math:`\text{Re}[F_z]` components of the fields :math:`\vec F \in [\vec E, \vec H, \vec u]`. In a lossless non-leaky problem, these fields should normally be zero at all points and therefore not useful to plot.
+
+#. By default, plots are exported as ``png`` format. This can be adjusted in your ``numbat.toml`` plot settings file.
+
+#. Plots of both spectra and modes are generated with a best attempt at font sizes, line widths etc, but the range of potential cases make it impossible to find a selection that works in all cases, and you can use the ``numbat.toml`` file to fine tune your plots. Further, some plot functions  support the passing of a ``plotting.Decorator`` object that can vary the settings of some parameters and also pass additional commands to write on the plot axes. This should be regarded as a relatively advanced |NUMBAT| feature.
+
+#. Vector field plots often require tweaking to get an attractive set of vector arrows.  The ``quiver_points`` option controls the number of arrows drawn along each direction. Other settings can be controlled in your ``numbat.toml`` plot settings file.
+
+#. The plot functions and the ``Decorator`` class support many options. Consult the API chapter for details on how to fine tune your plots.
 
 
-The full code for this simulation is as follows:
+.. The full code for this simulation is as follows:
 
-.. literalinclude:: ../../examples/tutorials/sim-tut_02-gain_spectra-npsave.py
-    :lines: 0-
+.. .. literalinclude:: ../../examples/tutorials/sim-tut_02-gain_spectra-npsave.py
+..     :lines: 0-
 
 .. raw:: latex
 
@@ -156,11 +164,10 @@ As discussed in  *Formal selection rules for Brillouin scattering in integrated 
 profile. For this problem, the waveguide is rectangular with symmetry group :math:`C_{2v}`
 which  has four symmetry classes, which are marked in the dispersion diagram.
 
-This example also takes advantage of the ability to load and save simulation results to save repeated calculation using the ``save_simulation`` and ``load_simulation`` methods defined
-in the ``modecalcs`` module.
+This example also takes advantage of the ability to load and save simulation results to save repeated calculation using the ``save_simulation`` and ``load_simulation``.
 The previous tutorial saved its electromagnetic
 results in the file ``tut02_wguide_data.npz``
-using the ``Simulation.save_simulation()`` method, while the present example recovers those results using ``Simulation.load_simulation()``.
+using the ``Simulation.save_simulation()`` method, while the present example recovers those results using ``numbat.load_simulation()``.
 This can be a very useful technique when trying to adjust the appearance
 of plots without having to repeat the whole calculation effort.
 
@@ -186,7 +193,7 @@ This tutorial, contained in ``sim-tut_03_2-dispersion-multicore.py`` continues t
 
 In this code as in the previous example, the acoustic modal problem is
 repeatedly solved at a range of different :math:`q` values to build up a set of
-dispersion curves :math:`\nu_m(q)`. Due to the large number of avoided and
+dispersion curves :math:`\nu_m(q)`. The dispersion diagram looks quite different to the previous case as the waveguide is substantially wider. Due to the large number of avoided and
 non-avoided crossings, it is usually best to plot dispersion curves like this
 with dots rather than joined lines. The plot generated below can be improved by
 increasing the number of :math:`q` points sampled through the value of the
@@ -196,7 +203,7 @@ The multiprocessing library runs each task as a completely separate process on t
 Depending on the nature and number of your CPU, this may improve the performance considerably.
 This can also be easily extended to multiple node systems which will certainly improve performance.
 A very similar procedure using the ``threading``  library allows the different tasks
-to run as separate threads within the one process. However, due to the existence of the Python Global Interpreter Lock (GIL) which constrains what kinds of operations may run in parallel within Python , multiple threads will typically not improve the performance of |NUMBAT|.
+to run as separate threads within the one process. However, due to the existence of the Python Global Interpreter Lock (GIL) which constrains what kinds of operations may run in parallel within Python, multiple threads will typically not improve the performance of |NUMBAT|.
 
 This tutorial also  shows an example of saving data, in this case the array
 of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` routine
@@ -214,13 +221,13 @@ of acoustic wavenumbers and frequencies, to a text file using the ``numpy`` rout
 
 Tutorial 4 -- Parameter Scan of Widths
 ----------------------------------------
-This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a parameter scan of a waveguide property, in this case the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain.
+This tutorial, contained in ``sim-tut_04_scan_widths.py`` demonstrates the use of a parameter scan of a waveguide property, in this case the width of the silicon rectangular waveguide, to characterise the behaviour of the Brillouin gain. Later examples in the manual show similar calculations expressed as contour plots rather than in this "waterfall" style.
 
-This calculation generates a lot of data files. For this reason, we have provided a second argument to the ``NumBATApp`` call to specify the name of a new sub-directory, in this case ``tut_04-out``, to store all the generated files.
+This calculation generates a great many data files. For this reason, we have provided a second argument to the ``NumBATApp`` call to specify the name of a new sub-directory, in this case ``tut_04-out``, to store all the generated files.
 
 
 .. figure:: ./images/tutorial/tut_04-out/tut_04-gain_spectra-scan.png
-   :width: 10cm
+   :width: 15cm
 
    Gain spectra as function of waveguide width.
 
@@ -298,10 +305,9 @@ in this case a silica circular nanowire surrounded by vacuum.
 The ``gain-spectra`` plot below shows the Brillouin gain as a function of
 Stokes shift.  Each resonance peak is marked with the number of the acoustic
 mode associated with the resonance.  This is very helpful in identifying which
-acoustic mode profiles to examine more closely.  In this case, modes 5, 8 and
+acoustic mode profiles to examine more closely.  In this case, modes 4, , 8 and
 23 give the most significant Brillouin gain.  The number of modes labelled in the gain spectrum can be controlled using the parameter ``mark_mode_threshold`` in the function
-``plot_spectra()`` to avoid many labels from modes giving
-negligible gain.
+``plot_spectra()`` to avoid many labels from modes giving negligible gain.
 Other parameters allow selecting only one type of gain (PE or MB),
 changing the frequency range (``freq_min``, ``freq_max``),
 and plotting with log (``logy=True``) or dB (``dB=True``) scales.
@@ -401,12 +407,9 @@ Here are a few of these.
 
    Elastic velocity profiles (2D, :math:`x`-cut at :math:`y=0.1`, 1D slice between the points :math:`(-0.3, -0.2)` and :math:`(0.3, 0.2)`) of the slot index waveguide.
 
-Observe that the refractive index is largest in the pillars surrounding the slot and so the optical localisation to the
-gap region will be via the *slot effect*. On the other hand, for the elastic problem, *both* the elastic
-velocities in the gap are lower than in any other part of the structure, and so we can expect one or more elastic
-modes truly localised to the slot region by total internal reflection.
+Observe that the refractive index is largest in the pillars surrounding the slot and so the optical localisation to the gap region will be via the *slot effect*. On the other hand, for the elastic problem, *both* the elastic velocities in the gap are lower than in any other part of the structure, and so we can expect one or more elastic modes truly localised to the slot region by total internal reflection.
 
-Now we can look at the gain spectra and mode profiles. The highest gain occurs for elastic modes :math:`m=2` and :math:`m=4`.
+Now we can look at the gain spectra and mode profiles. The highest gain occurs for elastic modes :math:`m=0` and :math:`m=5`.
 
 
 
@@ -421,37 +424,48 @@ Now we can look at the gain spectra and mode profiles. The highest gain occurs f
 
    Gain data shown on a log scale.
 
-Comparing the :math:`m=2` and :math:`m=4` acoustic mode profiles with the
+Comparing the :math:`m=0` and :math:`m=5` acoustic mode profiles with the
 pump EM profile, it is apparent that the field overlap is favourable, whereas
-the :math:`m=3` mode gives zero gain due to its anti-symmetry relative to the pump field.
+the :math:`m=12` mode, although being well confined to the slot region, yields zero gain
+due to its anti-symmetry relative to the pump field.
 
-We also find that the lowest elastic modes are not as localised to the slot region as might be expected.
-Here, we are seeing a hybridisation of the guided slot mode and Rayleigh-like surface states that are supported
-on the free boundaries of the slab which is adjacent to the vacuum. This effect could be mitigated
-by choosing an alternative outer material.
+We also find that the lowest elastic modes are not as localised to the slot region as might be expected. Here, we are seeing a hybridisation of the guided slot mode and Rayleigh-like surface states that are supported on the free boundaries of the slab which is adjacent to the vacuum. This effect could be mitigated by choosing an alternative outer material.
 
 
 
 .. figure:: ./images/tutorial/tut_07-out/EM_E_mode_00.png
-   :width: 12cm
+   :width: 14cm
 
    Electromagnetic mode profile of the pump and Stokes field.
 
 
-.. figure:: ./images/tutorial/tut_07-out/AC_mode_02.png
-   :width: 12cm
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_00.png
+   :width: 14cm
 
-   Acoustic mode profiles for mode 2.
+   Acoustic mode profiles for mode 0.
 
-.. figure:: ./images/tutorial/tut_07-out/AC_mode_04.png
-   :width: 12cm
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_05.png
+   :width: 14cm
 
-   Acoustic mode profiles for mode 4.
+   Acoustic mode profiles for mode 5.
 
-.. figure:: ./images/tutorial/tut_07-out/AC_mode_03.png
-   :width: 12cm
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_12.png
+   :width: 14cm
 
-   Acoustic mode profiles for mode 3.
+   Acoustic mode profiles for mode 12.
+
+
+Finally, this simulation file includes examples of plots of 1D cut-profiles along different directions. (Look for the ``plot_modes_1D`` calls and additional mode outputs in the output fields directory.) Such plots can be useful in resolving features of tightly confined modes.
+
+
+.. figure:: ./images/tutorial/tut_07-out/AC_mode_05_ycut.png
+   :width: 10cm
+
+   1D y-cut mode profiles for mode 5.
+
+
+
+
 
 .. raw:: latex
 

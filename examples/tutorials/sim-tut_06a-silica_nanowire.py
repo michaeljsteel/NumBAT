@@ -71,7 +71,7 @@ v_kz=simres_EM_pump.kz_EM_all()
 print('\n k_z of EM modes [1/m]:')
 for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
-#simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
+simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))
@@ -94,7 +94,7 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
-#simres_AC.plot_modes(quiver_points=20)
+simres_AC.plot_modes(quiver_points=20)
 
 set_q_factor = 1000.
 #set_q_factor = None
@@ -109,10 +109,9 @@ gain_box = integration.get_gains_and_qs(
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = 5e9  # Hz
-freq_max = 12e9  # Hz
+freq_max = 15e9  # Hz
 
 # Generate gain spectra on linear and log vertical scales.
-gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max)
 gain_box.plot_spectra(freq_min=freq_min, freq_max=freq_max, logy=True)
 
 print(nbapp.final_report())

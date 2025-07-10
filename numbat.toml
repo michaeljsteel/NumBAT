@@ -33,6 +33,8 @@ wg_frame_linewidth_subfig = 0.25
 # gain plots
 mode_index_label_fs = 10
 
+# 'png', 'pdf', 'svg'
+plot_output_format = 'png'
 
 [multi_plots]
 # mode profile annotations

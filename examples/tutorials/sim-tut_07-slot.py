@@ -53,13 +53,10 @@ mat_slot=materials.make_material("As2S3_2017_Morrison")
 mat_slab=materials.make_material("SiO2_2013_Laude")
 mat_ribs=materials.make_material("Si_2016_Smith")
 
-
-refine_fac=.25
 wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     slot_w=slot_w, rib_w=rib_w, rib_h=rib_h, slab_w=slab_a_x, slab_h=slab_a_y,
     material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_ribs,
-    lc_bkg=0.05, lc_refine_1=3.0 * refine_fac, lc_refine_2=3.0 * refine_fac,
-)
+    lc_bkg=0.05, lc_refine_1=1.0 * refine_fac, lc_refine_2=1.0 * refine_fac,)
 
 #wguide.plot_mesh(prefix)
 gm = nbgmsh.MailData(wguide.mesh_mail_fname)
@@ -135,9 +132,9 @@ else:
     simres_AC = numbat.load_simulation("tut_07_acoustic")
 
 simres_AC.plot_modes(quiver_points=20, aspect=4)
-simres_AC.plot_modes_1D('x', 0, mode_indices=range(5))
-simres_AC.plot_modes_1D('y', 0, mode_indices=range(5))
-simres_AC.plot_modes_1D('line', (-1,1), (1,1), mode_indices=range(5))
+simres_AC.plot_modes_1D('x', 0, mode_indices=(0,5))
+simres_AC.plot_modes_1D('y', 0.05, mode_indices=(0,5))
+simres_AC.plot_modes_1D('line', (-1,1), (1,1), mode_indices=(0,5))
 
 # Print the frequencies of AC modes.
 v_nu = simres_AC.nu_AC_all()

@@ -142,8 +142,6 @@ As with our first example above, most |NUMBAT| scripts proceed with a standard s
 
 * calculating gain and other derived quantities
 
-The next chapter provides detailed information about specifying material properties and waveguide structures, as well as the key parameters for controlling the finite-element meshing.
-Information on how to add new structures to |NUMBAT| is provided in :ref:`sec-newmesh-label`.
 
 
 
