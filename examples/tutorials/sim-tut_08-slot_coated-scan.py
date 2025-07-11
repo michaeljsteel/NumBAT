@@ -88,7 +88,7 @@ def ac_mode_freqs(wid_x):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump, shift_Hz=shift_Hz)
 
     if wid_x == 150.0:
-        sim_AC.plot_modes(prefix=pref)
+        sim_AC.plot_modes(prefix=pref, comps=('x','y','z', 'a','t'))
 
     # Calculate gain
     set_q_factor = 1000.

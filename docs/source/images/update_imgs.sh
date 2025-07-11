@@ -52,6 +52,8 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
     cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/AC_mode_05_ycut.png  tut_07-out
     cp -pR ${BASE}/tutorials/tut_07-out/tut_07-fields/AC_mode_12.png  tut_07-out
     cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_00.png tut_08-out
+    cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_00_uy.png tut_08-out
+    cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_00_uz.png tut_08-out
     cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_01.png tut_08-out
     cp -pR ${BASE}/tutorials/tut_08-out/tut_08_150.0-fields/AC_mode_02.png tut_08-out
 

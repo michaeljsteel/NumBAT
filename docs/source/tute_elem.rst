@@ -474,12 +474,11 @@ Finally, this simulation file includes examples of plots of 1D cut-profiles alon
 
 Tutorial 8 -- Slot Waveguide Cover Width Scan
 ----------------------------------------------
-This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by
-examining the dependence of the acoustic spectrum on the width of the pillars.  As before, this parameter
-scan is accelerated by the use of multi-processing.
+This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the study of the previous slot waveguide, by examining the dependence of the acoustic spectrum on the width of the pillars.  As before, this parameter scan is accelerated by the use of multi-processing.
 
 .. It is interesting to look at different mode profiles and try to understand why the eigenfrequency of some modes are more affected  by the capping layer. The lowest mode, for instance, is noticeably unaffected.
 
+The shape of the simulation domain and the compactness of the mode makes the default mode displays hard to see clearly. While this can be addressed with plot settings such as the aspect ratio, and number of vector arrows, it is also helpful to plot each component separately on its own plot. this is achieved with the ``comps`` option to ``plot_modes()``.
 
 .. figure:: ./images/tutorial/tut_08-acdisp_slotwidth.png
    :width: 12cm
@@ -502,6 +501,17 @@ scan is accelerated by the use of multi-processing.
    :width: 12cm
 
    Modal profiles of third acoustic mode.
+
+.. figure:: ./images/tutorial/tut_08-out/AC_mode_00_uy.png
+   :width: 12cm
+
+.. figure:: ./images/tutorial/tut_08-out/AC_mode_00_uz.png
+   :width: 12cm
+
+
+   Individual components of the lowest acoustic mode.
+
+
 
 .. raw:: latex
 
