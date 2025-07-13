@@ -36,6 +36,9 @@ mode_index_label_fs = 10
 # 'png', 'pdf', 'svg'
 plot_output_format = 'png'
 
+# use up to 600 dpi for publication-ready plots
+plot_output_resolution_dpi = 200
+
 [multi_plots]
 # mode profile annotations
 ax_label_fs = 8

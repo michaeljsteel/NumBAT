@@ -14,15 +14,21 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-import matplotlib.pyplot as plt
 from PIL import Image
+
+import matplotlib.pyplot as plt
+import numbat
 
 def save_and_close_figure(fig, fig_fname):
 
+    plot_prefs = numbat.NumBATPlotPrefs()
+    #plot_fileext = plot_prefs._plot_extension
+    dpi = plot_prefs.plot_output_resolution_dpi
+
     if fig_fname[-3:-1] == 'png':
-        fig.savefig(fig_fname)
+        fig.savefig(fig_fname, dpi=dpi)
     else:
-        fig.savefig(fig_fname, bbox_inches='tight')
+        fig.savefig(fig_fname, bbox_inches='tight', dpi=dpi)
 
     plt.close(fig)
 
