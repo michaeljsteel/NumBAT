@@ -52,7 +52,9 @@ class PlotPrefs:
         else: # Look for standard locations
             home_dir = Path.home()
             locs = [Path('./numbat.toml'),
-                    Path(home_dir / '.numbat.toml')
+                    Path(home_dir / '.numbat.toml'),
+                    Path(home_dir / 'numbat.toml')
+
                     ]
             for loc in locs:
                 if loc.exists():
@@ -67,7 +69,6 @@ class PlotPrefs:
     def _set_defaults(self):
 
         d_all = self._user_settings['all_plots']
-
 
         # Select color combinations here
         coltup_em = self.color_tup_1
@@ -111,6 +112,9 @@ class PlotPrefs:
         self.WG_FRAME_LINEWIDTH_WHOLEFIG = d_all.get('wg_frame_linewidth_color', 0.75)
         # if field plot is a part figure
         self.WG_FRAME_LINEWIDTH_SUBFIG = d_all.get('wg_frame_linewidth_subfig', 0.25)
+
+        self.plot_output_resolution_dpi = d_all.get('plot_output_resolution_dpi', 300)
+
 
 
         d_multi = self.d_multi = {}
