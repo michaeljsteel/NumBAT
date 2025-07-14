@@ -34,27 +34,30 @@ def save_and_close_figure(fig, fig_fname):
 
     plt.close(fig)
 
+def fig_trim_border(im, clip=None, trimwhite=False, border = 20):
 
-def join_figs(l_fns, fnout, clip=None, trimwhite=False):
+    if clip:
+        sz = im.size
+        area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
+        im = im.crop(area)
+    elif trimwhite:
+        if im.mode != 'RGB':
+            im = im.convert('RGB')
+        imrev = ImageOps.invert(im)
+        bbox = imrev.getbbox()
+        bbox = np.array(bbox)
+        if border:
+            bbox += np.array([-border, -border, border, border])
+        im = im.crop(bbox)
+
+    return im
+
+def join_figs(l_fns, fnout, clip=None, trimwhite=False, border=20):
 
     images = []
     for fn in l_fns:
         with Image.open(fn) as im:
-
-
-            if clip:
-                sz = im.size
-                area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
-                im = im.crop(area)
-            elif trimwhite:
-                if im.mode != 'RGB':
-                   im = im.convert('RGB')
-                imrev = ImageOps.invert(im)
-                bbox = imrev.getbbox()
-                bbox = np.array(bbox) + np.array([-20,-20,40,40])
-    
-                im = im.crop(bbox)
-
+            im = fig_trim_border(im, clip, trimwhite, border)
             images.append(im)
 
     #matches heights of first two images

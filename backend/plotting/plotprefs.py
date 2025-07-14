@@ -32,11 +32,7 @@ class PlotPrefs:
 
     # TODO: do this with logger
     def _load_user_settings(self, user_settings_file='', ignore_user_settings=False):
-        self._user_settings = {
-            'all_plots':{},
-            'multi_plots':{},
-            'single_plots':{}
-                               }
+        self._user_settings = {}
 
         if ignore_user_settings:
             print('Ignoring any user setting files and using NumBAT default preferences.')
@@ -44,27 +40,31 @@ class PlotPrefs:
 
         user_file=None
         if user_settings_file:
-            if not Path(user_settings_file).exists():
-                s=f"NumBAT can't find the user settings .toml file at {user_settings_file}."
-                reporting.report_and_exit(s)
-
-            user_file=Path(user_settings_file)
+            user_file = Path(user_settings_file)
+            if not user_file.exists():
+                reporting.report_and_exit(f"NumBAT can't find the user settings .toml file at {user_file}.")
         else: # Look for standard locations
             home_dir = Path.home()
             locs = [Path('./numbat.toml'),
                     Path(home_dir / '.numbat.toml'),
                     Path(home_dir / 'numbat.toml')
-
                     ]
             for loc in locs:
                 if loc.exists():
                     user_file = loc
                     break
 
-        if user_file is not None:
+        if user_file:
             print(f'Loading plot preferences from {user_file}.')
-            with open(user_file, 'rb') as fin:
-                self._user_settings = tomllib.load(fin)
+            try:
+                with open(user_file, 'rb') as fin:
+                    self._user_settings = tomllib.load(fin)
+            except tomllib.TOMLDecodeError as e:
+                reporting.report_and_exit(f"Error decoding the TOML file at {user_file}: {e}")
+
+        # Ensure required sections exist to prevent KeyErrors later
+        for section in ['all_plots', 'multi_plots', 'single_plots']:
+            self._user_settings.setdefault(section, {})
 
     def _set_defaults(self):
 
@@ -91,9 +91,6 @@ class PlotPrefs:
         # multiple of shaft width
         self.vecplot_arrow_headwidth = d_all.get('vector_arrow_headwidth', 2)
 
-        #self.vecplot_arrow_head = 2
-        #self.vecplot_arrow_len = 2
-
         # colormap for refractive index plots
         self.cmap_ref_index = d_all.get('refindex_colormap', 'cool')
 
@@ -109,7 +106,7 @@ class PlotPrefs:
         self.WG_FRAME_EDGE_COLOR = d_all.get('wg_frame_edge_color', 'darkred')
 
         # if field plot is whole figure
-        self.WG_FRAME_LINEWIDTH_WHOLEFIG = d_all.get('wg_frame_linewidth_color', 0.75)
+        self.WG_FRAME_LINEWIDTH_WHOLEFIG = d_all.get('wg_frame_linewidth_wholefig', 0.75)
         # if field plot is a part figure
         self.WG_FRAME_LINEWIDTH_SUBFIG = d_all.get('wg_frame_linewidth_subfig', 0.25)
 
@@ -117,28 +114,25 @@ class PlotPrefs:
 
 
 
-        d_multi = self.d_multi = {}
-        d_single = self.d_single = {}
+        self.d_multi = {
+            'ax_label_fs': 8,
+            'ax_ticklabel_fs': 8,
+            'ax_tickwidth': 0.25,
+            'ax_linewidth': 1,
+            'title_fs': 16,
+            'subtitle_fs': 11,
+        }
+        self.d_single = {
+            'ax_label_fs': 14,
+            'ax_ticklabel_fs': 14,
+            'ax_tickwidth': 1,
+            'ax_linewidth': 1,
+            'title_fs': 22,
+            'subtitle_fs': 21,
+        }
 
-        d_multi['ax_label_fs'] = 8
-        d_multi['ax_ticklabel_fs'] = 8
-        d_multi['ax_tickwidth'] = 0.25
-        d_multi['ax_linewidth'] = 1
-        d_multi['title_fs'] = 16
-        d_multi['subtitle_fs'] = 11
-
-
-
-        d_single['ax_label_fs'] = 14
-        d_single['ax_ticklabel_fs'] = 14
-        d_single['ax_tickwidth'] = 1
-        d_single['ax_linewidth'] = 1
-        d_single['title_fs'] = 22
-        d_single['subtitle_fs'] = 21
-
-
-        d_multi.update(self._user_settings['multi_plots'])
-        d_single.update(self._user_settings['single_plots'])
+        self.d_multi.update(self._user_settings['multi_plots'])
+        self.d_single.update(self._user_settings['single_plots'])
 
 
     def cmap_field_signed(self, ftag):
@@ -160,20 +154,14 @@ class PlotPrefs:
             return self.vecplot_arrow_color_ac
 
 
-    # def vector_field_arrow_scale(self):
-    #     return self.vecplot_arrow_scale
-
-    # def vector_field_arrow_linewidth(self):
-    #     return self.vecplot_arrow_linewidth
-
-
 class TidyAxes:
 
-    def __init__(self, nax=1, props={}):
+    def __init__(self, nax=1, props=None):
 
         self._nax = nax
         self._set_defaults_for_num_axes(nax)
-        self._props.update(props)
+        if props:
+            self._props.update(props)
 
     def update_property(self, k, v):
         self._props[k]=v
@@ -183,48 +171,22 @@ class TidyAxes:
 
         props = {}
 
-        #axtags = ('ax_label_fs', 'ax_ticklabel_fs', 'ax_tickwidth', 'ax_linewidth')
         if nax in (4,6):  # includes layout for two row mode plots
-            #for s in axtags:
-            #    props[s] = user_prefs.d_multi[s]
             props.update(user_prefs.d_multi)
-
-
             props['ax_label_xpad'] = 3
             props['ax_label_ypad'] = 1
-
-        #    props['ax_label_fs'] = 8
-        ##    props['ax_ticklabel_fs'] = 8
-         ##   props['ax_tickwidth'] = .25
-          #  props['ax_linewidth'] = 1
 
         elif nax == 2:
-            # for s in axtags:
-            #     props[s] = user_prefs.d_multi[s]
             props.update(user_prefs.d_multi)
-
-
             props['ax_label_xpad'] = 3
             props['ax_label_ypad'] = 1
             props['ax_label_pad'] = 5
 
-            ##props['ax_label_fs'] = 12
-            #props['ax_ticklabel_fs'] =  10
-            #props['ax_tickwidth'] = 1
-            #props['ax_linewidth'] = 1
         else:
-            #for s in axtags:
-            #    props[s] = user_prefs.d_single[s]
             props.update(user_prefs.d_single)
-
             props['ax_label_pad'] = 5
             props['ax_label_xpad'] = 3
             props['ax_label_ypad'] = 1
-
-            #props['ax_label_fs'] =  14
-            #props['ax_ticklabel_fs'] =  14
-            #props['ax_tickwidth'] =  1
-            #props['ax_linewidth'] =  1
 
         props['aspect'] = 0.0
 
@@ -240,7 +202,6 @@ class TidyAxes:
         props['cb_shrink'] = 0  # possible?
         props['cb_pad'] = 0.    # possible?
 
-        #props['mode_index_label_fs'] = user_prefs['all_plots']['mode_index_label_fs']
         props['mode_index_label_fs'] = user_prefs.mode_index_label_fs
 
 
@@ -253,10 +214,7 @@ class TidyAxes:
 
         pr = self._props
 
-        #for ax in axs:  #TODO: for some reason, this is not working and have to index explicitly?!
-        for i in range(len(axs)):
-            ax = axs[i]
-
+        for ax in axs:
             # Shape
             if pr['aspect'] >0 : ax.set_aspect(pr['aspect'])
 
@@ -301,9 +259,3 @@ class TidyAxes:
 
             cb.ax.tick_params(labelsize=pr['cb_ticklabel_fs'],
                            width=pr['cb_tickwidth'])
-
-            # Not sure how to do these
-
-            #if pr['cb_shrink'] >0 :
-            #    cb.set_shrink(pr['cb_shrink'])
-            #    cb.set_pad(pr['cb_pad'])
