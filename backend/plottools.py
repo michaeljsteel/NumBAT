@@ -14,9 +14,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 import matplotlib.pyplot as plt
+import numpy as np
+
 import numbat
 
 def save_and_close_figure(fig, fig_fname):
@@ -33,17 +35,27 @@ def save_and_close_figure(fig, fig_fname):
     plt.close(fig)
 
 
-def join_figs(l_fns, fnout, clip=None):
+def join_figs(l_fns, fnout, clip=None, trimwhite=False):
 
     images = []
     for fn in l_fns:
-        im = Image.open(fn)
+        with Image.open(fn) as im:
 
-        if clip is not None:
-            sz = im.size
-            area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
-            im = im.crop(area)
-        images.append(im)
+
+            if clip:
+                sz = im.size
+                area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
+                im = im.crop(area)
+            elif trimwhite:
+                if im.mode != 'RGB':
+                   im = im.convert('RGB')
+                imrev = ImageOps.invert(im)
+                bbox = imrev.getbbox()
+                bbox = np.array(bbox) + np.array([-20,-20,40,40])
+    
+                im = im.crop(bbox)
+
+            images.append(im)
 
     #matches heights of first two images
     nsz0 = [images[1].size[0],

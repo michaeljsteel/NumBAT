@@ -14,6 +14,45 @@ def plot_mail_mesh(mesh_mail_fname, outpref):
     mail_data.plot_mesh(path)
 
 
+def plot_gmesh_wireframe(msh_loc_in, msh_loc_out, msh_name, outpref):
+    nbapp = numbat.NumBATApp()
+    gmsh_exe = nbapp.path_gmsh()
+
+    outprefix = nbapp.outpath(outpref)
+
+    tdir = tempfile.TemporaryDirectory()
+    tmpoutpref = str(Path(tdir.name, outpref))
+
+    #tmpoutpref = str(Path(tempfile.TemporaryFile(), outpref))
+
+    # Make the wire frame image
+    fn_in = Path(msh_loc_in) / 'geo2png.scr'
+    fn_out = Path(msh_loc_out) / (msh_name + '_geo2png.scr')
+    f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-entities'})
+    cmd = [gmsh_exe, msh_name + '.geo', fn_out.name]
+    print(outprefix, tmpoutpref, fn_out)
+    run_subprocess(cmd, 'Gmsh', cwd=msh_loc_out)
+
+def plot_gmesh_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
+
+    nbapp = numbat.NumBATApp()
+    gmsh_exe = nbapp.path_gmsh()
+
+    outprefix = nbapp.outpath(outpref)
+
+    tdir = tempfile.TemporaryDirectory()
+    tmpoutpref = str(Path(tdir.name, outpref))
+
+    # Make the mesh image
+    fn_in = Path(msh_loc_in) / 'msh2png.scr'
+    fn_out = Path(msh_loc_out) / (msh_name + '_msh2png.scr')
+    f2f_with_subs(fn_in, fn_out, {'tmp': str(tmpoutpref) + '-mesh_nodes'})
+
+    cmd = [gmsh_exe, msh_name + '.msh', fn_out.name]
+    run_subprocess(cmd, 'Gmsh', cwd=msh_loc_out)
+
+
+
 def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
     """Visualise mesh with gmsh and save to a file."""
 
@@ -21,10 +60,12 @@ def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
     # Writes final png file to user directory
 
 
+    #plot_gmesh_wireframe(msh_loc_in, msh_loc_out, msh_name, outpref)
+    #plot_gmesh_mesh(msh_loc_in, msh_loc_out, msh_name, outpref)
+
     nbapp = numbat.NumBATApp()
     gmsh_exe = nbapp.path_gmsh()
 
-    #outprefix = Path(numbat.NumBATApp().outdir(), outpref)
     outprefix = nbapp.outpath(outpref)
 
     tdir = tempfile.TemporaryDirectory()
@@ -49,7 +90,9 @@ def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
     plottools.join_figs([tmpoutpref+'-entities.png',
                         tmpoutpref+'-mesh_nodes.png',],
                         str(outprefix)+'-mesh.png',
-                        clip=(60,50,60,50))
+                        #clip=(60,50,60,50)
+                        trimwhite=True
+                        )
 
 
 def check_mesh(msh_loc_out, msh_name):
