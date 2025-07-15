@@ -27,7 +27,7 @@ from numbattools import int2D_trapz
 import femmesh
 import plotmodes
 import plotmoderaw
-import plottools
+import plotting.plottools
 
 
 
@@ -164,10 +164,10 @@ class ModeInterpolator:
         #print('checking grid', (s_cut, val1, val2, n_pts))
         #if self.setup_for_1D:
         #    print('seup', self.setup_for_1D)
-        #    print('checks ', 
-        #    self.setup_for_1D[0] == s_cut, 
-        #    self.setup_for_1D[1] == val1, 
-        #    self.setup_for_1D[2] == val2, 
+        #    print('checks ',
+        #    self.setup_for_1D[0] == s_cut,
+        #    self.setup_for_1D[1] == val1,
+        #    self.setup_for_1D[2] == val2,
         #    self.setup_for_1D[3] == n_pts)
 
         #if self.setup_for_1D == (s_cut, val1, val2, n_pts):
@@ -175,7 +175,7 @@ class ModeInterpolator:
         #self.setup_for_1D=(s_cut, val1, val2, n_pts)
 
         # use string rep because val1/2 can be floats or tuples and truth comparison is messy
-        if self.setup_for_1D == str((s_cut, val1, val2, n_pts)): 
+        if self.setup_for_1D == str((s_cut, val1, val2, n_pts)):
             return  # no update to interpolator needed
         #else:
         #    print('failed setup comparison', self.setup_for_1D, str((s_cut, val1, val2, n_pts)))

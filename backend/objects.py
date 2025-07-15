@@ -40,7 +40,7 @@ import nbgmsh
 import femmesh
 from materialprops import OpticalProps, ElasticProps
 
-import plottools
+import plotting.plottools
 import plotting.gmsh as pltgmsh
 import plotting.profiles as pltprof
 
@@ -272,11 +272,13 @@ class Structure:
 
         pltgmsh.plot_mail_mesh(self.mesh_mail_fname, outpref)
 
-    def plot_mesh(self, outpref):
-        """Visualise mesh with gmsh and save to a file."""
+    def plot_mesh(self, outpref, combo_plot=True):
+        """Visualise mesh with gmsh and save to a file.
 
-        pltgmsh.plot_mesh(self.msh_location_in, self.msh_location_out,
-                          self.msh_name, outpref)
+        If combo_plot==False, wire frame and mesh node plots are stored in separate files."""
+
+        return pltgmsh.plot_mesh(self.msh_location_in, self.msh_location_out,
+                          self.msh_name, outpref, combo_plot)
 
     def check_mesh(self):
         """Visualise geometry and mesh with gmsh."""

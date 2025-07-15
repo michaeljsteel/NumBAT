@@ -1,14 +1,13 @@
 import sys
 from PIL import Image, ImageDraw, ImageFont
-import time
 import math
-
-
+from pathlib import Path
 
 sys.path.append("../../../backend/")
 
 import numbat
 import materials
+from plottools import join_figs
 
 mat_bkg = materials.make_material("Vacuum")
 mat_air = materials.make_material("Air")
@@ -18,7 +17,9 @@ mat_c = materials.make_material("SiO2_2016_Smith")
 mat_d = materials.make_material("Si3N4_2021_Steel")
 mat_e = materials.make_material("GaAs_2021_Poulton")
 
-fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
+#fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
+fnt_mat = ImageFont.truetype(r'C:\Windows\Fonts\Times.ttf', 18)
+
 
 col_mat = 'black'
 col_lc = 'darkgreen'
@@ -41,16 +42,16 @@ def add_lc(im, bw, bh, lab, x, y, compass):
 
     match compass:
         case 'N':
-            ay -= alen
+            ay -= arlen
             anc = 'mb'
         case 'S':
-            ay += alen
+            ay += arlen
             anc = 'mt'
         case 'E':
-            ax += alen
+            ax += arlen
             anc = 'lm'
         case 'W':
-            ax -= alen
+            ax -= arlen
             anc = 'rm'
         case 'NW':
             ax -= sqlen
@@ -114,9 +115,27 @@ def get_sizes(im,x0,x1,y0,y1,un_x, un_y):
     scalx = bw/un_x
     scaly = bh/un_y
 
-    print(sz, bl, br, bt, bb, bw, bh)
+    #print(sz, bl, br, bt, bb, bw, bh)
     return (bl, br, bt, bb, bw, bh, scalx, scaly)
 
+def get_sizesb(im, un_x, un_y, border=20):
+    '''Controls the view into the image in pixels.
+    Open the combined grid and mesh image and find the coordinates
+    of the grid plot corners. Express x0, x1, y0, y1 as fractions of the
+    whole window.'''
+
+    sz = im.size
+    bl = border                   # new left border
+    br = im.size[0] - border      # new right border
+    bt = border
+    bb = im.size[1] - border      # new top border
+    bw = br-bl                    # new bottom border
+    bh = bb-bt
+
+    scalx = bw/un_x
+    scaly = bh/un_y
+
+    return (bl, br, bt, bb, bw, bh, scalx, scaly)
 
 def do_oneincl_rect(nbapp):
     un_x = 4000; un_y = 3000; inc_a_x = 1500; inc_a_y = 750
@@ -126,20 +145,27 @@ def do_oneincl_rect(nbapp):
                             material_bkg=mat_bkg, material_a=mat_a,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
     frt = 'rect'
-    wguide.plot_mesh(frt+fn_suff_raw)
-    wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
+    # 'rect_wg-mesh.png'
+    fn_wire, fn_mesh, fn_join = wguide.plot_mesh(frt+fn_suff_raw,
+                                                 combo_plot=False)
+    # 'rect_wg-ref_index.png'
+    fn_refindex = wguide.plot_refractive_index_profile(frt+fn_suff_raw)
 
-    do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y)
+    fn_anno = frt + fn_ext_anno
+    do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y,
+                             fn_wire, fn_mesh, fn_anno)
 
-def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
-    with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
-        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y,
+                             fin_wire, fin_mesh, fout_anno):
 
-        x0 = (bl+br)/2
-        y0 = (bt+bb)/2
-        dx = (br-bl)/20
-        dy = (bt-bb)/20
+    with Image.open(fin_wire).convert('RGBA') as im:
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizesb(im, un_x, un_y)
+
+        x0 = (bl+br)/2        # horz. middle
+        y0 = (bt+bb)/2        # vert. middle
+        dx = (br-bl)/20       # useful horz. delta
+        dy = (bt-bb)/20       # useful vert. delta
 
         add_mat_lab(im, bw, bh, 'mat_bkg', x0-2*dx, y0+dy)
         add_mat_lab(im, bw, bh, 'mat_a', x0-dx*6, y0+dy*5)
@@ -156,7 +182,11 @@ def do_oneincl_rect_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
         add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 
         im.show()
+        ftmp = fin_wire[:-4] + '_tmp.png'
         im.save(frt+fn_ext_anno)
+        im.save(ftmp)
+        join_figs([ftmp, fin_mesh], fout_anno, clip=None, trimwhite=False, border=20, delete_inputs=True)
+        Path(fin_wire).unlink()
 
 
 
@@ -176,7 +206,8 @@ def do_oneincl_circ(nbapp):
 def do_oneincl_circ_annotate(frt, un_x, un_y, inc_a_x, inc_a_y):
 
     with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
-        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+        #(bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizesb(im, un_x, un_y)
 
         x0 = (bl+br)/2
         y0 = (bt+bb)/2
@@ -221,7 +252,9 @@ def do_oneincl_triang(nbapp):
 
 def do_oneincl_triang_annotate(frt, un_x, un_y, basewid, pxo, ph):
     with Image.open(frt+fn_ext_raw).convert('RGBA') as im:
-        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+        #(bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizes(im, 0.025, 0.475,  0.06, 0.93,  un_x, un_y)
+        (bl, br, bt, bb, bw, bh, scalx, scaly) = get_sizesb(im, un_x, un_y)
+
 
         dx = (br-bl)/20
         dy = (bt-bb)/20   # negative value so adding dy moves curso up screen
@@ -262,8 +295,8 @@ def do_oneincl_triang_annotate(frt, un_x, un_y, basewid, pxo, ph):
 
 def do_oneincl(nbapp):
     do_oneincl_rect(nbapp)
-    do_oneincl_circ(nbapp)
-    do_oneincl_triang(nbapp)
+    #do_oneincl_circ(nbapp)
+    #do_oneincl_triang(nbapp)
 
 
 def do_twoincl(nbapp):
@@ -352,7 +385,7 @@ def do_slot(nbapp):
     inc_b_x = 300  # pillar width
     coat_y = 50  # pillar coat thickness
 
-    wguide1 = nbapp.make_structure('slot', un_x,un_y, 
+    wguide1 = nbapp.make_structure('slot', un_x,un_y,
                                 slab_w=slab_a_x, slab_h=slab_a_y,
                                    rib_w=inc_b_x,
                                    rib_h=inc_a_y,
@@ -366,7 +399,7 @@ def do_slot(nbapp):
     un_x = 4000
     un_y = 1000
 
-    wguide2 = nbapp.make_structure( 'slot_coated', un_x, un_y, 
+    wguide2 = nbapp.make_structure( 'slot_coated', un_x, un_y,
                                 slab_w=slab_a_x, slab_h=slab_a_y,
                                    rib_w=inc_b_x,
                                    rib_h=inc_a_y,
@@ -646,28 +679,30 @@ def do_pedestal(nbapp):
 
 
     wguide1 = nbapp.make_structure('pedestal', un_x, un_y,
-                                   ped_top_w = ped_top_w, 
+                                   ped_top_w = ped_top_w,
                                    ped_base_w = ped_base_w,
                                    ped_h = ped_h,
                                    slab_a_x=slab_a_x, slab_a_y=slab_a_y,
-                            material_bkg=mat_bkg, material_a=mat_a, 
+                            material_bkg=mat_bkg, material_a=mat_a,
                                    material_b=mat_b,
                                    material_c=mat_c,
                             pillar_x=pillar_x, pillar_y=pillar_y,
                             lc_bkg=.1, lc_refine_1=10, lc_refine_2=10)
+
     wguide1.plot_mesh('pedestal_wg')
+
 
 def do_main():
 
     nbapp = numbat.NumBATApp()
 
-    #do_oneincl(nbapp)
+    do_oneincl(nbapp)
     #do_twoincl(nbapp)
     #do_rib(nbapp)
     #do_slot(nbapp)
     #do_onion(nbapp)
     #do_trapezoid(nbapp)
-    do_pedestal(nbapp)
+    #do_pedestal(nbapp)
 
 
 if __name__=='__main__':

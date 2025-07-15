@@ -31,7 +31,7 @@ from nbtypes import SI_to_gmpercc, SI_um
 import numbat
 from plottools import save_and_close_figure
 import reporting
-import plottools
+import plotting.plottools
 from numbattools import is_real_number, is_float_pair
 
 

@@ -15,6 +15,7 @@
 
 
 from PIL import Image, ImageOps
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,25 +41,24 @@ def fig_trim_border(im, clip=None, trimwhite=False, border = 20):
         sz = im.size
         area = (clip[0], clip[1], sz[0]-clip[2], sz[1]-clip[3])
         im = im.crop(area)
-    elif trimwhite:
+    if trimwhite:
         if im.mode != 'RGB':
             im = im.convert('RGB')
         imrev = ImageOps.invert(im)
-        bbox = imrev.getbbox()
-        bbox = np.array(bbox)
+        bbox = np.array(imrev.getbbox())
         if border:
-            bbox += np.array([-border, -border, border, border])
-        im = im.crop(bbox)
+            bbox2 = bbox + np.array([-border, -border, border, border])
+        im = im.crop(bbox2)
 
     return im
 
-def join_figs(l_fns, fnout, clip=None, trimwhite=False, border=20):
+def join_figs(l_fns, fnout, clip=None, trimwhite=False, border=20,
+              delete_inputs=False):
 
     images = []
     for fn in l_fns:
-        with Image.open(fn) as im:
-            im = fig_trim_border(im, clip, trimwhite, border)
-            images.append(im)
+        im = Image.open(fn)
+        images.append(im)
 
     #matches heights of first two images
     nsz0 = [images[1].size[0],
@@ -86,6 +86,10 @@ def join_figs(l_fns, fnout, clip=None, trimwhite=False, border=20):
         x_offset += im.size[0]
 
     new_im.save(fnout)
+
+    if delete_inputs:
+        for fn in l_fns:
+            Path(fn).unlink()
 
 #fill = '█',   # TODO: this messes with pdflatex in docs. Fix
 def progressBar(sequence, prefix = '', suffix = '',
