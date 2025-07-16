@@ -2,17 +2,19 @@
 PYTHON=python
 
 all: tut01 tut02 tut03a tut03b tut04 tut05 tut06a tut06b \
-		tut07 tut08 tut09 tut11a  tut11b tut12 tut13 tut14
+		tut07 tut08 tut11a  tut11b tut12 tut13 tut14
 
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b \
-		ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
+		ftut07 ftut08  ftut11a  ftut12 ftut13
 
-fast1: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b 
-fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13 
+fast1: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b
+fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13
 
 slow: tut12 tut13 tut14
 
 goodtest: tut01 ftut02 ftut06 ftut08
+
+some:  tut11a  tut11b tut12 tut13 tut14
 
 
 memtest:

@@ -95,16 +95,10 @@ class _NumBATApp:
         self._outprefix=outprefix
         self.set_outdir(outdir)
 
-        self._user_settings={}
+        #self._user_settings={}
 
-
-        #self._plot_extension = '.png'
-        #self._plot_extension = '.pdf'
 
         g_numbat_plot_prefs = PlotPrefs(user_settings_file, ignore_user_settings)
-
-
-
 
         mshtemplates.initialise_waveguide_templates(self)
 
