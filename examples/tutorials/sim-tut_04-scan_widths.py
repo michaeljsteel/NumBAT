@@ -10,7 +10,7 @@ from multiprocessing import Pool
 import numpy as np
 
 import matplotlib.pyplot as plt
-from matplotlib.collections import PolyCollection
+#from matplotlib.collections import PolyCollection
 
 from pathlib import Path
 sys.path.append(str(Path('../../backend')))

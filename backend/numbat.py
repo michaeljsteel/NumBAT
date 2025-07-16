@@ -93,7 +93,7 @@ class _NumBATApp:
 
 
         self._outprefix=outprefix
-        self._outdir=outdir
+        self.set_outdir(outdir)
 
         self._user_settings={}
 
