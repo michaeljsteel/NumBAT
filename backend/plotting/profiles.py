@@ -7,7 +7,7 @@ import scipy
 import nbgmsh
 import reporting
 import femmesh
-import plotting.plottools
+import plotting.plottools as plottools
 
 def _make_dielectric_plotter(wguide, optical_props, as_epsilon, n_points):
 

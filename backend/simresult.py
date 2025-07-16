@@ -23,7 +23,7 @@ import copy
 
 from modes import ModeAC, ModeEM, ModeInterpolator
 
-from plottools import progressBar
+from plotting.plottools import progressBar
 import plotmodes
 import reporting
 

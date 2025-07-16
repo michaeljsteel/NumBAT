@@ -27,7 +27,7 @@ from numbattools import int2D_trapz
 import femmesh
 import plotmodes
 import plotmoderaw
-import plotting.plottools
+import plotting.plottools as plottools
 
 
 

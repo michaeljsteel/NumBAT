@@ -19,7 +19,7 @@ import numpy as np
 
 
 from plotmodes import TidyAxes
-from plottools import save_and_close_figure
+from plotting.plottools import save_and_close_figure
 
 class MailData:
     '''Native representation of the Gmsh mesh and node/element structures.

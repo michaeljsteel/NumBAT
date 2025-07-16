@@ -20,7 +20,7 @@ import numpy.random
 import matplotlib.pyplot as plt
 
 from nbtypes import SI_um
-import plotting.plottools
+import plotting.plottools as plottools
 
 def do_raw_fem_mode_plot(l_comps, mode_interpolator, fem_mesh, fem_evecs, mode_num):
 

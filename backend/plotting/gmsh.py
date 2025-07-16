@@ -4,7 +4,7 @@ from PIL import Image
 import numbat
 import nbgmsh
 
-import plotting.plottools
+import plotting.plottools as plottools
 from numbattools import f2f_with_subs, run_subprocess
 
 def plot_mail_mesh(mesh_mail_fname, outpref):

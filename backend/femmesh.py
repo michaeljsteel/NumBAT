@@ -29,9 +29,9 @@ from math import sqrt
 import nbgmsh
 from nbtypes import SI_to_gmpercc, SI_um
 import numbat
-from plottools import save_and_close_figure
+from plotting.plottools import save_and_close_figure
 import reporting
-import plotting.plottools
+import plotting.plottools as plottools
 from numbattools import is_real_number, is_float_pair
 
 

@@ -40,7 +40,7 @@ import nbgmsh
 import femmesh
 from materialprops import OpticalProps, ElasticProps
 
-import plotting.plottools
+import plotting.plottools as plottools
 import plotting.gmsh as pltgmsh
 import plotting.profiles as pltprof
 

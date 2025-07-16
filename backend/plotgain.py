@@ -28,7 +28,7 @@ import numbat
 from nbtypes import SI_GHz
 import reporting
 
-from plottools import save_and_close_figure
+from plotting.plottools import save_and_close_figure
 from plotmodes import Decorator, TidyAxes
 
 
