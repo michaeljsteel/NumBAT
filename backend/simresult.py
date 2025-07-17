@@ -16,10 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import numpy as np
-#from pathlib import Path
-
 import copy
+import collections.abc
+import numpy as np
 
 from modes import ModeAC, ModeEM, ModeInterpolator
 
@@ -268,10 +267,14 @@ class SimResult:
         domain_s = ftag.domain_type_as_str()
         field_s = ftag.field_type_as_str()
 
-        if mode_indices == 'All' or mode_indices is None:
+        # mode_indices can be list or string or nothing
+        #print(mode_indices, type(mode_indices), isinstance(mode_indices, collections.abc.Sequence))
+        if (isinstance(mode_indices, str) and mode_indices== 'All') or mode_indices is None:
             md_range = range(self.n_modes)
+        elif isinstance(mode_indices, collections.abc.Sequence) or isinstance(mode_indices, np.ndarray):
+            md_range = list(mode_indices)
         else:
-            md_range = mode_indices
+            md_range = range(self.n_modes)
 
         ntoplot = len(md_range)
 
@@ -288,31 +291,7 @@ class SimResult:
         plot_params.update(d_args)
         plot_params['field_type'] = ftag.as_field_type()
 
-
-        # plot_params.update(
-        #     {
-        #         'xlim_min': xlim_min,
-        #         'xlim_max': xlim_max,
-        #         'ylim_min': ylim_min,
-        #         'ylim_max': ylim_max,
-        #         'aspect': aspect,
-        #         #'field_type': field_type,
-        #         'field_type': ftag.as_field_type(),
-        #         'hide_vector_field': hide_vector_field,
-        #         'quiver_points': quiver_points,
-        #         'num_ticks': num_ticks,
-        #         'colorbar': colorbar,
-        #         'contours': contours,
-        #         'contour_lst': contour_lst,
-        #         'prefix': prefix,
-        #         'suffix': suffix,
-        #         'ticks': ticks,
-        #         'decorator': decorator,
-        #         'suppress_imimre': suppress_imimre,
-        #     }
-        # )
-
-        print('doing mode range', md_range)
+        print('mdrange', md_range)
         for m in progressBar(md_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps,
                                            ftag.as_field_type(), plot_params = plot_params)
@@ -335,16 +314,9 @@ class SimResult:
         logy=False,
     ):
 
-        #field_code = FieldCode(field_type, self.is_AC())
-
         ftag = FieldTag.make_from_field(field_type, self.is_AC())
         if ftag.is_EM_H():
             self.make_H_fields()
-
-        #if field_code.is_EM_H():
-        #   self.make_H_fields()
-
-      #  modetype = field_code.mode_type_as_str() #"acoustic" if field_type == FieldType.AC else "em"
 
         domain_s = ftag.domain_type_as_str()
         field_s = ftag.field_type_as_str()

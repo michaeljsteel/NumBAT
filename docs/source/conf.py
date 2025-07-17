@@ -19,8 +19,6 @@
 
 import sys
 import re
-from pathlib import Path
-
 
 #MOCK_MODULES = ['scipy', 'scipy.interpolate', 'numpy',
 #    'matplotlib', 'matplotlib.pyplot', 'matplotlib.mlab', 'matplotlib.gridspec',

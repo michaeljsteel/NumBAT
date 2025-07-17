@@ -21,11 +21,6 @@
 #TODO: reduce number of imports
 
 import copy
-import matplotlib.pyplot as plt
-
-import numpy as np
-import scipy.interpolate
-
 
 import numbat
 import reporting
@@ -36,11 +31,8 @@ import meshing.templates as mshtemplates
 
 import materials
 from modecalcs import em_mode_calculation, ac_mode_calculation
-import nbgmsh
-import femmesh
 from materialprops import OpticalProps, ElasticProps
 
-import plotting.plottools as plottools
 import plotting.gmsh as pltgmsh
 import plotting.profiles as pltprof
 
@@ -162,7 +154,6 @@ class Structure:
         for k,v in kwargs.items():
             if k.startswith('material_') and k !='material_bkg':
                 self.d_materials[k[9:]] = v
-
 
         n_mats_em = self._build_waveguide_geometry()
 

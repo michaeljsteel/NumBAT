@@ -50,6 +50,7 @@ inteldebug:
 
 intel:
 	- rm -rf build_intel
+
 	meson setup --reconfigure --buildtype=release build_intel \
 		--native-file nb-linuxintel-native-file.ini
 

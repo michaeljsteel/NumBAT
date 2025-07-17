@@ -1,44 +1,44 @@
 
-PYTHON=python3
+PYTHON=python
 
 .PHONY: all
-all: josab01 josab02 josab03 josab04 josab05 josab06 
-all2: josab04 josab05 josab06 
+all: josab01 josab02 josab03 josab04 josab05 josab06
+all2: josab04 josab05 josab06
 
 .PHONY: allfast
 allfast: fjosab01 fjosab02 fjosab03 fjosab04 fjosab05 fjosab06
 allfastb: fjosab04 fjosab05 fjosab06
 
-josab01: 
+josab01:
 	$(PYTHON) sim-josab-01.py
-fjosab01: 
+fjosab01:
 	$(PYTHON) sim-josab-01.py fast=1
 
-josab02: 
-	$(PYTHON) sim-josab-02.py 
+josab02:
+	$(PYTHON) sim-josab-02.py
 	$(PYTHON) sim-josab-02b-acdisp.py
-fjosab02: 
+fjosab02:
 	$(PYTHON) sim-josab-02.py fast=1
 	$(PYTHON) sim-josab-02b-acdisp.py fast=1
 
-josab03: 
+josab03:
 	$(PYTHON) sim-josab-03.py
-fjosab03: 
+fjosab03:
 	$(PYTHON) sim-josab-03.py fast=1
 
-josab04: 
+josab04:
 	$(PYTHON) sim-josab-04.py
-fjosab04: 
+fjosab04:
 	$(PYTHON) sim-josab-04.py fast=1
 
-josab05: 
+josab05:
 	$(PYTHON) sim-josab-05.py
-fjosab05: 
+fjosab05:
 	$(PYTHON) sim-josab-05.py fast=1
 
-josab06: 
+josab06:
 	$(PYTHON) sim-josab-06.py
-fjosab06: 
+fjosab06:
 	$(PYTHON) sim-josab-06.py fast=1
 
 clean:

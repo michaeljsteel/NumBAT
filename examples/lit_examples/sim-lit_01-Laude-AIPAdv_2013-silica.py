@@ -89,30 +89,8 @@ if recalc:
 else:
     sim_AC = numbat.load_simulation(prefix+'_ac')
 
-print('maintest',
-    np.max(np.abs(sim_AC.fem_evecs[0,:6,0,:])),
-    np.max(np.abs(sim_AC.fem_evecs[1,:6,0,:])),
-    np.max(np.abs(sim_AC.fem_evecs[2,:6,0,:])),
-      '\n',
-    np.max(np.abs(sim_AC.fem_evecs[0,:6,1,:])),
-    np.max(np.abs(sim_AC.fem_evecs[1,:6,1,:])),
-    np.max(np.abs(sim_AC.fem_evecs[2,:6,1,:])),
-    )
-
-
-
 gain_box = integration.get_gains_and_qs(sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
-
-print('maintest2',
-    np.max(np.abs(sim_AC.fem_evecs[0,:6,0,:])),
-    np.max(np.abs(sim_AC.fem_evecs[1,:6,0,:])),
-    np.max(np.abs(sim_AC.fem_evecs[2,:6,0,:])),
-      '\n',
-    np.max(np.abs(sim_AC.fem_evecs[0,:6,1,:])),
-    np.max(np.abs(sim_AC.fem_evecs[1,:6,1,:])),
-    np.max(np.abs(sim_AC.fem_evecs[2,:6,1,:])),
-    )
 
 
 print('Gains by acoustic mode:')

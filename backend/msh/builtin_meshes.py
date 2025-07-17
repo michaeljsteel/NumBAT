@@ -782,6 +782,27 @@ class CircOnion(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
+    def check_dimensions(self):
+        dom_x = self.get_param("domain_x")
+        dom_y = self.get_param("domain_y")
+        rad_a = self.get_param("inc_a_x") / 2.0
+
+        diam_outer = 2* rad_a
+        for c in ('b','c','d','e','f','g','h','i','j','k','l','m','n','o'):
+            t_rad = self.get_param('inc_%s_x' % c)
+            diam_outer += t_rad * 2
+
+        msg = ""
+
+        if diam_outer >= dom_x:
+            msg += f"Outer cylinder has total diameter of {diam_outer} which is larger than domain width (domain_x={dom_x}).\n"
+        if diam_outer >= dom_y:
+            msg += f"Outer cylinder has total diameter of {diam_outer} which is larger than domain height (domain_y={dom_y}).\n"
+
+        dims_ok = not len(msg)
+        return dims_ok, msg
+
+
     def draw_mpl_frame(self, ax, styles):
         draw_onion_frame(ax, self, styles)
 

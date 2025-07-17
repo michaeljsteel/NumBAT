@@ -423,7 +423,20 @@ contains
       vres(3) = dveca(1) * cvecb(2) - dveca(2) * cvecb(1)  ! fz = gx hy - gy hx
    end subroutine
 
+subroutine initialise_pyerror(nberr)
+   type(NBError) nberr
+   call nberr%reset()
+end subroutine
 
+subroutine finalise_pyerror(nberr, errco, emsg)
+   type(NBError) nberr
+
+   integer(8), intent(out) :: errco
+   character(len=EMSG_LENGTH), intent(out) :: emsg
+
+   call nberr%to_py(errco, emsg);
+
+end subroutine
 
 
 end module numbatmod

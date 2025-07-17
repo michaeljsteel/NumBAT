@@ -4,22 +4,22 @@
 
 ! \alpha = \Omega^2/Energy_aC \int  eta_ijkl d_i u_j^* d_k u_l
 
-subroutine initialise_pyerror(nberr)
-   use numbatmod
-   type(NBError) nberr
-   call nberr%reset()
-end subroutine
+! subroutine initialise_pyerror(nberr)
+!    use numbatmod
+!    type(NBError) nberr
+!    call nberr%reset()
+! end subroutine
 
-subroutine finalise_pyerror(nberr, errco, emsg)
-   use numbatmod
-   type(NBError) nberr
+! subroutine finalise_pyerror(nberr, errco, emsg)
+!    use numbatmod
+!    type(NBError) nberr
 
-   integer(8), intent(out) :: errco
-   character(len=EMSG_LENGTH), intent(out) :: emsg
+!    integer(8), intent(out) :: errco
+!    character(len=EMSG_LENGTH), intent(out) :: emsg
 
-   call nberr%to_py(errco, emsg);
+!    call nberr%to_py(errco, emsg);
 
-end subroutine
+! end subroutine
 
 subroutine ac_alpha_analytic_impl (n_modes, n_msh_elts, n_msh_pts, &
    m_elnd_to_mshpt, v_mshpt_xy, n_elt_mats, v_elt_material,  &

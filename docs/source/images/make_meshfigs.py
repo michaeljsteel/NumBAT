@@ -104,7 +104,6 @@ def get_sizes(im,x0,x1,y0,y1,un_x, un_y):
     of the grid plot corners. Express x0, x1, y0, y1 as fractions of the
     whole window.'''
 
-    sz = im.size
     bl = im.size[0]*x0
     br = im.size[0]*x1
     bt = im.size[1]*y0
@@ -124,7 +123,6 @@ def get_sizesb(im, un_x, un_y, border=20):
     of the grid plot corners. Express x0, x1, y0, y1 as fractions of the
     whole window.'''
 
-    sz = im.size
     bl = border                   # new left border
     br = im.size[0] - border      # new right border
     bt = border
@@ -190,7 +188,7 @@ def do_oneincl_rect_annotate(im, un_x, un_y, inc_a_x, inc_a_y):
     ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
     add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
 
-    xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx;
+    xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx
     ys = y0-.53*inc_a_y*scaly; yf = ys
     add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 
@@ -229,7 +227,7 @@ def do_oneincl_circ_annotate(im, un_x, un_y, inc_a_x, inc_a_y):
     ys = y0+.5*inc_a_y*scaly; yf = y0-.5*inc_a_y*scaly
     add_dim(im, bw, bh, 'inc_a_y', xs, ys, xf, yf, 'W')
 
-    xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx;
+    xs = x0-.5*inc_a_x*scalx; xf = x0+.5*inc_a_x*scalx
     ys = y0-.53*inc_a_y*scaly; yf = ys
     add_dim(im, bw, bh, 'inc_a_x', xs, ys, xf, yf, 'N')
 

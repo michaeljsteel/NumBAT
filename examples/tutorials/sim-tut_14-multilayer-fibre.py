@@ -5,7 +5,6 @@
 """
 
 import os
-import time
 import sys
 import copy
 import math
@@ -338,9 +337,6 @@ def solve_em_dispersion(prefix, wguide, lam0, ncore, nclad, rcore):
     klo = 0.9*k0
     khi = 1.1*k0
 
-    lam_lo=twopi/klo  # this is free space wavenumber in inverse nm
-    lam_hi=twopi/khi
-
     kvec=np.linspace(klo, khi, ksteps_num)
 
     (Vvec_num, neff_num) = solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rcore, ncore, nclad)
@@ -348,8 +344,6 @@ def solve_em_dispersion(prefix, wguide, lam0, ncore, nclad, rcore):
     make_em_plots(prefix, Vvec_num, neff_num, ncore, nclad)
 
 def do_main():
-
-    start = time.time()
 
     prefix, refine_fac = starter.read_args(14, sys.argv, refine=4)
 
@@ -405,13 +399,11 @@ def do_main():
 
     inc_shape = 'circ_onion'
 
-    domain_x = 2*(rcore + 7*(h_1+h_2))
-    #domain_x = acore*1.1  # system size in nm
+    domain_x = 2*(rcore + 8*(h_1+h_2))
     domain_y = domain_x
 
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
                                   material_bkg=mat_vac, # surroundings
-                                  #inc_a_x = acore, material_a=mat_vac,   # core
                                   inc_a_x = acore, material_a=mat_2,   # core
                                   inc_b_x = h_1, material_b=mat_1,
                                   inc_c_x = h_2, material_c=mat_2,
@@ -429,7 +421,6 @@ def do_main():
                                   inc_o_x = h_2, material_o=mat_2,
 
                             lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
-
     wguide.plot_mesh(prefix)
     wguide.plot_refractive_index_profile(prefix)
 
