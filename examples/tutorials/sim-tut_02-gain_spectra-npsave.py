@@ -136,7 +136,7 @@ for (i, nu) in enumerate(v_nu):
 # with xlim_min, xlim_max etc.
 
 print('\nPlotting acoustic modes')
-#simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
+simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
 
 #if reuse_old_fields:
 # Calculate the acoustic loss from our fields.

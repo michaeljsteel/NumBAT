@@ -3,7 +3,7 @@ mkdir -p tutorial
 mkdir -p josab_tutorial
 mkdir -p lit_examples
 
-for tdir in  02 06a 06b 07 08 11a 
+for tdir in  02 06a 06b 07 08 11a
     #14_0 14_5 14_10
 do
 mkdir -p tutorial/tut_${tdir}-fields
@@ -20,12 +20,12 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
         tut_06a-gain_spectra.png tut_06a-gain_spectra-logy.png tut_06a-refractive_index.png tut_06b-refractive_index.png \
         tut_06a-fields/AC_mode_05.png tut_06a-fields/AC_mode_08.png tut_06a-fields/EM_E_mode_00.png \
         tut_08-acdisp_slotwidth.png \
-        tut_09-gain_spectra.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \
         tut_11a-fields/AC_mode_17.png tut_11a-fields/AC_mode_32.png tut_11a-fields/AC_mode_39.png tut_11a-fields/AC_mode_44.png tut_11a-fields/AC_mode_66.png tut_11a-fields/AC_mode_69.png tut_11a-fields/EM_E_mode_00.png  \
         tut_12-sil-emdisp_ng.png tut_12-sil-emdisp_Vb.png tut_12-sil-emdisp_Vneff.png tut_12-smf28-emdisp_ng.png tut_12-smf28-emdisp_Vb.png tut_12-smf28-emdisp_Vneff.png \
-        tut_13-smf28-acdisp_qneff.png tut_13-smf28-acdisp_qnu.png 
+        tut_13-smf28-acdisp_qneff.png tut_13-smf28-acdisp_qnu.png
 
+# tut_09-gain_spectra.png \
 #        tut_14_0-fields tut_14_10-fields tut_14_5-fields tut_14-emdisp_ng.png tut_14-emdisp_Vneff.png \
 #        tut_14_0-fields/EM_E_mode_00.png tut_14_0-fields/EM_E_mode_01.png tut_14_0-fields/EM_E_mode_02.png tut_14_0-fields/EM_E_mode_03.png tut_14_10-fields/EM_E_mode_00.png tut_14_10-fields/EM_E_mode_01.png tut_14_10-fields/EM_E_mode_02.png tut_14_10-fields/EM_E_mode_03.png tut_14_5-fields/EM_E_mode_00.png tut_14_5-fields/EM_E_mode_01.png tut_14_5-fields/EM_E_mode_02.png tut_14_5-fields/EM_E_mode_03.png
     do
@@ -41,7 +41,7 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
         tut_07-out/tut_07-gain_spectra.png tut_07-out/tut_07-gain_spectra-logy.png \
         tut_07-out/tut_07-refractive_index.png tut_07-out/tut_07-refractive_index_xcut.png \
         tut_07-out/tut_07-refractive_index_ycut.png tut_07-out/tut_07-elastic_velocity_v0.png \
-        tut_07-out/tut_07-elastic_velocity_xcut.png  tut_07-out/tut_07-elastic_velocity_linecut.png 
+        tut_07-out/tut_07-elastic_velocity_xcut.png  tut_07-out/tut_07-elastic_velocity_linecut.png
     do
         cp -pR ${BASE}/tutorials/$im $im
     done
@@ -67,7 +67,7 @@ mkdir -p josab_tutorial/josab_${ndir}-fields
 done
 
 
-cd josab_tutorial 
+cd josab_tutorial
 
 for im in josab_01-fields/EM_E_mode_01.png josab_01-fields/AC_mode_28.png josab_01-gain_spectra.png \
     josab_02a-fields/EM_E_mode_00.png josab_02a-fields/AC_mode_02.png josab_02a-fields/AC_mode_06.png josab_02a-gain_spectra.png  \

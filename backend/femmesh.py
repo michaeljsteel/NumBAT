@@ -241,7 +241,6 @@ class FemMesh:
     def store_fortran_em_mesh_properties(self, type_el, node_physindex, m_elnd_to_mshpt, v_mshpt_xy):
         """Called after Fortran calc_modes_em() to store its mesh properties."""
 
-        print("storing em")
         self.v_el_2_mat_idx = type_el
         self.m_elnd_to_mshpt = m_elnd_to_mshpt
         self.v_mshpt_xy = v_mshpt_xy

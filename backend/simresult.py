@@ -291,7 +291,6 @@ class SimResult:
         plot_params.update(d_args)
         plot_params['field_type'] = ftag.as_field_type()
 
-        print('mdrange', md_range)
         for m in progressBar(md_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps,
                                            ftag.as_field_type(), plot_params = plot_params)
