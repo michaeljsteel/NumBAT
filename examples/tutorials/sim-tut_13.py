@@ -21,7 +21,7 @@ sys.path.append(str(Path("../../backend")))
 import numbat
 import materials
 from nbthread import launch_worker_threads_and_wait, launch_worker_processes_and_wait
-from nbanalytic import ElasticRod, chareq_elastic_rod
+from nbanalytic.nbanalytic import ElasticRod, chareq_elastic_rod
 from nbtypes import twopi
 
 import starter

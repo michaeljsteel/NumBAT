@@ -24,6 +24,8 @@ memtest:
 
 tut01:
 	$(PYTHON) sim-tut_01-first_calc.py
+ftut01:
+	$(PYTHON) sim-tut_01-first_calc.py
 
 tut02:
 	$(PYTHON) sim-tut_02-gain_spectra-npsave.py

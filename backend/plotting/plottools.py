@@ -17,10 +17,18 @@
 from PIL import Image, ImageOps
 from pathlib import Path
 
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 
 import numbat
+
+def get_rgb_for_poln(px, py, pz):
+    vp = np.array([px, py, pz])
+    pmod = math.sqrt(px*px.conjugate() + py*py.conjugate() + pz.pz.conjugate())
+    # RGB values are in range 0-1
+    rgb = np.abs(vp) / pmod
+    return rgb
 
 def save_and_close_figure(fig, fig_fname):
 
