@@ -30,12 +30,12 @@ coat2y = 4;
 coat2_w = coat2x/dx_in_nm;
 coat2_h = coat2y/dx_in_nm;
 
-lc = 0.1; // background and unitcell edge
-lc_refine_1 = lc/1; // rib
-lc_refine_2 = lc/1; // slab
-lc_refine_3 = lc/1; // coat
-lc_refine_4 = lc/1; // slab2
-lc_refine_5 = lc/1; // coat2
+lc_bkg = 0.05; // background and unitcell edge
+lc_refine_1 = lc_bkg/2.0; // rib
+lc_refine_2 = lc_bkg/2.0; // slab
+lc_refine_3 = lc_bkg/2.0; // coat
+lc_refine_4 = lc_bkg/2.0; // slab2
+lc_refine_5 = lc_bkg/2.0; // coat2
 
 hy = dy/2 + (slab_h/2) + radius1y; // 
 hx = 0.;
@@ -44,10 +44,10 @@ x0 = -d/2;
 y0 = hy-slab_h;
 
 
-Point(1) = {x0, y0, 0, lc};
-Point(2) = {x0-hx, y0-dy, 0, lc};
-Point(3) = {x0-hx+d, y0-dy, 0, lc};
-Point(4) = {x0+d, y0, 0,lc};
+Point(1) = {x0, y0, 0, lc_bkg};
+Point(2) = {x0-hx, y0-dy, 0, lc_bkg};
+Point(3) = {x0-hx+d, y0-dy, 0, lc_bkg};
+Point(4) = {x0+d, y0, 0,lc_bkg};
 
 // Slab
 Point(5) = {x0+d/2-slab_w/2, y0-hy+slab_h, 0, lc_refine_2};

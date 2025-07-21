@@ -1293,7 +1293,7 @@ class RibDoubleCoated(UserGeometryBase):
             ("slab2y = 5;", "slab2y = %f;", "slab_b_h"),
             ("coat2x = 4;", "coat2x = %f;", "coat2_w"),
             ("coat2y = 4;", "coat2y = %f;", "coat2_h"),
-            ("lc_bkg = 0.05;", "lc = %f;", "lc_bkg"),
+            ("lc_bkg = 0.05;", "lc_bkg = %f;", "lc_bkg"),
             ("lc_refine_1 = lc_bkg/2.0;", "lc_refine_1 = lc_bkg/%f;", "lc_refine_1"),
             ("lc_refine_2 = lc_bkg/2.0;", "lc_refine_2 = lc_bkg/%f;", "lc_refine_2"),
             ("lc_refine_3 = lc_bkg/2.0;", "lc_refine_3 = lc_bkg/%f;", "lc_refine_3"),

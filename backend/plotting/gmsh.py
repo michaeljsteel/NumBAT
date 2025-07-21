@@ -95,6 +95,7 @@ def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref,
                             fout_join,
                             #clip=(0,0,1,0), # gmsh leaves a vertical black line on right edge
                             #trimwhite=True
+                            delete_inputs=True,
                             )
     return fout_wire, fout_mesh, fout_join
 
