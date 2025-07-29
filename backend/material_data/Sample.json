@@ -1,0 +1,22 @@
+ {
+ "format": "NumBATMaterial-fmt-2.0",
+  "material_name": "Sample",  // Name of this file, will be used as identifier
+  "chemical": "Sample",  // Chemical composition
+  "author": "Smith",  // Author of data
+  "date": "2016",  // Year of data publication/creation
+  "institution": "Uni. of Sydney",  // Source institution
+  "doi": "dx.doi.org/xx.xxxx/x.xxxxxxx",  // doi or, failing that, the http address
+ "crystal_class": "Isotropic",
+  "Re_n": 2.13,  // Real part of refractive index []
+  "Im_n": 0.0,  // Imaginary part of refractive index []
+  "s": 5870,  // Density [kg/m3]
+  "c_11": 54e9,  // Stiffness tensor component [Pa]
+  "c_12": 18e9,  // Stiffness tensor component [Pa]
+  "c_44": 18e9,  // Stiffness tensor component [Pa]
+  "p_11": 0.257,  // Photoelastic tensor component []
+  "p_12": 0.241,  // Photoelastic tensor component []
+  "p_44": 0.0079,  // Photoelastic tensor component []
+  "eta_11": 5.9e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_12": 5.16e-3,  // Acoustic loss tensor component [Pa s]
+  "eta_44": 0.62e-3  // Acoustic loss tensor component [Pa s] 
+}

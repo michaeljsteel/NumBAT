@@ -1,4 +1,3 @@
-
 # Copyright (C) 2017-2025  Michael Steel
 
 # NumBAT is free software: you can redistribute it and/or modify
@@ -16,7 +15,7 @@
 
 
 import numpy as np
-import scipy.integrate as sciint
+from scipy.integrate import simpson
 import math
 import subprocess
 import numbers
@@ -25,48 +24,52 @@ import collections.abc as abc
 import reporting
 
 def is_real_number(x):
-    return isinstance(x, numbers.Real)  # need numpy.int32, int36, float64, etc
+    """Return True if x is a real number (including numpy types)."""
+    return isinstance(x, numbers.Real)
 
 def is_float_pair(x):
-    #print('float pair test', x,
-    #isinstance(x, abc.Sequence) ,len(x)==2, is_real_number(x[0]), is_real_number(x[1]))
-
+    """Return True if x is a sequence or array of two real numbers."""
     is_arr = isinstance(x, abc.Sequence) or isinstance(x, np.ndarray)
     return is_arr and len(x)==2 and is_real_number(x[0]) and is_real_number(x[1])
 
 def almost_zero(x, tol=1e-10):
+    """Return True if x is close to zero within absolute tolerance tol."""
     return math.isclose(x, 0, abs_tol=tol)
 
 def almost_unity(x, tol=1e-10):
+    """Return True if x is close to one within absolute tolerance tol."""
     return math.isclose(x, 1, abs_tol=tol)
 
 def np_min_max(v):
+    """Return the minimum and maximum of a numpy array v as a tuple."""
     return np.min(v), np.max(v)
 
-
 def int2D(mat, dx=1.0, dy=1.0):
-    return np.sum(np.sum(mat)) * dx * dy
+    """Return the 2D integral of mat using the rectangle rule with spacings dx, dy."""
+    return np.sum(mat) * dx * dy
 
 def int2D_trapz(mat, dx=1.0, dy=1.0):
+    """Return the 2D integral of mat using the trapezoidal rule with spacings dx, dy."""
     return np.trapz(np.trapz(mat)) * dx * dy
 
 # This does not work well on non-rectangular domains where there are sudden
 # jumps at outer boundaries
 def int2D_simp(mat, dx=1.0, dy=1.0):
-    return sciint.simpson(sciint.simpson(mat)) * dx * dy
-
+    """Return the 2D integral of mat using Simpson's rule with spacings dx, dy."""
+    return simpson(simpson(mat)) * dx * dy
 
 def signed_log10(mat, logmax=5, tol=1e-14):
+    """Return a signed log10 of mat, shifted by logmax, with small values clipped to zero."""
     lmat = np.log10(np.abs(mat)+tol) + logmax
     lmat = np.where(lmat>0, lmat, 0)
     lmat *= np.sign(mat)
     return lmat
 
-
-
 def process_fortran_return(resm, msg):
-    """Check return values of any Fortran function with errco, emsg style return codes"""
-
+    """
+    Check return values of any Fortran function with errco, emsg style return codes.
+    If an error is detected, report and exit. Otherwise, return the result tuple without error info.
+    """
     fort_err, fort_mesg = resm[-2:]
     if fort_err:
         fort_mesg = str(fort_mesg, "utf-8")  # fort_mesg comes back as a byte string.
@@ -78,15 +81,19 @@ def process_fortran_return(resm, msg):
     else:  # everything is fine
         return resm[:-2]
 
-
-
 def indent_string(s_in, indent=2):
+    """Indent every line in s_in by the specified number of spaces."""
     s_ind = indent * ' '
     s_out= s_ind + s_in
     s_out=s_out.replace('\n', '\n'+s_ind)
     return s_out
 
 def run_subprocess(cmd, proc_name, cwd='', exit_on_fail=True):
+    """
+    Run a subprocess with the given command and working directory.
+    If exit_on_fail is True, report and exit on failure.
+    Returns the process return code.
+    """
     try:
         comp_stat = subprocess.run(cmd, cwd=cwd)
         if comp_stat.returncode and exit_on_fail:
@@ -97,14 +104,19 @@ def run_subprocess(cmd, proc_name, cwd='', exit_on_fail=True):
 
     return comp_stat.returncode
 
-
 def f2f_with_subs(fn_in, fn_out, d_subs):
-
+    """
+    Read a file, apply string substitutions from d_subs, and write to a new file.
+    Args:
+        fn_in (str): Input filename.
+        fn_out (str): Output filename.
+        d_subs (dict): Dictionary of string substitutions {old: new}.
+    """
     with open(fn_in, 'r') as fin:
-        conv_tmp = fin.read()
+        conv = fin.read()
 
     for k, v in d_subs.items():
-        conv = conv_tmp.replace(k, v)
+        conv = conv.replace(k, v)
 
     with open(fn_out, 'w') as fout:
         fout.write(conv)

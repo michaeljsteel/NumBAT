@@ -118,7 +118,7 @@ Some key changes you will need to make are as follows:
 
 * A waveguide is now constructed using ``nbapp.make_waveguide`` rather than ``object.Structure``.
 
-* The parameter names for some waveguide types have changed to become more intuitive than the generic ``inc_a_x`` approach.  You can find details for a given structure using ``NumBATApp().wg_structure_help(inc_shape)``.
+* The parameter names for some waveguide types have changed to become more intuitive than the generic ``inc_a_x`` approach.  You can find details for a given structure using ``NumBATApp()._wg_structure_help(inc_shape)``.
 
 * The interface for creating materials has changed. You now call the ``materials.make_material(`` *name* ``)`` function. For example ``material_a = materials.make_material('Vacuum')``.
 

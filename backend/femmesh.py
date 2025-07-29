@@ -583,7 +583,7 @@ class FEMScalarFieldPlotter:
 
 
     def __init__(self, wguide, n_points=500):
-        """Build objects to hold a scalar field represented on a FEM mesh.
+        """Build structure to hold a scalar field represented on a FEM mesh.
 
         The FEM mesh is constructed from the mesh file mesh_mail_fname.
         n_points is the nominal linear resolution of the rectangular grid output,

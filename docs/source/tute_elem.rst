@@ -126,7 +126,7 @@ Here are some further elements to note about this example:
 
 #. It is frequently useful to be able to save and load the results of simulations to adjust plots without having to repeat the entire calculation. Here the flag ``reuse_old_fields`` determines whether the calculation should be done afresh and use previously saved data. This is performed using the ``save_simulation()`` and ``load_simulation()`` calls.
 
-#. Plots of the modal field profiles are obtained using the ``plot_modes`` methods of the EM and elastic sim result objects. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``field_type`` argument. The selection of mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
+#. Plots of the modal field profiles are obtained using the ``plot_modes`` methods of the EM and elastic sim result structure. Both electric and magnetic fields can be selected using ``EM_E`` or ``EM_H`` as the value of the ``field_type`` argument. The selection of mode numbers to be plotted is specified by ``ivals``.  These fields are stored in a folder ``tut_02-fields/`` within the tutorial folder.
    Later we will see how an alternative approach in which we extract a ``Mode`` object from a ``Simulation`` which represents a single mode that is able to plot itself. This can be more convenient.
 
 #. The overall amplitude of the modal fields is arbitrary.
@@ -365,9 +365,9 @@ To understand this, it is helpful to see the refractive index and acoustic veloc
 Previously, we have seen how to generate images of the Gmsh template and mesh, but that only gives
 an indirect sense of the final structure.
 
-In this example, we create objects that can plot the refractive index profile and acoustic velocity profile directly.
+In this example, we create structure that can plot the refractive index profile and acoustic velocity profile directly.
 These are created with the calls ``wguide.get_structure_plotter_refractive_index()`` and
-``wguide.get_structure_plotter_acoustic_velocity()``. Then, on each of these objects we can call one or more methods to generate
+``wguide.get_structure_plotter_acoustic_velocity()``. Then, on each of these structure we can call one or more methods to generate
 files containing 1D and 2D profiles. The 1D profiles can be made along any x-cut, any y-cut, or along a straight line between
 any two points.
 

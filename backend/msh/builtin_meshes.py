@@ -13,7 +13,7 @@ nmtoum = 0.001  # template radii are in nm but matplotlib plots are in microns
 
 #TODO:
 # expand allowed_/reqd_ parameters to take a 'is_dim' field.
-# have objects.Structure determine whether units are microns or nm.
+# have structure.Structure determine whether units are microns or nm.
 # multiply by nm_to_um  in get_param if required.
 
 
@@ -1273,9 +1273,10 @@ class RibDoubleCoated(UserGeometryBase):
                 "coat2_h": "vertical thickness of outer coating layer",
                 "material_bkg": "background material",
                 "material_a": "material of raised rib core",
-                "material_b": "material of substrate slab",
+                "material_b": "material of primary waveguide substrate layer (often the same as material_a)" ,
                 "material_c": "material of inner coating layer",
-                "material_d": "material of outer coating layer",
+                "material_d": "material of lower substrate layer",
+                "material_e": "material of outer coating layer",
             }
         )
 

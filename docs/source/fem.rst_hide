@@ -93,11 +93,11 @@ The important thing is to make a note of the chosen labeling! This is best done 
 Step 3
 ~~~~~~~~~~~~~~~~~~~~
 
-The last step is to add your geometry to the make_mesh function in NumBAT/backend/objects.py.
+The last step is to add your geometry to the make_mesh function in NumBAT/backend/structure.py.
 
-This involves adding a new elif statement for the inc_shape, in this case 'rib_coated', and then adding lines that define how the final mesh will be created based on the template. This involves giving the mesh a name, specifying the number of element types, and modifying the template geometric parameters. See objects.py for details.
+This involves adding a new elif statement for the inc_shape, in this case 'rib_coated', and then adding lines that define how the final mesh will be created based on the template. This involves giving the mesh a name, specifying the number of element types, and modifying the template geometric parameters. See structure.py for details.
 
-One last thing, if the geometry contains only rectangular shapes, and all elements are therefore linear (rather than curvi-linear), you should also add the inc_shape name to the self.linear_element_shapes list in objects.py. This will ensure that the most efficient semi-analytic integration routines are used. If NumBAT is not told that the mesh is linear it will default to using numerical quadrature.
+One last thing, if the geometry contains only rectangular shapes, and all elements are therefore linear (rather than curvi-linear), you should also add the inc_shape name to the self.linear_element_shapes list in structure.py. This will ensure that the most efficient semi-analytic integration routines are used. If NumBAT is not told that the mesh is linear it will default to using numerical quadrature.
 
 
 

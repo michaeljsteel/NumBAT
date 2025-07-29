@@ -21,7 +21,7 @@ sys.path.append(str(Path('../../backend')))
 import numbat
 import materials
 from nbthread import launch_worker_processes_and_wait
-from nbanalytic.nbanalytic import TwoLayerFiberEM, EMPoln
+from nbanalytic.emtwolayerfiber import TwoLayerFiberEM, EMPoln
 
 import starter
 

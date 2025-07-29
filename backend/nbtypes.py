@@ -20,7 +20,7 @@
 import math
 from enum import Enum, IntEnum, auto
 from numpy import array
-import copy
+import scipy.constants as const
 
 
 #### Natural constants ########################################################
@@ -28,11 +28,11 @@ import copy
 # These are all SI 2019 values
 
 twopi = math.pi * 2.0
-SI_Planck_h = 6.626_070_15e-34            # Planck's constant in Js (exact)
-SI_speed_c = 299792458                     # Speed of light in vacuum in m/s (exact)
-SI_charge_e = 1.602_176_634e-19            # Charge of an electron in C (exact)
-SI_permittivity_eps0 = 8.854_187_8188e-12
-SI_permeability_mu0 = 1.256_637_061_27e-6
+SI_Planck_h = const.Planck            # Planck's constant in Js (exact)
+SI_speed_c = const.speed_of_light                 # Speed of light in vacuum in m/s (exact)
+SI_charge_e = const.e                          # Charge of an electron in C (exact)
+SI_permittivity_eps0 = const.epsilon_0
+SI_permeability_mu0 = const.mu_0
 SI_vacuum_impedance_Z0 = math.sqrt(SI_permeability_mu0/SI_permittivity_eps0)
 
 ###############################################################################

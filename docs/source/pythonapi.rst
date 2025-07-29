@@ -10,21 +10,24 @@ Python Interface API
 
 
 
-This chapter provides a technical auto-generated summary  of the NumBAT Python API.
+This chapter provides an auto-generated summary of the NumBAT Python API.
 
 The API consists of several core modules\:
 
   - ``numbat``, for creating the top-level |NUMBAT| application;
   - ``materials``, for defining waveguide materials and their properties;
-  - ``objects``, for constructing waveguides from materials;
+  - ``voigt``, for manipulating tensor quantities.
+  - ``structure``, for constructing waveguides from materials;
   - ``modecalcs``, for the core calculation of electromagnetic and acoustic modes;
   - ``integration``, for performing calculations relating to SBS gain;
   - ``plotting``, for creating output plots of modes and gain functions.
 
+For the most part, users should only encounter the ``numat`` and ``integration`` modules.
+
 numbat module
 =============
 
-The ``numpy`` module contains the :class:`NumBATApp` through which the bulk of the |NUMBAT| API is accessed.
+The ``numbat`` module contains the :class:`NumBATApp` through which the bulk of the |NUMBAT| API is accessed.
 
 Creating a :class:`NumBATApp` object is normally the first main step in a |NUMBAT| script.
 
@@ -45,14 +48,33 @@ The primary class is :class:`materials.Material` however users will rarely use t
     :undoc-members:
     :show-inheritance:
 
+voigt module
+================
 
-objects module
+The ``voigt`` module provides functions for performing a number of tensor operations with regular and Voigt style tensors.
+
+.. automodule:: voigt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+modes module
+================
+
+The ``modes`` module defines the main classes for displaying and interrogating optical and elastic modes.
+
+.. automodule:: modes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+structure module
 ==============
 
-The ``objects`` module provides functions for defining and constructing waveguides.
+The ``structure`` module provides functions for defining and constructing waveguides.
 The diagrams in Chapter 2 can be used to identify which parameters (``slab_a_x, slab_c_y, material_d`` etc) correspond to each region.
 
-.. automodule:: objects
+.. automodule:: structure
     :members:
     :undoc-members:
     :show-inheritance:

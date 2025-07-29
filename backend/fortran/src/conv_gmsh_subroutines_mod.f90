@@ -187,7 +187,7 @@ subroutine check_point_separations(n_pts, vx, vy, nberr)
    mj = 0
 
    write(*,*) 'Looking for the smallest node separation.'
-   write(*,*) 'If you just trust your mesh, set assertions_on =False in objects.py)'
+   write(*,*) 'If you just trust your mesh, set assertions_on =False in structure.py)'
 
    minsep=1e10
    do i = 1, n_pts-1

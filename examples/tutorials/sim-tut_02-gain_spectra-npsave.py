@@ -3,7 +3,7 @@
 
     Calculate the backward SBS gain spectra of a silicon waveguide surrounded in air.
 
-    Show how to save simulation objects (eg. EM mode calcs) to expedite the process
+    Show how to save simulation structure (eg. EM mode calcs) to expedite the process
     of altering later parts of simulations.
 
     Show how to implement integrals in python and how to load data from Comsol.
@@ -146,6 +146,7 @@ fixed_Q=300
 gain = integration.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
     EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=fixed_Q)
+
 # Save the gain calculation results
 #np.savez('tut02_wguide_data_AC_gain', SBS_gain=gain)
 #else:
@@ -157,9 +158,6 @@ gain = integration.get_gains_and_qs(
 # included in NumBAT. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
 comsol_mode_indices = 5  # Number of modes contained in data file.
-#SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
-#    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, 'comsol_ac_modes_1-5.dat',
-#    comsol_mode_indices=comsol_mode_indices)
 
 # Print the PE contribution to gain SBS gain of the AC modes.
 print("\n Displaying results of first five modes with negligible components masked out")
@@ -174,12 +172,6 @@ np.set_printoptions(precision=4)
 print("SBS_gain [1/(Wm)] PE NumBAT default (Fortran)\n", masked_PE)
 print("SBS_gain [1/(Wm)] MB NumBAT default (Fortran)\n", masked_MB)
 
-#masked = np.ma.masked_inside(
-#    SBS_gain_PE_py[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold)
-#print("SBS_gain [1/(Wm)] python integration routines \n", masked)
-#masked = np.ma.masked_inside(
-#    SBS_gain_PE_comsol[EM_mode_index_pump, EM_mode_index_Stokes, :], 0, threshold)
-#print("SBS_gain [1/(Wm)] from loaded Comsol data \n", masked)
 
 # Construct the SBS gain spectrum, built from Lorentzian peaks of the individual modes.
 freq_min = np.real(simres_AC.nu_AC_all()[0]) - 2e9  # Hz

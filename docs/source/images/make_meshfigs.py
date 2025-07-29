@@ -17,8 +17,8 @@ mat_c = materials.make_material("SiO2_2016_Smith")
 mat_d = materials.make_material("Si3N4_2021_Steel")
 mat_e = materials.make_material("GaAs_2021_Poulton")
 
-#fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
-fnt_mat = ImageFont.truetype(r'C:\Windows\Fonts\Times.ttf', 18)
+fnt_mat = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 18)
+#fnt_mat = ImageFont.truetype(r'C:\Windows\Fonts\Times.ttf', 18)
 
 
 col_mat = 'black'

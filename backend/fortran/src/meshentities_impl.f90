@@ -82,7 +82,7 @@ subroutine MeshEntities_build_mesh_tables(this, mesh, nberr)
    call this%count_nodes_P3 (mesh, nberr); RET_ON_NBERR(nberr)
 
    ! Every distinct entity has been uniquely tagged
-   ! Total number of labelled objects is now known
+   ! Total number of labelled structure is now known
    this%n_entities = this%n_edges + this%n_faces + this%n_msh_pts_p3
 
 

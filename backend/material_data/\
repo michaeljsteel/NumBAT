@@ -56,7 +56,7 @@
  "piezo_active": 1,      // Trigonal 3m symmetry, these are indepenent
 
  "piezo_use_e" : 0,
- "piezo_use_epsT" : 1,
+ "piezo_use_epsT" : 0,
 
  "piezo_epsS_xx": 44, 
  "piezo_epsS_yy": 44, 

@@ -1,5 +1,5 @@
-# objects.py is a subroutine of NumBAT. It contains the Struct
-# objects that represent the structure being simulated.
+# structure.py is a subroutine of NumBAT. It contains the Struct
+# structure that represent the structure being simulated.
 
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
@@ -86,7 +86,7 @@ class Structure:
 
         if kwargs.get('direct_call', 0):
             reporting.register_warning(
-                'Calling objects.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
+                'Calling structure.Structure directly is deprecated. Please switch to calling nbapp.make_structure()')
 
         if 'inc_shape' not in kwargs and len(largs) == 0:
             reporting.report_and_exit('Must provide an inc_shape argument to make_structure()')
@@ -131,7 +131,7 @@ class Structure:
     def __init__(self, *largs, **kwargs):
         """Initialise the Structure object."""
 
-        numbat.assert_numbat_object_created()
+        numbat._assert_numbat_object_created()
 
         self._clean_and_handle_args_and_parameters(*largs, **kwargs)
 

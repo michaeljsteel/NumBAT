@@ -83,7 +83,7 @@ def chareq_christoffel(vkap, c_stiff, rho, v_p):
 
 
 def solve_christoffel(vkap, c_stiff, rho):
-    """Solve eigenproblem of Christoffel equation in the direction vkap (a 2D unit vector). 
+    """Solve eigenproblem of Christoffel equation in the direction vkap (a 2D unit vector).
 
     Returns for each of 3 modes:
         phase velocity                v_phase[m]
@@ -123,3 +123,39 @@ def solve_christoffel(vkap, c_stiff, rho):
         v_vgroup[m, :] = power_flux_christoffel(vkap, v_p, v_evecs[:, m], c_stiff)
 
     return v_vphase, v_evecs, v_vgroup
+
+
+def solve_dielectric(vkap, m_diel):
+    """Solve generalised eigenproblem of general dielectric in the direction vkap (a 2D unit vector).
+
+    Returns for each of 3 modes:
+        phase velocity                n_phase[m]
+        polarisation eigenvectors      evecs[:,m]
+        group velocity vectors.       n_group[m:x/y/z]
+
+    Modes are sorted by decreasing phase velocity.
+
+    Born and Wolf
+    """
+
+    # Eig equation is   eps E = n^2 (1-zz) E
+
+    m_A = m_diel
+    m_B = np.eye(3,dtype=np.float64)
+    m_B[2,2] = 0.0
+
+    vout = scipy.linalg.eig(m_A, b=m_B)
+    print(vout)
+
+    nmax = 5
+    v_n = np.linspace(2,3,100)
+    v_det = v_n * 0
+    for inn, nn in enumerate(v_n):
+        m_oP = m_A -m_B*nn**2
+        v_det[inn] = np.linalg.det(m_oP)
+
+    return v_n, v_det
+
+    #print('eigvalus', w)
+    #print('eigvecs', vr)
+

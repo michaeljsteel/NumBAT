@@ -41,7 +41,7 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
 
 #. Create the primary ``NumBATApp`` object to access most |NUMBAT| features and set the filename prefix for all outputs.
 
-#. Construct the waveguide with ``nbapp.make_structure`` out of a number of ``materials.Material`` objects.
+#. Construct the waveguide with ``nbapp.make_structure`` out of a number of ``materials.Material`` structure.
 
 #. Generate output files containing images of the finite element mesh and final refractive index. These are illustrated in figures below.
 
@@ -102,7 +102,7 @@ General Simulation Procedures
 
 Simulations with |NUMBAT| are generally carried out using a python script file.
 This file is kept in its own directory which may or may not be within your |NUMBAT| tree.
-All results of the simulation are automatically created within this directory. This directory then serves as a complete record of the calculation. Often, we will also save the simulation objects within this directory for future inspection, manipulation, plotting, etc.
+All results of the simulation are automatically created within this directory. This directory then serves as a complete record of the calculation. Often, we will also save the simulation structure within this directory for future inspection, manipulation, plotting, etc.
 
 These files can be edited using your choice of text editor (for instance ``nano`` or ``vim``) or an IDE (for instance MS Visual Code or ``pycharm``) which allow you to run and debug code within the IDE.
 
@@ -111,20 +111,20 @@ To save the results from a simulation that are displayed upon execution (the pri
     $ python3 ./sim-tut_01-first_calc.py | tee log-simo.log
 
 
-To have direct access to the simulation objects upon the completion of a script use::
+To have direct access to the simulation structure upon the completion of a script use::
 
     $ python3 -i ./sim-tut_01-first_calc.py
 
 This will execute the python script and then return you into an interactive
 python session within the terminal. This terminal session provides the user
 experience of an ipython type shell where the python environment and all the
-simulation objects are in the same state as in the script when it has finished executing. In this session you can access the docstrings of objects,
+simulation structure are in the same state as in the script when it has finished executing. In this session you can access the docstrings of structure,
 classes and methods. For example::
 
     >>> from pydoc import help
-    >>> help(objects.Structure)
+    >>> help(structure.Structure)
 
-where we have accessed the docstring of the Struct class from ``objects.py``.
+where we have accessed the docstring of the Struct class from ``structure.py``.
 
 
 Script Structure

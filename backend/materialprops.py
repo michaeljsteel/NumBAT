@@ -7,7 +7,7 @@ class OpticalProps:
         """Create OpticalProps object.
 
         Parameters:
-            v_mats_em : list of Material objects
+            v_mats_em : list of Material structure
             n_mats_em : int - number of active materials
             loss : bool - whether to include loss in the refractive index
 
@@ -16,7 +16,7 @@ class OpticalProps:
         v_mats_em = list(d_mats.values())
         self.n_mats_em = n_mats_em         #
 
-        matvals = v_mats_em[:n_mats_em]    # Material objects of those
+        matvals = v_mats_em[:n_mats_em]    # Material structure of those
 
         # Set up mapping tables for refractive indices
         # (Why we need el_conv_table_n is mystery)

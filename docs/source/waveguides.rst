@@ -315,7 +315,7 @@ is a helpful model to follow.
          dimensions will usually be changed through |NUMBAT| calls.
 
        - That all ``Line`` elements are unique. In other words do not
-         create two ``Line`` objects joining the same two points. This will
+         create two ``Line`` structure joining the same two points. This will
          produce designs that look correct, but lead to poorly formed meshes
          that will fail when |NUMBAT| runs.
 

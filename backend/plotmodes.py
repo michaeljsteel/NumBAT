@@ -434,7 +434,7 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     # shapes:
     # m_X and other matrices are stored with y points as rows but upside down
-    # mesh_grid_objects:
+    # mesh_grid_structure:
     # m_X =  [[x0, x1, x2, ...]
     #         [x0, x1, x2, ...]
     #         [x0, x1, x2, ...]
