@@ -538,25 +538,41 @@ class PlainTensor2_ij(object):
         self._physical_symbol=physical_symbol
         self.unit=unit
 
-    def __str__(self):
+    def as_str(self, chop=False, rtol=1e-10, atol=1e-12):
         """
-        Return a formatted string representation of the tensor, including units and values.
+        Return a string representation of the tensor, formatted for display.
+
+        Args:
+            chop (bool): Whether to chop small values to zero.
+            rtol (float): Relative tolerance for chopping.
+            atol (float): Absolute tolerance for chopping.
+
+        Returns:
+            str: Formatted string representation of the tensor.
         """
 
         sh = f'\n {self._physical_name} {self._physical_symbol}'
         if self.unit is not None:
             sh += f', unit: {self.unit[0]}.'
         else:
-            sh += '.'
+            sh += '., unit: dimensionless.'
 
         sh += '\n   Plain 2-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(self.mat/self.unit[1])
+                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(self.mat)
+                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
+
+    def __str__(self):
+        """
+        Return a formatted string representation of the tensor, including units and values.
+        """
+
+        return self.as_str(chop=False)
+
 
     def set_from_params(self, d_params):
         """
@@ -691,25 +707,41 @@ class VoigtTensor3_iJ(object):
 
         return self.mat.T
 
-    def __str__(self):
+
+    def as_str(self, chop=False, rtol=1e-10, atol=1e-12):
         """
-        Return a formatted string representation of the tensor, including units and values.
+        Return a string representation of the tensor, formatted for display.
+
+        Args:
+            chop (bool): Whether to chop small values to zero.
+            rtol (float): Relative tolerance for chopping.
+            atol (float): Absolute tolerance for chopping.
+
+        Returns:
+            str: Formatted string representation of the tensor.
         """
 
         sh = f'\n {self._physical_name} {self._physical_symbol}'
         if self.unit is not None:
             sh += f', unit: {self.unit[0]}.'
         else:
-            sh += '.'
+            sh += '., unit: dimensionless.'
 
         sh += '\n   Voigt 3-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(self.mat/self.unit[1])
+                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(self.mat)
+                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
+
+    def __str__(self):
+        """
+        Return a formatted string representation of the tensor, including units and values.
+        """
+
+        return self.as_str(chop=False)
 
 
     def set_from_00matrix(self, mat00):
@@ -852,19 +884,27 @@ class VoigtTensor4_IJ(object):
 
         self.mat = np.zeros([7, 7], dtype=float)  # unit indexing
 
-        self.physical_name = physical_name
+        self._physical_name = physical_name
         self._param_nm = param_nm  # eg 'c', 'p', 'eta'
 
         #self._d_params = src_dict
-        self.physical_symbol=physical_symbol
+        self._physical_symbol=physical_symbol
         self.unit=unit
 
-    def __str__(self):
+    def as_str(self, chop=False, rtol=1e-10, atol=1e-12):
         """
-        Return a formatted string representation of the tensor, including units and values.
+        Return a string representation of the tensor, formatted for display.
+
+        Args:
+            chop (bool): Whether to chop small values to zero.
+            rtol (float): Relative tolerance for chopping.
+            atol (float): Absolute tolerance for chopping.
+
+        Returns:
+            str: Formatted string representation of the tensor.
         """
 
-        sh = f'\n {self.physical_name} {self.physical_symbol}'
+        sh = f'\n {self._physical_name} {self._physical_symbol}'
         if self.unit is not None:
             sh += f', unit: {self.unit[0]}.'
         else:
@@ -873,11 +913,19 @@ class VoigtTensor4_IJ(object):
         sh += '\n   Voigt 4-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(self.mat[1:, 1:]/self.unit[1])
+                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(self.mat[1:, 1:])
+                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
+
+    def __str__(self):
+        """
+        Return a formatted string representation of the tensor, including units and values.
+        """
+
+        return self.as_str(chop=False)
+
 
     # Allow direct indexing of Voigt tensor in [(i,j)] form
 
@@ -947,7 +995,7 @@ class VoigtTensor4_IJ(object):
         Print the raw data of the tensor for debugging purposes.
         """
 
-        print(f'\nVoigt tensor {self.physical_name}, tensor {self._param_nm}')
+        print(f'\nVoigt tensor {self._physical_name}, tensor {self._param_nm}')
         print(self.mat[1:, 1:])
 
     def value(self):
@@ -1055,7 +1103,7 @@ class VoigtTensor4_IJ(object):
     #     if elt not in self._d_params:
     #         if not optional:
     #             reporting.report_and_exit(
-    #                 f'Failed to read required tensor element {elt} for material {self.physical_name}')
+    #                 f'Failed to read required tensor element {elt} for material {self._physical_name}')
     #         else:
     #             return False
 
@@ -1109,7 +1157,7 @@ class VoigtTensor4_IJ(object):
         tmat = self.mat - self.mat.T
         mat_is_sym = nbtools.almost_zero(np.linalg.norm(tmat), tol)
         reporting.assertion(
-            mat_is_sym, f'Material matrix {self.physical_name}-{self.physical_symbol} is symmetric.\n' + str(self.mat))
+            mat_is_sym, f'Material matrix {self._physical_name}-{self._physical_symbol} is symmetric.\n' + str(self.mat))
 
     # def _old_rotate(self, mat_R):
     #     """
@@ -1144,13 +1192,18 @@ class VoigtTensor4_IJ(object):
             self.set_elt_from_param_dict(eI, eJ, d_params)
 
         for d_IJ,src in elts_dep.items():
+            #if d_IJ == "66":
+            #    print('setting elts ', d_IJ, 'from', src)
             dI=int(d_IJ[0])
             dJ=int(d_IJ[1])
 
             if self.elt_specified(d_params, dI, dJ):
                 self.set_elt_from_param_dict(dI, dJ, d_params)
+             #   print('found element ', d_IJ, 'in d_params, setting it directly to', self.mat[dI, dJ])
             else:
                 for (s_IJ,sf) in src:
                     sI=int(s_IJ[0])
                     sJ=int(s_IJ[1])
-                self.mat[dI, dJ] += self.mat[sI,sJ] * sf
+                    self.mat[dI, dJ] += self.mat[sI,sJ] * sf
+
+        #print('set Voigt tensor from structure elements, result:\n', self.mat[1:, 1:])

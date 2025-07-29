@@ -444,7 +444,7 @@ class Material(object):
 
         return copy.deepcopy(self)
 
-    def full_str(self):
+    def full_str(self, chop=False, chop_rtol=1e-10, chop_atol=1e-12):
         """
         Return a detailed string representation of the material, including all tensors and piezo properties.
         """
@@ -453,11 +453,11 @@ class Material(object):
         s += f"\n  Crystal class:  {self.crystal_class.name}"
         s += f"\n  Crystal group:  {self.crystal_group}"
 
-        s += "\n" + str(self.optdiel_eps_ij)
+        s += "\n" + self.optdiel_eps_ij.as_str()
 
-        s += "\n" + str(self.stiffness_c_IJ)
-        s += "\n" + str(self.viscosity_eta_IJ)
-        s += "\n" + str(self.photoel_p_IJ)
+        s += "\n" + self.stiffness_c_IJ.as_str()
+        s += "\n" + self.viscosity_eta_IJ.as_str()
+        s += "\n" + self.photoel_p_IJ.as_str()
 
         if self.piezo_supported():
             s += "\n\n" + str(self._piezo)
@@ -484,7 +484,7 @@ class Material(object):
             )
         return s
 
-    def elastic_properties(self):
+    def elastic_properties(self, chop=False, chop_rtol=1e-10, chop_atol=1e-12):
         """
         Return a string describing the elastic properties of the material.
         """
@@ -528,7 +528,7 @@ class Material(object):
                 with np.printoptions(
                     precision=4, floatmode="fixed", sign=" ", suppress=True
                 ):
-                    s += dent + " " + str(self.stiffness_c_IJ) + "\n"
+                    s += dent + " " + self.stiffness_c_IJ.as_str(chop=chop, rtol=chop_rtol, atol=chop_atol) + "\n"
 
                     for m in range(3):
                         vgabs = np.linalg.norm(v_vgroup[m])
@@ -548,7 +548,7 @@ class Material(object):
 
         except Exception as err:
             s = (
-                f"Unknown/undefined elastic parameters in material {self.material_name}"
+                f"Unknown/undefined elastic parameters in material {self.material_name}:\n"
                 + str(err)
             )
         return s
@@ -923,7 +923,7 @@ class Material(object):
     #         eJ=int(s_IJ[1])
     #         tens.read_from_json(eI, eJ)
 
-    #     for d_IJ,src in dep_elts.items():
+    #     for d_IJ,src in dep_elts.items(
     #         dI=int(d_IJ[0])
     #         dJ=int(d_IJ[1])
 
@@ -1248,12 +1248,26 @@ class Material(object):
         self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
     ):
         """
-        Plot the bulk dispersion using the IVP method. Returns the filename of the generated image.
+        Plot the bulk dispersion as inverse phase velocity. Returns the filename of the generated image.
         """
 
         return plms.plot_bulk_dispersion_ivp(
             self, pref, label, show_poln, flip_x, flip_y
         )
+
+
+    def plot_bulk_dispersion_vg(
+        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
+    ):
+        """
+        Plot the bulk dispersion as the group velocity (ray surface). Returns the filename of the generated image.
+        """
+
+        return plms.plot_bulk_dispersion_vg(
+            self, pref, label, show_poln, flip_x, flip_y
+        )
+
+
 
     def plot_bulk_dispersion_all(
         self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
@@ -1301,7 +1315,7 @@ class Material(object):
             v_comps (list): List of element strings (e.g., '11', '12').
         """
 
-        plms.plot_material_photoelastic_IJ(prefix, v_comps, self)
+        return plms.plot_material_photoelastic_IJ(prefix, v_comps, self)
 
     def get_stiffness_for_kappa(self, vkap):
         """

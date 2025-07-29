@@ -40,6 +40,26 @@ def plot_bulk_dispersion_ivp(material, pref, label=None, show_poln=True,
     plt.close(fig)
     return fname
 
+def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
+                            flip_x=False, flip_y=False):
+
+    ax_vp, ax_sl, ax_vg, ax_ivp_3d = None, None, None, None
+
+    fig, ax_vg = plt.subplots(1, 1, dpi=300)
+    setup_bulk_dispersion_2D_plot(ax_vp, ax_sl, ax_vg, ax_ivp_3d)
+
+    cm = "cool"  # Color map for polarisation coding
+    add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
+                                    show_poln, flip_x, flip_y)
+
+    if label is not None:
+        ax_sl.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
+
+    fname = pref + "-bulkdisp-vg.png"
+    fig.savefig(fname)
+    plt.close(fig)
+    return fname
+
 def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
                             flip_x=False, flip_y=False):
     """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal
@@ -215,7 +235,7 @@ def add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
 
 
 
-def plot_material_photoelastic_IJ(prefix, v_comps, mat):
+def plot_material_photoelastic_IJ(pref, v_comps, mat):
     npts = 200
 
     fig, ax = plt.subplots(dpi=200, subplot_kw={'projection':'polar'}, figsize=(3,3))
@@ -279,6 +299,10 @@ def plot_material_photoelastic_IJ(prefix, v_comps, mat):
                                        # Or better, let tight_layout figure it out, but
                                        # sometimes manual adjustment is needed.
 
+    fname = pref + "-pijkl.png"
+    fig.savefig(fname)
+    plt.close(fig)
+    return fname
 
 
 def make_crystal_axes_plot(pref, crystal_axes):

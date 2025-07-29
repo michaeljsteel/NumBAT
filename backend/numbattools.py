@@ -65,6 +65,19 @@ def signed_log10(mat, logmax=5, tol=1e-14):
     lmat *= np.sign(mat)
     return lmat
 
+
+def chopmat(mat, chop=False, rtol=1e-10, atol=1e-12):
+    """Set all values below an absolute or relative tolerance to zero."""
+
+    chopmat = mat.copy()
+
+    if chop:
+        maxval = np.max(np.abs(chopmat))
+        chopmat[np.abs(chopmat) < atol] = 0
+        chopmat[np.abs(chopmat) < rtol*maxval] = 0
+
+    return chopmat
+
 def process_fortran_return(resm, msg):
     """
     Check return values of any Fortran function with errco, emsg style return codes.

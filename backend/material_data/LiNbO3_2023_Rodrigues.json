@@ -11,14 +11,17 @@
  "_Re_ne": 2.13,  // Real part of refractive index (n_e) []
  "Im_n": 0.0,  // Imaginary part of refractive index []
  "s": 4650,  // Density [kg/m3]
+
  "crystal_class": "Trigonal",
+ "crystal_sym": "3m",
+
  "c_11": 198.83e9,  // Stiffness tensor component [Pa]
  "c_12": 54.64e9,  // Stiffness tensor component [Pa]
  "c_13": 68.23e9,  // Stiffness tensor component [Pa]
  "c_14": 7.83e9,  // Stiffness tensor component [Pa]
  "c_33": 235.71e9,  // Stiffness tensor component [Pa]
  "c_44": 59.86e9,  // Stiffness tensor component [Pa]
- "c_66": 72.095,  // Stiffness tensor component [Pa]
+ "c_66": 72.095e9,  // Stiffness tensor component [Pa]
 
  "p_11": -0.026,  // Photoelastic tensor component []
  "p_12": 0.088,  // Photoelastic tensor component []
