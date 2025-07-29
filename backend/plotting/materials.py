@@ -449,6 +449,11 @@ def setup_bulk_dispersion_2D_plot_2x1():
 
 def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
                                      show_poln=True, flip_x=False, flip_y=False):
+    """Calculate and plot the bulk slowness curves for the material.
+
+    Only axes which are non-None are used.
+    """
+
     npolpts = 28
     npolskip = 10  # make bigger
     npts = npolpts * npolskip  # about 1000
@@ -481,8 +486,8 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
             vkapflip = vkap.copy()
-            #if flipkapz:
-            #    vkapflip[2] = -vkapflip[2]
+            # if flip_y:
+            #     vkapflip[0] = -vkapflip[0]
             t_stiffness = material.get_stiffness_for_kappa(vkapflip)
             v_vphase, vecs, v_vgroup = solve_christoffel(vkapflip,
                                                          t_stiffness,
