@@ -133,3 +133,4 @@ def progressBar(sequence, prefix = '', suffix = '',
         yield sequence[0]
 
     print() # Print New Line on Complete
+

@@ -1234,6 +1234,7 @@ class Material(object):
 
         self.stiffness_c_IJ.check_symmetries()
 
+    # deprecated
     def plot_bulk_dispersion(
         self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
     ):
@@ -1245,32 +1246,34 @@ class Material(object):
         return self.plot_bulk_dispersion_all(pref, label, show_poln, flip_x, flip_y)
 
     def plot_bulk_dispersion_ivp(
-        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
-    ):
+        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False,
+        cut_plane="xz", mark_velocities=() ):
         """
         Plot the bulk dispersion as inverse phase velocity. Returns the filename of the generated image.
         """
 
         return plms.plot_bulk_dispersion_ivp(
-            self, pref, label, show_poln, flip_x, flip_y
+            self, pref, label, show_poln, flip_x, flip_y, cut_plane, mark_velocities
         )
 
 
     def plot_bulk_dispersion_vg(
-        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
+        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False,
+        cut_plane="xz", mark_velocities=()
     ):
         """
         Plot the bulk dispersion as the group velocity (ray surface). Returns the filename of the generated image.
         """
 
         return plms.plot_bulk_dispersion_vg(
-            self, pref, label, show_poln, flip_x, flip_y
+            self, pref, label, show_poln, flip_x, flip_y, cut_plane, mark_velocities
         )
 
 
 
     def plot_bulk_dispersion_all(
-        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
+        self, pref, label=None, show_poln=True, flip_x=False, flip_y=False,
+        cut_plane="xz", mark_velocities=()
     ):
         """Plot the bulk dispersion and ray surfaces in the x-z plane for the current orientation (all modes).
         Returns the filename of the generated image.
@@ -1288,7 +1291,7 @@ class Material(object):
         """
 
         return plms.plot_bulk_dispersion_2D_all(
-            self, pref, label, show_poln, flip_x, flip_y
+            self, pref, label, show_poln, flip_x, flip_y, cut_plane, mark_velocities
         )
 
     def plot_bulk_dispersion_3D(self, pref):

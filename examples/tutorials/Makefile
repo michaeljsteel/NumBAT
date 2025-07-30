@@ -14,7 +14,8 @@ slow: tut12 tut13 tut14
 
 goodtest: tut01 ftut02 ftut06 ftut08
 
-some:  tut11a  tut11b tut12 tut13 tut14
+some:  tut03b tut04 tut05 tut06a tut06b \
+		tut07 tut08 tut11a  tut11b tut12 tut13 tut14
 
 
 memtest:
