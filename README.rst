@@ -41,7 +41,6 @@ Bulk dispersion properties
 .. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
    :align: left
    :width: 40%
-
 .. figure:: ./docs/source/images/bulkdisp/gaas_bulkdisp_all.png
    :align: right
    :width: 40%
