@@ -38,18 +38,15 @@ NumBAT calculates a wide range of results, including optical and elastic mode pr
 
 Bulk dispersion properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
-   :align: left
-   :width: 40%
 .. figure:: ./docs/source/images/bulkdisp/gaas_bulkdisp_all.png
    :align: right
    :width: 40%
 
-.. |clear| raw:: html
+.. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
+   :align: left
+   :width: 40%
 
-   <div style="clear: both;"></div>
 
-|clear|
 
 .. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
    :width: 5cm
