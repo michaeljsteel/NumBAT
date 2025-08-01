@@ -33,11 +33,28 @@ All user interaction with NumBAT is performed through a sophisticated python fro
 Example results
 -----------------
 
-.. figure:: ./docs/source/images/tutorial/tut_06-gain_spectra.png
+NumBAT calculates a wide range of results, including optical and elastic mode profiles, Brillouin gain spectra, and bulk mode dispersion curves for any elastic material.
+
+
+Bulk dispersion properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
    :width: 5cm
+
+.. figure:: ./docs/source/images/bulkdisp/gaas_bulkdisp_all.png
+   :width: 5cm
+
+Optical and elastic mode profiles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. figure:: ./docs/source/images/tutorial/tut_06-fields/AC_mode_08.png
    :width: 5cm
+
+
+.. figure:: ./docs/source/images/tutorial/tut_06-gain_spectra.png
+   :width: 5cm
+
 
 
 Availability

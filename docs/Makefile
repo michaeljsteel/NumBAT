@@ -26,7 +26,7 @@ both:
 
 .PHONY: view
 view:
-	evince build/latex/NumBAT.pdf
+	papers build/latex/NumBAT.pdf
 
 BROWSER=google-chrome
 
