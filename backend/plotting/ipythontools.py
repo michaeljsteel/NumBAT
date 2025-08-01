@@ -11,7 +11,7 @@ def img_single(fn, cap='', height=300):
     html_string = f"""
         <div style="margin-right: 10px;">
             <img src="{fn}?{cache_buster}" height="{height}px">
-            <p style="text-align: center;">{cap}</p>
+            <p style="text-align: left;">{cap}</p>
         </div>"""
 
     ipydisp.display(ipydisp.HTML(html_string))

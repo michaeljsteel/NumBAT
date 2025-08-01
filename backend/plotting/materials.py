@@ -41,7 +41,7 @@ def plot_bulk_dispersion_ivp(material, pref, label=None, show_poln=True,
     return fname
 
 def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
-                            cut_plane="xz", mark_velocities=()):
+                            flip_x=False, flip_y=False, cut_plane="xz", mark_velocities=()):
 
     ax_vp, ax_sl, ax_vg, ax_ivp_3d = None, None, None, None
 
@@ -50,7 +50,7 @@ def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
 
     cm = "cool"  # Color map for polarisation coding
     add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
-                                    show_poln, cut_plane, mark_velocities)
+                                    show_poln, flip_x, flip_y, cut_plane, mark_velocities)
 
     if label is not None:
         ax_sl.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
@@ -61,7 +61,7 @@ def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
     return fname
 
 def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
-                            cut_plane="xz", mark_velocities=()):
+                            flip_x=False, flip_y=False, cut_plane="xz", mark_velocities=()):
     """Draw slowness surface 1/v_p(kappa) and ray surface contours in the horizontal
     (x-z) plane for the crystal axes current orientation.
 
@@ -94,7 +94,7 @@ def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
 
     cm = "cool"  # Color map for polarisation coding
     add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, cm,
-                                     show_poln, cut_plane, mark_velocities)
+                                     show_poln, flip_x, flip_y, cut_plane, mark_velocities)
 
     # markers to reproduce Auld Fig 7.2
     #c11=material.stiffness_c_IJ[1,1]
@@ -136,7 +136,7 @@ def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
 
     #label = self.material_name
     if label is not None:
-        ax_vp.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
+        ax_vp.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_vp.transAxes)
 
     add_3d_dispersion_curves_to_axes(material, ax_ivp_3d)
 
@@ -626,7 +626,7 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
 
 
 def add_bulk_slowness_curves_to_axes_2x1(
-        material, pref, fig, ax_sl, ax_vp, cm, mat1or2
+        material, pref, fig, ax_sl, ax_vp, cm, mat1or2, maxivel1=0,
     ):
         npolpts = 28
         npolskip = 10  # make bigger
@@ -705,10 +705,9 @@ def add_bulk_slowness_curves_to_axes_2x1(
         # Tick location seems to need help here
         # for tax in [ax_vp.xaxis, ax_vp.yaxis, ax_vg.xaxis, ax_vg.yaxis]:
         #   tax.set_major_locator(ticker.MultipleLocator(2.0, offset=0))
-
-        make_axes_square(np.abs(1 / v_vel).max(), ax_sl)
-        # make_axes_square(np.abs(v_vel).max(), ax_vp)
-        # make_axes_square(max(np.abs(v_vgx).max(), np.abs(v_vgz).max()), ax_vg)
+        max_ivel = np.abs(1/v_vel).max()
+        if max_ivel> maxivel1:
+            make_axes_square(np.abs(1 / v_vel).max(), ax_sl)
 
         cbar = fig.colorbar(
             mplcm.ScalarMappable(cmap=cm),
@@ -723,6 +722,7 @@ def add_bulk_slowness_curves_to_axes_2x1(
         cbar.set_label(
             label=f"Mat {mat1or2} " + r"$\hat{e} \cdot \hat{\kappa}$", fontsize=10
         )
+        return max_ivel
 
 
 def compare_bulk_dispersion(mat1, mat2, pref):
@@ -736,8 +736,8 @@ def compare_bulk_dispersion(mat1, mat2, pref):
     cm1 = "cool"  # Color map for polarisation coding
     cm2 = "autumn"  # Color map for polarisation coding
 
-    add_bulk_slowness_curves_to_axes_2x1(mat1, pref + "_mat1", fig, ax_sl, ax_vg, cm1, 1)
-    add_bulk_slowness_curves_to_axes_2x1(mat2, pref + "_mat2", fig, ax_sl, ax_vg, cm2, 2)
+    maxivel1 = add_bulk_slowness_curves_to_axes_2x1(mat1, pref + "_mat1", fig, ax_sl, ax_vg, cm1, 1)
+    add_bulk_slowness_curves_to_axes_2x1(mat2, pref + "_mat2", fig, ax_sl, ax_vg, cm2, 2, maxivel1)
 
     ax_sl.text(
         0.05,
