@@ -48,7 +48,7 @@ Bulk dispersion properties
 Optical and elastic mode profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: ./docs/source/images/tutorial/tut_06a-fields/EM_mode_00.png
+.. figure:: ./docs/source/images/tutorial/tut_06a-fields/EM_E_mode_00.png
    :width: 5cm
 
 .. figure:: ./docs/source/images/tutorial/tut_06a-fields/AC_mode_08.png
@@ -56,12 +56,21 @@ Optical and elastic mode profiles
 
 Refractive index and stiffness profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+.. figure:: ./docs/source/images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png
+   :width: 5cm
 
 Brillouin gain profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. figure:: ./docs/source/images/tutorial/tut_06-gain_spectra.png
+.. figure:: ./docs/source/images/tutorial/tut_06a-gain_spectra.png
    :width: 5cm
+
+.. figure:: ./docs/source/images/tutorial/tut_06a-gain_spectra-logy.png
+   :width: 5cm
+
+.. figure:: ./docs/source/images/lit_examples/lit_03-gain_tot-diam_scan.png
+   :width: 5cm
+
+
 
 
 
