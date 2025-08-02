@@ -3,7 +3,7 @@
 
     Calculate the backward SBS gain spectra of a silicon waveguide surrounded in air.
 
-    Show how to save simulation objects (eg. EM mode calcs) to expedite the process
+    Show how to save simulation structure (eg. EM mode calcs) to expedite the process
     of altering later parts of simulations.
 
     Show how to implement integrals in python and how to load data from Comsol.
