@@ -1,3 +1,5 @@
+![Banner](./docs/source/NumBAT_logo.png)
+
 # NumBAT - The Numerical Brillouin Analysis Tool
 
 NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
