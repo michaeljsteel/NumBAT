@@ -34,35 +34,35 @@ NumBAT calculates a wide range of results, including optical and elastic mode pr
 
 Calculate dispersive and polarisation properties of elastic modes for arbitrary anistropy.
 
-![Bulk Dispersion 1](./docs/source/images/bulkdisp/gaas_bulkdisp_all.png)
+<img src="./docs/source/images/bulkdisp/gaas_bulkdisp_all.png" width="50%" alt="Bulk dispersion of GaAs" />
 
 ### Optical and elastic dispersion relations
 
 Calculate dispersion relations for optical and elastic waveguide modes.
 
-![Bulk Dispersion 2](./docs/source/images/tutorial/tut_03b-dispersion_multicore.png)
+<img src="./docs/source/images/tutorial/tut_03b-dispersion_multicore.png" width="50%" alt="Optical and elastic dispersion relations" />
 
 
 ### Optical and elastic mode profiles
 
 Plot and analyse properties of optical and elastic waveguide modes.
 
-![Optical Mode](./docs/source/images/tutorial/tut_06a-fields/EM_E_mode_00.png)
-![Elastic Mode](./docs/source/images/tutorial/tut_06a-fields/AC_mode_08.png)
+<img src="./docs/source/images/tutorial/tut_06a-fields/EM_E_mode_00.png" width="50%" alt="Optical mode profile" />
+<img src="./docs/source/images/tutorial/tut_06a-fields/AC_mode_08.png" width="50%" alt="Elastic mode profile" />
 
 ### Refractive index and stiffness profiles
 
 Generate profiles of refractive index, stiffness, elastic phase velocity, and density profiles.
 
-![Elastic Velocity](./docs/source/images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png)
+<img src="./docs/source/images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png" width="50%" alt="Elastic velocity profile" />
 
 ### Brillouin gain profiles
 
 Generate Brillouin gain spectra for arbitrary combinations of optical and elastic modes and correlate key peaks against mode numbers.
 
-![Gain Spectra 1](./docs/source/images/tutorial/tut_06a-gain_spectra.png)
-![Gain Spectra 2](./docs/source/images/tutorial/tut_06a-gain_spectra-logy.png)
-![Gain Spectra 3](./docs/source/images/lit_examples/lit_03-gain_tot-diam_scan.png)
+<img src="./docs/source/images/tutorial/tut_06a-gain_spectra.png" width="50%" alt="Brillouin gain spectrum" />
+<img src="./docs/source/images/tutorial/tut_06a-gain_spectra-logy.png" width="50%" alt="Brillouin gain spectrum (log scale)" />
+<img src="./docs/source/images/lit_examples/lit_03-gain_tot-diam_scan.png" width="50%" alt="Brillouin gain vs diameter scan" />
 
 ## Availability
 
