@@ -2,11 +2,21 @@
 
 # NumBAT - The Numerical Brillouin Analysis Tool
 
+<!-- Shields -->
+[![Last Commit](https://img.shields.io/github/last-commit/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/commits/main)
+[![Languages](https://img.shields.io/badge/languages-Python%20%7C%20Fortran-blue?style=flat-square)](https://github.com/michaeljsteel/NumBAT/search?l=python)
+[![Documentation Status](https://readthedocs.org/projects/numbat-au/badge/?version=latest&style=flat-square)](http://numbat-au.readthedocs.io/en/latest/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+![Banner](./docs/source/NumBAT_logo.png)
+
 NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
 ## Capabilities
 
+
 NumBAT's capabilities are constantly growing. The current feature set includes:
+
 - Eigenmode calculation and visualisation of optical waveguide modes
 - Eigenmode calculation and visualisation of elastic waveguide modes
 - Calculation of stimulated Brillouin gain coefficients for both the photoelastic and moving boundary effects
@@ -96,11 +106,12 @@ NumBAT was developed by Michael Steel, Bjorn Sturmberg, Kokou Dossou, and Christ
 
 If you find NumBAT useful in your work, we would appreciate a citation as follows:
 
-**Optica Style**
+
+### Optica Style
 
 B. C. P. Sturmberg, K. B. Dossou, M. J. A. Smith, B. Morrison, C. G. Poulton, and M. J. Steel, "Finite element analysis of stimulated Brillouin scattering in integrated photonic waveguides", J. Lightwave Technol. **37**, 3791-3804 (2019).
 
-**BibTeX:**
+### BibTeX
 
 ```bibtex
 @article{numbat2017,
