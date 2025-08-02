@@ -2,13 +2,16 @@
 
 # NumBAT - The Numerical Brillouin Analysis Tool
 
+
 <!-- Shields -->
 [![Last Commit](https://img.shields.io/github/last-commit/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/commits/main)
+[![Release](https://img.shields.io/github/v/release/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/releases)
 [![Languages](https://img.shields.io/badge/languages-Python%20%7C%20Fortran-blue?style=flat-square)](https://github.com/michaeljsteel/NumBAT/search?l=python)
+[![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square)](#platform-support)
 [![Documentation Status](https://readthedocs.org/projects/numbat-au/badge/?version=latest&style=flat-square)](http://numbat-au.readthedocs.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-![Banner](./docs/source/NumBAT_logo.png)
+
 
 NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
@@ -34,7 +37,7 @@ NumBAT uses the finite element method to solve modal fields for both the optical
 
 The core finite element solvers are written in modern Fortran. Meshing is performed using the Gmsh open source tool.
 
-All user interaction with NumBAT is performed through a sophisticated python front end, either using `.py` scripts or Jupyter notebooks.
+All user interaction with NumBAT is performed through a sophisticated python front end, either using python scripts or Jupyter notebooks.
 
 ## Example results
 
@@ -44,35 +47,35 @@ NumBAT calculates a wide range of results, including optical and elastic mode pr
 
 Calculate dispersive and polarisation properties of elastic modes for arbitrary anistropy.
 
-<img src="./docs/source/images/bulkdisp/gaas_bulkdisp_all.png" width="50%" alt="Bulk dispersion of GaAs" />
+<img src="./docs/source/images/bulkdisp/gaas_bulkdisp_all.png" width="65%" alt="Bulk dispersion of GaAs" />
 
 ### Optical and elastic dispersion relations
 
 Calculate dispersion relations for optical and elastic waveguide modes.
 
-<img src="./docs/source/images/tutorial/tut_03b-dispersion_multicore.png" width="50%" alt="Optical and elastic dispersion relations" />
+<img src="./docs/source/images/tutorial/tut_03b-dispersion_multicore.png" width="65%" alt="Optical and elastic dispersion relations" />
 
 
 ### Optical and elastic mode profiles
 
 Plot and analyse properties of optical and elastic waveguide modes.
 
-<img src="./docs/source/images/tutorial/tut_06a-fields/EM_E_mode_00.png" width="50%" alt="Optical mode profile" />
-<img src="./docs/source/images/tutorial/tut_06a-fields/AC_mode_08.png" width="50%" alt="Elastic mode profile" />
+<img src="./docs/source/images/tutorial/tut_06a-fields/EM_E_mode_00.png" width="65%" alt="Optical mode profile" />
+<img src="./docs/source/images/tutorial/tut_06a-fields/AC_mode_08.png" width="65%" alt="Elastic mode profile" />
 
 ### Refractive index and stiffness profiles
 
 Generate profiles of refractive index, stiffness, elastic phase velocity, and density profiles.
 
-<img src="./docs/source/images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png" width="50%" alt="Elastic velocity profile" />
+<img src="./docs/source/images/tutorial/tut_07-out/tut_07-elastic_velocity_v0.png" width="65%" alt="Elastic velocity profile" />
 
 ### Brillouin gain profiles
 
 Generate Brillouin gain spectra for arbitrary combinations of optical and elastic modes and correlate key peaks against mode numbers.
 
-<img src="./docs/source/images/tutorial/tut_06a-gain_spectra.png" width="50%" alt="Brillouin gain spectrum" />
-<img src="./docs/source/images/tutorial/tut_06a-gain_spectra-logy.png" width="50%" alt="Brillouin gain spectrum (log scale)" />
-<img src="./docs/source/images/lit_examples/lit_03-gain_tot-diam_scan.png" width="50%" alt="Brillouin gain vs diameter scan" />
+<img src="./docs/source/images/tutorial/tut_06a-gain_spectra.png" width="65%" alt="Brillouin gain spectrum" />
+<img src="./docs/source/images/tutorial/tut_06a-gain_spectra-logy.png" width="65%" alt="Brillouin gain spectrum (log scale)" />
+<img src="./docs/source/images/lit_examples/lit_03-gain_tot-diam_scan.png" width="65%" alt="Brillouin gain vs diameter scan" />
 
 ## Availability
 
@@ -80,7 +83,7 @@ NumBAT is developed on Linux and builds from source under Linux, MacOS and Windo
 
 The current release of NumBAT can be found at [https://github.com/michaeljsteel/NumBAT](https://github.com/michaeljsteel/NumBAT).
 
-Current documentation is available at [ReadTheDocs](http://numbat-au.readthedocs.io/en/latest/) or in the `NumBAT.pdf` file in the root directory.
+Current documentation is available at [ReadTheDocs](http://numbat-au.readthedocs.io/en/latest/) or in the [pdf version](NumBAT.pdf) in the main directory.
 
 ## Installation
 
