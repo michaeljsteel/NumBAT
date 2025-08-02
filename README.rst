@@ -1,7 +1,8 @@
-Welcome to NumBAT!
---------------------
+NumBAT - The Numerical Brillouin Analysis Tool
+========================================================
 
-NumBAT, the Numerical Brillouin Analysis Tool, integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
+
+NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
 
 
@@ -38,13 +39,13 @@ NumBAT calculates a wide range of results, including optical and elastic mode pr
 
 Bulk dispersion properties
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. figure:: ./docs/source/images/bulkdisp/gaas_bulkdisp_all.png
-   :align: right
-   :width: 40%
+.. .. figure:: ./docs/source/images/bulkdisp/gaas_bulkdisp_all.png
+..    :align: right
+..    :width: 40%
 
-.. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
-   :align: left
-   :width: 40%
+.. .. figure:: ./docs/source/images/tutorial/tut_03b-dispersion_multicore.png
+..    :align: left
+..    :width: 40%
 
 
 
@@ -88,9 +89,6 @@ Availability
 NumBAT is developed on Linux and builds from source under Linux, MacOS and Windows. A binary release for Windows is also available.
 
 
-Download
----------
-
 The current release of NumBAT can be found at https://github.com/michaeljsteel/NumBAT.
 
 
@@ -100,9 +98,7 @@ at  `ReadTheDocs <http://numbat-au.readthedocs.io/en/latest/>`_ or in the ``NumB
 
 Installation
 -------------
-NumBAT builds natively on Linux, MacOS and Windows.
-
-A pre-built binary install is also available for Windows.
+NumBAT builds natively on Linux, MacOS and Windows. A pre-built binary install is also available for Windows.
 
 Build from source
 ^^^^^^^^^^^^^^^^^^
@@ -112,7 +108,7 @@ For detailed instructions, please see the Installation chapter in the `HTML docu
 
 Binary install
 ^^^^^^^^^^^^^^^^^^
-On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.1.0>`_. This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
+On Windows, you can also try the `binary installer <https://github.com/michaeljsteel/NumBAT/releases/tag/v2.1.3>`_. This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
 
 You should still read the Installation chapter in the `HTML documentation <http://numbat-au.readthedocs.io/en/latest/>`_ or in the pdf version of the documentation ``NumBAT.pdf`` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
 
