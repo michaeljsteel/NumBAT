@@ -18,7 +18,8 @@ sys.path.append(str(Path('../../backend')))
 import numbat
 import materials
 from nbthread import launch_worker_threads_and_wait
-from nbanalytic.nbanalytic import TwoLayerFiberEM, ElasticRod
+from nbanalytic.emtwolayerfiber import TwoLayerFiberEM
+from nbanalytic.nbanalytic import ElasticRod
 
 import starter
 
@@ -278,7 +279,7 @@ def findroots_elastic_rod_chareq(Vl, nu_hi, p, q, nmodes, rho, c11, c12, c44, ar
     return sol_Om
 
 def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
-    cmat = coremat.c_tensor
+    cmat = coremat.stiffness_c_IJ
     c11 = cmat[1,1].real
     c12 = cmat[1,2].real
     c44 = cmat[4,4].real
@@ -325,7 +326,7 @@ def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
 
         fib_el = ElasticRod(rho, c11, c12, c44, arad)
 
-        (n_modes_found, v_Om_modes) = fib_el.find_nu_for_q(q, nu_hi, p, nmodes)
+        (n_modes_found, v_Om_modes) = fib_el.find_nu_at_q(q, nu_hi, p, nmodes)
 
         #v_Om_modes = findroots_elastic_rod_chareq(Vl, nu_hi, p, q, nmodes,
         #                                          rho, c11, c12, c44, a_nm)
@@ -359,7 +360,7 @@ def solve_elastic_rod_analytical(prefix, diams, nmodes, coremat):
     while not q_result.empty():  #only one thread now, so no blocking to worry about
         (p, q, jobid, v_Om_modes) = q_result.get()
         nu_an[p+1, jobid,:len(v_Om_modes)] = v_Om_modes/twopi
-        q_an[id] = q # will be refilled for each p but doesn't matter
+        q_an[jobid] = q # will be refilled for each p but doesn't matter
 
 
     # Plot of the analytic solution alone

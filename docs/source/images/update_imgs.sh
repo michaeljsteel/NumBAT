@@ -96,6 +96,7 @@ for im in lit_01-gain_spectra-logy.png lit_01-fields/EM_E_mode_00.png \
     lit_02-gain_spectra-logy.png lit_02-fields/AC_mode_23.png lit_02-fields/AC_mode_296.png \
     lit_03-gain_tot-diam_scan.png \
     lit_03-dwide-gain_tot-diam_scan.png \
+    lit_03-exactdisp_narrow-acdisp_qnu_exact.png \
     lit_03-exactdisp_wide-acdisp_qnu_exact.png \
     lit_03-out/lit_03-gain_spectra-logy_w1050.png \
     lit_03-out/lit_03-diam-1050-fields/EM_E_mode_00.png \

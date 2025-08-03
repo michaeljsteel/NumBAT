@@ -309,7 +309,13 @@ It is also illuminating to look at the elastic dispersion for a wide range of mi
 
    |NUMBAT| gain spectrum over wide range of diameters. (Note swapped axes for consistency with Beugnot *et al.*.)
 
-.. .. figure:: images/lit_examples/lit_03-exactdisp_wide-acdisp_qnu_exact.png
+.. figure:: images/lit_examples/lit_03-exactdisp_wide-acdisp_qnu_exact.png
+   :width: 12cm
+
+   Exact analytic dispersion relation for modes of elastic rod in air for comparison with gain spectra.
+
+.. figure:: images/lit_examples/lit_03-exactdisp_narrow-acdisp_qnu_exact.png
+   :width: 12cm
 
    Exact analytic dispersion relation for modes of elastic rod in air for comparison with gain spectra.
 
