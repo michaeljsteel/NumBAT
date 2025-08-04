@@ -20,43 +20,12 @@
 import sys
 import re
 
-#MOCK_MODULES = ['scipy', 'scipy.interpolate', 'numpy',
-#    'matplotlib', 'matplotlib.pyplot', 'matplotlib.mlab', 'matplotlib.gridspec',
-#    'fortran','make_axes_locatable','csv','mpl_toolkits', 'json', 'matplotlib.externals',
-#    'matplotlib.cbook', 'matplotlib.axes', 'matplotlib.axes.prop_cycle',
-#    'matplotlib.transforms', 'matplotlib.externals.six', 'matplotlib.artist',
-#    'matplotlib.axis', 'mpl_toolkits.axes_grid1']
-
-
-#from unittest.mock import MagicMock
-
-#class Mock(MagicMock):
-#    @classmethod
-#    def __getattr__(cls, name):
-#            return MagicMock()
-#
-#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
-
-
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('../../backend/'))
-#
 
-#sys.path.insert(0, str(Path.home() / 'research/numbat/nb_releases/nb_latest/backend'))
 
 sys.path.insert(0, '../../backend')   # This file is run from docs/source
-
-#sys.path.insert(0, '/home/msteel/research/numbat/latest/backend')
-#sys.path.insert(0, r'%HOMEPATH%\numbat\nb_releases\nb_latest\backend')
-
-#sys.path.insert(0, str(Path.home() / 'research/numbat/devel_1/backend'))
-#print('path is', sys.path)
-#import os
-#print(os.getcwd())
 
 from nbversion import *
 
@@ -82,6 +51,8 @@ extensions = [
 #    'sphinx.ext.githubpages',
 #
 ]
+
+numfig = True
 
 nbsphinx_execute = 'never'
 

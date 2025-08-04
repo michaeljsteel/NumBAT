@@ -72,7 +72,7 @@ sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, wl_nm, n_eff)
 sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 
 sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump],
-                         xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.2)
+                         xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.1)
 
 # Print the wavevectors of EM modes.
 print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))
