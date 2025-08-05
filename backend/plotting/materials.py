@@ -11,6 +11,7 @@ import copy
 import reporting
 
 from bulkprops import solve_christoffel
+import plotting.plottools as plottools
 
 def make_axes_square(ext0, ax, flip_x=False, flip_y=False):
     ext = 1.1 * ext0
@@ -36,8 +37,9 @@ def plot_bulk_dispersion_ivp(material, pref, label=None, show_poln=True,
         ax_sl.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
 
     fname = pref + "-bulkdisp-ivp.png"
-    fig.savefig(fname)
-    plt.close(fig)
+    plottools.save_and_close_figure(fig, fname)
+    # fig.savefig(fname)
+    # plt.close(fig)
     return fname
 
 def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
@@ -56,8 +58,10 @@ def plot_bulk_dispersion_vg(material, pref, label=None, show_poln=True,
         ax_sl.text( -0.1, 1.1, label, fontsize=14, style="italic", transform=ax_sl.transAxes)
 
     fname = pref + "-bulkdisp-vg.png"
-    fig.savefig(fname)
-    plt.close(fig)
+    plottools.save_and_close_figure(fig, fname)
+
+    #fig.savefig(fname)
+    #plt.close(fig)
     return fname
 
 def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
@@ -141,8 +145,9 @@ def plot_bulk_dispersion_2D_all(material, pref, label=None, show_poln=True,
     add_3d_dispersion_curves_to_axes(material, ax_ivp_3d)
 
     fname = pref + "-bulkdisp-all.png"
-    fig.savefig(fname)
-    plt.close(fig)
+    plottools.save_and_close_figure(fig, fname)
+    #fig.savefig(fname)
+    #plt.close(fig)
     return fname
 
 
@@ -156,8 +161,9 @@ def plot_bulk_dispersion_3D(material, pref):
     add_3d_dispersion_curves_to_axes(material, ax_vp, ax_vg)
 
     fname = pref + "-bulkdisp3D.png"
-    fig.savefig(fname)
-    plt.close(fig)
+    plottools.save_and_close_figure(fig, fname)
+    #fig.savefig(fname)
+    #plt.close(fig)
     return fname
 
 
@@ -238,7 +244,7 @@ def add_3d_dispersion_curves_to_axes(material, ax_ivp=None, ax_vg=None):
 def plot_material_photoelastic_IJ(pref, v_comps, mat):
     npts = 200
 
-    fig, ax = plt.subplots(dpi=200, subplot_kw={'projection':'polar'}, figsize=(3,3))
+    fig, ax = plt.subplots(subplot_kw={'projection':'polar'}, figsize=(3,3))
     # fig.subplots_adjust(hspace=.35, wspace=0)
 
     d_p_vecs = {}  # map of "IJ" strings -> (el_IJ, np.zeros(npts))
@@ -300,8 +306,10 @@ def plot_material_photoelastic_IJ(pref, v_comps, mat):
                                        # sometimes manual adjustment is needed.
 
     fname = pref + "-pijkl.png"
-    fig.savefig(fname)
-    plt.close(fig)
+    plottools.save_and_close_figure(fig, fname)
+
+    #fig.savefig(fname, bbox_inches='tight')
+    #plt.close(fig)
     return fname
 
 
@@ -756,6 +764,8 @@ def compare_bulk_dispersion(mat1, mat2, pref):
         transform=ax_sl.transAxes,
     )
 
-    plt.savefig(pref + "-compare-bulkdisp.png")
+    fname = pref + "-compare-bulkdisp.png"
+    plottools.save_and_close_figure(fig, fname)
+    #plt.savefig(pref + "-compare-bulkdisp.png")
 
 

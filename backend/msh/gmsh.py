@@ -60,6 +60,11 @@ def plot_gmesh_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
     f2f_with_subs(scr_in, scr_out, {'tmp': fn_out})
 
     cmd = [gmsh_exe, msh_name + '.msh', scr_out.name]
+
+    if numbat.NumBATApp().is_macos(): # macOS requires the -a flag to open applications
+        cmd = ['open', '-a'] + cmd
+
+
     run_subprocess(cmd, 'Gmsh', cwd=msh_loc_out)
 
     # tidy
@@ -105,8 +110,13 @@ def check_mesh(msh_loc_out, msh_name):
     nbapp = numbat.NumBATApp()
     gmsh_exe = str(nbapp.path_gmsh())
 
-    gmsh_cmd = [gmsh_exe, f'{msh_loc_out}/{msh_name}.geo']
-    run_subprocess(gmsh_cmd, 'Gmsh', cwd=msh_loc_out)
+    gmsh_cmd1 = [gmsh_exe, f'{msh_loc_out}/{msh_name}.geo']
 
-    gmsh_cmd = [gmsh_exe, f'{msh_loc_out}/{msh_name}.msh']
-    run_subprocess(gmsh_cmd, 'Gmsh', cwd=msh_loc_out)
+    gmsh_cmd2 = [gmsh_exe, f'{msh_loc_out}/{msh_name}.msh']
+
+    if numbat.NumBATApp().is_macos(): # macOS requires the -a flag to open applications
+        gmsh_cmd1 = ['open', '-a'] + gmsh_cmd1
+        gmsh_cmd2 = ['open', '-a'] + gmsh_cmd2
+
+    run_subprocess(gmsh_cmd1, 'Gmsh', cwd=msh_loc_out)
+    run_subprocess(gmsh_cmd2, 'Gmsh', cwd=msh_loc_out)

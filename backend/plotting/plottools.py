@@ -21,7 +21,6 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-import numbat
 
 def get_rgb_for_poln(px, py, pz):
     vp = np.array([px, py, pz])
@@ -32,8 +31,8 @@ def get_rgb_for_poln(px, py, pz):
 
 def save_and_close_figure(fig, fig_fname):
 
+    import numbat # here to avoid circular import
     plot_prefs = numbat.NumBATPlotPrefs()
-    #plot_fileext = plot_prefs._plot_extension
     dpi = plot_prefs.plot_output_resolution_dpi
 
     if fig_fname[-3:-1] == 'png':
