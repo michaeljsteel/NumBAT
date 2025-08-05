@@ -1,6 +1,8 @@
 
 core
 core.*
+tmp*.png
+tt*.png
 *.so
 *.cls
 *.pyc
