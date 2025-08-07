@@ -50,8 +50,24 @@
  "_eta_24":  0.0687e-3,  // Acoustic loss tensor component [Pa s]
  "_eta_55":  0.1765e-3,  // Acoustic loss tensor component [Pa s]
  "_eta_56": -0.0687e-3,  // Acoustic loss tensor component [Pa s]
+
+
+ "piezo_active": 1,      // Trigonal 3m symmetry, these are indepenent
+ "piezo_use_e" : 1,
+ "piezo_use_epsT" : 0,
+
+ "piezo_epsS_xx": 44.95, 
+ "piezo_epsS_yy": 44.95, 
+ "piezo_epsS_zz": 24.06, 
+
+ "piezo_e_x5": 3.65, 
+ "piezo_e_y2": 2.39, 
+ "piezo_e_z1": 0.31, 
+ "piezo_e_z3": 1.72, 
+
  
  "orientation_x-cut": "0,0,1,90",
+ "orientation_negx-cut": "0,0,1,-90",
  "orientation_y-cut": "ident",
  "orientation_z-cut": "1,0,0,-90"
 

@@ -503,6 +503,8 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
             elif cut_plane == "yz":
                 vkap = np.array([0.0, np.cos(kphi), np.sin(kphi)])
                 vnorm = np.array([1.0, 0.0, 0.0])
+            else:
+                reporting.report_and_exit(f"Unknown cut plane {cut_plane}.")
 
             fout.write(f"{kphi:.4f}  {vkap[0]:+.4f}  {vkap[2]:+.4f}  ")
 
@@ -511,10 +513,13 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
             # v_vphase[m]:   |vphase| of modes m=1 to 3
             # vecs[:,m]:     evecs of modes m=1 to 3
             # v_vgroup[m,:]  vgroup of mode m, second index is x,y,z
-#            vkapflip = vkap.copy()
 
+            vkapflip = vkap.copy()
+            #if flip_x:
+                #vkapflip[0] = -vkapflip[0]  # flip y component for xz cut
+             #   vkapflip[2] = -vkapflip[2]  # flip
 
-            t_stiffness = material.get_stiffness_for_kappa(vkap)
+            t_stiffness = material.get_stiffness_for_kappa(vkapflip)
             v_vphase, vecs, v_vgroup = solve_christoffel(vkap, t_stiffness, material.rho)
 
             v_vel[ik, :] = v_vphase  # phase velocity
@@ -602,6 +607,7 @@ def add_bulk_slowness_curves_to_axes(material, pref, fig, ax_vp, ax_sl, ax_vg, c
     for tax in active_axes:
         tax.set_major_locator( ticker.MultipleLocator( 2.0 ))# , offset=0
 
+    flip_x=False
     if ax_sl is not None:
         make_axes_square(np.abs(1 / v_vel).max(), ax_sl, flip_x, flip_y)
     if ax_vp is not None:

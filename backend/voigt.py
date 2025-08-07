@@ -129,78 +129,159 @@ def kvec_to_symmetric_gradient(kvec):
     ])
     return nabla_IJ
 
-# def rotate_2tensor_elt(i, j, T_pq, mat_R):
-#     """
-#     Calculate the element (i, j) of a rotated rank-2 tensor under a given rotation.
 
-#     Args:
-#         i (int): Row index of the rotated tensor.
-#         j (int): Column index of the rotated tensor.
-#         T_pq (np.ndarray): Original 3x3 tensor.
-#         mat_R (np.ndarray): 3x3 rotation matrix.
-
-#     Returns:
-#         float: Rotated tensor element Tp_ij.
-#     """
-
-#     Tp_ij = 0
-
-#     for q in range(3):
-#         for r in range(3):
-#             Tp_ij += mat_R[i, q] * mat_R[j, r] * T_pq[q,r]
-
-#     return Tp_ij
-
-# def rotate_3tensor_elt(i, j, k, T_pqr, mat_R):
-#     """
-#     Calculate the element (i, j, k) of a rotated rank-3 tensor under a given rotation.
-
-#     Args:
-#         i (int): First index of the rotated tensor.
-#         j (int): Second index of the rotated tensor.
-#         k (int): Third index of the rotated tensor.
-#         T_pqr (np.ndarray): Original 3x3x3 tensor.
-#         mat_R (np.ndarray): 3x3 rotation matrix.
-
-#     Returns:
-#         float: Rotated tensor element Tp_ijk.
-#     """
-
-#     Tp_ijk = 0
-
-#     for q in range(3):
-#         for r in range(3):
-#             for s in range(3):
-#                     Tp_ijk += mat_R[i, q] * mat_R[j, r] * mat_R[k, s] * T_pqr[q,r,s]
-
-#     return Tp_ijk
+# old rotation methods
 
 
-# def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R):
-#     """
-#     Calculate the element (i, j, k, L) of a rotated rank-4 tensor in 6x6 Voigt notation under a given rotation.
 
-#     Args:
-#         i, j, k, L (int): Indices of the rotated tensor.
-#         T_PQ (np.ndarray): Original 6x6 Voigt tensor.
-#         mat_R (np.ndarray): 3x3 rotation matrix.
+def rotate_2tensor_elt(i, j, T_pq, mat_R):
+    """
+    Calculate the element (i, j) of a rotated rank-2 tensor under a given rotation.
 
-#     Returns:
-#         float: Rotated tensor element Tp_ijkl.
-#     """
+    Args:
+        i (int): Row index of the rotated tensor.
+        j (int): Column index of the rotated tensor.
+        T_pq (np.ndarray): Original 3x3 tensor.
+        mat_R (np.ndarray): 3x3 rotation matrix.
 
-#     Tp_ijkl = 0
+    Returns:
+        float: Rotated tensor element Tp_ij.
+    """
 
-#     for q in range(3):
-#         for r in range(3):
-#             V_I = to_Voigt_zerobase[q, r]
-#             for s in range(3):
-#                 for t in range(3):
-#                     V_J = to_Voigt_zerobase[s, t]
-#                     Tp_ijkl += mat_R[i, q] * mat_R[j, r] * \
-#                         mat_R[k, s] * mat_R[l, t] * T_PQ[V_I, V_J]
+    Tp_ij = 0
 
-#     return Tp_ijkl
+    for q in range(3):
+        for r in range(3):
+            Tp_ij += mat_R[i, q] * mat_R[j, r] * T_pq[q,r]
+
+    return Tp_ij
+
+def rotate_3tensor_elt(i, j, k, T_pqr, mat_R):
+    """
+    Calculate the element (i, j, k) of a rotated rank-3 tensor under a given rotation.
+
+    Args:
+        i (int): First index of the rotated tensor.
+        j (int): Second index of the rotated tensor.
+        k (int): Third index of the rotated tensor.
+        T_pqr (np.ndarray): Original 3x3x3 tensor.
+        mat_R (np.ndarray): 3x3 rotation matrix.
+
+    Returns:
+        float: Rotated tensor element Tp_ijk.
+    """
+
+    Tp_ijk = 0
+
+    for q in range(3):
+        for r in range(3):
+            for s in range(3):
+                    Tp_ijk += mat_R[i, q] * mat_R[j, r] * mat_R[k, s] * T_pqr[q,r,s]
+
+    return Tp_ijk
+
+
+def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R):
+    """
+    Calculate the element (i, j, k, L) of a rotated rank-4 tensor in 6x6 Voigt notation under a given rotation.
+
+    Args:
+        i, j, k, L (int): Indices of the rotated tensor.
+        T_PQ (np.ndarray): Original 6x6 Voigt tensor.
+        mat_R (np.ndarray): 3x3 rotation matrix.
+
+    Returns:
+        float: Rotated tensor element Tp_ijkl.
+    """
+
+    Tp_ijkl = 0
+
+    for q in range(3):
+        for r in range(3):
+            V_I = to_Voigt_zerobase[q, r]
+            for s in range(3):
+                for t in range(3):
+                    V_J = to_Voigt_zerobase[s, t]
+                    Tp_ijkl += mat_R[i, q] * mat_R[j, r] * \
+                        mat_R[k, s] * mat_R[l, t] * T_PQ[V_I, V_J]
+
+    return Tp_ijkl
+
+def _old_rotate_2tensor(T_ij, mat_R):
+    """
+    Rotate a material tensor by theta radians around a specified rotation_axis.
+    T_ij is a rank-2 tensor expressed in 3x3 zero-indexed standard notation.
+
+    The complete operation in 3x3 notation is
+    T'_ij  = sum_{pqr} R_ip R_jq T_pq
+
+    Args:
+        T_ij  (array): Tensor to be rotated.
+
+        theta  (float): Angle to rotate by in radians.
+
+        rotation_axis  (str): Axis around which to rotate.
+    """
+
+    Tp_ij = np.zeros((3, 3), dtype=T_ij.dtype)
+
+    for i in range(3):
+        for j in range(3):
+                Tp_ij[i,j] = rotate_2tensor_elt(i, j, T_ij, mat_R)
+
+    return Tp_ij
+
+def _rotate_3tensor(T_ijk, mat_R):
+    """
+    Rotate a material tensor by theta radians around a specified rotation_axis.
+    T_ijk is a rank-3 tensor expressed in 3x3x3 zero-indexed standard notation.
+
+    The complete operation in 3x3x3 notation is
+    T'_ijk  = sum_{pqr} R_ip R_jq R_kr T_pqr.
+
+    Args:
+        T_ijk (np.ndarray): 3x3x3 tensor to be rotated.
+        mat_R (np.ndarray): 3x3 rotation matrix.
+
+    Returns:
+        np.ndarray: Rotated 3x3x3 tensor.
+    """
+
+    Tp_ijk = np.zeros((3, 3, 3), dtype=T_ijk.dtype)
+
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                Tp_ijk[i,j,k] = rotate_3tensor_elt(i, j, k, T_ijk, mat_R)
+
+    return Tp_ijk
+
+def _rotate_Voigt_4tensor(T_PQ, mat_R):
+    """
+    Rotate a rank-4 acoustic material tensor in 6x6 Voigt notation using a rotation matrix.
+
+    The complete operation in 3x3x3 notation is
+    T'_ijkl  = sum_{pqr} R_ip R_jq R_kr R_ls T_pqrs.
+
+    Args:
+        T_PQ (np.ndarray): 6x6 Voigt tensor to be rotated.
+        mat_R (np.ndarray): 3x3 rotation matrix.
+
+    Returns:
+        np.ndarray: Rotated 6x6 Voigt tensor.
+    """
+
+    Tp_PQ = np.zeros((6, 6), dtype=T_PQ.dtype)
+    for i in range(3):
+        for j in range(3):
+            V1 = to_Voigt_zerobase[i, j]
+            for k in range(3):
+                for l in range(3):
+                    V2 = to_Voigt_zerobase[k, l]
+                    Tp_PQ[V1, V2] = rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R)
+
+    return Tp_PQ
+
 
 
 def parse_rotation_axis(rot_axis_spec):
@@ -276,7 +357,15 @@ def make_rotation_matrix(rot_axis_spec, theta):
 
     return mat_R
 
-def generate_voigt_rotation_matrix(matR):
+def make_rotation_Bond_matrix_M(matR):
+    """Bond rotation matrix for stiffness forms, upper right is 2x the lower left."""
+    return _make_rotation_Bond_matrix(matR, 2.0, 1.0)
+
+def make_rotation_Bond_matrix_N(matR):
+    """Bond rotation matrix for compliance forms, lower left is 2x the upper right."""
+    return _make_rotation_Bond_matrix(matR, 1.0, 2.0)
+
+def _make_rotation_Bond_matrix(matR, urfac, llfac):
     """
     Generates the 6x6 transformation matrix M for rotating a rank 4 tensor
     expressed in 6x6 Voigt notation, given a 3x3 rotation matrix R.
@@ -308,30 +397,30 @@ def generate_voigt_rotation_matrix(matR):
     M[2, 0] = R31**2; M[2, 1] = R32**2; M[2, 2] = R33**2
 
     # First 3x3 block (normal-shear components, factor of 2)
-    M[0, 3] = 2 * R12 * R13
-    M[0, 4] = 2 * R11 * R13
-    M[0, 5] = 2 * R11 * R12
+    M[0, 3] = urfac * R12 * R13
+    M[0, 4] = urfac * R11 * R13
+    M[0, 5] = urfac * R11 * R12
 
-    M[1, 3] = 2 * R22 * R23
-    M[1, 4] = 2 * R21 * R23
-    M[1, 5] = 2 * R21 * R22
+    M[1, 3] = urfac * R22 * R23
+    M[1, 4] = urfac * R21 * R23
+    M[1, 5] = urfac * R21 * R22
 
-    M[2, 3] = 2 * R32 * R33
-    M[2, 4] = 2 * R31 * R33
-    M[2, 5] = 2 * R31 * R32
+    M[2, 3] = urfac * R32 * R33
+    M[2, 4] = urfac * R31 * R33
+    M[2, 5] = urfac * R31 * R32
 
     # Bottom 3x3 block (shear-normal components)
-    M[3, 0] = R21 * R31
-    M[3, 1] = R22 * R32
-    M[3, 2] = R23 * R33
+    M[3, 0] = llfac * R21 * R31
+    M[3, 1] = llfac * R22 * R32
+    M[3, 2] = llfac * R23 * R33
 
-    M[4, 0] = R11 * R31
-    M[4, 1] = R12 * R32
-    M[4, 2] = R13 * R33
+    M[4, 0] = llfac * R11 * R31
+    M[4, 1] = llfac * R12 * R32
+    M[4, 2] = llfac * R13 * R33
 
-    M[5, 0] = R11 * R21
-    M[5, 1] = R12 * R22
-    M[5, 2] = R13 * R23
+    M[5, 0] = llfac * R11 * R21
+    M[5, 1] = llfac * R12 * R22
+    M[5, 2] = llfac * R13 * R23
 
     # Bottom 3x3 block (shear-shear components)
     M[3, 3] = R22 * R33 + R23 * R32
@@ -384,80 +473,7 @@ def _rotate_2tensor(T_ij, mat_R):
     return Tp_ij
 
 
-# def _old_rotate_2tensor(T_ij, mat_R):
-#     """
-#     Rotate a material tensor by theta radians around a specified rotation_axis.
-#     T_ij is a rank-2 tensor expressed in 3x3 zero-indexed standard notation.
 
-#     The complete operation in 3x3 notation is
-#     T'_ij  = sum_{pqr} R_ip R_jq T_pq
-
-#     Args:
-#         T_ij  (array): Tensor to be rotated.
-
-#         theta  (float): Angle to rotate by in radians.
-
-#         rotation_axis  (str): Axis around which to rotate.
-#     """
-
-#     Tp_ij = np.zeros((3, 3), dtype=T_ij.dtype)
-
-#     for i in range(3):
-#         for j in range(3):
-#                 Tp_ij[i,j] = rotate_2tensor_elt(i, j, T_ij, mat_R)
-
-#     return Tp_ij
-
-# def _rotate_3tensor(T_ijk, mat_R):
-#     """
-#     Rotate a material tensor by theta radians around a specified rotation_axis.
-#     T_ijk is a rank-3 tensor expressed in 3x3x3 zero-indexed standard notation.
-
-#     The complete operation in 3x3x3 notation is
-#     T'_ijk  = sum_{pqr} R_ip R_jq R_kr T_pqr.
-
-#     Args:
-#         T_ijk (np.ndarray): 3x3x3 tensor to be rotated.
-#         mat_R (np.ndarray): 3x3 rotation matrix.
-
-#     Returns:
-#         np.ndarray: Rotated 3x3x3 tensor.
-#     """
-
-#     Tp_ijk = np.zeros((3, 3, 3), dtype=T_ijk.dtype)
-
-#     for i in range(3):
-#         for j in range(3):
-#             for k in range(3):
-#                 Tp_ijk[i,j,k] = rotate_3tensor_elt(i, j, k, T_ijk, mat_R)
-
-#     return Tp_ijk
-
-# def _rotate_Voigt_4tensor(T_PQ, mat_R):
-#     """
-#     Rotate a rank-4 acoustic material tensor in 6x6 Voigt notation using a rotation matrix.
-
-#     The complete operation in 3x3x3 notation is
-#     T'_ijkl  = sum_{pqr} R_ip R_jq R_kr R_ls T_pqrs.
-
-#     Args:
-#         T_PQ (np.ndarray): 6x6 Voigt tensor to be rotated.
-#         mat_R (np.ndarray): 3x3 rotation matrix.
-
-#     Returns:
-#         np.ndarray: Rotated 6x6 Voigt tensor.
-#     """
-
-#     Tp_PQ = np.zeros((6, 6), dtype=T_PQ.dtype)
-#     for i in range(3):
-#         for j in range(3):
-#             V1 = to_Voigt_zerobase[i, j]
-#             for k in range(3):
-#                 for l in range(3):
-#                     V2 = to_Voigt_zerobase[k, l]
-#                     Tp_PQ[V1, V2] = rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R)
-
-#     return Tp_PQ
 
 
 def Voigt3_iJ_to_ijk(mat_iJ, fac2mul = False):
@@ -686,7 +702,7 @@ class VoigtTensor3_iJ(object):
 
         """
 
-        mat_M = generate_voigt_rotation_matrix(mat_R)
+        mat_M = make_rotation_Bond_matrix_M(mat_R)
 
         self.mat = mat_R @ self.mat @ mat_M.T
 
@@ -870,7 +886,7 @@ class VoigtTensor4_IJ(object):
 
     Internally uses 1-based indexing like the notation. Externally it passes zero-based values.'''
 
-    def __init__(self, param_nm, physical_name='', physical_symbol='', unit=None):
+    def __init__(self, param_nm, physical_name='', physical_symbol='', unit=None, transforms_like_stiffness=True):
         """
         Initialize a VoigtTensor4_IJ object.
 
@@ -890,6 +906,7 @@ class VoigtTensor4_IJ(object):
         #self._d_params = src_dict
         self._physical_symbol=physical_symbol
         self.unit=unit
+        self._transforms_like_stiffness = transforms_like_stiffness  # converts to _ijkl form with stiffness factors
 
     def as_str(self, chop=False, rtol=1e-10, atol=1e-12):
         """
@@ -1159,16 +1176,16 @@ class VoigtTensor4_IJ(object):
         reporting.assertion(
             mat_is_sym, f'Material matrix {self._physical_name}-{self._physical_symbol} is symmetric.\n' + str(self.mat))
 
-    # def _old_rotate(self, mat_R):
-    #     """
-    #     Rotate the tensor using the SO(3) matrix mat_R.
+    def _old_rotate(self, mat_R):
+        """
+        Rotate the tensor using the SO(3) matrix mat_R.
 
-    #     Args:
-    #         mat_R (np.ndarray): 3x3 rotation matrix.
-    #     """
+        Args:
+            mat_R (np.ndarray): 3x3 rotation matrix.
+        """
 
-    #     rot_tensor = _rotate_Voigt_4tensor(self.mat[1:, 1:], mat_R)
-    #     self.mat[1:, 1:] = rot_tensor
+        rot_tensor = _rotate_Voigt_4tensor(self.mat[1:, 1:], mat_R)
+        self.mat[1:, 1:] = rot_tensor
 
     def rotate(self, mat_R):
         """
@@ -1179,9 +1196,12 @@ class VoigtTensor4_IJ(object):
 
         """
 
-        mat_M = generate_voigt_rotation_matrix(mat_R)
+        if self._transforms_like_stiffness:
+            mat_MN = make_rotation_Bond_matrix_M(mat_R)
+        else:
+            mat_MN = make_rotation_Bond_matrix_N(mat_R)
 
-        self.mat[1:, 1:] = mat_M @ self.mat[1:, 1:] @ mat_M.T
+        self.mat[1:, 1:] = mat_MN @ self.mat[1:, 1:] @ mat_MN.T
 
 
     def set_from_structure_elts(self, d_params, elts_indep, elts_dep):

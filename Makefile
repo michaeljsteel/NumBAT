@@ -46,4 +46,4 @@ setup_ubuntu:
 	sudo apt-get install libarpack2-dev libparpack2-dev libatlas-base-dev libblas-dev liblapack-dev  libsuitesparse-dev
 
 backend_tests:
-	pytest tests
+	pytest -s tests

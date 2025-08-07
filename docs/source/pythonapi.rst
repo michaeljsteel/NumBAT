@@ -69,7 +69,7 @@ The ``modes`` module defines the main classes for displaying and interrogating o
     :show-inheritance:
 
 structure module
-==============
+=================
 
 The ``structure`` module provides functions for defining and constructing waveguides.
 The diagrams in Chapter 2 can be used to identify which parameters (``slab_a_x, slab_c_y, material_d`` etc) correspond to each region.

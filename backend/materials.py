@@ -39,7 +39,7 @@ from nbtypes import CrystalGroup, unit_x, unit_y, unit_z, SI_permittivity_eps0
 import reporting
 import voigt
 from bulkprops import solve_christoffel, solve_dielectric
-import numbattools as nbtools
+#import numbattools as nbtools
 
 
 import plotting.materials as plms
@@ -472,7 +472,7 @@ class Material(object):
         """
 
         """Returns a string containing key elastic properties of the material."""
-        dent = "\n  "
+        #dent = "\n  "
 
         try:
             s = f"Optical properties of material {self.material_name}"
@@ -1251,7 +1251,7 @@ class Material(object):
         """
         Plot the bulk dispersion as inverse phase velocity. Returns the filename of the generated image.
         """
-
+        print('plot_bulk_dispersion_ivp', flip_x)
         return plms.plot_bulk_dispersion_ivp(
             self, pref, label, show_poln, flip_x, flip_y, cut_plane, mark_velocities
         )

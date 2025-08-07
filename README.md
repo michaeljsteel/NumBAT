@@ -2,7 +2,6 @@
 
 # NumBAT - The Numerical Brillouin Analysis Tool
 
-
 <!-- Shields -->
 [![Last Commit](https://img.shields.io/github/last-commit/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/commits/main)
 [![Release](https://img.shields.io/github/v/release/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/releases)
@@ -11,12 +10,9 @@
 [![Documentation Status](https://readthedocs.org/projects/numbat-au/badge/?version=latest&style=flat-square)](http://numbat-au.readthedocs.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
-
-
 NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
 
 ## Capabilities
-
 
 NumBAT's capabilities are constantly growing. The current feature set includes:
 
@@ -54,7 +50,6 @@ Calculate dispersive and polarisation properties of elastic modes for arbitrary 
 Calculate dispersion relations for optical and elastic waveguide modes.
 
 <img src="./docs/source/images/tutorial/tut_03b-dispersion_multicore.png" width="65%" alt="Optical and elastic dispersion relations" />
-
 
 ### Optical and elastic mode profiles
 
@@ -108,7 +103,6 @@ NumBAT was developed by Michael Steel, Bjorn Sturmberg, Kokou Dossou, and Christ
 ## How to cite
 
 If you find NumBAT useful in your work, we would appreciate a citation as follows:
-
 
 ### Optica Style
 
