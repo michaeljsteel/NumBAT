@@ -26,15 +26,16 @@ import numbattools as nbtools
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]
 
 # Makes a Voigt3 index in [1..6] from (i,j) in [0..2]x[0..2]
-to_Voigt3_index = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]])
+to_Voigt3_index = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]]) + 1
 """Array mapping (i, j) indices in [0..2]x[0..2] to Voigt notation indices [1..6]."""
 
 #used by Voigt4, J is 0..5 !
 to_Voigt_zerobase = np.array([[0, 5, 4], [5, 1, 3], [4, 3, 2]])
 """Array mapping (i, j) indices in [0..2]x[0..2] to zero-based Voigt indices [0..5]."""
 
-# Sends a Voigt index in [0..5] to (i,j) in [0..2]x[0..2]
+# Sends a Voigt index in [1..6] to (i,j) in [0..2]x[0..2]
 from_Voigt = [
+        None,
         (0,0),
         (1,1),
         (2,2),
@@ -43,25 +44,6 @@ from_Voigt = [
         (0,1),
         ]
 """List mapping Voigt indices [1..6] to (i, j) pairs in [0..2]x[0..2]."""
-
-
-def compliance_factor(is_stiffness, I, J):
-    """    Calculate the compliance factor for Voigt notation indices I and J.
-    Args:
-        I (int): First Voigt index (0-5).
-        J (int): Second Voigt index (0-5).
-
-    Returns:
-        float: Compliance factor.
-    """
-    if is_stiffness:
-        return 1.0
-    elif I < 3 and J < 3:
-        return 1.0
-    elif I < 3 or J < 3:
-        return 2.0
-    else:
-        return 4.0
 
 
 # These functions are indexed from 0.
@@ -199,7 +181,7 @@ def rotate_3tensor_elt(i, j, k, T_pqr, mat_R):
     return Tp_ijk
 
 
-def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R, is_stiffness):
+def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R):
     """
     Calculate the element (i, j, k, L) of a rotated rank-4 tensor in 6x6 Voigt notation under a given rotation.
 
@@ -220,11 +202,8 @@ def rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R, is_stiffness):
             for s in range(3):
                 for t in range(3):
                     V_J = to_Voigt_zerobase[s, t]
-                    mulfac = compliance_factor(is_stiffness, V_I, V_J)
-
-                    # s_ijkl are 1 or 2 or 4 x smaller than s_IJ
                     Tp_ijkl += mat_R[i, q] * mat_R[j, r] * \
-                        mat_R[k, s] * mat_R[l, t] * T_PQ[V_I, V_J] / mulfac
+                        mat_R[k, s] * mat_R[l, t] * T_PQ[V_I, V_J]
 
     return Tp_ijkl
 
@@ -277,10 +256,7 @@ def _rotate_3tensor(T_ijk, mat_R):
 
     return Tp_ijk
 
-
-
-
-def _rotate_Voigt_4tensor(T_PQ, mat_R, is_stiffness):
+def _rotate_Voigt_4tensor(T_PQ, mat_R):
     """
     Rotate a rank-4 acoustic material tensor in 6x6 Voigt notation using a rotation matrix.
 
@@ -302,12 +278,7 @@ def _rotate_Voigt_4tensor(T_PQ, mat_R, is_stiffness):
             for k in range(3):
                 for l in range(3):
                     V2 = to_Voigt_zerobase[k, l]
-                    elt_p = rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ,
-                                                             mat_R, is_stiffness)
-
-                    # s_IJ are 1 or 2 or 4 x larger than s_ijkl
-                    mulfac =compliance_factor(is_stiffness, V1, V2)
-                    Tp_PQ[V1, V2] = elt_p * mulfac
+                    Tp_PQ[V1, V2] = rotate_Voigt_4tensor_elt(i, j, k, l, T_PQ, mat_R)
 
     return Tp_PQ
 
@@ -358,9 +329,7 @@ def parse_rotation_axis(rot_axis_spec):
 
 def make_rotation_matrix(rot_axis_spec, theta):
     """
-    Return the SO(3) matrix corresponding to am active rotation of theta radians about the specified axis.
-
-    Note that Auld uses passive rotations, so use the opposite sign for theta to compare against those examples.
+    Return the SO(3) matrix corresponding to a rotation of theta radians about the specified axis.
 
     Args:
         rot_axis_spec (str, tuple, list, or np.ndarray): Axis specification.
@@ -507,13 +476,13 @@ def _rotate_2tensor(T_ij, mat_R):
 
 
 
-def Voigt3_iJ_to_ijk(mat_iJ, trans_like_dijk = False):
+def Voigt3_iJ_to_ijk(mat_iJ, fac2mul = False):
     """
     Convert a 3x6 Voigt-indexed tensor to a 3x3x3 tensor, optionally multiplying off-diagonal elements by 2.
 
     Args:
         mat_iJ (np.ndarray): 3x6 Voigt-indexed tensor.
-        trans_like_dijk (bool): Whether to multiply off-diagonal elements by 2.
+        fac2mul (bool): Whether to multiply off-diagonal elements by 2.
 
     Returns:
         np.ndarray: 3x3x3 tensor.
@@ -521,24 +490,23 @@ def Voigt3_iJ_to_ijk(mat_iJ, trans_like_dijk = False):
 
     T_ijk = np.zeros([3,3,3], dtype=mat_iJ.dtype)
 
-    compfac = 2 if trans_like_dijk else 1
     for i in range(3):
         for j in range(3):
             for k in range(3):
-                J = to_Voigt3_index[j,k]   # J is in [0..5]
-                if J>=3:
-                    T_ijk[i,j,k] = mat_iJ[i,J] /compfac
+                J = to_Voigt3_index[j,k]
+                if J>=4 and fac2mul:
+                    T_ijk[i,j,k] = 2*mat_iJ[i,J-1]
                 else:
-                    T_ijk[i,j,k] = mat_iJ[i,J]
+                    T_ijk[i,j,k] = mat_iJ[i,J-1]
     return T_ijk
 
-def Voigt3_ijk_to_iJ(mat_ijk, trans_like_dijk = False):
+def Voigt3_ijk_to_iJ(mat_ijk, fac2mul = False):
     """
     Convert a 3x3x3 tensor to a 3x6 Voigt-indexed tensor, optionally dividing off-diagonal elements by 2.
 
     Args:
         mat_ijk (np.ndarray): 3x3x3 tensor.
-        trans_like_dijk (bool): Whether to divide off-diagonal elements by 2.
+        fac2mul (bool): Whether to divide off-diagonal elements by 2.
 
     Returns:
         np.ndarray: 3x6 Voigt-indexed tensor.
@@ -546,14 +514,13 @@ def Voigt3_ijk_to_iJ(mat_ijk, trans_like_dijk = False):
 
     T_iJ = np.zeros([3,6], dtype=mat_ijk.dtype)
 
-    compfac = 2 if trans_like_dijk else 1
     for i in range(3):
-        for J in range(6):
+        for J in range(1,7):
             (j,k) = from_Voigt[J]
-            if J>=3 :
-                T_iJ[i,J] = mat_ijk[i,j,k] * compfac
+            if J>=4 and fac2mul:
+                T_iJ[i,J-1] = mat_ijk[i,j,k] / 2
             else:
-                T_iJ[i,J] = mat_ijk[i,j,k]
+                T_iJ[i,J-1] = mat_ijk[i,j,k]
     return T_iJ
 
 
@@ -646,7 +613,7 @@ class PlainTensor2_ij(object):
 
                 self.mat[i_xyz, j_xyz] = val
 
-    def set_from_matrix(self, mat00):
+    def set_from_00matrix(self, mat00):
         """
         Set the tensor values from a 3x3 matrix.
 
@@ -735,17 +702,9 @@ class VoigtTensor3_iJ(object):
 
         """
 
-        #mat_M = make_rotation_Bond_matrix_M(mat_R)
-        #self.mat = mat_R @ self.mat @ mat_M.T
+        mat_M = make_rotation_Bond_matrix_M(mat_R)
 
-        if self._transforms_like_piezo_d:
-            # Auld eq 8.35
-            mat_N = make_rotation_Bond_matrix_N(mat_R)
-            self.mat = mat_R @ self.mat @ mat_N.T
-        else:
-            # Auld eq 8.47
-            mat_M = make_rotation_Bond_matrix_M(mat_R)
-            self.mat = mat_R @ self.mat @ mat_M.T
+        self.mat = mat_R @ self.mat @ mat_M.T
 
 
 
@@ -801,7 +760,7 @@ class VoigtTensor3_iJ(object):
         return self.as_str(chop=False)
 
 
-    def set_from_matrix(self, mat):
+    def set_from_00matrix(self, mat00):
         """
         Set the tensor values from a 3x6 matrix.
 
@@ -809,7 +768,7 @@ class VoigtTensor3_iJ(object):
             mat00 (np.ndarray): 3x6 matrix.
         """
 
-        self.mat = mat.copy()
+        self.mat = mat00.copy()
 
     def set_from_params(self, d_params):
         """
@@ -939,7 +898,7 @@ class VoigtTensor4_IJ(object):
             unit (tuple or None): Unit information (name, scale).
         """
 
-        self.mat = np.zeros([6, 6], dtype=float)  # unit indexing
+        self.mat = np.zeros([7, 7], dtype=float)  # unit indexing
 
         self._physical_name = physical_name
         self._param_nm = param_nm  # eg 'c', 'p', 'eta'
@@ -971,9 +930,9 @@ class VoigtTensor4_IJ(object):
         sh += '\n   Voigt 4-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(nbtools.chopmat(self.mat/self.unit[1], chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(nbtools.chopmat(self.mat, chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
 
@@ -1016,7 +975,7 @@ class VoigtTensor4_IJ(object):
         Fill the tensor with random values (uniform in [0,1)).
         """
 
-        self.mat = nprand.rand(6, 6)
+        self.mat = nprand.rand(7,7)
 
     def elt_s_IJ(self, s_IJ):
         """
@@ -1032,7 +991,7 @@ class VoigtTensor4_IJ(object):
         eI=int(s_IJ[0])
         eJ=int(s_IJ[1])
         assert(eI>=1 and eI<=6 and eJ>=1 and eJ<=6)
-        return self.mat[eI-1, eJ-1]
+        return self.mat[eI,eJ]
 
     def set_elt_s_IJ(self, s_IJ, val):
         """
@@ -1046,7 +1005,7 @@ class VoigtTensor4_IJ(object):
         eI=int(s_IJ[0])
         eJ=int(s_IJ[1])
         assert(eI>=1 and eI<=6 and eJ>=1 and eJ<=6)
-        self.mat[eI-1,eJ-1] = val
+        self.mat[eI,eJ] = val
 
     def dump_rawdata(self):
         """
@@ -1054,32 +1013,34 @@ class VoigtTensor4_IJ(object):
         """
 
         print(f'\nVoigt tensor {self._physical_name}, tensor {self._param_nm}')
-        print(self.mat)
+        print(self.mat[1:, 1:])
 
     def value(self):
         """
         Return a copy of the tensor's matrix data (shape [6,6]).
         """
 
-        return self.mat.copy()
+        return self.mat[1:, 1:].copy()
 
     def refvalue(self):
         """
         Return a reference to the tensor's matrix data (shape [6,6]).
         """
 
-        return self.mat[:, :]
+        return self.mat[1:, 1:]
 
 
-    def set_from_matrix(self, mat):
+    def set_from_00matrix(self, mat00):
         """
         Set the tensor values from a 6x6 matrix.
 
         Args:
-            mat (np.ndarray): 6x6 matrix.
+            mat00 (np.ndarray): 6x6 matrix.
         """
 
-        self.mat = mat.copy()
+        if self.mat.dtype != mat00.dtype:
+            self.mat = np.zeros([7, 7], dtype=mat00.dtype)
+        self.mat[1:7, 1:7] = mat00
 
     def copy(self):
         """
@@ -1135,9 +1096,9 @@ class VoigtTensor4_IJ(object):
         """
 
         elt = f'{self._param_nm}_{s_IJ}'
-        e_I, e_J = self._siJ_to_rc(s_IJ)
+        e_i, e_J = self._siJ_to_rc(s_IJ)
 
-        self.mat[e_I-1, e_J-1] =  d_params[elt]
+        self.mat[e_i, e_J] =  d_params[elt]
 
 
 
@@ -1174,7 +1135,7 @@ class VoigtTensor4_IJ(object):
         self.set_elt_from_param_dict(1, 1, d_params)
         self.set_elt_from_param_dict(1, 2, d_params)
         self.set_elt_from_param_dict(4, 4, d_params)
-        self.make_isotropic_tensor(self.mat[0, 0], self.mat[0, 1], self.mat[3, 3])
+        self.make_isotropic_tensor(self.mat[1, 1], self.mat[1, 2], self.mat[4, 4])
 
     def make_isotropic_tensor(self, m11, m12, m44):
         """
@@ -1187,19 +1148,19 @@ class VoigtTensor4_IJ(object):
             m44 (float): Shear value.
         """
 
-        self.mat[0, 0] = m11
-        self.mat[0, 1] = m12
-        self.mat[3, 3] = m44
+        self.mat[1, 1] = m11
+        self.mat[1, 2] = m12
+        self.mat[4, 4] = m44
 
-        self.mat[1, 1] = self.mat[0, 0]
-        self.mat[2, 2] = self.mat[0, 0]
-        self.mat[4, 4] = self.mat[3, 3]
-        self.mat[5, 5] = self.mat[3, 3]
-        self.mat[1, 0] = self.mat[0, 1]
-        self.mat[1, 2] = self.mat[0, 1]
-        self.mat[0, 2] = self.mat[0, 1]
-        self.mat[2, 0] = self.mat[0, 1]
-        self.mat[2, 1] = self.mat[0, 1]
+        self.mat[2, 2] = self.mat[1, 1]
+        self.mat[3, 3] = self.mat[1, 1]
+        self.mat[5, 5] = self.mat[4, 4]
+        self.mat[6, 6] = self.mat[4, 4]
+        self.mat[2, 1] = self.mat[1, 2]
+        self.mat[2, 3] = self.mat[1, 2]
+        self.mat[1, 3] = self.mat[1, 2]
+        self.mat[3, 1] = self.mat[1, 2]
+        self.mat[3, 2] = self.mat[1, 2]
 
     def check_symmetries(self):
         """
@@ -1223,8 +1184,8 @@ class VoigtTensor4_IJ(object):
             mat_R (np.ndarray): 3x3 rotation matrix.
         """
 
-        rot_tensor = _rotate_Voigt_4tensor(self.mat, mat_R, self._transforms_like_stiffness)
-        self.mat = rot_tensor
+        rot_tensor = _rotate_Voigt_4tensor(self.mat[1:, 1:], mat_R)
+        self.mat[1:, 1:] = rot_tensor
 
     def rotate(self, mat_R):
         """
@@ -1240,7 +1201,7 @@ class VoigtTensor4_IJ(object):
         else:
             mat_MN = make_rotation_Bond_matrix_N(mat_R)
 
-        self.mat = mat_MN @ self.mat @ mat_MN.T
+        self.mat[1:, 1:] = mat_MN @ self.mat[1:, 1:] @ mat_MN.T
 
 
     def set_from_structure_elts(self, d_params, elts_indep, elts_dep):
@@ -1263,6 +1224,6 @@ class VoigtTensor4_IJ(object):
                 for (s_IJ,sf) in src:
                     sI=int(s_IJ[0])
                     sJ=int(s_IJ[1])
-                    self.mat[dI-1, dJ-1] += self.mat[sI-1,sJ-1] * sf
+                    self.mat[dI, dJ] += self.mat[sI,sJ] * sf
 
         #print('set Voigt tensor from structure elements, result:\n', self.mat[1:, 1:])

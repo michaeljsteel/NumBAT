@@ -161,7 +161,7 @@ class PiezoElectricProperties:
             "Strain piezo coefficient",
             "d_iJ",
             ("pC/N", 1e-12),
-            transforms_with_factor_2=True,
+            transforms_like_piezo_d=True,
         )
 
         self._tens_e_iJ = voigt.VoigtTensor3_iJ(
@@ -169,7 +169,7 @@ class PiezoElectricProperties:
             "Stress piezo coefficient",
             "e_iJ",
             ("C/m^2", 1.0),
-            transforms_with_factor_2=False,
+            transforms_like_piezo_d=False,
         )
 
         self._tens_relepsS_ij = voigt.PlainTensor2_ij(
