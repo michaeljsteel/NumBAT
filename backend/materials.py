@@ -153,7 +153,7 @@ class PiezoElectricProperties:
         self.active = d_piezo.get("piezo_active", 0)
 
         # incoming base tensors
-        self._tens_cE_IJ = stiffness_cE_IJ
+        self._tens_cE_IJ = stiffness_cE_IJ.copy()
 
         # Units of [Coulomb/Newton], order 1e-12
         self._tens_d_iJ = voigt.VoigtTensor3_iJ(
@@ -203,13 +203,13 @@ class PiezoElectricProperties:
 
         if d_piezo.get("piezo_use_epsT", 0):
             self._tens_relepsT_ij.set_from_params(d_piezo)
-            epsS_ij_00 = self._tens_relepsT_ij.value() - d_cE_d_ij
-            self._tens_relepsS_ij.set_from_00matrix(epsS_ij_00)
+            epsS_ij = self._tens_relepsT_ij.value() - d_cE_d_ij
+            self._tens_relepsS_ij.set_from_matrix(epsS_ij)
 
         else:
             self._tens_relepsS_ij.set_from_params(d_piezo)
-            epsT_ij_00 = self._tens_relepsS_ij.value() + d_cE_d_ij
-            self._tens_relepsT_ij.set_from_00matrix(epsT_ij_00)
+            epsT_ij = self._tens_relepsS_ij.value() + d_cE_d_ij
+            self._tens_relepsT_ij.set_from_matrix(epsT_ij)
 
     def _load_piezo_d_IJ_from_json(self, d_piezo):
         if d_piezo["crystal_sym"] == "no sym":
@@ -251,7 +251,7 @@ class PiezoElectricProperties:
 
             # d_iK = e_iJ . s_JK
             tens_s_compliance = npla.inv(self._tens_cE_IJ.value())
-            self._tens_d_iJ.set_from_00matrix(
+            self._tens_d_iJ.set_from_matrix(
                 self._tens_e_iJ.value() @ tens_s_compliance
             )
 
@@ -263,7 +263,7 @@ class PiezoElectricProperties:
 
             tens_cE = self._tens_cE_IJ.value()
 
-            self._tens_e_iJ.set_from_00matrix(
+            self._tens_e_iJ.set_from_matrix(
                 self._tens_d_iJ.value() @ tens_cE
             )  # Auld 8.40
 
@@ -285,12 +285,18 @@ class PiezoElectricProperties:
         li_e_iL = v_kap @ e_iL
 
         l_eps_l = v_kap @ self._tens_relepsS_ij.value() @ v_kap * SI_permittivity_eps0
-
-        cE_KL_stiff = self._tens_cE_IJ.value() + np.outer(e_Kj_lj, li_e_iL) / l_eps_l
-
+        corr_stiff = np.outer(e_Kj_lj, li_e_iL) / l_eps_l
+        cE_KL_stiff = self._tens_cE_IJ.value() + corr_stiff
+        # with np.printoptions(precision=4, suppress=True):
+        #     print('\n\nkap:', v_kap,
+        #           '\n eiL', e_iL, '\n eKj', e_Kj,
+        #           '\n li_e_iL', li_e_iL, '\n e_Kj_lj', e_Kj_lj,
+        #           '\n l_eps_l', l_eps_l, '\n corr_stiff\n', corr_stiff /1e10,
+        #           '\n cE_KL_stiff\n', cE_KL_stiff /1e10,
+        #           )
         # convert to a voigt4
         vt_cE_KL_stiff = self._tens_cE_IJ.copy()
-        vt_cE_KL_stiff.set_from_00matrix(cE_KL_stiff)
+        vt_cE_KL_stiff.set_from_matrix(cE_KL_stiff)
 
         return vt_cE_KL_stiff
 
@@ -301,6 +307,8 @@ class PiezoElectricProperties:
         Args:
             matR (np.ndarray): 3x3 rotation matrix.
         """
+
+        self._tens_cE_IJ.rotate(matR)
 
         self._tens_d_iJ.rotate(matR)
         self._tens_e_iJ.rotate(matR)
@@ -314,6 +322,7 @@ class PiezoElectricProperties:
         """
 
         self._tens_d_iJ = self._tens_d_iJ_orig.copy()
+        self._tens_cE_IJ = self._tens_cE_IJ_orig.copy()
         self._tens_e_iJ = self._tens_e_iJ_orig.copy()
         self._tens_relepsS_ij = self._tens_relepsS_ij_orig.copy()
         self._tens_relepsT_ij = self._tens_relepsT_ij_orig.copy()
@@ -322,6 +331,7 @@ class PiezoElectricProperties:
         """Save tensors to optionally restore after rotations."""
 
         self._tens_d_iJ_orig = copy.deepcopy(self._tens_d_iJ)
+        self._tens_cE_IJ_orig = copy.deepcopy(self._tens_cE_IJ)
         self._tens_e_iJ_orig = copy.deepcopy(self._tens_e_iJ)
         self._tens_relepsS_ij_orig = copy.deepcopy(self._tens_relepsS_ij)
         self._tens_relepsT_ij_orig = copy.deepcopy(self._tens_relepsT_ij)
@@ -658,7 +668,7 @@ class Material(object):
             Re_n = json_data["Re_n"]  # Real part of refractive index []
             Im_n = json_data["Im_n"]  # Imaginary part of refractive index []
             self.refindex_n = Re_n + 1j * Im_n  # Complex refractive index []
-            self.optdiel_eps_ij.set_from_00matrix(np.eye(3) * self.refindex_n**2)
+            self.optdiel_eps_ij.set_from_matrix(np.eye(3) * self.refindex_n**2)
 
     def _parse_crystal_types(self, json_data, fname):
         if "crystal_class" not in json_data:
@@ -701,13 +711,13 @@ class Material(object):
 
 
         self.stiffness_c_IJ = voigt.VoigtTensor4_IJ(
-            "c", "Stiffness", "c_IJ", ("GPa", 1.0e9)
+            "c", "Stiffness", "c_IJ", ("GPa", 1.0e9), transforms_like_stiffness=True
         )
         self.viscosity_eta_IJ = voigt.VoigtTensor4_IJ(
-            "eta", "Viscosity", "eta_IJ"
+            "eta", "Viscosity", "eta_IJ", transforms_like_stiffness=True
         )
         self.photoel_p_IJ = voigt.VoigtTensor4_IJ(
-            "p", "Photoelasticity", "p_IJ"
+            "p", "Photoelasticity", "p_IJ", transforms_like_stiffness=True  # TODO: what is correct form?
         )
 
         self.construct_crystal()
@@ -1251,7 +1261,6 @@ class Material(object):
         """
         Plot the bulk dispersion as inverse phase velocity. Returns the filename of the generated image.
         """
-        print('plot_bulk_dispersion_ivp', flip_x)
         return plms.plot_bulk_dispersion_ivp(
             self, pref, label, show_poln, flip_x, flip_y, cut_plane, mark_velocities
         )

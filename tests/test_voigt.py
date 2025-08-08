@@ -116,7 +116,6 @@ def test_voigt_tensor4_IJ_old_rotations_recover_identity():
                     tens_rot._old_rotate(mat_R)
                 np.testing.assert_allclose(tens.mat, tens_rot.mat, atol=1e-12)
 
-
 def test_voigt_tensor3_iJ_old_and_new_rotations_are_equivalent_dijk():
     tens = VoigtTensor3_iJ('testsym', transforms_like_piezo_d=True)
     tens.fill_random()

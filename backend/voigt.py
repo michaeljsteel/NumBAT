@@ -609,9 +609,9 @@ class PlainTensor2_ij(object):
         sh += '\n   Plain 2-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat, chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
 
@@ -787,9 +787,9 @@ class VoigtTensor3_iJ(object):
         sh += '\n   Voigt 3-tensor:\n'
         with np.printoptions(precision=4):
             if self.unit is not None:
-                sd = str(nbtools.chopmat(self.mat[1:, 1:]/self.unit[1], chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat/self.unit[1], chop=chop, rtol=rtol, atol=atol))
             else:
-                sd = str(nbtools.chopmat(self.mat[1:, 1:], chop=chop, rtol=rtol, atol=atol))
+                sd = str(nbtools.chopmat(self.mat, chop=chop, rtol=rtol, atol=atol))
 
         return sh + nbtools.indent_string(sd, indent=4)
 
@@ -985,31 +985,38 @@ class VoigtTensor4_IJ(object):
         return self.as_str(chop=False)
 
 
-    # Allow direct indexing of Voigt tensor in [(i,j)] form
+    # Allow direct indexing of Voigt tensor in [(I,J)] form
 
-    def __getitem__(self, k):
+    def __getitem__(self, pr_IJ):
         """
-        Get an element of the tensor using (i, j) tuple indexing.
+        Get an element of the tensor using (I, J) tuple indexing with I,J in [1..6].
 
         Args:
-            k (tuple): Tuple of indices (i, j).
+            k (tuple): Tuple of indices (I, J).
 
         Returns:
             float: Value at the specified indices.
         """
+        I, J = pr_IJ
+        assert(isinstance(I, int) and isinstance(J, int)), f'Indices {pr_IJ} must be integers.'
+        assert(I>=1 and I<=6 and J>=1 and J<=6), f'Indices {pr_IJ} out of range for Voigt tensor.'
 
-        return self.mat[k[0], k[1]]
+        return self.mat[I-1, J-1]
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, pr_IJ, v):
         """
-        Set an element of the tensor using (i, j) tuple indexing.
+        Set an element of the tensor using (I, J) tuple indexing.
 
         Args:
-            k (tuple): Tuple of indices (i, j).
+            k (tuple): Tuple of indices (I, J).
             v (float): Value to set.
         """
 
-        self.mat[k[0], k[1]] = v
+        I, J = pr_IJ
+        assert(isinstance(I, int) and isinstance(J, int)), f'Indices {pr_IJ} must be integers.'
+        assert(I>=1 and I<=6 and J>=1 and J<=6), f'Indices {pr_IJ} out of range for Voigt tensor.'
+
+        self.mat[I-1, J-1] = v
 
     def fill_random(self):
         """
@@ -1123,7 +1130,7 @@ class VoigtTensor4_IJ(object):
 
         elt = f'{self._param_nm}_{I}{J}'
 
-        self.mat[I, J] = d_params[elt]
+        self.mat[I-1, J-1] =  d_params[elt]
 
     def set_elt_from_param_dict_as_str(self, s_IJ, d_params):
         """
@@ -1139,32 +1146,6 @@ class VoigtTensor4_IJ(object):
 
         self.mat[e_I-1, e_J-1] =  d_params[elt]
 
-
-
-    # def read_from_json(self, m, n, optional=False):
-    #     """
-    #     Read a tensor element from the parameter dictionary using indices (m, n).
-
-    #     Args:
-    #         m (int): Row index (1-based).
-    #         n (int): Column index (1-based).
-    #         optional (bool): If True, do not raise error if element is missing.
-
-    #     Returns:
-    #         bool: True if element was found and set, False otherwise.
-    #     """
-
-    #     elt = f'{self._param_nm}_{m}{n}'
-
-    #     if elt not in self._d_params:
-    #         if not optional:
-    #             reporting.report_and_exit(
-    #                 f'Failed to read required tensor element {elt} for material {self._physical_name}')
-    #         else:
-    #             return False
-
-    #     self.mat[m, n] = self._d_params[elt]
-    #     return True
 
     def load_isotropic_from_json(self, d_params):
         """

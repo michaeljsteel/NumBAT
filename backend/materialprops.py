@@ -119,7 +119,7 @@ class ElasticProps:
 
                 self.rho[k_typ] = t_ac.rho
 
-                if symmetry_flag:  # is it actually worth making this saving?
+                if False and symmetry_flag:  # is it actually worth making this saving?
                     print('Surprise: using symmetry_flag tensor buildings.')
                     self.c_IJ[0, 0, k_typ] = t_ac_c_IJ[1, 1]
                     self.c_IJ[1, 1, k_typ] = t_ac_c_IJ[1, 1]
@@ -198,18 +198,18 @@ class ElasticProps:
                 else:
                     for i in range(6):
                         for j in range(6):
-                            self.c_IJ[i, j, k_typ] = t_ac_c_IJ[i+1, j+1]  # TODO: replace with Voigt.value() ?
+                            self.c_IJ[i, j, k_typ] = t_ac_c_IJ[i, j]  # TODO: replace with Voigt.value() ?
 
                     for i in [0, 1, 2]:
                         for j in [0, 1, 2]:
-                            I = voigt_map[(i, j)]
+                            I = voigt_map[(i, j)] -1
                             for k in [0, 1, 2]:
                                 Jz = voigt_map[(k, 2)]
                                 self.c_ijkz[i, j, k, k_typ] = t_ac_c_IJ[I, Jz]
                                 self.c_zjkl[k, i, j, k_typ] = t_ac_c_IJ[Jz, I]
 
                                 for l in [0, 1, 2]:
-                                    J = voigt_map[(k, l)]
+                                    J = voigt_map[(k, l)] -1
                                     self.p_ijkl[i, j, k, l, k_typ] = t_ac_p_IJ[I, J]
                                     self.eta_ijkl[i, j, k, l, k_typ] = t_ac_eta_IJ[I, J]
 
