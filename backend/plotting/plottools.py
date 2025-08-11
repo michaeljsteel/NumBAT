@@ -67,8 +67,13 @@ def save_and_close_figure(fig, fig_fname):
         Output filename. PNG files are saved with default DPI, others with tight bounding box.
     """
     import numbat  # here to avoid circular import
+
     plot_prefs = numbat.NumBATPlotPrefs()
-    dpi = plot_prefs.plot_output_resolution_dpi
+
+    if plot_prefs is None:  # If NumBATApp() has not been called this will be None
+        dpi = 300
+    else:
+        dpi = plot_prefs.plot_output_resolution_dpi
 
     if fig_fname[-3:-1] == 'png':
         fig.savefig(fig_fname, dpi=dpi)

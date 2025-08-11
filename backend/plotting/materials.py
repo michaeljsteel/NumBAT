@@ -772,6 +772,6 @@ def compare_bulk_dispersion(mat1, mat2, pref):
 
     fname = pref + "-compare-bulkdisp.png"
     plottools.save_and_close_figure(fig, fname)
-    #plt.savefig(pref + "-compare-bulkdisp.png")
+    return fname
 
 

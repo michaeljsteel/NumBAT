@@ -1354,7 +1354,7 @@ class Material(object):
 
 
 def compare_bulk_dispersion(mat1, mat2, pref):
-    plms.compare_bulk_dispersion(mat1, mat2, pref)
+    return plms.compare_bulk_dispersion(mat1, mat2, pref)
 
 
 def isotropic_stiffness(E, v):
