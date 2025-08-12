@@ -40,6 +40,7 @@ import reporting
 import voigt
 from bulkprops import solve_christoffel, solve_dielectric
 #import numbattools as nbtools
+from crystalsyms import construct_crystal_for_symmetry_class
 
 
 import plotting.materials as plms
@@ -743,283 +744,7 @@ class Material(object):
         return self.chemical == "Vacuum"
 
     # (don't really need this as isotropic materials are the same)
-    def construct_crystal_cubic(self):
-        """
-        Return lists of independent and dependent elements for cubic crystals.
-        """
 
-        # plain cartesian axes
-        self.set_crystal_axes(unit_x, unit_y, unit_z)
-        C_indep_elts = ["11", "12", "44"]
-        C_dep_elts = {
-            "13": [("12", 1)],
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("12", 1)],
-            "31": [("12", 1)],
-            "32": [("12", 1)],
-            "33": [("11", 1)],
-            "55": [("44", 1)],
-            "66": [("44", 1)],
-        }
-
-        pIJ_indep_elts = ["11", "12", "44"]
-        pIJ_dep_elts = {
-            "13": [("12", 1)],
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("12", 1)],
-            "31": [("12", 1)],
-            "32": [("12", 1)],
-            "33": [("11", 1)],
-            "55": [
-                ("44", 1)
-            ],  # According to Powell, for Oh group, these are distinct elements, but no one seems to quote them
-            "66": [("44", 1)],
-        }
-
-        return C_indep_elts, C_dep_elts, pIJ_indep_elts, pIJ_dep_elts
-
-        # try:
-        #     self.stiffness_c_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.viscosity_eta_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.photoel_p_IJ.set_from_structure_elts(
-        #         self._d_params, pIJ_indep_elts, pIJ_dep_elts
-        #     )
-
-        #     # self.stiffness_c_IJ.read_from_json(1, 1)
-        #     # self.stiffness_c_IJ.read_from_json(1, 2)
-        #     # self.stiffness_c_IJ[1, 3] = self.stiffness_c_IJ[1, 2]
-        #     # self.stiffness_c_IJ[2, 1] = self.stiffness_c_IJ[1, 2]
-        #     # self.stiffness_c_IJ[2, 2] = self.stiffness_c_IJ[1, 1]
-        #     # self.stiffness_c_IJ[2, 3] = self.stiffness_c_IJ[1, 2]
-        #     # self.stiffness_c_IJ[3, 1] = self.stiffness_c_IJ[1, 2]
-        #     # self.stiffness_c_IJ[3, 2] = self.stiffness_c_IJ[1, 2]
-        #     # self.stiffness_c_IJ[3, 3] = self.stiffness_c_IJ[1, 1]
-        #     # self.stiffness_c_IJ.read_from_json(4, 4)
-        #     # self.stiffness_c_IJ[5, 5] = self.stiffness_c_IJ[4, 4]
-        #     # self.stiffness_c_IJ[6, 6] = self.stiffness_c_IJ[4, 4]
-
-        #     # self.viscosity_eta_IJ.read_from_json(1, 1)
-        #     # self.viscosity_eta_IJ.read_from_json(1, 2)
-        #     # self.viscosity_eta_IJ[1, 3] = self.viscosity_eta_IJ[1, 2]
-        #     # self.viscosity_eta_IJ[2, 1] = self.viscosity_eta_IJ[1, 2]
-        #     # self.viscosity_eta_IJ[2, 2] = self.viscosity_eta_IJ[1, 1]
-        #     # self.viscosity_eta_IJ[2, 3] = self.viscosity_eta_IJ[1, 2]
-        #     # self.viscosity_eta_IJ[3, 1] = self.viscosity_eta_IJ[1, 2]
-        #     # self.viscosity_eta_IJ[3, 2] = self.viscosity_eta_IJ[1, 2]
-        #     # self.viscosity_eta_IJ[3, 3] = self.viscosity_eta_IJ[1, 1]
-        #     # self.viscosity_eta_IJ.read_from_json(4, 4)
-        #     # self.viscosity_eta_IJ[5, 5] = self.viscosity_eta_IJ[4, 4]
-        #     # self.viscosity_eta_IJ[6, 6] = self.viscosity_eta_IJ[4, 4]
-
-        #     # self.photoel_p_IJ.read_from_json(1, 1)
-        #     # self.photoel_p_IJ.read_from_json(1, 2)
-
-        #     # self.photoel_p_IJ[1, 3] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[2, 1] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[2, 2] = self.photoel_p_IJ[1, 1]
-        #     # self.photoel_p_IJ[2, 3] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[3, 1] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[3, 2] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[3, 3] = self.photoel_p_IJ[1, 1]
-        #     # self.photoel_p_IJ.read_from_json(4, 4)
-
-        #     # # According to Powell, for Oh group, these are distinct elements, but no one seems to quote them
-        #     # if not self.photoel_p_IJ.read_from_json(5, 5, optional=True):
-        #     #     self.photoel_p_IJ[5, 5] = self.photoel_p_IJ[4, 4]
-        #     # if not self.photoel_p_IJ.read_from_json(6, 6, optional=True):
-        #     #     self.photoel_p_IJ[6, 6] = self.photoel_p_IJ[4, 4]
-
-        # except Exception:
-        #     reporting.report_and_exit(
-        #         f"Failed to load cubic crystal class in material data file {self.json_file}"
-        #     )
-
-    def construct_crystal_trigonal(self):
-        """
-        Return lists of independent and dependent elements for trigonal crystals.
-        """
-
-        # Good source for these rules is the supp info of doi:10.1364/JOSAB.482656 (Gustavo surface paper)
-
-        self.set_crystal_axes(unit_x, unit_y, unit_z)
-
-        C_indep_elts = ["11", "12", "13", "14", "33", "44"]
-        C_dep_elts = {
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("13", 1)],
-            "24": [("14", -1)],
-            "31": [("13", 1)],
-            "32": [("13", 1)],
-            "41": [("14", 1)],
-            "42": [("14", -1)],
-            "55": [("44", 1)],
-            "56": [("14", 1)],
-            "65": [("14", 1)],
-            "66": [("11", 0.5), ("12", -0.5)],
-        }
-
-        pIJ_indep_elts = ["11", "12", "13", "14", "31", "33", "41", "44"]
-        pIJ_dep_elts = {
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("13", 1)],
-            "24": [("14", -1)],
-            "32": [("31", 1)],
-            "42": [("41", -1)],
-            "55": [("44", 1)],
-            "56": [("41", 1)],
-            "65": [("14", 1)],
-            "66": [("11", 0.5), ("12", -0.5)],
-        }
-
-        return C_indep_elts, C_dep_elts, pIJ_indep_elts, pIJ_dep_elts
-
-        # try:
-        #     # self._fill_4tensor_from_elt_patterns(self.stiffness_c_IJ, C_indep_elts, C_dep_elts)
-        #     # self._fill_4tensor_from_elt_patterns(self.viscosity_eta_IJ, C_indep_elts, C_dep_elts)
-
-        #     self.stiffness_c_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.viscosity_eta_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.photoel_p_IJ.set_from_structure_elts(
-        #         self._d_params, pIJ_indep_elts, pIJ_dep_elts
-        #     )
-
-        #     # # TODO: confirm correct symmetry properties for p.
-        #     # # PreviouslyuUsing trigonal = C3v from Powell, now the paper above
-        #     # self.photoel_p_IJ.read_from_json(1, 1)
-        #     # self.photoel_p_IJ.read_from_json(1, 2)
-        #     # self.photoel_p_IJ.read_from_json(1, 3)
-        #     # self.photoel_p_IJ.read_from_json(1, 4)
-        #     # self.photoel_p_IJ.read_from_json(3, 1)
-        #     # self.photoel_p_IJ.read_from_json(3, 3)
-        #     # self.photoel_p_IJ.read_from_json(4, 1)
-        #     # self.photoel_p_IJ.read_from_json(4, 4)
-
-        #     # self.photoel_p_IJ[2, 1] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[2, 2] = self.photoel_p_IJ[1, 1]
-        #     # self.photoel_p_IJ[2, 3] = self.photoel_p_IJ[1, 3]
-        #     # self.photoel_p_IJ[2, 4] = -self.photoel_p_IJ[1, 4]
-
-        #     # self.photoel_p_IJ[3, 2] = self.photoel_p_IJ[3, 1]
-
-        #     # self.photoel_p_IJ[4, 2] = -self.photoel_p_IJ[4, 1]
-
-        #     # self.photoel_p_IJ[5, 5] = self.photoel_p_IJ[4, 4]
-        #     # self.photoel_p_IJ[5, 6] = self.photoel_p_IJ[4, 1]
-        #     # self.photoel_p_IJ[6, 5] = self.photoel_p_IJ[1, 4]
-        #     # self.photoel_p_IJ[6, 6] = (
-        #     #     self.photoel_p_IJ[1, 1] - self.photoel_p_IJ[1, 2]
-        #     # ) / 2
-
-        # except Exception as err:
-        #     reporting.report_and_exit(
-        #         f"Failed to load trigonal crystal class in material data file {self.json_file}:\n {err}"
-        #     )
-
-    # def _fill_4tensor_from_elt_patterns(self, tens, indep_elts, dep_elts):
-    #     for s_IJ in indep_elts:
-    #         eI=int(s_IJ[0])
-    #         eJ=int(s_IJ[1])
-    #         tens.read_from_json(eI, eJ)
-
-    #     for d_IJ,src in dep_elts.items(
-    #         dI=int(d_IJ[0])
-    #         dJ=int(d_IJ[1])
-
-    #         for (s_IJ,sf) in src:
-    #             sI=int(s_IJ[0])
-    #             sJ=int(s_IJ[1])
-    #             tens[dI, dJ] += tens[sI,sJ] * sf
-
-    def construct_crystal_hexagonal(self):
-        """
-        Return lists of independent and dependent elements for hexagonal crystals.
-        """
-
-        self.set_crystal_axes(unit_x, unit_y, unit_z)
-
-        C_indep_elts = ["11", "12", "13", "33", "44"]
-        C_dep_elts = {
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("13", 1)],
-            "31": [("13", 1)],
-            "32": [("13", 1)],
-            "55": [("44", 1)],
-            "66": [("11", 0.5), ("12", -0.5)],
-        }
-
-        pIJ_indep_elts = ["11", "12", "13", "14", "31", "33", "41", "44"]
-        pIJ_dep_elts = {
-            "21": [("12", 1)],
-            "22": [("11", 1)],
-            "23": [("13", 1)],
-            "24": [("14", -1)],
-            "32": [("31", 1)],
-            "42": [("41", -1)],
-            "55": [("44", 1)],
-            "56": [("41", 1)],
-            "65": [("14", 1)],
-            "66": [("11", 0.5), ("12", -0.5)],
-        }
-        return C_indep_elts, C_dep_elts, pIJ_indep_elts, pIJ_dep_elts
-
-        # try:
-        #     # self._fill_4tensor_from_elt_patterns(self.stiffness_c_IJ, C_indep_elts, C_dep_elts)
-        #     # self._fill_4tensor_from_elt_patterns(self.viscosity_eta_IJ, C_indep_elts, C_dep_elts)
-
-        #     self.stiffness_c_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.viscosity_eta_IJ.set_from_structure_elts(
-        #         self._d_params, C_indep_elts, C_dep_elts
-        #     )
-        #     self.photoel_p_IJ.set_from_structure_elts(
-        #         self._d_params, pIJ_indep_elts, pIJ_dep_elts
-        #     )
-
-        #     # TODO: confirm correct symmetry properties for p.
-        #     # PreviouslyuUsing trigonal = C3v from Powell, now the paper above
-        #     # self.photoel_p_IJ.read_from_json(1, 1)
-        #     # self.photoel_p_IJ.read_from_json(1, 2)
-        #     # self.photoel_p_IJ.read_from_json(1, 3)
-        #     # self.photoel_p_IJ.read_from_json(1, 4)
-        #     # self.photoel_p_IJ.read_from_json(3, 1)
-        #     # self.photoel_p_IJ.read_from_json(3, 3)
-        #     # self.photoel_p_IJ.read_from_json(4, 1)
-        #     # self.photoel_p_IJ.read_from_json(4, 4)
-
-        #     # self.photoel_p_IJ[2, 1] = self.photoel_p_IJ[1, 2]
-        #     # self.photoel_p_IJ[2, 2] = self.photoel_p_IJ[1, 1]
-        #     # self.photoel_p_IJ[2, 3] = self.photoel_p_IJ[1, 3]
-        #     # self.photoel_p_IJ[2, 4] = -self.photoel_p_IJ[1, 4]
-
-        #     # self.photoel_p_IJ[3, 2] = self.photoel_p_IJ[3, 1]
-
-        #     # self.photoel_p_IJ[4, 2] = -self.photoel_p_IJ[4, 1]
-
-        #     # self.photoel_p_IJ[5, 5] = self.photoel_p_IJ[4, 4]
-        #     # self.photoel_p_IJ[5, 6] = self.photoel_p_IJ[4, 1]
-        #     # self.photoel_p_IJ[6, 5] = self.photoel_p_IJ[1, 4]
-        #     # self.photoel_p_IJ[6, 6] = (
-        #     #     self.photoel_p_IJ[1, 1] - self.photoel_p_IJ[1, 2]
-        #     # ) / 2
-
-        # except Exception as ex:
-        #     reporting.report_and_exit(
-        #         f"Failed to load hexagonal crystal class in material data file {self.json_file}: \n{ex}"
-        #     )
 
     def construct_crystal_general(self):
         """
@@ -1224,13 +949,10 @@ class Material(object):
         if self.crystal_class == CrystalGroup.GeneralAnisotropic:
             self.construct_crystal_general()
         else:
-            if self.crystal_class == CrystalGroup.Trigonal:
-                C_indep, C_dep, pIJ_indep, pIJ_dep = self.construct_crystal_trigonal()
-            elif self.crystal_class == CrystalGroup.Hexagonal:
-                C_indep, C_dep, pIJ_indep, pIJ_dep = self.construct_crystal_hexagonal()
-            elif self.crystal_class == CrystalGroup.Cubic:
-                C_indep, C_dep, pIJ_indep, pIJ_dep = self.construct_crystal_cubic()
+            crystal_axes, C_indep, C_dep, pIJ_indep, pIJ_dep = construct_crystal_for_symmetry_class(
+                self.crystal_class)
 
+            self.set_crystal_axes(*crystal_axes)
 
             self.stiffness_c_IJ.set_from_structure_elts(
                 self._d_params, C_indep, C_dep
@@ -1243,17 +965,6 @@ class Material(object):
             )
 
         self.stiffness_c_IJ.check_symmetries()
-
-    # # deprecated
-    # def plot_bulk_dispersion(
-    #     self, pref, label=None, show_poln=True, flip_x=False, flip_y=False
-    # ):
-    #     """
-    #     Plot the bulk dispersion (slowness and ray surfaces) in the x-z plane for the current orientation.
-    #     Returns the filename of the generated image.
-    #     """
-
-    #     return self.plot_bulk_dispersion_all(pref, label, show_poln, flip_x, flip_y)
 
     def plot_bulk_dispersion_ivp(
         self, pref, label=None, show_poln=True, flip_x=False, flip_y=False,
