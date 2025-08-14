@@ -39,8 +39,7 @@ from nbtypes import CrystalGroup, unit_x, unit_y, unit_z, SI_permittivity_eps0
 import reporting
 import voigt
 from bulkprops import solve_christoffel, solve_dielectric
-#import numbattools as nbtools
-from crystalsyms import construct_crystal_for_symmetry_class
+from crystalsyms import construct_crystal_for_symmetry_class, construct_piezo_elt_mappings
 
 
 import plotting.materials as plms
@@ -221,26 +220,7 @@ class PiezoElectricProperties:
     def _fill_piezo_elt_mappings(self, d_piezo):
         sym_group = d_piezo["crystal_sym"]
 
-        elts_indep = []
-        elts_dep = []
-
-        # first index of elts_dep is d_ijk multipliers, second is e_ijk multipliers
-        if sym_group == "3m":
-            elts_indep = "x5", "y2", "z1", "z3"
-            elts_dep = {
-                "x6": ("y2", -2.0, -1.0),
-                "y1": ("y2", -1.0, -1.0),
-                "y4": ("x5", 1.0, 1.0),
-                "z2": ("z1", 1.0, 1.0),
-            }
-
-        elif sym_group == "4'3m":
-            elts_indep = ("x4",)
-            elts_dep = {"y5": ("x4", 1.0, 1.0), "z6": ("x4", 1.0, 1.0)}
-
-        elif sym_group == "6mm":
-            elts_indep = "x5", "z1", "z3"
-            elts_dep = {"y4": ("x5", 1.0, 1.0), "z2": ("z1", 1.0, 1.0)}
+        elts_indep, elts_dep = construct_piezo_elt_mappings(sym_group)
 
         if d_piezo.get(
             "piezo_use_e", 0
@@ -746,28 +726,7 @@ class Material(object):
     # (don't really need this as isotropic materials are the same)
 
 
-    def construct_crystal_general(self):
-        """
-        Fill all tensor elements for a general anisotropic crystal from the parameter dictionary.
-        """
 
-        try:  # full anisotropic tensor components
-            for I in range(1, 7):
-                for J in range(1, 7):
-                    #self.stiffness_c_IJ.read_from_json(i, j)
-                    #self.photoel_p_IJ.read_from_json(i, j)
-                    #self.viscosity_eta_IJ.read_from_json(i, j)
-
-                    self.stiffness_c_IJ.set_elt_from_param_dict(I, J, self._d_params)
-                    self.photoel_p_IJ.set_elt_from_param_dict(I, J, self._d_params)
-                    self.viscosity_eta_IJ.set_elt_from_param_dict(I, J, self._d_params)
-
-
-
-        except KeyError:
-            reporting.report_and_exit(
-                "Failed to load anisotropic crystal class in material data file {self.json_file}"
-            )
 
     # TODO: make a property
     def set_refractive_index(self, nr, ni=0.0):
@@ -897,15 +856,17 @@ class Material(object):
 
         # Try to read isotropic from stiffness and then from Young's modulus and Poisson ratio
         if "c_11" in self._d_params and "c_12" in self._d_params and "c_44" in self._d_params:
+            c_11 = self._d_params["c_11"]
+            c_12 = self._d_params["c_12"]
+            c_44 = self._d_params["c_44"]
 
-            self.stiffness_c_IJ.load_isotropic_from_json(self._d_params)
-            mu = self.stiffness_c_IJ.mat[4, 4]
-            lam = self.stiffness_c_IJ.mat[1, 2]
+            self.stiffness_c_IJ.make_isotropic_tensor(c_11, c_12, c_44)
+            mu = self.stiffness_c_IJ[4, 4]
+            lam = self.stiffness_c_IJ[1, 2]
+
             r = lam / mu
             self.nuPoisson = 0.5 * r / (1 + r)
             self.EYoung = 2 * mu * (1 + self.nuPoisson)
-            self.Lame_mu = mu
-            self.Lame_lambda = lam
 
         elif "EYoung" in self._d_params and "nuPoisson" in self._d_params:
             self.EYoung = self._d_params["EYoung"]
@@ -917,22 +878,43 @@ class Material(object):
                 / ((1 + self.nuPoisson) * (1 - 2 * self.nuPoisson))
             )
             c11 = c12 + 2 * c44
-            self.stiffness_c_IJ = voigt.VoigtTensor4_IJ(
-                "c", "Stiffness", "c_IJ", unit=("GPa", 1.0e9)
-            )
-            self.stiffness_c_IJ.make_isotropic_tensor(c11, c12, c44)
 
-            self.Lame_mu = self.stiffness_c_IJ.mat[4, 4]
-            self.Lame_lambda = self.stiffness_c_IJ.mat[1, 2]
+            self.stiffness_c_IJ.make_isotropic_tensor(c11, c12, c44)
+            mu = self.stiffness_c_IJ[4, 4]
+            lam = self.stiffness_c_IJ[1, 2]
+
         else:
             reporting.report_and_exit(
                 "Broken isotropic material file:" + self.json_file
             )
 
+
+        self.Lame_mu = mu
+        self.Lame_lambda = lam
+
         self.photoel_p_IJ.load_isotropic_from_json(self._d_params)
         self.viscosity_eta_IJ.load_isotropic_from_json(self._d_params)
 
         self.stiffness_c_IJ.check_symmetries()
+
+    def construct_crystal_general(self):
+        """
+        Fill all tensor elements for a general anisotropic crystal from the parameter dictionary.
+        """
+
+        self.set_crystal_axes(unit_x, unit_y, unit_z) # no other obvious choice
+
+        try:  # full anisotropic tensor components
+            for I in range(1, 7):
+                for J in range(1, 7):
+                    self.stiffness_c_IJ.set_elt_from_param_dict(I, J, self._d_params)
+                    self.photoel_p_IJ.set_elt_from_param_dict(I, J, self._d_params)
+                    self.viscosity_eta_IJ.set_elt_from_param_dict(I, J, self._d_params)
+
+        except KeyError:
+            reporting.report_and_exit(
+                "Failed to load anisotropic crystal class in material data file {self.json_file}"
+            )
 
     def construct_crystal(self):
         """

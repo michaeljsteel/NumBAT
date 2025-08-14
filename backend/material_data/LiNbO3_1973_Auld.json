@@ -10,7 +10,7 @@
  // Optical constants
 
  "Re_n": 2.30,  // Real part of refractive index (n_o) []
- "_Re_no": 2.30,  // Real part of refractive index (n_e) []
+ "_Re_no": 2.30,  // Real part of refractive index (n_o) []
  "_Re_ne": 2.21,  // Real part of refractive index (n_e) []
  "Im_n": 0.0,  // Imaginary part of refractive index []
 
