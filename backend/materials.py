@@ -127,7 +127,9 @@ class MaterialLibrary:
             try:
                 new_mat = Material(json_data, fname)
             except BadMaterialFileError as err:
-                reporting.report_and_exit(str(err))
+                reporting.report_and_exit(f'Problem in loading material file {fname}: ' + str(err))
+            except KeyError as err:
+                reporting.report_and_exit(f'Missing paramter key in loading material file {fname}: ' + str(err))
 
             self._materials[mat_name] = new_mat
 

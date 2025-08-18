@@ -1,0 +1,42 @@
+{
+ "format": "NumBATMaterial-fmt-2.0",
+ "material_name": "Al2O3_2023_Ugarak",  // Name of this file, will be used as identifier
+ "chemical": "Al2O3",  // Chemical composition
+ "author": "Ugarak",    // Author of data
+ "date": "2023",       // Year of data publication/creation
+ "institution": "Universite de Granche-Comte",  // Source institution
+ "doi": "dx.doi.org/10.1063/5.0169889",  // doi or, failing that, the http address
+ "Re_n": 1.745,        // Real part of refractive index []
+ "Im_n": 0.0,          // Imaginary part of refractive index []
+ "s": 3950,            // Density [kg/m3]
+
+ "crystal_class": "Trigonal",
+ "crystal_sym": "3'm",
+
+ "c_11": 511.90e9,     // Stiffness tensor component [Pa]
+ "c_12": 166.65e9,  // Stiffness tensor component [Pa]
+ "c_13": 123.14e9,  // Stiffness tensor component [Pa]
+ "c_33": 522.54e9,     // Stiffness tensor component [Pa]
+ "c_44": 150.89e9,  // Stiffness tensor component [Pa]
+ "c_14": 23.42e9,  // Stiffness tensor component [Pa]
+
+ "p_11": 0.0,  // Photoelastic tensor component []
+ "p_12": 0.0,  // Photoelastic tensor component []
+ "p_13": 0.0,  // Photoelastic tensor component []
+ "p_14": 0.0,  // Photoelastic tensor component []
+ "p_44": 0.0,  // Photoelastic tensor component []
+ "p_41": 0.0,  // Photoelastic tensor component []
+ "p_31": 0.0,  // Photoelastic tensor component []
+ "p_33": 0.0,  // Photoelastic tensor component []
+
+ "eta_11": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_13": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_33": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_14": 0.0e-3,  // Acoustic loss tensor component [Pa s]
+
+ "orientation_x-cut": "0,0,1,90",
+ "orientation_y-cut": "ident",
+ "orientation_z-cut": "1,0,0,-90"
+}
