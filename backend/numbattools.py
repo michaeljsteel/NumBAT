@@ -66,7 +66,7 @@ def signed_log10(mat, logmax=5, tol=1e-14):
     return lmat
 
 
-def chopmat(mat, chop=False, rtol=1e-10, atol=1e-12):
+def chopmat(mat, chop=True, rtol=1e-10, atol=1e-12):
     """Set all values below an absolute or relative tolerance to zero."""
 
     chopmat = mat.copy()
@@ -77,6 +77,52 @@ def chopmat(mat, chop=False, rtol=1e-10, atol=1e-12):
         chopmat[np.abs(chopmat) < rtol*maxval] = 0
 
     return chopmat
+
+
+def polish_float(x, atol=1e-10):
+    for v in range(-10,11,1):
+        if np.isclose(x, v, atol):
+            return v
+
+    for v in (.1,.2,.3,.4,.5,.6,.7,.9):
+        if np.isclose(x, v, atol):
+            return v
+        if np.isclose(x, -v, atol):
+            return -v
+    return x
+
+def vchopmattoint(vec, atol=1e-10):
+    """Set all values with an absolute tolerance of one to one."""
+    chopvec = vec.copy()
+    for r in range(len(vec)):
+        chopvec[r] = polish_float(chopvec[r])
+    return chopvec
+
+def chopmattoint(mat, atol=1e-10):
+    """Set all values with an absolute tolerance of one to one."""
+
+    chopmat = mat.copy()
+    rs,cs = mat.shape
+
+    for r in range(rs):
+        for c in range(cs):
+            for val in range(-10,11,1):
+                if np.isclose(chopmat[r,c], val, atol):
+                    chopmat[r,c]=val
+
+            for val in (.1,.2,.3,.4,.5,.6,.7,.9):
+                if np.isclose(chopmat[r,c], val, atol):
+                    chopmat[r,c]=val
+                if np.isclose(chopmat[r,c], -val, atol):
+                    chopmat[r,c]=-val
+
+
+            #if np.isclose(chopmat[r,c], -1.0, atol):
+            #    chopmat[r,c]=-1.0
+
+    return chopmat
+
+
 
 def process_fortran_return(resm, msg):
     """
