@@ -57,6 +57,18 @@ intel:
 	meson compile -v -C build_intel
 	cp build_intel/nb_fortran.so .
 
+lincuda:
+	- rm -rf build_lincuda
+
+	FC='/opt/nvidia/hpc_sdk/Linux_x86_64/2025/compilers/bin/nvfortran' meson setup --reconfigure --buildtype=release build_lincuda \
+		--native-file nb-linuxcuda-native-file.ini
+
+	meson compile -v -C build_lincuda
+	cp build_lincuda/nb_fortran.so .
+
+
+
+
 mac:
 	- rm -rf build_mac
 	meson setup --reconfigure --buildtype=release build_mac \

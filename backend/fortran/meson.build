@@ -20,6 +20,10 @@ message('F compiler:', f_comp.get_id())
 message('host:', host_machine.system())
 
 libs_extra = []
+linklang = 'c'
+linkargs = []
+
+dep_cuda = []
 
 plat_pref = host_machine.system() + '_'
 
@@ -80,6 +84,7 @@ lib_umfpack = c_comp.find_library('umfpack', dirs: dir_usrlocal_lib)
 
 # enforce implicit none
 if host_machine.system() == 'windows'
+  message('location 1')
   add_global_arguments(
     ['/warn:declarations'],
     language: 'fortran',
@@ -90,6 +95,7 @@ if host_machine.system() == 'windows'
   )
 
 elif c_comp.get_id() == 'intel-llvm'
+  message('location 2')
   # intel on linux
   add_global_arguments(
     ['-implicitnone'],
@@ -99,6 +105,14 @@ elif c_comp.get_id() == 'intel-llvm'
     ['-Wno-format', '-Wno-misleading-indentation'],
     language: 'c',
   ) # numpy f2py has bad format strings that do no harm
+
+elif c_comp.get_id() == 'nvidia_hpc'
+  message('location 3')
+  add_global_arguments( ['-cuda'], language: 'fortran')
+  dep_cuda = c_comp.find_library('cublas',
+    dirs: ['/opt/nvidia/hpc_sdk/Linux_x86_64/2025/math_libs/12.9/targets/x86_64-linux/lib'])
+  linklang = 'fortran'
+  linkargs = ['-cuda']
 
 else
   # gcc on linux and mac
@@ -175,11 +189,16 @@ srcs = [
   src_sswrap,
 ]
 
+
 nblib = shared_module(
   'nb_fortran',
   srcs,
   include_directories: incs,
   name_prefix: '',
   override_options: ['b_lundef=false'],
-  dependencies: [lib_arpack, lib_umfpack, dep_blas, libs_extra, dep_py],
+  dependencies: [lib_arpack, lib_umfpack, dep_cuda, dep_blas, libs_extra, dep_py],
+
+  # linux cuda only
+  link_language: linklang, 
+  link_args: linkargs
 )

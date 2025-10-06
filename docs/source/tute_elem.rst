@@ -478,7 +478,7 @@ This tutorial, contained in ``sim-tut_08-slot_coated-scan.py`` continues the stu
 
 .. It is interesting to look at different mode profiles and try to understand why the eigenfrequency of some modes are more affected  by the capping layer. The lowest mode, for instance, is noticeably unaffected.
 
-The shape of the simulation domain and the compactness of the mode makes the default mode displays hard to see clearly. While this can be addressed with plot settings such as the aspect ratio, and number of vector arrows, it is also helpful to plot each component separately on its own plot. this is achieved with the ``comps`` option to ``plot_modes()``.
+The shape of the simulation domain and the compactness of the mode makes the default mode displays hard to see clearly. While this can be addressed with plot settings such as the aspect ratio, and number of vector arrows, it is also helpful to plot each component separately on its own plot. this is achieved with the ``comps`` option to ``plot_modes()``. Allowed values are ``x``, ``y``, ``z`` for each component, ``a`` for the absolute value of the field, and ``t`` for a transverse vector field plot.
 
 .. figure:: ./images/tutorial/tut_08-acdisp_slotwidth.png
    :width: 12cm

@@ -22,6 +22,7 @@ class PlotPrefs:
     color_tup_5 = ('coolwarm', 'Reds', 'dimgray')
     color_tup_6 = ('PiYG', 'GnBu', 'dimgray')
     color_tup_7 = ('RdYlGn', 'GnBu', 'dimgray')
+    color_tup_8 = ('berlin', 'GnBu', 'dimgray')
 
 
     def __init__(self, user_settings_file='', ignore_user_settings=False):
@@ -61,6 +62,8 @@ class PlotPrefs:
                     self._user_settings = tomllib.load(fin)
             except tomllib.TOMLDecodeError as e:
                 reporting.report_and_exit(f"Error decoding the TOML file at {user_file}: {e}")
+        else:
+            print('Using default NumBAT plot prefs.')
 
         # Ensure required sections exist to prevent KeyErrors later
         for section in ['all_plots', 'multi_plots', 'single_plots']:
@@ -72,7 +75,7 @@ class PlotPrefs:
 
         # Select color combinations here
         coltup_em = self.color_tup_1
-        coltup_ac = self.color_tup_7
+        coltup_ac = self.color_tup_8
 
         self.cmap_em_field_signed = d_all.get('em_colormap_signed', coltup_em[0])
         self.cmap_em_field_unsigned = d_all.get('em_colormap_unsigned', coltup_em[1])

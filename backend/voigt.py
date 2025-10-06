@@ -670,6 +670,16 @@ class PlainTensor2_ij(object):
 
         return self.mat.copy()
 
+    def unit_indexed_value(self):
+        """
+        Return a copy of the tensor's matrix data in 1..3, 1..3 indices (shape [4,4]).
+        """
+
+        mat = np.zeros([4,4], dtype=np.float64)
+
+        mat[1:4, 1:4] = self.mat.copy()
+        return mat
+
     def fill_random(self):
         """
         Fill the tensor with random values (uniform in [0,1)).
@@ -908,6 +918,16 @@ class VoigtTensor3_iJ(object):
 
         return self.mat.copy()
 
+    def unit_indexed_value(self):
+        """
+        Return a copy of the tensor's matrix data in 1..3, 1..6 indices (shape [7,7]).
+        """
+
+        mat = np.zeros([4,7], dtype=np.float64)
+
+        mat[1:4, 1:7] = self.mat.copy()
+        return mat
+
     def refvalue(self):
         """
         Return a reference to the tensor's matrix data (shape [3,6]).
@@ -1069,6 +1089,16 @@ class VoigtTensor4_IJ(object):
         """
 
         return self.mat.copy()
+
+    def unit_indexed_value(self):
+        """
+        Return a copy of the tensor's matrix data in 1..6, 1..6 indices (shape [7,7]).
+        """
+
+        mat = np.zeros([7,7], dtype=np.float64)
+
+        mat[1:7, 1:7] = self.mat.copy()
+        return mat
 
     def refvalue(self):
         """

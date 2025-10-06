@@ -43,6 +43,7 @@ from crystalsyms import construct_crystal_for_symmetry_class, construct_piezo_el
 
 
 import plotting.materials as plms
+import nbanalytic.elasticstack as elstack
 
 
 class BadMaterialFileError(Exception):
@@ -408,6 +409,12 @@ class Material(object):
             s += f"\nComment: {self.comment}"
         return s
 
+    def piezo_active(self):
+        """
+        Returns True if the material supports piezoelectric effects and they are active.
+        """
+        return self.piezo_supported() and self._piezo.active
+
     def piezo_supported(self):
         """
         Returns True if the material supports piezoelectric effects.
@@ -546,19 +553,24 @@ class Material(object):
             )
         return s
 
-    def Vac_Rayleigh(self):
+    def Vac_Rayleigh(self, force_transfer_matrix_method=False):
         """
         For an isotropic material, return the Rayleigh wave elastic phase velocity.
         """
-        assert self.is_isotropic()
 
-        Vs = self.Vac_shear()
-        Vl = self.Vac_longitudinal()
 
         if not self.rho or self.rho == 0:  # Catch vacuum cases
             return 0.0
+
+        elif self.is_isotropic() and not force_transfer_matrix_method:
+            Vs = self.Vac_shear()
+            Vl = self.Vac_longitudinal()
+            return find_Rayleigh_velocity_isotropic(Vs, Vl)
+
         else:
-            return find_Rayleigh_velocity(Vs, Vl)
+            return find_Rayleigh_velocity_anisotropic(self)
+
+
 
     def Vac_longitudinal(self):
         """
@@ -1071,12 +1083,12 @@ def isotropic_stiffness(E, v):
     return c_11, c_12, c_44
 
 
-def disprel_rayleigh(vR, vl):
+def disprel_rayleigh_isotropic(vR, vl):
 
     return vR**6 - 8 * vR**4 + vR**2 * (24 - 16 / vl**2) + 16 * (1 / vl**2 - 1)
 
 
-def find_Rayleigh_velocity(Vs, Vl):
+def find_Rayleigh_velocity_isotropic(Vs, Vl):
     """Find Rayleigh velocity v_q for isotropic mode with velocities Vs and Vl."""
 
     vl = Vl / Vs
@@ -1085,7 +1097,7 @@ def find_Rayleigh_velocity(Vs, Vl):
     vRhi = 1
 
     def dr_rayleigh(vR):
-        return disprel_rayleigh(vR, vl)
+        return disprel_rayleigh_isotropic(vR, vl)
 
     vres = sciopt.root_scalar(dr_rayleigh, bracket=(vRlo, vRhi))
 
@@ -1095,3 +1107,9 @@ def find_Rayleigh_velocity(Vs, Vl):
         vR = vres.root
 
     return vR * Vs
+
+
+def find_Rayleigh_velocity_anisotropic(material):
+
+    return elstack.find_Rayleigh_velocity_anisotropic(material)
+

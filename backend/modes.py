@@ -30,6 +30,11 @@ import plotmoderaw
 import plotting.plottools as plottools
 
 
+def check_allowed_plot_components(comps):
+    for c in comps:
+        if c not in ('x', 'y', 'z', 't', 'a'):
+            reporting.report_and_exit(f"Unknown field component flag '{c}' in 'comps' argument to plot_mode()." +
+            "\nAllowed values are 'x', 'y', 'z', 't' (transverse vector plot), 'a' (absolute value).")
 
 class ModeInterpolator:
     '''Helper class for plotting modes.
@@ -255,6 +260,8 @@ class Mode:
     def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='',
                   plot_params=plotmodes.PlotParams2D()):
 
+        check_allowed_plot_components(comps)
+
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
 
@@ -267,8 +274,9 @@ class Mode:
 
         #self.clear_mode_plot_data()
 
-    def plot_mode_H(self, comps, ax=None, n_pts=501, decorator=None):
+    def plot_mode_H(self, comps=(), ax=None, n_pts=501, decorator=None):
         """Plot magnetic field for EM modes."""
+        check_allowed_plot_components(comps)
         self.plot_mode(comps, field_type=FieldType.EM_H, ax=ax, n_pts=n_pts, decorator=decorator)
 
 
@@ -286,6 +294,8 @@ class Mode:
 
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
+
+        check_allowed_plot_components(comps)
 
         if prefix: plot_params['prefix'] = prefix
 

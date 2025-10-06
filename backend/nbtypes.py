@@ -37,13 +37,19 @@ SI_vacuum_impedance_Z0 = math.sqrt(SI_permeability_mu0/SI_permittivity_eps0)
 
 ###############################################################################
 
+SI_ns = 1.0e-9
+SI_ps = 1.0e-12
+SI_fs = 1.0e-15
+
 SI_THz = 1.0e12
 SI_GHz = 1.0e9
+SI_GPa = 1.0e9
 SI_MHz = 1.0e6
 
 SI_nm = 1.0e-9
 SI_um = 1.0e-6
 SI_km = 1.0e3
+SI_kmps = 1.0e3
 
 SI_to_gmpercc = 0.001   # 1kg/m^3 = 0.001 gm/cm^3
 
