@@ -94,9 +94,11 @@ def find_bracketed_minima(minfunc, l_braks):
         (xm1, fm1), (x0, f0), (xp1, fp1) = br
         assert fm1 > f0 < fp1, f"Invalid bracket: f0 is not less than neighbors for bracket {ibr}: {br}."
 
-        res = sciopt.minimize_scalar(minfunc, bracket=(xm1, xp1))
+        res = sciopt.minimize_scalar(minfunc, bracket=(xm1, x0, xp1))
         if res.success:
-
+            #print(f"Found minimum in bracket {xm1, xp1}: {res.x}, {res.fun}")
+            #if not (xm1 <= res.x <= xp1):
+             #   print(f"Minimum {res.x} found outside bracket {xm1, xp1}.", res)
             l_mins.append((res.x, res.fun))
         else:
             print(f"Failed to find minimum in bracket {xm1, xp1}.")

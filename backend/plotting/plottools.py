@@ -49,7 +49,7 @@ def get_rgb_for_poln(px, py, pz):
         Normalized RGB values (0-1) as a numpy array.
     """
     vp = np.array([px, py, pz])
-    pmod = math.sqrt(px*px.conjugate() + py*py.conjugate() + pz.pz.conjugate())
+    pmod = math.sqrt(np.real(px*px.conjugate() + py*py.conjugate() + pz*pz.conjugate()))
     # RGB values are in range 0-1
     rgb = np.abs(vp) / pmod
     return rgb

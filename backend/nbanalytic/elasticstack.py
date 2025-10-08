@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import nbtypes
 import materials
 from numtools.optimize import bracket_minima, find_bracketed_minima, BracketError
+from nbtypes import SI_GHz, SI_THz, SI_um, SI_kmps
+import plotting.plottools as nbpt
 
 
 class NormalisationConstants:
@@ -183,12 +185,14 @@ def get_layer_stiffness_submatrices_piezo(cs: NDArray[np.float64], e_iJ: NDArray
 class ElasticLayer:
     def __init__(self, material, #: materials.Material,
                  L: float = 1e-6, use_4d: bool = False) -> None:
+        # dimensionless thickness
+
         self.material = material
         self.L = L / g_norms.x0
 
         self._build_material_quantities(use_4d)
 
-    def norm_L(self) -> float:
+    def L_phys(self) -> float:
         return self.L * g_norms.x0
 
     def _build_material_quantities(self, use_4d: bool) -> None:
@@ -282,7 +286,8 @@ class ElasticBoundaryCondition:
     def __str__(self) -> str:
         return f"ElasticBoundaryCondition({self.bc_type})"
 
-    def analyse_semiinfinite_eigenspace(self, Om: float, Vp: float) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
+    def analyse_semiinfinite_eigenspace(self, Om: float, Vp: float,
+                                        growing_is_good: bool ) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
         # find eigenvalues and eigenvectors of semi-infinite layer transfer matrix
         # identify growing and "forwards" modes and put them at front of the list
 
@@ -296,46 +301,68 @@ class ElasticBoundaryCondition:
         ndecay = 0
         nfwd = 0
 
+        v_is_growing = np.zeros(len(eigvals), dtype=bool)
+        v_is_decaying = np.zeros(len(eigvals), dtype=bool)
+        v_is_fwds = np.zeros(len(eigvals), dtype=bool)
+        v_is_pureimag = np.zeros(len(eigvals), dtype=bool)
+        v_poynting_Sz = np.zeros((len(eigvals), 3), dtype=np.float64)
+
         for i in range(len(eigvals)):
             ev = eigvals[i]  # this is lambda = i q_y
 
             is_growing = is_growing_eigenvalue(ev)
             is_decaying = is_decaying_eigenvalue(ev)
-
-            #vecq = np.array([0, ev / 1j, Om / Vp], dtype=np.complex128)
-            #vecu = eigvecs[3:6, i]
-            #(Sx, Sy, Sz) = poynting_vector(Om, vecu, vecq, self.layer.cstiff_norm[1:,1:]) # cstiff is unit-indexed
-            #is_fwds = Sz > 0
             is_fwds = np.isclose(np.real(ev), 0) and np.imag(ev) > 0
 
-            if is_growing:
-                ngrow += 1
-            if is_decaying:
-                ndecay += 1
-            if is_fwds:
-                nfwd += 1
+            v_is_growing[i] = is_growing
+            v_is_decaying[i] = is_decaying
+            v_is_pureimag[i] = np.isclose(np.real(ev), 0)
+            v_is_fwds[i] = is_fwds
 
-            if is_growing or (not is_decaying and is_fwds):
-                ev_good.append(i)
+            vecq = np.array([0, ev / 1j, Om / Vp], dtype=np.complex128)
+            vecu = eigvecs[3:6, i]
+            Svec = poynting_vector(Om, vecu, vecq, self.layer.cstiff_norm[1:,1:]) # cstiff is unit-indexed
+            v_poynting_Sz[i, :] = Svec
+            #is_fwds = Sz > 0
+
+
+            if growing_is_good:
+                if is_growing or (not is_decaying and is_fwds):
+                    ev_good.append(i)
+                else:
+                    ev_bad.append(i)
             else:
-                ev_bad.append(i)
-        # print(
-        #     "num good evs",
-        #     len(ev_good),
-        #     "bad evs",
-        #     len(ev_bad),
-        #     "ngrow",
-        #     ngrow,
-        #     "nfwd",
-        #     nfwd,
-        # )
+                if is_decaying or (not is_growing and is_fwds):
+                    ev_good.append(i)
+                else:
+                    ev_bad.append(i)
+
+        ngrow = np.sum(v_is_growing)
+        ndecay = np.sum(v_is_decaying)
+        nfwd = np.sum(v_is_fwds)
+
+        # sometimes after a branch cut (above shear velocity?) we can get 2 pure imaginary forward modes
+        # for rayleigh, this may not matter, but for leaky modes it does
+        # so perhaps we look for ones with Sy away from the interface?
         if len(ev_good) != 3:
-            raise ValueError(
-                f"Semi-infinite layer: Expected 3 good eigenvalues, found {len(ev_good)} "
-                f"(ngrow={ngrow}, ndecay={ndecay}, nfwd={nfwd}):",
-                "\n good: ",  eigvals[ev_good],
-                "\n bad: ", eigvals[ev_bad]
-            )
+            print('Unexpected number of good eigenvalues in semi-infinite layer:')
+            print(f' Om:{Om:.4f}, Vp:{Vp:.4f}, (ngrow={ngrow}, ndecay={ndecay}, nfwd={nfwd}, ngood={len(ev_good)}).')
+            for iev in v_is_growing.nonzero()[0]:
+                Sx,Sy,Sz = v_poynting_Sz[iev,:] * 100
+                print(f'  ev[{iev}] = {eigvals[iev]: 12.5f} grow,  Svec=({Sx:7.3f},{Sy:7.3f},{Sz:7.3f})')
+
+            for iev in v_is_decaying.nonzero()[0]:
+                Sx,Sy,Sz = v_poynting_Sz[iev,:]* 100
+                print(f'  ev[{iev}] = {eigvals[iev]: 12.5f} decay, Svec=({Sx:7.3f},{Sy:7.3f},{Sz:7.3f})')
+
+            for iev in v_is_pureimag.nonzero()[0]:
+                Sx,Sy,Sz = v_poynting_Sz[iev,:]* 100
+                print(f'  ev[{iev}] = {eigvals[iev]: 12.5f} imag,  Svec=({Sx:7.3f},{Sy:7.3f},{Sz:7.3f})')
+
+
+            #raise ValueError(
+            #    f"Semi-infinite layer: Expected 3 good eigenvalues, found {len(ev_good)} "
+            #    )
 
         mVeigs = np.zeros((6, 6), dtype=np.complex128)
         ev_order = ev_good + ev_bad
@@ -353,10 +380,9 @@ class ElasticBoundaryCondition:
         if not self.is_semi_infinite():
             return 0.0
 
-        vEvals, mVeigs = self.analyse_semiinfinite_eigenspace(Om, Vp)
+        vEvals, mVeigs = self.analyse_semiinfinite_eigenspace(Om, Vp, growing_is_good=True)
         # find smallest decay length
         lamrs = np.real(vEvals[0:3])
-        print('lamsr',lamrs)
         lammin =np.min(lamrs)
         if not np.isclose(lammin,0):
             return 6.0 / abs(lammin)  # 3 decay lengths
@@ -372,8 +398,8 @@ class ElasticBoundaryCondition:
         v_psi0 = np.zeros(6, dtype=np.complex128)
 
         if self.is_vacuum():
-            v_psi0[0:3] = v_null  # initial stress field only
-            v_psi0[3:6] = 0.0
+            v_psi0[0:3] = 0.0
+            v_psi0[3:6] = v_null  # null is literally initial displacement field
         elif self.is_semi_infinite():
             v_psi0 = self._semiinf_evecs[:, 0:3] @ v_null  # initial field from evectors
         else:
@@ -415,16 +441,16 @@ class ElasticStack:
         bc0_vaclike = not self._bcs[0].is_semi_infinite()
         bc1_vaclike = not self._bcs[1].is_semi_infinite()
 
-        if bc0_vaclike:
-            if bc1_vaclike:
+        match (bc0_vaclike, bc1_vaclike):
+            case (True, True):
                 return mat_G[0:3, 3:6] # G12 = B
-            else:
+            case (True, False):
                 return mat_G[3:6, 3:6] # G22 = D
-        else:
-            if bc1_vaclike:
+            case (False, True):
                 return mat_G[0:3, 0:3] # G11 = A
-            else:
+            case (False, False):
                 return mat_G[3:6, 0:3] # G21 = C
+
 
 
     def make_layer_Pdz_mat(self):
@@ -462,9 +488,9 @@ class ElasticStack:
             L_right = 0.0
 
 
-        L_stack = sum(layer.L for layer in self._l_layers)
+        #L_stack = sum(layer.L for layer in self._l_layers)
+        #L_y = L_stack + L_left + L_right
 
-        L_y = L_stack + L_left + L_right
         n_y = self._n_layers * ny_per_layer
 
         if L_left > 0:
@@ -479,9 +505,9 @@ class ElasticStack:
 
         iyoff = 0
         ylo = 0
+        yhi = 0
         if L_left > 0:
             ylo -= L_left
-            yhi = 0
             dy = L_left / ny_per_layer
             v_y[iyoff:ny_per_layer] = np.linspace(ylo, yhi - dy, ny_per_layer)
             v_ilayer[iyoff:ny_per_layer] = -1
@@ -489,7 +515,7 @@ class ElasticStack:
             ylo += L_left
 
         for ilay,layer in enumerate(self._l_layers):
-            L = layer.norm_L()
+            L = layer.L
             yhi += L
             dy = L / ny_per_layer
             v_y[iyoff : iyoff + ny_per_layer] = np.linspace(ylo, yhi - dy, ny_per_layer)
@@ -535,22 +561,38 @@ class NonPiezoStack(ElasticStack):
             mat_T, mat_expTL = layer.find_layer_transfer_matrix(Om, Vp)
             mat_G = mat_expTL @ mat_G
 
+
         # add boundary layer parts
         for ibcs, bc in enumerate(self._bcs):
             if bc.is_semi_infinite():
 
+                growing_is_good = ibcs == 0
                 # sort eigenvectors into growing and decaying/forwards and backwards modes
-                v_evals, m_eigvecs = bc.analyse_semiinfinite_eigenspace(Om, Vp)
-                #print(v_evals)
+                v_evals, m_eigvecs = bc.analyse_semiinfinite_eigenspace(Om, Vp, growing_is_good)
+                #print(f"BC {ibcs} Vp {Vp} eigvals:", npla.det(m_eigvecs))
+                #print('BC eigmag:', ibcs,
+                #      np.max(np.abs(m_eigvecs)),
+                #      np.max(np.abs(npla.inv(m_eigvecs)))
+                #      )
 
                 if ibcs == 0:
                     mat_G = mat_G @ m_eigvecs
                 else:
+                    # Inverted eigenvectors can get large, but attempting to scale
+                    # leads to unsmooth determinant scans
+                    #m_inveigs = npla.inv(m_eigvecs)
+                    #m_inveigs /= np.max(np.abs(m_inveigs))
+                    #mat_G = m_inveigs @ mat_G
+
                     mat_G = npla.inv(m_eigvecs) @ mat_G
 
         mat_G_ij = self._extract_quadrant(mat_G)
+        #print(f"detG Om {Om:.3f} Vp {Vp:.3f}:", npla.det(mat_G), npla.det(mat_G_ij))
+        #print(mat_G)
+        #print(mat_G_ij)
         #np.set_printoptions(precision=3)
         #print(mat_G_ij)
+        mat_G_ij /= np.max(np.abs(mat_G_ij))  # scale to avoid overflow in det
 
         return mat_G, mat_G_ij
 
@@ -561,21 +603,16 @@ class NonPiezoStack(ElasticStack):
         Vmax: float = 10000.0,
         show_scan_plot: bool = False,
         show_progress: bool = False,
+        fmin_thresh: float = 1e-5,
+        find_mode_color: bool = False,
         prefix: str = "tmpdrscan",
     ) -> List[Tuple[float, float]]:
-        # Vacs = material.Vac_phase()
-        # Vs = np.min(Vacs) * 1000.0  # convert to SI for now
-        # Vl = np.max(Vacs) * 1000.0  # convert to SI for now
 
-        # Vmin = 0.25 * Vs
-        # Vmax = Vs * 1.01  #
-
-        # look for zeros in |T(v)|
 
         # move to normalised units here
         Om = Omega_SI / g_norms.f0
 
-        n_Vp = 5000
+        n_Vp = 500
         v_Vp = np.linspace(Vmin, Vmax, n_Vp) / g_norms.v0
 
         v_det = np.zeros(n_Vp, dtype=np.complex128)
@@ -583,22 +620,20 @@ class NonPiezoStack(ElasticStack):
         for ivP, vP in enumerate(v_Vp):
             mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
             v_det[ivP] = npla.det(mat_G_ij)
+            #print(f"detG Om {Om:.3f} Vp {vP:.3f}:", npla.det(mat_G_ij))
+            #print('detmag', ivP, np.max(np.abs(mat_G_ij)))
 
         if show_scan_plot:
             plot_det_scan(Om, v_Vp, v_det, prefix=prefix)
 
-        # feels like the determinant can be chosen real, so could do root solve rather than minimise
-
-        # bracket minima in |T(v)|
-        # print('\n\n seeking minima in |T(v)|')
 
         l_braks = bracket_minima(v_Vp, np.abs(v_det))
         if show_progress:
-            print("Found brackets:")
-            np.set_printoptions(legacy="1.25", precision=6)
+            print(f"\nAt Nu={Om/(2*np.pi):.10f}, found {len(l_braks)} brackets:")
+
             for br in l_braks:
-                (xm1, fm1), (x0, f0), (xp1, fp1) = br
-                print(f"    {xm1, x0, xp1} with f={fm1, f0, fp1}")
+                (xm1, fm1), (x0, f0), (xp1, fp1) = np.array(br).tolist() # awkward but converts to plain floats
+                print(f"    [{xm1:.5f}, {x0:.5f}, {xp1:.5f}] with f=[{fm1:.3e}, {f0:.3e}, {fp1:.3e}]")
 
         if len(l_braks) == 0:
             raise BracketError("No minima found in determinant scan - no modes found.")
@@ -609,15 +644,86 @@ class NonPiezoStack(ElasticStack):
 
         l_mins = find_bracketed_minima(minfunc, l_braks)
         if show_progress:
-            print("Found minima:", l_mins)
+            print("  Found minima:")
+            for v, f in l_mins:
+                print(f"    Vp={v:.9f}, Det(f)={f:.4e}")
 
-        l_mins_SI = [(v * g_norms.v0, f) for v, f in l_mins]
+        # remove any minima with f above threshold or with multiple singular values as probably not real modes
+        fmin_norm_thresh = fmin_thresh * np.max(np.abs(v_det))
+        l_mins_SI_keep = []
+        l_mins_bad_threshold = []
+        l_mins_bad_singval = []
 
-        return l_mins_SI
+        for v, f in l_mins:
+            if f > fmin_norm_thresh:
+                l_mins_bad_threshold.append((v,f))
+            elif self.count_singular_values(Om, v) != 1:
+                l_mins_bad_singval.append((v,f))  # could be zero or two singvals
+            else:
+                l_mins_SI_keep.append((v * g_norms.v0,f))
 
-    def dispersion_relation_find_Vs_at_Omegas(self, v_Omega: NDArray[np.float64], Vmin: float = 0, Vmax: float = 0) -> None:
-        pass
+        #l_mins_SI_keep = [(v * g_norms.v0, f) for v, f in l_mins if f < fmin_norm_thresh]
+        #l_mins_SI_drop = [(v * g_norms.v0, f) for v, f in l_mins if f >= fmin_norm_thresh]
 
+        n_dropped = len(l_mins_bad_threshold) + len(l_mins_bad_singval)
+        if show_progress and n_dropped > 0:
+            print(f"  Dropping {n_dropped} modes:")
+            for v, f in l_mins_bad_singval:
+                print(f"    Vp={v:.3f} m/s has multiple small singular values.")
+            for v, f in l_mins_bad_threshold:
+                print(f"    Vp={v:.3f} has relative det minimum f={f:.3e} above fmin_thresh={fmin_norm_thresh:.3e}:")
+
+        # color modes by polarization at the surface.
+        # better to do by energy weighted average over all domain but that is more expensive
+        v_mode_cols = np.zeros((len(l_mins_SI_keep), 3), dtype=np.float64 )
+
+        if find_mode_color:
+            for iv, (vSI,f) in enumerate(l_mins_SI_keep):
+                v_psi0 = self.find_mode_psi0(Om, vSI/g_norms.v0)
+                #ux,uy,uz = np.abs(v_psi0[3:6])
+                v_mode_cols[iv,:] = nbpt.get_rgb_for_poln(*v_psi0[3:6])
+
+        return l_mins_SI_keep, v_mode_cols
+
+    def count_singular_values(self, Om: float, vP: float,
+                              thresh: float = 1e-6) -> int:
+        mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
+        u, s, vh = npla.svd(mat_G_ij)
+        nsmall = np.sum(s < thresh*np.max(s)) # Limited contrast precision in SVD
+        return nsmall
+
+    def find_mode_psi0(self, Om: float, vP: float,
+                       show_progress: bool = False) -> NDArray[np.complex128]:
+
+        mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
+
+        u, s, vh = npla.svd(mat_G_ij)
+
+        if show_progress:
+            print('Det check:', npla.det(mat_G_ij))
+            print('SVD check:', s)
+
+        nsmall = np.sum(s < 1e-6*np.max(s)) # Limited contrast precision in SVD
+
+        if show_progress:
+            print('Num small singular values:', nsmall)
+
+        if nsmall == 0:
+            raise ValueError('No nullspace found - not a mode?')
+        if nsmall > 1:
+            raise ValueError('Multiple small singular values found - may be non-genuine mode.')
+
+
+        v_null = vh.conj().T[:,-1]  # take the last column of Vh (smallest singular value)
+
+        v_psi0 = self._bcs[0].null_vector_to_field(v_null)
+        v_psi0 /= np.max(np.abs(v_psi0[3:6]))  # normalise max displacement to 1
+
+        if show_progress:
+            with np.printoptions(precision=4, suppress=True, linewidth=200):
+                print(f'Initial field at y=0:\n null vec: {v_null}\n psi0:  {v_psi0}')
+
+        return v_psi0
 
     def find_mode_profile_1d(self, Omega: float, Vs: float,
                              ny_per_layer: int = 100, L_left: float = -1, L_right: float = -1) -> NDArray[np.float64]:
@@ -625,28 +731,14 @@ class NonPiezoStack(ElasticStack):
         Om = Omega / g_norms.f0
         vP = Vs / g_norms.v0
 
-        mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
-
-        print('Det check:', npla.det(mat_G_ij))
-        u, s, vh = npla.svd(mat_G_ij)
-        print('SVD check:', s)
-        nsmall = np.sum(s < 1e-6)
-        print('Num small singular values:', nsmall)
-        if nsmall == 0:
-            raise ValueError('No nullspace found - not a mode?')
-        if nsmall > 1:
-            print('Warning: Multiple small singular values found - may be non-unique mode.')
-        v_null = vh.conj().T[:,-1]
-
-        v_psi0 = self._bcs[0].null_vector_to_field(v_null)
-        v_psi0 /= np.max(np.abs(v_psi0[3:6]))  # normalise max displacement to 1
-
-        print(f'Initial field at y=0:\n null field {v_null}\n psi0 {v_psi0}')
-
-        # check bcs are satisfied
-        print('First boundary stress:')
+        try:
+            v_psi0 = self.find_mode_psi0(Om, vP)
+        except ValueError as e:
+            raise ValueError(f"Could not find mode at Omega={Omega:.3e} ({Om:.3f} norm), Vs={Vs:.3f} ({vP:.3f} norm): {e}") from e
 
         # find profile through stack
+
+        # user can override default L_left and L_right for semi-infinite layers
         L_left = L_left if L_left > 0 else self._bcs[0].suggested_L_left(Om, vP)
         L_right = L_right if L_right > 0 else self._bcs[1].suggested_L_right(Om, vP)
 
@@ -696,15 +788,19 @@ class NonPiezoStack(ElasticStack):
                 m_psi_y[:,iy] = spla.expm(mat_Tleft * y) @ v_psi0
             else:
                 Dy = y - y_layer_start  # distance into current layer
-                mat_T = v_mat_Tlayer[ilayer] if ilayer >0 else mat_Tright
+                mat_T = v_mat_Tlayer[ilayer] #if ilayer >0 else mat_Tright
                 m_psi_y[:,iy] = spla.expm(mat_T * Dy) @ v_psi_layer_0
 
-        with np.printoptions(precision=3, suppress=True, linewidth=200,
-                             formatter={'float': '{: 0.3f}'.format}):
+        #with np.printoptions(precision=3, suppress=True, linewidth=200,
+        #                     formatter={'float': '{: 0.3f}'.format}):
             #print(v_y, m_psi_y)
             #print(v_y, np.abs(m_psi_y[5,:]))
-            print(v_y[-5:],'\n', m_psi_y[:,-5:])
+            #print(v_y[-5:],'\n', m_psi_y[:,-5:])
+
+        #TODO: should probably unscale the position v_y
         return v_y, m_psi_y
+
+
 
 
 
@@ -713,111 +809,24 @@ class PiezoStack(ElasticStack):
         super().__init__(l_layers, bcs)
 
 
-def make_ElStack(l_materials#: List[Tuple[materials.Material, float]]
-                 , bcs: List[ElasticBoundaryCondition]) -> None:
-    pass
 
 
-# class MyElasticStack:
-#     def __init__(self, l_layers: List[Tuple[materials.Material, float]]) -> None:
 
-#         # l_layers is a list of materials or strings and lengths
-#         # vz is velocity along z direction in SI units
 
-#         # build transfer matrix
-#         # assume for now is simple half infinite layer in first medium
 
-#         # mat_1 = l_layers[0][0]
-#         self.mats = l_layers
 
-#     def det_transfer_matrix_at_vz(self, vz_SI: float) -> Tuple[NDArray[np.complex128], NDArray[np.complex128], complex]:
-#         # print(f'Calculating transfer matrix at vz={vz_SI:.9e} m/s')
 
-#         g_norms.f0 = nbtypes.SI_GHz
-#         g_norms.x0 = nbtypes.SI_um
-#         v0 = g_norms.x0 * g_norms.f0  # km/s
-#         g_norms.p0 = nbtypes.SI_GPa
-#         g_norms.rho0 = 1000
-
-#         Om = 2 * np.pi * 1e10 / g_norms.f0
-
-#         # move to normalised units
-#         mat0 = self.mats[0][0]
-#         cstiff = mat0.stiffness_c_IJ
-#         rho = mat0.rho / g_norms.rho0
-#         vz = vz_SI / v0
-
-#         mM1, mM2, mL1, mL2 = get_layer_stiffness_submatrices(cstiff, g_norms.p0)
-
-#         # print(mM1, '\n', mM2, '\n',mL1, '\n',mL2)
-#         # construct transfer matrix for
-#         # v = [T6, T2, T4, ux, uy, uz]
-
-#         matT = np.zeros([6, 6], dtype=np.complex128)
-
-#         # ddz [T] = [ M_TT  M_TU] [T]
-#         #     [U] = [ M_UT  M_UU] [U]
-
-#         mM1inv = npla.inv(mM1)
-
-#         matT[:3, :3] = -1j * Om / vz * mL2 @ mM1inv  # M_TT
-#         matT[:3, 3:6] = (Om / vz) ** 2 * (
-#             mL1 - rho * vz**2 * np.eye(3) - mL2 @ mM1inv @ mM2
-#         )  # M_TU
-
-#         matT[3:6, 0:3] = mM1inv  # M_UT
-#         matT[3:6, 3:6] = -1j * Om / vz * mM1inv @ mM2  # M_UU
-
-#         # Now find the eigenvectors and look for growing ones.
-#         eigvals, eigvecs = npla.eig(matT)
-
-#         def old_eig_growing(ev):
-#             return np.imag(ev) < 0 and not np.isclose(np.imag(ev), 0)
-
-#         def old_eig_fwds(ev):
-
-#             val = np.isclose(np.imag(ev), 0) and np.real(ev) > 0
-#             return val
-
-#         # There is no i in the exponent in the definition of the transfer matrix here
-#         # so growing modes have positive real part to eigenvalue
-#         # "forwards" mode is neither growing nor decaying, and its energy flux is in the +z direction
-#         # For now we take that as meaning real part is zero and i
-#         # maginary part positive
-#         #  Should fix this and look at Poynting vector explicitly
-#         def eig_growing(ev):
-#             return not np.isclose(np.real(ev), 0) and np.real(ev) > 0
-
-#         def eig_fwds(ev):
-#             val = np.isclose(np.real(ev), 0) and np.imag(ev) > 0
-#             return val
-
-#         ev_keep = []
-#         for i in range(len(eigvals)):
-#             ev = eigvals[i]
-#             if eig_growing(ev) or eig_fwds(ev):
-#                 ev_keep.append(i)
-
-#         growing_modes = eigvecs[:, ev_keep]
-#         # print('Kept evs', ev_keep, eigvals[ev_keep])
-#         # print('growmodes','\n',
-#         #   np.real(growing_modes[0:3,:]),'\n',
-#         #   np.imag(growing_modes[0:3,:]))
-
-#         detgrow = npla.det(growing_modes[0:3, :])
-
-#         # print('Dets ', npla.det(matT),detgrow)
-
-#         return matT, growing_modes, detgrow
 
 
 def plot_det_scan(Omega: float, v_Vp: NDArray[np.float64], v_det: NDArray[np.complex128], prefix: str = "tmp") -> None:
+
     fig, ax = plt.subplots()
-    # ax.plot(v_Vp, np.real(v_det), "o", label=r"$\Delta_r$", markersize=0.5)
-    # ax.plot(v_Vp, np.imag(v_det), "x", label=r"$\Delta_i$", markersize=0.5)
+
     ax.plot(
         v_Vp, np.abs(v_det), "-+", label=r"$|\Delta|$", markersize=1.0, linewidth=0.5
     )
+
+    ax.set_yscale("log")
     ax.set_xlabel(r"$V$ [km/s]", fontsize=10)
     ax.set_ylabel(r"$|T|$ ", fontsize=10)
     ax.set_title(rf"$\Omega/(2\pi)={Omega/(2*np.pi):.3f}\,$GHz", fontsize=10)
@@ -859,56 +868,20 @@ def find_Rayleigh_velocity_anisotropic(material#: materials.Material
     # use transfer matrix approach and search for vanishing determinant
     # Solution(s) should lie below the bulk shear velocity
 
-    Vacs = material.Vac_phase()
-    Vs = np.min(Vacs) * 1000.0  # convert to SI for now
-    Vl = np.max(Vacs) * 1000.0  # convert to SI for now
+    bcs = (
+        ElasticBoundaryCondition(ElBCType.SEMI_INFINITE, material),
+        ElasticBoundaryCondition(ElBCType.VACUUM),
+    )
+    l_layers = []
 
-    Vmin = 0.25 * Vs
-    Vmax = Vs * 1.01  #
 
-    # look for zeros in |T(v)|
-    n_Vp = 1000
-    v_Vp = np.linspace(Vmin, Vmax, n_Vp)
-    v_det = np.zeros(n_Vp, dtype=np.complex128)
-    # np.printoptions(precision=2, suppress=True)
+    Omega = 2*np.pi * 1.0 * SI_GHz
+    estack = NonPiezoStack(l_layers, bcs)
+    Vs = estack.dispersion_relation_find_Vs_at_Omega(Omega,
+                                                         Vmin=1*SI_kmps, Vmax=8.0*SI_kmps)
 
-    # print(f'Seeking Rayleigh velocity in range: {Vmin, Vmax}')
 
-    l_layers = ((material, 1.0),)
-
-    stack = ElasticStack(l_layers)
-
-    for ivz, vz in enumerate(v_Vp):
-        mT, gmodes, detgrow = stack.det_transfer_matrix_at_vz(vz)
-        v_det[ivz] = detgrow
-
-    plot_rayleigh_det_scan(v_Vp, v_det, Vs, Vl, material)
-
-    # feels like the determinant can be chosen real, so could do root solve rather than minimise
-
-    # bracket minima in |T(v)|
-    # print('\n\n seeking minima in |T(v)|')
-    v_det_abs = np.abs(v_det)
-
-    l_braks = bracket_minima(v_Vp, v_det_abs)
-    # print('Found brackets:', l_braks)
-
-    if len(l_braks) == 0:
-        raise BracketError(
-            "No minima found in determinant scan - cannot find Rayleigh velocity"
-        )
-
-    def minfunc(v):
-        mT, gmodes, detgrow = stack.det_transfer_matrix_at_vz(v)
-        return np.abs(detgrow)
-
-    l_mins = find_bracketed_minima(minfunc, l_braks)
-    # print('Found minima:', l_mins)
-
-    if len(l_mins) != 1:
-        raise BracketError(
-            "Multiple minima found in determinant scan - cannot find Rayleigh velocity"
-        )
+    if Vs:
+        return Vs[0][0]  # return first found mode
     else:
-        vR = l_mins[0][0]
-    return vR
+        return 0
