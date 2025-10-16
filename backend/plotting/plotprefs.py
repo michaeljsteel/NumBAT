@@ -75,7 +75,7 @@ class PlotPrefs:
 
         # Select color combinations here
         coltup_em = self.color_tup_1
-        coltup_ac = self.color_tup_8
+        coltup_ac = self.color_tup_7 # tup_8 is broken because of berlin?
 
         self.cmap_em_field_signed = d_all.get('em_colormap_signed', coltup_em[0])
         self.cmap_em_field_unsigned = d_all.get('em_colormap_unsigned', coltup_em[1])

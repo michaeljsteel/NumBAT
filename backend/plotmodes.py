@@ -70,11 +70,12 @@ class Decorator(object):
         mp_base_fs = 18
         sp_base_fs = 24
 
-        self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': .6,
+        self._multi_props = {'figsize': (10, 8),'subplots_hspace': .2, 'subplots_wspace': 1.2,
                              'base_fs': mp_base_fs,
                              'title_fs': mp_base_fs-2,
                              'subtitle_fs': mp_base_fs-7,  # used for component labels
-                             'title_pad': 10, 'subtitle_pad': 10,                                     'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
+                             'title_pad': 10, 'subtitle_pad': 10,
+                             'ax_label_fs': mp_base_fs-10, 'ax_label_pad': 20, 'ax_tick_fs': mp_base_fs-10,
                              'data_label_fs': mp_base_fs-8,
                              'cbar_tick_fs': mp_base_fs-12,
                              'ax_linewidth': '.75', # used in plotgain only
@@ -317,6 +318,8 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
     d_kw = {'origin':'lower', 'extent':extents, 'interpolation':interp, 'cmap':cmap}
 
+    common_amp = True and cont_signed
+
     if decorator.get_cmap_limits(ftag_cont._xyz) is not None:
         (act_zlo, act_zhi) = decorator.get_cmap_limits(ftag_cont._xyz)
         tsnorm = mplcolors.TwoSlopeNorm(
@@ -334,8 +337,13 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
         d_kw['vmax'] = vma
 
     else:
-        act_zlo = np.nanmin(cont_field)
-        act_zhi = np.nanmax(cont_field)
+        if common_amp:
+            act_zlo = -1
+            act_zhi = 1
+        else:
+            act_zlo = np.nanmin(cont_field)
+            act_zhi = np.nanmax(cont_field)
+
         vma = max(abs(act_zlo), abs(act_zhi))
         vmi = -vma if cont_signed else 0.0
 
@@ -578,14 +586,23 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
     decorator = plps['decorator']
     fs = decorator.get_property('data_label_fs')
 
-    x0 = .05
-    yhi = .99
+    wide_mode = plps.get('wide_mode', False)
+
+    if wide_mode:
+        x0_1 = 0.05
+        x0_2 = 0.55
+        yhi = .85
+    else:
+        x0_1 = x0_2 = .05
+        yhi = .99
+
     dy = .12
     y0 = yhi-dy
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, yhi)
-    ax.set_aspect('equal')
+    asp = 0.25 if plps['wide_mode'] else 1.0
+    ax.set_aspect(asp)
     ax.axis('off')
 
     mode = sim_result.get_all_modes()[mode_index]
@@ -601,9 +618,10 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
     (wx, wy, w0) = mode.second_moment_widths() # In units of um
 
 
-    _write_line(x0-.05, y0, f'Mode properties: m={mode_index}', fs+2); y0 -= dy
+    _write_line(x0_1-.05, y0, f'Mode properties: m={mode_index}', fs+2); y0 -= dy
 
     lines=[]
+    lines2=[] # second column if needed
 
     if sim_result.is_EM():
         lines.append( r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz')
@@ -629,17 +647,17 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
             lines.append( f'$v_p$: {vp:.2f} m/s, $v_g$: {vg:.2f} m/s')
         else:
             lines.append( f'$v_p$: {vp:.2f} m/s')
-    lines.append( f'$f_x:$ {f_x:.3f}, $f_y$: {f_y:.3f}')
-    lines.append( f'$f_t:$ {f_t:.3f}, $f_z$: {f_z:.3f}')
-    lines.append( r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm')
-    lines.append( f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm')
+    lines2.append( f'$f_x:$ {f_x:.3f}, $f_y$: {f_y:.3f}')
+    lines2.append( f'$f_t:$ {f_t:.3f}, $f_z$: {f_z:.3f}')
+    lines2.append( r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm')
+    lines2.append( f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm')
 
     if field_code.is_EM_H():
-        lines.append( r'$H$ field multiplied by $Z_0=376.7\, \Omega$')
+        lines2.append( r'$H$ field multiplied by $Z_0=376.7\, \Omega$')
 
     sc = sim_result.symmetry_classification(mode_index)
     if len(sc):
-        lines.append( f'Sym: {sc}')
+        lines2.append( f'Sym: {sc}')
 
     # TODO: reactivate
     # if sim_result.is_AC() and sim_result.Q_method != QAcMethod.NotSet:
@@ -674,33 +692,57 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
 
     d_ext = mode.get_mode_data()
     if len(d_ext):
-        lines.append( r'Extra data:')
+        lines2.append( r'Extra data:')
         for (k, v) in d_ext.items():
-            lines.append( f'   {k}: {v}')
+            lines2.append( f'   {k}: {v}')
 
+    ty0 = y0
     for line in lines:
-        _write_line(x0, y0, line)
-        y0 -= dy
+        _write_line(x0_1, ty0, line)
+        ty0 -= dy
+
+    if wide_mode:
+        ty0 = y0
+    for line in lines2:
+        _write_line(x0_2, ty0, line)
+        ty0 -= dy
+
 
 def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index):
     decorator = plps['decorator']
     figsz = decorator['figsize']
-    ws = decorator['subplots_wspace']
     hs = decorator['subplots_hspace']
+    ws = decorator['subplots_wspace']
 
     decorator.set_waveguide(sim_result._structure.wg_geom)
 
     hide_minors = plps['suppress_imimre']
-    rows = 2 if hide_minors else 3
 
-    fig, axs = plt.subplots(rows, 3, figsize=figsz)
-    fig.subplots_adjust(hspace=hs, wspace=ws*1.5)
+    tall_layout = not plps['wide_mode']
 
-    axs = axs.flat
-    axi = 0
+    if tall_layout:
+        rows = 2 if hide_minors else 3
 
-    ax = axs[axi]; axi += 1
-    write_mode_data(ax, plps, sim_result, mode_index, field_code)  # mode data summary
+        fig, axs = plt.subplots(rows, 3, figsize=figsz)
+        fig.subplots_adjust(hspace=hs, wspace=ws)
+
+        ax_md_data = axs[0, 0]  # mode data summary
+        ax_ut = axs[0, 1]  # the whole field
+        ax_uv = axs[0, 2]  # the intensity
+        axs_comp = axs[1:, :].flatten()  # the components
+
+    else:
+        cols = 2 if hide_minors else 3
+
+        fig, axs = plt.subplots(3, cols, figsize=(figsz[0]*1.5, figsz[1]))
+        fig.subplots_adjust(hspace=hs, wspace=ws)
+
+        ax_md_data = axs[0, 0]  # mode data summary
+        ax_ut = axs[1, 0]  # the whole field
+        ax_uv = axs[2, 0]  # the intensity
+        axs_comp = axs[:, 1:].flatten()  # the components
+
+    write_mode_data(ax_md_data, plps, sim_result, mode_index, field_code)  # mode data summary
 
     ft = field_code.as_field_type()
 
@@ -712,13 +754,12 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
     else:
         ftag_transjoint = ftag_transvec
 
-    ax = axs[axi]; axi += 1  # the whole field (top row middle)
-    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps,
+    plot_contour_and_quiver(fig, ax_ut, d_xy, v_plots, plps,
                             ftag_scalar=ftag_scal, ftag_vector=ftag_transjoint)
 
-    ax = axs[axi]; axi += 1  # the intensity (top row right)
-    plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_vector=ftag_transvec)
+    plot_contour_and_quiver(fig, ax_uv, d_xy, v_plots, plps, ftag_vector=ftag_transvec)
 
+    axi = 0
     for flab in v_plots.keys():
         cc = FieldTag.make_from_field_and_Fcode(ft, flab)
 
@@ -727,7 +768,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
         # don't plot what will likely be pure zero fields
         if (hide_minors and not cc.is_minor()): continue
 
-        ax = axs[axi]; axi += 1
+        ax = axs_comp[axi]; axi += 1
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=cc)  # the scalar plots
 
 

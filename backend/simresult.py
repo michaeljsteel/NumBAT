@@ -214,6 +214,7 @@ class SimResult:
         suppress_imimre=True,
         logamp=False,
         decorator=None,
+        wide_mode=False,
         **kwargs
     ):
         """Plot E or H fields of EM mode, or the AC modes displacement fields.

@@ -1,0 +1,28 @@
+{
+ "format": "NumBATMaterial-fmt-2.0",
+ "material_name": "Ge_1973_Auld",  // Name of this file, will be used as identifier
+ "chemical": "Ge [100]",  // Chemical composition
+ "author": "Auld",  // Author of data
+ "date": "1973",  // Year of data publication/creation
+ "institution": "Stanford University",  // Source institution
+ "doi": "ISBN-10. 0898747821",
+
+ "Re_n": 4.025,  // Real part of refractive index []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+
+ "s": 5322,  // Density [kg/m3]
+
+ "crystal_class": "Cubic",
+ "crystal_sym": "m3m",
+
+ "c_11": 12.89e10,  // Stiffness tensor component [Pa]
+ "c_44": 67.1e9,  // Stiffness tensor component [Pa]
+ "c_12": 48.3e9,  // Stiffness tensor component [Pa]
+
+ "p_11": -0.151,  // Photoelastic tensor component []
+ "p_12": -0.128,  // Photoelastic tensor component []
+ "p_44": -0.072,  // Photoelastic tensor component []
+ "eta_11": 9.06e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 8.57e-3,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.71e-3  // Acoustic loss tensor component [Pa s]
+}

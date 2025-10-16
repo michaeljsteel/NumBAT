@@ -130,7 +130,7 @@ class MaterialLibrary:
             except BadMaterialFileError as err:
                 reporting.report_and_exit(f'Problem in loading material file {fname}: ' + str(err))
             except KeyError as err:
-                reporting.report_and_exit(f'Missing paramter key in loading material file {fname}: ' + str(err))
+                reporting.report_and_exit(f'Missing parameter key in loading material file {fname}: ' + str(err))
 
             self._materials[mat_name] = new_mat
 
@@ -594,7 +594,7 @@ class Material(object):
         else:
             return math.sqrt(self.stiffness_c_IJ[4, 4] / self.rho)
 
-    def Vac_phase(self):
+    def Vac_phase(self, return_polarizations=False):
         """
         Return the three acoustic phase velocities for propagation along z for the current orientation.
         """
@@ -602,7 +602,10 @@ class Material(object):
         v_vphase, vecs, v_vgroup = solve_christoffel(
             vkap, self.stiffness_c_IJ, self.rho
         )
-        return v_vphase
+        if return_polarizations:
+            return v_vphase, vecs
+        else:
+            return v_vphase
 
     def em_phase_index(self):
         """
