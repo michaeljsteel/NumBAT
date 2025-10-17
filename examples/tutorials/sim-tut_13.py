@@ -21,7 +21,7 @@ sys.path.append(str(Path("../../backend")))
 import numbat
 import materials
 from nbthread import launch_worker_threads_and_wait, launch_worker_processes_and_wait
-from nbanalytic.nbanalytic import ElasticRod, chareq_elastic_rod
+from nbanalytic.elasticcylinder import ElasticIsotropicCylinder, chareq_elastic_cylinder
 from nbtypes import twopi
 
 import starter
@@ -75,8 +75,8 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
         (p, iq, q) = args  # Matches queues passed to CalcThread
 
         arad_SI = arad * 1e-9  # fix this messiness
-        rod_ac = ElasticRod(rho, c11, c12, c44, arad_SI)
-        v_Om_modes = rod_ac.find_nu_for_q(q, nu_hi, p, nmodes)[1]
+        rod_ac = ElasticIsotropicCylinder(rho, c11, c12, c44, arad_SI)
+        v_Om_modes = rod_ac.find_Omega_at_q(q, nu_hi*2*np.pi, p, nmodes)[1]
         # v_Om_modes = findroots_elastic_rod_chareq(Vl, nu_hi, p, q, #nmodes, rho, c11, c12, c44, arad)
         return (p, iq, v_Om_modes)
 
@@ -110,7 +110,7 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
                 drvec = np.zeros(len(Omvec))
 
                 for iOm, Om in enumerate(Omvec):
-                    drvec[iOm] = chareq_elastic_rod(Om, p, q, rho, c11, c12, c44, arad)
+                    drvec[iOm] = chareq_elastic_cylinder(Om, p, q, rho, c11, c12, c44, arad)
                 axs[0].plot(
                     Omvec / (twopi * 1e9),
                     drvec,

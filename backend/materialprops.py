@@ -113,7 +113,10 @@ class ElasticProps:
         for k_typ in range(self.n_mats_ac):
             if v_acoustic_mats[k_typ]:
                 t_ac = v_acoustic_mats[k_typ]
-                t_ac_c_IJ = t_ac.stiffness_c_IJ
+
+                #t_ac_c_IJ = t_ac.stiffness_c_IJ
+                t_ac_c_IJ = t_ac.get_stiffness_for_kappa((0,0,1))
+
                 t_ac_p_IJ = t_ac.photoel_p_IJ
                 t_ac_eta_IJ = t_ac.viscosity_eta_IJ
 
