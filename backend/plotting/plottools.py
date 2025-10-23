@@ -48,11 +48,34 @@ def get_rgb_for_poln(px, py, pz):
     rgb : ndarray
         Normalized RGB values (0-1) as a numpy array.
     """
-    vp = np.array([px, py, pz])
-    pmod = math.sqrt(np.real(px*px.conjugate() + py*py.conjugate() + pz*pz.conjugate()))
+
+    # plain rgb
+    col_x = np.array([1,0,0])  
+    col_y = np.array([0,1,0])  
+    col_z = np.array([0,0,1])
+
+    # colors suitable for green/red vision impaired 
+    #col_x = np.array([1,1,0])  # yellow
+    #col_y = np.array([1,0,1])  # magenta
+    #col_z = np.array([0,0,1])
+
+    # another set that avoids hard to see yellow but doesn't have great yz contrast
+    #col_x = np.array([1,0.533,0])  # yellow
+    #col_y = np.array([.102,.102,.102])  # magenta
+    #col_z = np.array([0,.447,.698])
+
+
+    vp = np.array([np.abs(px), np.abs(py), np.abs(pz)], dtype=np.float64) 
+    vp /= np.linalg.norm(vp)
+
+    v_rgb = vp[0]**2 * col_x + vp[1]**2 * col_y + vp[2]**2 * col_z 
+    v_rgb *= 0.999999 # avoid overflow beyond 1.0
+
     # RGB values are in range 0-1
-    rgb = np.abs(vp) / pmod
-    return rgb
+    #v_rgb = v_rgb
+    #with np.printoptions(precision=6):
+    #    print(px, py, pz, v_rgb)
+    return v_rgb
 
 
 def save_and_close_figure(fig, fig_fname):

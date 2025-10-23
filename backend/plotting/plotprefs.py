@@ -89,7 +89,7 @@ class PlotPrefs:
         self.vecplot_arrow_scale = d_all.get('vector_arrow_scale', 10)
 
         # width of the shaft in fractions of plot width
-        self.vecplot_arrow_linewidth = d_all.get('vector_arrow_linewidth', 0.005)
+        self.vecplot_arrow_width = d_all.get('vector_arrow_width', 0.005)
 
         # multiple of shaft width
         self.vecplot_arrow_headwidth = d_all.get('vector_arrow_headwidth', 2)

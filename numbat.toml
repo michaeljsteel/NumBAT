@@ -18,7 +18,7 @@ ac_colormap_unsigned = 'GnBu'
 ac_vector_arrow_color = 'dimgray'
 
 vector_arrow_scale = 10
-vecplot_arrow_linewidth = 0.005
+vecplot_arrow_width = 0.005
 vecplot_arrow_headwidth = 2
 
 # refractive index plots

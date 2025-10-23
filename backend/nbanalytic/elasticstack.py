@@ -12,33 +12,13 @@ import numbat
 import nbtypes
 import materials
 from numtools.optimize import bracket_minima, find_bracketed_minima, BracketError
-from nbtypes import SI_GHz, SI_THz, SI_um, SI_kmps
+from nbtypes import SI_GHz, SI_um, SI_kmps
 import plotting.plottools as nbpt
 from nbanalytic.elasticfieldconversions import uvec3_to_poynting_S3
 
-class NormalisationConstants:
-    def __init__(self):
-        # adjustable
-        self.t0 = nbtypes.SI_ns
-        self.x0 = nbtypes.SI_um
-        self.rho0 = 1000  # 1000 kg/m^3
-        self.eps0 = nbtypes.SI_permittivity_eps0  # 8.854187817e-12  F/m
-        self.V0 = 1.0  # V
+from nbanalytic.elasticmodeplots import ModeFunction1D, QuantLabel
 
-        # derived
-        self.f0 = 1 / self.t0  # GHz
-        self.v0 = self.x0 / self.t0  # km/s
-
-        self.T0 = self.rho0 * self.v0**2  # GPa
-        self.c0 = self.T0  # GPa
-        self.E0 = self.V0 / self.x0  # V/um
-        self.D0 = self.eps0 * self.E0  # C/m^2
-
-        self.e0 = 1e-2  # C/m^2
-        # self.p0 = nbtypes.SI_GPa
-
-
-g_norms = NormalisationConstants()
+g_norms = nbtypes.NormalisationConstants()
 
 
 class ElBCType(Enum):
@@ -585,7 +565,7 @@ class NonPiezoStack(ElasticStack):
 
     ) -> List[Tuple[float, float]]:
 
-        check_magnitude(Omega_SI, "Omega", 1e8,1e11)
+        check_magnitude(Omega_SI, "Omega", 1e8,100e9*2*np.pi)
         check_magnitude(Vmin_SI, "Vmin", 10, 20000)
         check_magnitude(Vmax_SI, "Vmax", 100, 20000)
 
@@ -669,19 +649,40 @@ class NonPiezoStack(ElasticStack):
         # better to do by energy weighted average over all domain but that is more expensive
         v_mode_cols = None
 
+        full_mode_col = False
         if find_mode_color:
             v_mode_cols = np.zeros((len(l_mins_V_SI_keep), 3), dtype=np.float64 )
             for iv, (vSI,f) in enumerate(l_mins_V_SI_keep):
-                v_psi0 = self.find_mode_psi0(Om, vSI/g_norms.v0)
-                #ux,uy,uz = np.abs(v_psi0[3:6])
-                v_mode_cols[iv,:] = nbpt.get_rgb_for_poln(*v_psi0[3:6])
+                if full_mode_col:
+                    pol_vec = self.find_mode_polarization_over_profile_1d(Omega_SI, vSI)
+                else:
+                    pol_vec = self.find_mode_polarization_at_y0(Omega_SI, vSI)
 
+                v_mode_cols[iv,:] = nbpt.get_rgb_for_poln(*pol_vec)
         res = { 'Vphase': l_mins_V_SI_keep,
                 'poln_cols': v_mode_cols,
                 'det_scan': (v_Vp, v_det)
                 }
 
         return res
+
+    def find_mode_polarization_at_y0(self, Omega_SI: float, vP_SI: float) -> NDArray[np.float64]:
+        v_psi0 = self.find_mode_psi0(Omega_SI/g_norms.f0, vP_SI/g_norms.v0)
+        u_x, u_y, u_z = np.abs(v_psi0[3:6])
+        poln_vec = np.array([u_x, u_y, u_z], dtype=np.float64)
+        poln_vec /= np.linalg.norm(poln_vec)
+        return poln_vec
+
+    def find_mode_polarization_over_profile_1d(self, Omega_SI: float, vP_SI: float,
+                             ny_per_layer: int = 100, L_left: float = -1, L_right: float = -1) -> NDArray[np.float64]:
+
+
+        v_y, m_psi_y = self.find_mode_profile_1d(Omega_SI, vP_SI)
+        m_u_y = m_psi_y[3:6, :]  # displacement part
+        poln_fracs = np.sum(np.abs(m_u_y)**2, axis=1)
+        poln_fracs /= np.linalg.norm(poln_fracs)
+        return poln_fracs
+
 
 
     def count_singular_values(self, Om: float, vP: float,
@@ -729,16 +730,16 @@ class NonPiezoStack(ElasticStack):
 
         return v_psi0
 
-    def find_mode_profile_1d(self, Omega: float, Vs: float,
+    def find_mode_profile_1d(self, Omega_SI: float, Vp_SI: float,
                              ny_per_layer: int = 100, L_left: float = -1, L_right: float = -1) -> NDArray[np.float64]:
         # find nullspace vector and initial field at y=0
-        Om = Omega / g_norms.f0
-        vP = Vs / g_norms.v0
+        Om = Omega_SI / g_norms.f0
+        vP = Vp_SI / g_norms.v0
 
         try:
             v_psi0 = self.find_mode_psi0(Om, vP)
         except ValueError as e:
-            raise ValueError(f"Could not find mode at Omega={Omega:.3e} ({Om:.3f} norm), Vs={Vs:.3f} ({vP:.3f} norm): {e}") from e
+            raise ValueError(f"Could not find mode at Omega={Om:.3e} ({Om:.3f} norm), Vs={vP:.3f} ({vP:.3f} norm): {e}") from e
 
         # find profile through stack
 
@@ -804,8 +805,25 @@ class NonPiezoStack(ElasticStack):
             #print(v_y[-5:],'\n', m_psi_y[:,-5:])
 
         #TODO: should probably unscale the position v_y
-        return v_y, m_psi_y
 
+        v_y_SI = v_y * g_norms.x0
+
+
+        m_uxyz = m_psi_y[3:,:].T.copy()
+        m_T6 = m_psi_y[0:3,:].T.copy()
+
+        # to make physically realistic values  will treat displacements as being in nm, so stresses come down by 1000
+        m_T6 /=1000
+
+        mode_prof_u = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_uxyz)
+        mode_prof_T6 = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_T6)
+
+        mode_prof_T6.set_labels(dvar=QuantLabel('Normal stress', r'$\vec T_i$', r'$|\vec T_i|$', '[GPa]'))
+
+
+        #return v_y, m_psi_y, mode_prof_u, mode_prof_T6
+
+        return  mode_prof_u, mode_prof_T6
 
 
 
@@ -885,10 +903,8 @@ def find_Rayleigh_velocity_anisotropic(material#: materials.Material
 
     Omega = 2*np.pi * 1.0 * SI_GHz
     estack = NonPiezoStack(l_layers, bcs)
-    res = estack.dispersion_relation_find_Vs_at_Omega(Omega,
-                                                         Vmin=1*SI_kmps, Vmax=8.0*SI_kmps)
+    res = estack.dispersion_relation_find_Vs_at_Omega(Omega, Vmin_SI=1*SI_kmps, Vmax_SI=8.0*SI_kmps)
     Vp = res['Vphase']
-
 
     if Vp:
         return Vp[0][0]  # return first found mode
@@ -896,132 +912,133 @@ def find_Rayleigh_velocity_anisotropic(material#: materials.Material
         return 0
 
 
-def plot_profile_2d(v_y, m_psi_y, Omega, Vs, imd, v_bulks, prefix):
-    fig,ax=plt.subplots(3,2, figsize=(6,4))
-    fig.set_tight_layout(True)
+# def plot_profile_2d(v_y, m_psi_y, Omega, Vs, imd, prefix, Vbulks=None):
+#     fig,ax=plt.subplots(3,2, figsize=(6,4))
+#     fig.set_tight_layout(True)
 
-    nutil=Omega/(2*np.pi*SI_GHz)
-    Vstil=Vs/SI_kmps
-    title = fr'Mode {imd} for $\Omega/2\pi$={nutil:.3f} GHz, V={Vstil:.3f} km/s'
-    title += f'\nBulk Velocities: {v_bulks[0]:.3f}, {v_bulks[1]:.3f}, {v_bulks[2]:.3f} km/s'
-    fig.suptitle(title, fontsize=8)
+#     nutil=Omega/(2*np.pi*SI_GHz)
+#     Vstil=Vs/SI_kmps
+#     title = fr'Mode {imd} for $\Omega/2\pi$={nutil:.3f} GHz, V={Vstil:.3f} km/s'
+#     if Vbulks is not None:
+#         title += f'\nBulk Velocities: {Vbulks[0]:.3f}, {Vbulks[1]:.3f}, {Vbulks[2]:.3f} km/s'
+#     fig.suptitle(title, fontsize=8)
 
-    q= Omega / Vs * SI_um
-    nz = len(v_y)
-    v_z = np.linspace(0, 2*np.pi/q, 100)
-    v_Y, v_Z = np.meshgrid(v_y, v_z)
+#     q= Omega / Vs * SI_um
+#     v_z = np.linspace(0, 2*np.pi/q, 100)
+#     v_Y, v_Z = np.meshgrid(v_y, v_z)
 
-    v_T6 = np.abs(m_psi_y[0,:])
-    v_T2 = np.abs(m_psi_y[1,:])
-    v_T4 = np.abs(m_psi_y[2,:])
-    v_ux = np.abs(m_psi_y[3,:])
-    v_uy = np.abs(m_psi_y[4,:])
-    v_uz = np.abs(m_psi_y[5,:])
-    m_eiphiz = np.exp(1j * q * v_Z).T
-    m_T6 = np.real(np.outer(v_T6, np.ones(len(v_z))) * m_eiphiz)
-    m_T2 = np.real(np.outer(v_T2, np.ones(len(v_z))) * m_eiphiz)
-    m_T4 = np.real(np.outer(v_T4, np.ones(len(v_z))) * m_eiphiz)
-    m_ux = np.real(np.outer(v_ux, np.ones(len(v_z))) * m_eiphiz)
-    m_uy = np.real(np.outer(v_uy, np.ones(len(v_z))) * m_eiphiz)
-    m_uz = np.real(np.outer(v_uz, np.ones(len(v_z))) * m_eiphiz)
+#     v_T6 = np.abs(m_psi_y[0,:])
+#     v_T2 = np.abs(m_psi_y[1,:])
+#     v_T4 = np.abs(m_psi_y[2,:])
+#     v_ux = np.abs(m_psi_y[3,:])
+#     v_uy = np.abs(m_psi_y[4,:])
+#     v_uz = np.abs(m_psi_y[5,:])
+#     m_eiphiz = np.exp(1j * q * v_Z).T
+#     m_T6 = np.real(np.outer(v_T6, np.ones(len(v_z))) * m_eiphiz)
+#     m_T2 = np.real(np.outer(v_T2, np.ones(len(v_z))) * m_eiphiz)
+#     m_T4 = np.real(np.outer(v_T4, np.ones(len(v_z))) * m_eiphiz)
+#     m_ux = np.real(np.outer(v_ux, np.ones(len(v_z))) * m_eiphiz)
+#     m_uy = np.real(np.outer(v_uy, np.ones(len(v_z))) * m_eiphiz)
+#     m_uz = np.real(np.outer(v_uz, np.ones(len(v_z))) * m_eiphiz)
 
-    exts = (v_y[0], v_y[-1], v_z[0], v_z[-1])
-    fs = 6
-    plotprefs = numbat.NumBATPlotPrefs()
-    cm = plotprefs.cmap_ac_field_signed
-    kwimgs = dict(extent=exts, aspect='auto', origin='lower', cmap=cm)
+#     exts = (v_y[0], v_y[-1], v_z[0], v_z[-1])
+#     fs = 6
+#     plotprefs = numbat.NumBATPlotPrefs()
+#     cm = plotprefs.cmap_ac_field_signed
+#     kwimgs = dict(extent=exts, aspect='auto', origin='lower', cmap=cm)
 
-    for iax, (m_T,mlab) in enumerate(
-        ([m_T6, r'$\Re\{T_6\}$ [GPa]'],
-         [m_T2, r'$\Re\{T_2\}$ [GPa]'],
-         [m_T4, r'$\Re\{T_4\}$ [GPa]'],
-         [m_ux, r'$\Re\{u_x\}$ [$\mu$m]'],
-         [m_uy, r'$\Re\{u_y\}$ [$\mu$m]'],
-         [m_uz, r'$\Re\{u_z\}$ [$\mu$m]'])):
-        irow = iax % 3
-        icol = iax // 3
-        im = ax[irow, icol].imshow(m_T.T, **kwimgs)
-        cbar = fig.colorbar(im, ax=ax[irow, icol])
-        cbar.ax.tick_params(labelsize=fs)
-        ax[irow, icol].set_title(mlab, fontsize=fs)
-
-
-    for tax in ax.flatten():
-        tax.tick_params(axis='both', labelsize=fs)
-        tax.set_xlabel(r'$y$ [$\mu$m]', fontsize=fs)
-        tax.set_ylabel(r'$z$ [$\mu$m]', fontsize=fs)
-
-    fname = prefix+'_profile_2d.png'
-    nbpt.save_and_close_figure(fig, fname)
-    return fname
+#     for iax, (m_T,mlab) in enumerate(
+#         ([m_T6, r'$\Re\{T_6\}$ [GPa]'],
+#          [m_T2, r'$\Re\{T_2\}$ [GPa]'],
+#          [m_T4, r'$\Re\{T_4\}$ [GPa]'],
+#          [m_ux, r'$\Re\{u_x\}$ [$\mu$m]'],
+#          [m_uy, r'$\Re\{u_y\}$ [$\mu$m]'],
+#          [m_uz, r'$\Re\{u_z\}$ [$\mu$m]'])):
+#         irow = iax % 3
+#         icol = iax // 3
+#         im = ax[irow, icol].imshow(m_T.T, **kwimgs)
+#         cbar = fig.colorbar(im, ax=ax[irow, icol])
+#         cbar.ax.tick_params(labelsize=fs)
+#         ax[irow, icol].set_title(mlab, fontsize=fs)
 
 
-def plot_profile_1d(v_y, m_psi_y, Omega, Vs, imd, v_bulks, prefix):
-    fig,ax=plt.subplots(2,2, figsize=(6,4))
-    fig.set_tight_layout(True)
+#     for tax in ax.flatten():
+#         tax.tick_params(axis='both', labelsize=fs)
+#         tax.set_xlabel(r'$y$ [$\mu$m]', fontsize=fs)
+#         tax.set_ylabel(r'$z$ [$\mu$m]', fontsize=fs)
 
-    nutil=Omega/(2*np.pi*SI_GHz)
-    Vstil=Vs/SI_kmps
-    title = fr'Mode {imd} for $\Omega/2\pi$={nutil:.3f} GHz, V={Vstil:.3f} km/s'
-    title += f'\nBulk Velocities: {v_bulks[0]:.3f}, {v_bulks[1]:.3f}, {v_bulks[2]:.3f} km/s'
-    fig.suptitle(title, fontsize=8)
-
-    ms = 1
-    v_T6 = np.abs(m_psi_y[0,:])
-    v_T2 = np.abs(m_psi_y[1,:])
-    v_T4 = np.abs(m_psi_y[2,:])
-    v_ux = np.abs(m_psi_y[3,:])
-    v_uy = np.abs(m_psi_y[4,:])
-    v_uz = np.abs(m_psi_y[5,:])
-
-    lw=.5
-    lsr='-'
-    lsi='--'
-    marker='o'
-    c1='red'
-    c2='green'
-    c3='blue'
-    fs=6
-    kwlns = dict(lw=lw, marker=marker, markersize=ms)
-
-    ax[0,0].plot(v_y, np.real(v_T6), linestyle=lsr, **kwlns, color=c1, label=r'$T_6$')
-    ax[0,0].plot(v_y, np.real(v_T2), linestyle=lsr, **kwlns, color=c2, label=r'$T_2$')
-    ax[0,0].plot(v_y, np.real(v_T4), linestyle=lsr, **kwlns, color=c3, label=r'$T_4$')
-    ax[0,0].plot(v_y, np.imag(v_T6), linestyle=lsi, **kwlns, color=c1)
-    ax[0,0].plot(v_y, np.imag(v_T2), linestyle=lsi, **kwlns, color=c2)
-    ax[0,0].plot(v_y, np.imag(v_T4), linestyle=lsi, **kwlns, color=c3)
-
-    ax[1,0].plot(v_y, np.abs(v_T6), linestyle=lsr, **kwlns, color=c1, label=r'$T_6$')
-    ax[1,0].plot(v_y, np.abs(v_T2), linestyle=lsr, **kwlns, color=c2, label=r'$T_2$')
-    ax[1,0].plot(v_y, np.abs(v_T4), linestyle=lsr, **kwlns, color=c3, label=r'$T_4$')
+#     fname = prefix+'_profile_2d.png'
+#     nbpt.save_and_close_figure(fig, fname)
+#     return fname
 
 
-    ax[0,1].plot(v_y, np.real(v_ux), linestyle=lsr, **kwlns, color=c1, label=r'$u_x$')
-    ax[0,1].plot(v_y, np.real(v_uy), linestyle=lsr, **kwlns, color=c2, label=r'$u_y$')
-    ax[0,1].plot(v_y, np.real(v_uz), linestyle=lsr, **kwlns, color=c3, label=r'$u_z$')
-    ax[0,1].plot(v_y, np.imag(v_ux), linestyle=lsi, **kwlns, color=c1)
-    ax[0,1].plot(v_y, np.imag(v_uy), linestyle=lsi, **kwlns, color=c2)
-    ax[0,1].plot(v_y, np.imag(v_uz), linestyle=lsi, **kwlns, color=c3)
+# def plot_profile_1d(v_y, m_psi_y, Omega, Vs, imd, prefix, Vbulks=None):
+#     fig,ax=plt.subplots(2,2, figsize=(6,4))
+#     fig.set_tight_layout(True)
+
+#     nutil=Omega/(2*np.pi*SI_GHz)
+#     Vstil=Vs/SI_kmps
+#     title = fr'Mode {imd} for $\Omega/2\pi$={nutil:.3f} GHz, V={Vstil:.3f} km/s'
+#     if Vbulks is not None:
+#         title += f'\nBulk Velocities: {Vbulks[0]:.3f}, {Vbulks[1]:.3f}, {Vbulks[2]:.3f} km/s'
+#     fig.suptitle(title, fontsize=8)
+
+#     ms = 1
+#     v_T6 = m_psi_y[0,:]
+#     v_T2 = m_psi_y[1,:]
+#     v_T4 = m_psi_y[2,:]
+#     v_ux = m_psi_y[3,:]
+#     v_uy = m_psi_y[4,:]
+#     v_uz = m_psi_y[5,:]
+
+#     lw=.5
+#     lsr='-'
+#     lsi='--'
+#     marker='o'
+#     c1='red'
+#     c2='green'
+#     c3='blue'
+#     fs=6
+#     kwlns = dict(lw=lw, marker=marker, markersize=ms)
+
+#     ax[0,0].plot(v_y, np.real(v_T6), linestyle=lsr, **kwlns, color=c1, label=r'$T_6$')
+#     ax[0,0].plot(v_y, np.real(v_T2), linestyle=lsr, **kwlns, color=c2, label=r'$T_2$')
+#     ax[0,0].plot(v_y, np.real(v_T4), linestyle=lsr, **kwlns, color=c3, label=r'$T_4$')
+#     ax[0,0].plot(v_y, np.imag(v_T6), linestyle=lsi, **kwlns, color=c1)
+#     ax[0,0].plot(v_y, np.imag(v_T2), linestyle=lsi, **kwlns, color=c2)
+#     ax[0,0].plot(v_y, np.imag(v_T4), linestyle=lsi, **kwlns, color=c3)
+
+#     ax[1,0].plot(v_y, np.abs(v_T6), linestyle=lsr, **kwlns, color=c1, label=r'$T_6$')
+#     ax[1,0].plot(v_y, np.abs(v_T2), linestyle=lsr, **kwlns, color=c2, label=r'$T_2$')
+#     ax[1,0].plot(v_y, np.abs(v_T4), linestyle=lsr, **kwlns, color=c3, label=r'$T_4$')
 
 
-    ax[1,1].plot(v_y, np.abs(v_ux), linestyle=lsr, **kwlns, color=c1, label=r'$u_x$')
-    ax[1,1].plot(v_y, np.abs(v_uy), linestyle=lsr, **kwlns, color=c2, label=r'$u_y$')
-    ax[1,1].plot(v_y, np.abs(v_uz), linestyle=lsr, **kwlns, color=c3, label=r'$u_z$')
+#     ax[0,1].plot(v_y, np.real(v_ux), linestyle=lsr, **kwlns, color=c1, label=r'$u_x$')
+#     ax[0,1].plot(v_y, np.real(v_uy), linestyle=lsr, **kwlns, color=c2, label=r'$u_y$')
+#     ax[0,1].plot(v_y, np.real(v_uz), linestyle=lsr, **kwlns, color=c3, label=r'$u_z$')
+#     ax[0,1].plot(v_y, np.imag(v_ux), linestyle=lsi, **kwlns, color=c1)
+#     ax[0,1].plot(v_y, np.imag(v_uy), linestyle=lsi, **kwlns, color=c2)
+#     ax[0,1].plot(v_y, np.imag(v_uz), linestyle=lsi, **kwlns, color=c3)
 
 
-    for tax in ax.flatten():
-        tax.set_xlabel(r'Position [$\mu$m]', fontsize=fs)
-        tax.legend(fontsize=fs)
-        tax.tick_params(axis='both', labelsize=fs)
+#     ax[1,1].plot(v_y, np.abs(v_ux), linestyle=lsr, **kwlns, color=c1, label=r'$u_x$')
+#     ax[1,1].plot(v_y, np.abs(v_uy), linestyle=lsr, **kwlns, color=c2, label=r'$u_y$')
+#     ax[1,1].plot(v_y, np.abs(v_uz), linestyle=lsr, **kwlns, color=c3, label=r'$u_z$')
 
-    ax[0,0].set_ylabel(r'Normal stress $\vec T_{r,i}$ [GPa]', fontsize=fs)
-    ax[1,0].set_ylabel(r'Normal stress $|\vec T|$ [GPa]', fontsize=fs)
 
-    ax[0,1].set_ylabel(r'Displacement $\vec u_{r,i}$ [$\mu$m]', fontsize=fs)
-    ax[1,1].set_ylabel(r'Displacement $|\vec u|$ [$\mu$m]', fontsize=fs)
+#     for tax in ax.flatten():
+#         tax.set_xlabel(r'Position [$\mu$m]', fontsize=fs)
+#         tax.legend(fontsize=fs)
+#         tax.tick_params(axis='both', labelsize=fs)
 
-    fname = prefix+'_profile_1d.png'
-    nbpt.save_and_close_figure(fig, fname)
-    return fname
+#     ax[0,0].set_ylabel(r'Normal stress $\vec T_{r,i}$ [GPa]', fontsize=fs)
+#     ax[1,0].set_ylabel(r'Normal stress $|\vec T|$ [GPa]', fontsize=fs)
+
+#     ax[0,1].set_ylabel(r'Displacement $\vec u_{r,i}$ [$\mu$m]', fontsize=fs)
+#     ax[1,1].set_ylabel(r'Displacement $|\vec u|$ [$\mu$m]', fontsize=fs)
+
+#     fname = prefix+'_profile_1d.png'
+#     nbpt.save_and_close_figure(fig, fname)
+#     return fname
 
 

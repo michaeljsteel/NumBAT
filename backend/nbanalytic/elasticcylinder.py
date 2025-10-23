@@ -373,7 +373,8 @@ class ElasticIsotropicCylinder(object):
         self._Vl = np.sqrt(c11 / rho)
         self._Vs = np.sqrt(c44 / rho)
 
-    def find_Omega_at_q(self, q, Om_hi, m, nmax_modes):
+    def find_Omega_at_q(self, q: float, Om_hi: float,
+                        m: int, nmax_modes: int) -> tuple:
         """Find discrete angular frequencies for a given axial wavenumber.
 
         Parameters
@@ -407,7 +408,7 @@ class ElasticIsotropicCylinder(object):
         )
         return (nmodes, v_Om)
 
-    def dispersion_relation_at_q_nu(self, q, nu, m):
+    def dispersion_relation_at_q_nu(self, q: float, nu: float, m: int) -> float:
         """Evaluate the characteristic equation at given axial wavenumber and frequency.
 
         Parameters
@@ -427,4 +428,4 @@ class ElasticIsotropicCylinder(object):
 
         return chareq_elastic_cylinder(
             np.pi * 2 * nu, m, q, self._rho, self._c11, self._c12, self._c44, self._arad
-        )  # m is azimuthal order
+        )

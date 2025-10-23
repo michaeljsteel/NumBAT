@@ -60,6 +60,29 @@ unit_x = array([1.0, 0.0, 0.0])
 unit_y = array([0.0, 1.0, 0.0])
 unit_z = array([0.0, 0.0, 1.0])
 
+class NormalisationConstants:
+    def __init__(self):
+        # adjustable
+        self.t0 = SI_ns
+        self.x0 = SI_um
+        self.rho0 = 1000  # 1000 kg/m^3
+        self.eps0 = SI_permittivity_eps0  # 8.854187817e-12  F/m
+
+        # derived
+        self.f0 = 1 / self.t0  # GHz
+        self.v0 = self.x0 / self.t0  # km/s
+
+        self.T0 = self.rho0 * self.v0**2  # GPa
+        self.c0 = self.T0  # GPa
+
+        self.E0 = math.sqrt(self.c0 / self.eps0)  # V/um
+        self.V0 = self.E0 * self.x0    # V
+        self.D0 = self.eps0 * self.E0  # C/m^2
+        self.e0 = math.sqrt(self.c0 * self.eps0)  # C/m^2
+
+        # self.p0 = nbtypes.SI_GPa
+
+
 
 class SimType(Enum):
     EM = 'EM'
