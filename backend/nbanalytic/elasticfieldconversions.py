@@ -44,12 +44,38 @@ def T6_to_T33(vecT6: NDArray[np.complex128]) -> NDArray[np.complex128]:
     return T33
 
 # This is slow, inline
-def uvec3_to_poynting_S3(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128], cstiff: NDArray[np.float64]) -> NDArray[np.float64]:
+def uvec3_to_poynting_S3_slow(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128], cstiff: NDArray[np.float64]) -> NDArray[np.float64]:
     T33 = uvec3_to_stress_T33(vecu, vecq, cstiff)
     vecv = -1j * Om * vecu
     # Poynting vector is 0.5 Re(-T . v*)
     Sav = np.real(-T33 @ vecv.conj()) * 0.5
     return Sav
+
+# This is an expensive function for some reason. 17% of total runtime.abs
+# This is inlined version of function immediately above.
+def uvec3_to_poynting_S3(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128], cstiff: NDArray[np.float64]) -> NDArray[np.float64]:
+
+    qx, qy, qz = vecq
+    ux, uy, uz = vecu
+
+    symgrad_u = 1j * np.array([ux * qx, uy * qy, uz * qz,
+                          uy * qz + uz * qy,
+                          uz * qx + ux * qz,
+                          ux * qy + uy * qx], dtype=np.complex128)
+    vT6 = cstiff @ symgrad_u
+
+    T33 = np.array(
+        [[vT6[0], vT6[5], vT6[4]], [vT6[5], vT6[1], vT6[3]], [vT6[4], vT6[3], vT6[2]]],
+        dtype=np.complex128,
+    )
+
+    # Poynting vector is 0.5 Re(-T . v*) = 0.5 Re(-T . ( -1j Om u)* ) = 0.5j Re( Om T . u* )
+    vecv = 0.5j * Om * vecu
+    Sav = np.real(T33 @ vecv.conj())
+    return Sav
+
+
+
 
 # This is slow, inline
 def uvec3_phi_to_poynting_S3_piezo(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128],
