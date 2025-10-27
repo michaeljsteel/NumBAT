@@ -542,11 +542,11 @@ class ElasticIsotropicFreeSlab:
 
         mode_prof = ModeFunction1D(Omega, Vr, v_x, m_uxyz)
 
-        return v_x, m_uxyz, mode_prof
+        return mode_prof
 
 
     def plot_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> None:
-        v_y, m_uxyz, mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
+        mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
         fname = mode_prof.plot_mode_profile_1d(ax=ax, legend=legend)
         return fname
 
@@ -554,29 +554,25 @@ class ElasticIsotropicFreeSlab:
     def plot_Rayleigh_profile_2d(self, Omega: float, depth: float, zperiods: int = 1, npts: int = 20, ax: Optional[MplAxes] = None,
                                  displacement_scale: float = 0.05, use_arrows: bool = False) -> None:
 
-        v_x, m_uxyz, mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
+        mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
         fname = mode_prof.plot_mode_profile_2d(ax=ax, npts=npts, zperiods=zperiods,
-                                      displacement_scale=displacement_scale, use_arrows=use_arrows,
-                                      labx=r'$y$ [µm]', laby=r'$z$ [µm]'
-                                      )
+                                      displacement_scale=displacement_scale  )
         return fname
 
 
     def plot_slab_mode_profile_1d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> float:
 
-        v_x, m_uxyz, frac_trans, mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
+        mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
         fname = mode_prof.plot_mode_profile_1d(ax=ax, npts=npts, legend=legend)
         return fname
 
 
     def plot_slab_mode_profile_2d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 30, zperiods: int = 1,
-                                  ax: Optional[MplAxes] = None, displacement_scale: float = 0.1, use_arrows: bool = False) -> None:
+                                  ax: Optional[MplAxes] = None, displacement_scale: float = 0.1) -> None:
 
-        v_x, m_uxyz, frac_trans, mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
+        mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
         fname = mode_prof.plot_mode_profile_2d(ax=ax, npts=npts, zperiods=zperiods,
-                                      displacement_scale=displacement_scale, use_arrows=use_arrows,
-                                      labx=r'$y$ [µm]', laby=r'$z$ [µm]'
-                                      )
+                                      displacement_scale=displacement_scale )
         return fname
 
 
@@ -640,12 +636,12 @@ class ElasticIsotropicFreeSlab:
         if max_u > 0:
             m_uxyz /= np.max(np.abs(m_uxyz))
 
-        en_y = np.sum(np.abs(vely)**2)
-        en_z = np.sum(np.abs(velz)**2)
-        frac_trans = en_y/(en_y+en_z)
+        # en_y = np.sum(np.abs(vely)**2)
+        # en_z = np.sum(np.abs(velz)**2)
+        # frac_trans = en_y/(en_y+en_z)
 
         Vp = Omega/q
         mode_prof = ModeFunction1D(Omega, Vp, v_x, m_uxyz)
 
-        return v_x, m_uxyz, frac_trans, mode_prof
+        return mode_prof
 

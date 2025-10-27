@@ -122,16 +122,26 @@ class PlotPrefs:
             'ax_ticklabel_fs': 8,
             'ax_tickwidth': 0.25,
             'ax_linewidth': 1,
-            'title_fs': 16,
+            'title_fs': 14,
             'subtitle_fs': 11,
+            'cb_linewidth': 1,
+            'cb_label_fs': 8,
+            'cb_ticklabel_fs': 6,
+            'cb_tickwidth': 0.25,
+            'cb_edgecolor': 'gray'
         }
         self.d_single = {
             'ax_label_fs': 14,
             'ax_ticklabel_fs': 14,
             'ax_tickwidth': 1,
             'ax_linewidth': 1,
-            'title_fs': 22,
-            'subtitle_fs': 21,
+            'title_fs': 16,
+            'subtitle_fs': 14,
+            'cb_linewidth': 1,
+            'cb_label_fs': 8,
+            'cb_ticklabel_fs': 6,
+            'cb_tickwidth': 0.25,
+            'cb_edgecolor': 'gray'
         }
 
         self.d_multi.update(self._user_settings['multi_plots'])
@@ -195,12 +205,11 @@ class TidyAxes:
 
         props['axes_color'] = 'gray'
 
-        props['cb_linewidth'] = 1
-        props['cb_label_fs'] = 10
-        props['cb_ticklabel_fs'] = 8
-        props['cb_tickwidth'] = 0.25
-
-        props['cb_edgecolor'] = 'gray'
+        #props['cb_linewidth'] = 1
+        #props['cb_label_fs'] = 10
+        #props['cb_ticklabel_fs'] = 8
+        #props['cb_tickwidth'] = 0.25
+        #props['cb_edgecolor'] = 'gray'
 
         props['cb_shrink'] = 0  # possible?
         props['cb_pad'] = 0.    # possible?

@@ -3,12 +3,10 @@ import sys
 sys.path.append('backend')
 
 import numpy as np
-#import voigt
 
 
 from voigt import PlainTensor2_ij, VoigtTensor3_iJ, VoigtTensor4_IJ
 from voigt import make_rotation_matrix, make_rotation_Bond_matrix_M, make_rotation_Bond_matrix_N
-#from voigt import _rotate_2tensor_b, _rotate_2tensor
 
 twopi = 2 * np.pi
 

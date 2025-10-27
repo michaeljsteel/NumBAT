@@ -34,6 +34,16 @@ def uvec3_to_stress_T33(vecu: NDArray[np.complex128], vecq: NDArray[np.complex12
     )
 
 
+def T6_to_T33(vecT6: NDArray[np.complex128]) -> NDArray[np.complex128]:
+    T33 = np.array(
+        [[vecT6[0], vecT6[5], vecT6[4]],
+         [vecT6[5], vecT6[1], vecT6[3]],
+         [vecT6[4], vecT6[3], vecT6[2]]],
+        dtype=np.complex128,
+    )
+    return T33
+
+# This is slow, inline
 def uvec3_to_poynting_S3(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128], cstiff: NDArray[np.float64]) -> NDArray[np.float64]:
     T33 = uvec3_to_stress_T33(vecu, vecq, cstiff)
     vecv = -1j * Om * vecu
@@ -41,4 +51,19 @@ def uvec3_to_poynting_S3(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[
     Sav = np.real(-T33 @ vecv.conj()) * 0.5
     return Sav
 
+# This is slow, inline
+def uvec3_phi_to_poynting_S3_piezo(Om: float, vecu: NDArray[np.complex128], vecq: NDArray[np.complex128],
+                                    phi: np.complex128, cstiff: NDArray[np.float64],
+                                    eiJ: NDArray[np.float64], permij: NDArray[np.float64]) -> NDArray[np.float64]:
+    S_J = uvec3_to_strain_S6(vecu, vecq)
+    vecE = -1j * vecq * phi
 
+    T6 = strain_S6_to_stress_T6(cstiff, S_J) -  vecE @ eiJ
+    T33 = T6_to_T33(T6)
+
+    D3 = eiJ @ S_J + permij @ vecE
+
+    vecv = -1j * Om * vecu
+
+    Sav = .5 * np.real(-T33 @ vecv.conj() + 1j * Om * phi* D3.conj())
+    return Sav
