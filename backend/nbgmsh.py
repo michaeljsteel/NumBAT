@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-from plotmodes import TidyAxes
+from plotting.tidyaxes import TidyAxes
 from plotting.plottools import save_and_close_figure
 
 class MailData:

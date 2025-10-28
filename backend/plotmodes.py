@@ -25,7 +25,7 @@ import matplotlib.colors as mplcolors
 import numbat
 from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plotting.plottools import save_and_close_figure
-from plotting.plotprefs import TidyAxes
+from plotting.tidyaxes import TidyAxes
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):

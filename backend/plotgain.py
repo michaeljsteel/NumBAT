@@ -18,8 +18,6 @@
 
 import math
 
-from pathlib import Path
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,7 +27,8 @@ from nbtypes import SI_GHz
 import reporting
 
 from plotting.plottools import save_and_close_figure
-from plotmodes import Decorator, TidyAxes
+from plotmodes import Decorator
+from plotting.tidyaxes import TidyAxes
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz, q_AC,

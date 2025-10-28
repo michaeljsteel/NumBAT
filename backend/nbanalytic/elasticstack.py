@@ -320,6 +320,8 @@ class ElasticBoundaryCondition:
         mat_T, mat_expTL = self.layer.find_layer_transfer_matrix(Om, Vp)
 
         eigvals, eigvecs = spla.eig(mat_T)
+        dim = len(eigvals)
+        hdim = dim//2
 
         ev_good = []
         ev_bad = []
@@ -327,11 +329,11 @@ class ElasticBoundaryCondition:
         ndecay = 0
         nfwd = 0
 
-        v_is_growing = np.zeros(len(eigvals), dtype=bool)
-        v_is_decaying = np.zeros(len(eigvals), dtype=bool)
-        v_is_fwds = np.zeros(len(eigvals), dtype=bool)
-        v_is_pureimag = np.zeros(len(eigvals), dtype=bool)
-        v_poynting_Sav = np.zeros((len(eigvals), 3), dtype=np.float64)
+        v_is_growing = np.zeros(dim, dtype=bool)
+        v_is_decaying = np.zeros(dim, dtype=bool)
+        v_is_fwds = np.zeros(dim, dtype=bool)
+        v_is_pureimag = np.zeros(dim, dtype=bool)
+        v_poynting_Sav = np.zeros((dim, 3), dtype=np.float64)
 
 
 
@@ -371,16 +373,18 @@ class ElasticBoundaryCondition:
             sign_Sy = 1
             ev_good.extend(np.nonzero(v_is_decaying)[0])
 
+        missing_ev = hdim - len(ev_good)
+
         # fill up the rest of the good slots with outward (leftward) going propagating waves
-        dim = len(eigvals)
-        hdim = dim//2
-        for i in range(dim):
+        for i in np.nonzero(v_is_pureimag)[0]:
             if (
-                v_is_pureimag[i] and v_poynting_Sav[i, 1] * sign_Sy > 0
+                #v_is_pureimag[i] and
+                v_poynting_Sav[i, 1] * sign_Sy > 0
             ):  #  Sy is outwards
                 ev_good.append(i)
-            if len(ev_good) == hdim:
-                break
+                missing_ev -= 1
+                if missing_ev == 0:
+                    break
 
         if len(ev_good) != hdim:
             print(
@@ -469,12 +473,15 @@ class ElasticStack:
         self.check_bcs()
         self.analyse_layers()
 
-        # row swap matrix
+        # row swap matrix for shorted bc
         self.Sswap = np.eye(8, dtype=np.float64)
         row8 = self.Sswap[7, :].copy()
         self.Sswap[7, :] = self.Sswap[3, :]
         self.Sswap[3, :] = row8
 
+        # charge-free BC matrices
+        self.tau_phi_plus = np.eye(8, dtype=np.float64)
+        self.tau_phi_minus = np.eye(8, dtype=np.float64)
 
 
     def check_bcs(self) -> None:
@@ -536,7 +543,7 @@ class ElasticStack:
         self.the_quadrant_slice = the_slice
 
 
-    def build_profile_domain_y(
+    def _build_profile_domain_y(
         self, ny_per_layer: int = 50, L_left: float = 0, L_right: float = 0
     ) -> Tuple[NDArray[np.float64], NDArray[np.int32]]:
         """Make vectors v_y and v_ilayer for the y-domain of the mode profile."""
@@ -595,21 +602,11 @@ class ElasticStack:
 
         return v_y, v_ilayer
 
-    def find_mode_profile_1d(
-        self,
-        Omega: float,
-        Vs: float,
-        ny_per_layer: int = 50,
-        L_left: float = -1,
-        L_right: float = -1,
-    ) -> Tuple["ModeFunction1D", "ModeFunction1D"]:
-        pass
-
-    def make_tau_phi_matrices(self, Om: float, Vp: float) -> None:
+    def update_tau_phi_matrices(self, Om: float, Vp: float) -> None:
         # build charge-free BC matrices
         q = Om / Vp
-        self.tau_phi_plus = np.eye(8, dtype=np.float64)
-        self.tau_phi_minus = np.eye(8, dtype=np.float64)
+        #self.tau_phi_plus = np.eye(8, dtype=np.float64)
+        #self.tau_phi_minus = np.eye(8, dtype=np.float64)
         self.tau_phi_plus[3,7] = q
         self.tau_phi_minus[3,7] = -q
 
@@ -621,7 +618,7 @@ class ElasticStack:
     ) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
         # build layer parts
         mat_G = np.eye(self.dim, dtype=np.complex128)
-        self.make_tau_phi_matrices(Om, Vp)
+        self.update_tau_phi_matrices(Om, Vp)
 
         for layer in self._layers:
             mat_T, mat_expTL = layer.find_layer_transfer_matrix(Om, Vp)
@@ -656,26 +653,24 @@ class ElasticStack:
         return mat_G, mat_G_ij
 
 
-    def _find_determinant_minima(self, n_Vp: int, Vmin_SI: float, Vmax_SI: float, Om: float,
-                                 show_scan_plot: bool, show_progress: bool, prefix: str, label: str, pllabel: str,
+    def _find_determinant_minima(self,  Om: float, v_Vp: NDArray[np.float64],
+                                 show_scan_plot: bool, show_progress: bool, prefix: str,
+                                 label_scanstep: str, pllabel_scanstep: str,
                                  vBulks=None) -> Tuple[NDArray[np.float64], NDArray[np.complex128], List[Tuple[float, float]], float]:
 
-        v_Vp = np.linspace(Vmin_SI, Vmax_SI, n_Vp) / g_norms.v0
-        # choose to space the velocities according to equal qz
-        # v_Vp = 1.0/np.linspace(1/Vmin, 1/Vmax, n_Vp) / g_norms.v0
 
-        v_det = np.zeros(n_Vp, dtype=np.complex128)
+        v_det = np.zeros(len(v_Vp), dtype=np.complex128)
 
         for ivP, vP in enumerate(v_Vp):
             mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
             v_det[ivP] = npla.det(mat_G_ij)
 
         if show_scan_plot:
-            plot_det_scan(Om, v_Vp, v_det, prefix=prefix, pllabel=pllabel, Vbulks=vBulks)
+            plot_det_scan(Om, v_Vp, v_det, prefix=prefix, pllabel=pllabel_scanstep, Vbulks=vBulks)
 
         l_braks = bracket_minima(v_Vp, np.abs(v_det))
         if show_progress:
-            print(f"\nAt {label}, found {len(l_braks)} brackets:")
+            print(f"\nAt {label_scanstep}, found {len(l_braks)} brackets:")
 
             for br in l_braks:
                 (xm1, fm1), (x0, f0), (xp1, fp1) = np.array(
@@ -686,7 +681,7 @@ class ElasticStack:
                 )
 
         if len(l_braks) == 0:
-            plot_det_scan(Om, v_Vp, v_det, prefix=prefix, pllabel=pllabel, Vbulks=vBulks)
+            plot_det_scan(Om, v_Vp, v_det, prefix=prefix, pllabel=pllabel_scanstep, Vbulks=vBulks)
             raise BracketError(
                 "No minima found in determinant scan - no modes found. Determinant scan plot dumped."
             )
@@ -701,7 +696,8 @@ class ElasticStack:
             for v, f in l_mins:
                 print(f"    Vp={v:.9f} km/s, Det(f)={f:.4e}")
         max_det = np.max(np.abs(v_det))
-        return v_Vp, v_det, l_mins, max_det
+
+        return v_det, l_mins, max_det
 
     def _filter_determinant_minima(self, l_mins: List[Tuple[float, float]],
                                  fmin_thresh: float, max_det: float, show_progress: bool) -> List[Tuple[float, float]]:
@@ -744,6 +740,15 @@ class ElasticStack:
         return v_mode_cols
 
 
+    def _get_characteristic_bulk_velocities(self) -> Optional[List[float]]:
+        vBulks = None
+        if not len(self._layers):
+            if self._bcs[0].is_semi_infinite():
+                vBulks = self._bcs[0].layer.material.Vac_phase()
+            elif self._bcs[1].is_semi_infinite():
+                vBulks = self._bcs[1].layer.material.Vac_phase()
+        return vBulks
+
     def dispersion_relation_find_Vs_at_Omega(
         self,
         Omega_SI: float,
@@ -764,6 +769,8 @@ class ElasticStack:
 
         # move to normalised units here
         Om = Omega_SI / g_norms.f0
+        Vmin = Vmin_SI / g_norms.v0
+        Vmax = Vmax_SI / g_norms.v0
 
         if label:
             pllabel = label
@@ -772,15 +779,16 @@ class ElasticStack:
             pllabel = rf"$\Omega/(2\pi)={Om/(2*np.pi):.4f}$ GHz"
 
         # if doing a rayleigh problem, add in the bulk velocities on the det scan for reference
-        vBulks = None
-        if not len(self._layers):
-            if self._bcs[0].is_semi_infinite():
-                vBulks = self._bcs[0].layer.material.Vac_phase()
-            elif self._bcs[1].is_semi_infinite():
-                vBulks = self._bcs[1].layer.material.Vac_phase()
+        vBulks = self._get_characteristic_bulk_velocities()
 
-        v_Vp, v_det, l_mins, max_det = self._find_determinant_minima(nVpts, Vmin_SI, Vmax_SI, Om,
-                                                     show_scan_plot, show_progress, prefix, label, pllabel, vBulks=vBulks)
+        v_Vp = np.linspace(Vmin, Vmax, nVpts)
+        # choose to space the velocities according to equal qz
+        # v_Vp = 1.0/np.linspace(1/Vmin, 1/Vmax, n_Vp)
+
+
+        v_det, l_mins, max_det = self._find_determinant_minima(Om, v_Vp,
+                                                     show_scan_plot, show_progress, prefix,
+                                                     label, pllabel, vBulks=vBulks)
 
         l_mins_V_keep = self._filter_determinant_minima(l_mins, fmin_thresh, max_det, show_progress)
 
@@ -801,9 +809,11 @@ class ElasticStack:
         self, Omega_SI: float, vP_SI: float
     ) -> NDArray[np.float64]:
         v_psi0 = self.find_mode_psi0(Omega_SI / g_norms.f0, vP_SI / g_norms.v0)[0]
-        poln_vec = v_psi0[self.slice_uvec]
-        poln_vec /= np.linalg.norm(poln_vec)
-        return poln_vec
+
+        uvec = v_psi0[self.slice_uvec]
+        uvec /= np.linalg.norm(uvec)
+
+        return uvec
 
     def find_mode_polarization_over_profile_1d(
         self,
@@ -904,7 +914,7 @@ class ElasticStack:
         L_left = L_left if L_left > 0 else self._bcs[0].suggested_L_left(Om, vP)
         L_right = L_right if L_right > 0 else self._bcs[1].suggested_L_right(Om, vP)
 
-        v_y, v_ilayer = self.build_profile_domain_y(ny_per_layer, L_left, L_right)
+        v_y, v_ilayer = self._build_profile_domain_y(ny_per_layer, L_left, L_right)
 
         # fill profile
         n_y = len(v_y)
