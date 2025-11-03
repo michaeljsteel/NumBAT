@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 import nbtypes
 from numtools.optimize import bracket_minima, find_bracketed_minima, BracketError
+import numbattools as nbt
 from nbtypes import SI_GHz, SI_kmps
 import plotting.plottools as nbpt
 from nbanalytic.elasticfieldconversions import uvec3_to_poynting_S3, uvec3_phi_to_poynting_S3_piezo
@@ -648,7 +649,17 @@ class ElasticStack:
                     mat_G = self.Sswap @ mat_G
 
         mat_G_ij = mat_G[self.the_quadrant_slice]
+
+
         mat_G_ij /= np.max(np.abs(mat_G_ij))  # scale to avoid overflow in det
+
+
+        # scale to avoid overflow in det and minimise meaningless phase changes
+        # maxG_flatindex = np.argmax(np.abs(mat_G_ij))
+        # maxG_loc = np.unravel_index(maxG_flatindex, mat_G_ij.shape)
+        # maxG = mat_G_ij[maxG_loc]
+        # mat_G_ij /= maxG
+
 
         return mat_G, mat_G_ij
 
@@ -663,14 +674,27 @@ class ElasticStack:
 
         for ivP, vP in enumerate(v_Vp):
             mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
-            v_det[ivP] = npla.det(mat_G_ij)
+            t_det = npla.det(mat_G_ij) # 1j # can be useful to pull out factor i for plots sometimes
+
+            # # tune the phase
+            # if np.abs(np.imag(t_det)) > 1e-6 * np.abs(t_det):
+            #     ang = np.angle(t_det)
+            #     t_det *= np.exp(-1j * ang)
+
+            v_det[ivP] = t_det
 
         if show_scan_plot:
             plot_det_scan(Om, v_Vp, v_det, prefix=prefix, pllabel=pllabel_scanstep, Vbulks=vBulks)
 
         l_braks = bracket_minima(v_Vp, np.abs(v_det))
-        if show_progress:
-            print(f"\nAt {label_scanstep}, found {len(l_braks)} brackets:")
+
+        print(f"\nAt {label_scanstep}:")
+        if vBulks is not None:
+            print(f"  Vbulks: {vBulks[2]:.6f},  {vBulks[1]:.6f},  {vBulks[0]:.6f}")
+
+        show_brack = False and show_progress
+        if show_brack:
+            print(f"\n  Found {len(l_braks)} brackets:")
 
             for br in l_braks:
                 (xm1, fm1), (x0, f0), (xp1, fp1) = np.array(
@@ -694,15 +718,20 @@ class ElasticStack:
         if show_progress:
             print(f"  Found {len(l_mins)} minima:")
             for v, f in l_mins:
-                print(f"    Vp={v:.9f} km/s, Det(f)={f:.4e}")
+                bulkdist = ""
+                if vBulks is not None:
+                    dbulk = np.min(np.abs(vBulks-v))
+                    bulkdist= f", dist to bulk mode = {dbulk:.3e}"
+                print(f"    Vp={v:.9f} km/s, Det(f)={f:.4e}{bulkdist}")
+
         max_det = np.max(np.abs(v_det))
 
         return v_det, l_mins, max_det
 
     def _filter_determinant_minima(self, l_mins: List[Tuple[float, float]],
-                                 fmin_thresh: float, max_det: float, show_progress: bool) -> List[Tuple[float, float]]:
+                                 detmin_thresh: float, max_det: float, show_progress: bool) -> List[Tuple[float, float]]:
         # remove any minima with f above threshold or with multiple singular values as probably not real modes
-        fmin_norm_thresh = fmin_thresh * max_det # np.max(np.abs(v_det))
+        fmin_norm_thresh = detmin_thresh * max_det # np.max(np.abs(v_det))
         l_mins_V_keep = []
         l_mins_bad_threshold = []
         l_mins_bad_singval = []
@@ -722,7 +751,7 @@ class ElasticStack:
                 print(f"    Vp={v:.3f} m/s has multiple small singular values.")
             for v, f in l_mins_bad_threshold:
                 print(
-                    f"    Vp={v:.3f} has relative det minimum f={f:.3e} above fmin_thresh={fmin_norm_thresh:.3e}:"
+                    f"    Vp={v:.3f} has relative det minimum f={f:.3e} above detmin_thresh={fmin_norm_thresh:.3e}:"
                 )
 
         return l_mins_V_keep
@@ -760,7 +789,7 @@ class ElasticStack:
         label: str = "",
         show_scan_plot: bool = False,
         show_progress: bool = False,
-        fmin_thresh: float = 1e-5,
+        detmin_thresh: float = 1e-5,
     ) -> Dict[str, Any]:
 
         check_magnitude(Omega_SI, "Omega", 1e8, 100e9 * 2 * np.pi)
@@ -775,7 +804,7 @@ class ElasticStack:
         if label:
             pllabel = label
         else:
-            label = f"Nu={Om/(2*np.pi):.10f}"
+            label = f"Nu={Om/(2*np.pi):.6f}"
             pllabel = rf"$\Omega/(2\pi)={Om/(2*np.pi):.4f}$ GHz"
 
         # if doing a rayleigh problem, add in the bulk velocities on the det scan for reference
@@ -790,15 +819,20 @@ class ElasticStack:
                                                      show_scan_plot, show_progress, prefix,
                                                      label, pllabel, vBulks=vBulks)
 
-        l_mins_V_keep = self._filter_determinant_minima(l_mins, fmin_thresh, max_det, show_progress)
+        l_mins_V_keep = self._filter_determinant_minima(l_mins, detmin_thresh, max_det, show_progress)
 
         l_mins_V_SI_keep = [(v * g_norms.v0, f) for v, f in l_mins_V_keep]
+
+        l_Vp_SI = [v * g_norms.v0 for v, f in l_mins_V_keep]
+        l_detmins = [f for v, f in l_mins_V_keep]
+
 
         v_mode_cols = self._color_modes_by_poln(Omega_SI, l_mins_V_SI_keep) if find_mode_color else None
 
 
         res = {
-            "Vphase": l_mins_V_SI_keep,
+            "Vphase": l_Vp_SI,
+            "detmins": l_detmins,
             "poln_cols": v_mode_cols,
             "det_scan": (v_Vp, v_det),
         }
@@ -808,7 +842,7 @@ class ElasticStack:
     def find_mode_polarization_at_y0(
         self, Omega_SI: float, vP_SI: float
     ) -> NDArray[np.float64]:
-        v_psi0 = self.find_mode_psi0(Omega_SI / g_norms.f0, vP_SI / g_norms.v0)[0]
+        (v_psi0, rel_sing_val) = self.find_mode_psi0(Omega_SI / g_norms.f0, vP_SI / g_norms.v0)[0]
 
         uvec = v_psi0[self.slice_uvec]
         uvec /= np.linalg.norm(uvec)
@@ -871,7 +905,7 @@ class ElasticStack:
 
         v_psi0s = []
         for isv in range(max(1, nsmall)):
-
+            t_rel_singval = s[-1-isv] / np.max(s)
             v_null = vh.conj().T[
                 :, -1-isv
             ]  # take the last column of Vh (smallest singular value)
@@ -879,7 +913,7 @@ class ElasticStack:
             v_psi0 = self._bcs[0].null_vector_to_field_psi0(v_null)
             vecu = v_psi0[self.slice_uvec]
             v_psi0 /= np.max(np.abs(vecu))  # normalise max displacement to 1
-            v_psi0s.append(v_psi0)
+            v_psi0s.append((v_psi0, t_rel_singval))
             if show_progress:
                 with np.printoptions(precision=4, suppress=True, linewidth=200):
                     print(
@@ -896,13 +930,15 @@ class ElasticStack:
             L_left: float = -1,
             L_right: float = -1,
             singval: int = 0,  # access multiple modes if they show up
+            singval_thresh: float = 1e-4,
         ) -> Tuple["ModeFunction1D", "ModeFunction1D"]:
         # find nullspace vector and initial field at y=0
         Om = Omega_SI / g_norms.f0
         vP = Vp_SI / g_norms.v0
 
         try:
-            v_psi0 = self.find_mode_psi0(Om, vP)[singval]
+            (v_psi0, rel_singval) = self.find_mode_psi0(Om, vP,
+                                                        thresh_singval=singval_thresh)[singval]
         except ValueError as e:
             raise ValueError(
                 f"Could not find mode at Omega={Om:.3e} ({Om:.3f} norm), Vs={vP:.3f} ({vP:.3f} norm): {e}"
@@ -980,8 +1016,8 @@ class ElasticStack:
         # to make physically realistic values  will treat displacements as being in nm, so stresses come down by 1000
         m_T6 /= 1000
 
-        mode_prof_u = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_uxyz)
-        mode_prof_T6 = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_T6)
+        mode_prof_u = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_uxyz, relative_sing_val=rel_singval)
+        mode_prof_T6 = ModeFunction1D(Omega_SI, Vp_SI, v_y_SI, m_T6, relative_sing_val=rel_singval)
 
         mode_prof_T6.set_labels(
             dvar=QuantLabel("Normal stress", r"$\vec T_i$", r"$|\vec T_i|$", "GPa")
@@ -1005,12 +1041,23 @@ def plot_det_scan(
         v_Vp, np.abs(v_det), "-+", label=r"$|\Delta|$", markersize=1.0, linewidth=0.5
     )
 
+
+    ax2=ax.twinx()
+    vdr, vdi = np.real(v_det), np.imag(v_det)
+    ax2.plot(v_Vp, nbt.signed_log10(vdr,power=4), '-o', linewidth=0.5, color='r',
+             label=r"Re($\Delta$)", markersize=1.0)
+    ax2.plot(v_Vp, nbt.signed_log10(vdi,power=4), '-o', linewidth=0.5, color='g', 
+             label=r"Im($\Delta$)", markersize=1.0)
+
+    # ax2.plot(v_Vp, np.angle(v_det), '-x', markersize=1.0, linewidth=0.5, color='C3', label=r"Arg($\Delta$)")
+
     ax.set_yscale("log")
     ax.set_xlabel(r"$V$ [km/s]", fontsize=10)
     ax.set_ylabel(r"$|T|$ ", fontsize=10)
     ax.set_title(pllabel, fontsize=10)
     ax.tick_params(axis="both", labelsize=10)
     ax.legend(fontsize=10)
+    ax.set_xlim(np.min(v_Vp), np.max(v_Vp))
     if Vbulks is not None:
         for Vb in Vbulks:
             ax.axvline(Vb, color='gray', linestyle='--', linewidth=0.8)
@@ -1055,7 +1102,7 @@ def find_Rayleigh_velocity_anisotropic(material: Any) -> float:  #: materials.Ma
     Vp = res["Vphase"]
 
     if Vp:
-        return Vp[0][0]  # return first found mode
+        return Vp[0] #[0]  # return first found mode
     else:
         return 0
 

@@ -88,6 +88,7 @@ class ModeFunction1D:
         m_uxyz: NDArray,  # Nelts x 3 array of some scalar complex values
         Vbulks: Optional[NDArray] = None,
         use_scaled_units=True,
+        relative_sing_val: Optional[float] = None,
     ) -> None:
 
         self.Omega_SI = Omega_SI
@@ -102,7 +103,9 @@ class ModeFunction1D:
         self.m_uxyz = m_uxyz.copy()  # Nelts x 3
         self.Vbulks = Vbulks
         self.vars_are_scaled = False
-        self.mode_id = ""
+
+        self.mode_id = ''
+        self.extra_lab = ''
 
         self.ivar_x = QuantLabel("Position", r"$y$", r"$|y|$", "µm")
         self.ivar_y = QuantLabel("Position", r"$z$", r"$|z|$", "µm")
@@ -110,11 +113,16 @@ class ModeFunction1D:
 
 
         gpp = numbat.NumBATPlotPrefs()
-        self.fs_suptitle = gpp.d_multi['title_fs'] -2
+        self.fs_suptitle = gpp.d_multi['title_fs'] -3
         self.fs_axtitle = gpp.d_multi['title_fs'] -4
         self.fs_axlab = gpp.d_multi['ax_label_fs']
         self.fs_ticklab = gpp.d_multi['ax_ticklabel_fs']
         self.fs_cbar = gpp.d_multi['cb_label_fs']
+
+        self.show_singval = False
+        self.relative_sing_val = relative_sing_val
+
+        self.bc_evals=None
 
         if use_scaled_units:
             self.switch_to_scaled_units()
@@ -218,7 +226,7 @@ class ModeFunction1D:
 
         """
 
-        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks)
+        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
 
         ax_in = ax
         if ax is None:
@@ -265,9 +273,29 @@ class ModeFunction1D:
         if ax_abs:
             ax_abs.set_ylabel(f"{self.dvar.name_abs_sym_units()}")
 
+
+        if self.show_singval and self.relative_sing_val is not None:
+            ax_comp.text(
+                0.05,
+                0.95,
+                f"Sing. val.: {self.relative_sing_val:.3e}", fontsize=self.fs_axlab,
+                transform=ax_comp.transAxes,
+            )
+        if self.bc_evals is not None:
+            ax_comp.text( 0.05, 0.90,
+                f"lam 1.: {np.real(self.bc_evals[0]):+.5f}+{np.imag(self.bc_evals[0]):+.5f}j", 
+                fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
+            ax_comp.text( 0.05, 0.85,
+                f"lam 2.: {np.real(self.bc_evals[1]):+.5f}+{np.imag(self.bc_evals[1]):+.5f}j", 
+                fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
+            ax_comp.text( 0.05, 0.80,
+                f"lam 3.: {np.real(self.bc_evals[2]):+.5f}+{np.imag(self.bc_evals[2]):+.5f}j", 
+                fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
+
+
         if legend:
             for ax in axs:
-                ax.legend()
+                ax.legend(loc='lower left')
 
         fname = ""
         if ax_in is None:
@@ -334,7 +362,7 @@ class ModeFunction1D:
             Scaling factor applied to displacements for visualization.
         """
 
-        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks)
+        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
 
         v_z, m_Y, m_Z, m_Fx, m_Fy, m_Fz = self._make_2d_field_arrays(zperiods, npts_per_period)
 
@@ -372,7 +400,7 @@ class ModeFunction1D:
     ) -> None:
         """Plot 2D mode profile."""
 
-        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks)
+        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
         v_z, m_Y, m_Z, m_Fx, m_Fy, m_Fz = self._make_2d_field_arrays(zperiods, npts_per_period)
 
 
@@ -421,7 +449,7 @@ class ModeFunction1D:
     ) -> None:
         """Plot 2D mode profile."""
 
-        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks)
+        title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
 
         v_z, m_Y, m_Z, m_Fx, m_Fy, m_Fz = self._make_2d_field_arrays(zperiods, npts_per_period)
 
@@ -461,11 +489,11 @@ class ModeFunction1D:
 
 
 def make_title(
-    Omega_norm: str, Vp_norm: str, mode_id: str, Vbulks: Optional[NDArray] = None
-) -> str:
+    Omega_norm: str, Vp_norm: str, mode_id: str, Vbulks: Optional[NDArray] = None,
+    extralab: str='') -> str:
     nutil = Omega_norm / (2 * np.pi)
     Vstil = Vp_norm
-    title = rf"Mode {mode_id} for $\Omega/2\pi$={nutil:.3f} GHz, $V$={Vstil:.3f} km/s"
+    title = rf"Mode {mode_id} for {extralab} $\Omega/2\pi$={nutil:.3f} GHz, $V$={Vstil:.3f} km/s"
 
     if Vbulks is not None:
         title += (

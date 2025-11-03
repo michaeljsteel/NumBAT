@@ -58,10 +58,10 @@ def int2D_simp(mat, dx=1.0, dy=1.0):
     """Return the 2D integral of mat using Simpson's rule with spacings dx, dy."""
     return simpson(simpson(mat)) * dx * dy
 
-def signed_log10(mat, logmax=5, tol=1e-14):
+def signed_log10(mat, logmax=5, tol=1e-14, power=1.0):
     """Return a signed log10 of mat, shifted by logmax, with small values clipped to zero."""
     lmat = np.log10(np.abs(mat)+tol) + logmax
-    lmat = np.where(lmat>0, lmat, 0)
+    lmat = np.where(lmat>0, lmat, 0)**power
     lmat *= np.sign(mat)
     return lmat
 
