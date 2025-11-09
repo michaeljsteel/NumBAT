@@ -1046,7 +1046,7 @@ def plot_det_scan(
     vdr, vdi = np.real(v_det), np.imag(v_det)
     ax2.plot(v_Vp, nbt.signed_log10(vdr,power=4), '-o', linewidth=0.5, color='r',
              label=r"Re($\Delta$)", markersize=1.0)
-    ax2.plot(v_Vp, nbt.signed_log10(vdi,power=4), '-o', linewidth=0.5, color='g', 
+    ax2.plot(v_Vp, nbt.signed_log10(vdi,power=4), '-o', linewidth=0.5, color='g',
              label=r"Im($\Delta$)", markersize=1.0)
 
     # ax2.plot(v_Vp, np.angle(v_det), '-x', markersize=1.0, linewidth=0.5, color='C3', label=r"Arg($\Delta$)")

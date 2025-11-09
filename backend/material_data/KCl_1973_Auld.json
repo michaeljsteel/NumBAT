@@ -1,0 +1,28 @@
+{
+ "format": "NumBATMaterial-fmt-2.0",
+ "material_name": "KCl_1973_Auld",  // Name of this file, will be used as identifier
+ "chemical": "KCl [100]",  // Chemical composition
+ "author": "Auld",  // Author of data
+ "date": "1973",  // Year of data publication/creation
+ "institution": "Stanford University",  // Source institution
+ "doi": "ISBN-10. 0898747821",
+
+ "Re_n": 1.49,  // Real part of refractive index []
+ "Im_n": 0.0,  // Imaginary part of refractive index []
+
+ "s": 1984.0,  // Density [kg/m3]
+
+ "crystal_class": "Cubic",
+ "crystal_sym": "m3m",
+
+ "c_11": 39.8e9,  // Stiffness tensor component [Pa]
+ "c_12": 6.2e9,  // Stiffness tensor component [Pa]
+ "c_44": 6.25e9,  // Stiffness tensor component [Pa]
+
+ "p_11": 0.0,  // Photoelastic tensor component []
+ "p_12": 0.0,  // Photoelastic tensor component []
+ "p_44": 0.0,  // Photoelastic tensor component []
+ "eta_11": 0.0,  // Acoustic loss tensor component [Pa s]
+ "eta_12": 0.0,  // Acoustic loss tensor component [Pa s]
+ "eta_44": 0.0  // Acoustic loss tensor component [Pa s]
+}
