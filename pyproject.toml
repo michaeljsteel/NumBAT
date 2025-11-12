@@ -1,0 +1,32 @@
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = [
+    "nbanalytic",
+    "reporting",
+    "nbgmsh",
+    "plottools",
+    "femmesh",
+    "nbthread",
+    "nbtypes",
+    "numbat",
+    "structure",
+    "materials",
+    "materialprops",
+    "bulkprops",
+    "modes",
+    "modecalcs",
+    "integration",
+    "voigt",
+    "crystalsyms",
+    "simresult",
+    "usermesh",
+    "numbattools",
+    "plotting",
+    "meshing",
+    "numtools"
+]
+src_paths = ["backend"]
+
+[tool.black]
+line-length = 100
