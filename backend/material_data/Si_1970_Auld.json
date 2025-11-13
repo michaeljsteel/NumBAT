@@ -11,8 +11,8 @@
   "s": 2332,  // Density [kg/m3]
   "crystal_class": "Cubic",
   "c_11": 165.7e9,  // Stiffness tensor component [Pa]
-  "c_12": 79.56e9,  // Stiffness tensor component [Pa]
-  "c_44": 63.9e9,  // Stiffness tensor component [Pa]
+  "c_12": 63.9e9,  // Stiffness tensor component [Pa]
+  "c_44": 79.56e9,  // Stiffness tensor component [Pa]
   "p_11": 0.09,  // Photoelastic tensor component []
   "p_12": -0.017,  // Photoelastic tensor component []
   "p_44": -0.054,  // Photoelastic tensor component []
