@@ -198,7 +198,7 @@
         "zjkl",
         "zwrapper"
     ],
-    "python.defaultInterpreterPath": "C:\\Users\\mq98002769\\nbpy-313\\scripts\\python.exe",
+    "_hide_python.defaultInterpreterPath": "C:\\Users\\mq98002769\\nbpy-313\\scripts\\python.exe",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend",
@@ -206,7 +206,7 @@
         "${workspaceFolder}/backend/fortran/include",
     ],
 
-    "fortran.linter.compiler": "ifx",
+    "_hide_fortran.linter.compiler": "ifx",
     "files.associations": {
         "*.win": "makefile",
         "fortranobject.h": "c",

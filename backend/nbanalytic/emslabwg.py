@@ -98,12 +98,17 @@ class EMSlab:
         match poln:
 
             case EMPoln.TE:
-                bfunc = lambda b: _emslab_chareq_TE(V, self._gamma, m, b)
+                def bfunc(b):
+                    return _emslab_chareq_TE(V, self._gamma, m, b)
 
             case EMPoln.TM:
-                bfunc = lambda b: _emslab_chareq_TM(
-                    V, self._gamma, self._ns, self._nf, self._nc, m, b
-                )
+                def bfunc(b):
+                    return _emslab_chareq_TM(
+                        V, self._gamma, self._ns, self._nf, self._nc, m, b
+                    )
+
+            case _:
+                raise ValueError(f"Unknown polarization type: {poln}")
 
         tol = 1e-10
         b_sol = sciopt.root_scalar(bfunc, bracket=[tol, 1 - tol])

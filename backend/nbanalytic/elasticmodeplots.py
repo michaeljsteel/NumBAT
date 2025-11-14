@@ -29,7 +29,7 @@ interactive use in notebooks and small scripts.
 import math
 import numpy as np
 
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
 from numpy.typing import NDArray
 
 
@@ -39,12 +39,12 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.axes import Axes as MplAxes
 from matplotlib.figure import Figure
 
-import numbat
 from nbtypes import SI_um, SI_GHz, SI_kmps
 from enum import IntEnum
 
 import IPython.display as ipydisp
 import plotting.plottools as nbpt
+import plotting.plotprefs as nbpp
 
 twopi = 2 * math.pi
 
@@ -112,12 +112,14 @@ class ModeFunction1D:
         self.dvar = QuantLabel("Displacement", r"$\vec u$", r"$|\vec u|$", "µm")
 
 
-        gpp = numbat.NumBATPlotPrefs()
+        gpp = nbpp.PlotPrefs()
         self.fs_suptitle = gpp.d_multi['title_fs'] -3
         self.fs_axtitle = gpp.d_multi['title_fs'] -4
         self.fs_axlab = gpp.d_multi['ax_label_fs']
         self.fs_ticklab = gpp.d_multi['ax_ticklabel_fs']
         self.fs_cbar = gpp.d_multi['cb_label_fs']
+        self.cm_cbar = gpp.cmap_ac_field_signed
+
 
         self.show_singval = False
         self.relative_sing_val = relative_sing_val
@@ -206,7 +208,7 @@ class ModeFunction1D:
         prefix: str = "",
         comps: Tuple[str, ...] = (),
         legend: bool = True,
-    ) -> None:
+    ) -> str:
         """Plot 1D real/imag components of a complex displacement field.
 
         Parameters
@@ -283,13 +285,13 @@ class ModeFunction1D:
             )
         if self.bc_evals is not None:
             ax_comp.text( 0.05, 0.90,
-                f"lam 1.: {np.real(self.bc_evals[0]):+.5f}+{np.imag(self.bc_evals[0]):+.5f}j", 
+                f"lam 1.: {np.real(self.bc_evals[0]):+.5f}+{np.imag(self.bc_evals[0]):+.5f}j",
                 fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
             ax_comp.text( 0.05, 0.85,
-                f"lam 2.: {np.real(self.bc_evals[1]):+.5f}+{np.imag(self.bc_evals[1]):+.5f}j", 
+                f"lam 2.: {np.real(self.bc_evals[1]):+.5f}+{np.imag(self.bc_evals[1]):+.5f}j",
                 fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
             ax_comp.text( 0.05, 0.80,
-                f"lam 3.: {np.real(self.bc_evals[2]):+.5f}+{np.imag(self.bc_evals[2]):+.5f}j", 
+                f"lam 3.: {np.real(self.bc_evals[2]):+.5f}+{np.imag(self.bc_evals[2]):+.5f}j",
                 fontsize=self.fs_axlab, transform=ax_comp.transAxes,)
 
 
@@ -312,7 +314,7 @@ class ModeFunction1D:
         npts_per_period: int = 30,
         displacement_scale: float = 0.3,
         style: str = "comps",
-    ) -> None:
+    ) -> str:
         """Plot 2D mode profile."""
 
         kw = locals()
@@ -351,7 +353,7 @@ class ModeFunction1D:
         zperiods: int,
         npts_per_period: int,
         displacement_scale: float,
-    ) -> None:
+    ) -> str:
         """Plot 2D displacement field as either a quiver or scatter field.
 
         Parameters
@@ -397,7 +399,7 @@ class ModeFunction1D:
         prefix: str ,
         aspect: float =1.0,
         figsize: Tuple[float, float] = (6, 4),
-    ) -> None:
+    ) -> str:
         """Plot 2D mode profile."""
 
         title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
@@ -405,8 +407,7 @@ class ModeFunction1D:
 
 
         exts = (self.v_x[0], self.v_x[-1], v_z[0], v_z[-1])
-        plotprefs = numbat.NumBATPlotPrefs()
-        cm = plotprefs.cmap_ac_field_signed
+        cm = self.cm_cbar
         kwimgs = dict(
             extent=exts, aspect="auto", origin="lower", cmap=cm  # aspect=aspect,
         )
@@ -446,7 +447,7 @@ class ModeFunction1D:
         npts_per_period: int ,
         aspect: float = 1.0,
         figsize: Tuple[float, float] = (6, 4),
-    ) -> None:
+    ) -> str:
         """Plot 2D mode profile."""
 
         title = make_title(self.Omega_norm, self.Vp_norm, self.mode_id, self.Vbulks, self.extra_lab)
@@ -489,7 +490,7 @@ class ModeFunction1D:
 
 
 def make_title(
-    Omega_norm: str, Vp_norm: str, mode_id: str, Vbulks: Optional[NDArray] = None,
+    Omega_norm: float, Vp_norm: float, mode_id: str, Vbulks: Optional[NDArray] = None,
     extralab: str='') -> str:
     nutil = Omega_norm / (2 * np.pi)
     Vstil = Vp_norm
@@ -539,7 +540,7 @@ class SlabMode2DAnimator:
 
     def __init__(
         self,
-        v_y: Sequence[float],
+        v_y: NDArray,
         m_uxyz: NDArray[np.complexfloating],
         q: float,
         fig: Optional[Figure] = None,

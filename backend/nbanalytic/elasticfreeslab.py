@@ -27,287 +27,19 @@ import scipy.optimize as sciopt
 
 from plotting.plottools import get_rgb_for_poln
 import numtools.rootbracket as ntrb
-from nbtypes import SI_um, NormalisationConstants, SI_GHz
+from nbtypes import NormalisationConstants, SI_GHz
 
-from nbanalytic.elasticmodeplots import _field_plot_1d, _field_plot_2d, ModeFunction1D
+from nbanalytic.elasticmodeplots import ModeFunction1D
 
-
+# Example use
+# explore/me/badribs/rib_saw.py
 
 #######################################################################################
 
 g_norms = NormalisationConstants()
 
 twopi = 2 * math.pi
-
-def elasticfreeslab_Lamb_chareq_even(Omega: float, Vs: float, Vl: float, wid: float, q: float) -> float:
-    """Dispersion relation for TE slab optical waveguide in normalised units.
-
-
-    Agrees with Mathematica notes in christoffel_2.nb
-    """
-
-    ONE = 1.0 + 0.0j
-    kappa_s = np.sqrt(ONE * (Omega / Vs) ** 2 - q**2)
-    kappa_l = np.sqrt(ONE * (Omega / Vl) ** 2 - q**2)
-
-    # lhs = np.tan(kappa_l * wid/2)/np.tan(kappa_s * wid/2)
-    # rhs = - (q**2-kappa_s**2)**2/(4 *q**2 *  kappa_l * kappa_s)
-
-    lhs = np.tan(kappa_l * wid / 2) * (4 * q**2 * kappa_l * kappa_s)
-    rhs = -((q**2 - kappa_s**2) ** 2) * np.tan(kappa_s * wid / 2)
-
-    eq = wid**4 * (lhs - rhs)
-    if abs(np.imag(eq)) > abs(np.real(eq)):
-        return np.imag(eq)
-    else:
-        return np.real(eq)
-
-
-def elasticfreeslab_Lamb_chareq_odd(Omega: float, Vs: float, Vl: float, wid: float, q: float) -> float:
-    """Dispersion relation for TE slab optical waveguide in normalised units."""
-    ONE = 1.0 + 0.0j
-    kappa_s = np.sqrt(ONE * (Omega / Vs) ** 2 - q**2)
-    kappa_l = np.sqrt(ONE * (Omega / Vl) ** 2 - q**2)
-
-    # lhs = np.tan(kappa_s * wid/2)/np.tan(kappa_l * wid/2)
-    # rhs = - (q**2-kappa_s**2)**2/(4 *q**2 * kappa_l * kappa_s)
-    lhs = np.tan(kappa_s * wid / 2) * (4 * q**2 * kappa_l * kappa_s)
-    rhs = -((q**2 - kappa_s**2) ** 2) * np.tan(kappa_l * wid / 2)
-
-    eq = wid**4 * (lhs - rhs)
-    if abs(np.imag(eq)) > abs(np.real(eq)):
-        return np.imag(eq)
-    else:
-        return np.real(eq)
-
-
-
-def ombrak_is_at_tan_resonance(ombrak: Sequence[float], q: float, Vs: float, Vl: float, width: float) -> bool:
-    """Check for bracketed frequencies where tan(kappa_i w/2) = tan((Omega/V_i)^2 - q^2) blow ups.
-
-    Looking for Om brackets that surround (Omega/V_i)^2 - q^2)w/2 = (2n+1) pi/2, so (Omega/V_i)^2 - q^2)w/pi = (2n+1)
-
-    """
-    widonpi = width/(np.pi)
-    qsq = q**2
-    if (ombrak[0] / Vs) ** 2 - qsq > 0:
-        sarg0 = np.sqrt((ombrak[0] / Vs) ** 2 - qsq) * widonpi
-
-        sarg1 = np.sqrt((ombrak[1] / Vs) ** 2 - qsq) * widonpi
-
-        if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0) % 2 == 1:  # an odd multiple of pi/2
-                return True
-
-    if (ombrak[0] / Vl) ** 2 - qsq > 0:
-        larg0 = np.sqrt((ombrak[0] / Vl) ** 2 - qsq) * widonpi
-
-        larg1 = np.sqrt((ombrak[1] / Vl) ** 2 - qsq) * widonpi
-
-        if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0) % 2 == 1:  # an odd multiple of pi/2
-            return True
-    return False
-
-def qbrak_is_at_tan_resonance(Omega: float, qbrak: Sequence[float], Vs: float, Vl: float, width: float) -> bool:
-    """Check for bracketed wavenumbers where tan(kappa_i w/2) = tan((Omega/V_i)^2 - q^2) blow ups.
-
-    Looking for q brackets that surround (Omega/V_i)^2 - q^2)w/2 = (2n+1) pi/2, so  (Omega/V_i)^2 - q^2)w/pi = (2n+1)
-    """
-
-    widonpi = width/(np.pi)
-    OmonVs_sq = (Omega / Vs) ** 2
-
-    if OmonVs_sq - qbrak[1] ** 2 > 0:
-        sarg0 = np.sqrt(OmonVs_sq - qbrak[0] ** 2) * widonpi
-        sarg1 =  np.sqrt(OmonVs_sq - qbrak[1] ** 2) * widonpi
-
-        if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0) % 2 == 1 :  # an odd multiple of pi/2
-            return True
-
-    OmonVl_sq = (Omega / Vl) ** 2
-    if OmonVl_sq - qbrak[1] ** 2 > 0:
-        larg0 = np.sqrt(OmonVl_sq - qbrak[0] ** 2) * widonpi
-        larg1 = np.sqrt(OmonVl_sq - qbrak[1] ** 2) * widonpi
-
-        if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0) % 2 == 1 :  # an odd multiple of pi/2
-            return True
-    return False
-
-
-def _find_Lamb_q_brackets_smart(self, Omega: float, Vs, Vl, width,
-                                    drfunc: Callable[[float], float]) -> List[Tuple[float, float]]:
-        # attempts to predict the crossings but doesn't get them all, becuse not all are about tan blowups
-
-        # qlo = 1e-9
-        # qhi=Omega/self._Vbulk_shear * 2
-
-        # need to avoid blowups of tan functions
-        # kappa_s w/2 = (2n+1) pi/2
-        # kappa_l w/2 = (2n+1) pi/2
-        hi_ns = np.ceil(width * Omega / (twopi * Vs) - 0.5)
-        hi_nl = np.ceil(width * Omega / (twopi * Vl) - 0.5)
-
-        bad_qs = (
-            (Omega / Vs) ** 2
-            - ((np.arange(0, hi_ns) + 0.5) * twopi / width) ** 2
-        ) ** 0.5
-        bad_ql = (
-            (Omega / Vl) ** 2
-            - ((np.arange(0, hi_nl) + 0.5) * twopi / width) ** 2
-        ) ** 0.5
-
-        # print(' hins', Omega, self._Vbulk_shear,hi_ns, hi_nl, self.width*Omega/(2*np.pi*self._Vbulk_long)-.5, bad_qs, bad_ql)
-
-        bad_q = np.append(bad_qs, bad_ql)
-        bad_q = np.sort(bad_q)
-        qbraks = []
-        # tollo = 1-1e-7
-        # tolhi = 1+1e-7
-
-        # print('Doing Omega', Omega)
-        # qsteps=2000
-        # qlo = 1e-9
-        # qhi=Omega/self._Vbulk_shear * 2
-        # v_q = np.linspace(qlo, qhi,  qsteps)
-        # v_disprel = list(map(drfunc, v_q))
-        # fig,axs=plt.subplots()
-        # axs.plot(v_q*1e-6, v_disprel)
-        # axs.plot(v_q*1e-6,0*v_q,':')
-        # axs.set_ylim(-1000,1000)
-        # #axs.set_xlim(0,20)
-
-        # # carve out the bad points
-        # for bq in bad_q:
-        #     qbraks.append([qlo, bq*tollo])
-        #     qlo = bq*tolhi
-        #     axs.plot(qlo*self.width,0,'x')
-        # qbraks.append([qlo, qhi])
-
-        # fig.savefig('qscan.png')
-        # sys.exit(0)
-
-        return qbraks
-
-
-def _find_Lamb_q_brackets(Omega: float, Vs, Vl, width,
-                          drfunc: Callable[[float], float],
-                          q_bracket_steps: int = 1000) -> List[Tuple[float, float]]:
-        # brute force bracketing
-        qsteps = q_bracket_steps
-
-        qlo = 1e-9
-        qhi = Omega / Vs * 4
-        v_q = np.linspace(qlo, qhi, qsteps)
-
-        v_disprel = np.array(list(map(drfunc, v_q)))
-
-        qbraks = []
-
-        is_small = 0.1 * max(abs(v_disprel))
-        fi_m1 = v_disprel[0]
-        for i in range(1, len(v_disprel) - 1):
-            fi = v_disprel[i]
-            if fi * fi_m1 < 0:  # a possible crossing?
-                if abs(fi) < is_small and abs(fi_m1) < is_small:  # legit
-                    qbrak = [v_q[i - 1], v_q[i]]
-                    # remove erroneous  brackets due to tan functions
-                    if not qbrak_is_at_tan_resonance(Omega, qbrak, Vs, Vl, width ):
-                        qbraks.append(qbrak)
-                # else: # a tan function infinity, update but don't keep
-                #    pass
-            fi_m1 = fi
-
-
-        return qbraks
-
-
-def _find_Lamb_Om_brackets_at_q(q: float, Vs: float, Vl: float, width: float,
-                               drfunc: Callable[[float], float],
-                               om_max: float = 200e9, om_bracket_steps: int = 1000) -> List[Tuple[float, float]]:
-
-        # brute force bracketing
-        omsteps = om_bracket_steps
-
-        omlo = 1e-9
-        omhi = om_max
-
-        use_ntrb = False
-        if use_ntrb:
-            d_rbr = {
-            "threshold_factor": 100,
-            "min_abs_value_for_sign_change": 1e-6,
-            "ignore_large_jumps": True,
-            }
-            ombraks, removed = ntrb.robust_bracket_roots(drfunc, omlo, omhi, om_bracket_steps, **d_rbr)
-            return ombraks
-
-
-        v_om = np.linspace(omlo, omhi, omsteps)
-        v_disprel = np.array(list(map(drfunc, v_om)))
-        np.set_printoptions(precision=15)
-
-        ombraks = []
-        removeds = []
-
-        is_small = 0.1 * max(abs(v_disprel))
-
-        # We skip over the very first possible bracket.
-        # If drfunc(om=\eps) \approx 0, then if we get drfunc(om=\eps)=\pm 1e-15,
-        # we can get a spurious root. So just don't look there.
-        i_st = 1
-
-        fi_m1 = v_disprel[i_st]
-        for i in range(i_st + 1, len(v_disprel) - 1):
-            fi = v_disprel[i]
-            if fi * fi_m1 < 0:  # a possible crossing?
-                if abs(fi) < is_small and abs(fi_m1) < is_small:  # legit
-                    ombrak = [v_om[i - 1], v_om[i]]
-                    if not ombrak_is_at_tan_resonance(ombrak, q, Vs, Vl, width):
-                        ombraks.append(ombrak)
-                    else:
-                        removeds.append(ombrak)
-                # else: # a tan function infinity, update but don't keep
-                #    pass
-            fi_m1 = fi
-
-        # plotscan=True
-        plotscan = False
-
-        # omnormfac = self.width/self._Vbulk_shear/np.pi   # genuine normalised angular frequency
-        # omnormlab = r'$\Omega w/(\pi V_s)$'
-
-        omnormfac = 1 / (twopi * SI_GHz)  # actual frequency in GHz
-        omnormlab = r"$\Omega/(2\pi)$ [GHz]"
-
-        if plotscan:
-            # print(ombraks)
-            fig, axs = plt.subplots()
-            v_omnorm = v_om * omnormfac
-            # axs.plot(v_omnorm, np.log10(abs(v_disprel)))
-            axs.plot(v_omnorm, v_disprel)
-
-            axs.plot(v_omnorm, 0 * v_om, ":")
-            # axs.set_ylim(-1*is_small, 1*is_small)
-            axs.set_ylim(-1e3, 1e3)
-            # axs.set_xlim(1.3,1.5)
-            for iob, ob in enumerate(ombraks):
-                obnorm = ob[0] * omnormfac
-                lab = "" if iob else "genuine roots"
-                axs.plot(obnorm, 0, "x", ms=20, label=lab)
-            for iob, ob in enumerate(removeds):
-                obnorm = ob[0] * omnormfac
-                lab = "" if iob else "false roots"
-                axs.plot(obnorm, 0, "o", mfc="none", ms=20, label=lab)
-
-            axs.legend()
-            axs.set_xlabel(omnormlab)
-            axs.set_ylabel(r"dispersion relation $(\Omega, q)$")
-
-            fig.savefig("omscan.png")
-            sys.exit(0)
-
-        return ombraks
-
-
+C_ONE = 1.0 + 0.0j
 
 class ElasticIsotropicFreeSlab:
     """Elastic slab waveguide solver for isotropic materials.
@@ -348,6 +80,293 @@ class ElasticIsotropicFreeSlab:
         self.q_bracketing_resolution = q_bracketing_resolution
 
 
+    def elasticfreeslab_Lamb_chareq_even(self, Omega: float, q: float) -> float:
+        """Dispersion relation for TE slab optical waveguide in normalised units.
+
+
+        Agrees with Mathematica notes in christoffel_2.nb
+        """
+        Vs = self._Vbulk_shear
+        Vl = self._Vbulk_long
+        wid = self.width
+
+        qsq = q**2
+        kappa_s = np.sqrt(C_ONE * (Omega / Vs) ** 2 - qsq)
+        kappa_l = np.sqrt(C_ONE * (Omega / Vl) ** 2 - qsq)
+
+        lhs = np.tan(kappa_l * wid / 2) * (4 * qsq * kappa_l * kappa_s)
+        rhs = -((qsq - kappa_s**2) ** 2) * np.tan(kappa_s * wid / 2)
+
+        eq = wid**4 * (lhs - rhs)
+        if abs(np.imag(eq)) > abs(np.real(eq)):
+            return np.imag(eq)
+        else:
+            return np.real(eq)
+
+
+    def elasticfreeslab_Lamb_chareq_odd(self, Omega: float, q: float) -> float:
+        """Dispersion relation for TE slab optical waveguide in normalised units."""
+
+        Vs = self._Vbulk_shear
+        Vl = self._Vbulk_long
+        wid = self.width
+
+        qsq = q**2
+        kappa_s = np.sqrt(C_ONE * (Omega / Vs) ** 2 - qsq)
+        kappa_l = np.sqrt(C_ONE * (Omega / Vl) ** 2 - qsq)
+
+        lhs = np.tan(kappa_s * wid / 2) * (4 * qsq * kappa_l * kappa_s)
+        rhs = -((qsq - kappa_s**2) ** 2) * np.tan(kappa_l * wid / 2)
+
+        eq = wid**4 * (lhs - rhs)
+        if abs(np.imag(eq)) > abs(np.real(eq)):
+            return np.imag(eq)
+        else:
+            return np.real(eq)
+
+
+
+    def ombrak_is_at_tan_resonance(self, ombrak: Sequence[float], q: float) -> bool:
+        """Check for bracketed frequencies where tan(kappa_i w/2) = tan((Omega/V_i)^2 - q^2) blow ups.
+
+        Looking for Om brackets that surround (Omega/V_i)^2 - q^2)w/2 = (2n+1) pi/2, so (Omega/V_i)^2 - q^2)w/pi = (2n+1)
+
+        """
+        widonpi = self.width/(np.pi)
+        Vs = self._Vbulk_shear
+        Vl = self._Vbulk_long
+
+        qsq = q**2
+        if (ombrak[0] / Vs) ** 2 - qsq > 0:
+            sarg0 = np.sqrt((ombrak[0] / Vs) ** 2 - qsq) * widonpi
+
+            sarg1 = np.sqrt((ombrak[1] / Vs) ** 2 - qsq) * widonpi
+
+            if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0) % 2 == 1:  # an odd multiple of pi/2
+                    return True
+
+        if (ombrak[0] / Vl) ** 2 - qsq > 0:
+            larg0 = np.sqrt((ombrak[0] / Vl) ** 2 - qsq) * widonpi
+
+            larg1 = np.sqrt((ombrak[1] / Vl) ** 2 - qsq) * widonpi
+
+            if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0) % 2 == 1:  # an odd multiple of pi/2
+                return True
+        return False
+
+    def qbrak_is_at_tan_resonance(self, Omega: float, qbrak: Sequence[float]) -> bool:
+        """Check for bracketed wavenumbers where tan(kappa_i w/2) = tan((Omega/V_i)^2 - q^2) blow ups.
+
+        Looking for q brackets that surround (Omega/V_i)^2 - q^2)w/2 = (2n+1) pi/2, so  (Omega/V_i)^2 - q^2)w/pi = (2n+1)
+        """
+
+        widonpi = self.width/(np.pi)
+        Vs = self._Vbulk_shear
+        Vl = self._Vbulk_long
+
+        OmonVs_sq = (Omega / Vs) ** 2
+
+        if OmonVs_sq - qbrak[1] ** 2 > 0:
+            sarg0 = np.sqrt(OmonVs_sq - qbrak[0] ** 2) * widonpi
+            sarg1 =  np.sqrt(OmonVs_sq - qbrak[1] ** 2) * widonpi
+
+            if math.ceil(sarg0) == math.floor(sarg1) and math.ceil(sarg0) % 2 == 1 :  # an odd multiple of pi/2
+                return True
+
+        OmonVl_sq = (Omega / Vl) ** 2
+        if OmonVl_sq - qbrak[1] ** 2 > 0:
+            larg0 = np.sqrt(OmonVl_sq - qbrak[0] ** 2) * widonpi
+            larg1 = np.sqrt(OmonVl_sq - qbrak[1] ** 2) * widonpi
+
+            if math.ceil(larg0) == math.floor(larg1) and math.ceil(larg0) % 2 == 1 :  # an odd multiple of pi/2
+                return True
+        return False
+
+
+    def _find_Lamb_q_brackets_smart(self, Omega: float,
+                                        drfunc: Callable[[float], float]) -> List[Tuple[float, float]]:
+            # attempts to predict the crossings but doesn't get them all, becuse not all are about tan blowups
+
+            # qlo = 1e-9
+            # qhi=Omega/self._Vbulk_shear * 2
+
+            # need to avoid blowups of tan functions
+            # kappa_s w/2 = (2n+1) pi/2
+            # kappa_l w/2 = (2n+1) pi/2
+
+            Vs = self._Vbulk_shear
+            Vl = self._Vbulk_long
+            width = self.width
+
+            hi_ns = np.ceil(width * Omega / (twopi * Vs) - 0.5)
+            hi_nl = np.ceil(width * Omega / (twopi * Vl) - 0.5)
+
+            bad_qs = (
+                (Omega / Vs) ** 2
+                - ((np.arange(0, hi_ns) + 0.5) * twopi / width) ** 2
+            ) ** 0.5
+            bad_ql = (
+                (Omega / Vl) ** 2
+                - ((np.arange(0, hi_nl) + 0.5) * twopi / width) ** 2
+            ) ** 0.5
+
+            # print(' hins', Omega, self._Vbulk_shear,hi_ns, hi_nl, self.width*Omega/(2*np.pi*self._Vbulk_long)-.5, bad_qs, bad_ql)
+
+            bad_q = np.append(bad_qs, bad_ql)
+            bad_q = np.sort(bad_q)
+            qbraks = []
+            # tollo = 1-1e-7
+            # tolhi = 1+1e-7
+
+            # print('Doing Omega', Omega)
+            # qsteps=2000
+            # qlo = 1e-9
+            # qhi=Omega/self._Vbulk_shear * 2
+            # v_q = np.linspace(qlo, qhi,  qsteps)
+            # v_disprel = list(map(drfunc, v_q))
+            # fig,axs=plt.subplots()
+            # axs.plot(v_q*1e-6, v_disprel)
+            # axs.plot(v_q*1e-6,0*v_q,':')
+            # axs.set_ylim(-1000,1000)
+            # #axs.set_xlim(0,20)
+
+            # # carve out the bad points
+            # for bq in bad_q:
+            #     qbraks.append([qlo, bq*tollo])
+            #     qlo = bq*tolhi
+            #     axs.plot(qlo*self.width,0,'x')
+            # qbraks.append([qlo, qhi])
+
+            # fig.savefig('qscan.png')
+            # sys.exit(0)
+
+            return qbraks
+
+
+    def _find_Lamb_q_brackets(self, Omega: float,
+                            drfunc: Callable[[float], float],
+                            q_bracket_steps: int = 1000) -> List[Tuple[float, float]]:
+            # brute force bracketing
+            qsteps = q_bracket_steps
+            Vs = self._Vbulk_shear
+            Vl = self._Vbulk_long
+            width = self.width
+
+
+            qlo = 1e-9
+            qhi = Omega / Vs * 4
+            v_q = np.linspace(qlo, qhi, qsteps)
+
+            v_disprel = np.array(list(map(drfunc, v_q)))
+
+            qbraks = []
+
+            is_small = 0.1 * max(abs(v_disprel))
+            fi_m1 = v_disprel[0]
+            for i in range(1, len(v_disprel) - 1):
+                fi = v_disprel[i]
+                if fi * fi_m1 < 0:  # a possible crossing?
+                    if abs(fi) < is_small and abs(fi_m1) < is_small:  # legit
+                        qbrak = [v_q[i - 1], v_q[i]]
+                        # remove errC_ONEous  brackets due to tan functions
+                        if not self.qbrak_is_at_tan_resonance(Omega, qbrak):
+                            qbraks.append(qbrak)
+                    # else: # a tan function infinity, update but don't keep
+                    #    pass
+                fi_m1 = fi
+
+
+            return qbraks
+
+
+    def _find_Lamb_Om_brackets_at_q(self, q: float,
+                                drfunc: Callable[[float], float],
+                                om_max: float = 200e9, om_bracket_steps: int = 1000) -> List[Tuple[float, float]]:
+
+            # brute force bracketing
+            omsteps = om_bracket_steps
+
+            omlo = 1e-9
+            omhi = om_max
+
+            use_ntrb = False
+            if use_ntrb:
+                d_rbr = {
+                "threshold_factor": 100,
+                "min_abs_value_for_sign_change": 1e-6,
+                "ignore_large_jumps": True,
+                }
+                ombraks, removed = ntrb.robust_bracket_roots(drfunc, omlo, omhi, om_bracket_steps, **d_rbr)
+                return ombraks
+
+
+            v_om = np.linspace(omlo, omhi, omsteps)
+            v_disprel = np.array(list(map(drfunc, v_om)))
+            np.set_printoptions(precision=15)
+
+            ombraks = []
+            removeds = []
+
+            is_small = 0.1 * max(abs(v_disprel))
+
+            # We skip over the very first possible bracket.
+            # If drfunc(om=\eps) \approx 0, then if we get drfunc(om=\eps)=\pm 1e-15,
+            # we can get a spurious root. So just don't look there.
+            i_st = 1
+
+            fi_m1 = v_disprel[i_st]
+            for i in range(i_st + 1, len(v_disprel) - 1):
+                fi = v_disprel[i]
+                if fi * fi_m1 < 0:  # a possible crossing?
+                    if abs(fi) < is_small and abs(fi_m1) < is_small:  # legit
+                        ombrak = [v_om[i - 1], v_om[i]]
+                        if not self.ombrak_is_at_tan_resonance(ombrak, q):
+                            ombraks.append(ombrak)
+                        else:
+                            removeds.append(ombrak)
+                    # else: # a tan function infinity, update but don't keep
+                    #    pass
+                fi_m1 = fi
+
+            # plotscan=True
+            plotscan = False
+
+            # omnormfac = self.width/self._Vbulk_shear/np.pi   # genuine normalised angular frequency
+            # omnormlab = r'$\Omega w/(\pi V_s)$'
+
+            omnormfac = 1 / (twopi * SI_GHz)  # actual frequency in GHz
+            omnormlab = r"$\Omega/(2\pi)$ [GHz]"
+
+            if plotscan:
+                # print(ombraks)
+                fig, axs = plt.subplots()
+                v_omnorm = v_om * omnormfac
+                # axs.plot(v_omnorm, np.log10(abs(v_disprel)))
+                axs.plot(v_omnorm, v_disprel)
+
+                axs.plot(v_omnorm, 0 * v_om, ":")
+                # axs.set_ylim(-1*is_small, 1*is_small)
+                axs.set_ylim(-1e3, 1e3)
+                # axs.set_xlim(1.3,1.5)
+                for iob, ob in enumerate(ombraks):
+                    obnorm = ob[0] * omnormfac
+                    lab = "" if iob else "genuine roots"
+                    axs.plot(obnorm, 0, "x", ms=20, label=lab)
+                for iob, ob in enumerate(removeds):
+                    obnorm = ob[0] * omnormfac
+                    lab = "" if iob else "false roots"
+                    axs.plot(obnorm, 0, "o", mfc="nC_ONE", ms=20, label=lab)
+
+                axs.legend()
+                axs.set_xlabel(omnormlab)
+                axs.set_ylabel(r"dispersion relation $(\Omega, q)$")
+
+                fig.savefig("omscan.png")
+                sys.exit(0)
+
+            return ombraks
+
+
 
 
     def find_Lamb_Omegas_at_q(self, q: float, max_modes: int, even_modes: bool = True) -> NDArray:
@@ -355,10 +374,10 @@ class ElasticIsotropicFreeSlab:
         # q must be smaller than Omega/V_l
 
         def dreven(om: float) -> float:
-            return elasticfreeslab_Lamb_chareq_even(om, self._Vbulk_shear, self._Vbulk_long, self.width, q)
+            return self.elasticfreeslab_Lamb_chareq_even(om, q)
 
         def drodd(om: float) -> float:
-            return elasticfreeslab_Lamb_chareq_odd(om, self._Vbulk_shear, self._Vbulk_long, self.width, q)
+            return self.elasticfreeslab_Lamb_chareq_odd(om, q)
 
         if even_modes:
             drfunc = dreven
@@ -367,7 +386,7 @@ class ElasticIsotropicFreeSlab:
 
         omsols = []
 
-        ombraks = _find_Lamb_Om_brackets_at_q(q, self._Vbulk_shear, self._Vbulk_long, self.width,
+        ombraks = self._find_Lamb_Om_brackets_at_q(q,
                                               drfunc, self._max_omega,
                                               self.omega_bracketing_resolution)
 
@@ -398,15 +417,14 @@ class ElasticIsotropicFreeSlab:
 
         if even_modes:
             def drfunc(q: float) -> float:
-                return elasticfreeslab_Lamb_chareq_even(Omega, self._Vbulk_shear, self._Vbulk_long, self.width, q)
+                return self.elasticfreeslab_Lamb_chareq_even(Omega, q)
         else:
             def drfunc(q: float) -> float:
-                return elasticfreeslab_Lamb_chareq_odd(Omega, self._Vbulk_shear, self._Vbulk_long, self.width, q)
+                return self.elasticfreeslab_Lamb_chareq_odd(Omega, q)
 
         qsols = []
 
-        qbraks = self._find_Lamb_q_brackets(Omega, self._Vbulk_shear, self._Vbulk_long, self.width,
-                                            drfunc, self.q_bracketing_resolution)
+        qbraks = self._find_Lamb_q_brackets(Omega, drfunc, self.q_bracketing_resolution)
 
         #if not len(qbraks):
         #    print("No brackets for Omega ", Omega)
@@ -438,7 +456,7 @@ class ElasticIsotropicFreeSlab:
         for iOm, Om in enumerate(v_Omega):
             qsols = self.find_Lamb_qs_at_Omega(Om, max_modes, even_modes)
 
-            # We might have less than max_modes, or even none
+            # We might have less than max_modes, or even nC_ONE
             if len(qsols):
                 m_qs[iOm, : len(qsols)] = qsols
 
@@ -459,7 +477,7 @@ class ElasticIsotropicFreeSlab:
 
     def find_Lamb_q_at_Omega_oddmode_zero_asymptotic_small_qw(self, Omega: float) -> float:
         om = Omega * self.width/self._Vbulk_shear
-        rv = self._Vbulk_long_norm
+        rv = self._Vl_norm
         vsq = om * np.sqrt((1-1/rv**2)/3) + om*om * (1/(6*rv**2)-9/40)
         V_asy = self._Vbulk_shear*np.sqrt(vsq)
         q = Omega/ V_asy
@@ -471,7 +489,7 @@ class ElasticIsotropicFreeSlab:
                 return 0  # don't know answer yet
         else:
             X = q*self.width
-            rv = self._Vbulk_long_norm
+            rv = self._Vl_norm
             V_asy = self._Vbulk_shear*np.sqrt( X**2*(1-rv**2)/3 )
             Omega = q * V_asy
             return Omega
@@ -508,12 +526,12 @@ class ElasticIsotropicFreeSlab:
         if col_array:
             # Is Rayleigh mode polarisation frequency dependent?
             v_col = np.zeros([len(v_Omega), 3])
-            rgb = self._get_rgb_for_poln(1, 0, 0)
+            rgb = get_rgb_for_poln(1, 0, 0)
             v_col[:] = rgb
 
         return v_qR, v_col
 
-    def find_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200) -> Tuple[NDArray, NDArray]:
+    def find_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200) -> ModeFunction1D:
 
         Vs = self._Vbulk_shear
         Vl = self._Vbulk_long
@@ -524,9 +542,9 @@ class ElasticIsotropicFreeSlab:
         v_x = np.linspace(-depth, 0, npts)
         m_uxyz = np.zeros([npts,3], dtype=np.complex64)
 
-        C_ONE = 1+0j
-        gam_s = np.sqrt(C_ONE*(qR**2-(Omega/Vs)**2))
-        gam_l = np.sqrt(C_ONE*(qR**2-(Omega/Vl)**2))
+        C_C_ONE = 1+0j
+        gam_s = np.sqrt(C_C_ONE*(qR**2-(Omega/Vs)**2))
+        gam_l = np.sqrt(C_C_ONE*(qR**2-(Omega/Vl)**2))
         exp_glx = np.exp(gam_l*v_x)
         exp_gsx = np.exp(gam_s*v_x)
 
@@ -545,38 +563,38 @@ class ElasticIsotropicFreeSlab:
         return mode_prof
 
 
-    def plot_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> None:
+    def plot_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> str:
         mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
         fname = mode_prof.plot_mode_profile_1d(ax=ax, legend=legend)
         return fname
 
 
     def plot_Rayleigh_profile_2d(self, Omega: float, depth: float, zperiods: int = 1, npts: int = 20, ax: Optional[MplAxes] = None,
-                                 displacement_scale: float = 0.05, use_arrows: bool = False) -> None:
+                                 displacement_scale: float = 0.05, use_arrows: bool = False) -> str:
 
         mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
-        fname = mode_prof.plot_mode_profile_2d(ax=ax, npts=npts, zperiods=zperiods,
+        fname = mode_prof.plot_mode_profile_2d(ax=ax, zperiods=zperiods,
                                       displacement_scale=displacement_scale  )
         return fname
 
 
-    def plot_slab_mode_profile_1d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> float:
+    def plot_slab_mode_profile_1d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> str:
 
         mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
-        fname = mode_prof.plot_mode_profile_1d(ax=ax, npts=npts, legend=legend)
+        fname = mode_prof.plot_mode_profile_1d(ax=ax, legend=legend)
         return fname
 
 
     def plot_slab_mode_profile_2d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 30, zperiods: int = 1,
-                                  ax: Optional[MplAxes] = None, displacement_scale: float = 0.1) -> None:
+                                  ax: Optional[MplAxes] = None, displacement_scale: float = 0.1) -> str:
 
         mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
-        fname = mode_prof.plot_mode_profile_2d(ax=ax, npts=npts, zperiods=zperiods,
+        fname = mode_prof.plot_mode_profile_2d(ax=ax, zperiods=zperiods,
                                       displacement_scale=displacement_scale )
         return fname
 
 
-    def find_mode_profile_1d(self, Omega: float, q: float, npts: int = 200, even_mode: bool = True) -> Tuple[NDArray, NDArray, float]:
+    def find_mode_profile_1d(self, Omega: float, q: float, npts: int = 200, even_mode: bool = True) -> ModeFunction1D:
         # Solutions from Auld Vol 2, 10.22
 
         hwid = self.width/2
@@ -584,15 +602,11 @@ class ElasticIsotropicFreeSlab:
         v_x = np.linspace(-self.width/2, self.width/2, npts)
         m_uxyz = np.zeros([npts,3], dtype=np.complex64)
 
-        C_ONE = 1+0j
-        kap_l = np.sqrt(C_ONE*((Omega/self._Vbulk_long)**2 - q**2))
-        kap_s = np.sqrt(C_ONE*((Omega/self._Vbulk_shear)**2 - q**2))
+        C_C_ONE = 1+0j
+        kap_l = np.sqrt(C_C_ONE*((Omega/self._Vbulk_long)**2 - q**2))
+        kap_s = np.sqrt(C_C_ONE*((Omega/self._Vbulk_shear)**2 - q**2))
 
         delq2kaps2 = q**2 - kap_s**2
-
-        #qrat_y= (q**2-kap_s**2)/(2*kap_s)
-        #qrat_z= (q**2-kap_s**2)/(2*q)
-
 
         cos_klw = np.cos(kap_l*hwid)
         cos_ksw = np.cos(kap_s*hwid)
