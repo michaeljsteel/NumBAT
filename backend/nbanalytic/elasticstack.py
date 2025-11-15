@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.linalg as npla
 import scipy.linalg as spla
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional, Dict, Any, Sequence
 from numpy.typing import NDArray
 
 from enum import Enum
@@ -26,6 +26,20 @@ g_norms = nbtypes.NormalisationConstants()
 
 
 class ElBCType(Enum):
+    """Boundary condition types for the elastic stack edges.
+
+    Members
+    -------
+    VACUUM
+        Free surface (zero tractions at the boundary).
+    SEMI_INFINITE
+        Semi-infinite half-space made of a material, used to absorb/emit waves.
+    SHORT
+        Electrically shorted boundary for piezoelectric problems (swaps rows to
+        enforce phi=0 at the surface).
+    CHARGE_FREE
+        Charge-free boundary for piezoelectric problems (tau_phi coupling used).
+    """
     VACUUM = "vacuum"
     SEMI_INFINITE = "semiinfinite"
     SHORT = "short"
@@ -33,6 +47,22 @@ class ElBCType(Enum):
 
 
 def check_magnitude(x: float, name: str, minval: float, maxval: float) -> None:
+    """Validate that the magnitude of a value lies within bounds.
+
+    Parameters
+    ----------
+    x
+        Input value to be checked.
+    name
+        Name of the quantity (used in the error message).
+    minval, maxval
+        Allowed bounds on |x| (inclusive). Units must match the caller's context.
+
+    Raises
+    ------
+    ValueError
+        If |x| is outside [minval, maxval].
+    """
     if not (minval <= abs(x) <= maxval):
         raise ValueError(f"{name} value {x} out of expected range [{minval}, {maxval}]")
 
@@ -43,7 +73,22 @@ def get_layer_stiffness_submatrices(
 ) -> Tuple[
     NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
 ]:
-    # cs is normalised stiffness
+    """Build 3x3 (or 4x4) submatrices of the constitutive tensor for a layer.
+
+    Parameters
+    ----------
+    cs
+        Normalised 7x7 stiffness matrix in Voigt-like indexing (unit-indexed).
+    use_4d
+        When True, embed the 3x3 blocks into 4x4 blocks for an 8-component
+        (piezo-aware) state vector; the extra row/column are padded with zeros.
+
+    Returns
+    -------
+    mM1, mM2, mL1, mL2 : ndarray
+        The submatrices used to construct the transfer matrix blocks for the
+        non-piezoelectric case. Shapes are 3x3 for use_4d=False, otherwise 4x4.
+    """
 
     assert cs.shape == (7, 7)
 
@@ -100,7 +145,23 @@ def get_layer_stiffness_submatrices_piezo(
 ) -> Tuple[
     NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
 ]:
-    # tensors are all unit indexed
+    """Build 4x4 submatrices for a piezoelectric layer.
+
+    Parameters
+    ----------
+    cs
+        Normalised 7x7 stiffness matrix (unit-indexed).
+    e_iJ
+        Normalised 4x7 piezoelectric coupling tensor (unit-indexed; i in 0..3, J in 0..6).
+    perm_ij
+        Relative permittivity tensor (4x4, unit-indexed).
+
+    Returns
+    -------
+    mM1, mM2, mL1, mL2 : ndarray
+        The 4x4 piezo-aware submatrices to construct transfer matrix blocks for
+        piezoelectric media.
+    """
 
     assert cs.shape == (7, 7)
     assert e_iJ.shape == (4, 7)
@@ -146,6 +207,23 @@ def get_layer_stiffness_submatrices_piezo(
 
 
 class ElasticLayer:
+    """Single homogeneous layer in the elastic stack.
+
+    Parameters
+    ----------
+    material
+        Material object providing stiffness, density, and (optionally) piezo tensors.
+    thickness_SI
+        Physical thickness in metres.
+    use_4d
+        Force an 8-component state dimension (piezo-aware) even for non-piezo materials.
+
+    Notes
+    -----
+    All internal calculations are performed in normalised units defined by
+    ``nbtypes.NormalisationConstants``. Access physical thickness via
+    ``thickness_SI()``.
+    """
     def __init__(
         self,
         material,  #: materials.Material,
@@ -169,13 +247,31 @@ class ElasticLayer:
         self._build_material_quantities(use_4d)
 
     def thickness_SI(self) -> float:
+        """Return the physical thickness of the layer in metres."""
         return self.L * g_norms.x0
 
     def is_piezo(self) -> bool:
+        """Whether the layer is piezoelectrically active."""
         return self.material.piezo_active()
 
     def poynting_vector_Sav(self, Om: float, Vp: float, vecq: NDArray[np.complex128],
                             evec: NDArray[np.complex128]) -> NDArray[np.float64]:
+        """Compute time-averaged elastic Poynting vector S for a mode.
+
+        Parameters
+        ----------
+        Om, Vp
+            Normalised angular frequency and phase velocity.
+        vecq
+            Wavevector components as a 3-vector [qx, qy, qz] in normalised units.
+        evec
+            Eigenvector (state vector) corresponding to the local eigenvalue.
+
+        Returns
+        -------
+        ndarray
+            S = [Sx, Sy, Sz] in normalised power-flow units.
+        """
 
         if self.dim == 6: # plain case
             vecu = evec[self.hdim:]
@@ -190,6 +286,11 @@ class ElasticLayer:
         return Svec
 
     def _build_material_quantities(self, use_4d: bool) -> None:
+        """Populate normalised material tensors used by the transfer matrix.
+
+        Sets stiffness, density, and (if present) piezo coupling and permittivity,
+        and precomputes helper matrices used in the layer transfer operator.
+        """
 
         self.cstiff_norm = (
             self.material.stiffness_c_IJ.unit_indexed_value() / g_norms.c0
@@ -224,6 +325,21 @@ class ElasticLayer:
     def find_layer_transfer_matrix(
         self, Om: float, Vp: float
     ) -> Tuple[NDArray[np.complex128], Optional[NDArray[np.complex128]]]:
+        """Construct the layer transfer generator and its exponential.
+
+        Parameters
+        ----------
+        Om, Vp
+            Normalised angular frequency and phase velocity.
+
+        Returns
+        -------
+        matT : ndarray (dim x dim)
+            First-order system matrix d/dy psi = matT psi.
+        matPdz : ndarray or None
+            exp(matT * L) if the layer thickness L>0, else None for zero-thickness
+            layers used to represent boundary conditions.
+        """
         # Om, Vp are both normalised
         #check_magnitude(Om, "Om", 0.05, 1000)
         #check_magnitude(Vp, "Vp", 0.01, 50)
@@ -250,7 +366,7 @@ class ElasticLayer:
         # exponentiate to get layer transfer matrix
         matPdz = spla.expm(matT * self.L) if self.L > 0 else None
 
-        return matT, matPdz
+        return matT, matPdz # type: ignore[arg-type]  # pylance worries that matPdz might be a real matrix
 
 
 # def is_growing_eigenvalue(ev: complex) -> bool:
@@ -262,6 +378,12 @@ class ElasticLayer:
 
 
 class ElasticBoundaryCondition:
+    """Boundary condition wrapper, optionally with a semi-infinite layer.
+
+    Depending on ``bc_type``, this may host an internal zero-thickness
+    ``ElasticLayer`` (for SEMI_INFINITE), or just encode algebraic constraints
+    (VACUUM/SHORT/CHARGE_FREE).
+    """
     def __init__(
         self,
         bc_type: ElBCType,
@@ -271,9 +393,9 @@ class ElasticBoundaryCondition:
         self.bc_type = bc_type
         self.material = material
 
-        self.layer = None
+        self._layer = None
         if material is not None:
-            self.layer = ElasticLayer(material, 0.0)
+            self._layer = ElasticLayer(material, 0.0)
 
         if self.is_semi_infinite() and material is None:
             raise ValueError("Semi-infinite boundary condition requires a material.")
@@ -283,44 +405,98 @@ class ElasticBoundaryCondition:
 
         self._is_front_side = True  # is bc at front (left side) of stack
 
+    def find_layer_transfer_matrix(
+        self, Om: float, Vp: float
+    ) -> Tuple[NDArray[np.complex128], Optional[NDArray[np.complex128]]]:
+        """Get the transfer matrix of the semi-infinite layer (if any).
+
+        Parameters
+        ----------
+        Om, Vp
+            Normalised angular frequency and phase velocity.
+
+        Returns
+        -------
+        matT : ndarray (dim x dim)
+            First-order system matrix d/dy psi = matT psi.
+        matPdz : ndarray or None
+            exp(matT * L) if the layer thickness L>0, else None for zero-thickness
+            layers used to represent boundary conditions.
+        """
+
+        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
+
+        return self._layer.find_layer_transfer_matrix(Om, Vp)
+
+
     def is_piezo(self) -> bool:
-        return self.layer is not None and self.layer.is_piezo()
+        """Whether this boundary condition engages piezo behaviour."""
+        return self._layer is not None and self._layer.is_piezo()
 
     def is_vacuum(self) -> bool:
+        """True for a free-surface (vacuum) boundary."""
         # using .value since we seem to be getting multiple visibly identical but not identical objects
         return self.bc_type.value == ElBCType.VACUUM.value
 
     def is_semi_infinite(self) -> bool:
+        """True if this side is a semi-infinite half-space of a material."""
         return self.bc_type.value == ElBCType.SEMI_INFINITE.value
 
     def is_short(self) -> bool:
+        """True for electrically shorted boundary (piezo)."""
         return self.bc_type.value == ElBCType.SHORT.value
 
     def is_charge_free(self) -> bool:
+        """True for charge-free boundary (piezo)."""
         return self.bc_type.value == ElBCType.CHARGE_FREE.value
 
     def set_is_front(self) -> None:
+        """Mark this BC as the front (left) side of the stack."""
         self._is_front_side = True
 
     def set_is_back(self) -> None:
+        """Mark this BC as the back (right) side of the stack."""
         self._is_front_side = False
 
     def __str__(self) -> str:
+        """Human-readable description of the boundary condition."""
         return f"ElasticBoundaryCondition({self.bc_type})"
 
     def analyse_semiinfinite_eigenspace(
         self, Om: float, Vp: float
     ) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
+        """Analyse the semi-infinite medium and sort eigenmodes.
+
+        Finds eigenvalues/vectors of the transfer operator for the half-space and
+        orders the modes so that the first half correspond to physically
+        admissible solutions (growing away from the interface on the front side
+        or decaying on the back side, plus outward-propagating real modes).
+
+        Parameters
+        ----------
+        Om, Vp
+            Normalised angular frequency and phase velocity.
+
+        Returns
+        -------
+        eigvals, eigvecs : ndarray
+            Eigenvalues (ordered) and the corresponding eigenvectors as columns.
+        """
+
         # find eigenvalues and eigenvectors of semi-infinite layer transfer matrix
         # identify growing and "forwards" modes and put them at front of the list
+
+        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
 
         # Om, Vp are both normalised
         check_magnitude(Om, "Om", 0.05, 1000)
         check_magnitude(Vp, "Vp", 0.01, 50)
 
-        mat_T, mat_expTL = self.layer.find_layer_transfer_matrix(Om, Vp)
+        mat_T, mat_expTL = self.find_layer_transfer_matrix(Om, Vp)
 
-        eigvals, eigvecs = spla.eig(mat_T)
+        eigvals: NDArray[np.complex128]
+        eigvecs: NDArray[np.complex128]
+        eigvals, eigvecs = spla.eig(mat_T)  # type: ignore[assignment]
         dim = len(eigvals)
         hdim = dim//2
 
@@ -355,7 +531,7 @@ class ElasticBoundaryCondition:
             if is_pureimag:
                 v_is_fwds[iev] = evi > 0
                 v_is_pureimag[iev] = True
-                v_poynting_Sav[iev, :] =self.layer.poynting_vector_Sav(Om, Vp, vecq, evec) # This is one of the time critical parts
+                v_poynting_Sav[iev, :] =self._layer.poynting_vector_Sav(Om, Vp, vecq, evec) # This is one of the time critical parts
             else:
                 v_is_growing[iev] = evr > 0
                 v_is_decaying[iev] = evr < 0
@@ -423,6 +599,11 @@ class ElasticBoundaryCondition:
         return vEvals, mVeigs
 
     def suggested_L_left(self, Om: float, Vp: float) -> float:
+        """Suggest a finite truncation length for a left semi-infinite side.
+
+        Uses the smallest decay length among admissible modes; returns a few
+        decay lengths for robust profile plotting. Value is in normalised units.
+        """
         if not self.is_semi_infinite():
             return 0.0
 
@@ -442,9 +623,17 @@ class ElasticBoundaryCondition:
         return L
 
     def suggested_L_right(self, Om: float, Vp: float) -> float:
+        """Suggest a finite truncation length for a right semi-infinite side."""
         return self.suggested_L_left(Om, Vp)
 
     def null_vector_to_field_psi0(self, v_null: NDArray[np.complex128]) -> NDArray[np.complex128]:
+        """Map a nullspace vector into a physical state at y=0.
+
+        For SEMI_INFINITE, the null vector are coefficients of selected eigenvectors.
+        For VACUUM/SHORT/CHARGE_FREE, the null vector corresponds to displacements
+        directly and algebraic constraints are applied.
+        """
+        assert self._semiinf_evecs is not None, "Semi-infinite eigenspace not analysed yet." # helps with typing
         hdim = len(v_null)
         dim = 2 * hdim
 
@@ -463,13 +652,28 @@ class ElasticBoundaryCondition:
 
 
 class ElasticStack:
-    def __init__(self, layers: List[ElasticLayer], bcs: List[ElasticBoundaryCondition]):
+    """Transfer-matrix solver for elastic waveguides composed of layers.
+
+    Parameters
+    ----------
+    layers
+        Sequence of ``ElasticLayer`` objects (front to back).
+    bcs
+        Two boundary conditions, for the front (left) and back (right) sides.
+
+    Notes
+    -----
+    All computations are performed in normalised units. Public APIs that accept
+    SI values are explicitly named with ``*_SI`` parameters.
+    """
+    def __init__(self, layers: Sequence[ElasticLayer], bcs: Sequence[ElasticBoundaryCondition]):
         self._def_Vmin = 0.01  # km/s
         self._def_Vmax = 10.0  # km/s
 
         self._n_layers = len(layers)
-        self._layers = layers
-        self._bcs = bcs
+        # Store as lists internally to support list-specific operations elsewhere
+        self._layers = list(layers)
+        self._bcs = list(bcs)
 
         self.check_bcs()
         self.analyse_layers()
@@ -486,6 +690,7 @@ class ElasticStack:
 
 
     def check_bcs(self) -> None:
+        """Validate boundary-condition list and basic configuration invariants."""
         if len(self._bcs) != 2:
             raise ValueError(
                 "Boundary conditions list must have exactly two elements (top and bottom)."
@@ -501,6 +706,7 @@ class ElasticStack:
             )
 
     def analyse_layers(self) -> None:
+        """Determine stack dimensionality and prepare slices based on piezo presence."""
         self._bcs[0].set_is_front()
         self._bcs[1].set_is_back()
 
@@ -520,6 +726,12 @@ class ElasticStack:
         self._prepare_quadrant_slice()
 
     def _prepare_quadrant_slice(self) -> None:
+        """Choose which quadrant of the full G matrix is used for the determinant.
+
+        The chosen submatrix depends on whether each side is vacuum-like or
+        semi-infinite. This avoids ill-conditioning from including constrained
+        rows/columns that do not affect mode existence.
+        """
 
         bc0_vaclike = not self._bcs[0].is_semi_infinite()
         bc1_vaclike = not self._bcs[1].is_semi_infinite()
@@ -547,7 +759,22 @@ class ElasticStack:
     def _build_profile_domain_y(
         self, ny_per_layer: int = 50, L_left: float = 0, L_right: float = 0
     ) -> Tuple[NDArray[np.float64], NDArray[np.int32]]:
-        """Make vectors v_y and v_ilayer for the y-domain of the mode profile."""
+        """Make vectors ``v_y`` and ``v_ilayer`` for the profile domain.
+
+        Parameters
+        ----------
+        ny_per_layer
+            Number of samples per physical layer (uniform within layers).
+        L_left, L_right
+            Optional semi-infinite truncation lengths (normalised units).
+
+        Returns
+        -------
+        v_y : ndarray
+            Monotonic y-positions (normalised) spanning left BC through layers to right BC.
+        v_ilayer : ndarray[int]
+            Layer index per sample; -1 for left semi-infinite region, -2 for right.
+        """
 
         # get semi-inf borders
         if self._bcs[0].is_semi_infinite():  # add a bit of space for decay
@@ -573,8 +800,9 @@ class ElasticStack:
         v_ilayer = np.zeros(n_y, dtype=np.int32)
 
         iyoff = 0
-        ylo = 0
-        yhi = 0
+        ylo = 0.0
+        yhi = 0.0
+        dy = 0.0
         if L_left > 0:
             ylo -= L_left
             dy = L_left / ny_per_layer
@@ -604,7 +832,11 @@ class ElasticStack:
         return v_y, v_ilayer
 
     def update_tau_phi_matrices(self, Om: float, Vp: float) -> None:
-        # build charge-free BC matrices
+        """Build the charge-free boundary-condition coupling matrices.
+
+        For piezoelectric problems the charge-free condition introduces a
+        coupling between stress and potential; the coefficient is q=Omega/V.
+        """
         q = Om / Vp
         #self.tau_phi_plus = np.eye(8, dtype=np.float64)
         #self.tau_phi_minus = np.eye(8, dtype=np.float64)
@@ -617,13 +849,19 @@ class ElasticStack:
     def _find_full_transfer_matrix(
         self, Om: float, Vp: float
     ) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
+        """Assemble the full transfer matrix across the stack and a quadrant.
+
+        Returns the full G matrix and the selected quadrant used for det-based
+        mode finding, including contributions from layers and boundary
+        conditions.
+        """
         # build layer parts
         mat_G = np.eye(self.dim, dtype=np.complex128)
         self.update_tau_phi_matrices(Om, Vp)
 
         for layer in self._layers:
             mat_T, mat_expTL = layer.find_layer_transfer_matrix(Om, Vp)
-            mat_G = mat_expTL @ mat_G
+            mat_G = mat_expTL @ mat_G  # type: ignore[arg-type]  # pylance worries that mat_expTL might be None
 
         # add boundary layer parts
         for ibcs, bc in enumerate(self._bcs):
@@ -667,10 +905,17 @@ class ElasticStack:
     def _find_determinant_minima(self,  Om: float, v_Vp: NDArray[np.float64],
                                  show_scan_plot: bool, show_progress: bool, prefix: str,
                                  label_scanstep: str, pllabel_scanstep: str,
-                                 vBulks=None) -> Tuple[NDArray[np.float64], NDArray[np.complex128], List[Tuple[float, float]], float]:
+                                 vBulks=None) -> Tuple[NDArray[np.complex128],
+                                                       List[Tuple[float, float]],
+                                                       float]:
+        """Scan det vs phase velocity and bracket local minima.
+
+        Returns the complex det samples, the list of bracketed minima (value,
+        det magnitude), and the maximum det magnitude (for normalisation).
+        """
 
 
-        v_det = np.zeros(len(v_Vp), dtype=np.complex128)
+        v_det: NDArray[np.complex128] = np.zeros(len(v_Vp), dtype=np.complex128)
 
         for ivP, vP in enumerate(v_Vp):
             mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
@@ -730,6 +975,7 @@ class ElasticStack:
 
     def _filter_determinant_minima(self, l_mins: List[Tuple[float, float]],
                                  detmin_thresh: float, max_det: float, show_progress: bool) -> List[Tuple[float, float]]:
+        """Filter spurious minima using a relative threshold and (optionally) SVD checks."""
         # remove any minima with f above threshold or with multiple singular values as probably not real modes
         fmin_norm_thresh = detmin_thresh * max_det # np.max(np.abs(v_det))
         l_mins_V_keep = []
@@ -757,6 +1003,7 @@ class ElasticStack:
         return l_mins_V_keep
 
     def _color_modes_by_poln(self, Omega_SI: float, l_V_SI: List[Tuple[float, float]]) -> NDArray[np.float64]:
+        """Assign RGB colors to modes based on displacement polarization fractions."""
         full_mode_col = False
         v_mode_cols = np.zeros((len(l_V_SI), 3), dtype=np.float64)
         for iv, (vSI, f) in enumerate(l_V_SI):
@@ -770,12 +1017,13 @@ class ElasticStack:
 
 
     def _get_characteristic_bulk_velocities(self) -> Optional[List[float]]:
+        """Return bulk wave velocities for a single half-space Rayleigh problem if applicable."""
         vBulks = None
         if not len(self._layers):
             if self._bcs[0].is_semi_infinite():
-                vBulks = self._bcs[0].layer.material.Vac_phase()
+                vBulks = self._bcs[0]._layer.material.Vac_phase()  # type: ignore[arg-type]
             elif self._bcs[1].is_semi_infinite():
-                vBulks = self._bcs[1].layer.material.Vac_phase()
+                vBulks = self._bcs[1]._layer.material.Vac_phase()  # type: ignore[arg-type]
         return vBulks
 
     def dispersion_relation_find_Vs_at_Omega(
@@ -791,6 +1039,27 @@ class ElasticStack:
         show_progress: bool = False,
         detmin_thresh: float = 1e-5,
     ) -> Dict[str, Any]:
+        """Find guided-mode phase velocities at a fixed frequency.
+
+        Parameters
+        ----------
+        Omega_SI
+            Angular frequency in rad/s.
+        Vmin_SI, Vmax_SI
+            Scan bounds for phase velocity in m/s.
+        nVpts
+            Number of scan points.
+        find_mode_color
+            If True, also compute a color per mode indicating polarization.
+        prefix, label, show_scan_plot, show_progress, detmin_thresh
+            Plotting/diagnostics controls and minimum-det threshold (relative).
+
+        Returns
+        -------
+        dict
+            Keys: "Vphase" (List[float]), "detmins" (List[float]),
+            "poln_cols" (Optional ndarray Nx3), and "det_scan" (tuple of arrays).
+        """
 
         check_magnitude(Omega_SI, "Omega", 1e8, 100e9 * 2 * np.pi)
         check_magnitude(Vmin_SI, "Vmin", 10, 20000)
@@ -841,7 +1110,8 @@ class ElasticStack:
 
     def find_mode_polarization_at_y0(
         self, Omega_SI: float, vP_SI: float
-    ) -> NDArray[np.float64]:
+    ) -> NDArray[np.complex128]:
+        """Return the unit-norm displacement polarization at the interface (y=0)."""
         (v_psi0, rel_sing_val) = self.find_mode_psi0(Omega_SI / g_norms.f0, vP_SI / g_norms.v0)[0]
 
         uvec = v_psi0[self.slice_uvec]
@@ -857,14 +1127,20 @@ class ElasticStack:
         L_left: float = -1,
         L_right: float = -1,
     ) -> NDArray[np.float64]:
+        """Compute polarization fractions integrated over the 1D profile.
 
-        v_y, m_psi_y = self.find_mode_profile_1d(Omega_SI, vP_SI)
-        m_u_y = m_psi_y[self.slice_uvec, :]  # displacement part
+        Returns an array of three non-negative values that sum to 1, representing
+        relative energy in x/y/z displacement components.
+        """
+
+        modefunc_u, _= self.find_mode_profile_1d(Omega_SI, vP_SI)
+        m_u_y = modefunc_u.m_uxyz[self.slice_uvec, :]  # displacement part
         poln_fracs = np.sum(np.abs(m_u_y) ** 2, axis=1)
         poln_fracs /= np.linalg.norm(poln_fracs)
         return poln_fracs
 
     def count_singular_values(self, Om: float, vP: float, thresh: float = 1e-6) -> int:
+        """Return how many singular values of the determinant quadrant fall below a threshold."""
         mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
         u, s, vh = npla.svd(mat_G_ij)
         nsmall = np.sum(s < thresh * np.max(s))  # Limited contrast precision in SVD
@@ -876,7 +1152,12 @@ class ElasticStack:
         vP: float,
         thresh_singval: float = 1e-4,
         show_progress: bool = False,
-    ) -> NDArray[np.complex128]:
+    ) -> List[Tuple[NDArray[np.complex128], float]]:
+        """Find nullspace vectors at y=0 corresponding to candidate modes.
+
+        Uses SVD of the determinant quadrant. Returns a list of (psi0, relative
+        singular value) pairs; multiple entries may appear near apparent mode crossings.
+        """
 
         mat_G, mat_G_ij = self._find_full_transfer_matrix(Om, vP)
 
@@ -932,6 +1213,11 @@ class ElasticStack:
             singval: int = 0,  # access multiple modes if they show up
             singval_thresh: float = 1e-4,
         ) -> Tuple["ModeFunction1D", "ModeFunction1D"]:
+        """Compute 1D mode profiles for displacement and (normal) stress.
+
+        Returns two ModeFunction1D objects: displacement components and normal
+        stresses (Tyy, Txy, Tzy). The profiles are normalised for convenient plotting.
+        """
         # find nullspace vector and initial field at y=0
         Om = Omega_SI / g_norms.f0
         vP = Vp_SI / g_norms.v0
@@ -960,17 +1246,16 @@ class ElasticStack:
         has_left = v_ilayer[0] == -1
         has_right = v_ilayer[-1] == -2
         if has_left:
-            mat_Tleft, mat_expTL = self._bcs[0].layer.find_layer_transfer_matrix(Om, vP)
+            mat_Tleft, _ = self._bcs[0].find_layer_transfer_matrix(Om, vP) # type: ignore[attr-defined]
 
         v_mat_Tlayer = []
         for ilay, layer in enumerate(self._layers):
-            mat_Tlayer, mat_expTL = layer.find_layer_transfer_matrix(Om, vP)
+            mat_Tlayer, _ = layer.find_layer_transfer_matrix(Om, vP)
             v_mat_Tlayer.append(mat_Tlayer)
 
         if has_right:
-            mat_Tright, mat_expTR = self._bcs[1].layer.find_layer_transfer_matrix(
-                Om, vP
-            )
+            mat_Tright, _ = self._bcs[1].find_layer_transfer_matrix(Om, vP) # type: ignore[attr-defined]
+
             # we just put the right hand matrix onto the end of the list. Doesn't need to be handled specially
             v_mat_Tlayer.append(mat_Tright)
 
@@ -997,7 +1282,7 @@ class ElasticStack:
             if (
                 ilayer == -1
             ):  # in the first layer. Back-propagate from the y=0 point (y is negative)
-                m_psi_y[:, iy] = spla.expm(mat_Tleft * y) @ v_psi0
+                m_psi_y[:, iy] = spla.expm(mat_Tleft * y) @ v_psi0 # type: ignore[operator]
             else:
                 Dy = y - y_layer_start  # distance into current layer
                 mat_T = (
@@ -1034,7 +1319,7 @@ def plot_det_scan(
     pllabel: str = "",
     Vbulks = None,
 ) -> None:
-
+    """Plot the determinant scan used to bracket guided modes and save to disk."""
     fig, ax = plt.subplots()
 
     ax.plot(
@@ -1072,7 +1357,7 @@ def plot_rayleigh_det_scan(
     Vl: float,
     material: Any,  #: materials.Material
 ) -> None:
-
+    """Plot determinant components for the Rayleigh half-space problem and save."""
     fig, ax = plt.subplots()
     ax.plot(v_Vp * 1e-3, np.real(v_det), "o", label=r"$\Delta_r$", markersize=0.5)
     ax.plot(v_Vp * 1e-3, np.imag(v_det), "x", label=r"$\Delta_i$", markersize=0.5)
@@ -1088,10 +1373,10 @@ def plot_rayleigh_det_scan(
 def find_Rayleigh_velocity_anisotropic(material: Any) -> float:  #: materials.Material
     """Find Rayleigh velocity for arbitrary material along the zhat=(0,0,1) direction with surface normal along yhat=(0,1,0)."""
 
-    bcs = (
+    bcs = [
         ElasticBoundaryCondition(ElBCType.SEMI_INFINITE, material),
         ElasticBoundaryCondition(ElBCType.VACUUM),
-    )
+    ]
     l_layers = []
 
     Omega = 2 * np.pi * 1.0 * SI_GHz

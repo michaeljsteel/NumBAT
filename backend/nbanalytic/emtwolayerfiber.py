@@ -16,6 +16,7 @@
 
 import math
 from typing import Optional, Tuple
+import functools
 
 import numpy as np
 import scipy.optimize as sciopt
@@ -24,8 +25,8 @@ import matplotlib.pyplot as plt
 import scipy.special as sp
 from numpy.typing import NDArray
 
+#import reporting
 from nbanalytic.emconstants import EMPoln
-import reporting
 
 class TwoLayerFiberEM(object):
     """Analytic modes of a two-layer (step-index) circular optical fibre.
@@ -283,28 +284,27 @@ class TwoLayerFiberEM(object):
 
         # look for up to nmodes in [n_clad, n_core]
         neff = np.linspace(self._n_core - dn / nbrack, self._n_clad + dn / nbrack, nbrack)
-        v_neff: NDArray[np.float64] = np.zeros(nmodes, dtype=np.float64)
+        v_neff: NDArray[np.float_] = np.zeros(nmodes, dtype=np.float64)
         imode = 0
+
         match poln:
             case EMPoln.TE:
-                f_disprel = self.chareq_em_fib2_TE_m
+                f_disprel_full = self.chareq_em_fib2_TE_m
             case EMPoln.TM:
-                f_disprel = self.chareq_em_fib2_TM_m
+                f_disprel_full = self.chareq_em_fib2_TM_m
             case EMPoln.HY:
-                f_disprel = self.chareq_em_fib2_hy_m
-            case _:
-                reporting.report_and_exit(f"Unknown fiber polarisation type: {poln}")
+                f_disprel_full = self.chareq_em_fib2_hy_m
 
         for m in range(azi_lo, azi_hi + 1):
-
+            f_disprel = functools.partial(f_disprel_full, m=m, kvac=kvac)
             last_neff = neff[0]
-            last_res = f_disprel(last_neff, m, kvac)
+            last_res = f_disprel(last_neff)
 
             nobrack = True  # if we find no roots with a given m, there will be no higher m roots and we can give up
             ineff = 1
             while imode < nmodes and ineff < nbrack:
                 t_neff = neff[ineff]
-                t_res = f_disprel(t_neff, m, kvac)
+                t_res = f_disprel(t_neff)
 
                 if (
                     poln == EMPoln.HY and last_res * t_res < 0
@@ -313,10 +313,8 @@ class TwoLayerFiberEM(object):
                 ):  # TE and TM curves have +inf to -inf breaks which are not brackets
                     # a bracket! go find the root
                     nobrack = False
-                    # root, rootres
-                    root = sciopt.brentq(
-                        f_disprel, last_neff, t_neff, args=(m, kvac)
-                    )
+                    #root, rootrest
+                    root = sciopt.brentq(f_disprel, last_neff, t_neff )
                     v_neff[imode] = root
                     imode += 1
 
