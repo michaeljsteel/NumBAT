@@ -373,6 +373,10 @@ def NumBATPlotPrefs():
     """
     Returns the global NumBAT plot preferences object.
     """
+    global g_numbat_plot_prefs
+
+    if not g_numbat_plot_prefs:
+        g_numbat_plot_prefs = PlotPrefs()
     return g_numbat_plot_prefs
 
 

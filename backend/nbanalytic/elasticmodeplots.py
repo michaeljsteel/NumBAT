@@ -315,24 +315,68 @@ class ModeFunction1D:
         displacement_scale: float = 0.3,
         style: str = "comps",
     ) -> str:
-        """Plot 2D mode profile."""
+        """Plot a 2D representation of the modal displacement field.
 
-        kw = locals()
+        Parameters
+        ----------
+        ax : matplotlib Axes, optional
+            Axes to plot into. If None, a new figure is created and saved.
+        prefix : str
+            Filename prefix for saved figure when ax is None.
+        zperiods : int
+            Number of axial periods to cover in the plot domain.
+        npts_per_period : int
+            Sample points per period along the axial direction.
+        displacement_scale : float
+            Visual displacement scaling factor.
+        style : {"comps","morph","quiver"}
+            Plot style: component panels, morph scatter, or quiver arrows.
+
+        Returns
+        -------
+        str
+            Path to saved figure (empty string if ax provided).
+        """
+        kw = locals().copy()
         kw.pop("self")
         kw.pop("style")
         if style == "morph":
             return self._plot_mode_profile_2d_morph(**kw)
-
         elif style == "comps":
             kw.pop("displacement_scale")
             return self._plot_mode_profile_2d_comps(**kw)
-
         elif style == "quiver":
             kw.pop("displacement_scale")
             return self._plot_mode_profile_2d_quiver(**kw)
-
         else:
             raise ValueError(f"Unknown style '{style}' for 2D mode profile plotting.")
+
+    def animate_mode_profile_2d(
+        self,
+        ax: Optional[MplAxes] = None,
+        fname: str = "",
+        zperiods: int = 1,
+        npts_per_period: int = 30,
+        displacement_scale: float = 0.3,
+        hide_decorations: bool = False,
+        shear_signed: bool = False,
+    ) -> str | None:
+        """Create and save a simple 2D slab mode animation as HTML.
+
+        Returns the output HTML filename. Currently uses the 'morph' style scatter
+        animation over two axial periods.
+        """
+        anim = SlabMode2DAnimator(
+            self.v_x * SI_um,
+            self.m_uxyz,
+            self.q_norm / SI_um,
+            zperiods=2,
+            displacement_scale=displacement_scale,
+            hide_decorations=hide_decorations,
+            shear_signed=shear_signed,
+        )
+        return anim.html_animate(fname=fname)
+
 
     def _make_2d_field_arrays(self, zperiods: int, npts_per_period: int):
 
@@ -380,9 +424,10 @@ class ModeFunction1D:
         ax.set_title(self.dvar.name_sym_units(), fontsize=self.fs_axtitle)
         self.dress_axes([ax], 'ivx', 'ivy')
 
-        m_Fabs = np.sqrt(np.abs(m_Fy) ** 2 + np.abs(m_Fz) ** 2)
+        m_Fabs = np.sqrt(np.abs(m_Fx) ** 2 + np.abs(m_Fy) ** 2 + np.abs(m_Fz) ** 2)
         dscal = displacement_scale * (self.v_x[-1] - self.v_x[0])  # fraction of the y domain
-        ax.scatter(m_Y + dscal * m_Fy.T, m_Z + dscal * m_Fz.T, s=0.5, c=m_Fabs.T)  # transposes are confusing here!
+        ax.scatter(m_Y + dscal * m_Fy.T, m_Z + dscal * m_Fz.T, s=0.5, c=m_Fabs.T,
+                   cmap=self.cm_cbar)  # transposes are confusing here!
 
         fname = ''
         if ax_in is None:
@@ -505,7 +550,6 @@ def make_title(
 
 
 
-
 class SlabMode2DAnimator:
     """Animate 2D slab-like mode displacements over one temporal period.
 
@@ -514,8 +558,8 @@ class SlabMode2DAnimator:
 
     Parameters
     ----------
-    v_y : array-like
-        Coordinates along the lateral direction (µm).
+    v_y_SI : array-like
+        Coordinates along the lateral direction (m).
     m_uxyz : ndarray
         3-element complex displacement vector describing the modal profile.
     q : float
@@ -540,7 +584,7 @@ class SlabMode2DAnimator:
 
     def __init__(
         self,
-        v_y: NDArray,
+        v_y_SI: NDArray,
         m_uxyz: NDArray[np.complexfloating],
         q: float,
         fig: Optional[Figure] = None,
@@ -552,10 +596,16 @@ class SlabMode2DAnimator:
         use_arrows: bool = False,
         displacement_scale: float = 0.05,
         label: str = "",
+        hide_decorations: bool = False,
+        shear_signed: bool = False,
     ) -> None:
+
+        pp = nbpp.PlotPrefs()
+
 
         self.n_frames = n_frames
         self.interval = interval
+        self.shear_signed = shear_signed
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -568,24 +618,36 @@ class SlabMode2DAnimator:
         self._displacement_scale = displacement_scale
         self._flip_axes = flip_axes
 
-        npts_y = len(v_y)
-        npts_z = npts_y * zperiods
+        npts_y = len(v_y_SI)
+        npts_z = npts_y #* zperiods
         zlo = 0
         zhi = zlo + zperiods * 2 * np.pi / q
         v_z = np.linspace(zlo, zhi, npts_z)
 
-        v_Y = v_y / SI_um
-        v_Z = v_z / SI_um
+        v_Y = v_y_SI / SI_um
+        v_Z = v_z/ SI_um
+        #cmp = cm.inferno
+        if self.shear_signed:
+            cmp = pp.cmap_em_field_signed
+        else:
+            cmp = pp.cmap_em_field_unsigned
 
-        cmp = cm.inferno
         dotsz = 0.5
         ds = self._displacement_scale
 
         qnorm = q * SI_um
 
+        self.m_ux_phi0 = np.full((npts_z, npts_y), m_uxyz[:, 0])
         self.m_uy_phi0 = np.full((npts_z, npts_y), m_uxyz[:, 1])
         self.m_uz_phi0 = np.full((npts_z, npts_y), m_uxyz[:, 2])
+
+        if self.shear_signed:
+            vmin, vmax = -1,1
+        else:
+            vmin, vmax = 0, None
+
         if flip_axes:
+            self.m_ux_phi0 = self.m_ux_phi0.T
             self.m_uy_phi0 = self.m_uy_phi0.T
             self.m_uz_phi0 = self.m_uz_phi0.T
 
@@ -594,6 +656,8 @@ class SlabMode2DAnimator:
             m_Y, m_Z = np.meshgrid(v_Y, v_Z)
             m_exp_iqz = np.exp(1j * qnorm * m_Z)
 
+
+            self.m_ux_phi0 *= m_exp_iqz
             self.m_uy_phi0 *= m_exp_iqz
             self.m_uz_phi0 *= m_exp_iqz
 
@@ -603,17 +667,19 @@ class SlabMode2DAnimator:
                 self.m_Y = m_Y
                 self.m_Z = m_Z
                 m_abs = np.sqrt(
+                    np.abs(self.m_ux_phi0) ** 2 +
                     np.abs(self.m_uy_phi0) ** 2 + np.abs(self.m_uz_phi0) ** 2
                 ).flatten()
                 v_dY = (m_Y + ds * np.real(self.m_uy_phi0)).flatten()
                 v_dZ = (m_Z + ds * np.real(self.m_uz_phi0)).flatten()
-                self.the_plot = self.ax.scatter(v_dY, v_dZ, c=m_abs, cmap=cmp, s=dotsz)
+                self.the_plot = self.ax.scatter(v_dY, v_dZ, c=m_abs, cmap=cmp, s=dotsz, vmin=vmin, vmax=vmax)
 
         else:
             xlab, ylab = r"$z$ [µm]", r"$y$ [µm]"
             m_Z, m_Y = np.meshgrid(v_Z, v_Y)
             m_exp_iqz = np.exp(1j * qnorm * m_Z)
 
+            self.m_ux_phi0 *= m_exp_iqz
             self.m_uy_phi0 *= m_exp_iqz
             self.m_uz_phi0 *= m_exp_iqz
 
@@ -623,26 +689,38 @@ class SlabMode2DAnimator:
                 self.m_Y = m_Y
                 self.m_Z = m_Z
                 m_abs = np.sqrt(
+                    np.abs(self.m_ux_phi0) ** 2 +
                     np.abs(self.m_uy_phi0) ** 2 + np.abs(self.m_uz_phi0) ** 2
                 ).flatten()
                 v_dY = (m_Y + ds * np.real(self.m_uy_phi0)).flatten()
                 v_dZ = (m_Z + ds * np.real(self.m_uz_phi0)).flatten()
-                self.the_plot = self.ax.scatter(v_dZ, v_dY, c=m_abs, cmap=cmp, s=dotsz)
+                self.the_plot = self.ax.scatter(v_dZ, v_dY, c=m_abs, cmap=cmp, s=dotsz, vmin=vmin, vmax=vmax)
 
         # self.ax.set_aspect('equal')
 
-        self.ax.set_xlabel(xlab)
-        self.ax.set_ylabel(ylab)
-        if label:
-            self.ax.set_title(label)
+        if hide_decorations:
+            self.ax.set_xticks([])
+            self.ax.set_yticks([])
+            self.ax.set_xticklabels([])
+            self.ax.set_yticklabels([])
+            for spine in self.ax.spines.values():
+                spine.set_visible(False)
+
+        else:
+            self.ax.set_xlabel(xlab)
+            self.ax.set_ylabel(ylab)
+            if label:
+                self.ax.set_title(label)
+
 
         self._apply_frame_for_phase(0.0)
 
     def _apply_frame_for_phase(self, phi: float) -> None:
+        m_ux_r = np.real(self.m_ux_phi0 * np.exp(-1j * phi))
         m_uy_r = np.real(self.m_uy_phi0 * np.exp(-1j * phi))
         m_uz_r = np.real(self.m_uz_phi0 * np.exp(-1j * phi))
 
-        m_abs = np.sqrt(m_uy_r**2 + m_uz_r**2).flatten()
+        m_abs = np.sqrt(m_ux_r**2 + m_uy_r**2 + m_uz_r**2).flatten()
         if self._use_arrows:
             if self._flip_axes:
                 self.the_plot.set_UVC(m_uz_r, m_uy_r, m_abs)
@@ -655,7 +733,11 @@ class SlabMode2DAnimator:
                 self.the_plot.set_offsets(np.column_stack([v_dZ, v_dY]))
             else:
                 self.the_plot.set_offsets(np.column_stack([v_dY, v_dZ]))
-            # self.the_plot.set_array(m_abs)  # update colors
+            if self.shear_signed:
+                m_abs = m_ux_r.flatten()
+            else :
+                m_abs = np.sqrt(m_uy_r**2 + m_uz_r**2).flatten()
+            self.the_plot.set_array(m_abs)  # update colors
 
     def init_func(self) -> Tuple[object, ...]:
         self._apply_frame_for_phase(0.0)
@@ -668,19 +750,59 @@ class SlabMode2DAnimator:
 
     def build_animation(self):
         self.ani = FuncAnimation(
-            self.fig,
-            self.update_func,
+            self.fig,                  # type: ignore
+            self.update_func,          # type: ignore
             frames=self.n_frames,
-            init_func=self.init_func,
+            init_func=self.init_func,  # type:ignore
             blit=True,
             interval=self.interval,
             repeat=True,
         )
         return self.ani, self.fig
 
-    def html_animate(self):
+    def html_animate(self, fname: Optional[str] = None) -> Optional[str]:
+        """Render the animation as HTML/JS. If ``output_path`` is provided, write to file.
+
+        Parameters
+        ----------
+        output_path : str, optional
+            Path to write the HTML fragment. If omitted, display inline.
+
+        Returns
+        -------
+        Optional[str]
+            The path written if ``output_path`` was supplied, else None.
+        """
         anim, fig = self.build_animation()
         plt.close(self.fig)
 
-        html_anim = ipydisp.HTML(self.ani.to_jshtml())
-        ipydisp.display(html_anim)
+        if not fname:
+            anim_out = self.ani.to_jshtml()  # type: ignore
+            html_anim = ipydisp.HTML(anim_out)
+            ipydisp.display(html_anim)
+            return None
+
+
+        fmode = fname.split('.')[-1]
+        anim_out = None
+        #fmode = 'jshtml'
+        #fmode = 'html'
+        #fmode = 'mp4'
+        #fmode = 'gif'
+        #fname = f"{prefix}_anim.{fmode}"
+
+        if fmode == 'jshtml': #display in pynotebook
+            anim_out = self.ani.to_jshtml()  # type: ignore
+            with open(fname, "w", encoding="utf-8") as f:
+                f.write(anim_out)
+        elif fmode == 'html':
+            anim_out = self.ani.to_html5_video()  # type: ignore
+            with open(fname, "w", encoding="utf-8") as f:
+                f.write(anim_out)
+
+        elif fmode == 'mp4':
+            self.ani.save(fname, writer='ffmpeg', dpi=120)  # type: ignore
+        else:  # gif
+            self.ani.save(fname, writer='imagemagick', dpi=80)  # type: ignore
+
+        return fname

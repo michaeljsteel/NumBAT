@@ -494,6 +494,24 @@ class ElasticIsotropicFreeSlab:
             Omega = q * V_asy
             return Omega
 
+
+    def find_SH_Omegas_at_q(self, q: float, max_modes: int, even_modes: bool = True) -> NDArray:
+        """Find shear horizontal mode frequencies at given q."""
+
+        omsols = []
+
+        for m in range(max_modes):
+            kappa_s_sq = (m * np.pi / self.width) ** 2
+            qsq = q**2
+            Omega_sq = self._Vbulk_shear**2 * (qsq + kappa_s_sq)
+            if Omega_sq > 0:
+                omsols.append(np.sqrt(Omega_sq))
+            else:
+                omsols.append(0.0)
+
+        rv = np.array(omsols)
+        return rv
+
     def find_SH_dispersion_for_q_bands_at_om(self, v_Omega: Sequence[float], max_modes: int, col_array: bool = False) -> Tuple[NDArray, Optional[NDArray]]:
         # Returns q(Omega) for each band
         # Bands are numbered from 0?
@@ -563,16 +581,16 @@ class ElasticIsotropicFreeSlab:
         return mode_prof
 
 
-    def plot_Rayleigh_profile_1d(self, Omega: float, depth: float, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> str:
-        mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
+    def plot_Rayleigh_profile_1d(self, Omega_SI: float, depth_SI: float, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> str:
+        mode_prof = self.find_Rayleigh_profile_1d(Omega_SI, depth_SI, npts)
         fname = mode_prof.plot_mode_profile_1d(ax=ax, legend=legend)
         return fname
 
 
-    def plot_Rayleigh_profile_2d(self, Omega: float, depth: float, zperiods: int = 1, npts: int = 20, ax: Optional[MplAxes] = None,
+    def plot_Rayleigh_profile_2d(self, Omega_SI: float, depth_SI: float, zperiods: int = 1, npts: int = 200, ax: Optional[MplAxes] = None,
                                  displacement_scale: float = 0.05, use_arrows: bool = False) -> str:
 
-        mode_prof = self.find_Rayleigh_profile_1d(Omega, depth, npts)
+        mode_prof = self.find_Rayleigh_profile_1d(Omega_SI, depth_SI, npts)
         fname = mode_prof.plot_mode_profile_2d(ax=ax, zperiods=zperiods,
                                       displacement_scale=displacement_scale  )
         return fname
@@ -594,13 +612,34 @@ class ElasticIsotropicFreeSlab:
         return fname
 
 
-    def find_mode_profile_1d(self, Omega: float, q: float, npts: int = 200, even_mode: bool = True) -> ModeFunction1D:
+    def find_SH_mode_profile_1d(self, Omega: float, q: float, m: int = 0,
+                                npts: int = 200) -> ModeFunction1D:
         # Solutions from Auld Vol 2, 10.22
 
         hwid = self.width/2
 
         v_x = np.linspace(-self.width/2, self.width/2, npts)
-        m_uxyz = np.zeros([npts,3], dtype=np.complex64)
+        m_uxyz = np.zeros([npts,3], dtype=np.complex128)
+
+        if m%2 == 0:
+            m_uxyz[:,0] = np.cos( (m * np.pi / self.width) * (v_x + hwid) )
+        else:
+            m_uxyz[:,0] = np.sin( (m * np.pi / self.width) * (v_x + hwid) )
+
+
+        Vp = Omega/q
+        mode_prof = ModeFunction1D(Omega, Vp, v_x, m_uxyz)
+
+        return mode_prof
+
+
+    def find_Lamb_mode_profile_1d(self, Omega: float, q: float, npts: int = 200, even_mode: bool = True) -> ModeFunction1D:
+        # Solutions from Auld Vol 2, 10.22
+
+        hwid = self.width/2
+
+        v_x = np.linspace(-self.width/2, self.width/2, npts)
+        m_uxyz = np.zeros([npts,3], dtype=np.complex128)
 
         C_C_ONE = 1+0j
         kap_l = np.sqrt(C_C_ONE*((Omega/self._Vbulk_long)**2 - q**2))

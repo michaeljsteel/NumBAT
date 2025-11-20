@@ -11,6 +11,7 @@ def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
     TOML_NAME = 'numbat.toml'
 
     user_settings = None
+    user_file=''
 
     if user_settings_file:
         user_file = Path(user_settings_file)
@@ -36,6 +37,7 @@ def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
             reporting.report_and_exit(f"Error decoding the TOML file at {user_file}: {e}")
     else:
         print('Using default NumBAT plot prefs.')
+        user_settings = {}
 
     return user_settings
 
