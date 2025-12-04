@@ -46,164 +46,9 @@ class ElBCType(Enum):
     CHARGE_FREE = "chargefree"
 
 
-def check_magnitude(x: float, name: str, minval: float, maxval: float) -> None:
-    """Validate that the magnitude of a value lies within bounds.
-
-    Parameters
-    ----------
-    x
-        Input value to be checked.
-    name
-        Name of the quantity (used in the error message).
-    minval, maxval
-        Allowed bounds on |x| (inclusive). Units must match the caller's context.
-
-    Raises
-    ------
-    ValueError
-        If |x| is outside [minval, maxval].
-    """
-    if not (minval <= abs(x) <= maxval):
-        raise ValueError(f"{name} value {x} out of expected range [{minval}, {maxval}]")
 
 
-# Coefficient matrices defined in the layers3.nb mathematica file
-def get_layer_stiffness_submatrices(
-    cs: NDArray[np.float64], use_4d: bool = False
-) -> Tuple[
-    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
-]:
-    """Build 3x3 (or 4x4) submatrices of the constitutive tensor for a layer.
 
-    Parameters
-    ----------
-    cs
-        Normalised 7x7 stiffness matrix in Voigt-like indexing (unit-indexed).
-    use_4d
-        When True, embed the 3x3 blocks into 4x4 blocks for an 8-component
-        (piezo-aware) state vector; the extra row/column are padded with zeros.
-
-    Returns
-    -------
-    mM1, mM2, mL1, mL2 : ndarray
-        The submatrices used to construct the transfer matrix blocks for the
-        non-piezoelectric case. Shapes are 3x3 for use_4d=False, otherwise 4x4.
-    """
-
-    assert cs.shape == (7, 7)
-
-    mM1 = np.array(
-        [
-            [cs[6, 6], cs[6, 2], cs[6, 4]],
-            [cs[2, 6], cs[2, 2], cs[2, 4]],
-            [cs[4, 6], cs[4, 2], cs[4, 4]],
-        ]
-    )
-
-    mM2 = np.array(
-        [
-            [cs[6, 5], cs[6, 4], cs[6, 3]],
-            [cs[2, 5], cs[2, 4], cs[2, 3]],
-            [cs[4, 5], cs[4, 4], cs[4, 3]],
-        ]
-    )
-
-    mL1 = np.array(
-        [
-            [cs[5, 5], cs[5, 4], cs[5, 3]],
-            [cs[4, 5], cs[4, 4], cs[4, 3]],
-            [cs[3, 5], cs[3, 4], cs[3, 3]],
-        ]
-    )
-
-    mL2 = np.array(
-        [
-            [cs[5, 6], cs[5, 2], cs[5, 4]],
-            [cs[4, 6], cs[4, 2], cs[4, 4]],
-            [cs[3, 6], cs[3, 2], cs[3, 4]],
-        ]
-    )
-
-    if use_4d:
-        # modify for 8-component case
-        mM1_4d = np.zeros((4, 4), dtype=np.float64)
-        mM2_4d = np.zeros((4, 4), dtype=np.float64)
-        mL1_4d = np.zeros((4, 4), dtype=np.float64)
-        mL2_4d = np.zeros((4, 4), dtype=np.float64)
-        mM1_4d[:3, :3] = mM1
-        mM2_4d[:3, :3] = mM2
-        mL1_4d[:3, :3] = mL1
-        mL2_4d[:3, :3] = mL2
-
-        mM1, mM2, mL1, mL2 = mM1_4d, mM2_4d, mL1_4d, mL2_4d
-
-    return mM1, mM2, mL1, mL2
-
-
-def get_layer_stiffness_submatrices_piezo(
-    cs: NDArray[np.float64], e_iJ: NDArray[np.float64], perm_ij: NDArray[np.float64]
-) -> Tuple[
-    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
-]:
-    """Build 4x4 submatrices for a piezoelectric layer.
-
-    Parameters
-    ----------
-    cs
-        Normalised 7x7 stiffness matrix (unit-indexed).
-    e_iJ
-        Normalised 4x7 piezoelectric coupling tensor (unit-indexed; i in 0..3, J in 0..6).
-    perm_ij
-        Relative permittivity tensor (4x4, unit-indexed).
-
-    Returns
-    -------
-    mM1, mM2, mL1, mL2 : ndarray
-        The 4x4 piezo-aware submatrices to construct transfer matrix blocks for
-        piezoelectric media.
-    """
-
-    assert cs.shape == (7, 7)
-    assert e_iJ.shape == (4, 7)
-    assert perm_ij.shape == (4, 4)
-
-    mM1 = np.array(
-        [
-            [cs[6, 6], cs[6, 2], cs[6, 4], e_iJ[2, 6]],
-            [cs[2, 6], cs[2, 2], cs[2, 4], e_iJ[2, 2]],
-            [cs[4, 6], cs[4, 2], cs[4, 4], e_iJ[2, 4]],
-            [e_iJ[2, 6], e_iJ[2, 2], e_iJ[2, 4], -perm_ij[2, 2]],
-        ]
-    )
-
-    mM2 = np.array(
-        [
-            [cs[6, 5], cs[6, 4], cs[6, 3], e_iJ[3, 6]],
-            [cs[2, 5], cs[2, 4], cs[2, 3], e_iJ[3, 2]],
-            [cs[4, 5], cs[4, 4], cs[4, 3], e_iJ[3, 4]],
-            [e_iJ[2, 5], e_iJ[2, 4], e_iJ[2, 3], -perm_ij[2, 3]],
-        ]
-    )
-
-    mL1 = np.array(
-        [
-            [cs[5, 5], cs[5, 4], cs[5, 3], e_iJ[3, 5]],
-            [cs[4, 5], cs[4, 4], cs[4, 3], e_iJ[3, 4]],
-            [cs[3, 5], cs[3, 4], cs[3, 3], e_iJ[3, 3]],
-            [e_iJ[3, 5], e_iJ[3, 4], e_iJ[3, 3], -perm_ij[3, 3]],
-        ]
-    )
-
-    mL2 = np.array(
-        [
-            [cs[5, 6], cs[5, 2], cs[5, 4], e_iJ[2, 5]],
-            [cs[4, 6], cs[4, 2], cs[4, 4], e_iJ[2, 4]],
-            [cs[3, 6], cs[3, 2], cs[3, 4], e_iJ[2, 3]],
-            [e_iJ[3, 6], e_iJ[3, 2], e_iJ[3, 4], -perm_ij[3, 2]],
-        ]
-    )
-
-    return mM1, mM2, mL1, mL2
 
 
 class ElasticLayer:
@@ -227,11 +72,11 @@ class ElasticLayer:
     def __init__(
         self,
         material,  #: materials.Material,
-        thickness_SI: float = 1e-6,
+        thickness_SI: float = 0.0,
         use_4d: bool = False,
     ) -> None:
 
-        check_magnitude(thickness_SI, "thickness_SI", 0.0, 1e-4) # max length 100 microns
+        nbt.check_magnitude(thickness_SI, "thickness_SI", 0.0, 1e-4) # max length 100 microns
 
         self.material = material
         self.L = thickness_SI / g_norms.x0
@@ -254,6 +99,7 @@ class ElasticLayer:
         """Whether the layer is piezoelectrically active."""
         return self.material.piezo_active()
 
+    # TODO: this belongs somewhere else but involves a lot of arg passing.
     def poynting_vector_Sav(self, Om: float, Vp: float, vecq: NDArray[np.complex128],
                             evec: NDArray[np.complex128]) -> NDArray[np.float64]:
         """Compute time-averaged elastic Poynting vector S for a mode.
@@ -285,42 +131,6 @@ class ElasticLayer:
                                         self.permij_norm[1:, 1:])
         return Svec
 
-    def _build_material_quantities(self, use_4d: bool) -> None:
-        """Populate normalised material tensors used by the transfer matrix.
-
-        Sets stiffness, density, and (if present) piezo coupling and permittivity,
-        and precomputes helper matrices used in the layer transfer operator.
-        """
-
-        self.cstiff_norm = (
-            self.material.stiffness_c_IJ.unit_indexed_value() / g_norms.c0
-        )
-        self.rho_norm = self.material.rho / g_norms.rho0
-
-        if self.material.piezo_active():
-            self.eiJ_norm = self.material._piezo._tens_e_iJ.unit_indexed_value() / g_norms.e0
-            self.permij_norm = (
-                self.material._piezo._tens_relepsS_ij.unit_indexed_value()
-            )
-        else:  # trivial values for non-piezo materials in a piezo-aware stack
-            self.eiJ_norm = np.zeros((4, 7), dtype=np.float64)
-            self.permij_norm = np.eye(4, dtype=np.float64)
-
-        if self.material.piezo_active():
-            mM1, mM2, mL1, mL2 = get_layer_stiffness_submatrices_piezo(
-                self.cstiff_norm, self.eiJ_norm, self.permij_norm
-            )
-        else:
-            mM1, mM2, mL1, mL2 = get_layer_stiffness_submatrices(
-                self.cstiff_norm, use_4d
-            )
-
-        self.rho_norm_I = self.rho_norm * np.eye(self.hdim)
-        self.mL1 = mL1
-        self.mM1inv = npla.inv(mM1)
-        self.mL2_mM1inv = mL2 @ self.mM1inv
-        self.mL2_mM1inv_mM2 = mL2 @ self.mM1inv @ mM2
-        self.mM1inv_mM2 = self.mM1inv @ mM2
 
     def find_layer_transfer_matrix(
         self, Om: float, Vp: float
@@ -341,8 +151,8 @@ class ElasticLayer:
             layers used to represent boundary conditions.
         """
         # Om, Vp are both normalised
-        #check_magnitude(Om, "Om", 0.05, 1000)
-        #check_magnitude(Vp, "Vp", 0.01, 50)
+        #nbt.check_magnitude(Om, "Om", 0.05, 1000)
+        #nbt.check_magnitude(Vp, "Vp", 0.01, 50)
 
         dim, hdim = self.dim, self.hdim
 
@@ -369,12 +179,42 @@ class ElasticLayer:
         return matT, matPdz # type: ignore[arg-type]  # pylance worries that matPdz might be a real matrix
 
 
-# def is_growing_eigenvalue(ev: complex) -> bool:
-#     return not np.isclose(np.real(ev), 0) and np.real(ev) > 0
+    def _build_material_quantities(self, use_4d: bool) -> None:
+        """Populate normalised material tensors used by the transfer matrix.
 
+        Sets stiffness, density, and (if present) piezo coupling and permittivity,
+        and precomputes helper matrices used in the layer transfer operator.
+        """
 
-# def is_decaying_eigenvalue(ev: complex) -> bool:
-#     return not np.isclose(np.real(ev), 0) and np.real(ev) < 0
+        self.cstiff_norm = (
+            self.material.stiffness_c_IJ.unit_indexed_value() / g_norms.c0
+        )
+        self.rho_norm = self.material.rho / g_norms.rho0
+
+        if self.material.piezo_active():
+            self.eiJ_norm = self.material._piezo._tens_e_iJ.unit_indexed_value() / g_norms.e0
+            self.permij_norm = (
+                self.material._piezo._tens_relepsS_ij.unit_indexed_value()
+            )
+        else:  # trivial values for non-piezo materials in a piezo-aware stack
+            self.eiJ_norm = np.zeros((4, 7), dtype=np.float64)
+            self.permij_norm = np.eye(4, dtype=np.float64)
+
+        if self.material.piezo_active():
+            mM1, mM2, mL1, mL2 = _get_layer_stiffness_submatrices_piezo(
+                self.cstiff_norm, self.eiJ_norm, self.permij_norm
+            )
+        else:
+            mM1, mM2, mL1, mL2 = _get_layer_stiffness_submatrices(
+                self.cstiff_norm, use_4d
+            )
+
+        self.rho_norm_I = self.rho_norm * np.eye(self.hdim)
+        self.mL1 = mL1
+        self.mM1inv = npla.inv(mM1)
+        self.mL2_mM1inv = mL2 @ self.mM1inv
+        self.mL2_mM1inv_mM2 = mL2 @ self.mM1inv @ mM2
+        self.mM1inv_mM2 = self.mM1inv @ mM2
 
 
 class ElasticBoundaryCondition:
@@ -395,7 +235,7 @@ class ElasticBoundaryCondition:
 
         self._layer = None
         if material is not None:
-            self._layer = ElasticLayer(material, 0.0)
+            self._layer = ElasticLayer(material)
 
         if self.is_semi_infinite() and material is None:
             raise ValueError("Semi-infinite boundary condition requires a material.")
@@ -405,28 +245,6 @@ class ElasticBoundaryCondition:
 
         self._is_front_side = True  # is bc at front (left side) of stack
 
-    def find_layer_transfer_matrix(
-        self, Om: float, Vp: float
-    ) -> Tuple[NDArray[np.complex128], Optional[NDArray[np.complex128]]]:
-        """Get the transfer matrix of the semi-infinite layer (if any).
-
-        Parameters
-        ----------
-        Om, Vp
-            Normalised angular frequency and phase velocity.
-
-        Returns
-        -------
-        matT : ndarray (dim x dim)
-            First-order system matrix d/dy psi = matT psi.
-        matPdz : ndarray or None
-            exp(matT * L) if the layer thickness L>0, else None for zero-thickness
-            layers used to represent boundary conditions.
-        """
-
-        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
-
-        return self._layer.find_layer_transfer_matrix(Om, Vp)
 
 
     def is_piezo(self) -> bool:
@@ -462,6 +280,29 @@ class ElasticBoundaryCondition:
         """Human-readable description of the boundary condition."""
         return f"ElasticBoundaryCondition({self.bc_type})"
 
+    def find_layer_transfer_matrix(
+        self, Om: float, Vp: float
+    ) -> Tuple[NDArray[np.complex128], Optional[NDArray[np.complex128]]]:
+        """Get the transfer matrix of the semi-infinite layer (if any).
+
+        Parameters
+        ----------
+        Om, Vp
+            Normalised angular frequency and phase velocity.
+
+        Returns
+        -------
+        matT : ndarray (dim x dim)
+            First-order system matrix d/dy psi = matT psi.
+        matPdz : ndarray or None
+            exp(matT * L) if the layer thickness L>0, else None for zero-thickness
+            layers used to represent boundary conditions.
+        """
+
+        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
+
+        return self._layer.find_layer_transfer_matrix(Om, Vp)
+
     def analyse_semiinfinite_eigenspace(
         self, Om: float, Vp: float
     ) -> Tuple[NDArray[np.complex128], NDArray[np.complex128]]:
@@ -483,20 +324,32 @@ class ElasticBoundaryCondition:
             Eigenvalues (ordered) and the corresponding eigenvectors as columns.
         """
 
-        # find eigenvalues and eigenvectors of semi-infinite layer transfer matrix
-        # identify growing and "forwards" modes and put them at front of the list
 
-        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
 
         # Om, Vp are both normalised
-        check_magnitude(Om, "Om", 0.05, 1000)
-        check_magnitude(Vp, "Vp", 0.01, 50)
+        nbt.check_magnitude(Om, "Om", 0.05, 1000)
+        nbt.check_magnitude(Vp, "Vp", 0.01, 50)
 
         mat_T, mat_expTL = self.find_layer_transfer_matrix(Om, Vp)
 
-        eigvals: NDArray[np.complex128]
-        eigvecs: NDArray[np.complex128]
-        eigvals, eigvecs = spla.eig(mat_T)  # type: ignore[assignment]
+        evals: NDArray[np.complex128]
+        evecs: NDArray[np.complex128]
+        evals, evecs = spla.eig(mat_T)  # type: ignore[assignment]
+
+        evals_sorted, evecs_sorted = self._classify_seminifite_eigenspace(
+            Om, Vp, evals, evecs)
+
+        self._semiinf_evals = evals_sorted
+        self._semiinf_evecs = evecs_sorted
+
+        return evals_sorted, evecs_sorted
+
+    def _classify_seminifite_eigenspace(self, Om:float, Vp: float,
+                                    eigvals: NDArray[np.complex128],
+                                    eigvecs: NDArray[np.complex128]):
+
+        assert self._layer is not None, "Layer must be initialized for semi-infinite BC" # helps with typing
+
         dim = len(eigvals)
         hdim = dim//2
 
@@ -591,11 +444,6 @@ class ElasticBoundaryCondition:
 
         vEvals = eigvals[ev_order]
         mVeigs = eigvecs[:, ev_order]
-
-        # print(f"Semi-infinite  layer: Kept evs", ev_good, eigvals[ev_good])
-        self._semiinf_evals = vEvals
-        self._semiinf_evecs = mVeigs
-
         return vEvals, mVeigs
 
     def suggested_L_left(self, Om: float, Vp: float) -> float:
@@ -633,11 +481,11 @@ class ElasticBoundaryCondition:
         For VACUUM/SHORT/CHARGE_FREE, the null vector corresponds to displacements
         directly and algebraic constraints are applied.
         """
-        assert self._semiinf_evecs is not None, "Semi-infinite eigenspace not analysed yet." # helps with typing
         hdim = len(v_null)
         dim = 2 * hdim
 
         if self.is_semi_infinite():                     # null vector is coeffs of eigenvectors
+            assert self._semiinf_evecs is not None, "Semi-infinite eigenspace not analysed yet." # helps with typing
             v_psi0 = self._semiinf_evecs[:, :hdim] @ v_null
         else:
             v_psi0 = np.zeros(dim, dtype=np.complex128)
@@ -1061,9 +909,9 @@ class ElasticStack:
             "poln_cols" (Optional ndarray Nx3), and "det_scan" (tuple of arrays).
         """
 
-        check_magnitude(Omega_SI, "Omega", 1e8, 100e9 * 2 * np.pi)
-        check_magnitude(Vmin_SI, "Vmin", 10, 20000)
-        check_magnitude(Vmax_SI, "Vmax", 100, 20000)
+        nbt.check_magnitude(Omega_SI, "Omega", 1e8, 100e9 * 2 * np.pi)
+        nbt.check_magnitude(Vmin_SI, "Vmin", 10, 20000)
+        nbt.check_magnitude(Vmax_SI, "Vmax", 100, 20000)
 
         # move to normalised units here
         Om = Omega_SI / g_norms.f0
@@ -1391,3 +1239,145 @@ def find_Rayleigh_velocity_anisotropic(material: Any) -> float:  #: materials.Ma
     else:
         return 0
 
+
+
+
+
+
+# Coefficient matrices defined in the layers3.nb mathematica file
+def _get_layer_stiffness_submatrices(
+    cs: NDArray[np.float64], use_4d: bool = False
+) -> Tuple[
+    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
+]:
+    """Build 3x3 (or 4x4) submatrices of the constitutive tensor for a layer.
+
+    Parameters
+    ----------
+    cs
+        Normalised 7x7 stiffness matrix in Voigt-like indexing (unit-indexed).
+    use_4d
+        When True, embed the 3x3 blocks into 4x4 blocks for an 8-component
+        (piezo-aware) state vector; the extra row/column are padded with zeros.
+
+    Returns
+    -------
+    mM1, mM2, mL1, mL2 : ndarray
+        The submatrices used to construct the transfer matrix blocks for the
+        non-piezoelectric case. Shapes are 3x3 for use_4d=False, otherwise 4x4.
+    """
+
+    assert cs.shape == (7, 7)
+
+    mM1 = np.array(
+        [
+            [cs[6, 6], cs[6, 2], cs[6, 4]],
+            [cs[2, 6], cs[2, 2], cs[2, 4]],
+            [cs[4, 6], cs[4, 2], cs[4, 4]],
+        ]
+    )
+
+    mM2 = np.array(
+        [
+            [cs[6, 5], cs[6, 4], cs[6, 3]],
+            [cs[2, 5], cs[2, 4], cs[2, 3]],
+            [cs[4, 5], cs[4, 4], cs[4, 3]],
+        ]
+    )
+
+    mL1 = np.array(
+        [
+            [cs[5, 5], cs[5, 4], cs[5, 3]],
+            [cs[4, 5], cs[4, 4], cs[4, 3]],
+            [cs[3, 5], cs[3, 4], cs[3, 3]],
+        ]
+    )
+
+    mL2 = np.array(
+        [
+            [cs[5, 6], cs[5, 2], cs[5, 4]],
+            [cs[4, 6], cs[4, 2], cs[4, 4]],
+            [cs[3, 6], cs[3, 2], cs[3, 4]],
+        ]
+    )
+
+    if use_4d:
+        # modify for 8-component case
+        mM1_4d = np.zeros((4, 4), dtype=np.float64)
+        mM2_4d = np.zeros((4, 4), dtype=np.float64)
+        mL1_4d = np.zeros((4, 4), dtype=np.float64)
+        mL2_4d = np.zeros((4, 4), dtype=np.float64)
+        mM1_4d[:3, :3] = mM1
+        mM2_4d[:3, :3] = mM2
+        mL1_4d[:3, :3] = mL1
+        mL2_4d[:3, :3] = mL2
+
+        mM1, mM2, mL1, mL2 = mM1_4d, mM2_4d, mL1_4d, mL2_4d
+
+    return mM1, mM2, mL1, mL2
+
+
+def _get_layer_stiffness_submatrices_piezo(
+    cs: NDArray[np.float64], e_iJ: NDArray[np.float64], perm_ij: NDArray[np.float64]
+) -> Tuple[
+    NDArray[np.float64], NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]
+]:
+    """Build 4x4 submatrices for a piezoelectric layer.
+
+    Parameters
+    ----------
+    cs
+        Normalised 7x7 stiffness matrix (unit-indexed).
+    e_iJ
+        Normalised 4x7 piezoelectric coupling tensor (unit-indexed; i in 0..3, J in 0..6).
+    perm_ij
+        Relative permittivity tensor (4x4, unit-indexed).
+
+    Returns
+    -------
+    mM1, mM2, mL1, mL2 : ndarray
+        The 4x4 piezo-aware submatrices to construct transfer matrix blocks for
+        piezoelectric media.
+    """
+
+    assert cs.shape == (7, 7)
+    assert e_iJ.shape == (4, 7)
+    assert perm_ij.shape == (4, 4)
+
+    mM1 = np.array(
+        [
+            [cs[6, 6], cs[6, 2], cs[6, 4], e_iJ[2, 6]],
+            [cs[2, 6], cs[2, 2], cs[2, 4], e_iJ[2, 2]],
+            [cs[4, 6], cs[4, 2], cs[4, 4], e_iJ[2, 4]],
+            [e_iJ[2, 6], e_iJ[2, 2], e_iJ[2, 4], -perm_ij[2, 2]],
+        ]
+    )
+
+    mM2 = np.array(
+        [
+            [cs[6, 5], cs[6, 4], cs[6, 3], e_iJ[3, 6]],
+            [cs[2, 5], cs[2, 4], cs[2, 3], e_iJ[3, 2]],
+            [cs[4, 5], cs[4, 4], cs[4, 3], e_iJ[3, 4]],
+            [e_iJ[2, 5], e_iJ[2, 4], e_iJ[2, 3], -perm_ij[2, 3]],
+        ]
+    )
+
+    mL1 = np.array(
+        [
+            [cs[5, 5], cs[5, 4], cs[5, 3], e_iJ[3, 5]],
+            [cs[4, 5], cs[4, 4], cs[4, 3], e_iJ[3, 4]],
+            [cs[3, 5], cs[3, 4], cs[3, 3], e_iJ[3, 3]],
+            [e_iJ[3, 5], e_iJ[3, 4], e_iJ[3, 3], -perm_ij[3, 3]],
+        ]
+    )
+
+    mL2 = np.array(
+        [
+            [cs[5, 6], cs[5, 2], cs[5, 4], e_iJ[2, 5]],
+            [cs[4, 6], cs[4, 2], cs[4, 4], e_iJ[2, 4]],
+            [cs[3, 6], cs[3, 2], cs[3, 4], e_iJ[2, 3]],
+            [e_iJ[3, 6], e_iJ[3, 2], e_iJ[3, 4], -perm_ij[3, 2]],
+        ]
+    )
+
+    return mM1, mM2, mL1, mL2

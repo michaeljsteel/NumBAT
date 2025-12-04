@@ -534,7 +534,7 @@ class ElasticIsotropicFreeSlab:
         return m_qs, m_col
 
 
-    def find_Rayleigh_dispersion_for_v(self, v_Omega: Sequence[float], col_array: bool = False) -> Tuple[NDArray, Optional[NDArray]]:
+    def find_Rayleigh_dispersion_at_om(self, v_Omega: Sequence[float], col_array: bool = False) -> Tuple[NDArray, Optional[NDArray]]:
         # find Rayleigh wavenumber v_q of Rayleigh mode for np array v_Omega
         vR = self._material.Vac_Rayleigh()
         v_qR = v_Omega/vR
@@ -598,7 +598,7 @@ class ElasticIsotropicFreeSlab:
 
     def plot_slab_mode_profile_1d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 200, ax: Optional[MplAxes] = None, legend: bool = False) -> str:
 
-        mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
+        mode_prof = self.find_Lamb_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
         fname = mode_prof.plot_mode_profile_1d(ax=ax, legend=legend)
         return fname
 
@@ -606,7 +606,7 @@ class ElasticIsotropicFreeSlab:
     def plot_slab_mode_profile_2d(self, mode: int, Omega: float, q: float, is_even: bool, npts: int = 30, zperiods: int = 1,
                                   ax: Optional[MplAxes] = None, displacement_scale: float = 0.1) -> str:
 
-        mode_prof = self.find_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
+        mode_prof = self.find_Lamb_mode_profile_1d(Omega, q, npts=npts, even_mode=is_even)
         fname = mode_prof.plot_mode_profile_2d(ax=ax, zperiods=zperiods,
                                       displacement_scale=displacement_scale )
         return fname

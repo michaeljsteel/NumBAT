@@ -152,6 +152,7 @@ def launch_worker_threads_and_wait(num_workers, task_func, q_result,
 
     if num_workers < 1:  # avoid separate thread if num_workers <= 0
         run_in_current_thread(task_func, q_result, q_work, verbose)
+        run_in_current_thread(task_func, q_result, q_work_noshare, verbose)
         return
 
     report_progress = True

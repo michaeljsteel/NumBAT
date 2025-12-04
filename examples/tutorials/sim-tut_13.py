@@ -21,7 +21,7 @@ sys.path.append(str(Path("../../backend")))
 import numbat
 import materials
 from nbthread import launch_worker_threads_and_wait, launch_worker_processes_and_wait
-from nbanalytic.elasticcylinder import ElasticIsotropicCylinder, chareq_elastic_cylinder
+from nbanalytic.elasticcylinder import ElasticIsotropicCylinder 
 from nbtypes import twopi
 
 import starter
@@ -97,6 +97,10 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
     print(f"Assigned {q_work.qsize()} tasks to {num_cores} threads.")
 
     # Make plots of the char equation at q as func of Omega (to check if it behaves nicely for root-finding)
+
+    arad_SI = arad * 1e-9  # fix this messiness
+    rod_ac = ElasticIsotropicCylinder(rho, c11, c12, c44, arad_SI)
+    
     plot_chareqs = False
     if plot_chareqs:
         for p in range(plo, phi + 1):
@@ -110,7 +114,8 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
                 drvec = np.zeros(len(Omvec))
 
                 for iOm, Om in enumerate(Omvec):
-                    drvec[iOm] = chareq_elastic_cylinder(Om, p, q, rho, c11, c12, c44, arad)
+                    #drvec[iOm] = chareq_elastic_cylinder(Om, p, q, rho, c11, c12, c44, arad)
+                    drvec[iOm] = rod_ac.chareq_elastic_cylinder(Om, p, q)
                 axs[0].plot(
                     Omvec / (twopi * 1e9),
                     drvec,
@@ -210,7 +215,7 @@ def solve_elastic_rod_analytical(prefix, qvec, nmodes, coremat, arad):
         r"$q\, [\mathrm{μm}^{-1}]$ ",
         r"$\nu$ [GHz]",
         (0, qvec[-1] * 1e-6),
-        (0, nu_hi * 1e-9),
+        (0, nu_hi * 1e-9/2),
         legend_ncol=2,
     )
 
@@ -404,8 +409,10 @@ def solve_elastic_dispersion(prefix, ssys, wguide, simres_EM, rcore, mat_core):
 
     # Numerical part of joint (q,nu) plot
     plot_and_label(ax, qvec_num * 1e-6, nu_num * 1e-9, "xk", "FEM")
-    ax.plot(qvec_num * 1e-6, qvec_num * Vl / (twopi * 1e9), ":", color="gray", lw=0.5)
-    ax.plot(qvec_num * 1e-6, qvec_num * Vs / (twopi * 1e9), ":", color="gray", lw=0.5)
+    #ax.plot(qvec_num * 1e-6, qvec_num * Vl / (twopi * 1e9), ":", color="gray", lw=0.5)
+    #ax.plot(qvec_num * 1e-6, qvec_num * Vs / (twopi * 1e9), ":", color="gray", lw=0.5)
+    ax.plot(qvec_num * 1e-6, qvec_num * Vl / (twopi * 1e9), ":",  lw=0.5)
+    ax.plot(qvec_num * 1e-6, qvec_num * Vs / (twopi * 1e9), ":",  lw=0.5)
 
     # write numerical dispersion data with qvec as 0th column
     mdata = np.hstack((qvec_num[:, np.newaxis], nu_num))
