@@ -34,6 +34,8 @@ import time
 import datetime
 from pathlib import Path
 
+import nbplatform
+
 try:
     from fortran import nb_fortran
 except ImportError:
@@ -317,9 +319,11 @@ class NumBATApp(metaclass=_SingletonMeta):
         Check that the Python and Fortran versions match the required NumBAT version.
         Exits with an error if not.
         """
-        pyver = platform.python_version_tuple()
+        py_ver = platform.python_version_tuple()
+        np_ver = nbplatform.get_numpy_version_tuple()
+        mpl_ver = nbplatform.get_matplotlib_version_tuple()
 
-        if int(pyver[0])<3 or int(pyver[1])<10:
+        if int(py_ver[0])<3 or int(py_ver[1])<10:
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.11 or later.')
 
         s_fortver = str(nb_fortran.get_fortran_compiled_nb_version(), "utf-8")
@@ -328,6 +332,14 @@ class NumBATApp(metaclass=_SingletonMeta):
             reporting.report_and_exit(
                 f'NumBAT has detected different versions for the Python (ver={nbversion.NUMBAT_VERSION_STR_MMM}) and Fortran components (ver={s_fortver}).\n Most likely, you need to rebuild the Fortran module.'
                 )
+
+        if int(np_ver[0])<2 or int(np_ver[1])<1:
+            reporting.report_and_exit('NumBAT must be run with a numpy version of 2.1.0 or later.')
+
+        if int(mpl_ver[0])<3 or int(mpl_ver[1])<5:
+            reporting.report_and_exit('NumBAT must be run with a matplotlib version of 3.5.0 or later.')
+
+
 
     def version(self):
         """
