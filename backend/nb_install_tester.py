@@ -66,6 +66,29 @@ def check_asymptote(nbapp):
     passed=True
     return passed
 
+def check_shared_libs():
+    if not is_windows():
+        return True
+
+    req_libs = ['arpack.dll', 'mkl_intel_thread.2.dll' , 'mkl_rt.2.dll' , 'svml_dispmd.dll' , 'libifcoremd.dll' , 'libifportmd.dll' , 'libmmd.dll' , 'python313.dll' , 'libumfpack.dll' , 'libspqr.dll' , 'libcholmod.dll' , 'libklu.dll' , 'libcxsparse.dll' , 'libamd.dll' , 'libcamd.dll' , 'libbtf.dll' , 'libccolamd.dll' , 'libcolamd.dll' , 'libldl.dll']
+
+    print('\nChecking required shared libraries...')
+    all_found = True
+    for lib in req_libs:
+        if not Path(f'fortran/{lib}').exists():
+            print(f'  Missing required library: {lib}')
+            all_found = False
+        else:
+            print(f'  Found required library: {lib}')
+
+    if not all_found:
+        print('\nSome required shared libraries are missing.')
+        print('See installation guide for instructions on copying the required DLLs to the backend/fortran/ folder.')
+
+    return all_found
+
+
+
 def check_nb_fortran():
     passed=False
 
@@ -107,8 +130,12 @@ def do_main(argv):
     print(f'\n\nPerforming tests for platform: {nb_platform()}.')
     print('\n\n')
 
-    # Can't create NumBATApp without the main module
 
+    pass_libs = check_shared_libs()
+    if not pass_libs:
+        sys.exit(1)
+
+    # Can't create NumBATApp without the main module
     pass_nbfort, mod_nb = check_nb_fortran()
 
     if not pass_nbfort:
