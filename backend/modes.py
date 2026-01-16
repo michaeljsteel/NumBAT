@@ -754,7 +754,7 @@ def _write_one_component_to_file(md_index, longpref, ftag, s_xy, d_fields):
 
     fc = ftag.component_as_F() # eg 'Fabs'
 
-    if ftag.is_abs():  # a real valued quantity
+    if ftag.is_abs() or ftag.is_intens():  # a real valued quantity
         fname = longpref+'.txt'
         fld = d_fields[fc]
         header=f'Mode {md_index:02d}, {fc}, '  + s_xy

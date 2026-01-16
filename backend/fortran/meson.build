@@ -1,7 +1,7 @@
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.1.2', # this has to match the version in nbversion.py
+  version: '2.1.5', # this has to match the version in nbversion.py
   meson_version: '>1.4.0',
 )
 
@@ -199,6 +199,6 @@ nblib = shared_module(
   dependencies: [lib_arpack, lib_umfpack, dep_cuda, dep_blas, libs_extra, dep_py],
 
   # linux cuda only
-  link_language: linklang, 
+  link_language: linklang,
   link_args: linkargs
 )

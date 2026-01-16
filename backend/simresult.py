@@ -212,6 +212,7 @@ class SimResult:
         contours=False,
         contour_lst=None,
         suppress_imimre=True,
+        mod_is_amp=True,  # plot amplitude (True) or intensity (False) in all comp mode plots
         logamp=False,
         decorator=None,
         wide_mode=False,
@@ -310,6 +311,7 @@ class SimResult:
         comps=[],
         decorator=None,
         suppress_imimre=True,
+        mod_is_amp=True,  # plot amplitude (True) or intensity (False) in all comp mode plots
         logx=False,
         logy=False,
     ):
@@ -344,6 +346,7 @@ class SimResult:
                 'ticks': ticks,
                 'decorator': decorator,
                 'suppress_imimre': suppress_imimre,
+                'mod_is_amp': mod_is_amp,
                 'logx': logx,
                 'logy': logy,
             }

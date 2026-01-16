@@ -185,7 +185,7 @@ class FieldTag:
 
     @staticmethod  # make plain module method
     def make_from_field_and_component(ft, cc):
-        '''Create a FieldTag from the field type and component suffix x, y, z, a, t.'''
+        '''Create a FieldTag from the field type and component suffix x, y, z, a, i, t.'''
 
         if not isinstance(ft, FieldType):
             ft = FieldType(ft)
@@ -206,13 +206,13 @@ class FieldTag:
         The fc can override the preference for major real/imag part.'''
         if ft == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
-                  'Fzr': 'Ez', 'Fzi': 'Ez', 'Fa': 'Ea', 'Ft': 'Et'}[fc]
+                  'Fzr': 'Ez', 'Fzi': 'Ez', 'Fa': 'Ea', 'Fi': 'Ei', 'Ft': 'Et'}[fc]
         elif ft == FieldType.EM_H:
             uc = {'Fxr': 'Hx', 'Fxi': 'Hx', 'Fyr': 'Hy', 'Fyi': 'Hy',
-                  'Fzr': 'Hz', 'Fzi': 'Hz', 'Fa': 'Ha', 'Ft': 'Ht'}[fc]
+                  'Fzr': 'Hz', 'Fzi': 'Hz', 'Fa': 'Ha', 'Fi': 'Hi', 'Ft': 'Ht'}[fc]
         else:
             uc = {'Fxr': 'ux', 'Fxi': 'ux', 'Fyr': 'uy', 'Fyi': 'uy',
-                  'Fzr': 'uz', 'Fzi': 'uz', 'Fa': 'ua', 'Ft': 'ut'}[fc]
+                  'Fzr': 'uz', 'Fzi': 'uz', 'Fa': 'ua', 'Fi': 'ui', 'Ft': 'ut'}[fc]
 
         return FieldTag(uc, fc)
 
@@ -220,9 +220,9 @@ class FieldTag:
     def reim_major(fi):
         '''Returns the tag of the major part (real or imag) of the field component fi.'''
         try:
-            return {'Ex': 'Exr', 'Ey': 'Eyr', 'Ez': 'Ezi', 'Ea': 'Ea',
-                    'Hx': 'Hxr', 'Hy': 'Hyr', 'Hz': 'Hzi', 'Ha': 'Ha',
-                    'ux': 'uxr', 'uy': 'uyr', 'uz': 'uzi', 'ua': 'ua'}[fi]
+            return {'Ex': 'Exr', 'Ey': 'Eyr', 'Ez': 'Ezi', 'Ea': 'Ea', 'Ei': 'Ei', 'Et': 'Et',
+                    'Hx': 'Hxr', 'Hy': 'Hyr', 'Hz': 'Hzi', 'Ha': 'Ha', 'Hi': 'Hi', 'Ht': 'Ht',
+                    'ux': 'uxr', 'uy': 'uyr', 'uz': 'uzi', 'ua': 'ua', 'ui': 'ui', 'ut': 'ut'}[fi]
         except KeyError:
             return fi
 
@@ -230,15 +230,15 @@ class FieldTag:
     def reim_minor(fi):
         '''Returns the tag of the minor part (real or imag) of the field component fi.'''
         try:
-            return {'Ex': 'Exi', 'Ey': 'Eyi', 'Ez': 'Ezi', 'Ea': 'Ea',
-                    'Hx': 'Hxi', 'Hy': 'Hyi', 'Hz': 'Hzi', 'Ha': None,
-                    'ux': 'uxi', 'uy': 'uyi', 'uz': 'uzr', 'ua': None}[fi]
+            return {'Ex': 'Exi', 'Ey': 'Eyi', 'Ez': 'Ezi', 'Ea': None, 'Ei': None, 'Et': None,
+                    'Hx': 'Hxi', 'Hy': 'Hyi', 'Hz': 'Hzi', 'Ha': None, 'Hi': None, 'Ht': None,
+                    'ux': 'uxi', 'uy': 'uyi', 'uz': 'uzr', 'ua': None, 'ui': None, 'ut': None}[fi]
         except KeyError:
             return None
 
 
     def __init__(self, uc, fc=''):
-        '''Make FieldTag knowing the actual field component Ex, Ey, Ez, Et, Ea, ux, uy etc.
+        '''Make FieldTag knowing the actual field component Ex, Ey, Ez, Et, Ea, Ei, ux, uy etc.
 
            By default, the tag is set to the dominant real/imag part of the field component.
            This can be overridden or changed later using set_to_major() or set_to_minor().
@@ -247,9 +247,9 @@ class FieldTag:
               uc: str  - User-friendly field component code.
               fc: str  - Field-agnostic symbol indicating rea/imag/a/t part of whichever field is active.
 
-           A user code (uc) is one of Ex, Ey, Ez, Et, Ea, Hx, Hy, Hz, Ht, Ha, ux, uy, uz, ut, ua.
+           A user code (uc) is one of Ex, Ey, Ez, Et, Ea, Ei, Hx, Hy, Hz, Ht, Ha, Hi, ux, uy, uz, ut, ua, ui.
 
-           A field code (fc) is one of Fxr, Fxi, Fyr, Fyi, Fzr, Fzi, Fa, Ft.
+           A field code (fc) is one of Fxr, Fxi, Fyr, Fyi, Fzr, Fzi, Ft, Fa, Fi.
         '''
 
         self._user_code = uc
@@ -261,7 +261,7 @@ class FieldTag:
             'u': FieldType.AC
             }[uc[0]]
 
-        self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Et, Hx, Hy, etc
+        self._Fi = uc[:2]  # Ex, Ey, Ez, Ea, Ei, Et, Hx, Hy, etc
         self._xyz = uc[1]  # x, y, z, a, t
 
         # default real/imag given the _F value
@@ -279,12 +279,6 @@ class FieldTag:
     def field_component(self):
         return self._user_code
 
-    #def is_user_code(self, uc):
-    #     return uc in ('Ex', 'Ey', 'Ez', 'Ea', 'Et', 'Hx', 'Hy', 'Hz', 'Ha', 'Ht', 'ux', 'uy', 'uz', 'ua', 'ut')
-
-    #def is_field_code(self, fc):
-    #    return fc in ('Fxr', 'Fxi', 'Fyr', 'Fyi', 'Fzr', 'Fzi', 'Fa', 'Ft')
-
     def is_AC(self):
         return self._F == 'u'
 
@@ -300,6 +294,9 @@ class FieldTag:
 
     def is_abs(self): return self._f_code == 'Fa'
 
+    def is_intens(self): return self._f_code == 'Fi'
+
+
     def is_x(self):
         return self._xyz == 'x'
 
@@ -309,7 +306,7 @@ class FieldTag:
     def is_z(self):
         return self._xyz == 'z'
 
-    def is_signed_field(self): return self._f_code not in ('Ft', 'Fa')
+    def is_signed_field(self): return self._f_code not in ('Ft', 'Fa', 'Fi')
 
     def is_transverse(self): return self._user_code in ('Et', 'Ht', 'ut')
 
@@ -343,7 +340,8 @@ class FieldTag:
         lab = {'Fx': r'Re[ $F_x$ ]', 'Fy': r'Re[ $F_y$ ]', 'Fz': r'Im[ $F_z$ ]',
                'Fxr': r'Re[ $F_x$ ]', 'Fyr': r'Re[ $F_y$ ]', 'Fzi': r'Im[ $F_z$ ]',
                'Fxi': r'Im[ $F_x$ ]', 'Fyi': r'Im[ $F_y$ ]', 'Fzr': r'Re[ $F_z$ ]',
-               'Fa': r'$|\vec F|^2$', 'Ft': r'$\vec F_t$'}[self._f_code]  # adjusted so that Fa gives |F|^2
+               'Fa': r'$|\vec F|$', 'Fi': r'$|\vec F|^2$',
+               'Ft': r'$\vec F_t$'}[self._f_code]
         return lab.replace('F', self._F)
 
     def set_to_major(self):
@@ -369,9 +367,9 @@ class FieldTag:
             return 'EM'
 
     def linestyle(self, all_comps):
-        """Field amplitudes are dashed (major) or dotted (minor) if they are plotted alongside an aolute value"""
+        """Field amplitudes are dashed (major) or dotted (minor) if they are plotted alongside an absolute value"""
 
-        if self.is_abs():
+        if self.is_abs() or self.is_intens():
             return 'solid'
         mixed = 'a' in all_comps or 'a' in all_comps
 
@@ -383,7 +381,7 @@ class FieldTag:
     def linecolor(self):
         """Field amplitudes have standard colours."""
 
-        if self.is_abs():
+        if self.is_abs() or self.is_intens():
             return 'red'
         if self.is_x():
             return 'blue'
@@ -398,9 +396,6 @@ class FieldTag:
         """Create new FieldTag with same field but component cc of ['x', 'y', 'z', 'a', 't']"""
         tag = FieldTag.make_from_field_and_component(self._field_type, cc)
         return tag
-
-    #def as_field_code(self):
-    #    return FieldCode(self._field_type)
 
     def as_field_type(self):
         return self._field_type

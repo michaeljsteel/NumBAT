@@ -291,7 +291,8 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
     cont_field = (c_field).copy().T
 
     if ftag_cont.is_abs():
-        # TODO: cleanup: plot |u| as |u|^2
+        cont_field = np.abs(cont_field)
+    elif ftag_cont.is_intens():
         cont_field = np.abs(cont_field)**2
 
     logmax=5  # show up to 5 orders of magnitude contrast
@@ -717,6 +718,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
     decorator.set_waveguide(sim_result._structure.wg_geom)
 
     hide_minors = plps['suppress_imimre']
+    mod_is_amp = plps['mod_is_amp']
 
     tall_layout = not plps['wide_mode']
 
@@ -746,7 +748,8 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
 
     ft = field_code.as_field_type()
 
-    ftag_scal = FieldTag.make_from_field_and_component(ft, 'a')
+    scal_comp = 'a' if mod_is_amp else 'i'  # intensity or amplitude plot
+    ftag_scal = FieldTag.make_from_field_and_component(ft, scal_comp)
     ftag_transvec = FieldTag.make_from_field_and_component(ft, 't')
 
     if plps['hide_vector_field']:
