@@ -14,7 +14,8 @@ em_colormap_unsigned = 'OrRd'
 em_vector_arrow_color = 'dimgray'
 
 ac_colormap_signed = 'RdYlGn'
-ac_colormap_unsigned = 'GnBu'
+#ac_colormap_unsigned = 'GnBu'
+ac_colormap_unsigned = 'YlOrRd'   # good match to comsol's Amber
 ac_vector_arrow_color = 'dimgray'
 
 vector_arrow_scale = 10

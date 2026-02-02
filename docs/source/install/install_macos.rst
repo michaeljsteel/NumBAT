@@ -79,7 +79,7 @@ This new ``NumBAT`` folder location is referred to as ``<NumBAT>`` in the follow
 
 #. Install necessary python libraries ::
 
-    $ pip3 install numpy matplotlib scipy psutil meson ninja
+    $ pip3 install numpy matplotlib scipy psutil meson ninja gitpython
 
 #. Check that the python installs work. ::
 

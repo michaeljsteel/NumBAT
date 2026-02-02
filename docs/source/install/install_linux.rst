@@ -99,7 +99,7 @@ Building |NUMBAT| itself
 
 #. Install necessary python libraries ::
 
-      $ pip3 install numpy matplotlib scipy psutils
+      $ pip3 install numpy matplotlib scipy psutils gitpython
 
 
 

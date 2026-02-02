@@ -30,6 +30,7 @@ Copyright (C) 2017-2025  Michael Steel.
 from PIL import Image, ImageOps
 from pathlib import Path
 
+from datetime import datetime
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,11 +51,11 @@ def get_rgb_for_poln(px, py, pz):
     """
 
     # plain rgb
-    col_x = np.array([1,0,0])  
-    col_y = np.array([0,1,0])  
+    col_x = np.array([1,0,0])
+    col_y = np.array([0,1,0])
     col_z = np.array([0,0,1])
 
-    # colors suitable for green/red vision impaired 
+    # colors suitable for green/red vision impaired
     #col_x = np.array([1,1,0])  # yellow
     #col_y = np.array([1,0,1])  # magenta
     #col_z = np.array([0,0,1])
@@ -65,10 +66,10 @@ def get_rgb_for_poln(px, py, pz):
     #col_z = np.array([0,.447,.698])
 
 
-    vp = np.array([np.abs(px), np.abs(py), np.abs(pz)], dtype=np.float64) 
+    vp = np.array([np.abs(px), np.abs(py), np.abs(pz)], dtype=np.float64)
     vp /= np.linalg.norm(vp)
 
-    v_rgb = vp[0]**2 * col_x + vp[1]**2 * col_y + vp[2]**2 * col_z 
+    v_rgb = vp[0]**2 * col_x + vp[1]**2 * col_y + vp[2]**2 * col_z
     v_rgb *= 0.999999 # avoid overflow beyond 1.0
 
     # RGB values are in range 0-1
@@ -91,6 +92,7 @@ def save_and_close_figure(fig, fig_fname):
     """
     import numbat  # here to avoid circular import
 
+
     plot_prefs = numbat.NumBATPlotPrefs()
 
     if plot_prefs is None:  # If NumBATApp() has not been called this will be None
@@ -98,10 +100,18 @@ def save_and_close_figure(fig, fig_fname):
     else:
         dpi = plot_prefs.plot_output_resolution_dpi
 
+    # Prepare metadata
+    metadata = {
+        'Title': 'NumBAT Plot',
+        'CreationDate': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'Version': numbat.version(),
+        'GitHash': numbat.git_hash() or 'N/A'
+    }
+
     if fig_fname[-3:-1] == 'png':
-        fig.savefig(fig_fname, dpi=dpi)
+        fig.savefig(fig_fname, dpi=dpi, metadata=metadata)
     else:
-        fig.savefig(fig_fname, bbox_inches='tight', dpi=dpi)
+        fig.savefig(fig_fname, bbox_inches='tight', dpi=dpi, metadata=metadata)
 
     plt.close(fig)
 
