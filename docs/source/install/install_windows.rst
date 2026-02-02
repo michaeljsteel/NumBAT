@@ -53,10 +53,7 @@ You can use an existing Python installation if you have a sufficiently recent ve
 
 #.  Install the necessary python tools and libraries ::
 
-        $ pip3 install numpy  matplotlib scipy psutil ninja meson==1.4.1
-
-    Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
-
+        $ pip3 install numpy  matplotlib scipy psutil gitpython ninja meson
 
 #.  Finally, we will also need the Gnu ``make`` tool. This can be installed by typing ::
 

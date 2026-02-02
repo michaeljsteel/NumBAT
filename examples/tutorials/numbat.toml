@@ -26,7 +26,7 @@ refindex_colormap = 'cool'
 
 # properties of waveguide boundary frames
 # edge color : gray, dimgray, black, brown
-wg_frame_edge_color = 'darkred'
+wg_frame_edge_color = 'green'
 wg_frame_linewidth_wholefig = 0.75
 wg_frame_linewidth_subfig = 0.25
 

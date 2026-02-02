@@ -33,6 +33,7 @@ import shutil
 import time
 import datetime
 from pathlib import Path
+import git
 
 import nbplatform
 
@@ -391,6 +392,19 @@ def NumBATPlotPrefs():
         g_numbat_plot_prefs = PlotPrefs()
     return g_numbat_plot_prefs
 
+_cached_git_hash = None
+
+def git_hash():
+    """Get the current git commit hash (cached for the session)."""
+    global _cached_git_hash
+    if _cached_git_hash is None:
+        try:
+            repo = git.Repo(search_parent_directories=True)
+            _cached_git_hash = repo.head.object.hexsha
+        except (git.InvalidGitRepositoryError, git.GitCommandError):
+            _cached_git_hash = "unknown"
+
+    return _cached_git_hash if _cached_git_hash != "unknown" else None
 
 def version():
     """
