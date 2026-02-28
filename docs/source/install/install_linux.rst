@@ -57,7 +57,7 @@ Required libraries
 
    On Ubuntu, perform the following ::
 
-    $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev meson pkg-config ninja-build
+    $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev pkg-config ninja-build
 
     $ sudo add-apt-repository universe
 
@@ -99,7 +99,8 @@ Building |NUMBAT| itself
 
 #. Install necessary python libraries ::
 
-      $ pip3 install numpy matplotlib scipy psutils gitpython
+      $ python3 -m ensurepip --upgrade
+      $ pip3 install meson numpy matplotlib scipy psutils gitpython ipython
 
 
 
@@ -110,7 +111,7 @@ Building |NUMBAT| itself
     $ git clone https://github.com/michaeljsteel/NumBAT.git
     $ cd NumBAT
 
-#.  Move to the ``backend\fortran`` directory.
+#.  Move to the ``backend/fortran`` directory.
 
     #. To build with the ``gcc`` compilers, run::
 
