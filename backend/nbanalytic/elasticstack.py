@@ -911,7 +911,7 @@ class ElasticStack:
 
         nbt.check_magnitude(Omega_SI, "Omega", 1e8, 100e9 * 2 * np.pi)
         nbt.check_magnitude(Vmin_SI, "Vmin", 10, 20000)
-        nbt.check_magnitude(Vmax_SI, "Vmax", 100, 20000)
+        nbt.check_magnitude(Vmax_SI, "Vmax", 100, 60000)
 
         # move to normalised units here
         Om = Omega_SI / g_norms.f0
@@ -1170,26 +1170,29 @@ def plot_det_scan(
     """Plot the determinant scan used to bracket guided modes and save to disk."""
     fig, ax = plt.subplots()
 
-    ax.plot(
-        v_Vp, np.abs(v_det), "-+", label=r"$|\Delta|$", markersize=1.0, linewidth=0.5
-    )
+    line_1, = ax.plot( v_Vp, np.abs(v_det), "-+", label=r"$|\Delta|$", markersize=1.0, linewidth=0.5)
 
 
     ax2=ax.twinx()
     vdr, vdi = np.real(v_det), np.imag(v_det)
-    ax2.plot(v_Vp, nbt.signed_log10(vdr,power=4), '-o', linewidth=0.5, color='r',
+    line_2a, = ax2.plot(v_Vp, nbt.signed_log10(vdr,power=4), '-o', linewidth=0.5, color='r',
              label=r"Re($\Delta$)", markersize=1.0)
-    ax2.plot(v_Vp, nbt.signed_log10(vdi,power=4), '-o', linewidth=0.5, color='g',
+    line_2b, = ax2.plot(v_Vp, nbt.signed_log10(vdi,power=4), '-o', linewidth=0.5, color='g',
              label=r"Im($\Delta$)", markersize=1.0)
+
 
     # ax2.plot(v_Vp, np.angle(v_det), '-x', markersize=1.0, linewidth=0.5, color='C3', label=r"Arg($\Delta$)")
 
     ax.set_yscale("log")
     ax.set_xlabel(r"$V$ [km/s]", fontsize=10)
-    ax.set_ylabel(r"$|T|$ ", fontsize=10)
+    ax.set_ylabel(r"Det of transfer matrix $|T|$ ", fontsize=10)
     ax.set_title(pllabel, fontsize=10)
     ax.tick_params(axis="both", labelsize=10)
-    ax.legend(fontsize=10)
+
+    lines = [line_1, line_2a, line_2b]
+    labels= [l.get_label() for l in lines]
+    ax.legend(lines, labels, fontsize=10)
+
     ax.set_xlim(np.min(v_Vp), np.max(v_Vp))
     if Vbulks is not None:
         for Vb in Vbulks:
