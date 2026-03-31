@@ -296,9 +296,7 @@ We are now ready to build and test |NUMBAT| itself.
 
 #. We need two additional python modules to run the build process ::
 
-     $ pip3 install ninja meson==1.4.1
-
-   Note that at last check, the most recent meson (1.5.0) is broken and we specify the earlier 1.4.1 version.
+     $ pip3 install ninja
 
 #. In your command prmopt, move to your root ``<NumBAT_BASE>`` directory and then to the |NUMBAT| folder itself::
 
