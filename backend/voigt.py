@@ -670,6 +670,13 @@ class PlainTensor2_ij(object):
 
         return self.mat.copy()
 
+    def trace(self):
+        """
+        Return the trace of the tensor's matrix data.
+        """
+
+        return self.mat[0,0] + self.mat[1,1] + self.mat[2,2] 
+
     def unit_indexed_value(self):
         """
         Return a copy of the tensor's matrix data in 1..3, 1..3 indices (shape [4,4]).

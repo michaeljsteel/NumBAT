@@ -594,14 +594,18 @@ class Material(object):
         else:
             return math.sqrt(self.stiffness_c_IJ[4, 4] / self.rho)
 
-    def Vac_phase(self, return_polarizations=False):
+    def Vac_phase(self, qvec = np.array([0,0,1]), return_polarizations=False):
         """
-        Return the three acoustic phase velocities for propagation along z for the current orientation.
+        Return the three acoustic phase velocities for propagation along qvec for the current orientation.
+        Defaults to qvec = [0,0,1]
         """
-        vkap = np.array([0, 0, 1], dtype=np.float64)
-        v_vphase, vecs, v_vgroup = solve_christoffel(
-            vkap, self.stiffness_c_IJ, self.rho
-        )
+        qvecn = qvec/ np.sqrt(np.dot(qvec, qvec))
+
+        vkap = np.array(qvecn, dtype=np.float64)
+
+        t_stiffness = self.get_stiffness_for_kappa(vkap)
+
+        v_vphase, vecs, v_vgroup = solve_christoffel( vkap, t_stiffness, self.rho)
         if return_polarizations:
             return v_vphase, vecs
         else:
@@ -662,6 +666,7 @@ class Material(object):
 
         if "eps_xx_r" in json_data:  # use strain dielectric constants
             self.optdiel_eps_ij.set_from_params(json_data)
+            self.refindex_n = np.sqrt(self.optdiel_eps_ij.trace()/3).real # TODO: ok?
         else:
             Re_n = json_data["Re_n"]  # Real part of refractive index []
             Im_n = json_data["Im_n"]  # Imaginary part of refractive index []
