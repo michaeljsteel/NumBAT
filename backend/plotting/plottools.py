@@ -100,6 +100,7 @@ def save_and_close_figure(fig, fig_fname):
     else:
         dpi = plot_prefs.plot_output_resolution_dpi
 
+    print('plotting to file: ' + fig_fname)
     # Prepare metadata
     metadata = {
         'Title': 'NumBAT Plot',
@@ -108,10 +109,12 @@ def save_and_close_figure(fig, fig_fname):
         'GitHash': numbat.git_hash() or 'N/A'
     }
 
-    if fig_fname[-3:-1] == 'png':
-        fig.savefig(fig_fname, dpi=dpi, metadata=metadata)
-    else:
+    if fig_fname[-3:] == 'pdf':
         fig.savefig(fig_fname, bbox_inches='tight', dpi=dpi, metadata=metadata)
+    elif fig_fname[-3:] == 'svg':
+        fig.savefig(fig_fname)
+    else: # png
+        fig.savefig(fig_fname, dpi=dpi, metadata=metadata)
 
     plt.close(fig)
 

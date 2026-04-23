@@ -124,6 +124,13 @@ class PlotPrefs:
         self.WG_FRAME_LINEWIDTH_SUBFIG = d_all.get('wg_frame_linewidth_subfig', 0.25)
 
         self.plot_output_resolution_dpi = d_all.get('plot_output_resolution_dpi', 300)
+        self._plot_extension = d_all.get('plot_output_format', '.png')
+
+        if self._plot_extension[0] != '.':
+            self._plot_extension = '.' + self._plot_extension
+
+        if self._plot_extension not in ['.png', '.pdf', '.svg']:
+            reporting.report_and_exit(f"Unsupported plot output format: {self._plot_extension}. Supported formats are .png, .pdf, and .svg.")
 
 
 

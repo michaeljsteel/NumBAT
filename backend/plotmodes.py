@@ -783,6 +783,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
 
 def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=None):
     decorator = plps['decorator']
+    fig=None # a problem for passed in axes
     if axis is None:
         figsz = decorator['figsize']
         fig, ax = plt.subplots(figsize=figsz)
