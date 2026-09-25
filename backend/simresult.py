@@ -49,6 +49,8 @@ class SimResult:
         self.n_modes = sim.n_modes
         self.mode_set = []
         self.r0_offset = [0, 0]  # passed to modes when created
+        #self.width_r0_reference = [0, 0]  # passed to modes when created
+        self.width_r0_reference = None
 
         self.sym_reps = None
         self.point_group = PointGroup.Unknown
@@ -124,11 +126,16 @@ class SimResult:
         for m in self.get_all_modes():
             m.set_r0_offset(rx, ry)
 
+    def set_width_r0_reference(self, rx, ry):
+        self.width_r0_reference = [rx, ry]
+        for m in self.get_all_modes():
+            m.set_width_r0_reference(self.width_r0_reference)
+
     def analyse_all_modes(self, n_points=501):
         """Perform modal property analysis on complete set of eigenmodes."""
         modes = self.get_all_modes()
         for m in modes:
-            m.analyse_mode(n_points=n_points)
+            m.analyse_mode(n_pts=n_points)
 
     def _build_modes(self):
         for m in range(self.n_modes):
@@ -138,6 +145,7 @@ class SimResult:
                 mode = ModeAC(self, m)
             # awkward and specific to do this here, but might have already been set in the Simulation object befores modes are created
             mode.set_r0_offset(self.r0_offset[0], self.r0_offset[1])
+            mode.set_width_r0_reference(self.width_r0_reference)
             self.mode_set.append(mode)
 
     def get_all_modes(self):

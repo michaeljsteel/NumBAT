@@ -1,3 +1,4 @@
+import sys
 
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 
@@ -430,7 +431,7 @@ class Mode:
         return self.extra_data
 
     def field_fracs(self):
-        '''Returns tuple (*fx*, *fy*, *fz*, *ft*) of "fraction" of mode contained in *x*, *y*, *z* or *t* (sum of transverse *x+y*) components.
+        '''Returns tuple (*fx*, *fy*, *ft*, *fz*) of "fraction" of mode contained in *x*, *y*, *t* (sum of transverse *x+y*) or *z* components.
 
            Note that *fraction* is defined through a simple overlap integral. It does not necessarily represent the fraction of energy density in the component.
 
@@ -533,13 +534,14 @@ class Mode:
            '''
         return self.w2[2]
 
-    def set_width_r0_reference(self, x0, y0):
+    def set_width_r0_reference(self, wid_r0_ref=None):
         '''Set reference point for calculation of second moment width.
 
         Positions are measured in microns.'''
 
         #self._width_r0_ref=(x0/SI_um, y0/SI_um)
-        self._width_r0_ref=(x0, y0)
+        if wid_r0_ref is not None:
+            self._width_r0_ref=wid_r0_ref
 
     def set_r0_offset(self, x0, y0):
         '''Sets the transverse position in the grid that is to be regarded as the origin for calculations of center-of-mass.
@@ -615,11 +617,12 @@ class Mode:
         x0 = int2D_trapz(m_xmod, dx, dy)/s_f          # unit = um
         y0 = int2D_trapz(m_ymod, dx, dy)/s_f
 
-        # This just makes the outdata look cleaner on plots, by avoiding a -0.000
-        if abs(x0) < 1e-6:
-            x0 = 0.0
-        if abs(y0) < 1e-6:
-            y0 = 0.0
+        # This just makes the outdata look cleaner on plots, by avoiding a -0.000. 
+        # But is changing actual values of r0 !
+       # if abs(x0) < 1e-6:
+       #     x0 = 0.0
+       # if abs(y0) < 1e-6:
+       #     y0 = 0.0
 
         # unit = um^2 [|F|^2]
         if self._width_r0_ref is None: # allow user setting of the second width moment reference point
@@ -631,12 +634,29 @@ class Mode:
 
         m_x2mod = np.power((m_x - w_x0), 2) * m_Fall2
         m_y2mod = np.power((m_yud - w_y0), 2) * m_Fall2
+
+
+        #m_y2modb = np.power((m_yud -y0), 2) * m_Fall2
+        #print('cols', m_yud[:,0])
+        #print('rows', m_yud[0,:])
+        #print('colsb', m_yud[:,0]-w_y0)
+        #print('\nrowsa', 
+        #      np.transpose(np.array([
+        #          m_yud[0,:],
+        #      np.sum(m_y2mod, axis=0)/s_f*dx*dy,
+        #      np.sum(m_y2modb, axis=0)/s_f*dx*dy
+        #      ])
+        #      ))
+        #sys.exit(1)
+
         w2x = sqrt(int2D_trapz(m_x2mod, dx, dy)/s_f)
         w2y = sqrt(int2D_trapz(m_y2mod, dx, dy)/s_f)
 
         w2 = sqrt(w2x*w2x+w2y*w2y)
         self.r0 = np.array([x0, y0])
         self.w2 = np.array([w2x, w2y, w2])
+
+        #print('rowsb', self.mode_num, x0, y0, w_x0, w_y0, w2y)# m_yud[0,:]-w_y0)
 
 
 

@@ -519,8 +519,19 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
 
     cbar = None
     if do_cont:
-        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftag_scalar.component_as_F()],
+
+        # terrible hack. v_fields doesn't have an 'Fi' member
+        # But add_contour_plot will square it up because of the ftag_scalar value
+        # So we push the v_fields index back to '_a'
+        ftsc = ftag_scalar.component_as_F()
+        if ftsc[1]=='i':
+            ftsc=ftsc[0]+'a'
+
+
+        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftsc],
                                        ftag_scalar, plps, decorator)
+        #im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftag_scalar.component_as_F()],
+        #                               ftag_scalar, plps, decorator)
 
     if do_quiv:
         add_quiver_plot(fig, ax, d_xy, v_fields,
