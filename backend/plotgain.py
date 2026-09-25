@@ -264,13 +264,24 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz
     save_and_close_figure(fig, f'{pathpref}{suffix}{plot_fileext}')
 
 
-    if save_txt:
-        save_array = np.array([nu_grid, v_gain_global['Total']]).T
-        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-Total.csv', save_array, delimiter=',')
-        save_array = np.array([nu_grid, v_gain_global['PE']]).T
-        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-PE.csv',  save_array, delimiter=',')
-        save_array = np.array([nu_grid, v_gain_global['MB']]).T
-        np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-MB.csv',  save_array, delimiter=',')
+
+    # if True or save_txt:
+    #     save_array = np.column_stack((
+    #         nu_grid_GHz,
+    #         np.real(v_gain_global['Total']),
+    #         np.imag(v_gain_global['Total']),
+    #     ))
+    #     np.savetxt(
+    #         f'{pathpref}-MB_PE_comps{suffix}-Total-realimag.csv',
+    #         save_array,
+    #         delimiter=',',
+    #     )
+    #     save_array = np.array([nu_grid, v_gain_global['Total']]).T
+    #     np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-Total.csv', save_array, delimiter=',')
+    #     save_array = np.array([nu_grid, v_gain_global['PE']]).T
+    #     np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-PE.csv',  save_array, delimiter=',')
+    #     save_array = np.array([nu_grid, v_gain_global['MB']]).T
+    #     np.savetxt(f'{pathpref}-MB_PE_comps{suffix}-MB.csv',  save_array, delimiter=',')
 
     # dB graph
     if dB:

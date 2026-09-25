@@ -687,7 +687,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
     for x in np.linspace(x_min, x_max, n_pts_x):
         for y in np.linspace(y_min, y_max, n_pts_y):
             v_x[i] = x
-            v_y[i] = y
+            v_y[i] = yActiv
             i += 1
     v_x = np.array(v_x)
     v_y = np.array(v_y)
