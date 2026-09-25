@@ -129,7 +129,7 @@ class SimResult:
     def set_width_r0_reference(self, rx, ry):
         self.width_r0_reference = [rx, ry]
         for m in self.get_all_modes():
-            m.set_width_r0_reference(self.width_r0_reference)
+            m.set_width_r0_reference(rx, ry)
 
     def analyse_all_modes(self, n_points=501):
         """Perform modal property analysis on complete set of eigenmodes."""
@@ -145,7 +145,8 @@ class SimResult:
                 mode = ModeAC(self, m)
             # awkward and specific to do this here, but might have already been set in the Simulation object befores modes are created
             mode.set_r0_offset(self.r0_offset[0], self.r0_offset[1])
-            mode.set_width_r0_reference(self.width_r0_reference)
+            if self.width_r0_reference is not None:
+                mode.set_width_r0_reference(self.width_r0_reference[0], self.width_r0_reference[1])
             self.mode_set.append(mode)
 
     def get_all_modes(self):
