@@ -61,7 +61,7 @@ Required libraries
 
     $ sudo add-apt-repository universe
 
-    $ sudo apt-get install libarpack2-dev libparpack2-dev libatlas-base-dev libblas-dev liblapack-dev  libsuitesparse-dev
+    $ sudo apt-get install libarpack2-dev libparpack2-dev libopenblas-dev libblas-dev liblapack-dev  libsuitesparse-dev
 
 #. If you wish to use the Intel OneAPI math libraries, you need both of the following:
 
@@ -78,7 +78,7 @@ Required libraries
 
 
 #. If you using the Intel OneAPI math libraries, you should add the library path
-   ``/opt/intel/oneapi/<release>/lib`` to your ``LD_LIBRARY_PATH`` variable in one of your shell startup files (eg. ``~/.bashrc``).  Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.
+   ``/opt/intel/oneapi/<release>/lib`` to your ``LD_LIBRARY_PATH`` variable in one of your shell startup files (eg. ``~/.bashrc``).  Replace ``<release>`` with the correct string ``2025.1`` or similar depending on your installed version of OneAPI.
 
 
 
@@ -100,7 +100,7 @@ Building |NUMBAT| itself
 #. Install necessary python libraries ::
 
       $ python3 -m ensurepip --upgrade
-      $ pip3 install meson numpy matplotlib scipy psutils gitpython ipython
+      $ pip3 install meson numpy matplotlib scipy psutils gitpython ipython ipywidgets
 
 
 
@@ -117,7 +117,7 @@ Building |NUMBAT| itself
 
         $ make gcc
 
-    #. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point the correct location of the Intel compilers. Then run::
+    #. To build with the Intel compilers, edit the file ``nb-linuxintel-native-file.ini`` adjusting the variables to point to the correct location of the Intel compilers if you have not used the default location ``/opt/intel/oneapi``. Then run::
 
         $ make intel
 
