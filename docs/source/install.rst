@@ -78,11 +78,16 @@ Steps for building the documentation
 
    Activate your normal |NUMBAT| python environment and then type ::
 
+         $ sudo apt install latexmk
          $ pip3 install sphinx nbsphinx sphinx_subfigure sphinxcontrib-bibtex setuptools pandoc ipython pygments
 
 *  Install Pandoc.
 
     You may also need to install the Pandoc package  for your distribution using your package manager or from `<https://pandoc.org/>`_ .
+
+    On Debian/Ubuntu, you can install it with::
+
+        $ sudo apt install pandoc
 
 *  Build the docs (choosing whichever version you require) ::
 

@@ -2,7 +2,7 @@
 
 NUMBAT_VERSION_MAJ=2
 NUMBAT_VERSION_MIN=1
-NUMBAT_VERSION_MIC=6
+NUMBAT_VERSION_MIC=8
 
 ######################################
 # No changes below here

@@ -74,8 +74,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'NumBAT'
-copyright = u'2016-2025, Michael Steel, Bjorn Sturmberg, Blair Morrison, Mike Smith, and Christopher Poulton'
-author = u'Michael Steel, Bjorn Sturmberg, Blair Morrison, Mike Smith, and Christopher Poulton'
+copyright = u'2016-2026, Michael Steel, Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Mike Smith, and Christopher Poulton'
+author = u'Michael Steel, Bjorn Sturmberg, Kokou Dossou, Blair Morrison, Mike Smith, and Christopher Poulton'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -343,7 +343,7 @@ except NameError:
 latex_documents = [
         #(master_doc, 'NumBAT.tex', u'NumBAT Documentation',
         (master_doc, 'NumBAT.tex', u'NumBAT - The Numerical Brillouin Analysis Tool',
-         u'Michael Steel, Bjorn Sturmberg, Blair Morrison, \\\\ Mike Smith and  Christopher Poulton' , 'manual'),
+         u'Michael Steel, Bjorn Sturmberg, Kokou Dossou, \\\\ Blair Morrison, Mike Smith and  Christopher Poulton' , 'manual'),
         ]
 
 # The name of an image file (relative to this directory) to place at the top of
