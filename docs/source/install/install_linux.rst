@@ -63,18 +63,15 @@ Required libraries
 
     $ sudo apt-get install libarpack2-dev libparpack2-dev libopenblas-dev libblas-dev liblapack-dev  libsuitesparse-dev
 
-#. If you wish to use the Intel OneAPI math libraries, you need both of the following:
+#. If you wish to use the Intel OneAPI math libraries, you need to install the Intel OneAPI toolkit. (Unlike earlier releases, there is no just one Intel OneAPI package.):
 
-    - *Intel OneAPI Base Toolkit*:
-        This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
+    - *Intel OneAPI Toolkit*:
+        This is the main Intel developer environment including C/C++ and Fortran compilers and many high performance math libraries.
 
-        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
+        The software is available from the `download site <https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit-download.html>`_.
 
+        There are commandline, GUI and package installers available.
 
-    - *Intel OneAPI HPC Toolkit*
-        This adds the Intel Fortran compiler amongst other HPC tools.
-
-        Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
 
 
 #. If you using the Intel OneAPI math libraries, you should add the library path
