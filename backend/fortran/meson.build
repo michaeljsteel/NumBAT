@@ -75,8 +75,11 @@ else
 endif
 
 if c_comp.get_id() == 'intel-llvm' # using intel compiler
-  lib_oneapi = c_comp.find_library('ifport', dirs: dir_mkl)
-  libs_extra = [lib_oneapi]
+  # Resolve Intel Fortran runtime libraries with the Fortran compiler.
+  # `for_abort` is provided by ifcore and may not be pulled in transitively.
+  lib_ifport = f_comp.find_library('ifport')
+  lib_ifcore = f_comp.find_library('ifcore')
+  libs_extra = [lib_ifport, lib_ifcore]
 endif
 
 lib_arpack = c_comp.find_library('arpack', dirs: dir_usrlocal_lib)
