@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/michaeljsteel/NumBAT?style=flat-square)](https://github.com/michaeljsteel/NumBAT/releases)
 [![Languages](https://img.shields.io/badge/languages-Python%20%7C%20Fortran-blue?style=flat-square)](https://github.com/michaeljsteel/NumBAT/search?l=python)
 [![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square)](#platform-support)
-[![Documentation Status](https://readthedocs.org/projects/numbat-au/badge/?version=latest&style=flat-square)](http://numbat-au.readthedocs.io/en/latest/)
+[![Documentation Status](https://readthedocs.org/projects/numbat/badge/?version=latest&style=flat-square)](http://numbat-rtd3.readthedocs.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 NumBAT integrates electromagnetic and acoustic mode solvers to study the interaction of optical and acoustic waves in photonic waveguides, with a particular focus on stimulated Brillouin scattering.
@@ -78,7 +78,7 @@ NumBAT is developed on Linux and builds from source under Linux, MacOS and Windo
 
 The current release of NumBAT can be found at [https://github.com/michaeljsteel/NumBAT](https://github.com/michaeljsteel/NumBAT).
 
-Current documentation is available at [ReadTheDocs](http://numbat-au.readthedocs.io/en/latest/) or in the [pdf version](NumBAT.pdf) in the main directory.
+Current documentation is available at [ReadTheDocs](http://numbat-rtd3.readthedocs.io/en/latest/) or in the [pdf version](NumBAT.pdf) in the main directory.
 
 ## Installation
 
@@ -88,13 +88,13 @@ NumBAT builds natively on Linux, MacOS and Windows. A pre-built binary install i
 
 The full build of NumBAT requires a number of additional libraries and compilation tools. On each platform, you should use a relatively recent compiler.
 
-For detailed instructions, please see the Installation chapter in the [HTML documentation](http://numbat-au.readthedocs.io/en/latest/) or in the pdf version of the documentation `NumBAT.pdf` in the main directory.
+For detailed instructions, please see the Installation chapter in the [HTML documentation](http://numbat-rtd3.readthedocs.io/en/latest/) or in the pdf version of the documentation `NumBAT.pdf` in the main directory.
 
 ### Binary install
 
 On Windows, you can also try the [binary installer](https://github.com/michaeljsteel/NumBAT/releases/tag/v2.1.3). This installs the NumBAT specific code. You will still need to have installs of python and Gmsh as well.
 
-You should still read the Installation chapter in the [HTML documentation](http://numbat-au.readthedocs.io/en/latest/) or in the pdf version of the documentation `NumBAT.pdf` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
+You should still read the Installation chapter in the [HTML documentation](http://numbat-rtd3.readthedocs.io/en/latest/) or in the pdf version of the documentation `NumBAT.pdf` in the main directory, to learn how to correctly setup python and Gmsh to work with NumBAT.
 
 ## Credits
 
