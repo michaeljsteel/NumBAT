@@ -160,16 +160,13 @@ The following tools are all free but will use several GB of disk space.
 
     To install the free Community 2022 edition, download the `main installer <https://visualstudio.microsoft.com/vs/community/>`_ and follow the instructions.
 
-- *Intel OneAPI Base Toolkit*:
-    This is the main Intel developer environment including C/C++ compiler and many high performance math libraries.
+- *Intel OneAPI Toolkit*:
+    This is the main Intel developer environment including C/C++ and Fortran compilers, and many high performance math libraries.
 
-    Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/base-toolkit-download.html>`_ accepting all defaults.
+    The software is available from the `download site <https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit-download.html>`_.
 
+    There are command line, GUI, and package installers available.
 
-- *Intel OneAPI HPC Toolkit*
-    This adds the Intel Fortran compiler amongst other HPC tools.
-
-    Download and run the `installer <https://www.intel.com/content/www/us/en/developer/tools/oneapi/hpc-toolkit-download.html>`__ accepting all defaults.
 
 
 - *Git*

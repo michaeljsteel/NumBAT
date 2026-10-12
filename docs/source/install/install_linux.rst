@@ -66,11 +66,11 @@ Required libraries
 #. If you wish to use the Intel OneAPI math libraries, you need to install the Intel OneAPI toolkit. (Unlike earlier releases, there is no just one Intel OneAPI package.):
 
     - *Intel OneAPI Toolkit*:
-        This is the main Intel developer environment including C/C++ and Fortran compilers and many high performance math libraries.
+        This is the main Intel developer environment including C/C++ and Fortran compilers, and many high performance math libraries.
 
         The software is available from the `download site <https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit-download.html>`_.
 
-        There are commandline, GUI and package installers available.
+        There are command line, GUI, and package installers available.
 
 
 
