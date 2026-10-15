@@ -1,4 +1,5 @@
-{
+q
+:q{
     "cSpell.words": [
         "acdisp",
         "Anaysis",
@@ -199,7 +200,7 @@
         "zwrapper"
     ],
     "_hide_python.defaultInterpreterPath": "C:\\Users\\mq98002769\\nbpy-313\\scripts\\python.exe",
-    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeCheckingMode": "off",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/backend",
         "${workspaceFolder}/backend/fortran",
@@ -219,5 +220,17 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-}
 
+
+"ruff.lint.enable": true,
+"ruff.format.enable": false,
+"ruff.organizeImports": true,
+
+"[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports.ruff": "explicit"
+    }
+}
+}

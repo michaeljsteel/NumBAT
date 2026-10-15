@@ -75,7 +75,7 @@ def _confirm_file_exists(nm, filetype, fn, envvar=''):
     if not Path(fn).exists():
         s=f"NumBAT can't find the {nm} {filetype} at {fn}."
         if envvar:
-            s += f'You may need to set the environment variable {envvar}.'
+            s += f'\n You may need to set the environment variable {envvar}.'
         reporting.report_and_exit(s)
 
 class _SingletonMeta(type):

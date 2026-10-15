@@ -16,10 +16,31 @@
 
 import uuid
 import os
+import importlib.util
+import inspect
+import sys
 from pathlib import Path
 
 import reporting
 from numbattools import is_real_number
+
+
+def _rebuild_geometry(module_file, class_name, state):
+    """Recreate a geometry template loaded from a file-based module."""
+    module_name = f"_numbat_waveguide_{Path(module_file).stem}"
+    module = sys.modules.get(module_name)
+    if module is None:
+        spec = importlib.util.spec_from_file_location(module_name, module_file)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Unable to load waveguide template module: {module_file}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+
+    geometry = getattr(module, class_name).__new__(getattr(module, class_name))
+    geometry.__dict__.update(state)
+    return geometry
+
 
 class UserGeometryBase():
 
@@ -125,6 +146,27 @@ class UserGeometryBase():
 
     def __str__(self):
         return self._descrip
+
+    def __reduce__(self):
+        module = sys.modules.get(type(self).__module__)
+        module_file = getattr(module, "__file__", None)
+        if module_file is None:
+            try:
+                module_file = inspect.getfile(type(self))
+            except (OSError, TypeError) as exc:
+                raise TypeError(
+                    f"Cannot pickle waveguide template class {type(self).__name__} "
+                    "because its implementation module has no file."
+                ) from exc
+        if module_file is None:
+            raise TypeError(
+                f"Cannot pickle waveguide template class {type(self).__name__} "
+                "because its implementation module has no file."
+            )
+        return (
+            _rebuild_geometry,
+            (module_file, type(self).__name__, self.__dict__),
+        )
 
     def make_geometry(self, p_dir_templates):
         subs = self.apply_parameters()

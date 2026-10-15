@@ -28,8 +28,45 @@ known_first_party = [
 ]
 src_paths = ["backend"]
 
+[tool.ruff]
+line-length = 100
+src = ["backend"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = true
+known-first-party = [
+    "nbanalytic",
+    "reporting",
+    "nbgmsh",
+    "plottools",
+    "femmesh",
+    "nbthread",
+    "nbtypes",
+    "numbat",
+    "structure",
+    "materials",
+    "materialprops",
+    "bulkprops",
+    "modes",
+    "modecalcs",
+    "integration",
+    "voigt",
+    "crystalsyms",
+    "simresult",
+    "usermesh",
+    "numbattools",
+    "plotting",
+    "meshing",
+    "numtools"
+]
+
 [tool.black]
 line-length = 100
 
 [tool.pyright]
+typeCheckingMode = "off"
 reportAttributeAccessIssue = "none"
+extraPaths = ["backend", "backend/fortran", "backend/fortran/include"]

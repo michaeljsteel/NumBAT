@@ -22,6 +22,8 @@ fastexamples:
 	cd examples && make fastexamples
 
 
+testbuild:
+	cd backend && python nb_install_tester.py
 testinstall:
 	cd tests && nosetests3
 
