@@ -25,7 +25,7 @@ rad2 = (a1r+a2)*scale;
 rad3 = (a1r+a2+a3)*scale;
 
 lc = 0.1; 
-lc_refine_1 = lc/1; // on cylinder surfaces
+//lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 surfaces
 
 hy = dy; // Thickness: square profile => hy=d

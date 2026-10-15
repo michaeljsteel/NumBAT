@@ -20,7 +20,6 @@ In all cases, the current source code for |NUMBAT| is hosted `here on Github <ht
 You can now skip forward to the section for your operating system: :ref:`Linux <sec-linuxinstall-label>`, :ref:`MacOS <sec-macosinstall-label>` or :ref:`Windows <sec-wininstall-label>`.
 
 
-**Installation instructions for your OS**
 
 
 .. toctree::

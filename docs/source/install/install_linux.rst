@@ -25,9 +25,9 @@ Requirements
   - gcc compiler of version 13.0 or later
   - python 3.11 or later
 
-|NUMBAT| is currently developed and tested on Ubuntu 25.04 with the following
-package versions: Python 3.13, Numpy 2.0, Arpack-NG, Suitesparse 7.1.0,
-and Gmsh 4.8.4.  |NUMBAT| also depends on the BLAS linear algebra library. We
+|NUMBAT| is currently developed and tested on Ubuntu 26.04 with the following
+package versions: Python 3.14, Numpy 2.5, Arpack-NG, Suitesparse 7.1.0,
+and Gmsh 4.15.  |NUMBAT| also depends on the BLAS linear algebra library. We
 strongly recommend linking |NUMBAT| against an optimised version, such as the MKL
 library provided in the free Intel OneAPI library (for Intel CPUs) or the AMD Optimizing CPU Libraries (AOCL) for AMD CPUs.  The steps below demonstrate the Intel OneAPI approach.
 
@@ -50,12 +50,12 @@ Required libraries
 
 #. Before installing, ensure your system is up to date ::
 
+   On Ubuntu, perform the following ::
+
     $ sudo apt-get update
     $ sudo apt-get upgrade
 
 #. Install the required libraries using your distribution's package manager.
-
-   On Ubuntu, perform the following ::
 
     $ sudo apt-get install gcc gfortran make gmsh python3-venv python3-dev pkg-config ninja-build
 
@@ -144,7 +144,7 @@ It is also possible to build |NUMBAT| with the ``ifx`` compiler from Intel's fre
 To use the Intel compiler,
 
 #. If you have not already done so, install the Intel OneAPI Base and HPC Toolkits as described above.
-#. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2024.1`` or similar depending on your installed version of OneAPI.)
+#. Adjust your LD_LIBRARY_PATH variable in your ``~/.bashrc`` or equivalent to include ``/opt/intel/oneapi/<release>/lib``.  (Replace ``<release>`` with the correct string ``2026.1`` or similar depending on your installed version of OneAPI.)
 #. In ``<NumBAT>/backend/fortran``, repeat all the earlier instructions for the standard GCC build but rather than plain ``make gcc``, please use::
 
     $ make intel

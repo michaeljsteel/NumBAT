@@ -19,7 +19,7 @@ What does |NUMBAT| actually calculate?
 
 * solve the elastic modal problem  using FEM.
 
-* calculate Brillouin gain coefficients and linewidths for a given triplet of two optical and one elastic mode, and use this to generate gain spectra.
+* calculate Brillouin gain coefficients and linewidths for a given triplet of one elastic and two optical modes, and use this to generate gain spectra.
 
 
 Here we specify the precise mathematical problems being solved.
@@ -33,7 +33,7 @@ The electromagnetic wave problem is defined by the vector wave equation
 
    - \nabla \times (\nabla \times {\vec E}) + \omega^2 \epsilon_0 \, \epsilon_r(x,y) \vec E =0,
 
-where :math:`\omega=2\pi/\lambda` is the optical angular frequency with :math:`\lambda` the free space wavelength. The waveguide properties are defined by the spatially varying relative dielectric constant :math:`\epsilon_r(x,y)`.
+where :math:`\omega=2\pi/\lambda` is the optical angular frequency with :math:`\lambda` the free-space wavelength. The waveguide properties are defined by the spatially varying relative dielectric constant :math:`\epsilon_r(x,y)`, while :math:`\epsilon_0` is the permittivity of free space.
 
 The *real-valued* electric field :math:`\vec E(x,y,z,t)` has the following form for modal propagation along :math:`z`:
 
@@ -53,7 +53,7 @@ The *real-valued* electric field :math:`\vec E(x,y,z,t)` has the following form 
 
 in terms of the wavenumber :math:`k`, complex field amplitude :math:`\vcalE(\vecr)`, mode profile :math:`\vece(x,y)` and the mode amplitude :math:`a`. Note that some authors include a factor of :math:`\frac{1}{2}` in these definitions which leads to slightly different expressions for the energy and power flow below.
 
-By Faraday's law the complex magnetic field amplitude is given by
+By Faraday's law, the complex magnetic field amplitude is given by
 
 .. math::
 
@@ -63,7 +63,7 @@ Dependent and independent variables in the modal dispersion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In |NUMBAT|, the electromagnetic mode problem is formulated with the optical angular frequency :math:`\omega` as the independent variable and the wavenumber or *propagation constant* :math:`k(\omega)` as the eigenvalue.  For a given frequency, |NUMBAT| thus finds the eigenvalues :math:`k_n(\omega)` and eigenmodes :math:`\vece_n(x,y)`. The algorithm finds the most-bound or "lowest" eigenvalues first. Thus the values :math:`k_n(\omega)` *decrease* with :math:`n` and there are only a finite number of guided mode solutions for a given structure and frequency :math:`\omega`. Note that the propagation constant is also often denoted by :math:`\beta_n(\omega)`.
 
-It is thus straightforward to generate dispersion relations :math:`k_n(\omega)` on an equal-spaced frequency grid. If you require the wavenumber on an equal-spaced grid, you will need to interpolate the :math:`k_n(\omega)` functions.
+It is thus straightforward to generate dispersion relations :math:`k_n(\omega)` on an equal-spaced frequency grid. If you require the wavenumber on an equal-spaced grid, you will need to interpolate the :math:`k_n(\omega)` functions. This can be tricky where there are mode crossings.
 
 Elastic  modal problem
 ----------------------------------
@@ -155,7 +155,7 @@ Then, at least for backward SBS, the peak SBS gain of the Stokes wave :math:`\Ga
    \Gamma = \frac{2\omega \Omega}{\alpha_t}
       \frac{|Q_\mathrm{tot}|^2}{{\cal P}^{(s)}{\cal P}^{(p)}{\cal E}^{(a)}},
 
-where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`. As anticipated above, the modal power fluxes appear in the denominator of this expression.
+where the total SBS coupling is :math:`Q_\mathrm{tot} = Q^{(\mathrm{PE})} + Q^{(\mathrm{MB})}`. As anticipated above, the modal optical power fluxes and elastic energy density appear in the denominator of this expression. (By default, we normalise with the elastic energy density rather than the power flux to avoid blows up in the coupling where the elastic group velocity is small.)
 
 The quantity :math:`\alpha_t` is the *temporal* elastic loss coefficient in :math:`\mathrm{s}^{-1}`.
 It is related to the spatial attenuation coefficient by
@@ -196,6 +196,10 @@ Note that the coupling :math:`Q_\text{tot}` enters both in native and complex co
 
 Connecting these to output quantities from code
 -------------------------------------------------
+
+In subsequent chapters, we will introduce a large range of output quantities in both python function and output file form. Here are the places to access a number of the quantities introduced above:
+
+WRITE ME.
 
 
 Equivalent forms of equations

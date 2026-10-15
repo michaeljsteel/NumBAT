@@ -61,7 +61,7 @@ and a link to the github page at `<https://github.com/michaeljsteel/NumBAT>`_.
 
 Contributing to NumBAT
 ================================
-NumBAT is open source software licensed under the GPL with all source and documentation available at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team before starting work at ``michael.steel@mq.edu.au``.
+NumBAT is open source software licensed under the GPL with all source and documentation available at `github.com <https://github.com/michaeljsteel/NumBAT.git>`_. We welcome additions to NumBAT code, documentation and the materials library. Interested users should fork the standard release from github and make a pull request when ready.  For major changes, we strongly suggest contacting the NumBAT team at ``michael.steel@mq.edu.au`` before starting any development.
 
 
 Seeking assistance
@@ -76,10 +76,10 @@ All requests should be sent to ``michael.steel@mq.edu.au``.
 
    * Your platform (Linux, Windows, MacOS) and specific operating system
 
-   * The version number of your |NUMBAT| installation.
-      You can determine this by typing the following command in your terminal ::
+   * The version number and git hash of your |NUMBAT| installation.
+      You can determine this by typing the following command in your terminal from the `backend` directory::
 
-         python -c 'import numbat;print(numbat.version())'
+         python -c 'import numbat;print(numbat.version(), numbat.git_hash())'
 
    * A short python script which demonstrates the issue you are trying to solve.
       Please make the script as short in both code length and execution time as
@@ -165,9 +165,7 @@ To find out how you can support the care and revitalisation of this beautiful an
 Acknowledgements
 ===================
 
-We acknowledge the elders past and present of the following First Nations people,
-on whose unceded lands |NUMBAT| has been developed: the Wallumattagal clan of the Dharug
-nation, the Cammeraygal people, and the Gadigal people of the Eora nation.
+We acknowledge the elders past and present of the following First Nations peoples, on whose unceded lands |NUMBAT| has been developed: the Wallumattagal clan of the Dharug nation, the Cammeraygal people, and the Gadigal people of the Eora nation.
 
 
 Development of |NumBAT| has been supported in part by the

@@ -225,6 +225,26 @@ def launch_worker_threads_and_wait(num_workers, task_func, q_result,
     print("All tasks completed and worker threads terminated.")
 
 
+_use_fork_for_closures = False
+
+
+def enable_fork_for_closures():
+    """Legacy opt-in: start worker processes with 'fork' instead of Python's default start method.
+
+    Python 3.14 changed the Linux default from 'fork' to 'forkserver', which pickles the
+    worker function. Nested functions (closures) cannot be pickled, so scripts that still
+    pass them to launch_worker_processes_and_wait() fail unless they call this first.
+
+    New code should instead pass a module-level function, binding extra arguments with
+    functools.partial. 'fork' is unsafe with threaded libraries (OpenMP, MKL), is not
+    available on Windows, and may stop working in future Python versions.
+    """
+    global _use_fork_for_closures
+    if "fork" not in multiprocessing.get_all_start_methods():
+        raise RuntimeError("The 'fork' start method is not available on this platform.")
+    _use_fork_for_closures = True
+
+
 class CalcProcess(multiprocessing.Process):
     """Runs the calculation function f_work(task) in a separate process on one or more tasks
     popped from multiprocessing.JoinableQueue q_work with results pushed to queue q_result.
@@ -326,7 +346,13 @@ def launch_worker_processes_and_wait(num_workers, task_func,
 
     processes = []
     for _ in range(num_workers):
-        pr = CalcProcess(q_work, q_result, task_func, verbose)
+        if _use_fork_for_closures:
+            # ForkProcess first in the MRO so its fork-based _Popen is used
+            class _CalcProcessFork(multiprocessing.get_context("fork").Process, CalcProcess):
+                pass
+            pr = _CalcProcessFork(q_work, q_result, task_func, verbose)
+        else:
+            pr = CalcProcess(q_work, q_result, task_func, verbose)
         print("Starting process:", pr.name)
         if do_multiproc:
             pr.start()

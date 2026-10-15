@@ -6,6 +6,7 @@ import os
 import time
 import sys
 import copy
+import functools
 import multiprocessing
 import math
 
@@ -56,26 +57,29 @@ def plot_and_label (ax, vx, mat, sty, lab, col=None):
 #
 
 
+# The worker function that does one analytic task.
+# It is defined at module level (not nested) so that it can be pickled and sent
+# to worker processes under any multiprocessing start method (the default on
+# Linux is 'forkserver' from Python 3.14, and macOS/Windows use 'spawn').
+# Shared data (fib_em, nmodes) is bound with functools.partial.
+def solemrod_callee(args, fib_em, nmodes):
+    (ik, k) = args # Matches queues passed to launch_worker_processes_and_wait
+
+    mhy_lo = 1
+    mhy_hi = 5
+    v_neff_TE = fib_em.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
+    v_neff_TM = fib_em.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
+    v_neff_hy = fib_em.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
+
+    return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
+
+
 # Solve the analytic dispersion relation using worker processes
 def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
 
     fib_em = TwoLayerFiberEM(ncore, nclad, rco)
 
-    # The worker function passed to CalcThread to do one task
-    def solemrod_callee(args):
-        (ik, k) = args # Matches queues passed to CalcThread
-
-        mhy_lo = 1
-        mhy_hi = 5
-        #v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
-        #v_neff_TM = solve_chareq_em_fib2_disprel(chareq_em_fib2_TM_m, 'TM', k, nmodes, 0, 0, rco, ncore, nclad)
-        #v_neff_hy = solve_chareq_em_fib2_disprel(chareq_em_fib2_hy_m, 'Hy', k, nmodes, mhy_lo, mhy_hi, rco, ncore, nclad) # m in [1,5)
-        v_neff_TE = fib_em.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
-        v_neff_TM = fib_em.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
-        v_neff_hy = fib_em.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
-
-        return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
-
+    task_func = functools.partial(solemrod_callee, fib_em=fib_em, nmodes=nmodes)
 
     # Multiprocessing here is for the demonstration of how to do it
     # It's probably not actually improving performance
@@ -94,7 +98,7 @@ def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_workers, solemrod_callee, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -107,6 +111,23 @@ def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
         an_neff_hy[ik,:] = np.sort(v_neff_hy)[-nmodes:]
 
     return neff_TE_an, neff_TM_an, an_neff_hy
+
+# Module-level (picklable) worker function to perform one FEM task.
+# Each task carries its own private copy of the waveguide, wg.
+def emcalc_callee(args, nbasis, n_eff, nmodes, nk, prefix):
+    (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
+
+    t_lambda_nm = twopi/tk
+    simres_EM= wg.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
+    neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
+
+    if False and doplot: # Only worker 1 will ever do this
+        print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
+            multiprocessing.current_process().name, ik, nk-1))
+        simres_EM.plot_modes(mode_indices=range(nmodes),
+                                  prefix=prefix+'_%d'%ik, ticks=True)
+
+    return (ik, tk, neff_k)
 
 def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbasis, rco, ncore, nclad):
     neff_num = np.zeros([len(kvec), nmodes], dtype=float)
@@ -127,27 +148,14 @@ def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbas
         q_work.put((ik, tk, doplot, wg))
 
 
-    # function to perform one worker FEM task
-    def emcalc_callee(args):
-        (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
-
-        t_lambda_nm = twopi/tk
-        simres_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
-        neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
-
-        if False and doplot: # Only worker 1 will ever do this
-            print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
-                multiprocessing.current_process().name, ik, len(kvec)-1))
-            simres_EM.plot_modes(mode_indices=range(nmodes),
-                                      prefix=prefix+'_%d'%ik, ticks=True)
-
-        return (ik, tk, neff_k)
+    task_func = functools.partial(emcalc_callee, nbasis=nbasis, n_eff=n_eff,
+                                  nmodes=nmodes, nk=len(kvec), prefix=prefix)
 
     num_workers = max(4,int(os.cpu_count()/4))
     #num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
     if not nbapp.is_linux(): num_workers = 0
 
-    launch_worker_processes_and_wait(num_workers, emcalc_callee, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
 
     #Collect all the data back into one matrix
@@ -305,7 +313,7 @@ def do_main():
     ncore = np.real(mat_core.refindex_n)
     nclad = np.real(mat_clad.refindex_n)
     acore = rcore*2           #diameter of the core (first is diam)
-    aclad = rclad - rcore     #annular thickness of each layer
+    #aclad = rclad - rcore     #annular thickness of each layer
 
     # Solving with either a 1-layer or 2-layer approach
     onion=1
@@ -319,11 +327,13 @@ def do_main():
     domain_y = domain_x
 
     wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, acore,   # remove these factors of 2
-                               inc_b_x=aclad,
+    #                           inc_b_x=aclad,
                             material_bkg=mat_bkg,
                             material_a=mat_core,
                             material_b=mat_clad,
-                            lc_bkg=.1, lc_refine_1=3.0*refine_fac, lc_refine_2=3*refine_fac)
+                            lc_bkg=.1,
+                                 # lc_refine_1=3.0*refine_fac,
+                                  lc_refine_2=3*refine_fac)
 
     #wguide.plot_mesh(prefix)
 

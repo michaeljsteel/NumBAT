@@ -22,7 +22,7 @@ rad2 = (a1r+a2)*scale;
 //rad2 = ((a1+a2)/(2*dx_in_nm))*d;
 //rad3 = ((a1+a2+a3)/(2*dx_in_nm))*d;
 lc = 0.1;             // 
-lc_refine_1 = lc/1; // on cylinder surfaces
+//lc_refine_1 = lc/1; // on cylinder surfaces
 lc_refine_2 = lc/1; // cylinder1 centres
 
 hx = d;

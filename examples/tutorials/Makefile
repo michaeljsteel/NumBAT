@@ -8,7 +8,8 @@ allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b \
 		ftut07 ftut08  ftut11a  ftut12 ftut13
 
 fast1: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b
-fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13
+#fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13
+fast2:	ftut11a  ftut12 ftut13
 
 slow: tut12 tut13 tut14
 

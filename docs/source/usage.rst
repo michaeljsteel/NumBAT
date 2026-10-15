@@ -122,9 +122,9 @@ simulation structure are in the same state as in the script when it has finished
 classes and methods. For example::
 
     >>> from pydoc import help
-    >>> help(structure.Structure)
+    >>> help(modecalcs.EMSimulation)
 
-where we have accessed the docstring of the Struct class from ``structure.py``.
+where we have accessed the docstring of the EmSimulation class from the ``modecalcs.py`` module.
 
 
 Script Structure
