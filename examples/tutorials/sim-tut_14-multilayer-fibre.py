@@ -8,6 +8,7 @@ import os
 import sys
 import copy
 import math
+import functools
 import multiprocessing
 import scipy.optimize as sciopt
 import scipy.special as sp
@@ -154,29 +155,32 @@ def solve_chareq_em_fib2_disprel(f_disprel, family, k, nmodes, mlo, mhi, rco, nc
     return sol_neff
 
 
-# Solve the analytic dispersion relation using worker threads
+# Module-level (picklable) worker function to perform one analytic task.
+def callee_em_fib2_analytic(args, nmodes, rco, ncore, nclad):
+    (ik, k) = args  # Matches queues passed to launch_worker...
+    mhy_lo = 1
+    mhy_hi = 5
+    v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
+    v_neff_TM = solve_chareq_em_fib2_disprel(chareq_em_fib2_TM_m, 'TM', k, nmodes, 0, 0, rco, ncore, nclad)
+    v_neff_hy = solve_chareq_em_fib2_disprel(chareq_em_fib2_hy_m, 'Hy', k, nmodes, mhy_lo, mhy_hi, rco, ncore, nclad)  # m in [1,5)
+    return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
+
+
+# Solve the analytic dispersion relation using worker processes
 def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
 
-    # The worker function passed to CalcThread to do one task
-    def solemrod_callee(args):
-        (ik, k) = args # Matches queues passed to CalcThread
-        mhy_lo = 1
-        mhy_hi = 5
-        v_neff_TE = solve_chareq_em_fib2_disprel(chareq_em_fib2_TE_m, 'TE', k, nmodes, 0, 0, rco, ncore, nclad)
-        v_neff_TM = solve_chareq_em_fib2_disprel(chareq_em_fib2_TM_m, 'TM', k, nmodes, 0, 0, rco, ncore, nclad)
-        v_neff_hy = solve_chareq_em_fib2_disprel(chareq_em_fib2_hy_m, 'Hy', k, nmodes, mhy_lo, mhy_hi, rco, ncore, nclad) # m in [1,5)
-        return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
-
+    task_func = functools.partial(callee_em_fib2_analytic, nmodes=nmodes, rco=rco,
+                                  ncore=ncore, nclad=nclad)
 
     num_workers = os.cpu_count()
     manager = multiprocessing.Manager()
-    q_work = multiprocessing.JoinableQueue()      # for assigning the work
+    q_work = manager.Queue()                      # for assigning the work
     q_result = manager.Queue()                    # for collecting the work
 
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
-    launch_worker_processes_and_wait(num_workers, solemrod_callee, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
     neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
@@ -189,6 +193,26 @@ def solve_em_multilayer_fiber_analytic(kvec, nmodes, rco, ncore, nclad):
         an_neff_hy[ik,:] = np.sort(v_neff_hy)[-nmodes:]
 
     return neff_TE_an, neff_TM_an, an_neff_hy
+
+# Module-level (picklable) worker function to perform one FEM task.
+# Each task carries its own private copy of the waveguide, wg.
+def callee_em_fib2_numerical(args, nbasis, n_eff, nmodes, prefix):
+    (ik, tk, doplot, wg) = args  # Matches queues passed to launch_worker...
+
+    t_lambda_nm = twopi/tk
+
+    print('Starting mode solve', ik)
+    simres_EM = wg.calc_EM_modes(nbasis, t_lambda_nm, n_eff)
+    print('Done mode solve', ik)
+    neff_k = np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
+
+    if doplot:
+        print('Doing plot of modes', ik)
+        simres_EM.plot_modes(mode_indices=range(nmodes), prefix=f'{prefix}_{ik}', ticks=True)
+        print('Done plot of modes', ik)
+
+    return (ik, tk, neff_k)
+
 
 def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rcore, ncore, nclad):
 
@@ -204,7 +228,7 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
     # Multiprocess-safe queues for communicating with workers
     # The Manager.Queue is needed for technical reasons
     manager = multiprocessing.Manager()
-    q_work = multiprocessing.JoinableQueue()      # for assigning the work
+    q_work = manager.Queue()                      # for assigning the work
     q_result = manager.Queue()                    # for collecting the work
 
     # Create work queues
@@ -214,28 +238,14 @@ def solve_em_multilayer_fiber_numerical(prefix, wguide, kvec, nmodes, nbasis, rc
         q_work.put((ik, tk, doplot, wg))
 
 
-    def emcalc_callee(args):
-        (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
-
-        t_lambda_nm = twopi/tk
-
-        print('Starting mode solve', ik)
-        simres_EM= wguide.calc_EM_modes(nbasis, t_lambda_nm, n_eff)
-        print('Done mode solve', ik)
-        neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
-
-        if doplot: # Only worker 1 will ever do this
-            print('Doing plot of modes', ik)
-            simres_EM.plot_modes(mode_indices=range(nmodes), prefix=f'{prefix}_{ik}', ticks=True)
-            print('Done plot of modes', ik)
-
-        return (ik, tk, neff_k)
+    task_func = functools.partial(callee_em_fib2_numerical, nbasis=nbasis, n_eff=n_eff,
+                                  nmodes=nmodes, prefix=prefix)
 
     #num_workers = os.cpu_count()
     #num_workers = 2
     num_workers = 0   # just do direct in the main process and single thread
 
-    launch_worker_processes_and_wait(num_workers, emcalc_callee, q_result, q_work)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
 
     #Collect all the data back into one matrix

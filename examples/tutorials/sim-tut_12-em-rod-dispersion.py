@@ -61,15 +61,15 @@ def plot_and_label (ax, vx, mat, sty, lab, col=None):
 # It is defined at module level (not nested) so that it can be pickled and sent
 # to worker processes under any multiprocessing start method (the default on
 # Linux is 'forkserver' from Python 3.14, and macOS/Windows use 'spawn').
-# Shared data (fib_em, nmodes) is bound with functools.partial.
-def solemrod_callee(args, fib_em, nmodes):
+# Shared data (em_rod, nmodes) is bound with functools.partial.
+def callee_em_rod_disp_analytic(args, em_rod, nmodes):
     (ik, k) = args # Matches queues passed to launch_worker_processes_and_wait
 
     mhy_lo = 1
     mhy_hi = 5
-    v_neff_TE = fib_em.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
-    v_neff_TM = fib_em.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
-    v_neff_hy = fib_em.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
+    v_neff_TE = em_rod.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
+    v_neff_TM = em_rod.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
+    v_neff_hy = em_rod.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
 
     return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
 
@@ -77,9 +77,8 @@ def solemrod_callee(args, fib_em, nmodes):
 # Solve the analytic dispersion relation using worker processes
 def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
 
-    fib_em = TwoLayerFiberEM(ncore, nclad, rco)
+    em_rod = TwoLayerFiberEM(ncore, nclad, rco)
 
-    task_func = functools.partial(solemrod_callee, fib_em=fib_em, nmodes=nmodes)
 
     # Multiprocessing here is for the demonstration of how to do it
     # It's probably not actually improving performance
@@ -98,6 +97,7 @@ def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
     # build all the tasks
     for ik,k in enumerate(kvec): q_work.put((ik, k))
 
+    task_func = functools.partial(callee_em_rod_disp_analytic, em_rod=em_rod, nmodes=nmodes)
     launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
     #Collect all the data back into one matrix per polarisation
@@ -114,14 +114,14 @@ def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
 
 # Module-level (picklable) worker function to perform one FEM task.
 # Each task carries its own private copy of the waveguide, wg.
-def emcalc_callee(args, nbasis, n_eff, nmodes, nk, prefix):
+def callee_em_rod_disp_numerical(args, nbasis, n_eff, nmodes, nk, prefix):
     (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
 
     t_lambda_nm = twopi/tk
     simres_EM= wg.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
     neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
 
-    if False and doplot: # Only worker 1 will ever do this
+    if doplot: # Only worker 1 will ever do this
         print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
             multiprocessing.current_process().name, ik, nk-1))
         simres_EM.plot_modes(mode_indices=range(nmodes),
@@ -138,23 +138,24 @@ def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbas
     field_out_skip = max(int(len(kvec)/n_field_outs),1)
 
     # Multiprocess-safe queues for communicating with workers
+    # Possibly these should swith to Manager.Queue() for better cross-platform support, but JoinableQueue is simpler for now and less expensive in passing around large data structures like the waveguide.
     q_work = multiprocessing.JoinableQueue()        # everything else
     q_result = multiprocessing.JoinableQueue()      # for returning the answers
 
+    #num_workers = max(4,int(os.cpu_count()/4))
+    num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+
     # Create work queues
     for ik, tk in enumerate(kvec):
-        doplot =  (ik % field_out_skip == 0) # Time for some field plots!
+        doplot =  num_workers < 2 and (ik % field_out_skip == 0) # Time for some field plots!
         wg = copy.deepcopy(wguide)  # wguide and sim are not thread-safe when we plot mode profiles
         q_work.put((ik, tk, doplot, wg))
 
-
-    task_func = functools.partial(emcalc_callee, nbasis=nbasis, n_eff=n_eff,
-                                  nmodes=nmodes, nk=len(kvec), prefix=prefix)
-
-    num_workers = max(4,int(os.cpu_count()/4))
-    #num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
     if not nbapp.is_linux(): num_workers = 0
 
+
+    task_func = functools.partial(callee_em_rod_disp_numerical, nbasis=nbasis, n_eff=n_eff,
+                                  nmodes=nmodes, nk=len(kvec), prefix=prefix)
     launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
 
 
@@ -171,29 +172,12 @@ def make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
 
     Vlo, Vhi =Vvec_an[0], Vvec_an[-1]
 
-    # Analytical only plot
-    #fig, ax = plt.subplots()
-    #plot_and_label(ax, Vvec_an, neff_TE_an, '-b', 'TE')
-    #plot_and_label(ax, Vvec_an, neff_TM_an, '-g', 'TM')
-    #plot_and_label(ax, Vvec_an, neff_Hy_an, '-r', 'Hy')
-    #decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vneff_exact.png',
-    #        'Analytic dispersion of '+ssys,
-    #        r'$V$ number ', r'$\bar{n}$', (Vlo, Vhi), (nclad, ncore))
-
-
-    # Numerical only plot
-    #fig, ax = plt.subplots()
-    #ax.plot(Vvec_num, neff_num, 'xk')
-    #decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vneff_num.png',
-    #        'Numerical dispersion of '+ssys,
-    #        r'$V$ number ', r'$\bar{n}$', (Vlo, Vhi), (nclad, ncore))
-
 
     # General plot for neff
     fig, ax = plt.subplots()
-    plot_and_label(ax, Vvec_an, neff_TE_an, '-b', 'TE')
-    plot_and_label(ax, Vvec_an, neff_TM_an, '-g', 'TM')
-    plot_and_label(ax, Vvec_an, neff_Hy_an, '-r', 'Hy')
+    plot_and_label(ax, Vvec_an, neff_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an, neff_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an, neff_Hy_an, ':r', 'Hy')
     ax.plot(Vvec_num, neff_num, 'xk')
     decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vneff.png',
             'Dispersion of '+ssys,
@@ -206,9 +190,9 @@ def make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
     b_num =  (neff_num**2-nclad**2)/(ncore**2-nclad**2)
 
     fig, ax = plt.subplots()
-    plot_and_label(ax, Vvec_an, b_TE_an, '-b', 'TE')
-    plot_and_label(ax, Vvec_an, b_TM_an, '-g', 'TM')
-    plot_and_label(ax, Vvec_an, b_Hy_an, '-r', 'Hy')
+    plot_and_label(ax, Vvec_an, b_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an, b_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an, b_Hy_an, ':r', 'Hy')
     ax.plot(Vvec_num, b_num, 'xk')
     decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vb.png',
             'Dispersion of '+ssys, r'$V$ number ', r'$b$', (Vlo, Vhi), (0, 1))
@@ -230,9 +214,9 @@ def make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
     ng_num *= neff_num[1:-1,:]>nclad   # only plot for V>V_cutoff
 
     fig, ax = plt.subplots()
-    plot_and_label(ax, Vvec_an[1:-1], ng_TE_an, '.b', 'TE')
-    plot_and_label(ax, Vvec_an[1:-1], ng_TM_an, '.g', 'TM')
-    plot_and_label(ax, Vvec_an[1:-1], ng_Hy_an, '.r', 'Hy')
+    plot_and_label(ax, Vvec_an[1:-1], ng_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an[1:-1], ng_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an[1:-1], ng_Hy_an, ':r', 'Hy')
     ax.plot(Vvec_num[1:-1], ng_num, 'xk')
 
     decorate_and_save_plot(fig, ax, prefix + '-emdisp_ng.png',
@@ -275,8 +259,6 @@ def solve_em_dispersion(nbapp, prefix, ssys, wguide, rcore, ncore, nclad):
 
 def do_main():
 
-    start = time.time()
-
     pref0, refine_fac = starter.read_args(12, sys.argv, refine=3)
 
     # Geometric Parameters - all in nm.
@@ -286,8 +268,8 @@ def do_main():
     mat_SiO2_GeO2= materials.make_material("SiO2GeO2_smf28")
     mat_SiO2= materials.make_material("SiO2_smf28")
     mat_vac= materials.make_material("Vacuum")
-    mat_Si= materials.make_material("Si_2021_Poulton")
     mat_As2S3= materials.make_material("As2S3_2023_Steel")
+    #mat_Si= materials.make_material("Si_2021_Poulton")
 
     if smf28:
         ssys = 'SMF-28 optical fibre'
@@ -304,7 +286,7 @@ def do_main():
         mat_core = mat_As2S3
         mat_clad = mat_SiO2
         mat_bkg  = mat_vac
-        prefix =pref0+'-sil'
+        prefix =pref0+'-chalcsil'
 
     nbapp=numbat.NumBATApp(prefix)
 

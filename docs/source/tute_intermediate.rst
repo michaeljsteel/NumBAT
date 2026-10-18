@@ -79,7 +79,7 @@ How can we be confident that |NUMBAT|'s calculations are actually correct?
 This tutorial and the next one look at rigorously validating some of the modal
 calculations produced by |NUMBAT|.
 
-This tutorial, contained in ``sim-tut_12.py``,
+This tutorial, contained in ``sim-tut_12-em-rod-dispersion.py``,
 compares analytic and numerical calculations for the dispersion relation of the electromagnetic
 modes of a cylindrical waveguide.
 This can be done in both a low-index contrast (SMF-28 fibre) and high-index contrast (silicon rod in silica) context. We calculate the effective index :math:`\bar{n}` and normalised
@@ -117,17 +117,17 @@ Threads are light-weight and can be started more efficiently than separate proce
 
 
 
-.. figure:: ./images/tutorial/tut_12-sil-emdisp_Vneff.png
+.. figure:: ./images/tutorial/tut_12-chalcsil-emdisp_Vneff.png
    :width: 10cm
 
    Optical effective index as a function of normalised frequency for silicon rod in silica.
 
-.. figure:: ./images/tutorial/tut_12-sil-emdisp_Vb.png
+.. figure:: ./images/tutorial/tut_12-chalcsil-emdisp_Vb.png
    :width: 10cm
 
    Optical normalised waveguide parameter as a function of normalised frequency for silicon rod in silica.
 
-.. figure:: ./images/tutorial/tut_12-sil-emdisp_ng.png
+.. figure:: ./images/tutorial/tut_12-chalcsil-emdisp_ng.png
    :width: 10cm
 
    Optical group index :math:`n_g=\bar{n} + V \frac{d\bar{n}}{dV}` as a function of normalised frequency for silicon rod in silica.
@@ -141,7 +141,7 @@ Threads are light-weight and can be started more efficiently than separate proce
 Tutorial 13 -- Validating the calculation of the dispersion of an elastic rod in vacuum
 -------------------------------------------------------------------------------------------------
 
-The tutorial ``sim-tut_13.py`` performs the same kind of calculation as in the previous
+The tutorial ``sim-tut_13-elastic-rod-dispersion.py`` performs the same kind of calculation as in the previous
 tutorial for the acoustic problem.
 In this case there is no simple analytic solution possible for the two-layer cylinder.
 Instead we create a structure of a single elastic rod surrounded by vacuum.

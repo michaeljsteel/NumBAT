@@ -22,7 +22,8 @@ for im in tut_01-mesh.png tut_01-refractive_index.png \
         tut_08-acdisp_slotwidth.png \
         tut_11a-gain_spectra.png tut_11b-gain_spectra.png \
         tut_11a-fields/AC_mode_17.png tut_11a-fields/AC_mode_32.png tut_11a-fields/AC_mode_39.png tut_11a-fields/AC_mode_44.png tut_11a-fields/AC_mode_66.png tut_11a-fields/AC_mode_69.png tut_11a-fields/EM_E_mode_00.png  \
-        tut_12-sil-emdisp_ng.png tut_12-sil-emdisp_Vb.png tut_12-sil-emdisp_Vneff.png tut_12-smf28-emdisp_ng.png tut_12-smf28-emdisp_Vb.png tut_12-smf28-emdisp_Vneff.png \
+        tut_12-chalcsil-emdisp_ng.png tut_12-chalcsil-emdisp_Vb.png tut_12-chalcsil-emdisp_Vneff.png \
+        tut_12-smf28-emdisp_ng.png tut_12-smf28-emdisp_Vb.png tut_12-smf28-emdisp_Vneff.png \
         tut_13-smf28-acdisp_qneff.png tut_13-smf28-acdisp_qnu.png
 
 # tut_09-gain_spectra.png \

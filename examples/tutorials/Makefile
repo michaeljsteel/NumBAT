@@ -95,16 +95,18 @@ ftut11b:
 	$(PYTHON) sim-tut_11b-onion3.py fast=1
 
 tut12:
-	$(PYTHON) sim-tut_12.py
-	$(PYTHON) sim-tut_12.py smf28
+	$(PYTHON) sim-tut_12-em-rod-dispersion.py
+	$(PYTHON) sim-tut_12-em-rod-dispersion.py smf28
 ftut12:
-	$(PYTHON) sim-tut_12.py fast=1
-	$(PYTHON) sim-tut_12.py fast=1 smf28
+	$(PYTHON) sim-tut_12-em-rod-dispersion.py fast=1
+	$(PYTHON) sim-tut_12-em-rod-dispersion.py fast=1 smf28
 
 tut13:
-	$(PYTHON) sim-tut_13.py
+	$(PYTHON) sim-tut_13-elastic-rod-dispersion.py
+	$(PYTHON) sim-tut_13-elastic-rod-dispersion.py smf28
 ftut13:
-	$(PYTHON) sim-tut_13.py fast=1
+	$(PYTHON) sim-tut_13-elastic-rod-dispersion.py fast=1
+	$(PYTHON) sim-tut_13-elastic-rod-dispersion.py fast=1 smf28
 
 tut14:
 	$(PYTHON) sim-tut_14-multilayer-fibre.py
