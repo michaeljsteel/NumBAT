@@ -16,10 +16,11 @@
 
 import uuid
 import os
-import importlib.util
 import inspect
 import sys
 from pathlib import Path
+
+from meshing.template_loader import load_waveguide_module
 
 import reporting
 from numbattools import is_real_number
@@ -27,16 +28,7 @@ from numbattools import is_real_number
 
 def _rebuild_geometry(module_file, class_name, state):
     """Recreate a geometry template loaded from a file-based module."""
-    module_name = f"_numbat_waveguide_{Path(module_file).stem}"
-    module = sys.modules.get(module_name)
-    if module is None:
-        spec = importlib.util.spec_from_file_location(module_name, module_file)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Unable to load waveguide template module: {module_file}")
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-
+    module = load_waveguide_module(module_file)
     geometry = getattr(module, class_name).__new__(getattr(module, class_name))
     geometry.__dict__.update(state)
     return geometry
@@ -117,7 +109,7 @@ class UserGeometryBase():
         # report unexpected keys
         goodkeys = reqkws + self._allowed_params
         goodkeys.append('lc') # remove special case once everything is moved to lc_bkg
-        for key in user_params.keys():
+        for key in user_params:
             if key not in goodkeys:
                 reporting.report(
                     f"Waveguide '{self._shape_name}' will ignore the parameter '{key}' in make_structure().")

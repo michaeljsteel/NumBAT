@@ -14,10 +14,10 @@
 #
 
 import json
-import importlib
 
 import reporting
 import traceback
+from meshing.template_loader import load_waveguide_module
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
 
@@ -38,7 +38,6 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
         if not wg.get('active', 1):  # this mesh is turned off for now
             continue
 
-        wgnm = wg['inc_shape']    # Name of inc_shape requested by user
         wgclsnm = wg['wg_class']  # Python class implementing this template
         wgpy = wg['wg_impl']      # Python file defining that class
 
@@ -49,11 +48,8 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
             reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({pth_wgtemplate_index}).'
                             + f'\nFile was expected in directory {str(pth_wgtemplate_dir)}')
 
-        # wgnm is just a convenient name
-        spec = importlib.util.spec_from_file_location(wgnm, pth_mod)
-
         try:
-            py_mod = spec.loader.load_module()
+            py_mod = load_waveguide_module(pth_mod)
         except Exception as ex:
             reporting.report_and_exit(f"Python couldn't load the user module '{str(wgpy)}'."+
                                       "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+

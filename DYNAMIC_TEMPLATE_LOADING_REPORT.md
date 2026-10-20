@@ -134,6 +134,19 @@ Keep support for arbitrary user implementation files, but:
 
 This is relatively low risk and does not require changing the JSON format.
 
+#### Implementation status
+
+Implemented in `backend/meshing/template_loader.py`. The shared loader derives
+a deterministic internal module name from each resolved implementation path,
+registers the module in `sys.modules` before executing it, and caches only
+successfully executed modules. It also removes a partially initialized module
+from `sys.modules` if execution fails.
+
+Both `backend/meshing/templates.py` and `backend/usermesh.py` use this shared
+loader, so template registration and geometry reconstruction use the same
+module identity and cache. The existing `UserGeometryBase.__reduce__`
+compatibility mechanism remains in place for file-based user templates.
+
 ### Phase 2: use normal imports for built-in templates
 
 Change built-in template metadata from filenames to import paths:

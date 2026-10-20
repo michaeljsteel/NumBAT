@@ -315,7 +315,7 @@ class CalcProcess(multiprocessing.Process):
                 traceback.print_exception(err)
                 break
 
-        print(f"{self.name} is running off the end")
+        print(f"{self.name} has exhausted its work queue and is exiting.")
 
 
 def launch_worker_processes_and_wait(num_workers, task_func,
