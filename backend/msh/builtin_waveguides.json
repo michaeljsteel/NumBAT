@@ -2,68 +2,68 @@
     "wguides":
     [
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Rectangular",
             "inc_shape": "rectangular",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Circular",
             "inc_shape": "circular",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "TwoIncl",
             "inc_shape": "twoincl",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "TwoInclVert",
             "inc_shape": "twoinclvert",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Pedestal",
             "inc_shape": "pedestal",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Rib",
             "inc_shape": "rib",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "RibCoated",
             "inc_shape": "rib_coated",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "RibDoubleCoated",
             "inc_shape": "rib_double_coated",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "RibMkII",
             "inc_shape": "ribmk2",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Triangular",
             "inc_shape": "triangular",
             "active": 1
@@ -71,73 +71,73 @@
 
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "TrapezoidalRib",
             "inc_shape": "trapezoidal_rib",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Slot",
             "inc_shape": "slot",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "SlotCoated",
             "inc_shape": "slot_coated",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Onion",
             "inc_shape": "onion",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Onion1",
             "inc_shape": "onion1",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Onion2",
             "inc_shape": "onion2",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "Onion3",
             "inc_shape": "onion3",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "CircOnion",
             "inc_shape": "circ_onion",
             "active": 1
         },
 
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "CircOnion1",
             "inc_shape": "circ_onion1",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "CircOnion2",
             "inc_shape": "circ_onion2",
             "active": 1
         },
         {
-            "wg_impl": "builtin_meshes.py",
+            "module": "msh.builtin_meshes",
             "wg_class": "CircOnion3",
             "inc_shape": "circ_onion3",
             "active": 1

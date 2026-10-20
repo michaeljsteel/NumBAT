@@ -171,6 +171,15 @@ template_class = getattr(module, entry["class"])
 This gives built-in classes stable identities and makes them naturally
 compatible with Python multiprocessing.
 
+#### Implementation status
+
+Implemented by replacing each built-in `wg_impl` entry with
+`"module": "msh.builtin_meshes"` in `backend/msh/builtin_waveguides.json`.
+The template loader now imports entries with `module` using
+`importlib.import_module()` and retains `wg_impl` support for file-based user
+templates. Built-in geometry classes consequently retain their natural
+`msh.builtin_meshes` module identity.
+
 ### Phase 3: provide a package-based plugin mechanism
 
 For third-party templates, the most maintainable approach is to use installed

@@ -14,6 +14,7 @@
 #
 
 import json
+from importlib import import_module
 
 import reporting
 import traceback
@@ -39,25 +40,47 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
             continue
 
         wgclsnm = wg['wg_class']  # Python class implementing this template
-        wgpy = wg['wg_impl']      # Python file defining that class
+        module_name = wg.get('module')
+        if module_name is not None:
+            try:
+                py_mod = import_module(module_name)
+            except Exception as ex:
+                reporting.report_and_exit(
+                    f"Python couldn't import waveguide template module '{module_name}'."
+                    "\n Your code likely contains a syntax error or an attempt to load another "
+                    "module that was not successful."
+                    f"\n\n The Python traceback contained the error message:\n   {str(ex)}."
+                    f"\n\n\n The full traceback was {traceback.format_exc()}"
+                )
+            template_source = f"module: {module_name}"
+        else:
+            wgpy = wg['wg_impl']  # Python file defining that class
+            pth_mod = pth_wgtemplate_dir / wgpy
 
-        # Find and load the module containing the class that implements this waveguide template
-        pth_mod = pth_wgtemplate_dir / wgpy
+            if not pth_mod.exists():
+                reporting.report_and_exit(
+                    f"Missing waveguide template implementation file: {str(wgpy)} "
+                    f"named in str({pth_wgtemplate_index})."
+                    f"\nFile was expected in directory {str(pth_wgtemplate_dir)}"
+                )
 
-        if not pth_mod.exists():
-            reporting.report_and_exit(f'Missing waveguide template implementation file: {str(wgpy)} named in str({pth_wgtemplate_index}).'
-                            + f'\nFile was expected in directory {str(pth_wgtemplate_dir)}')
-
-        try:
-            py_mod = load_waveguide_module(pth_mod)
-        except Exception as ex:
-            reporting.report_and_exit(f"Python couldn't load the user module '{str(wgpy)}'."+
-                                      "\n Your code likely contains a syntax error or an attempt to load another module that was not successful." + f'\n\n The Python traceback contained the error message:\n   {str(ex)}.'+
-                                      f'\n\n\n The full traceback was {traceback.format_exc()}')
+            try:
+                py_mod = load_waveguide_module(pth_mod)
+            except Exception as ex:
+                reporting.report_and_exit(
+                    f"Python couldn't load the user module '{str(wgpy)}'."
+                    "\n Your code likely contains a syntax error or an attempt to load another "
+                    "module that was not successful."
+                    f"\n\n The Python traceback contained the error message:\n   {str(ex)}."
+                    f"\n\n\n The full traceback was {traceback.format_exc()}"
+                )
+            template_source = f"implementation file: {wgpy}"
 
         # Now extract the class that implements this waveguide template
         if not hasattr(py_mod, wgclsnm):
-            reporting.report_and_exit(f"Can't find waveguide template class {wgclsnm} in implementation file: {wgpy}")
+            reporting.report_and_exit(
+                f"Can't find waveguide template class {wgclsnm} in {template_source}"
+            )
         wgcls = getattr(py_mod, wgclsnm)
 
         wg['wg_template_cls'] = wgcls

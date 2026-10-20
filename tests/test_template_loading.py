@@ -7,8 +7,12 @@ import pytest
 
 sys.path.append("backend")
 
-from meshing import template_loader
+from meshing import template_loader  # noqa: I001
 from meshing.templates import _load_waveguide_templates
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+BUILTIN_TEMPLATE_DIRECTORY = PROJECT_ROOT / "backend" / "msh"
 
 
 def _unload_module(module_path):
@@ -94,6 +98,19 @@ def test_waveguide_index_reuses_one_module_for_classes_from_same_implementation(
     second_class = waveguides[1]["wg_template_cls"]
     assert first_class.__module__ == second_class.__module__
     assert first_class.__module__ == template_loader._module_name_for_path(module_path.resolve())
+
+
+def test_builtin_waveguide_index_uses_normal_import_path():
+    waveguides = _load_waveguide_templates(
+        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+    )
+
+    assert waveguides
+    assert all(waveguide["module"] == "msh.builtin_meshes" for waveguide in waveguides)
+    assert all("wg_impl" not in waveguide for waveguide in waveguides)
+    assert all(
+        waveguide["wg_template_cls"].__module__ == "msh.builtin_meshes" for waveguide in waveguides
+    )
 
 
 def test_pickle_rebuilds_file_based_geometry_with_its_saved_state(tmp_path):
