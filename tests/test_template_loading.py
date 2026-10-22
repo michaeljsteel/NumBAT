@@ -1,18 +1,35 @@
 import json
 import pickle
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 
 sys.path.append("backend")
 
 from meshing import template_loader  # noqa: I001
 from meshing.templates import _load_waveguide_templates
+from msh.builtin_meshes import RoundedBowtie
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_TEMPLATE_DIRECTORY = PROJECT_ROOT / "backend" / "msh"
+ROUNDED_BOWTIE_PARAMETERS = {
+    "domain_x": 1000,
+    "domain_y": 1000,
+    "rad_tip": 10,
+    "alpha_tip": 3.141592653589793 / 6,
+    "gap_g": 20,
+    "bowlen_l": 100,
+    "rad_corner": 5,
+    "lc_bkg": 0.1,
+    "lc_refine_1": 1,
+    "lc_refine_2": 2,
+}
 
 
 def _unload_module(module_path):
@@ -111,6 +128,78 @@ def test_builtin_waveguide_index_uses_normal_import_path():
     assert all(
         waveguide["wg_template_cls"].__module__ == "msh.builtin_meshes" for waveguide in waveguides
     )
+
+
+def test_rounded_bowtie_is_registered_and_substitutes_its_half_angle():
+    waveguides = _load_waveguide_templates(
+        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+    )
+    rounded_bowtie = next(
+        waveguide for waveguide in waveguides if waveguide["inc_shape"] == "rounded_bowtie"
+    )
+    geometry = rounded_bowtie["wg_template_cls"](ROUNDED_BOWTIE_PARAMETERS, {})
+    geometry.init_geometry()
+    mesh_geometry = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+
+    assert isinstance(geometry, RoundedBowtie)
+    assert "alpha_tip = 0.523599;" in mesh_geometry
+    assert geometry.check_dimensions() == (True, "")
+
+
+def test_rounded_bowtie_rejects_crossing_outer_corner_transitions():
+    invalid_parameters = dict(ROUNDED_BOWTIE_PARAMETERS, bowlen_l=120, rad_corner=50)
+    geometry = RoundedBowtie(invalid_parameters, {})
+
+    dimensions_ok, message = geometry.check_dimensions()
+
+    assert not dimensions_ok
+    assert "outer corner transitions cross" in message
+
+
+def test_rounded_bowtie_draws_mirrored_inclusion_outlines():
+    geometry = RoundedBowtie(ROUNDED_BOWTIE_PARAMETERS, {})
+    figure, axes = plt.subplots()
+    try:
+        geometry.draw_mpl_frame(axes, {"edgecolor": "black", "linewidth": 1})
+        assert len(axes.lines) == 2
+        right_outline = axes.lines[0].get_xydata()
+        left_outline = axes.lines[1].get_xydata()
+        assert right_outline.shape == left_outline.shape
+        assert (right_outline[:, 0] == -left_outline[:, 0]).all()
+        assert (right_outline[:, 1] == left_outline[:, 1]).all()
+        assert np.isclose(right_outline[:, 0].min(), ROUNDED_BOWTIE_PARAMETERS["gap_g"] / 2000)
+    finally:
+        plt.close(figure)
+
+
+def test_rounded_bowtie_template_creates_three_physical_surfaces(tmp_path):
+    gmsh = shutil.which("gmsh")
+    if gmsh is None:
+        pytest.skip("Gmsh is not installed")
+
+    geometry = RoundedBowtie(ROUNDED_BOWTIE_PARAMETERS, {})
+    geometry.init_geometry()
+    rendered_template = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+    geometry_path = tmp_path / "rounded_bowtie.geo"
+    mesh_path = tmp_path / "rounded_bowtie.msh"
+    geometry_path.write_text(rendered_template)
+    subprocess.run(
+        [gmsh, "-2", str(geometry_path), "-format", "msh2", "-o", str(mesh_path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    physical_surfaces = set()
+    lines = mesh_path.read_text().splitlines()
+    element_start = lines.index("$Elements") + 2
+    element_end = lines.index("$EndElements")
+    for element_line in lines[element_start:element_end]:
+        fields = element_line.split()
+        if fields[1] == "2":
+            physical_surfaces.add(int(fields[3]))
+
+    assert physical_surfaces == {1, 2, 3}
 
 
 def test_pickle_rebuilds_file_based_geometry_with_its_saved_state(tmp_path):

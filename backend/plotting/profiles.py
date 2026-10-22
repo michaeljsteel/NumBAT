@@ -49,11 +49,8 @@ def get_structure_plotter_stiffness(wguide, c_I, c_J, n_points=500):
     return fsfp
 
 
-def get_structure_plotter_acoustic_velocity(wguide, d_materials, vel_index=0, n_points=500):
+def get_structure_plotter_acoustic_velocity(wguide, d_materials, n_points=500):
     """Make plotter for arbitrary 1D and 2D slices of the elastic acoustic phase speed.
-
-    Args:
-        vel_index (0,1,2): Index of the elastic mode phase speed to plot.
 
     Currently only works for isotropic materials."""
 

@@ -141,6 +141,12 @@
             "wg_class": "CircOnion3",
             "inc_shape": "circ_onion3",
             "active": 1
+        },
+        {
+            "module": "msh.builtin_meshes",
+            "wg_class": "RoundedBowtie",
+            "inc_shape": "rounded_bowtie",
+            "active": 1
         }
     ]
 }

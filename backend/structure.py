@@ -263,13 +263,13 @@ class Structure:
 
         pltgmsh.plot_mail_mesh(self.mesh_mail_fname, outpref)
 
-    def plot_mesh(self, outpref, combo_plot=True):
+    def plot_mesh(self, outpref, combo_plot=True, keep_singles=False):
         """Visualise mesh with gmsh and save to a file.
 
         If combo_plot==False, wire frame and mesh node plots are stored in separate files."""
 
         return pltgmsh.plot_mesh(self.msh_location_in, self.msh_location_out,
-                          self.msh_name, outpref, combo_plot)
+                          self.msh_name, outpref, combo_plot, keep_singles)
 
     def check_mesh(self):
         """Visualise geometry and mesh with gmsh."""
@@ -361,20 +361,16 @@ class Structure:
         return pltprof._make_dielectric_plotter(self, self.optical_props, True, n_points)
 
     def get_structure_plotter_stiffness(self, c_I, c_J, n_points=500):
-        """Make plotter for arbitrary 1D and 2D slices of the elastic stiffness."""
+        """Make plotter for arbitrary 1D and 2D slices of the elastic stiffness for the element C_{IJ}."""
         return pltprof.get_structure_plotter_stiffness(self, c_I, c_J, n_points)
 
 
-    def get_structure_plotter_acoustic_velocity(self, vel_index=0, n_points=500):
+    def get_structure_plotter_acoustic_velocity(self, n_points=500):
         """Make plotter for arbitrary 1D and 2D slices of the elastic acoustic phase speed.
-
-        Args:
-            vel_index (0,1,2): Index of the elastic mode phase speed to plot.
 
         Currently only works for isotropic materials."""
 
-        return pltprof.get_structure_plotter_acoustic_velocity(self, self.d_materials,
-                                                               vel_index, n_points)
+        return pltprof.get_structure_plotter_acoustic_velocity(self, self.d_materials, n_points)
 
 
     def plot_refractive_index_profile_rough(self, prefix, n_points = 200, as_epsilon=False):
