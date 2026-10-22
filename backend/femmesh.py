@@ -689,12 +689,15 @@ class FEMScalarFieldPlotter:
 
         validate_1D_cut_format(s_cut, val1, val2)
 
+        fn=''
         if s_cut.lower() == "x":
-            self._make_plot_xcut(prefix, val1)
+            fn=self._make_plot_xcut(prefix, val1)
         elif s_cut.lower() == "y":
-            self._make_plot_ycut(prefix, val1)
+            fn=self._make_plot_ycut(prefix, val1)
         else:
-            self._make_plot_1D(prefix, val1, val2)
+            fn=self._make_plot_1D(prefix, val1, val2)
+
+        return [fn]
 
     def _make_plot_ycut(self, prefix, y0):
         v_x_flat = self.v_x
@@ -762,12 +765,13 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(v_d, v_scalar)
 
-        plottools.save_and_close_figure(
-            fig, prefix + "-" + self.fname_suffix + "_linecut.png"
-        )
+        fname = prefix + "-" + self.fname_suffix + "_linecut.png"
+        plottools.save_and_close_figure(fig, fname)
+        return [fname]
 
     def make_plot_2D(self, pref, aspect=1.0, with_cb=True):
 
+        fnames = []
         # full out-directory path
         prefix = str(Path(numbat.NumBATApp().outdir(), pref))
 
@@ -835,7 +839,8 @@ class FEMScalarFieldPlotter:
                 cb.outline.set_color("gray")
 
             plottools.save_and_close_figure(fig, fname)
-
+            fnames.append(fname)
+        return fnames
 
 
 

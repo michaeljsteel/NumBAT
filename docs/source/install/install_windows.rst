@@ -165,7 +165,7 @@ The following tools are all free but will use several GB of disk space.
 
     The software is available from the `download site <https://www.intel.com/content/www/us/en/developer/tools/oneapi/oneapi-toolkit-download.html>`_.
 
-    There are command line, GUI, and package installers available.
+    There are command line, GUI, and package installers available. The instructions below assume you are using the 2026.1 version. Some DLLs change their names between releases, so if you are using a different version, please check the names of the DLLs in the ``<IntelOneAPI>\mkl\latest\bin`` and ``<IntelOneAPI>\compiler\latest\bin`` directories.
 
 
 
@@ -328,8 +328,8 @@ We are now ready to build and test |NUMBAT| itself.
 
 #. Also, copy the following Intel oneAPI .dlls to this directory::
 
-    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.2.dll" .
-    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.2.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_rt.3.dll" .
+    $ copy "c:\Program Files (x86)\Intel\oneAPI\mkl\latest\bin\mkl_intel_thread.3.dll" .
     $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\svml_dispmd.dll" .
     $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libmmd.dll" .
     $ copy "c:\Program Files (x86)\Intel\oneAPI\compiler\latest\bin\libifcoremd.dll" .
