@@ -100,7 +100,6 @@ def save_and_close_figure(fig, fig_fname):
     else:
         dpi = plot_prefs.plot_output_resolution_dpi
 
-    print('plotting to file: ' + fig_fname)
     # Prepare metadata
     metadata = {
         'Title': 'NumBAT Plot',

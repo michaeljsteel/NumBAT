@@ -13,31 +13,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import itertools
+from collections.abc import Sequence
+from math import sqrt
+from numbers import Real
+from pathlib import Path
+from typing import Any, Optional, Union
 
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-import copy
-from numbattools import np_min_max
-from pathlib import Path
-
-
-from math import sqrt
+import numpy as np
 
 import nbgmsh
-from nbtypes import SI_to_gmpercc, SI_um
 import numbat
-from plotting.plottools import save_and_close_figure
-import reporting
 import plotting.plottools as plottools
-from numbattools import is_real_number, is_float_pair
+import reporting
+from nbtypes import SI_to_gmpercc, SI_um
+from numbattools import is_float_pair, is_real_number, np_min_max
+from plotting.plottools import save_and_close_figure
 
 
+def validate_1D_cut_format(
+    s_cut: str, val1: Union[Real, Sequence[Real]], val2: Optional[Sequence[Real]]
+) -> None:
+    """Validate the direction and coordinates requested for a one-dimensional cut.
 
-def validate_1D_cut_format(s_cut, val1, val2):
-    """Checks the format of the input values for a 1D cut plot."""
+    Args:
+        s_cut: Cut direction, either ``"x"``, ``"y"``, or ``"line"``.
+        val1: Fixed coordinate for an axis-aligned cut, or the start point of a
+            line cut.
+        val2: End point of a line cut. It is required only when ``s_cut`` is
+            ``"line"``.
+    """
 
     if s_cut not in ('x', 'y', 'line'):
         reporting.report_and_exit(f'Invalid plot cut type. Must be "x", "y" or "line". Received {s_cut}.')
@@ -65,7 +74,27 @@ def validate_1D_cut_format(s_cut, val1, val2):
 # ProcessPoolExecutor, because neither Triangulations or nested functions are
 # pickleable
 class TriInterpWrapper:
-    def __init__(self, tri_triang6p, finder, vx_out, vy_out, nx=0, ny=0):
+    """Callable wrapper around a linear FEM triangle interpolator."""
+
+    def __init__(
+        self,
+        tri_triang6p: matplotlib.tri.Triangulation,
+        finder: matplotlib.tri.TriFinder,
+        vx_out: np.ndarray,
+        vy_out: np.ndarray,
+        nx: int = 0,
+        ny: int = 0,
+    ) -> None:
+        """Store the triangulation and output grid used for interpolation.
+
+        Args:
+            tri_triang6p: Triangulation in six-node element ordering.
+            finder: Triangle finder associated with the physical mesh.
+            vx_out: Flattened output x coordinates.
+            vy_out: Flattened output y coordinates.
+            nx: Output grid width, or zero for a one-dimensional sample.
+            ny: Output grid height, or zero for a one-dimensional sample.
+        """
         self.tri_triang6p = tri_triang6p
         self.finder = finder
         self.vx_out = vx_out
@@ -73,7 +102,16 @@ class TriInterpWrapper:
         self.nx = nx  # Nonzero if 2D context
         self.ny = ny  # Nonzero if 2D context
 
-    def __call__(self, femsol):
+    def __call__(self, femsol: np.ndarray) -> np.ma.MaskedArray:
+        """Interpolate a FEM solution onto the stored sampling coordinates.
+
+        Args:
+            femsol: Scalar field values in six-node element ordering.
+
+        Returns:
+            Interpolated values, reshaped to ``(nx, ny)`` for a two-dimensional
+            sampling grid.
+        """
         #print('\n\nCalling TriInterpWrapper:', type(self.tri_triang6p))
         #print(dir(self.tri_triang6p))
         #print(self.tri_triang6p._cpp_triangulation)
@@ -95,8 +133,27 @@ class TriInterpWrapper:
 
         return mptri
 
-def make_interper_f_2D(tri_triang6p, finder, vx_out, vy_out, nx, ny):
-    """vx_out and vy_out are flattened 1D lists of x and y coords from a 2D grid of dimension nx x ny."""
+def make_interper_f_2D(
+    tri_triang6p: matplotlib.tri.Triangulation,
+    finder: matplotlib.tri.TriFinder,
+    vx_out: np.ndarray,
+    vy_out: np.ndarray,
+    nx: int,
+    ny: int,
+) -> TriInterpWrapper:
+    """Create an interpolator for a flattened two-dimensional sampling grid.
+
+    Args:
+        tri_triang6p: Triangulation in six-node element ordering.
+        finder: Triangle finder associated with the physical mesh.
+        vx_out: Flattened x coordinates of the sampling grid.
+        vy_out: Flattened y coordinates of the sampling grid.
+        nx: Number of samples along the x axis.
+        ny: Number of samples along the y axis.
+
+    Returns:
+        Callable interpolator that reshapes evaluated fields to ``(nx, ny)``.
+    """
 
 #    def mif2D(femsol):
 #        return matplotlib.tri.LinearTriInterpolator(
@@ -109,8 +166,23 @@ def make_interper_f_2D(tri_triang6p, finder, vx_out, vy_out, nx, ny):
 
 
 
-def make_interper_f_1D(tri_triang6p, finder, vx_out, vy_out):
-    """vx_out and vy_out are 1D lists of x and y coords from a 1D sampling line."""
+def make_interper_f_1D(
+    tri_triang6p: matplotlib.tri.Triangulation,
+    finder: matplotlib.tri.TriFinder,
+    vx_out: np.ndarray,
+    vy_out: np.ndarray,
+) -> TriInterpWrapper:
+    """Create an interpolator for samples along a one-dimensional line.
+
+    Args:
+        tri_triang6p: Triangulation in six-node element ordering.
+        finder: Triangle finder associated with the physical mesh.
+        vx_out: X coordinates of the sampling line.
+        vy_out: Y coordinates of the sampling line.
+
+    Returns:
+        Callable interpolator that evaluates fields at the supplied points.
+    """
 
     # def mif1D(femsol):
     #     return matplotlib.tri.LinearTriInterpolator(
@@ -134,7 +206,8 @@ class FemMesh:
     """
 
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialise an empty mesh ready for EM or acoustic mesh data."""
         ## filename of original Gmsh-derived .mail file
         self.mesh_mail_fname = ""
 
@@ -188,7 +261,13 @@ class FemMesh:
         # self.el_convert_tbl_inv = None   # Inversion of el_convert_tbl
         # self.node_convert_tbl = None
 
-    def build_from_gmsh_mail(self, wguide):
+    def build_from_gmsh_mail(self, wguide: Any) -> None:
+        """Load the electromagnetic mesh and physical coordinates from a waveguide.
+
+        Args:
+            wguide: Waveguide structure providing its ``.mail`` mesh filename,
+                domain dimensions, and optical material properties.
+        """
         # Takes list of all material refractive indices
         # Discards any that are zero
 
@@ -238,8 +317,21 @@ class FemMesh:
             print(f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.')
 
 
-    def store_fortran_em_mesh_properties(self, type_el, node_physindex, m_elnd_to_mshpt, v_mshpt_xy):
-        """Called after Fortran calc_modes_em() to store its mesh properties."""
+    def store_fortran_em_mesh_properties(
+        self,
+        type_el: np.ndarray,
+        node_physindex: np.ndarray,
+        m_elnd_to_mshpt: np.ndarray,
+        v_mshpt_xy: np.ndarray,
+    ) -> None:
+        """Store electromagnetic mesh arrays returned by the Fortran solver.
+
+        Args:
+            type_el: Per-element Fortran material indices.
+            node_physindex: Per-node physical-boundary indices.
+            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping.
+            v_mshpt_xy: Physical x and y coordinates of mesh nodes.
+        """
 
         self.v_el_2_mat_idx = type_el
         self.m_elnd_to_mshpt = m_elnd_to_mshpt
@@ -251,8 +343,16 @@ class FemMesh:
         # print("  elt2nodes index map", self.m_elnd_to_mshpt, self.m_elnd_to_mshpt.shape)
         # print( #    "  node_physindex index map", self.node_physindex, self.node_physindex.shape)
 
-    def store_fortran_ac_mesh_properties(self, type_el, m_elnd_to_mshpt, v_mshpt_xy):
-        """Called after Fortran calc_modes_ac() to store its mesh properties."""
+    def store_fortran_ac_mesh_properties(
+        self, type_el: np.ndarray, m_elnd_to_mshpt: np.ndarray, v_mshpt_xy: np.ndarray
+    ) -> None:
+        """Store acoustic mesh arrays returned by the Fortran solver.
+
+        Args:
+            type_el: Per-element Fortran material indices.
+            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping.
+            v_mshpt_xy: Physical x and y coordinates of mesh nodes.
+        """
 
         self.v_el_2_mat_idx = type_el
         self.m_elnd_to_mshpt = m_elnd_to_mshpt
@@ -261,7 +361,7 @@ class FemMesh:
         # print("  type_el", list(self.v_el_2_mat_idx), self.v_el_2_mat_idx.shape)
         # print("  elt2nodes index map", self.m_elnd_to_mshpt)
 
-    def ac_build_from_em(self, wguide, em_fem):
+    def ac_build_from_em(self, wguide: Any, em_fem: "FemMesh") -> None:
         """Builds the FemMesh for an acoustic simulation based on an existing EM mesh
         and the known elastic properties.
 
@@ -382,7 +482,8 @@ class FemMesh:
 
         self._report_ac_mesh_properties(el_props)
 
-    def get_xy_limits(self):
+    def get_xy_limits(self) -> tuple[float, float, float, float]:
+        """Return minimum and maximum physical coordinates of the mesh."""
         x_min, x_max = np_min_max(self.v_mshpt_xy[0, :])
         y_min, y_max = np_min_max(self.v_mshpt_xy[1, :])
         return x_min, x_max, y_min, y_max
@@ -408,7 +509,13 @@ class FemMesh:
         # print("  elt2nodes index map", self.m_elnd_to_mshpt)
 
 
-    def make_sub_triangulation(self):
+    def make_sub_triangulation(self) -> tuple[list[list[int]], list[list[int]]]:
+        """Split every quadratic mesh element into four linear triangles.
+
+        Returns:
+            Triangle-node indices in six-node element ordering and global
+            mesh-node ordering, respectively.
+        """
         # In m_elnd_to_mshpt
         # Nodes around a triangle element are numbered as corners: 0 1 2,  midpts: 3,4,5
         # This induces a 4-triangle sub-triangulation of each element, with clockwise vertices
@@ -467,7 +574,9 @@ class FemMesh:
         fname = pref + f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
         save_and_close_figure(fig, fname)
 
-    def make_interpolator_for_grid(self, vx_out, vy_out, nx, ny):
+    def make_interpolator_for_grid(
+        self, vx_out: np.ndarray, vy_out: np.ndarray, nx: int, ny: int
+    ) -> TriInterpWrapper:
         """Constructs interpolator to map triangular fem grid scalar functions onto requested rectangular grid.
 
         Args:
@@ -529,7 +638,15 @@ class FemMesh:
 
         return interper_f
 
-    def rect_grid(self, n_points):
+    def rect_grid(self, n_points: int) -> tuple[np.ndarray, np.ndarray]:
+        """Create an approximately square-pixel rectangular grid over the mesh.
+
+        Args:
+            n_points: Nominal linear resolution for the grid.
+
+        Returns:
+            X and y coordinate vectors spanning the mesh extents.
+        """
 
         x_min, x_max = self.extents[0:2]
         y_min, y_max = self.extents[2:]
@@ -542,13 +659,21 @@ class FemMesh:
         v_regy = np.linspace(y_min, y_max, n_pts_y)
         return v_regx, v_regy
 
-    def element_to_material_index(self, i_el):
+    def element_to_material_index(self, i_el: int) -> int:
+        """Return the zero-based material index for one mesh element.
+
+        Args:
+            i_el: Zero-based mesh-element index.
+
+        Returns:
+            Zero-based material index associated with the element.
+        """
         # -1 because FEM material indices are fortran unit-indexed
         return (self.v_el_2_mat_idx[i_el] - 1)
 
 
 
-    def get_fullmesh_nodes_xy(self):
+    def get_fullmesh_nodes_xy(self) -> tuple[np.ndarray, np.ndarray]:
         """Returns vectors of x and y physical positions from the 6 nodes of each element
         in the standard order.
 
@@ -582,7 +707,7 @@ class FEMScalarFieldPlotter:
     """Class to make 1D and 2D plots of a scalar quantity represented on a FEM mesh."""
 
 
-    def __init__(self, wguide, n_points=500):
+    def __init__(self, wguide: Any, n_points: int = 500) -> None:
         """Build structure to hold a scalar field represented on a FEM mesh.
 
         The FEM mesh is constructed from the mesh file mesh_mail_fname.
@@ -613,7 +738,17 @@ class FEMScalarFieldPlotter:
         self.y_lab = r"$y$ [μm]"
         self.d_lab = r"$d$ [μm]"
 
-    def setup_scalar_properties(self, nm_eng, unit, nm_math, fname_suffix):
+    def setup_scalar_properties(
+        self, nm_eng: str, unit: str, nm_math: str, fname_suffix: str
+    ) -> None:
+        """Configure labels and output names for a scalar quantity.
+
+        Args:
+            nm_eng: Human-readable quantity name.
+            unit: Unit label appended to plotted values.
+            nm_math: Mathematical quantity label.
+            fname_suffix: Suffix used for generated filenames.
+        """
         self.dim = 1
         self.nm_eng = nm_eng
         self.nm_math = nm_math
@@ -622,14 +757,25 @@ class FEMScalarFieldPlotter:
 
     def setup_vector_properties(
         self,
-        dim,
-        nm_eng,
-        unit,
-        nm_math,
-        nm_math_comps,
-        fname_suffix,
-        fname_suffix_comps,
-    ):
+        dim: int,
+        nm_eng: str,
+        unit: str,
+        nm_math: str,
+        nm_math_comps: Sequence[str],
+        fname_suffix: str,
+        fname_suffix_comps: Sequence[str],
+    ) -> None:
+        """Configure labels and output names for a vector quantity.
+
+        Args:
+            dim: Number of vector components.
+            nm_eng: Human-readable quantity name.
+            unit: Unit label appended to plotted values.
+            nm_math: Mathematical vector label.
+            nm_math_comps: Mathematical labels for each vector component.
+            fname_suffix: Base suffix used for generated filenames.
+            fname_suffix_comps: Suffixes used for each component filename.
+        """
         self.dim = dim
         self.nm_eng = nm_eng
         self.nm_math = nm_math
@@ -638,17 +784,21 @@ class FEMScalarFieldPlotter:
         self.fname_suffix = fname_suffix
         self.fname_suffix_comps = fname_suffix_comps
 
-    def set_quantity_name(self, nm, suf):
+    def set_quantity_name(self, nm: str, suf: str) -> None:
+        """Set the human-readable quantity name and output filename suffix."""
         self.quantity_name = nm
         self.file_suffix = suf
 
-    def n_elts(self):  # NAME PROBLEMATIC
+    def n_elts(self) -> int:  # NAME PROBLEMATIC
+        """Return the number of finite elements in the underlying mesh."""
         return self.fem_mesh.n_msh_el
 
-    def fill_quantity_by_material_index(self, mati_to_scalars):
-        """Takes an array mati_to_scalar that maps the index of a material to the desired scalar property, eg refractive index.
+    def fill_quantity_by_material_index(self, mati_to_scalars: np.ndarray) -> None:
+        """Populate scalar fields from values indexed by material.
 
-        mati_to_scalar is indexed from 0 with 0 being the vacuum material
+        Args:
+            mati_to_scalars: Scalar or vector values indexed by zero-based
+                material index, with vacuum at index zero.
         """
 
         # make both scalar and vector inputs usable
@@ -669,19 +819,32 @@ class FEMScalarFieldPlotter:
             t_scalar_field = t_scalar_field.flatten("F")
             self.scalar_fields.append(t_scalar_field)
 
-    def element_to_material_index(self, i_el):
+    def element_to_material_index(self, i_el: int) -> int:
+        """Return the zero-based material index for one mesh element."""
         return self.fem_mesh.element_to_material_index(i_el)
 
-    def make_plot_1D_cut(self, pref, s_cut, val1, val2=None):
+    def make_plot_1D_cut(
+        self,
+        pref: Union[str, Path],
+        s_cut: str,
+        val1: Union[Real, Sequence[Real]],
+        val2: Optional[Sequence[Real]] = None,
+    ) -> list[str]:
         """Make a 1D plot of the scalar along a line.
 
-        s_cut is a string determining the cut direction, with allowed values: 'x', 'y', or 'line'.
+        Args:
+            pref: Output filename prefix relative to the NumBAT output directory.
+            s_cut: Cut direction: ``"x"``, ``"y"``, or ``"line"``.
+            val1: Fixed coordinate for an axis-aligned cut, or the starting
+                ``(x, y)`` point for a line cut.
+            val2: Ending ``(x, y)`` point for a line cut.
 
-        For s_cut='x', the function is plotted along y at fixed x=val1, where val1 is a float.
+        Returns:
+            Paths of the generated cut plot files.
 
-        For s_cut='y', the function is plotted along x at fixed x=val1, where val1 is a float.
-
-        For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
+        For ``s_cut="x"``, the function is plotted along y at fixed x=val1.
+        For ``s_cut="y"``, the function is plotted along x at fixed y=val1.
+        For ``s_cut="line"``, the function is plotted from ``val1`` to ``val2``.
         """
 
         # full out-directory parth
@@ -718,9 +881,9 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(self.v_x, v_scalar)
 
-        plottools.save_and_close_figure(
-            fig, prefix + "-" + self.fname_suffix + "_xcut.png"
-        )
+        fname = prefix + "-" + self.fname_suffix + "_ycut.png"
+        plottools.save_and_close_figure( fig, fname )
+        return fname
 
     def _make_plot_xcut(self, prefix, x0):
         v_y_flat = self.v_y
@@ -740,9 +903,10 @@ class FEMScalarFieldPlotter:
             v_scalar = self.interper(self.scalar_fields[i])
             ax.plot(self.v_y, v_scalar)
 
-        plottools.save_and_close_figure(
-            fig, prefix + "-" + self.fname_suffix + "_ycut.png"
-        )
+        fname = prefix + "-" + self.fname_suffix + "_ycut.png"
+        plottools.save_and_close_figure( fig, fname)
+        return fname
+
 
     def _make_plot_1D(self, prefix, pt0, pt1):
 
@@ -767,9 +931,21 @@ class FEMScalarFieldPlotter:
 
         fname = prefix + "-" + self.fname_suffix + "_linecut.png"
         plottools.save_and_close_figure(fig, fname)
-        return [fname]
+        return fname
 
-    def make_plot_2D(self, pref, aspect=1.0, with_cb=True):
+    def make_plot_2D(
+        self, pref: Union[str, Path], aspect: float = 1.0, with_cb: bool = True
+    ) -> list[str]:
+        """Render every scalar-field component as a two-dimensional image.
+
+        Args:
+            pref: Output filename prefix relative to the NumBAT output directory.
+            aspect: Matplotlib aspect ratio for the image axes.
+            with_cb: Whether to add a colour bar to every image.
+
+        Returns:
+            Paths of the generated component image files.
+        """
 
         fnames = []
         # full out-directory path
@@ -854,7 +1030,14 @@ class FEMScalarFieldPlotter:
 
 # Checks of mesh and triangles satisfy conditions for triangulation
 # Quadratic algorithm. Use on the smallest grid possible
-def check_triangulation(vx, vy, triangs):
+def check_triangulation(vx: np.ndarray, vy: np.ndarray, triangs: Sequence[Sequence[int]]) -> None:
+    """Report duplicate points and duplicate triangles in a triangulation.
+
+    Args:
+        vx: X coordinates of triangulation nodes.
+        vy: Y coordinates of triangulation nodes.
+        triangs: Node-index triples defining the triangles to inspect.
+    """
     # are points unique
     print("\n\nChecking triangulation goodness")
     npts = len(vx)

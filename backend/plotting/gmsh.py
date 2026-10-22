@@ -310,8 +310,8 @@ def _save_msh_plot(
         )
 
     axes.set_aspect("equal")
-    axes.set_xlabel(r"$x$ [arb. units]")
-    axes.set_ylabel(r"$y$ [arb. units]")
+    axes.set_xlabel(r"$x$ [μm]")
+    axes.set_ylabel(r"$y$ [μm]")
     axes.tick_params(colors="#666666")
     axes.xaxis.label.set_color("#666666")
     axes.yaxis.label.set_color("#666666")
@@ -397,7 +397,13 @@ def plot_mesh(
             # trimwhite=True
             delete_inputs= not keep_singles,
         )
-    return fout_wire, fout_mesh, fout_join
+    if combo_plot:
+        if keep_singles:
+            return fout_join, fout_wire, fout_mesh
+        else:
+            return fout_join
+    else:
+        return fout_wire, fout_mesh
 
 
 def check_mesh(msh_loc_out: Path | str, msh_name: str) -> None:
