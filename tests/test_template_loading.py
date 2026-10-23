@@ -13,14 +13,14 @@ sys.path.append("backend")
 
 from meshing import template_loader  # noqa: I001
 from meshing.templates import _load_waveguide_templates
-from msh.builtin_meshes import RoundedBowtie
+from msh.builtin_meshes import RoundedBowtie, RoundedWedge
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_TEMPLATE_DIRECTORY = PROJECT_ROOT / "backend" / "msh"
 ROUNDED_BOWTIE_PARAMETERS = {
-    "domain_x": 1000,
-    "domain_y": 1000,
+    "domain_x": 3000,
+    "domain_y": 3000,
     "rad_tip": 10,
     "alpha_tip": 3.141592653589793 / 6,
     "gap_g": 20,
@@ -29,6 +29,7 @@ ROUNDED_BOWTIE_PARAMETERS = {
     "lc_bkg": 0.1,
     "lc_refine_1": 1,
     "lc_refine_2": 2,
+    "rad_wg": 1000,
 }
 
 
@@ -200,6 +201,114 @@ def test_rounded_bowtie_template_creates_three_physical_surfaces(tmp_path):
             physical_surfaces.add(int(fields[3]))
 
     assert physical_surfaces == {1, 2, 3}
+
+
+ROUNDED_WEDGE_PARAMETERS = {
+    "domain_x": 3000,
+    "domain_y": 3000,
+    "rad_wg": 1000,
+    "rad_tip": 10,
+    "alpha_tip": 3.141592653589793 / 6,
+    "bowlen_l": 100,
+    "rad_corner": 5,
+    "lc_bkg": 0.1,
+    "lc_refine_1": 1,
+    "lc_refine_2": 2,
+}
+
+
+def test_rounded_wedge_is_registered_and_substitutes_its_parameters():
+    waveguides = _load_waveguide_templates(
+        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+    )
+    rounded_wedge = next(
+        waveguide for waveguide in waveguides if waveguide["inc_shape"] == "rounded_wedge"
+    )
+    geometry = rounded_wedge["wg_template_cls"](ROUNDED_WEDGE_PARAMETERS, {})
+    geometry.init_geometry()
+    mesh_geometry = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+
+    assert isinstance(geometry, RoundedWedge)
+    assert "alpha_tip = 0.523599;" in mesh_geometry
+    assert "bowlen_l = 100.000000;" in mesh_geometry
+    assert geometry.check_dimensions() == (True, "")
+
+
+def test_rounded_wedge_rejects_corner_transitions_that_meet_on_axis():
+    invalid_parameters = dict(ROUNDED_WEDGE_PARAMETERS, rad_corner=70)
+    geometry = RoundedWedge(invalid_parameters, {})
+
+    dimensions_ok, message = geometry.check_dimensions()
+
+    assert not dimensions_ok
+    assert "rad_corner" in message
+
+
+def test_rounded_wedge_rejects_tip_overlapping_corner_transition():
+    invalid_parameters = dict(ROUNDED_WEDGE_PARAMETERS, rad_tip=80, rad_corner=60)
+    geometry = RoundedWedge(invalid_parameters, {})
+
+    dimensions_ok, message = geometry.check_dimensions()
+
+    assert not dimensions_ok
+    assert "rounded tip" in message
+
+
+def test_rounded_wedge_rejects_wedge_not_inside_fibre():
+    invalid_parameters = dict(ROUNDED_WEDGE_PARAMETERS, rad_wg=100, bowlen_l=100)
+    geometry = RoundedWedge(invalid_parameters, {})
+
+    dimensions_ok, message = geometry.check_dimensions()
+
+    assert not dimensions_ok
+    assert "waveguide radius" in message
+
+
+def test_rounded_wedge_draws_single_symmetric_outline():
+    geometry = RoundedWedge(ROUNDED_WEDGE_PARAMETERS, {})
+    figure, axes = plt.subplots()
+    try:
+        geometry.draw_mpl_frame(axes, {"edgecolor": "black", "linewidth": 1})
+        assert len(axes.lines) == 1
+        outline = axes.lines[0].get_xydata()
+        assert np.isclose(outline[:, 0].min(), -outline[:, 0].max())
+        assert np.isclose(outline[:, 1].min(), -ROUNDED_WEDGE_PARAMETERS["bowlen_l"] / 1000, atol=1e-3)
+        apex_y = ROUNDED_WEDGE_PARAMETERS["bowlen_l"] - ROUNDED_WEDGE_PARAMETERS["rad_tip"] * (
+            1 / np.sin(ROUNDED_WEDGE_PARAMETERS["alpha_tip"]) - 1
+        )
+        assert np.isclose(outline[:, 1].max(), apex_y / 1000, atol=1e-4)
+    finally:
+        plt.close(figure)
+
+
+def test_rounded_wedge_template_creates_two_physical_surfaces(tmp_path):
+    gmsh = shutil.which("gmsh")
+    if gmsh is None:
+        pytest.skip("Gmsh is not installed")
+
+    geometry = RoundedWedge(ROUNDED_WEDGE_PARAMETERS, {})
+    geometry.init_geometry()
+    rendered_template = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+    geometry_path = tmp_path / "rounded_wedge.geo"
+    mesh_path = tmp_path / "rounded_wedge.msh"
+    geometry_path.write_text(rendered_template)
+    subprocess.run(
+        [gmsh, "-2", str(geometry_path), "-format", "msh2", "-o", str(mesh_path)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    physical_surfaces = set()
+    lines = mesh_path.read_text().splitlines()
+    element_start = lines.index("$Elements") + 2
+    element_end = lines.index("$EndElements")
+    for element_line in lines[element_start:element_end]:
+        fields = element_line.split()
+        if fields[1] == "2":
+            physical_surfaces.add(int(fields[3]))
+
+    assert physical_surfaces == {1, 2}
 
 
 def test_pickle_rebuilds_file_based_geometry_with_its_saved_state(tmp_path):

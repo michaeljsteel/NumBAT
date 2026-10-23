@@ -147,6 +147,12 @@
             "wg_class": "RoundedBowtie",
             "inc_shape": "rounded_bowtie",
             "active": 1
+        },
+        {
+            "module": "msh.builtin_meshes",
+            "wg_class": "RoundedWedge",
+            "inc_shape": "rounded_wedge",
+            "active": 1
         }
     ]
 }
