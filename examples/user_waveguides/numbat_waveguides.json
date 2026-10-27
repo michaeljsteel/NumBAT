@@ -1,0 +1,10 @@
+{
+    "wguides": [
+        {
+            "module": "elliptical_rod",
+            "wg_class": "EllipticalRod",
+            "inc_shape": "elliptical_rod",
+            "active": true
+        }
+    ]
+}

@@ -227,7 +227,29 @@ This tutorial, contained in ``examples/tutorials/sim-tut_14-coupled-wg.py`` demo
 of both electromagnetic and elastic modes in a pair of closely adjacent waveguides.
 
 
+Tutorial 21 -- User waveguide directories
+------------------------------------------
 
+This tutorial, contained in ``examples/tutorials/sim-tut_21-user-waveguides.py``,
+demonstrates the source-tree user-waveguide workflow. It registers
+``examples/user_waveguides`` with ``numbat.register_waveguide_directory`` before
+creating ``NumBATApp``. NumBAT then reads that directory's
+``numbat_waveguides.json`` manifest and loads its active
+``elliptical_rod.EllipticalRod`` entry.
+
+The tutorial creates a single elliptical silica rod in vacuum using the
+externally supplied ``EllipticalRod`` class and its neighbouring Gmsh
+``.geo`` template. It calculates and plots the fundamental optical mode, then
+calculates a set of elastic modes. The acoustic wavevector is chosen from
+the optical propagation constant only to obtain a representative elastic
+spectrum; no Stokes modes, interaction integrals, or SBS gain are calculated.
+
+The directory can be copied outside the NumBAT checkout and replaced with a
+group's own waveguide collection. The registration call is the only
+NumBAT-specific setup required by the simulation script.
+
+.. literalinclude:: ../../examples/tutorials/sim-tut_21-user-waveguides.py
+   :language: python
 
 
 

@@ -136,7 +136,8 @@ This is relatively low risk and does not require changing the JSON format.
 
 #### Implementation status
 
-Implemented in `backend/meshing/template_loader.py`. The shared loader derives
+Implemented in `backend/meshing/legacy_template_loader.py`. The deprecated
+compatibility loader derives
 a deterministic internal module name from each resolved implementation path,
 registers the module in `sys.modules` before executing it, and caches only
 successfully executed modules. It also removes a partially initialized module

@@ -5,7 +5,7 @@
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 
-"""Load file-based waveguide template modules with stable identities."""
+"""Deprecated compatibility loader for file-based ``wg_impl`` waveguides."""
 
 import hashlib
 import importlib.util
@@ -17,17 +17,22 @@ from types import ModuleType
 _loaded_modules = {}
 
 
-def _module_name_for_path(module_path: Path) -> str:
-    """Return a deterministic import name for a resolved template file."""
+def _legacy_module_name_for_path(module_path: Path) -> str:
+    """Return a deterministic import name for a legacy implementation file."""
     safe_stem = re.sub(r"\W|^(?=\d)", "_", module_path.stem)
     path_digest = hashlib.sha256(str(module_path).encode("utf-8")).hexdigest()[:16]
     return f"_numbat_waveguide_{safe_stem}_{path_digest}"
 
 
-def load_waveguide_module(module_file: str | Path) -> ModuleType:
-    """Load a waveguide module once for each resolved implementation path."""
+def is_legacy_waveguide_module(module_name: str) -> bool:
+    """Return whether ``module_name`` was created by this compatibility loader."""
+    return module_name.startswith("_numbat_waveguide_")
+
+
+def load_legacy_waveguide_module(module_file: str | Path) -> ModuleType:
+    """Load a legacy ``wg_impl`` module once for each resolved implementation path."""
     module_path = Path(module_file).resolve()
-    module_name = _module_name_for_path(module_path)
+    module_name = _legacy_module_name_for_path(module_path)
     cached_module = _loaded_modules.get(module_path)
 
     if cached_module is not None:

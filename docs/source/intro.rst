@@ -136,7 +136,7 @@ Some key changes you will need to make are as follows:
 
 * In all functions the parameter ``prefix_str`` has been renamed to ``prefix`` for brevity. Using the default output settings in ``NumBATApp()``, these should be rarely needed.
 
-* All waveguides are now specified as individual plugin classes in the files ``backend/msh/user_waveguides.json`` and ``backend/msh/user_meshes.py``.  These files provide useful examples of how to design and load new waveguide templates. See the following chapter for more details.
+* User waveguides are supplied by registering a directory containing a ``numbat_waveguides.json`` manifest, Python modules, and Gmsh templates. See :ref:`sec-user-defined-waveguides-label` for the preferred workflow.
 
 
 About our mascot

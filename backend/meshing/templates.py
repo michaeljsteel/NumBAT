@@ -14,13 +14,71 @@
 #
 
 import json
+import sys
 from importlib import import_module
+from pathlib import Path
 
 import reporting
 import traceback
-from meshing.template_loader import load_waveguide_module
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
+_registered_waveguide_directories = []
+_waveguide_manifest_filename = "numbat_waveguides.json"
+
+
+def register_waveguide_directory(directory):
+    """Register a directory containing a NumBAT waveguide manifest.
+
+    The directory is made available as a Python import root. Its active
+    waveguides are loaded when ``NumBATApp`` initializes.
+    """
+    waveguide_directory = Path(directory).expanduser().resolve()
+    if not waveguide_directory.is_dir():
+        raise NotADirectoryError(
+            f"Waveguide directory does not exist or is not a directory: {waveguide_directory}"
+        )
+
+    manifest_path = waveguide_directory / _waveguide_manifest_filename
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"Waveguide directory {waveguide_directory} does not contain "
+            f"{_waveguide_manifest_filename}"
+        )
+
+    try:
+        with manifest_path.open() as manifest_file:
+            manifest = json.load(manifest_file)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid waveguide manifest: {manifest_path}") from exc
+
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("wguides"), list):
+        raise ValueError(
+            f"Waveguide manifest {manifest_path} must contain a 'wguides' list."
+        )
+    for index, waveguide in enumerate(manifest["wguides"]):
+        if not isinstance(waveguide, dict):
+            raise ValueError(
+                f"Waveguide manifest {manifest_path} entry {index} must be an object."
+            )
+        missing_fields = {"module", "wg_class", "inc_shape"} - waveguide.keys()
+        if missing_fields:
+            missing = ", ".join(sorted(missing_fields))
+            raise ValueError(
+                f"Waveguide manifest {manifest_path} entry {index} is missing: {missing}."
+            )
+        if not all(
+            isinstance(waveguide[field], str) and waveguide[field]
+            for field in ("module", "wg_class", "inc_shape")
+        ):
+            raise ValueError(
+                f"Waveguide manifest {manifest_path} entry {index} must give non-empty "
+                "'module', 'wg_class', and 'inc_shape' strings."
+            )
+
+    if waveguide_directory not in _registered_waveguide_directories:
+        _registered_waveguide_directories.append(waveguide_directory)
+    if str(waveguide_directory) not in sys.path:
+        sys.path.insert(0, str(waveguide_directory))
 
 
 def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
@@ -33,6 +91,18 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
             wg_index = json.load(fin)['wguides']
     except Exception as ex:
         raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
+
+    legacy_entries = [
+        waveguide
+        for waveguide in wg_index
+        if waveguide.get("active", 1) and "module" not in waveguide
+    ]
+    if legacy_entries:
+        reporting.register_warning(
+            f"Waveguide manifest {pth_wgtemplate_index} uses the deprecated 'wg_impl' "
+            "file-loader mechanism. Migrate its active templates to a registered "
+            "waveguide directory with normal 'module' entries."
+        )
 
     for wg in wg_index: # eg rectangular, circular, Onion, etc
 
@@ -65,7 +135,9 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
                 )
 
             try:
-                py_mod = load_waveguide_module(pth_mod)
+                from meshing.legacy_template_loader import load_legacy_waveguide_module
+
+                py_mod = load_legacy_waveguide_module(pth_mod)
             except Exception as ex:
                 reporting.report_and_exit(
                     f"Python couldn't load the user module '{str(wgpy)}'."
@@ -90,27 +162,48 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
 
+
+def _add_waveguide_templates(waveguides, source):
+    existing_shapes = {waveguide["inc_shape"] for waveguide in g_waveguide_templates}
+    for waveguide in waveguides:
+        inc_shape = waveguide["inc_shape"]
+        if inc_shape in existing_shapes:
+            reporting.report_and_exit(
+                f"Waveguide template shape '{inc_shape}' from {source} is already registered."
+            )
+        existing_shapes.add(inc_shape)
+    g_waveguide_templates.extend(waveguides)
+
+
 # called at startup from NumBATApp.__init__
 def initialise_waveguide_templates(nbapp):
     global g_waveguide_templates
+    g_waveguide_templates = []
     pmsh_dir = nbapp.path_mesh_templates()
 
     pmsh_index_builtin = pmsh_dir / 'builtin_waveguides.json'
     pmsh_index_user = pmsh_dir / 'user_waveguides.json'
 
     if pmsh_index_builtin.exists():
-        g_waveguide_templates = _load_waveguide_templates(pmsh_dir, pmsh_index_builtin)
+        _add_waveguide_templates(
+            _load_waveguide_templates(pmsh_dir, pmsh_index_builtin), pmsh_index_builtin
+        )
     else:
         reporting.register_warning(
             f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
 
     if pmsh_index_user.exists():
         user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-        g_waveguide_templates.extend(user_wg_templates)
+        _add_waveguide_templates(user_wg_templates, pmsh_index_user)
     else:
         reporting.register_warning(
             f"Couldn't find user waveguide template index file: {pmsh_index_user}")
 
+    for waveguide_directory in _registered_waveguide_directories:
+        manifest_path = waveguide_directory / _waveguide_manifest_filename
+        _add_waveguide_templates(
+            _load_waveguide_templates(waveguide_directory, manifest_path), manifest_path
+        )
 
 
 

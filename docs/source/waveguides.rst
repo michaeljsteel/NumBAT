@@ -68,10 +68,11 @@ Waveguide Geometries
 |NUMBAT| encodes different waveguide structures through finite element meshes
 constructed using the ``.geo`` language used by the open source tool ``Gmsh``.
 Most users will find they can construct all waveguides of interest using the
-existing templates. However, new templates can be added by adding a new
-``.geo`` file to the ``<NumBAT>/backend/fortran/msh`` directory and making a
-new subclass of the ``UserGeometryBase`` class in the
-``<NumBAT>/backend/msh/user_meshes.py`` file.  This procedure is described in detail in :ref:`sec-user-defined-waveguides-label`.
+existing templates. New templates use a ``.geo`` file and a subclass of
+``UserGeometryBase``. They can remain in ``<NumBAT>/backend/msh`` using the
+legacy file-based mechanism, or live together in an external source directory
+that is added to Python's ``sys.path``. This procedure is described in detail
+in :ref:`sec-user-defined-waveguides-label`.
 
 All the builtin examples below are
 constructed in the same fashion in a parallel ``builtin_meshes.py`` file and
@@ -297,110 +298,229 @@ The subsequent parameters ``inc_b_x``, ``inc_c_x``, etc specify the annular thic
 User-defined waveguide geometries
 -----------------------------------
 
-Users may incorporate their own waveguide designs fully into |NUMBAT| with the following steps. The ``triangular`` built-in structure
-is a helpful model to follow.
+Users may incorporate their own waveguide designs in a source-tree directory
+outside the NumBAT checkout. The directory contains the Python implementation,
+its Gmsh template files, and a manifest that tells NumBAT which waveguides to
+load. The complete ``EllipticalRod`` example is in
+``examples/user_waveguides`` and its use demonstrated in the tutorial
+``sim-tut_21-user-waveguides.py``.
 
-  - Create a new gmsh template ``.geo`` file to be placed in
-    ``<NumBAT>/backend/msh`` that specifies the general structure. Start by
-    looking at the structure of ``triangular_msh_template.geo`` and some other
-    files to get an idea of the general structure.  We'll suppose the file is
-    called ``mywaveguide_msh_template.geo`` and the template name is thus
-    ``mywaveguide``.
+User waveguide directory
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-    When designing your template, please ensure the following:
+The following is a minimal directory containing one waveguide:
 
-       - That you use appropriate-sized parameters for all significant
-         dimensions.  This makes it easier to determine if the template
-         structure has the right general shape, even though the precise
-         dimensions will usually be changed through |NUMBAT| calls.
+::
 
-       - That all ``Line`` elements are unique. In other words do not
-         create two ``Line`` structure joining the same two points. This will
-         produce designs that look correct, but lead to poorly formed meshes
-         that will fail when |NUMBAT| runs.
+    my_waveguides/
+    ├── numbat_waveguides.json
+    ├── elliptical_rod.py
+    └── elliptical_rod_msh_template.geo
 
-       - That all ``Line Loop`` elements defining a particular region
-         are defined with the same handedness. The natural choice is to go
-         around the loop anti-clockwise.  Remember to include a minus sign for
-         any line element that is traversed in the backwards sense.
+A directory may contain any number of Python modules and Gmsh templates. For a
+larger collection, it is preferable to use a uniquely named Python package to
+avoid collisions with other modules:
 
-       - That all regions that define a single physical structure with a common
-         material are grouped together as a single ``Surface``
-         and then ``Physical Surface``.
+::
 
-       - That the outer boundary is grouped as a ``Line Loop`` and
-         then a ``Physical Line``.
+    my_waveguides/
+    ├── numbat_waveguides.json
+    └── my_lab_waveguides/
+        ├── __init__.py
+        ├── elliptical_rod.py
+        ├── elliptical_rod_msh_template.geo
+        ├── slot_rod.py
+        └── slot_rod_msh_template.geo
 
-       - That the origin of coordinates is placed in a sensible position, such
-         as a symmetry point close to where you expect the fundamental mode
-         fields to be concentrated.  This doesn't actually affect |NUMBAT|
-         calculations but will produce more natural axis scales in output
-         plots.
+In your main simulation script, register the directory before creating ``NumBATApp``:
 
-    You can see all examples of these principles followed in the mesh
-    structures supplied with |NUMBAT|.
+::
 
+    import numbat
 
-  - If this is your first, user-defined geometry, copy the file
-    ''user_waveguides.json_template``  in ``<NumBAT>/backend/msh/`` to
-    ``user_waveguides.json`` in the same directory. This will ensure that
-    subsequent ``git pull`` commands will not overwrite your work.
+    numbat.register_waveguide_directory("/path/to/my_waveguides")
+    nbapp = numbat.NumBATApp()
 
-  - Open the file ``user_waveguides.json`` and add a new
-    dictionary element for your new waveguide, copying the general format of
-    the pre-defined example entries.
+Registration verifies the directory and its manifest, then makes the directory
+available to Python's ordinary import system. NumBAT imports the active
+waveguide classes when ``NumBATApp`` initializes. The directory can therefore
+be kept in a separate Git repository and shared without modifying the NumBAT
+checkout.
 
-  - Fill in values for the ``wg_impl`` (the name of the python *file*
-    implementing your waveguide geometry), ``wg_class`` (the name of the python
-    *class* corresponding to your waveguide) and ``inc_shape`` (the waveguide
-    *template name*) fields.
+Waveguide manifest
+^^^^^^^^^^^^^^^^^^
 
-      - The value of ``inc_shape`` will normally be the your chosen template
-        name, in this case ``mywaveguide``.  The other parameters can be chosen
-        as you wish. It is natural to choose a class name which matches your
-        template name, so perhaps ``MyWaveguide``.  However, depending on the
-        number of geometries you create, it may be convenient to store all your
-        classes in one python file so the filename for ``wg_impl`` may be the
-        same for all your entries.
+Every registered directory must contain a file named
+``numbat_waveguides.json``. It contains a ``wguides`` list. Each list item
+declares one waveguide:
 
-      - The ``active`` field allows a waveguide to be disabled if it is not
-        yet fully working and you wish to use other |NUMBAT| models in the
-        meantime.  You must set ``active`` to ``True`` of 1 in order to test
-        your waveguide model.
+::
 
-      -  Then save and close this file.
+    {
+        "wguides": [
+            {
+                "module": "my_lab_waveguides.elliptical_rod",
+                "wg_class": "EllipticalRod",
+                "inc_shape": "elliptical_rod",
+                "active": true
+            },
+            {
+                "module": "my_lab_waveguides.slot_rod",
+                "wg_class": "SlotRod",
+                "inc_shape": "lab_slot_rod",
+                "active": false
+            }
+        ]
+    }
 
-  - Open or create the python file you just specified in the ``wg_impl`` field.
-    This file must be placed in the ``<NumBAT>/backend/msh`` directory.
+``module`` is the normal Python import path of the module containing the
+class. For the minimal layout above, it would be ``elliptical_rod``. For the
+package layout, it is ``my_lab_waveguides.elliptical_rod``.
 
-      - The python file must include the  import line  ``from usermesh import
-        UserGeometryBase``.
+``wg_class`` is the class name in that module. ``inc_shape`` is the name passed
+as ``inc_shape`` to ``nbapp.make_structure`` and must be unique among all
+active built-in, legacy, and registered waveguides. Only entries whose
+``active`` value is ``true`` are loaded. This allows a single directory to
+contain work-in-progress waveguides without making them available to a
+simulation.
 
-      - Create your waveguide class ``MyWaveguide`` by subclassing the
-        ``UserGeometryBase`` class and adding ``init_geometry`` and
-        ``apply_parameters`` methods using the  ``Triangular`` class in
-        ``builtin_meshes.py`` as a model. Both methods must take only ``self``
-        as arguments.
+Python implementation
+^^^^^^^^^^^^^^^^^^^^^
 
-      - The ``init_geometry`` method specifies a few values including the name
-        of the template ``.geo`` file, the number of distinct waveguide
-        components and a short description.
+Each class named by the manifest must subclass ``UserGeometryBase``. Its module
+must import the base class:
 
-      - The ``apply_parameters`` method is the mechanism for associating
-        standard |NUMBAT| symbols like ``inc_a_x``, ``slab_a_y``, etc with
-        actual dimensions in your ``.geo`` file. This is done by string
-        substitution of unique expressions in your ``.geo`` file using float
-        values evaluated from the |NUMBAT| parameters. Again, look at the
-        examples in the ``Triangular`` class to see how this works.
+::
 
-      - Optionally, you may also add a ``draw_mpl_frame`` method. This provides
-        a mechanism to draw waveguide outlines onto mode profile images and
-        will be called automatically any time an electromagnetic or elastic
-        mode profile is generated. The built-in waveguides ``Circular``,
-        ``Rectangular`` and ``TwoIncl`` provide good models for this method.
+    from pathlib import Path
 
+    from usermesh import UserGeometryBase
 
-Designing and implementing a few waveguide structure should not be a daunting task but some steps can be confusing the first time round. If you hit any hiccups or have suggestions for trouble-shooting, please let us know.
+    class MyWaveguide(UserGeometryBase):
+        def init_geometry(self):
+            self.set_properties("mywaveguide", is_curvi=True)
+            self.set_required_parameters(["inc_a_x", "inc_a_y"], 2)
+            self.set_allowed_parameters(["lc_refine_1", "lc_refine_2"])
+
+        def gmsh_template_path(self, p_dir_templates):
+            return Path(__file__).with_name("mywaveguide_msh_template.geo")
+
+        def apply_parameters(self):
+            return [
+                ("a1 = 20;", "a1 = %f;", "inc_a_x"),
+                ("a1y = 10;", "a1y = %f;", "inc_a_y"),
+            ]
+
+The value passed to ``set_properties`` should normally match the manifest's
+``inc_shape``. ``init_geometry`` defines the shape name, whether its boundaries
+are curvilinear, and the required or optional parameters. Use
+``set_parameter_help`` to document any template-specific parameters shown in
+NumBAT's help output.
+
+``apply_parameters`` returns string substitutions that replace identifiable
+default expressions in the ``.geo`` file with values passed to
+``make_structure``. Standard parameters include ``domain_x``, ``domain_y``,
+``inc_a_x``, ``inc_a_y``, ``lc_bkg``, ``lc_refine_1``, and ``lc_refine_2``.
+The full implementation in ``examples/user_waveguides/elliptical_rod.py`` also
+shows substitutions for these common parameters.
+
+For source-tree waveguides, override ``gmsh_template_path`` to return the
+template alongside the Python module, as above. An optional
+``draw_mpl_frame(self, ax, styles)`` method can add an outline to optical and
+elastic mode-profile plots. The built-in ``Circular``, ``Rectangular``, and
+``TwoIncl`` classes in ``builtin_meshes.py`` provide useful models.
+
+Gmsh ``.geo`` template
+^^^^^^^^^^^^^^^^^^^^^^
+
+Create a Gmsh ``.geo`` file for each geometry. It is usually helpful to start
+with ``triangular_msh_template.geo`` or another supplied template. If the
+Python implementation above is used, the file must be named
+``mywaveguide_msh_template.geo`` and be stored beside the module.
+
+When designing the template, ensure the following:
+
+  - Use appropriate default values for all significant dimensions. This makes
+    it easier to inspect the general shape before NumBAT substitutes the exact
+    values for a simulation.
+
+  - Make every ``Line`` element unique. Do not create two lines joining the
+    same pair of points. Such a design can look correct but produce a malformed
+    mesh that fails during a NumBAT calculation.
+
+  - Define the ``Line Loop`` elements for each region with consistent
+    handedness. Anticlockwise is the natural convention. Include a minus sign
+    when traversing a line in the reverse direction.
+
+  - Group all regions with one material into a single ``Physical Surface``.
+
+  - Group the outer boundary into ``Physical Line`` definitions.
+
+  - Place the coordinate origin at a useful symmetry point near the expected
+    fundamental field. This does not affect the calculation, but gives more
+    natural axes in output plots.
+
+The supplied mesh templates demonstrate these principles. The
+``elliptical_rod_msh_template.geo`` example is a small two-material template
+with an elliptical core and surrounding background.
+
+Using a registered waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+After registering the directory and creating ``NumBATApp``, select the
+manifest's shape name as usual:
+
+::
+
+    structure = nbapp.make_structure(
+        inc_shape="elliptical_rod",
+        domain_x=3000,
+        domain_y=2000,
+        inc_a_x=800,
+        inc_a_y=400,
+        material_bkg=material_bkg,
+        material_a=material_a,
+        lc_bkg=0.1,
+        lc_refine_1=2,
+        lc_refine_2=3,
+    )
+
+Tutorial 21, ``examples/tutorials/sim-tut_21-user-waveguides.py``, demonstrates
+the complete registration, structure creation, optical-mode, and elastic-mode
+workflow.
+
+Deprecated ``wg_impl`` mechanism
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. deprecated::
+
+   Use a registered user waveguide directory and ``module`` entries instead.
+   The ``wg_impl`` mechanism requires modifying files inside the NumBAT
+   checkout and uses NumBAT's legacy file loader.
+
+Existing ``wg_impl`` waveguides remain supported. Their entries are placed in
+``<NumBAT>/backend/msh/user_waveguides.json`` and use the implementation
+filename instead of a normal Python module:
+
+::
+
+    {
+        "wg_impl": "mywaveguides.py",
+        "wg_class": "MyWaveguide",
+        "inc_shape": "mywaveguide",
+        "active": 1
+    }
+
+The Python implementation file and the corresponding
+``mywaveguide_msh_template.geo`` file must both be placed in
+``<NumBAT>/backend/msh``. ``wg_class`` names the implementation class and
+``inc_shape`` is the name passed to ``make_structure``. ``active`` must be
+``true`` or ``1`` for NumBAT to load the entry; it can be disabled while the
+geometry is under development.
+
+Designing and implementing a waveguide should not be daunting, but the first
+template can be confusing. Use the supplied examples as models and review the
+generated mesh before running a large calculation.
 
 
 Mesh parameters
@@ -484,4 +604,3 @@ will print out the required command to do so.
 .. .. raw:: latex
 
     \clearpage
-

@@ -11,13 +11,15 @@ import pytest
 
 sys.path.append("backend")
 
-from meshing import template_loader  # noqa: I001
+from meshing import legacy_template_loader  # noqa: I001
+from meshing import templates
 from meshing.templates import _load_waveguide_templates
 from msh.builtin_meshes import RoundedBowtie, RoundedWedge
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_TEMPLATE_DIRECTORY = PROJECT_ROOT / "backend" / "msh"
+EXTERNAL_TEMPLATE_DIRECTORY = PROJECT_ROOT / "examples" / "user_waveguides"
 ROUNDED_BOWTIE_PARAMETERS = {
     "domain_x": 3000,
     "domain_y": 3000,
@@ -35,34 +37,36 @@ ROUNDED_BOWTIE_PARAMETERS = {
 
 def _unload_module(module_path):
     resolved_path = Path(module_path).resolve()
-    module_name = template_loader._module_name_for_path(resolved_path)
-    template_loader._loaded_modules.pop(resolved_path, None)
+    module_name = legacy_template_loader._legacy_module_name_for_path(resolved_path)
+    legacy_template_loader._loaded_modules.pop(resolved_path, None)
     sys.modules.pop(module_name, None)
 
 
 @pytest.fixture(autouse=True)
-def clean_loaded_template_modules():
-    original_modules = dict(template_loader._loaded_modules)
+def clean_loaded_legacy_template_modules():
+    original_modules = dict(legacy_template_loader._loaded_modules)
     yield
-    for module_path in list(template_loader._loaded_modules):
+    for module_path in list(legacy_template_loader._loaded_modules):
         if module_path not in original_modules:
             _unload_module(module_path)
 
 
-def test_load_waveguide_module_caches_resolved_path_and_registers_module(tmp_path):
+def test_legacy_loader_caches_resolved_path_and_registers_module(tmp_path):
     module_path = tmp_path / "template.py"
     module_path.write_text("execution_count = 1\n")
 
-    first_module = template_loader.load_waveguide_module(module_path)
-    second_module = template_loader.load_waveguide_module(module_path.resolve())
+    first_module = legacy_template_loader.load_legacy_waveguide_module(module_path)
+    second_module = legacy_template_loader.load_legacy_waveguide_module(module_path.resolve())
 
     assert first_module is second_module
     assert first_module.execution_count == 1
-    assert first_module.__name__ == template_loader._module_name_for_path(module_path.resolve())
+    assert first_module.__name__ == legacy_template_loader._legacy_module_name_for_path(
+        module_path.resolve()
+    )
     assert sys.modules[first_module.__name__] is first_module
 
 
-def test_load_waveguide_module_distinguishes_same_named_files_in_different_directories(tmp_path):
+def test_legacy_loader_distinguishes_same_named_files_in_different_directories(tmp_path):
     first_path = tmp_path / "first" / "template.py"
     second_path = tmp_path / "second" / "template.py"
     first_path.parent.mkdir()
@@ -70,8 +74,8 @@ def test_load_waveguide_module_distinguishes_same_named_files_in_different_direc
     first_path.write_text("value = 'first'\n")
     second_path.write_text("value = 'second'\n")
 
-    first_module = template_loader.load_waveguide_module(first_path)
-    second_module = template_loader.load_waveguide_module(second_path)
+    first_module = legacy_template_loader.load_legacy_waveguide_module(first_path)
+    second_module = legacy_template_loader.load_legacy_waveguide_module(second_path)
 
     assert first_module is not second_module
     assert first_module.__name__ != second_module.__name__
@@ -79,16 +83,16 @@ def test_load_waveguide_module_distinguishes_same_named_files_in_different_direc
     assert second_module.value == "second"
 
 
-def test_load_waveguide_module_removes_failed_import_from_module_registry(tmp_path):
+def test_legacy_loader_removes_failed_import_from_module_registry(tmp_path):
     module_path = tmp_path / "broken_template.py"
     module_path.write_text("raise RuntimeError('broken template')\n")
-    module_name = template_loader._module_name_for_path(module_path.resolve())
+    module_name = legacy_template_loader._legacy_module_name_for_path(module_path.resolve())
 
     with pytest.raises(RuntimeError, match="broken template"):
-        template_loader.load_waveguide_module(module_path)
+        legacy_template_loader.load_legacy_waveguide_module(module_path)
 
     assert module_name not in sys.modules
-    assert module_path.resolve() not in template_loader._loaded_modules
+    assert module_path.resolve() not in legacy_template_loader._loaded_modules
 
 
 def test_waveguide_index_reuses_one_module_for_classes_from_same_implementation(tmp_path):
@@ -115,7 +119,9 @@ def test_waveguide_index_reuses_one_module_for_classes_from_same_implementation(
     first_class = waveguides[0]["wg_template_cls"]
     second_class = waveguides[1]["wg_template_cls"]
     assert first_class.__module__ == second_class.__module__
-    assert first_class.__module__ == template_loader._module_name_for_path(module_path.resolve())
+    assert first_class.__module__ == legacy_template_loader._legacy_module_name_for_path(
+        module_path.resolve()
+    )
 
 
 def test_builtin_waveguide_index_uses_normal_import_path():
@@ -129,6 +135,100 @@ def test_builtin_waveguide_index_uses_normal_import_path():
     assert all(
         waveguide["wg_template_cls"].__module__ == "msh.builtin_meshes" for waveguide in waveguides
     )
+
+
+def test_module_based_user_waveguide_uses_neighbouring_geo_template_and_normal_import(
+    tmp_path, monkeypatch
+):
+    index_path = tmp_path / "waveguides.json"
+    index_path.write_text(
+        json.dumps(
+            {
+                "wguides": [
+                    {
+                        "module": "elliptical_rod",
+                        "wg_class": "EllipticalRod",
+                        "inc_shape": "elliptical_rod",
+                    }
+                ]
+            }
+        )
+    )
+    monkeypatch.syspath_prepend(str(EXTERNAL_TEMPLATE_DIRECTORY))
+    sys.modules.pop("elliptical_rod", None)
+
+    waveguides = _load_waveguide_templates(tmp_path, index_path)
+    geometry = waveguides[0]["wg_template_cls"](
+        {
+            "domain_x": 3000,
+            "domain_y": 2000,
+            "inc_a_x": 800,
+            "inc_a_y": 400,
+            "lc_bkg": 0.1,
+            "lc_refine_1": 2,
+            "lc_refine_2": 3,
+        },
+        {},
+    )
+    geometry.init_geometry()
+    rendered_template = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+
+    assert type(geometry).__module__ == "elliptical_rod"
+    assert geometry.gmsh_template_path(BUILTIN_TEMPLATE_DIRECTORY) == (
+        EXTERNAL_TEMPLATE_DIRECTORY / "elliptical_rod_msh_template.geo"
+    )
+    assert "radius_x = a1 / (2 * dx_in_nm) * d;" in rendered_template
+    assert "a1 = 800.000000;" in rendered_template
+    assert "a1y = 400.000000;" in rendered_template
+
+    gmsh = shutil.which("gmsh")
+    if gmsh is not None:
+        geometry_path = tmp_path / "elliptical_rod.geo"
+        mesh_path = tmp_path / "elliptical_rod.msh"
+        geometry_path.write_text(rendered_template)
+        subprocess.run(
+            [gmsh, "-2", str(geometry_path), "-format", "msh2", "-o", str(mesh_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+    serialized_geometry = pickle.dumps(geometry)
+    sys.modules.pop("elliptical_rod", None)
+    rebuilt_geometry = pickle.loads(serialized_geometry)
+
+    assert type(rebuilt_geometry).__module__ == "elliptical_rod"
+    assert rebuilt_geometry._d_params == geometry._d_params
+
+
+def test_registered_waveguide_directory_loads_active_manifest_entries(monkeypatch):
+    class Application:
+        def path_mesh_templates(self):
+            return BUILTIN_TEMPLATE_DIRECTORY
+
+    monkeypatch.setattr(templates, "_registered_waveguide_directories", [])
+    monkeypatch.setattr(templates, "g_waveguide_templates", [])
+    monkeypatch.syspath_prepend(str(EXTERNAL_TEMPLATE_DIRECTORY))
+    sys.modules.pop("elliptical_rod", None)
+
+    templates.register_waveguide_directory(EXTERNAL_TEMPLATE_DIRECTORY)
+    templates.initialise_waveguide_templates(Application())
+
+    elliptical_rod = next(
+        waveguide
+        for waveguide in templates.g_waveguide_templates
+        if waveguide["inc_shape"] == "elliptical_rod"
+    )
+    assert elliptical_rod["wg_template_cls"].__module__ == "elliptical_rod"
+
+
+def test_register_waveguide_directory_rejects_incomplete_manifest_entries(tmp_path, monkeypatch):
+    manifest_path = tmp_path / "numbat_waveguides.json"
+    manifest_path.write_text(json.dumps({"wguides": [{"module": "elliptical_rod"}]}))
+    monkeypatch.setattr(templates, "_registered_waveguide_directories", [])
+
+    with pytest.raises(ValueError, match="missing: inc_shape, wg_class"):
+        templates.register_waveguide_directory(tmp_path)
 
 
 def test_rounded_bowtie_is_registered_and_substitutes_its_half_angle():
@@ -318,7 +418,7 @@ def test_pickle_rebuilds_file_based_geometry_with_its_saved_state(tmp_path):
         "class ExampleGeometry(UserGeometryBase):\n"
         "    pass\n"
     )
-    module = template_loader.load_waveguide_module(module_path)
+    module = legacy_template_loader.load_legacy_waveguide_module(module_path)
     geometry = module.ExampleGeometry({"size": 3}, None)
     geometry.extra_state = "preserved"
     serialized_geometry = pickle.dumps(geometry)
@@ -327,7 +427,7 @@ def test_pickle_rebuilds_file_based_geometry_with_its_saved_state(tmp_path):
     rebuilt_geometry = pickle.loads(serialized_geometry)
 
     assert type(rebuilt_geometry).__name__ == "ExampleGeometry"
-    assert type(rebuilt_geometry).__module__ == template_loader._module_name_for_path(
+    assert type(rebuilt_geometry).__module__ == legacy_template_loader._legacy_module_name_for_path(
         module_path.resolve()
     )
     assert rebuilt_geometry._d_params == {"size": 3}

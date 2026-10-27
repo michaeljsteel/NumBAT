@@ -18,17 +18,26 @@ import uuid
 import os
 import inspect
 import sys
+from importlib import import_module
 from pathlib import Path
-
-from meshing.template_loader import load_waveguide_module
 
 import reporting
 from numbattools import is_real_number
 
 
-def _rebuild_geometry(module_file, class_name, state):
-    """Recreate a geometry template loaded from a file-based module."""
-    module = load_waveguide_module(module_file)
+def _rebuild_legacy_geometry(module_file, class_name, state):
+    """Recreate a geometry template loaded through deprecated ``wg_impl`` support."""
+    from meshing.legacy_template_loader import load_legacy_waveguide_module
+
+    module = load_legacy_waveguide_module(module_file)
+    geometry = getattr(module, class_name).__new__(getattr(module, class_name))
+    geometry.__dict__.update(state)
+    return geometry
+
+
+def _rebuild_imported_geometry(module_name, class_name, state):
+    """Recreate a geometry template from its normal Python import path."""
+    module = import_module(module_name)
     geometry = getattr(module, class_name).__new__(getattr(module, class_name))
     geometry.__dict__.update(state)
     return geometry
@@ -141,6 +150,17 @@ class UserGeometryBase():
 
     def __reduce__(self):
         module = sys.modules.get(type(self).__module__)
+        module_spec = getattr(module, "__spec__", None)
+        if (
+            module_spec is not None
+            and module_spec.name == type(self).__module__
+            and not type(self).__module__.startswith("_numbat_waveguide_")
+        ):
+            return (
+                _rebuild_imported_geometry,
+                (type(self).__module__, type(self).__name__, self.__dict__),
+            )
+
         module_file = getattr(module, "__file__", None)
         if module_file is None:
             try:
@@ -156,17 +176,25 @@ class UserGeometryBase():
                 "because its implementation module has no file."
             )
         return (
-            _rebuild_geometry,
+            _rebuild_legacy_geometry,
             (module_file, type(self).__name__, self.__dict__),
         )
+
+    def gmsh_template_path(self, p_dir_templates):
+        """Return the Gmsh template path for this geometry."""
+        return Path(p_dir_templates, f"{self.gmsh_template_filename()}_msh_template.geo")
 
     def make_geometry(self, p_dir_templates):
         subs = self.apply_parameters()
         #if subs is None:
         #    subs = self._param_subs
 
-        geo = open(Path(p_dir_templates,
-                   f'{self.gmsh_template_filename()}_msh_template.geo'), 'r').read()
+        template_path = self.gmsh_template_path(p_dir_templates)
+        if not template_path.is_file():
+            raise FileNotFoundError(
+                f"Missing Gmsh template for waveguide '{self._shape_name}': {template_path}"
+            )
+        geo = template_path.read_text()
 
         for (olds, news, sval) in subs:
             # sval can be either an actual float or a string rep of a float

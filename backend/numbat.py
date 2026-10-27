@@ -62,6 +62,11 @@ _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
 g_numbat_plot_prefs = None
 
 
+def register_waveguide_directory(directory):
+    """Register an external directory of waveguide modules before creating ``NumBATApp``."""
+    mshtemplates.register_waveguide_directory(directory)
+
+
 def _confirm_file_exists(nm, filetype, fn, envvar=''):
     """
     Check that a file exists at the given path, and exit with an error if not.
