@@ -2020,9 +2020,9 @@ class RoundedWedge(UserGeometryBase):
         diam_outer = rad_wg * 2
 
         if diam_outer >= dom_x:
-            msg += "Outer cylinder has total diameter larger than domain width (domain_x).\n"
+            msg += f"Outer cylinder has total diameter={diam_outer} exceeding the domain width (domain_x)={dom_x}.\n"
         if diam_outer >= dom_y:
-            msg += "Outer cylinder has total diameter larger than domain height (domain_y).\n"
+            msg += f"Outer cylinder has total diameter={diam_outer} exceeding the domain width (domain_y)={dom_y}.\n"
         if rad_wg <= bowlen_l:
             msg += "Wedge length (bowlen_l) must be less than the waveguide radius (rad_wg).\n"
         msg += _rounded_wedge_shape_problems(rad_tip, alpha_tip, bowlen_l, rad_corner)

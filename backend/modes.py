@@ -716,6 +716,32 @@ class Mode:
 
         np.savetxt(fname, flds, header=header, fmt='%16.8f')
 
+    def get_mode_1D(self, s_cut, val1, val2=None, n_points=501, field_type=FieldType.EM_E):
+
+        self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
+
+        #pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
+        #ftag = FieldTag.make_from_field(field_type)
+        #ftlab = ftag.field_type_label()
+
+        #longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{s_cut}cut'
+        #fname = longpref+'.txt'
+
+        v_genx = self.mode_interpolator.v_x_axis
+        nr = len(v_genx)
+        nc = 4 # vFx, Fy, Fz, Fa
+
+        flds = np.zeros([nr,nc], dtype=np.complex128)
+        #header='x Fxr Fxi Fyr Fyi Fzr Fzi Fa'
+
+        flds[:,0] = self.d_fields_1D['Fxr'] + 1j * self.d_fields_1D['Fxi']
+        flds[:,1] = self.d_fields_1D['Fyr'] + 1j * self.d_fields_1D['Fyi']
+        flds[:,2] = self.d_fields_1D['Fzr'] + 1j * self.d_fields_1D['Fzi']
+        flds[:,3] = self.d_fields_1D['Fa']
+
+        #np.savetxt(fname, flds, header=header, fmt='%16.8f')
+        return v_genx, flds
+
 
     def plot_mode_raw_fem(self, comps):
         '''Plot the requested field components on the sim mesh with no interpolation.'''
