@@ -33,7 +33,6 @@ import shutil
 import time
 import datetime
 from pathlib import Path
-import git
 
 import nbplatform
 
@@ -52,14 +51,11 @@ import structure
 from modecalcs import Simulation
 import meshing.templates as mshtemplates
 from plotting.plotprefs import PlotPrefs
-
-
+from numbat_core import runtime
 import nbversion
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
-
-g_numbat_plot_prefs = None
 
 
 def register_waveguide_directory(directory):
@@ -122,8 +118,6 @@ class NumBATApp(metaclass=_SingletonMeta):
         """
 
 
-        global g_numbat_plot_prefs
-
         reporting.init_logger()
         self._start_time=time.time()
         self._check_versions()
@@ -142,7 +136,8 @@ class NumBATApp(metaclass=_SingletonMeta):
         #self._user_settings={}
 
 
-        g_numbat_plot_prefs = PlotPrefs(user_settings_file, ignore_user_settings)
+        runtime.set_plot_prefs(PlotPrefs(user_settings_file, ignore_user_settings))
+        runtime.set_application(self)
 
         mshtemplates.initialise_waveguide_templates(self)
 
@@ -180,7 +175,7 @@ class NumBATApp(metaclass=_SingletonMeta):
         """
         Return the current plot file extension as a string.
         """
-        return g_numbat_plot_prefs._plot_extension
+        return runtime.plotfile_ext()
 
     # Only needed to change prefix at some point
     def set_outprefix(self, s): # change to getter/setter
@@ -391,31 +386,12 @@ def NumBATPlotPrefs():
     """
     Returns the global NumBAT plot preferences object.
     """
-    global g_numbat_plot_prefs
+    return runtime.plot_prefs()
 
-    if not g_numbat_plot_prefs:
-        g_numbat_plot_prefs = PlotPrefs()
-    return g_numbat_plot_prefs
 
-_cached_git_hash = None
+git_hash = runtime.git_hash
+version = runtime.version
 
-def git_hash():
-    """Get the current git commit hash (cached for the session)."""
-    global _cached_git_hash
-    if _cached_git_hash is None:
-        try:
-            repo = git.Repo(search_parent_directories=True)
-            _cached_git_hash = repo.head.object.hexsha
-        except (git.InvalidGitRepositoryError, git.GitCommandError):
-            _cached_git_hash = "unknown"
-
-    return _cached_git_hash if _cached_git_hash != "unknown" else None
-
-def version():
-    """
-    Returns the NumBAT version string.
-    """
-    return nbversion.NUMBAT_VERSION_STR_MMM
 
 def load_simulation(prefix):
     """

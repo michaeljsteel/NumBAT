@@ -1,7 +1,7 @@
 from pathlib import Path
 from PIL import Image
 
-import numbat
+from numbat_core import runtime
 import nbgmsh
 
 import plotting.plottools as plottools
@@ -10,14 +10,13 @@ from numbattools import f2f_with_subs, run_subprocess
 def plot_mail_mesh(mesh_mail_fname, outpref):
     """Visualise the mesh in .mail format."""
 
-    path = numbat.NumBATApp().outpath()
+    path = runtime.outpath()
     mail_data = nbgmsh.MailData(mesh_mail_fname)
     mail_data.plot_mesh(path)
 
 
 def plot_gmesh_wireframe(msh_loc_in, msh_loc_out, msh_name, outpref):
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = nbapp.path_gmsh()
+    gmsh_exe = runtime.path_gmsh()
 
     #tdir = tempfile.TemporaryDirectory()
     #tmpoutpref = str(Path(tdir.name, outpref))
@@ -44,8 +43,7 @@ def plot_gmesh_wireframe(msh_loc_in, msh_loc_out, msh_name, outpref):
 
 def plot_gmesh_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
 
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = nbapp.path_gmsh()
+    gmsh_exe = runtime.path_gmsh()
 
     #tdir = tempfile.TemporaryDirectory()
     #tmpoutpref = str(Path(tdir.name, outpref))
@@ -61,7 +59,7 @@ def plot_gmesh_mesh(msh_loc_in, msh_loc_out, msh_name, outpref):
 
     cmd = [gmsh_exe, msh_name + '.msh', scr_out.name]
 
-    if numbat.NumBATApp().is_macos(): # macOS requires the -a flag to open applications
+    if runtime.is_macos(): # macOS requires the -a flag to open applications
         cmd = ['open', '-a'] + cmd
 
 
@@ -90,9 +88,7 @@ def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref,
     # join them
     fout_join = ''
     if combo_plot:
-        nbapp = numbat.NumBATApp()
-
-        outprefix = nbapp.outpath(outpref)
+        outprefix = runtime.outpath(outpref)
 
         fout_join = str(outprefix)+'-mesh.png'
 
@@ -107,14 +103,13 @@ def plot_mesh(msh_loc_in, msh_loc_out, msh_name, outpref,
 def check_mesh(msh_loc_out, msh_name):
     """Visualise geometry and mesh with gmsh."""
 
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = str(nbapp.path_gmsh())
+    gmsh_exe = str(runtime.path_gmsh())
 
     gmsh_cmd1 = [gmsh_exe, f'{msh_loc_out}/{msh_name}.geo']
 
     gmsh_cmd2 = [gmsh_exe, f'{msh_loc_out}/{msh_name}.msh']
 
-    if numbat.NumBATApp().is_macos(): # macOS requires the -a flag to open applications
+    if runtime.is_macos(): # macOS requires the -a flag to open applications
         gmsh_cmd1 = ['open', '-a'] + gmsh_cmd1
         gmsh_cmd2 = ['open', '-a'] + gmsh_cmd2
 

@@ -22,20 +22,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
-import numbat
+from numbat_core import runtime
 from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plotting.plottools import save_and_close_figure
 from plotting.tidyaxes import TidyAxes
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
-    nbapp = numbat.NumBATApp()
-
     pref=plps['prefix']
     suf = plps['suffix']
     comp = field_code.as_str()
 
-    fullpref = str(nbapp.outdir_fields_path(prefix=pref))
+    fullpref = str(runtime.outdir_fields_path(prefix=pref))
     filestart = f'{fullpref}/{comp}_mode_{mode_index:02d}'
 
     if cut:
@@ -45,7 +43,7 @@ def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
 
     if label: filestart += '_'+label
 
-    fn = filestart + nbapp.plotfile_ext()
+    fn = filestart + runtime.plotfile_ext()
     return fn
 
 # TODO: allow a suffix to label multiple cut planes
@@ -111,7 +109,7 @@ class Decorator(object):
         self._waveguide = wg
 
     def add_waveguide_border(self, ax):
-        plprefs = numbat.NumBATPlotPrefs()
+        plprefs = runtime.plot_prefs()
         styles = {}
 
         styles['edgecolor'] = plprefs.WG_FRAME_EDGE_COLOR
@@ -275,8 +273,8 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
     logamp = plps['logamp']
 
-    cmap_signed = numbat.NumBATPlotPrefs().cmap_field_signed(ftag_cont)
-    cmap_unsigned = numbat.NumBATPlotPrefs().cmap_field_unsigned(ftag_cont)
+    cmap_signed = runtime.plot_prefs().cmap_field_signed(ftag_cont)
+    cmap_unsigned = runtime.plot_prefs().cmap_field_unsigned(ftag_cont)
 
     cont_signed = ftag_cont.is_signed_field()
     #cmap = cmap_signed if (cont_signed and not logamp) else cmap_unsigned
@@ -471,10 +469,10 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
     #m_ImEy_q = v_fields['Fyi'][qslice_x[:, np.newaxis], qslice_y]
 
 
-    vecarrow_col = numbat.NumBATPlotPrefs().vector_field_arrow_color(cc)
-    vecarrow_scale = numbat.NumBATPlotPrefs().vecplot_arrow_scale
-    vecarrow_width = numbat.NumBATPlotPrefs().vecplot_arrow_width
-    vecarrow_hw = numbat.NumBATPlotPrefs().vecplot_arrow_headwidth
+    vecarrow_col = runtime.plot_prefs().vector_field_arrow_color(cc)
+    vecarrow_scale = runtime.plot_prefs().vecplot_arrow_scale
+    vecarrow_width = runtime.plot_prefs().vecplot_arrow_width
+    vecarrow_hw = runtime.plot_prefs().vecplot_arrow_headwidth
 
 
 

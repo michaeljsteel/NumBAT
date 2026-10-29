@@ -20,7 +20,7 @@ from math import sqrt
 import numpy as np
 import matplotlib.pyplot as plt
 
-import numbat
+from numbat_core import runtime
 from nbtypes import FieldType, FieldCode, FieldTag, SI_um, SI_vacuum_impedance_Z0
 import reporting
 
@@ -679,7 +679,7 @@ class Mode:
         for cc in ccs:
             ftag = FieldTag.make_from_field_and_component(ft, cc)
             ftlab = ftag.field_type_label()
-            pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
+            pref=str(runtime.outdir_fields_path(prefix))
 
             longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{ftag.field_component()}'
 
@@ -691,7 +691,7 @@ class Mode:
 
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
-        pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
+        pref=str(runtime.outdir_fields_path(prefix))
         ftag = FieldTag.make_from_field(field_type)
         ftlab = ftag.field_type_label()
 

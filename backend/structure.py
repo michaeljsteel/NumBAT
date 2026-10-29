@@ -22,9 +22,9 @@
 
 import copy
 
-import numbat
 import reporting
 from nbtypes import SI_nm
+from numbat_core import runtime
 from numbattools import run_subprocess
 
 import meshing.templates as mshtemplates
@@ -131,12 +131,12 @@ class Structure:
     def __init__(self, *largs, **kwargs):
         """Initialise the Structure object."""
 
-        numbat._assert_numbat_object_created()
+        runtime.assert_application_created()
 
         self._clean_and_handle_args_and_parameters(*largs, **kwargs)
 
         # locations of gmsh input and output files
-        self.msh_location_in = numbat.NumBATApp().path_mesh_templates()
+        self.msh_location_in = runtime.path_mesh_templates()
         self.msh_location_out = self.msh_location_in / 'build'
 
         if not self.msh_location_out.is_dir():
@@ -234,7 +234,7 @@ class Structure:
             fout.write(geo_str)
 
         # Convert our Gmsh .geo file into Gmsh .msh
-        gmsh_exe =  numbat.NumBATApp().path_gmsh()
+        gmsh_exe =  runtime.path_gmsh()
         args =f' -2 -order 2 -v 0 -o {msh_inst_fname}.msh {msh_inst_fname}.geo'
         cmd = [str(gmsh_exe)]
         cmd.extend(args.split())

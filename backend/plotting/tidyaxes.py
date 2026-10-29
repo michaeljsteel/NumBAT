@@ -3,8 +3,7 @@ from collections.abc import Iterable
 from typing import Optional, Union
 from matplotlib.axes import Axes
 from matplotlib.colorbar import Colorbar
-import numbat
-
+from numbat_core import runtime
 class TidyAxes:
     """Utility class for applying consistent styling to matplotlib axes and colorbars.
 
@@ -43,7 +42,7 @@ class TidyAxes:
         Args:
             nax: Number of axes in the figure.
         """
-        user_prefs = numbat.NumBATPlotPrefs()
+        user_prefs = runtime.plot_prefs()
 
         props = {}
 

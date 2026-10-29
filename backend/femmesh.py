@@ -27,10 +27,10 @@ import matplotlib.ticker as mticker
 import numpy as np
 
 import nbgmsh
-import numbat
 import plotting.plottools as plottools
 import reporting
 from nbtypes import SI_to_gmpercc, SI_um
+from numbat_core import runtime
 from numbattools import is_float_pair, is_real_number, np_min_max
 from plotting.plottools import save_and_close_figure
 
@@ -570,7 +570,7 @@ class FemMesh:
         axs[0].set_xlabel(r"$x$ [μm]")
         axs[0].set_ylabel(r"$y$ [μm]")
 
-        pref = numbat.NumBATApp().outprefix()
+        pref = runtime.outprefix()
         fname = pref + f"-{'ac' if self.sim_result.is_AC else 'em'}_triplots.png"
         save_and_close_figure(fig, fname)
 
@@ -848,7 +848,7 @@ class FEMScalarFieldPlotter:
         """
 
         # full out-directory parth
-        prefix = str(Path(numbat.NumBATApp().outdir(), pref))
+        prefix = str(Path(runtime.outdir(), pref))
 
         validate_1D_cut_format(s_cut, val1, val2)
 
@@ -949,7 +949,7 @@ class FEMScalarFieldPlotter:
 
         fnames = []
         # full out-directory path
-        prefix = str(Path(numbat.NumBATApp().outdir(), pref))
+        prefix = str(Path(runtime.outdir(), pref))
 
         m_x, m_y = np.meshgrid(self.v_x, self.v_y)
         v_x_flat = m_x.flatten("F")

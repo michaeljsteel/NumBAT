@@ -41,7 +41,6 @@ def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
 
     return user_settings
 
-# make the NumBATPlotPrefs call return a reference to object in plottools.py
 class PlotPrefs:
     """Selection of color scales and line properties for different field plots."""
 
@@ -71,9 +70,8 @@ class PlotPrefs:
 
         if ignore_user_settings:
             print('Ignoring any user setting files and using NumBAT default preferences.')
-            return
-
-        self._user_settings = _load_user_settings_file(user_settings_file)
+        else:
+            self._user_settings = _load_user_settings_file(user_settings_file)
 
         # Ensure required sections exist to prevent KeyErrors later
         for section in ['all_plots', 'multi_plots', 'single_plots']:

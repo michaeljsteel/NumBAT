@@ -22,7 +22,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-import numbat
+from numbat_core import runtime
 from nbtypes import SI_GHz
 import reporting
 
@@ -90,12 +90,10 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz
             suffix  (str): String to be appended to end of file name.
     """
 
-    nbapp = numbat.NumBATApp()
-
-    plot_prefs = numbat.NumBATPlotPrefs()
+    plot_prefs = runtime.plot_prefs()
     plot_fileext = plot_prefs._plot_extension
 
-    pathpref = nbapp.outpath(prefix) + '-gain_spectra'
+    pathpref = runtime.outpath(prefix) + '-gain_spectra'
 
     if decorator is None:
         decorator = Decorator()

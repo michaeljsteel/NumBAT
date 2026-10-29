@@ -39,6 +39,7 @@ extend-select = ["I"]
 split-on-trailing-comma = true
 known-first-party = [
     "nbanalytic",
+    "numbat_core",
     "reporting",
     "nbgmsh",
     "plottools",

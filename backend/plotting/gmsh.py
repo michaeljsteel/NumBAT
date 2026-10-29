@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-import numbat
 import plotting.plottools as plottools
+from numbat_core import runtime
 from numbattools import f2f_with_subs, run_subprocess
 
 
@@ -19,7 +19,7 @@ def plot_mail_mesh(mesh_mail_fname: Path | str, outpref: Optional[str]) -> None:
     """
     import nbgmsh
 
-    path = Path(numbat.NumBATApp().outpath())
+    path = Path(runtime.outpath())
     mail_data = nbgmsh.MailData(mesh_mail_fname)
     mail_data.plot_mesh(path)
 
@@ -38,8 +38,7 @@ def plot_gmesh_wireframe(
     Returns:
         Path to the generated wireframe PNG file.
     """
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = str(nbapp.path_gmsh())
+    gmsh_exe = str(runtime.path_gmsh())
 
     tmpoutpref = Path.cwd() / outpref
 
@@ -81,8 +80,7 @@ def plot_gmesh_mesh(
     Returns:
         Path to the generated mesh PNG file.
     """
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = str(nbapp.path_gmsh())
+    gmsh_exe = str(runtime.path_gmsh())
 
     tmpoutpref = Path.cwd() / outpref
 
@@ -120,8 +118,7 @@ def _render_gmsh_png(
     output_suffix: str,
 ) -> Path:
     """Render a Gmsh model through its GUI context and return the PNG path."""
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = str(nbapp.path_gmsh())
+    gmsh_exe = str(runtime.path_gmsh())
     output_prefix = Path.cwd() / outpref
     output_stem = output_prefix.with_name(f"{output_prefix.name}-{output_suffix}")
     output_png = output_stem.with_suffix(".png")
@@ -381,9 +378,7 @@ def plot_mesh(
     # join them
     fout_join = ""
     if combo_plot:
-        nbapp = numbat.NumBATApp()
-
-        outprefix = Path(nbapp.outpath(outpref))
+        outprefix = Path(runtime.outpath(outpref))
 
         fout_join = str(outprefix.with_name(f"{outprefix.name}-mesh.png"))
 
@@ -415,8 +410,7 @@ def check_mesh(msh_loc_out: Path | str, msh_name: str) -> None:
         msh_loc_out: Directory containing the mesh files.
         msh_name: Base name of the mesh file (without extension).
     """
-    nbapp = numbat.NumBATApp()
-    gmsh_exe = str(nbapp.path_gmsh())
+    gmsh_exe = str(runtime.path_gmsh())
 
     msh_loc_out = Path(msh_loc_out)
 

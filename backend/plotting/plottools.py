@@ -35,6 +35,7 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
+from numbat_core import runtime
 def get_rgb_for_poln(px, py, pz):
     """
     Calculate normalized RGB values for a polarization vector.
@@ -90,22 +91,15 @@ def save_and_close_figure(fig, fig_fname):
     fig_fname : str
         Output filename. PNG files are saved with default DPI, others with tight bounding box.
     """
-    import numbat  # here to avoid circular import
-
-
-    plot_prefs = numbat.NumBATPlotPrefs()
-
-    if plot_prefs is None:  # If NumBATApp() has not been called this will be None
-        dpi = 300
-    else:
-        dpi = plot_prefs.plot_output_resolution_dpi
+    plot_prefs = runtime.plot_prefs()
+    dpi = plot_prefs.plot_output_resolution_dpi
 
     # Prepare metadata
     metadata = {
         'Title': 'NumBAT Plot',
         'CreationDate': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'Version': numbat.version(),
-        'GitHash': numbat.git_hash() or 'N/A'
+        'Version': runtime.version(),
+        'GitHash': runtime.git_hash() or 'N/A'
     }
 
     if fig_fname[-3:] == 'pdf':
