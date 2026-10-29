@@ -160,12 +160,12 @@ old public API.
 
 Suggested early candidates:
 
-| Current area | Proposed internal area |
-|---|---|
-| `reporting`, platform and version helpers | `numbat_core.runtime` |
-| `numbattools`, `numtools` | `numbat_core.utils` |
-| `bulkprops`, `materialprops`, `crystalsyms` | `numbat_core.materials` |
-| `voigt` | `numbat_core.materials.elasticity` |
+| Current area                                | Proposed internal area             |
+| ------------------------------------------- | ---------------------------------- |
+| `reporting`, platform and version helpers   | `numbat_core.runtime`              |
+| `numbattools`, `numtools`                   | `numbat_core.utils`                |
+| `bulkprops`, `materialprops`, `crystalsyms` | `numbat_core.materials`            |
+| `voigt`                                     | `numbat_core.materials.elasticity` |
 
 For each move:
 
@@ -222,13 +222,13 @@ default module path only after the dual-path loader has shipped and is tested.
 The existing `plotting/` package is already a useful subsystem. Move loose
 top-level plotting modules into the internal plotting package:
 
-| Current module | Proposed internal module |
-|---|---|
-| `plotmodes.py` | `numbat_core.plotting.modes` |
-| `plotmoderaw.py` | `numbat_core.plotting.raw_modes` |
-| `plotgain.py` | `numbat_core.plotting.gain` |
-| `plotting/profiles.py` | `numbat_core.plotting.profiles` |
-| `plotting/gmsh.py` | `numbat_core.plotting.mesh` |
+| Current module         | Proposed internal module         |
+| ---------------------- | -------------------------------- |
+| `plotmodes.py`         | `numbat_core.plotting.modes`     |
+| `plotmoderaw.py`       | `numbat_core.plotting.raw_modes` |
+| `plotgain.py`          | `numbat_core.plotting.gain`      |
+| `plotting/profiles.py` | `numbat_core.plotting.profiles`  |
+| `plotting/gmsh.py`     | `numbat_core.plotting.mesh`      |
 
 Keep mesh rendering separate from Gmsh subprocess and mesh-file I/O. The former
 belongs in plotting; the latter belongs in `numbat_core.mesh`.
