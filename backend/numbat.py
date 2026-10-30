@@ -50,7 +50,7 @@ import structure
 from modecalcs import Simulation
 from numbat_core import nbversion, reporting, runtime
 from numbat_core.mesh import templates as mshtemplates
-from plotting.plotprefs import PlotPrefs
+from numbat_core.plotting.preferences import PlotPrefs
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'

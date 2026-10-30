@@ -35,15 +35,16 @@ import numpy as np
 import numpy.linalg as npla
 import scipy.optimize as sciopt
 
-from numbat_core.nbtypes import CrystalGroup, unit_x, unit_y, unit_z, SI_permittivity_eps0
+import nbanalytic.elasticstack as elstack
 from numbat_core import reporting
 from numbat_core.materials import elastic_tensors as voigt
 from numbat_core.materials.bulkprops import solve_christoffel, solve_dielectric
-from numbat_core.materials.crystalsyms import construct_crystal_for_symmetry_class, construct_piezo_elt_mappings
-
-
-import plotting.materials as plms
-import nbanalytic.elasticstack as elstack
+from numbat_core.materials.crystalsyms import (
+    construct_crystal_for_symmetry_class,
+    construct_piezo_elt_mappings,
+)
+from numbat_core.nbtypes import CrystalGroup, SI_permittivity_eps0, unit_x, unit_y, unit_z
+from numbat_core.plotting import materials as plms
 
 
 class BadMaterialFileError(Exception):
@@ -1120,4 +1121,3 @@ def find_Rayleigh_velocity_isotropic(Vs, Vl):
 def find_Rayleigh_velocity_anisotropic(material):
 
     return elstack.find_Rayleigh_velocity_anisotropic(material)
-

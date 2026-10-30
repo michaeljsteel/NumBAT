@@ -15,12 +15,13 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random
-import matplotlib.pyplot as plt
 
 from numbat_core.nbtypes import SI_um
-import plotting.plottools as plottools
+from numbat_core.plotting import tools as plottools
+
 
 def do_raw_fem_mode_plot(l_comps, mode_interpolator, fem_mesh, fem_evecs, mode_num):
 

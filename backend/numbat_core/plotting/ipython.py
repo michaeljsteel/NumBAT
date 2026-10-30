@@ -1,8 +1,9 @@
 # functions for python notebooks
 
 import time
-import IPython.display as ipydisp
 from pathlib import Path
+
+import IPython.display as ipydisp
 
 
 # Define a function to display a single image with a caption

@@ -18,17 +18,14 @@
 
 import math
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-
-from numbat_core import runtime
+from numbat_core import reporting, runtime
 from numbat_core.nbtypes import SI_GHz
-from numbat_core import reporting
-
-from plotting.plottools import save_and_close_figure
-from plotmodes import Decorator
-from plotting.tidyaxes import TidyAxes
+from numbat_core.plotting.axes import TidyAxes
+from numbat_core.plotting.modes import Decorator
+from numbat_core.plotting.tools import save_and_close_figure
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz, q_AC,
@@ -331,5 +328,4 @@ def plot_gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz
         save_and_close_figure(fig, f'{pathpref}-logy{suffix}{plot_fileext}')
 
     return v_gain_global['Total'], v_gain_global['PE'], v_gain_global['MB']
-
 

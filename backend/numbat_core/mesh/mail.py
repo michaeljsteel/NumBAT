@@ -14,11 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import matplotlib.pyplot as plt
 import numpy as np
-
-from plotting.plottools import save_and_close_figure
-from plotting.tidyaxes import TidyAxes
 
 
 class MailData:
@@ -70,72 +66,6 @@ class MailData:
         #s += ' Node table:\n' + str(self.v_elts)
 
         print(s)
-
-
-    def plot_mesh(self, path):
-        fig, axs = plt.subplots(2,2, dpi=300)
-        fig.subplots_adjust(hspace=0.3, wspace=.1)
-
-
-        axs = axs.flat
-        cf=axs[0].scatter(self.v_x, self.v_y, s=4, c=self.v_node_physindex, cmap='Dark2')
-
-        axs[0].set_title('Gmsh surface and curve types', fontsize=8)
-
-        cbar = fig.colorbar(cf, shrink=.5, pad=.025, location='right')
-        cbar.set_label(label='Phys curve/surface number')
-
-
-        elts = self.v_elts-1  # built for fortran indexing
-        axs[1].scatter(self.v_x[elts[:,0]], self.v_y[elts[:,0]], s=6, c='red')
-        axs[1].scatter(self.v_x[elts[:,1]], self.v_y[elts[:,1]], s=6, c='red')
-        axs[1].scatter(self.v_x[elts[:,2]], self.v_y[elts[:,2]], s=6, c='red')
-        axs[1].scatter(self.v_x[elts[:,3]], self.v_y[elts[:,3]], s=4, c='blue')
-        axs[1].scatter(self.v_x[elts[:,4]], self.v_y[elts[:,4]], s=4, c='blue')
-        axs[1].scatter(self.v_x[elts[:,5]], self.v_y[elts[:,5]], s=4, c='blue')
-
-        axs[1].set_title('Vertex and edge nodes', fontsize=8)
-
-        # axs[2].scatter(self.v_x[elts[:,1]], self.v_y[elts[:,1]], s=4, c='red')
-        # axs[2].scatter(self.v_x[elts[:,2]], self.v_y[elts[:,2]], s=4, c='green')
-        # axs[2].scatter(self.v_x[elts[:,3]], self.v_y[elts[:,3]], s=4, c='blue')
-        # axs[3].scatter(self.v_x[elts[:,4]], self.v_y[elts[:,4]], s=4, c='cyan')
-        # axs[3].scatter(self.v_x[elts[:,5]], self.v_y[elts[:,5]], s=4, c='magenta')
-        # axs[3].scatter(self.v_x[elts[:,6]], self.v_y[elts[:,6]], s=4, c='yellow')
-
-        # Draw elements (solid) and sub-element (dotted) triangles
-        cmap = plt.get_cmap('tab10')
-        for i in range(self.n_msh_elts):
-            icor = [elts[i,0],elts[i,1],elts[i,2],elts[i,0]]
-            imid = [elts[i,3],elts[i,4],elts[i,5],elts[i,3]]
-            ic = (2*i)%10
-            axs[2].plot(self.v_x[icor], self.v_y[icor], color=cmap(ic), lw=1)
-            axs[2].plot(self.v_x[imid], self.v_y[imid], ':',color=cmap(ic+1), lw=.5)
-
-        for off in range(self.n_msh_elts):  # look for top left element
-            if 10 in elts[off,:6]:
-                break
-        for i in range(6):
-            axs[2].plot(self.v_x[elts[off, i]],self.v_y[elts[off, i]], 'o',color=cmap(i), markersize=3, label=f'Node {i}')
-        axs[2].legend(loc='upper right', fontsize=8)
-        axs[2].set_xlim(min(self.v_x), max(self.v_x))
-        axs[2].set_ylim(min(self.v_y), max(self.v_y))
-        axs[2].set_title('NumBAT FEM sub-elements', fontsize=8)
-
-        for ax in axs:
-            ax.set_xlabel(r'$x$ [μm]')
-            ax.set_ylabel(r'$y$ [μm]')
-
-        tidyaxes = TidyAxes(nax=4, props={'ax_label_fs':8, 'ax_ticklabel_fs':6,
-                                     'ax_tickwidth':0.25, 'ax_linewidth':1, 'aspect':1,
-                                     'cb_linewidth':1, 'cb_label_fs':10,
-                                     'cb_ticklabel_fs':8, 'cb_tickwidth':0.25})
-
-
-        tidyaxes.apply_to_axes(axs)
-        tidyaxes.apply_to_cbars(cbar)
-
-        save_and_close_figure(fig, str(path) + '-mailmesh.png')
 
 
     def _parse_lines(self, lines):

@@ -261,19 +261,49 @@ path only in a later, explicit compatibility release.
 
 ### Phase 4: Consolidate plotting
 
-The existing `plotting/` package is already a useful subsystem. Move loose
-top-level plotting modules into the internal plotting package:
+Move all plotting implementations to `numbat_core.plotting`:
 
-| Current module         | Proposed internal module         |
-| ---------------------- | -------------------------------- |
-| `plotmodes.py`         | `numbat_core.plotting.modes`     |
-| `plotmoderaw.py`       | `numbat_core.plotting.raw_modes` |
-| `plotgain.py`          | `numbat_core.plotting.gain`      |
-| `plotting/profiles.py` | `numbat_core.plotting.profiles`  |
-| `plotting/gmsh.py`     | `numbat_core.plotting.mesh`      |
+```text
+numbat_core/plotting/
+├── axes.py
+├── fields.py
+├── gain.py
+├── ipython.py
+├── materials.py
+├── mesh.py
+├── modes.py
+├── preferences.py
+├── profiles.py
+├── raw_modes.py
+├── tools.py
+└── resources/
+    └── gmsh/
+```
 
-Keep mesh rendering separate from Gmsh subprocess and mesh-file I/O. The former
-belongs in plotting; the latter belongs in `numbat_core.mesh`.
+The legacy flat modules and `plotting/` package remain compatibility aliases:
+
+| Legacy path              | Internal implementation                |
+| ------------------------ | -------------------------------------- |
+| `plotmodes.py`           | `numbat_core.plotting.modes`           |
+| `plotmoderaw.py`         | `numbat_core.plotting.raw_modes`       |
+| `plotgain.py`            | `numbat_core.plotting.gain`            |
+| `plotting/plotprefs.py`  | `numbat_core.plotting.preferences`     |
+| `plotting/plottools.py`  | `numbat_core.plotting.tools`           |
+| `plotting/tidyaxes.py`   | `numbat_core.plotting.axes`            |
+| `plotting/profiles.py`   | `numbat_core.plotting.profiles`        |
+| `plotting/gmsh.py`       | `numbat_core.plotting.mesh`            |
+| `msh/gmsh.py`            | `numbat_core.plotting.mesh`            |
+
+Before moving the modules, remove plotting behavior from `numbat_core.mesh`.
+`FEMScalarFieldPlotter` belongs in `numbat_core.plotting.fields`, and MAIL
+mesh rendering belongs in `numbat_core.plotting.mesh`; `FemMesh` and
+`MailData` remain pure mesh representations. Move MSH file parsing to
+`numbat_core.mesh.gmsh_io`, then have plotting consume that API.
+
+Update all implementation imports to use `numbat_core.plotting.*` and retain
+no `numbat_core.plotting` imports under `numbat_core.mesh`. Add headless
+rendering tests and verify both legacy and internal module paths resolve to
+the same module objects.
 
 ### Phase 5: Move simulation-domain modules
 

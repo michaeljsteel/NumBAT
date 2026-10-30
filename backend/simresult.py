@@ -16,27 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import copy
 import collections.abc
+import copy
+
 import numpy as np
-
-from modes import ModeAC, ModeEM, ModeInterpolator
-
-from plotting.plottools import progressBar
-import plotmodes
-from numbat_core import reporting
-
-from numbat_core.nbtypes import (
-    FieldType,
-    FieldTag,
-    PointGroup,
-    SymRep,
-    SI_speed_c,
-    twopi,
-)
 
 import integration
 from fortran import nb_fortran
+from modes import ModeAC, ModeEM, ModeInterpolator
+from numbat_core import reporting
+from numbat_core.nbtypes import (
+    FieldTag,
+    FieldType,
+    PointGroup,
+    SI_speed_c,
+    SymRep,
+    twopi,
+)
+from numbat_core.plotting import modes as plotmodes
+from numbat_core.plotting.tools import progressBar
+
 
 class SimResult:
 

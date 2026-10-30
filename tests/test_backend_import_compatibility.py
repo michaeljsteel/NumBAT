@@ -26,6 +26,14 @@ TUTORIAL_IMPORT_ORDER = [
     "simresult",
     "meshing.templates",
     "plotting.profiles",
+    "plotting.gmsh",
+    "plotting.materials",
+    "plotting.plotprefs",
+    "plotting.plottools",
+    "plotting.tidyaxes",
+    "plotgain",
+    "plotmoderaw",
+    "plotmodes",
 ]
 
 IMPORTABLE_AFTER_NUMBAT = [
@@ -46,7 +54,19 @@ IMPORTABLE_AFTER_NUMBAT = [
     "numbat_core.mesh.mail",
     "numbat_core.mesh.templates",
     "numbat_core.mesh.builtin",
+    "numbat_core.plotting",
+    "numbat_core.plotting.axes",
+    "numbat_core.plotting.fields",
+    "numbat_core.plotting.gain",
+    "numbat_core.plotting.materials",
+    "numbat_core.plotting.mesh",
+    "numbat_core.plotting.modes",
+    "numbat_core.plotting.preferences",
+    "numbat_core.plotting.profiles",
+    "numbat_core.plotting.raw_modes",
+    "numbat_core.plotting.tools",
     "msh.builtin_meshes",
+    "msh.gmsh",
     "msh.builtin_meshes._common",
     "msh.builtin_meshes.basic",
     "msh.builtin_meshes.onion",
@@ -71,12 +91,32 @@ IMPORTABLE_STANDALONE = [
     "simresult",
     "nbgmsh",
     "plotting.profiles",
+    "plotting.gmsh",
+    "plotting.materials",
+    "plotting.plotprefs",
+    "plotting.plottools",
+    "plotting.tidyaxes",
+    "plotgain",
+    "plotmoderaw",
+    "plotmodes",
+    "msh.gmsh",
     "numbat_core.mesh",
     "numbat_core.mesh.fem",
     "numbat_core.mesh.geometry",
     "numbat_core.mesh.mail",
     "numbat_core.mesh.templates",
     "numbat_core.mesh.builtin",
+    "numbat_core.plotting",
+    "numbat_core.plotting.axes",
+    "numbat_core.plotting.fields",
+    "numbat_core.plotting.gain",
+    "numbat_core.plotting.materials",
+    "numbat_core.plotting.mesh",
+    "numbat_core.plotting.modes",
+    "numbat_core.plotting.preferences",
+    "numbat_core.plotting.profiles",
+    "numbat_core.plotting.raw_modes",
+    "numbat_core.plotting.tools",
 ]
 
 # Entry points that may import the application root directly.
@@ -134,3 +174,22 @@ def test_low_level_modules_do_not_import_application_root():
         and _imports_application_root(path)
     ]
     assert offenders == [], f"low-level modules import numbat: {offenders}"
+
+
+def test_mesh_modules_do_not_import_internal_plotting():
+    mesh_dir = BACKEND_DIR / "numbat_core" / "mesh"
+    offenders = []
+    for path in sorted(mesh_dir.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(
+                "numbat_core.plotting"
+            ):
+                offenders.append(str(path.relative_to(BACKEND_DIR)))
+                break
+            if isinstance(node, ast.Import) and any(
+                alias.name.startswith("numbat_core.plotting") for alias in node.names
+            ):
+                offenders.append(str(path.relative_to(BACKEND_DIR)))
+                break
+    assert offenders == [], f"mesh modules import plotting: {offenders}"

@@ -28,15 +28,16 @@ accessing gain and loss data, as well as functions for performing the necessary 
 
 
 import csv
+
+import matplotlib
 import numpy as np
 from scipy import interpolate
-import matplotlib
 
-from numbat_core.nbtypes import SI_permittivity_eps0
-from numbat_core.utils.numeric import np_min_max, process_fortran_return
-from numbat_core import reporting
-import plotgain
 from fortran import nb_fortran
+from numbat_core import reporting
+from numbat_core.nbtypes import SI_permittivity_eps0
+from numbat_core.plotting import gain as plotgain
+from numbat_core.utils.numeric import np_min_max, process_fortran_return
 
 
 class GainProps(object):
@@ -899,5 +900,4 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
         # plt.close()
 
     return sym_list
-
 

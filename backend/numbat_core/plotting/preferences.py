@@ -1,10 +1,11 @@
 
-from typing import Optional
-from pathlib import Path
 import tomllib
+from pathlib import Path
+from typing import Optional
 
 from numbat_core import reporting
 from numbat_core.nbtypes import FieldTag
+
 
 def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
 

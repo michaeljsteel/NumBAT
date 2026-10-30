@@ -23,14 +23,14 @@
 import copy
 
 import materials
-import plotting.gmsh as pltgmsh
-import plotting.profiles as pltprof
 from fortran import nb_fortran
 from modecalcs import ac_mode_calculation, em_mode_calculation
 from numbat_core import reporting, runtime
 from numbat_core.materials.materialprops import ElasticProps, OpticalProps
 from numbat_core.mesh import templates as mshtemplates
 from numbat_core.nbtypes import SI_nm
+from numbat_core.plotting import mesh as pltgmsh
+from numbat_core.plotting import profiles as pltprof
 from numbat_core.utils.numeric import run_subprocess
 
 

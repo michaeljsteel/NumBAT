@@ -18,18 +18,15 @@ import sys
 from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes as MplAxes
-
 import numpy as np
+import scipy.optimize as sciopt
+from matplotlib.axes import Axes as MplAxes
 from numpy.typing import NDArray
 
-import scipy.optimize as sciopt
-
-from plotting.plottools import get_rgb_for_poln
 import numtools.rootbracket as ntrb
-from numbat_core.nbtypes import NormalisationConstants, SI_GHz
-
 from nbanalytic.elasticmodeplots import ModeFunction1D
+from numbat_core.nbtypes import NormalisationConstants, SI_GHz
+from numbat_core.plotting.tools import get_rgb_for_poln
 
 # Example use
 # explore/me/badribs/rib_saw.py
@@ -697,4 +694,3 @@ class ElasticIsotropicFreeSlab:
         mode_prof = ModeFunction1D(Omega, Vp, v_x, m_uxyz)
 
         return mode_prof
-

@@ -27,24 +27,21 @@ interactive use in notebooks and small scripts.
 """
 
 import math
-import numpy as np
-
+from enum import IntEnum
 from typing import Optional, Tuple
-from numpy.typing import NDArray
 
-
-import matplotlib.pyplot as plt
+import IPython.display as ipydisp
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.animation import FuncAnimation
 from matplotlib.axes import Axes as MplAxes
 from matplotlib.figure import Figure
+from numpy.typing import NDArray
 
-from numbat_core.nbtypes import SI_um, SI_GHz, SI_kmps
-from enum import IntEnum
-
-import IPython.display as ipydisp
-import plotting.plottools as nbpt
-import plotting.plotprefs as nbpp
+from numbat_core.nbtypes import SI_GHz, SI_kmps, SI_um
+from numbat_core.plotting import preferences as nbpp
+from numbat_core.plotting import tools as nbpt
 
 twopi = 2 * math.pi
 

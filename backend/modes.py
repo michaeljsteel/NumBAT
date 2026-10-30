@@ -16,12 +16,12 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 
-import plotmoderaw
-import plotmodes
-import plotting.plottools as plottools
 from numbat_core import reporting, runtime
 from numbat_core.mesh import fem as femmesh
 from numbat_core.nbtypes import FieldCode, FieldTag, FieldType, SI_um, SI_vacuum_impedance_Z0
+from numbat_core.plotting import modes as plotmodes
+from numbat_core.plotting import raw_modes as plotmoderaw
+from numbat_core.plotting import tools as plottools
 from numbat_core.utils.numeric import int2D_trapz
 
 

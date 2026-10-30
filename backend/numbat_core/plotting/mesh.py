@@ -5,8 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-import plotting.plottools as plottools
 from numbat_core import runtime
+from numbat_core.mesh.gmsh_io import read_msh2_mesh
+from numbat_core.mesh.mail import MailData
+from numbat_core.plotting import tools as plottools
+from numbat_core.plotting.axes import TidyAxes
+from numbat_core.plotting.tools import save_and_close_figure
 from numbat_core.utils.numeric import f2f_with_subs, run_subprocess
 
 
@@ -17,11 +21,8 @@ def plot_mail_mesh(mesh_mail_fname: Path | str, outpref: Optional[str]) -> None:
         mesh_mail_fname: Path to the .mail mesh file.
         outpref: Output prefix for the plot files.
     """
-    import nbgmsh
-
     path = Path(runtime.outpath())
-    mail_data = nbgmsh.MailData(mesh_mail_fname)
-    mail_data.plot_mesh(path)
+    plot_mail_data(MailData(mesh_mail_fname), path)
 
 
 def plot_gmesh_wireframe(
@@ -179,54 +180,6 @@ def plot_gmsh_mesh(
     return str(output_png)
 
 
-def _read_msh2_mesh(mesh_path: Path) -> tuple[np.ndarray, list[tuple[tuple[int, int, int], int]], set[tuple[int, int]]]:
-    """Read nodes, triangular elements, and line elements from a Gmsh 2.2 mesh."""
-    lines = mesh_path.read_text().splitlines()
-    node_coordinates = {}
-    triangles = []
-    line_elements = set()
-    line_index = 0
-
-    while line_index < len(lines):
-        if lines[line_index] == "$Nodes":
-            node_count = int(lines[line_index + 1])
-            for node_line in lines[line_index + 2 : line_index + 2 + node_count]:
-                node_id, x_coord, y_coord, _ = node_line.split()
-                node_coordinates[int(node_id)] = (float(x_coord), float(y_coord))
-            line_index += node_count + 3
-        elif lines[line_index] == "$Elements":
-            element_count = int(lines[line_index + 1])
-            for element_line in lines[line_index + 2 : line_index + 2 + element_count]:
-                fields = element_line.split()
-                element_type = int(fields[1])
-                tag_count = int(fields[2])
-                node_ids = [int(node_id) for node_id in fields[3 + tag_count :]]
-                physical_id = int(fields[3]) if tag_count else 0
-
-                if element_type == 1:
-                    line_elements.add(tuple(sorted(node_ids[:2])))
-                elif element_type in (2, 9):
-                    triangles.append((tuple(node_ids[:3]), physical_id))
-            line_index += element_count + 3
-        else:
-            line_index += 1
-
-    if not node_coordinates or not triangles:
-        raise ValueError(f"Mesh file does not contain Gmsh 2.2 nodes and triangular elements: {mesh_path}")
-
-    ordered_node_ids = sorted(node_coordinates)
-    node_id_to_index = {node_id: index for index, node_id in enumerate(ordered_node_ids)}
-    coordinates = np.array([node_coordinates[node_id] for node_id in ordered_node_ids])
-    indexed_triangles = [
-        (tuple(node_id_to_index[node_id] for node_id in node_ids), physical_id)
-        for node_ids, physical_id in triangles
-    ]
-    indexed_line_elements = {
-        tuple(node_id_to_index[node_id] for node_id in node_ids) for node_ids in line_elements
-    }
-    return coordinates, indexed_triangles, indexed_line_elements
-
-
 def _wireframe_edges(
     triangles: list[tuple[tuple[int, int, int], int]], line_elements: set[tuple[int, int]]
 ) -> tuple[set[tuple[int, int]], set[tuple[int, int]]]:
@@ -323,7 +276,7 @@ def plot_msh_wireframe(
 ) -> str:
     """Create a deterministic wireframe PNG from a Gmsh 2.2 mesh file."""
     output_png = (Path.cwd() / outpref).with_name(f"{outpref}-wireframe.png")
-    coordinates, triangles, line_elements = _read_msh2_mesh(
+    coordinates, triangles, line_elements = read_msh2_mesh(
         Path(msh_loc_out) / f"{msh_name}.msh"
     )
     exterior_edges, interior_edges = _wireframe_edges(triangles, line_elements)
@@ -339,7 +292,7 @@ def plot_msh_wireframe(
 def plot_msh_mesh(msh_loc_out: Path | str, msh_name: str, outpref: str) -> str:
     """Create a deterministic triangular-mesh PNG from a Gmsh 2.2 mesh file."""
     output_png = (Path.cwd() / outpref).with_name(f"{outpref}-mesh_nodes.png")
-    coordinates, triangles, line_elements = _read_msh2_mesh(
+    coordinates, triangles, line_elements = read_msh2_mesh(
         Path(msh_loc_out) / f"{msh_name}.msh"
     )
     exterior_edges, interior_edges = _wireframe_edges(triangles, line_elements)
@@ -420,3 +373,67 @@ def check_mesh(msh_loc_out: Path | str, msh_name: str) -> None:
     gmsh_cmd = [gmsh_exe, str(msh_loc_out / f"{msh_name}.msh")]
     run_subprocess(gmsh_cmd, "Gmsh", cwd=str(msh_loc_out))
     run_subprocess(gmsh_cmd, "Gmsh", cwd=str(msh_loc_out))
+def plot_mail_data(mail_data, path):
+    fig, axs = plt.subplots(2,2, dpi=300)
+    fig.subplots_adjust(hspace=0.3, wspace=.1)
+
+
+    axs = axs.flat
+    cf=axs[0].scatter(mail_data.v_x, mail_data.v_y, s=4, c=mail_data.v_node_physindex, cmap='Dark2')
+
+    axs[0].set_title('Gmsh surface and curve types', fontsize=8)
+
+    cbar = fig.colorbar(cf, shrink=.5, pad=.025, location='right')
+    cbar.set_label(label='Phys curve/surface number')
+
+
+    elts = mail_data.v_elts-1  # built for fortran indexing
+    axs[1].scatter(mail_data.v_x[elts[:,0]], mail_data.v_y[elts[:,0]], s=6, c='red')
+    axs[1].scatter(mail_data.v_x[elts[:,1]], mail_data.v_y[elts[:,1]], s=6, c='red')
+    axs[1].scatter(mail_data.v_x[elts[:,2]], mail_data.v_y[elts[:,2]], s=6, c='red')
+    axs[1].scatter(mail_data.v_x[elts[:,3]], mail_data.v_y[elts[:,3]], s=4, c='blue')
+    axs[1].scatter(mail_data.v_x[elts[:,4]], mail_data.v_y[elts[:,4]], s=4, c='blue')
+    axs[1].scatter(mail_data.v_x[elts[:,5]], mail_data.v_y[elts[:,5]], s=4, c='blue')
+
+    axs[1].set_title('Vertex and edge nodes', fontsize=8)
+
+    # axs[2].scatter(mail_data.v_x[elts[:,1]], mail_data.v_y[elts[:,1]], s=4, c='red')
+    # axs[2].scatter(mail_data.v_x[elts[:,2]], mail_data.v_y[elts[:,2]], s=4, c='green')
+    # axs[2].scatter(mail_data.v_x[elts[:,3]], mail_data.v_y[elts[:,3]], s=4, c='blue')
+    # axs[3].scatter(mail_data.v_x[elts[:,4]], mail_data.v_y[elts[:,4]], s=4, c='cyan')
+    # axs[3].scatter(mail_data.v_x[elts[:,5]], mail_data.v_y[elts[:,5]], s=4, c='magenta')
+    # axs[3].scatter(mail_data.v_x[elts[:,6]], mail_data.v_y[elts[:,6]], s=4, c='yellow')
+
+    # Draw elements (solid) and sub-element (dotted) triangles
+    cmap = plt.get_cmap('tab10')
+    for i in range(mail_data.n_msh_elts):
+        icor = [elts[i,0],elts[i,1],elts[i,2],elts[i,0]]
+        imid = [elts[i,3],elts[i,4],elts[i,5],elts[i,3]]
+        ic = (2*i)%10
+        axs[2].plot(mail_data.v_x[icor], mail_data.v_y[icor], color=cmap(ic), lw=1)
+        axs[2].plot(mail_data.v_x[imid], mail_data.v_y[imid], ':',color=cmap(ic+1), lw=.5)
+
+    for off in range(mail_data.n_msh_elts):  # look for top left element
+        if 10 in elts[off,:6]:
+            break
+    for i in range(6):
+        axs[2].plot(mail_data.v_x[elts[off, i]],mail_data.v_y[elts[off, i]], 'o',color=cmap(i), markersize=3, label=f'Node {i}')
+    axs[2].legend(loc='upper right', fontsize=8)
+    axs[2].set_xlim(min(mail_data.v_x), max(mail_data.v_x))
+    axs[2].set_ylim(min(mail_data.v_y), max(mail_data.v_y))
+    axs[2].set_title('NumBAT FEM sub-elements', fontsize=8)
+
+    for ax in axs:
+        ax.set_xlabel(r'$x$ [μm]')
+        ax.set_ylabel(r'$y$ [μm]')
+
+    tidyaxes = TidyAxes(nax=4, props={'ax_label_fs':8, 'ax_ticklabel_fs':6,
+                                 'ax_tickwidth':0.25, 'ax_linewidth':1, 'aspect':1,
+                                 'cb_linewidth':1, 'cb_label_fs':10,
+                                 'cb_ticklabel_fs':8, 'cb_tickwidth':0.25})
+
+
+    tidyaxes.apply_to_axes(axs)
+    tidyaxes.apply_to_cbars(cbar)
+
+    save_and_close_figure(fig, str(path) + '-mailmesh.png')

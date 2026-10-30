@@ -18,14 +18,14 @@
 
 import copy
 
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
+import matplotlib.pyplot as plt
+import numpy as np
 
 from numbat_core import runtime
-from numbat_core.nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
-from plotting.plottools import save_and_close_figure
-from plotting.tidyaxes import TidyAxes
+from numbat_core.nbtypes import FieldTag, FieldType, SI_GHz, SI_THz, SI_um, twopi
+from numbat_core.plotting.axes import TidyAxes
+from numbat_core.plotting.tools import save_and_close_figure
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
@@ -813,7 +813,6 @@ def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=No
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename_2D(field_code, plps, mode_index, cc._user_code)
         save_and_close_figure(fig, fig_fname)
-
 
 
 

@@ -78,6 +78,14 @@ def test_mesh_generation_writes_nonempty_mesh_file(nbapp):
     assert mesh_file.stat().st_size > 0
 
 
+def test_mail_mesh_plot_writes_output(nbapp):
+    wg = _make_rectangular(nbapp)
+
+    wg.plot_mail_mesh("ignored")
+
+    assert Path(f"{nbapp.outpath()}-mailmesh.png").is_file()
+
+
 def test_em_simulation_object_is_constructed(nbapp):
     wg = _make_rectangular(nbapp)
     n_eff_guess = np.real(wg.get_material("a").refindex_n) - 0.1

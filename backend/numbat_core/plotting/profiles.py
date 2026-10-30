@@ -2,10 +2,10 @@ import matplotlib as plt
 import numpy as np
 import scipy
 
-import plotting.plottools as plottools
 from numbat_core import reporting
-from numbat_core.mesh import fem as femmesh
 from numbat_core.mesh import mail as nbgmsh
+from numbat_core.plotting import tools as plottools
+from numbat_core.plotting.fields import FEMScalarFieldPlotter
 
 
 def _make_dielectric_plotter(wguide, optical_props, as_epsilon, n_points):
@@ -23,7 +23,7 @@ def _make_dielectric_plotter(wguide, optical_props, as_epsilon, n_points):
         nm_math=r'$n(\vec x)$'
         fname_suffix='refractive_index'
 
-    fsfp = femmesh.FEMScalarFieldPlotter(wguide, n_points)
+    fsfp = FEMScalarFieldPlotter(wguide, n_points)
 
     unit=''
 
@@ -40,7 +40,7 @@ def get_structure_plotter_stiffness(wguide, c_I, c_J, n_points=500):
 
     v_stiff = np.zeros(5) # fill me
 
-    fsfp = femmesh.FEMScalarFieldPlotter(wguide, n_points)
+    fsfp = FEMScalarFieldPlotter(wguide, n_points)
     qname = 'Stiffness $c_{'+f'{c_I},{c_J}' +'}$'
     suffname = f'stiffness_c_{c_I}{c_J}'
     fsfp.set_quantity_name(qname, suffname)
@@ -60,7 +60,7 @@ def get_structure_plotter_acoustic_velocity(wguide, d_materials, n_points=500):
         if v_mats[i].has_elastic_properties():
             v_acvel[i,:] = v_mats[i].Vac_phase()
 
-    fsfp = femmesh.FEMScalarFieldPlotter(wguide, n_points)
+    fsfp = FEMScalarFieldPlotter(wguide, n_points)
     fsfp.setup_vector_properties(3, 'Elastic velocity', '[km/s]', r'$v_i$',
                                     [r'$v_0$', r'$v_1$', r'$v_2$'],
                                     'elastic_velocity', ['v0', 'v1', 'v2'])
@@ -141,6 +141,5 @@ def plot_refractive_index_profile_rough(mesh_mail_fname, d_materials,
 
 
         plottools.save_and_close_figure(fig, prefix+'refn.png')
-
 
 

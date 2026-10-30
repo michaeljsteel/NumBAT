@@ -27,15 +27,17 @@ Copyright (C) 2017-2025  Michael Steel.
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from PIL import Image, ImageOps
+import math
+from datetime import datetime
 from pathlib import Path
 
-from datetime import datetime
-import math
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image, ImageOps
 
 from numbat_core import runtime
+
+
 def get_rgb_for_poln(px, py, pz):
     """
     Calculate normalized RGB values for a polarization vector.
