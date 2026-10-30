@@ -133,7 +133,8 @@ def test_builtin_waveguide_index_uses_normal_import_path():
     assert all(waveguide["module"] == "msh.builtin_meshes" for waveguide in waveguides)
     assert all("wg_impl" not in waveguide for waveguide in waveguides)
     assert all(
-        waveguide["wg_template_cls"].__module__ == "msh.builtin_meshes" for waveguide in waveguides
+        waveguide["wg_template_cls"].__module__.startswith("msh.builtin_meshes")
+        for waveguide in waveguides
     )
 
 

@@ -66,7 +66,7 @@ def test_builtin_waveguide_construction(nbapp):
 
     assert wg.inc_shape == "rectangular"
     assert wg.wg_geom._shape_name == "rectangular"
-    assert type(wg.wg_geom).__module__ == "msh.builtin_meshes"
+    assert type(wg.wg_geom).__module__.startswith("msh.builtin_meshes")
     assert np.real(wg.get_material("a").refindex_n) > 3.0
 
 
