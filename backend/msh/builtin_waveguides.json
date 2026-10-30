@@ -153,6 +153,24 @@
             "wg_class": "RoundedWedge",
             "inc_shape": "rounded_wedge",
             "active": 1
+        },
+        {
+            "module": "msh.builtin_meshes",
+            "wg_class": "RoundedWedge3",
+            "inc_shape": "rounded_wedge3",
+            "active": 1
+        },
+        {
+            "module": "msh.builtin_meshes",
+            "wg_class": "RoundedWedge4",
+            "inc_shape": "rounded_wedge4",
+            "active": 1
+        },
+        {
+            "module": "msh.builtin_meshes",
+            "wg_class": "RoundedWedge6",
+            "inc_shape": "rounded_wedge6",
+            "active": 1
         }
     ]
 }

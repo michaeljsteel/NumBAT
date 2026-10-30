@@ -4,12 +4,12 @@ The scratch folder is created under the current working directory, not inside
 the backend source tree, and is reused across calls.
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
-from numbat_core import runtime  # noqa: E402
+from numbat_core import runtime
 
 
 def test_scratch_dir_is_created_in_working_directory(tmp_path, monkeypatch):

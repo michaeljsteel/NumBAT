@@ -21,4 +21,10 @@ from .rib import (
     RibMkII as RibMkII,
 )
 from .slot import Slot as Slot, SlotCoated as SlotCoated
-from .rounded import RoundedBowtie as RoundedBowtie, RoundedWedge as RoundedWedge
+from .rounded import (
+    RoundedBowtie as RoundedBowtie,
+    RoundedWedge as RoundedWedge,
+    RoundedWedge3 as RoundedWedge3,
+    RoundedWedge4 as RoundedWedge4,
+    RoundedWedge6 as RoundedWedge6,
+)
