@@ -137,11 +137,7 @@ class Structure:
 
         # locations of gmsh input and output files
         self.msh_location_in = runtime.path_mesh_templates()
-        self.msh_location_out = self.msh_location_in / 'build'
-
-        if not self.msh_location_out.is_dir():
-            self.msh_location_out.mkdir()
-
+        self.msh_location_out = runtime.path_scratch()
 
         mat_vac = materials.make_material('Vacuum')
         self.d_materials = {'bkg': kwargs['material_bkg']}  # this one must come first

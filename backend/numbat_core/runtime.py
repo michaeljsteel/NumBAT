@@ -74,6 +74,20 @@ def path_mesh_templates():
     return _app().path_mesh_templates()
 
 
+SCRATCH_DIRNAME = 'numbat_tmp'
+
+
+def path_scratch() -> Path:
+    """Return the scratch directory for generated mesh files, creating it if needed.
+
+    The directory lives in the current working directory and is shared by all
+    runs made from it. Generated files are kept for inspection.
+    """
+    path = Path.cwd() / SCRATCH_DIRNAME
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def is_macos():
     """Return True if running on macOS."""
     return _app().is_macos()
