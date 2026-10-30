@@ -31,6 +31,7 @@ explore/*
 backend/msh/*.msh
 backend/msh/*.mail
 numbat_tmp/
+numbat_tmp/*.*
 
 backend/fortran/nb_build_config.txt
 backend/fortran/build/*

@@ -653,6 +653,14 @@ class _RoundedWedgeN(UserGeometryBase):
         return "\n".join(lines) + "\n"
 
 
+class RoundedWedge2(_RoundedWedgeN):
+    """NumBAT geometry template for three identical rounded wedges, one pointing up."""
+
+    _num_wedges = 2
+    _first_wedge_angle_deg = 0.0
+    _alpha_tip_limit_deg = 90.0
+    _inc_shape = "rounded_wedge2"
+
 class RoundedWedge3(_RoundedWedgeN):
     """NumBAT geometry template for three identical rounded wedges, one pointing up."""
 
