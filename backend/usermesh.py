@@ -16,23 +16,11 @@
 
 import uuid
 import os
-import inspect
-import sys
 from importlib import import_module
 from pathlib import Path
 
 from numbat_core import reporting
 from numbat_core.utils.numeric import is_real_number
-
-
-def _rebuild_legacy_geometry(module_file, class_name, state):
-    """Recreate a geometry template loaded through deprecated ``wg_impl`` support."""
-    from meshing.legacy_template_loader import load_legacy_waveguide_module
-
-    module = load_legacy_waveguide_module(module_file)
-    geometry = getattr(module, class_name).__new__(getattr(module, class_name))
-    geometry.__dict__.update(state)
-    return geometry
 
 
 def _rebuild_imported_geometry(module_name, class_name, state):
@@ -149,35 +137,9 @@ class UserGeometryBase():
         return self._descrip
 
     def __reduce__(self):
-        module = sys.modules.get(type(self).__module__)
-        module_spec = getattr(module, "__spec__", None)
-        if (
-            module_spec is not None
-            and module_spec.name == type(self).__module__
-            and not type(self).__module__.startswith("_numbat_waveguide_")
-        ):
-            return (
-                _rebuild_imported_geometry,
-                (type(self).__module__, type(self).__name__, self.__dict__),
-            )
-
-        module_file = getattr(module, "__file__", None)
-        if module_file is None:
-            try:
-                module_file = inspect.getfile(type(self))
-            except (OSError, TypeError) as exc:
-                raise TypeError(
-                    f"Cannot pickle waveguide template class {type(self).__name__} "
-                    "because its implementation module has no file."
-                ) from exc
-        if module_file is None:
-            raise TypeError(
-                f"Cannot pickle waveguide template class {type(self).__name__} "
-                "because its implementation module has no file."
-            )
         return (
-            _rebuild_legacy_geometry,
-            (module_file, type(self).__name__, self.__dict__),
+            _rebuild_imported_geometry,
+            (type(self).__module__, type(self).__name__, self.__dict__),
         )
 
     def gmsh_template_path(self, p_dir_templates):

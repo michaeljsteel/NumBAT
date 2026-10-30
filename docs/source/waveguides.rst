@@ -489,34 +489,58 @@ Tutorial 21, ``examples/tutorials/sim-tut_21-user-waveguides.py``, demonstrates
 the complete registration, structure creation, optical-mode, and elastic-mode
 workflow.
 
-Deprecated ``wg_impl`` mechanism
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Migrating a legacy user waveguide
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. deprecated::
+NumBAT no longer loads user waveguides from ``backend/msh`` or supports
+``wg_impl`` manifest entries. Move each legacy model into a directory outside
+the NumBAT checkout and register that directory before creating
+``NumBATApp``.
 
-   Use a registered user waveguide directory and ``module`` entries instead.
-   The ``wg_impl`` mechanism requires modifying files inside the NumBAT
-   checkout and uses NumBAT's legacy file loader.
+For a legacy model consisting of ``mywaveguides.py``,
+``mywaveguide_msh_template.geo``, and an entry in
+``backend/msh/user_waveguides.json``:
 
-Existing ``wg_impl`` waveguides remain supported. Their entries are placed in
-``<NumBAT>/backend/msh/user_waveguides.json`` and use the implementation
-filename instead of a normal Python module:
+#. Create a directory such as ``my_waveguides`` outside the NumBAT checkout.
+#. Move ``mywaveguides.py`` and ``mywaveguide_msh_template.geo`` into that
+   directory.
+#. Create ``my_waveguides/numbat_waveguides.json`` with a normal Python module
+   entry:
 
-::
+   ::
 
-    {
-        "wg_impl": "mywaveguides.py",
-        "wg_class": "MyWaveguide",
-        "inc_shape": "mywaveguide",
-        "active": 1
-    }
+       {
+           "wguides": [
+               {
+                   "module": "mywaveguides",
+                   "wg_class": "MyWaveguide",
+                   "inc_shape": "mywaveguide",
+                   "active": true
+               }
+           ]
+       }
 
-The Python implementation file and the corresponding
-``mywaveguide_msh_template.geo`` file must both be placed in
-``<NumBAT>/backend/msh``. ``wg_class`` names the implementation class and
-``inc_shape`` is the name passed to ``make_structure``. ``active`` must be
-``true`` or ``1`` for NumBAT to load the entry; it can be disabled while the
-geometry is under development.
+#. Ensure the geometry class resolves its Gmsh template alongside its module:
+
+   ::
+
+       from pathlib import Path
+
+       def gmsh_template_path(self, p_dir_templates):
+           return Path(__file__).with_name("mywaveguide_msh_template.geo")
+
+#. Register the directory before constructing the application:
+
+   ::
+
+       import numbat
+
+       numbat.register_waveguide_directory("/path/to/my_waveguides")
+       nbapp = numbat.NumBATApp()
+
+Existing serialized geometries created with the former ``wg_impl`` mechanism
+cannot be loaded after this migration. Recreate them from the registered
+waveguide model.
 
 Designing and implementing a waveguide should not be daunting, but the first
 template can be confusing. Use the supplied examples as models and review the

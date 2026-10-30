@@ -26,25 +26,7 @@ _registered_waveguide_directories = []
 _waveguide_manifest_filename = "numbat_waveguides.json"
 
 
-def register_waveguide_directory(directory):
-    """Register a directory containing a NumBAT waveguide manifest.
-
-    The directory is made available as a Python import root. Its active
-    waveguides are loaded when ``NumBATApp`` initializes.
-    """
-    waveguide_directory = Path(directory).expanduser().resolve()
-    if not waveguide_directory.is_dir():
-        raise NotADirectoryError(
-            f"Waveguide directory does not exist or is not a directory: {waveguide_directory}"
-        )
-
-    manifest_path = waveguide_directory / _waveguide_manifest_filename
-    if not manifest_path.is_file():
-        raise FileNotFoundError(
-            f"Waveguide directory {waveguide_directory} does not contain "
-            f"{_waveguide_manifest_filename}"
-        )
-
+def _read_waveguide_manifest(manifest_path):
     try:
         with manifest_path.open() as manifest_file:
             manifest = json.load(manifest_file)
@@ -74,6 +56,29 @@ def register_waveguide_directory(directory):
                 f"Waveguide manifest {manifest_path} entry {index} must give non-empty "
                 "'module', 'wg_class', and 'inc_shape' strings."
             )
+    return manifest
+
+
+def register_waveguide_directory(directory):
+    """Register a directory containing a NumBAT waveguide manifest.
+
+    The directory is made available as a Python import root. Its active
+    waveguides are loaded when ``NumBATApp`` initializes.
+    """
+    waveguide_directory = Path(directory).expanduser().resolve()
+    if not waveguide_directory.is_dir():
+        raise NotADirectoryError(
+            f"Waveguide directory does not exist or is not a directory: {waveguide_directory}"
+        )
+
+    manifest_path = waveguide_directory / _waveguide_manifest_filename
+    if not manifest_path.is_file():
+        raise FileNotFoundError(
+            f"Waveguide directory {waveguide_directory} does not contain "
+            f"{_waveguide_manifest_filename}"
+        )
+
+    _read_waveguide_manifest(manifest_path)
 
     if waveguide_directory not in _registered_waveguide_directories:
         _registered_waveguide_directories.append(waveguide_directory)
@@ -86,23 +91,7 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
 
     Returns an index of waveguide inc_shape to class."""
 
-    try:
-        with open(pth_wgtemplate_index) as fin:
-            wg_index = json.load(fin)['wguides']
-    except Exception as ex:
-        raise Exception('JSON parse error in reading user mesh index file' + str(ex)) from ex
-
-    legacy_entries = [
-        waveguide
-        for waveguide in wg_index
-        if waveguide.get("active", 1) and "module" not in waveguide
-    ]
-    if legacy_entries:
-        reporting.register_warning(
-            f"Waveguide manifest {pth_wgtemplate_index} uses the deprecated 'wg_impl' "
-            "file-loader mechanism. Migrate its active templates to a registered "
-            "waveguide directory with normal 'module' entries."
-        )
+    wg_index = _read_waveguide_manifest(Path(pth_wgtemplate_index))["wguides"]
 
     for wg in wg_index: # eg rectangular, circular, Onion, etc
 
@@ -110,43 +99,18 @@ def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
             continue
 
         wgclsnm = wg['wg_class']  # Python class implementing this template
-        module_name = wg.get('module')
-        if module_name is not None:
-            try:
-                py_mod = import_module(module_name)
-            except Exception as ex:
-                reporting.report_and_exit(
-                    f"Python couldn't import waveguide template module '{module_name}'."
-                    "\n Your code likely contains a syntax error or an attempt to load another "
-                    "module that was not successful."
-                    f"\n\n The Python traceback contained the error message:\n   {str(ex)}."
-                    f"\n\n\n The full traceback was {traceback.format_exc()}"
-                )
-            template_source = f"module: {module_name}"
-        else:
-            wgpy = wg['wg_impl']  # Python file defining that class
-            pth_mod = pth_wgtemplate_dir / wgpy
-
-            if not pth_mod.exists():
-                reporting.report_and_exit(
-                    f"Missing waveguide template implementation file: {str(wgpy)} "
-                    f"named in str({pth_wgtemplate_index})."
-                    f"\nFile was expected in directory {str(pth_wgtemplate_dir)}"
-                )
-
-            try:
-                from meshing.legacy_template_loader import load_legacy_waveguide_module
-
-                py_mod = load_legacy_waveguide_module(pth_mod)
-            except Exception as ex:
-                reporting.report_and_exit(
-                    f"Python couldn't load the user module '{str(wgpy)}'."
-                    "\n Your code likely contains a syntax error or an attempt to load another "
-                    "module that was not successful."
-                    f"\n\n The Python traceback contained the error message:\n   {str(ex)}."
-                    f"\n\n\n The full traceback was {traceback.format_exc()}"
-                )
-            template_source = f"implementation file: {wgpy}"
+        module_name = wg["module"]
+        try:
+            py_mod = import_module(module_name)
+        except Exception as ex:
+            reporting.report_and_exit(
+                f"Python couldn't import waveguide template module '{module_name}'."
+                "\n Your code likely contains a syntax error or an attempt to load another "
+                "module that was not successful."
+                f"\n\n The Python traceback contained the error message:\n   {str(ex)}."
+                f"\n\n\n The full traceback was {traceback.format_exc()}"
+            )
+        template_source = f"module: {module_name}"
 
         # Now extract the class that implements this waveguide template
         if not hasattr(py_mod, wgclsnm):
@@ -182,8 +146,6 @@ def initialise_waveguide_templates(nbapp):
     pmsh_dir = nbapp.path_mesh_templates()
 
     pmsh_index_builtin = pmsh_dir / 'builtin_waveguides.json'
-    pmsh_index_user = pmsh_dir / 'user_waveguides.json'
-
     if pmsh_index_builtin.exists():
         _add_waveguide_templates(
             _load_waveguide_templates(pmsh_dir, pmsh_index_builtin), pmsh_index_builtin
@@ -191,13 +153,6 @@ def initialise_waveguide_templates(nbapp):
     else:
         reporting.register_warning(
             f"Couldn't find builtin waveguide template index file: {pmsh_index_builtin}")
-
-    if pmsh_index_user.exists():
-        user_wg_templates =  _load_waveguide_templates(pmsh_dir, pmsh_index_user)
-        _add_waveguide_templates(user_wg_templates, pmsh_index_user)
-    else:
-        reporting.register_warning(
-            f"Couldn't find user waveguide template index file: {pmsh_index_user}")
 
     for waveguide_directory in _registered_waveguide_directories:
         manifest_path = waveguide_directory / _waveguide_manifest_filename

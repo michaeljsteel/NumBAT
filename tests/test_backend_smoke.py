@@ -97,9 +97,7 @@ def test_builtin_template_is_registered(nbapp, shape):
     for entry in templates.g_waveguide_templates:
         inc_shape = entry["inc_shape"]
         registered_shapes.update([inc_shape] if isinstance(inc_shape, str) else inc_shape)
-        # Built-in entries carry a resolved class. Legacy user entries carry 'wg_impl' instead.
-        if "wg_template_cls" in entry:
-            assert issubclass(entry["wg_template_cls"], UserGeometryBase)
+        assert issubclass(entry["wg_template_cls"], UserGeometryBase)
 
     assert shape in registered_shapes
 
