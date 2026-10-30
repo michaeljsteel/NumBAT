@@ -23,8 +23,8 @@ import matplotlib.pyplot as plt
 
 
 from numbat_core import runtime
-from nbtypes import SI_GHz
-import reporting
+from numbat_core.nbtypes import SI_GHz
+from numbat_core import reporting
 
 from plotting.plottools import save_and_close_figure
 from plotmodes import Decorator

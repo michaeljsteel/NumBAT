@@ -34,7 +34,7 @@ import time
 import datetime
 from pathlib import Path
 
-import nbplatform
+from numbat_core import nbplatform
 
 try:
     from fortran import nb_fortran
@@ -46,13 +46,13 @@ except ImportError:
           """)
     sys.exit(1)
 
-import reporting
+from numbat_core import reporting
 import structure
 from modecalcs import Simulation
 import meshing.templates as mshtemplates
 from plotting.plotprefs import PlotPrefs
 from numbat_core import runtime
-import nbversion
+from numbat_core import nbversion
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'

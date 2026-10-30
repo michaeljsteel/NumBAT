@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mplcolors
 
 from numbat_core import runtime
-from nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
+from numbat_core.nbtypes import FieldTag, FieldType, SI_THz, SI_GHz, SI_um, twopi
 from plotting.plottools import save_and_close_figure
 from plotting.tidyaxes import TidyAxes
 

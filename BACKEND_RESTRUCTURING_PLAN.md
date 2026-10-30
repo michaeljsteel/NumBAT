@@ -51,7 +51,7 @@ backend/
 │   │   ├── materialprops.py
 │   │   ├── bulkprops.py
 │   │   ├── crystalsyms.py
-│   │   └── voigt.py
+│   │   └── elastic_tensors.py
 │   ├── mesh/
 │   │   ├── fem.py
 │   │   ├── gmsh_io.py
@@ -160,12 +160,19 @@ old public API.
 
 Suggested early candidates:
 
-| Current area                                | Proposed internal area             |
-| ------------------------------------------- | ---------------------------------- |
-| `reporting`, platform and version helpers   | `numbat_core.runtime`              |
-| `numbattools`, `numtools`                   | `numbat_core.utils`                |
-| `bulkprops`, `materialprops`, `crystalsyms` | `numbat_core.materials`            |
-| `voigt`                                     | `numbat_core.materials.elasticity` |
+| Current area                                | Proposed internal area                       |
+| ------------------------------------------- | -------------------------------------------- |
+| `reporting`, `nbversion`, `nbplatform`      | `numbat_core` top level (see note below)     |
+| `nbtypes`                                   | `numbat_core.nbtypes`                        |
+| `numbattools`                               | `numbat_core.utils.numeric`                  |
+| `bulkprops`, `materialprops`, `crystalsyms` | `numbat_core.materials`                      |
+| `voigt`                                     | `numbat_core.materials.elastic_tensors`      |
+
+`numtools` does not exist in this repository and was not moved. `reporting`,
+`nbversion`, and `nbplatform` sit at the top level of `numbat_core` rather than
+under `runtime/`, because `numbat_core.runtime` is a module, not a package.
+`nbtypes` was not in the original table. It moves so that `numbat_core` does
+not import flat modules. `voigt_old.py` is left untouched.
 
 For each move:
 

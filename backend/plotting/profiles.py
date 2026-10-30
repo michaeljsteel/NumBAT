@@ -5,7 +5,7 @@ import scipy
 
 
 import nbgmsh
-import reporting
+from numbat_core import reporting
 import femmesh
 import plotting.plottools as plottools
 

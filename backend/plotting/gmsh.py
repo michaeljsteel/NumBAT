@@ -7,7 +7,7 @@ from PIL import Image
 
 import plotting.plottools as plottools
 from numbat_core import runtime
-from numbattools import f2f_with_subs, run_subprocess
+from numbat_core.utils.numeric import f2f_with_subs, run_subprocess
 
 
 def plot_mail_mesh(mesh_mail_fname: Path | str, outpref: Optional[str]) -> None:

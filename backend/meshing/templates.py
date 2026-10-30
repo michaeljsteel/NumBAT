@@ -18,7 +18,7 @@ import sys
 from importlib import import_module
 from pathlib import Path
 
-import reporting
+from numbat_core import reporting
 import traceback
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class

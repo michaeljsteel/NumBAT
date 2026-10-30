@@ -27,7 +27,7 @@ import scipy.optimize as sciopt
 
 from plotting.plottools import get_rgb_for_poln
 import numtools.rootbracket as ntrb
-from nbtypes import NormalisationConstants, SI_GHz
+from numbat_core.nbtypes import NormalisationConstants, SI_GHz
 
 from nbanalytic.elasticmodeplots import ModeFunction1D
 

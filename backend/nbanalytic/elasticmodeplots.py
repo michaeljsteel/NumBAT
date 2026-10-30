@@ -39,7 +39,7 @@ from matplotlib.animation import FuncAnimation
 from matplotlib.axes import Axes as MplAxes
 from matplotlib.figure import Figure
 
-from nbtypes import SI_um, SI_GHz, SI_kmps
+from numbat_core.nbtypes import SI_um, SI_GHz, SI_kmps
 from enum import IntEnum
 
 import IPython.display as ipydisp

@@ -8,10 +8,10 @@ from enum import Enum
 
 import matplotlib.pyplot as plt
 
-import nbtypes
+from numbat_core import nbtypes
 from numtools.optimize import bracket_minima, find_bracketed_minima, BracketError
-import numbattools as nbt
-from nbtypes import SI_GHz, SI_kmps
+from numbat_core.utils import numeric as nbt
+from numbat_core.nbtypes import SI_GHz, SI_kmps
 import plotting.plottools as nbpt
 from nbanalytic.elasticfieldconversions import uvec3_to_poynting_S3, uvec3_phi_to_poynting_S3_piezo
 

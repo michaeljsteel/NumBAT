@@ -11,8 +11,8 @@ from pathlib import Path
 
 import git
 
-import nbversion
-import reporting
+from numbat_core import nbversion
+from numbat_core import reporting
 from plotting.plotprefs import PlotPrefs
 
 _application = None

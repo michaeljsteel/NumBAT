@@ -5,7 +5,7 @@ from numbat_core import runtime
 import nbgmsh
 
 import plotting.plottools as plottools
-from numbattools import f2f_with_subs, run_subprocess
+from numbat_core.utils.numeric import f2f_with_subs, run_subprocess
 
 def plot_mail_mesh(mesh_mail_fname, outpref):
     """Visualise the mesh in .mail format."""

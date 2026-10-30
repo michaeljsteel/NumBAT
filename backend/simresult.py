@@ -24,9 +24,9 @@ from modes import ModeAC, ModeEM, ModeInterpolator
 
 from plotting.plottools import progressBar
 import plotmodes
-import reporting
+from numbat_core import reporting
 
-from nbtypes import (
+from numbat_core.nbtypes import (
     FieldType,
     FieldTag,
     PointGroup,

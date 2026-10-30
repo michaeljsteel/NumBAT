@@ -6,7 +6,7 @@ import matplotlib.patches as mplpatches
 import numpy as np
 
 from usermesh import UserGeometryBase
-import reporting
+from numbat_core import reporting
 
 nmtoum = 0.001  # template radii are in nm but matplotlib plots are in microns
 

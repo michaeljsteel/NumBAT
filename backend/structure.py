@@ -22,16 +22,16 @@
 
 import copy
 
-import reporting
-from nbtypes import SI_nm
+from numbat_core import reporting
+from numbat_core.nbtypes import SI_nm
 from numbat_core import runtime
-from numbattools import run_subprocess
+from numbat_core.utils.numeric import run_subprocess
 
 import meshing.templates as mshtemplates
 
 import materials
 from modecalcs import em_mode_calculation, ac_mode_calculation
-from materialprops import OpticalProps, ElasticProps
+from numbat_core.materials.materialprops import OpticalProps, ElasticProps
 
 import plotting.gmsh as pltgmsh
 import plotting.profiles as pltprof

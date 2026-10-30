@@ -3,8 +3,8 @@ from typing import Optional
 from pathlib import Path
 import tomllib
 
-import reporting
-from nbtypes import FieldTag
+from numbat_core import reporting
+from numbat_core.nbtypes import FieldTag
 
 def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
 

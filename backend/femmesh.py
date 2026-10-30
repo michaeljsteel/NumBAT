@@ -28,10 +28,9 @@ import numpy as np
 
 import nbgmsh
 import plotting.plottools as plottools
-import reporting
-from nbtypes import SI_to_gmpercc, SI_um
-from numbat_core import runtime
-from numbattools import is_float_pair, is_real_number, np_min_max
+from numbat_core import reporting, runtime
+from numbat_core.nbtypes import SI_to_gmpercc, SI_um
+from numbat_core.utils.numeric import is_float_pair, is_real_number, np_min_max
 from plotting.plottools import save_and_close_figure
 
 

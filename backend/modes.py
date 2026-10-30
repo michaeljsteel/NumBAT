@@ -21,10 +21,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from numbat_core import runtime
-from nbtypes import FieldType, FieldCode, FieldTag, SI_um, SI_vacuum_impedance_Z0
-import reporting
+from numbat_core.nbtypes import FieldType, FieldCode, FieldTag, SI_um, SI_vacuum_impedance_Z0
+from numbat_core import reporting
 
-from numbattools import int2D_trapz
+from numbat_core.utils.numeric import int2D_trapz
 import femmesh
 import plotmodes
 import plotmoderaw

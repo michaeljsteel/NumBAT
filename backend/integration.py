@@ -32,9 +32,9 @@ import numpy as np
 from scipy import interpolate
 import matplotlib
 
-from nbtypes import SI_permittivity_eps0
-from numbattools import np_min_max, process_fortran_return
-import reporting
+from numbat_core.nbtypes import SI_permittivity_eps0
+from numbat_core.utils.numeric import np_min_max, process_fortran_return
+from numbat_core import reporting
 import plotgain
 from fortran import nb_fortran
 

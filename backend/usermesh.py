@@ -21,8 +21,8 @@ import sys
 from importlib import import_module
 from pathlib import Path
 
-import reporting
-from numbattools import is_real_number
+from numbat_core import reporting
+from numbat_core.utils.numeric import is_real_number
 
 
 def _rebuild_legacy_geometry(module_file, class_name, state):
