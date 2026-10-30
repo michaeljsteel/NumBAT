@@ -22,21 +22,16 @@
 
 import copy
 
-from numbat_core import reporting
-from numbat_core.nbtypes import SI_nm
-from numbat_core import runtime
-from numbat_core.utils.numeric import run_subprocess
-
-import meshing.templates as mshtemplates
-
 import materials
-from modecalcs import em_mode_calculation, ac_mode_calculation
-from numbat_core.materials.materialprops import OpticalProps, ElasticProps
-
 import plotting.gmsh as pltgmsh
 import plotting.profiles as pltprof
-
 from fortran import nb_fortran
+from modecalcs import ac_mode_calculation, em_mode_calculation
+from numbat_core import reporting, runtime
+from numbat_core.materials.materialprops import ElasticProps, OpticalProps
+from numbat_core.mesh import templates as mshtemplates
+from numbat_core.nbtypes import SI_nm
+from numbat_core.utils.numeric import run_subprocess
 
 
 class Structure:
@@ -376,4 +371,3 @@ class Structure:
             self.mesh_mail_fname,
             self.d_materials,
             prefix, n_points , as_epsilon)
-

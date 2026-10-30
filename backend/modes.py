@@ -1,34 +1,28 @@
 import sys
 
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
-
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-
 from math import sqrt
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-from numbat_core import runtime
-from numbat_core.nbtypes import FieldType, FieldCode, FieldTag, SI_um, SI_vacuum_impedance_Z0
-from numbat_core import reporting
-
-from numbat_core.utils.numeric import int2D_trapz
-import femmesh
-import plotmodes
 import plotmoderaw
+import plotmodes
 import plotting.plottools as plottools
+from numbat_core import reporting, runtime
+from numbat_core.mesh import fem as femmesh
+from numbat_core.nbtypes import FieldCode, FieldTag, FieldType, SI_um, SI_vacuum_impedance_Z0
+from numbat_core.utils.numeric import int2D_trapz
 
 
 def check_allowed_plot_components(comps):

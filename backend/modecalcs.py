@@ -17,22 +17,19 @@
 
 import numpy as np
 
-#import yep
-from numbat_core.utils.numeric import process_fortran_return
-
-
+from fortran import nb_fortran
+from numbat_core import reporting
+from numbat_core.mesh.fem import FemMesh
 from numbat_core.nbtypes import (
     QAcMethod,
     SI_nm,
     twopi,
 )
 
-from femmesh import FemMesh
+#import yep
+from numbat_core.utils.numeric import process_fortran_return
+from simresult import ACSimResult, EMSimResult
 
-from fortran import nb_fortran
-
-from simresult import EMSimResult, ACSimResult
-from numbat_core import reporting
 
 class Simulation:
     """Class for calculating the electromagnetic and/or acoustic modes of a ``Struct`` object."""

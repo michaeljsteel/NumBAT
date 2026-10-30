@@ -26,9 +26,9 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 
-import nbgmsh
 import plotting.plottools as plottools
 from numbat_core import reporting, runtime
+from numbat_core.mesh import mail
 from numbat_core.nbtypes import SI_to_gmpercc, SI_um
 from numbat_core.utils.numeric import is_float_pair, is_real_number, np_min_max
 from plotting.plottools import save_and_close_figure
@@ -273,7 +273,7 @@ class FemMesh:
         # (MJS: Not sure about the counting from 1, possibly needed for fortran?)
 
         self.mesh_mail_fname = wguide.mesh_mail_fname
-        mesh = nbgmsh.MailData(wguide.mesh_mail_fname)
+        mesh = mail.MailData(wguide.mesh_mail_fname)
 
         # mesh = wguide.get_mail_mesh_data()
 

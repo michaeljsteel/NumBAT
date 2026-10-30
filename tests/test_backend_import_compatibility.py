@@ -40,7 +40,20 @@ IMPORTABLE_AFTER_NUMBAT = [
     "plotting.profiles",
     "nbgmsh",
     "integration",
+    "numbat_core.mesh",
+    "numbat_core.mesh.fem",
+    "numbat_core.mesh.geometry",
+    "numbat_core.mesh.mail",
+    "numbat_core.mesh.templates",
+    "numbat_core.mesh.builtin",
     "msh.builtin_meshes",
+    "msh.builtin_meshes._common",
+    "msh.builtin_meshes.basic",
+    "msh.builtin_meshes.onion",
+    "msh.builtin_meshes.rib",
+    "msh.builtin_meshes.rounded",
+    "msh.builtin_meshes.slot",
+    "msh.builtin_meshes.two_incl",
     "usermesh",
 ]
 
@@ -58,6 +71,12 @@ IMPORTABLE_STANDALONE = [
     "simresult",
     "nbgmsh",
     "plotting.profiles",
+    "numbat_core.mesh",
+    "numbat_core.mesh.fem",
+    "numbat_core.mesh.geometry",
+    "numbat_core.mesh.mail",
+    "numbat_core.mesh.templates",
+    "numbat_core.mesh.builtin",
 ]
 
 # Entry points that may import the application root directly.

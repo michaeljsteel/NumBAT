@@ -15,9 +15,9 @@ from meshing import templates
 from meshing.templates import _load_waveguide_templates
 from msh.builtin_meshes import RoundedBowtie, RoundedWedge
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BUILTIN_TEMPLATE_DIRECTORY = PROJECT_ROOT / "backend" / "msh"
+BUILTIN_WAVEGUIDE_DIRECTORY = PROJECT_ROOT / "backend" / "numbat_core" / "mesh" / "builtin"
+BUILTIN_TEMPLATE_DIRECTORY = BUILTIN_WAVEGUIDE_DIRECTORY / "geo"
 EXTERNAL_TEMPLATE_DIRECTORY = PROJECT_ROOT / "examples" / "user_waveguides"
 ROUNDED_BOWTIE_PARAMETERS = {
     "domain_x": 3000,
@@ -35,14 +35,32 @@ ROUNDED_BOWTIE_PARAMETERS = {
 
 def test_builtin_waveguide_index_uses_normal_import_path():
     waveguides = _load_waveguide_templates(
-        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+        BUILTIN_WAVEGUIDE_DIRECTORY / "builtin_waveguides.json"
     )
 
     assert waveguides
     assert all(waveguide["module"] == "msh.builtin_meshes" for waveguide in waveguides)
     assert all("wg_impl" not in waveguide for waveguide in waveguides)
     assert all(
-        waveguide["wg_template_cls"].__module__.startswith("msh.builtin_meshes")
+        waveguide["wg_template_cls"].__module__.startswith("numbat_core.mesh.builtin")
+        for waveguide in waveguides
+    )
+
+
+def test_internal_builtin_waveguide_module_path_is_supported(tmp_path):
+    manifest_path = tmp_path / "numbat_waveguides.json"
+    builtin_manifest = json.loads(
+        (BUILTIN_WAVEGUIDE_DIRECTORY / "builtin_waveguides.json").read_text()
+    )
+    for waveguide in builtin_manifest["wguides"]:
+        waveguide["module"] = "numbat_core.mesh.builtin"
+    manifest_path.write_text(json.dumps(builtin_manifest))
+
+    waveguides = _load_waveguide_templates(manifest_path)
+
+    assert waveguides
+    assert all(
+        waveguide["wg_template_cls"].__module__.startswith("numbat_core.mesh.builtin")
         for waveguide in waveguides
     )
 
@@ -67,7 +85,7 @@ def test_module_based_user_waveguide_uses_neighbouring_geo_template_and_normal_i
     monkeypatch.syspath_prepend(str(EXTERNAL_TEMPLATE_DIRECTORY))
     sys.modules.pop("elliptical_rod", None)
 
-    waveguides = _load_waveguide_templates(tmp_path, index_path)
+    waveguides = _load_waveguide_templates(index_path)
     geometry = waveguides[0]["wg_template_cls"](
         {
             "domain_x": 3000,
@@ -158,12 +176,12 @@ def test_waveguide_manifest_rejects_removed_wg_impl_entries(tmp_path):
     )
 
     with pytest.raises(ValueError, match="missing: module"):
-        _load_waveguide_templates(tmp_path, index_path)
+        _load_waveguide_templates(index_path)
 
 
 def test_rounded_bowtie_is_registered_and_substitutes_its_half_angle():
     waveguides = _load_waveguide_templates(
-        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+        BUILTIN_WAVEGUIDE_DIRECTORY / "builtin_waveguides.json"
     )
     rounded_bowtie = next(
         waveguide for waveguide in waveguides if waveguide["inc_shape"] == "rounded_bowtie"
@@ -249,7 +267,7 @@ ROUNDED_WEDGE_PARAMETERS = {
 
 def test_rounded_wedge_is_registered_and_substitutes_its_parameters():
     waveguides = _load_waveguide_templates(
-        BUILTIN_TEMPLATE_DIRECTORY, BUILTIN_TEMPLATE_DIRECTORY / "builtin_waveguides.json"
+        BUILTIN_WAVEGUIDE_DIRECTORY / "builtin_waveguides.json"
     )
     rounded_wedge = next(
         waveguide for waveguide in waveguides if waveguide["inc_shape"] == "rounded_wedge"

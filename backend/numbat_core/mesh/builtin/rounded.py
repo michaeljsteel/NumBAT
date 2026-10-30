@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from usermesh import UserGeometryBase
+from numbat_core.mesh.geometry import UserGeometryBase
+
 from ._common import nmtoum
 
 
@@ -686,4 +687,3 @@ class RoundedWedge6(_RoundedWedgeN):
     _first_wedge_angle_deg = 0.0
     _alpha_tip_limit_deg = 30.0
     _inc_shape = "rounded_wedge6"
-

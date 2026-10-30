@@ -14,8 +14,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-import uuid
 import os
+import uuid
 from importlib import import_module
 from pathlib import Path
 

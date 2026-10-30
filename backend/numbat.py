@@ -26,12 +26,12 @@ Key classes and functions:
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import platform
-import os
-import sys
-import shutil
-import time
 import datetime
+import os
+import platform
+import shutil
+import sys
+import time
 from pathlib import Path
 
 from numbat_core import nbplatform
@@ -46,13 +46,11 @@ except ImportError:
           """)
     sys.exit(1)
 
-from numbat_core import reporting
 import structure
 from modecalcs import Simulation
-import meshing.templates as mshtemplates
+from numbat_core import nbversion, reporting, runtime
+from numbat_core.mesh import templates as mshtemplates
 from plotting.plotprefs import PlotPrefs
-from numbat_core import runtime
-from numbat_core import nbversion
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
@@ -255,7 +253,7 @@ class NumBATApp(metaclass=_SingletonMeta):
         """
         Return the path to the mesh templates directory.
         """
-        return Path(self._codedir, 'msh')
+        return mshtemplates.builtin_geo_directory()
 
     def final_report(self, outprefix=''):
         """

@@ -1,8 +1,8 @@
 # This is the single point of definition of NumBAT version numbers
 
 NUMBAT_VERSION_MAJ=2
-NUMBAT_VERSION_MIN=1
-NUMBAT_VERSION_MIC=8
+NUMBAT_VERSION_MIN=2
+NUMBAT_VERSION_MIC=0
 
 ######################################
 # No changes below here

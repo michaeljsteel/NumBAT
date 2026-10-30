@@ -15,15 +15,25 @@
 
 import json
 import sys
+import traceback
 from importlib import import_module
 from pathlib import Path
 
 from numbat_core import reporting
-import traceback
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
 _registered_waveguide_directories = []
 _waveguide_manifest_filename = "numbat_waveguides.json"
+
+
+def builtin_waveguide_directory():
+    """Return the directory containing built-in waveguide classes and manifest."""
+    return Path(__file__).with_name("builtin")
+
+
+def builtin_geo_directory():
+    """Return the directory containing built-in Gmsh templates."""
+    return builtin_waveguide_directory() / "geo"
 
 
 def _read_waveguide_manifest(manifest_path):
@@ -86,7 +96,7 @@ def register_waveguide_directory(directory):
         sys.path.insert(0, str(waveguide_directory))
 
 
-def _load_waveguide_templates(pth_wgtemplate_dir, pth_wgtemplate_index):
+def _load_waveguide_templates(pth_wgtemplate_index):
     """Loads and instantiates waveguide templates specified in .json file {pth_wgtemplate_index} in directory {pth_wgtemplate_dir}.
 
     Returns an index of waveguide inc_shape to class."""
@@ -143,12 +153,12 @@ def _add_waveguide_templates(waveguides, source):
 def initialise_waveguide_templates(nbapp):
     global g_waveguide_templates
     g_waveguide_templates = []
-    pmsh_dir = nbapp.path_mesh_templates()
+    builtin_directory = builtin_waveguide_directory()
+    pmsh_index_builtin = builtin_directory / "builtin_waveguides.json"
 
-    pmsh_index_builtin = pmsh_dir / 'builtin_waveguides.json'
     if pmsh_index_builtin.exists():
         _add_waveguide_templates(
-            _load_waveguide_templates(pmsh_dir, pmsh_index_builtin), pmsh_index_builtin
+            _load_waveguide_templates(pmsh_index_builtin), pmsh_index_builtin
         )
     else:
         reporting.register_warning(
@@ -157,7 +167,7 @@ def initialise_waveguide_templates(nbapp):
     for waveguide_directory in _registered_waveguide_directories:
         manifest_path = waveguide_directory / _waveguide_manifest_filename
         _add_waveguide_templates(
-            _load_waveguide_templates(waveguide_directory, manifest_path), manifest_path
+            _load_waveguide_templates(manifest_path), manifest_path
         )
 
 

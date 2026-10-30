@@ -205,7 +205,6 @@ numbat_core/mesh/
 ├── mail.py
 ├── geometry.py
 ├── templates.py
-├── loader.py
 ├── gmsh_io.py
 └── builtin/
     ├── __init__.py                 # re-exports the builtin mesh classes
@@ -216,7 +215,7 @@ numbat_core/mesh/
     ├── rib.py
     ├── slot.py
     ├── rounded.py
-    ├── waveguides.json
+    ├── builtin_waveguides.json
     └── geo/
 ```
 
@@ -226,17 +225,39 @@ waveguide family, with `__init__.py` re-exporting all 23 classes. Classes now
 report their submodule as `__module__` (for example `msh.builtin_meshes.rib`).
 The target layout above keeps the same family split.
 
-Do not change built-in mesh metadata such as:
+The legacy file-based `wg_impl` mechanism, its dynamic loader, and
+`backend/msh/user_waveguides.json` have been removed. User waveguides are
+normal Python modules in registered out-of-tree directories. Consequently,
+this phase does not need a file loader, file-based pickle reconstruction, or
+compatibility resources for user models.
+
+Migrate this phase in the following order:
+
+1. Move the implementations of `usermesh.py`, `nbgmsh.py`, `femmesh.py`, and
+   `meshing/templates.py` to `numbat_core.mesh`, then replace their top-level
+   modules and the `meshing` package with re-exporting facades.
+2. Move the built-in family modules to `numbat_core.mesh.builtin`, retaining
+   `msh.builtin_meshes` as a facade that re-exports every built-in class.
+3. Package the built-in manifest and `.geo` files with the internal mesh
+   package. Provide a resource-path helper so built-in template discovery does
+   not rely on `backend/msh` being the implementation location.
+4. Update internal consumers to import `numbat_core.mesh.*`; preserve the
+   existing flat imports and `msh.builtin_meshes.*` imports for tutorials,
+   existing scripts, and serialized built-in geometries.
+5. Test the built-in manifest, a registered external user-waveguide directory,
+   Gmsh template resolution, mesh generation, and geometry pickle round trips.
+
+Do not change the built-in manifest's initial module path:
 
 ```json
 "module": "msh.builtin_meshes"
 ```
 
-in the first mesh migration. The `msh.builtin_meshes` package keeps this path
-importable, so the JSON metadata stays valid. First make the loader accept both the current and
-new module paths. This preserves template registration, user geometry pickle
-identity, and compatibility with existing user code. Change the registry's
-default module path only after the dual-path loader has shipped and is tested.
+The facade keeps this metadata valid while implementations move internally.
+The template loader now uses ordinary `import_module()` calls, so it already
+accepts either the legacy facade path or `numbat_core.mesh.builtin`; test both
+paths with equivalent manifests. Change the shipped manifest to the internal
+path only in a later, explicit compatibility release.
 
 ### Phase 4: Consolidate plotting
 

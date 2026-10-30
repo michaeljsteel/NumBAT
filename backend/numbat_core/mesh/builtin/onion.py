@@ -1,6 +1,6 @@
 import matplotlib.patches as mplpatches
 
-from usermesh import UserGeometryBase
+from numbat_core.mesh.geometry import UserGeometryBase
 
 from ._common import nmtoum
 

@@ -2,7 +2,7 @@ import matplotlib.patches as mplpatches
 import numpy as np
 
 from numbat_core import reporting
-from usermesh import UserGeometryBase
+from numbat_core.mesh.geometry import UserGeometryBase
 
 from ._common import nmtoum
 

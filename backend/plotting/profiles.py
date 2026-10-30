@@ -1,13 +1,12 @@
-import numpy as np
-
 import matplotlib as plt
+import numpy as np
 import scipy
 
-
-import nbgmsh
-from numbat_core import reporting
-import femmesh
 import plotting.plottools as plottools
+from numbat_core import reporting
+from numbat_core.mesh import fem as femmesh
+from numbat_core.mesh import mail as nbgmsh
+
 
 def _make_dielectric_plotter(wguide, optical_props, as_epsilon, n_points):
 
@@ -142,7 +141,6 @@ def plot_refractive_index_profile_rough(mesh_mail_fname, d_materials,
 
 
         plottools.save_and_close_figure(fig, prefix+'refn.png')
-
 
 
 
