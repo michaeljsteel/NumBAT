@@ -208,10 +208,23 @@ numbat_core/mesh/
 ├── loader.py
 ├── gmsh_io.py
 └── builtin/
-    ├── meshes.py
+    ├── __init__.py                 # re-exports the builtin mesh classes
+    ├── _common.py
+    ├── basic.py
+    ├── two_incl.py
+    ├── onion.py
+    ├── rib.py
+    ├── slot.py
+    ├── rounded.py
     ├── waveguides.json
     └── geo/
 ```
+
+The built-in mesh classes have already been split from a single
+`msh/builtin_meshes.py` into the `msh/builtin_meshes/` package, grouped by
+waveguide family, with `__init__.py` re-exporting all 23 classes. Classes now
+report their submodule as `__module__` (for example `msh.builtin_meshes.rib`).
+The target layout above keeps the same family split.
 
 Do not change built-in mesh metadata such as:
 
@@ -219,7 +232,8 @@ Do not change built-in mesh metadata such as:
 "module": "msh.builtin_meshes"
 ```
 
-in the first mesh migration. First make the loader accept both the current and
+in the first mesh migration. The `msh.builtin_meshes` package keeps this path
+importable, so the JSON metadata stays valid. First make the loader accept both the current and
 new module paths. This preserves template registration, user geometry pickle
 identity, and compatibility with existing user code. Change the registry's
 default module path only after the dual-path loader has shipped and is tested.
