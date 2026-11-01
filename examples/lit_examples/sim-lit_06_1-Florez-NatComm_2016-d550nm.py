@@ -15,11 +15,11 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-from plotgain import Decorator
-import integration
-import modecalcs
-import materials
-from nbtypes import SI_GHz
+from numbat.plotting import Decorator
+from numbat.solvers import integration
+from numbat.solvers import modecalcs
+from numbat import materials
+from numbat.types import SI_GHz
 
 
 import starter

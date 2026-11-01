@@ -14,10 +14,10 @@ import numpy as np
 from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
-from plotgain import Decorator
-import integration
-import modecalcs
-import materials
+from numbat.plotting import Decorator
+from numbat.solvers import integration
+from numbat.solvers import modecalcs
+from numbat import materials
 import numbat
 
 import starter

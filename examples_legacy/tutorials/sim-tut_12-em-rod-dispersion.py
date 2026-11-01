@@ -1,0 +1,328 @@
+""" Example showing how the 'onion' geometry template can be used
+    to calculate the electromagnetic dispersion curves of a cylindrical rod.
+"""
+
+import os
+import time
+import sys
+import copy
+import functools
+import multiprocessing
+import math
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+from pathlib import Path
+sys.path.append(str(Path('../../backend')))
+
+
+import numbat
+import materials
+from nbthread import launch_worker_processes_and_wait
+from nbanalytic.emtwolayerfiber import TwoLayerFiberEM, EMPoln
+
+import starter
+
+twopi = math.pi*2.0
+
+# a helper function to make consistent pretty plots
+def decorate_and_save_plot (fig, ax, fname, title, xlab, ylab, xlims, ylims,
+                            legloc=None):
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+    ax.set_xlim(xlims[0], xlims[1])
+    ax.set_ylim(ylims[0], ylims[1])
+    ax.set_title(title)
+    if legloc is not None:
+        ax.legend(loc=legloc, fontsize='x-small')
+    else:
+        ax.legend(fontsize='x-small')
+    fig.savefig(fname)
+
+def plot_and_label (ax, vx, mat, sty, lab, col=None):
+    if col is None:
+        ax.plot(vx, mat, sty, ms=5)
+        ax.plot(vx, mat[:,0], sty, label=lab, ms=5)
+    else:
+        ax.plot(vx, mat, sty, color=col, ms=5)
+        ax.plot(vx, mat[:,0], sty, label=lab, color=col, ms=5)
+
+#
+#
+#EM analytic calculations
+#
+#
+
+
+# The worker function that does one analytic task.
+# It is defined at module level (not nested) so that it can be pickled and sent
+# to worker processes under any multiprocessing start method (the default on
+# Linux is 'forkserver' from Python 3.14, and macOS/Windows use 'spawn').
+# Shared data (em_rod, nmodes) is bound with functools.partial.
+def callee_em_rod_disp_analytic(args, em_rod, nmodes):
+    (ik, k) = args # Matches queues passed to launch_worker_processes_and_wait
+
+    mhy_lo = 1
+    mhy_hi = 5
+    v_neff_TE = em_rod.find_neffs_for_k(k, EMPoln.TE, 0, 0, nmodes)[1]
+    v_neff_TM = em_rod.find_neffs_for_k(k, EMPoln.TM, 0, 0, nmodes)[1]
+    v_neff_hy = em_rod.find_neffs_for_k(k, EMPoln.HY, mhy_lo, mhy_hi, nmodes)[1]
+
+    return (ik, v_neff_TE, v_neff_TM, v_neff_hy)
+
+
+# Solve the analytic dispersion relation using worker processes
+def solve_em_two_layer_fiber_analytic(nbapp, kvec, nmodes, rco, ncore, nclad):
+
+    em_rod = TwoLayerFiberEM(ncore, nclad, rco)
+
+
+    # Multiprocessing here is for the demonstration of how to do it
+    # It's probably not actually improving performance
+
+    # Choose a reasonable number of processes to test the system
+    # without grinding the computer to a halt
+    num_workers = max(4,int(os.cpu_count()/4))
+    #num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+    if not nbapp.is_linux(): num_workers = 0
+
+    manager = multiprocessing.Manager()
+    #q_work = multiprocessing.JoinableQueue()        # for assigning the work
+    q_work = manager.Queue()
+    q_result = manager.Queue()      # for returning the answers
+
+    # build all the tasks
+    for ik,k in enumerate(kvec): q_work.put((ik, k))
+
+    task_func = functools.partial(callee_em_rod_disp_analytic, em_rod=em_rod, nmodes=nmodes)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
+
+    #Collect all the data back into one matrix per polarisation
+    neff_TE_an=np.zeros([len(kvec), nmodes], dtype=float)
+    neff_TM_an=np.zeros([len(kvec), nmodes], dtype=float)
+    an_neff_hy=np.zeros([len(kvec), nmodes], dtype=float)
+    while not q_result.empty():  #only one process now, so no blocking to worry about
+        (ik, v_neff_TE, v_neff_TM, v_neff_hy) = q_result.get()
+        neff_TE_an[ik,:] = np.sort(v_neff_TE)[-nmodes:]
+        neff_TM_an[ik,:] = np.sort(v_neff_TM)[-nmodes:]
+        an_neff_hy[ik,:] = np.sort(v_neff_hy)[-nmodes:]
+
+    return neff_TE_an, neff_TM_an, an_neff_hy
+
+# Module-level (picklable) worker function to perform one FEM task.
+# Each task carries its own private copy of the waveguide, wg.
+def callee_em_rod_disp_numerical(args, nbasis, n_eff, nmodes, nk, prefix):
+    (ik, tk, doplot, wg) = args # Matches queues passed to launch_worker...
+
+    t_lambda_nm = twopi/tk
+    simres_EM= wg.calc_EM_modes(nbasis, t_lambda_nm, n_eff)   # main work happens here!
+    neff_k= np.sort(np.real(simres_EM.neff_all()))[-nmodes:]
+
+    if doplot: # Only worker 1 will ever do this
+        print('{0} is plotting elastic modes at iq = {1:d} of [0..{2:d}].'.format(
+            multiprocessing.current_process().name, ik, nk-1))
+        simres_EM.plot_modes(mode_indices=range(nmodes),
+                                  prefix=prefix+'_%d'%ik, ticks=True)
+
+    return (ik, tk, neff_k)
+
+def solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec, nmodes, nbasis, rco, ncore, nclad):
+    neff_num = np.zeros([len(kvec), nmodes], dtype=float)
+
+    # Expected effective index of fundamental guided mode.
+    n_eff = (ncore+nclad)/2.0
+    n_field_outs = 5  # how many ksteps to write full set of fields
+    field_out_skip = max(int(len(kvec)/n_field_outs),1)
+
+    # Multiprocess-safe queues for communicating with workers
+    # Possibly these should swith to Manager.Queue() for better cross-platform support, but JoinableQueue is simpler for now and less expensive in passing around large data structures like the waveguide.
+    q_work = multiprocessing.JoinableQueue()        # everything else
+    q_result = multiprocessing.JoinableQueue()      # for returning the answers
+
+    #num_workers = max(4,int(os.cpu_count()/4))
+    num_workers = 0  # causes all execution in this main thread, no multiprocessing at all
+
+    # Create work queues
+    for ik, tk in enumerate(kvec):
+        doplot =  num_workers < 2 and (ik % field_out_skip == 0) # Time for some field plots!
+        wg = copy.deepcopy(wguide)  # wguide and sim are not thread-safe when we plot mode profiles
+        q_work.put((ik, tk, doplot, wg))
+
+    if not nbapp.is_linux(): num_workers = 0
+
+
+    task_func = functools.partial(callee_em_rod_disp_numerical, nbasis=nbasis, n_eff=n_eff,
+                                  nmodes=nmodes, nk=len(kvec), prefix=prefix)
+    launch_worker_processes_and_wait(num_workers, task_func, q_result, q_work)
+
+
+    #Collect all the data back into one matrix
+    while not q_result.empty():  #only one process now, so no blocking to worry about
+        (ik, tk, neff_k) = q_result.get()
+        neff_num[ik,:] = neff_k
+
+    return neff_num
+
+
+def make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
+                  Vvec_num, neff_num, ncore, nclad):
+
+    Vlo, Vhi =Vvec_an[0], Vvec_an[-1]
+
+
+    # General plot for neff
+    fig, ax = plt.subplots()
+    plot_and_label(ax, Vvec_an, neff_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an, neff_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an, neff_Hy_an, ':r', 'Hy')
+    ax.plot(Vvec_num, neff_num, 'xk')
+    decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vneff.png',
+            'Dispersion of '+ssys,
+            r'$V$ number ', r'$\bar{n}$', (Vlo, Vhi), (nclad, ncore))
+
+    # Plots of normalised waveguide parameter b
+    b_TE_an = (neff_TE_an**2-nclad**2)/(ncore**2-nclad**2)
+    b_TM_an = (neff_TM_an**2-nclad**2)/(ncore**2-nclad**2)
+    b_Hy_an = (neff_Hy_an**2-nclad**2)/(ncore**2-nclad**2)
+    b_num =  (neff_num**2-nclad**2)/(ncore**2-nclad**2)
+
+    fig, ax = plt.subplots()
+    plot_and_label(ax, Vvec_an, b_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an, b_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an, b_Hy_an, ':r', 'Hy')
+    ax.plot(Vvec_num, b_num, 'xk')
+    decorate_and_save_plot(fig, ax, prefix + '-emdisp_Vb.png',
+            'Dispersion of '+ssys, r'$V$ number ', r'$b$', (Vlo, Vhi), (0, 1))
+
+    # Find group index by numerical differentiation
+    dV=Vvec_an[1]-Vvec_an[0]
+    dndV_TE_an = (neff_TE_an[2:,:]-neff_TE_an[:-2,:])/(2*dV)
+    dndV_TM_an = (neff_TM_an[2:,:]-neff_TM_an[:-2,:])/(2*dV)
+    dndV_Hy_an = (neff_Hy_an[2:,:]-neff_Hy_an[:-2,:])/(2*dV)
+
+    dV=Vvec_num[1]-Vvec_num[0]
+    dndV_num = (neff_num[2:,:]-neff_num[:-2,:])/(2*dV)
+
+    ng_TE_an = dndV_TE_an + neff_TE_an[1:-1,:]
+    ng_TM_an = dndV_TM_an + neff_TM_an[1:-1,:]
+    ng_Hy_an = dndV_Hy_an + neff_Hy_an[1:-1,:]
+    ng_num = dndV_num + neff_num[1:-1,:]
+
+    ng_num *= neff_num[1:-1,:]>nclad   # only plot for V>V_cutoff
+
+    fig, ax = plt.subplots()
+    plot_and_label(ax, Vvec_an[1:-1], ng_TE_an, ':b', 'TE')
+    plot_and_label(ax, Vvec_an[1:-1], ng_TM_an, ':g', 'TM')
+    plot_and_label(ax, Vvec_an[1:-1], ng_Hy_an, ':r', 'Hy')
+    ax.plot(Vvec_num[1:-1], ng_num, 'xk')
+
+    decorate_and_save_plot(fig, ax, prefix + '-emdisp_ng.png',
+            'Dispersion of '+ssys,
+            r'$V$ number ', r'Group index $n_g$', (Vlo, Vhi), (nclad, ncore))
+
+
+
+def solve_em_dispersion(nbapp, prefix, ssys, wguide, rcore, ncore, nclad):
+    print('\n\nElectromagnetic dispersion problem')
+    print(    '----------------------------------')
+    nmodes = 20
+    nbasis = 40
+
+    ksteps_num=10
+    ksteps_analytic=200
+
+    lam_hi=3000    # wavelength range in nm
+    lam_lo=500    # wavelength range in nm
+    klo=twopi/lam_hi  # this is free space wavenumber in inverse nm
+    khi=twopi/lam_lo
+    kvec_an=np.linspace(klo, khi, ksteps_analytic)
+    kvec_num=np.linspace(klo, khi, ksteps_num)
+
+    Vvec_an = kvec_an*rcore*np.sqrt(ncore**2-nclad**2)
+    Vvec_num = kvec_num*rcore*np.sqrt(ncore**2-nclad**2)
+
+
+    print('Doing analytic problem')
+
+    #plot_em_chareq_at_k(kvec[-1], rcore, ncore, nclad) # for checking zero finding behaviour
+
+    neff_TE_an, neff_TM_an, neff_Hy_an = solve_em_two_layer_fiber_analytic(nbapp, kvec_an, nmodes, rcore, ncore, nclad)
+
+    print('Doing numerical problem')
+    neff_num = solve_em_two_layer_fiber_numerical(nbapp, prefix, wguide, kvec_num, nmodes, nbasis, rcore, ncore, nclad)
+
+    make_em_plots(prefix, ssys, Vvec_an, neff_TE_an, neff_TM_an, neff_Hy_an,
+                  Vvec_num, neff_num, ncore, nclad)
+
+def do_main():
+
+    pref0, refine_fac = starter.read_args(12, sys.argv, refine=3)
+
+    # Geometric Parameters - all in nm.
+
+    smf28 = 'smf28' in sys.argv  # which system to study: SMF-28 or chalc rod in silica
+
+    mat_SiO2_GeO2= materials.make_material("SiO2GeO2_smf28")
+    mat_SiO2= materials.make_material("SiO2_smf28")
+    mat_vac= materials.make_material("Vacuum")
+    mat_As2S3= materials.make_material("As2S3_2023_Steel")
+    #mat_Si= materials.make_material("Si_2021_Poulton")
+
+    if smf28:
+        ssys = 'SMF-28 optical fibre'
+        dcore = 8200    # 8 micron core diameter
+        dclad = 125000  # 125 micron cladding diameter
+        mat_core = mat_SiO2_GeO2
+        mat_clad = mat_SiO2
+        mat_bkg  = mat_vac
+        prefix =pref0+'-smf28'
+    else:
+        ssys = 'chalc rod in silica'
+        dcore = 300      # 150 nm core diameter
+        dclad = 800      # 500 nm cladding diameter
+        mat_core = mat_As2S3
+        mat_clad = mat_SiO2
+        mat_bkg  = mat_vac
+        prefix =pref0+'-chalcsil'
+
+    nbapp=numbat.NumBATApp(prefix)
+
+    rcore = dcore/2.0
+    rclad = dclad/2.0
+    ncore = np.real(mat_core.refindex_n)
+    nclad = np.real(mat_clad.refindex_n)
+    acore = rcore*2           #diameter of the core (first is diam)
+    #aclad = rclad - rcore     #annular thickness of each layer
+
+    # Solving with either a 1-layer or 2-layer approach
+    onion=1
+    if onion == 1:
+        inc_shape = 'circ_onion1'
+        mat_bkg = mat_clad  # because the background is now the second layer, ie the cladding
+    elif onion == 2:
+        inc_shape = 'circ_onion2'
+
+    domain_x = rcore*10  # system size in nm
+    domain_y = domain_x
+
+    wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, acore,   # remove these factors of 2
+    #                           inc_b_x=aclad,
+                            material_bkg=mat_bkg,
+                            material_a=mat_core,
+                            material_b=mat_clad,
+                            lc_bkg=.1,
+                                 # lc_refine_1=3.0*refine_fac,
+                                  lc_refine_2=3*refine_fac)
+
+    #wguide.plot_mesh(prefix)
+
+    solve_em_dispersion(nbapp, prefix, ssys, wguide, rcore, ncore, nclad)
+
+    print(nbapp.final_report())
+
+
+if __name__ == '__main__':
+    do_main()

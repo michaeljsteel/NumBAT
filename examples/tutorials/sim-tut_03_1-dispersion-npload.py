@@ -11,10 +11,10 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-import integration
+from numbat.solvers import integration
 
-import materials
-from nbtypes import SI_GHz
+from numbat import materials
+from numbat.types import SI_GHz
 
 import starter
 

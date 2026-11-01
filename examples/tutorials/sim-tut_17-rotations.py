@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 
-import materials
+from numbat import materials
 
 np.set_printoptions( precision=4)
 # Geometric Parameters - all in nm.

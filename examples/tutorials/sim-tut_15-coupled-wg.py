@@ -10,7 +10,7 @@ sys.path.append(str(Path('../../backend')))
 
 
 import numbat
-import materials
+from numbat import materials
 
 
 

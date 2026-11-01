@@ -43,6 +43,8 @@ Release date: |today|
 
    pythonapi
 
+   appendix_migration
+
    refs
 
    indices

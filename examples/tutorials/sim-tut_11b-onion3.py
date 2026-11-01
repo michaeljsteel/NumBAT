@@ -10,9 +10,9 @@ sys.path.append(str(Path('../../backend')))
 
 
 import numbat
-import materials
+from numbat import materials
 
-import integration
+from numbat.solvers import integration
 
 
 import starter
