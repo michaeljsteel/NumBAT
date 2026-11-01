@@ -6,9 +6,12 @@
 
 import os
 import sys
-from multiprocessing import Pool
+import multiprocessing
 import numpy as np
 
+import matplotlib
+# Forked workers must not inherit a Tk (interactive) backend
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 #from matplotlib.collections import PolyCollection
 
@@ -99,7 +102,7 @@ for width in waveguide_widths:
 
 # Run widths in parallel across num_cores CPUs using multiprocessing package.
 if use_multiproc:
-    with Pool(num_cores) as pool:
+    with multiprocessing.get_context("fork").Pool(num_cores) as pool:
         l_width_data = pool.map(modes_n_gain, l_wguides)
 else:
     l_width_data = list(map(modes_n_gain, l_wguides))

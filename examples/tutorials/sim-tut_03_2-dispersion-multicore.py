@@ -5,8 +5,11 @@
 
 import sys
 import os
-from multiprocessing import Pool
+import multiprocessing
 
+import matplotlib
+# Forked workers must not inherit a Tk (interactive) backend
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import copy
@@ -111,7 +114,7 @@ qsets = zip(np.arange(n_qs), np.arange(n_qs)*0+n_qs,
 if multiproc:
     num_cores = os.cpu_count()  # Let OS decide how many processes to run
     num_cores = 4
-    with  Pool(num_cores) as pool:
+    with  multiprocessing.get_context("fork").Pool(num_cores) as pool:
         pooled_mode_freqs = pool.map(solve_ac_mode_freqs, qsets)
 else:
     pooled_mode_freqs = []

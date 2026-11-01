@@ -9,9 +9,12 @@
 import time
 
 import sys
-from multiprocessing import Pool
+import multiprocessing
 
 import numpy as np
+import matplotlib
+# Forked workers must not inherit a Tk (interactive) backend
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from pathlib import Path
@@ -176,7 +179,7 @@ def modes_n_gain(diam):
 
 # Run diams in parallel across num_cores CPUs using multiprocessing package.
 if num_cores>1:
-    with Pool(num_cores) as pool:
+    with multiprocessing.get_context("fork").Pool(num_cores) as pool:
         gain_specs = pool.map(modes_n_gain, v_diams)
 else:
     gain_specs = map(modes_n_gain, v_diams)

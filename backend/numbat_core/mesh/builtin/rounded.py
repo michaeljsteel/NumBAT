@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from numbat_core.mesh.geometry import UserGeometryBase
+from numbat_core.geometry.usermesh import UserGeometryBase
 
 from ._common import nmtoum
 

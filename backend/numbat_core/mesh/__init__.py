@@ -1,5 +1,5 @@
 """Internal mesh construction, template, and geometry support."""
 
-from .geometry import UserGeometryBase
+from numbat_core.geometry.usermesh import UserGeometryBase
 
 __all__ = ["UserGeometryBase"]

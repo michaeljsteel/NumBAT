@@ -1,3 +1,7 @@
-"""Compatibility facade for the legacy user geometry module."""
+"""Compatibility alias for legacy user geometry imports."""
 
-from numbat_core.mesh.geometry import *
+import sys
+
+from numbat_core.geometry import usermesh as _implementation
+
+sys.modules[__name__] = _implementation

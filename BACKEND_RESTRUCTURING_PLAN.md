@@ -327,6 +327,11 @@ numbat_core/
 This phase includes the largest and most interconnected modules, so it should
 follow rather than precede the low-level and mesh migrations.
 
+Keep the legacy flat imports (`structure`, `usermesh`, `modes`, `modecalcs`,
+`integration`, `simresult`, and `numbat`) as aliases to these implementations.
+The former `numbat_core.mesh.geometry` path should likewise remain an alias to
+`numbat_core.geometry.usermesh`.
+
 ### Phase 6: Introduce the modern public package
 
 After the internal hierarchy is stable, introduce the preferred installed

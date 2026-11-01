@@ -1,4 +1,4 @@
-"""Phase 2 checks: leaf modules moved into ``numbat_core`` keep their old names.
+"""Compatibility checks for moved implementations in ``numbat_core``.
 
 Each flat module at the backend root is a facade over its ``numbat_core``
 home. Every public name in the new module must resolve through the facade to
@@ -25,6 +25,25 @@ FACADE_PAIRS = [
     ("materialprops", "numbat_core.materials.materialprops"),
     ("bulkprops", "numbat_core.materials.bulkprops"),
     ("voigt", "numbat_core.materials.elastic_tensors"),
+    ("structure", "numbat_core.geometry.structure"),
+    ("usermesh", "numbat_core.geometry.usermesh"),
+    ("modes", "numbat_core.solvers.modes"),
+    ("modecalcs", "numbat_core.solvers.modecalcs"),
+    ("integration", "numbat_core.solvers.integration"),
+    ("simresult", "numbat_core.solvers.simresult"),
+    ("numbat", "numbat_core.api.application"),
+    ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
+]
+
+SIMULATION_FACADE_PAIRS = [
+    ("structure", "numbat_core.geometry.structure"),
+    ("usermesh", "numbat_core.geometry.usermesh"),
+    ("modes", "numbat_core.solvers.modes"),
+    ("modecalcs", "numbat_core.solvers.modecalcs"),
+    ("integration", "numbat_core.solvers.integration"),
+    ("simresult", "numbat_core.solvers.simresult"),
+    ("numbat", "numbat_core.api.application"),
+    ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
 ]
 
 
@@ -62,4 +81,16 @@ print('ok', len(public))
 @pytest.mark.parametrize("_old, new", FACADE_PAIRS)
 def test_numbat_core_module_imports_standalone(_old, new):
     res = _run(f"import importlib; importlib.import_module({new!r})")
+    assert res.returncode == 0, res.stderr
+
+
+@pytest.mark.parametrize("old, new", SIMULATION_FACADE_PAIRS)
+def test_simulation_legacy_paths_are_module_aliases(old, new):
+    code = f"""
+import importlib
+old = importlib.import_module({old!r})
+new = importlib.import_module({new!r})
+assert old is new
+"""
+    res = _run(code)
     assert res.returncode == 0, res.stderr

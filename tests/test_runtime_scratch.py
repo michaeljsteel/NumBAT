@@ -31,6 +31,12 @@ def test_scratch_dir_is_reused(tmp_path, monkeypatch):
 
 
 def test_structure_does_not_write_into_source_tree():
-    structure_src = (Path(__file__).resolve().parents[1] / "backend" / "structure.py").read_text()
+    structure_src = (
+        Path(__file__).resolve().parents[1]
+        / "backend"
+        / "numbat_core"
+        / "geometry"
+        / "structure.py"
+    ).read_text()
     assert "/ 'build'" not in structure_src
     assert "runtime.path_scratch()" in structure_src

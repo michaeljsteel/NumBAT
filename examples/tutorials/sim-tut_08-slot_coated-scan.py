@@ -7,8 +7,11 @@
 
 import os
 import sys
-from multiprocessing import Pool
+import multiprocessing
 import numpy as np
+import matplotlib
+# Forked workers must not inherit a Tk (interactive) backend
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from pathlib import Path
@@ -124,7 +127,7 @@ num_cores = 1
 use_multiproc = num_cores >1 and not nbapp.is_macos()
 
 if use_multiproc:
-    pool = Pool(num_cores)
+    pool = multiprocessing.get_context("fork").Pool(num_cores)
     pooled_mode_freqs = pool.map(ac_mode_freqs, wid_x_list)
 else:
     pooled_mode_freqs = map(ac_mode_freqs, wid_x_list)
