@@ -1,11 +1,8 @@
-"""Helpers for warnings emitted by legacy import facades."""
-
-import warnings
+"""Errors raised by legacy import facades."""
 
 
 def warn_legacy_import(module_name: str, replacement: str) -> None:
-    warnings.warn(
-        f"Importing '{module_name}' is deprecated; use '{replacement}' instead.\nYou can avoid these warnings by reverting to version 2.3.0 [git commit 7853637...] or earlier, or by updating your code to use the new import paths.\nThis warning will become an error in a future release.",
-        FutureWarning,
-        stacklevel=3,
+    raise ImportError(
+        f"As of version 2.5.0, importing '{module_name}' is no longer supported; use '{replacement}' instead.\n"
+        f"See the migration guide in the manual appendix for more information.\n\nTo avoid this error without making updates, you can revert to version 2.3.0 [git commit: 7853637] (no warnings), or version 2.4.1 [git commit: 358a559] (warnings only) by checking out the appropriate tag in the git repository."
     )

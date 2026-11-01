@@ -27,7 +27,7 @@ import re
 
 sys.path.insert(0, '../../backend')   # This file is run from docs/source
 
-from nbversion import *
+from numbat_core.nbversion import *
 
 # -- General configuration ------------------------------------------------
 

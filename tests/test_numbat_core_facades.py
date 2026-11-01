@@ -1,10 +1,4 @@
-"""Compatibility checks for moved implementations in ``numbat_core``.
-
-Each flat module at the backend root is a facade over its ``numbat_core``
-home. Every public name in the new module must resolve through the facade to
-the same object, so existing ``import nbtypes`` style code keeps working.
-Runs in a fresh interpreter with PYTHONPATH=backend.
-"""
+"""Checks for supported imports and fatal legacy-import errors."""
 
 import os
 import subprocess
@@ -33,20 +27,8 @@ FACADE_PAIRS = [
     ("modecalcs", "numbat_core.solvers.modecalcs"),
     ("integration", "numbat_core.solvers.sbsgain"),
     ("simresult", "numbat_core.solvers.simresult"),
-    ("numbat", "numbat_core.api.application"),
     ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
 ]
-
-SIMULATION_FACADE_PAIRS = [
-    ("structure", "numbat_core.geometry.structure"),
-    ("usermesh", "numbat_core.geometry.usermesh"),
-    ("modes", "numbat_core.solvers.modes"),
-    ("modecalcs", "numbat_core.solvers.modecalcs"),
-    ("integration", "numbat_core.solvers.sbsgain"),
-    ("simresult", "numbat_core.solvers.simresult"),
-    ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
-]
-
 
 def _run(code: str) -> subprocess.CompletedProcess:
     env = dict(os.environ)
@@ -61,39 +43,24 @@ def _run(code: str) -> subprocess.CompletedProcess:
     )
 
 
-@pytest.mark.parametrize("old, new", FACADE_PAIRS)
-def test_facade_exposes_new_module_public_names_by_identity(old, new):
+@pytest.mark.parametrize("old, _new", FACADE_PAIRS)
+def test_legacy_imports_are_fatal(old, _new):
     code = f"""
 import importlib
-old = importlib.import_module({old!r})
-new = importlib.import_module({new!r})
-public = [n for n in dir(new) if not n.startswith('_')]
-missing = [n for n in public if not hasattr(old, n)]
-assert not missing, f'facade missing names: {{missing}}'
-mismatch = [n for n in public if getattr(old, n) is not getattr(new, n)]
-assert not mismatch, f'facade names not identical: {{mismatch}}'
-print('ok', len(public))
+try:
+    importlib.import_module({old!r})
+except ImportError as exc:
+    assert "no longer supported" in str(exc), exc
+else:
+    raise AssertionError("legacy import unexpectedly succeeded")
 """
     res = _run(code)
     assert res.returncode == 0, res.stderr
-    assert res.stdout.startswith("ok")
 
 
 @pytest.mark.parametrize("_old, new", FACADE_PAIRS)
 def test_numbat_core_module_imports_standalone(_old, new):
     res = _run(f"import importlib; importlib.import_module({new!r})")
-    assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize("old, new", SIMULATION_FACADE_PAIRS)
-def test_simulation_legacy_paths_are_module_aliases(old, new):
-    code = f"""
-import importlib
-old = importlib.import_module({old!r})
-new = importlib.import_module({new!r})
-assert old is new
-"""
-    res = _run(code)
     assert res.returncode == 0, res.stderr
 
 
@@ -108,22 +75,14 @@ assert old is new
         ("import msh.builtin_meshes.basic", "numbat.mesh"),
     ],
 )
-def test_legacy_import_warns_at_user_import(legacy_import, replacement):
+def test_legacy_import_reports_replacement(legacy_import, replacement):
     code = f"""
-import warnings
-with warnings.catch_warnings(record=True) as caught:
-    warnings.simplefilter("always")
+try:
     {legacy_import}
-
-deprecation_warnings = [
-    warning for warning in caught
-    if issubclass(warning.category, FutureWarning)
-]
-assert len(deprecation_warnings) == 1, deprecation_warnings
-warning = deprecation_warnings[0]
-assert warning.filename == "<string>", warning.filename
-assert warning.lineno == 5, warning.lineno
-assert {replacement!r} in str(warning.message), warning.message
+except ImportError as exc:
+    assert {replacement!r} in str(exc), exc
+else:
+    raise AssertionError("legacy import unexpectedly succeeded")
 """
     res = _run(code)
     assert res.returncode == 0, res.stderr

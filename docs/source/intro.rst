@@ -103,6 +103,9 @@ Version 2.4.0 introduces a substantial change to the package interface for |NUMB
 
 A full description of the changes and a migration guide is available in :ref:`chap-migration-label`.
 
+In addition:
+  * The module `integration` has been renamed `sgsgain`.
+
 Version 2.0
 -----------
 

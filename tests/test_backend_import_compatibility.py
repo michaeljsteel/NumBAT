@@ -1,9 +1,8 @@
-"""Import-compatibility checks for the flat backend namespace.
+"""Import checks for the supported backend namespace.
 
-Each check runs in a fresh interpreter with PYTHONPATH=backend, the way
-tutorials and user scripts load NumBAT. Tutorials import ``numbat`` before any
-other backend module, so that order is the supported contract. Low-level
-modules must also import standalone, and must not import the application root.
+Each check runs in a fresh interpreter with PYTHONPATH=backend. Public and
+internal implementation modules must import successfully, while legacy
+facades must report their replacement import paths.
 """
 
 import ast
@@ -18,22 +17,11 @@ BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
 
 TUTORIAL_IMPORT_ORDER = [
     "numbat",
-    "materials",
-    "femmesh",
-    "modecalcs",
-    "modes",
-    "structure",
-    "simresult",
-    "meshing.templates",
-    "plotting.profiles",
-    "plotting.gmsh",
-    "plotting.materials",
-    "plotting.plotprefs",
-    "plotting.plottools",
-    "plotting.tidyaxes",
-    "plotgain",
-    "plotmoderaw",
-    "plotmodes",
+    "numbat.materials",
+    "numbat.geometry",
+    "numbat.mesh",
+    "numbat.solvers",
+    "numbat.plotting",
 ]
 
 IMPORTABLE_AFTER_NUMBAT = [
@@ -139,6 +127,45 @@ IMPORTABLE_STANDALONE = [
     "numbat_core.plotting.tools",
 ]
 
+LEGACY_IMPORTS = [
+    "materials",
+    "femmesh",
+    "modecalcs",
+    "modes",
+    "structure",
+    "simresult",
+    "meshing.templates",
+    "plotting.profiles",
+    "plotting.gmsh",
+    "plotting.materials",
+    "plotting.plotprefs",
+    "plotting.plottools",
+    "plotting.tidyaxes",
+    "plotgain",
+    "plotmoderaw",
+    "plotmodes",
+    "nbgmsh",
+    "integration",
+    "msh.builtin_meshes",
+    "msh.gmsh",
+    "msh.builtin_meshes._common",
+    "msh.builtin_meshes.basic",
+    "msh.builtin_meshes.onion",
+    "msh.builtin_meshes.rib",
+    "msh.builtin_meshes.rounded",
+    "msh.builtin_meshes.slot",
+    "msh.builtin_meshes.two_incl",
+    "usermesh",
+    "numbat_core.mesh.geometry",
+]
+
+IMPORTABLE_AFTER_NUMBAT = [
+    module for module in IMPORTABLE_AFTER_NUMBAT if module not in LEGACY_IMPORTS
+]
+IMPORTABLE_STANDALONE = [
+    module for module in IMPORTABLE_STANDALONE if module not in LEGACY_IMPORTS
+]
+
 # Entry points that may import the application root directly.
 APP_ROOT_MODULES = {"numbat.py", "nb_install_tester.py"}
 
@@ -173,6 +200,13 @@ def test_module_imports_after_numbat(tmp_path, module):
 @pytest.mark.parametrize("module", IMPORTABLE_STANDALONE)
 def test_module_imports_standalone(tmp_path, module):
     _assert_imports_succeed(_run_imports(module, cwd=tmp_path))
+
+
+@pytest.mark.parametrize("module", LEGACY_IMPORTS)
+def test_legacy_module_imports_are_fatal(tmp_path, module):
+    result = _run_imports("numbat", module, cwd=tmp_path)
+    assert result.returncode != 0
+    assert "is no longer supported; use '" in result.stderr
 
 
 def _imports_application_root(path):

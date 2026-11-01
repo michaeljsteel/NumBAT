@@ -14,12 +14,14 @@ As of |NUMBAT| version 2.4.0, the internal code has been reorganized into a stru
 which exposes the user-facing pieces under clear names. The tutorials and examples in ``examples/`` now use these new imports. A frozen copy of the original scripts is kept in
 ``examples_legacy/`` for reference.
 
-In version 2.4.0, you can continue to use old scripts with the legacy flat imports, but they will emit a ``FutureWarning``. The warning does not mean the import has stopped working; migrate your scripts when convenient. No removal release is scheduled by this warning alone.
-
-From version 2.5.0, the legacy flat imports will be removed, and scripts must use the new ``numbat`` package imports. A conversion tool is provided to help rewrite legacy imports in Python scripts and Jupyter notebooks. See the discussion below for details.
+Legacy flat imports are no longer supported and raise ``ImportError``. Scripts
+must use the public ``numbat`` package imports. A conversion tool is provided
+to help rewrite legacy imports in Python scripts and Jupyter notebooks. See the
+discussion below for details.
 
 Details
 ========
+
 
 Prior to version 2.4.0, |NUMBAT| was used by adding the ``backend`` directory to ``sys.path`` and then importing a collection of flat modules:
 
@@ -37,13 +39,9 @@ names. The tutorials and examples in ``examples/`` now use these new imports.
 A frozen copy of the original scripts is kept in ``examples_legacy/`` for
 reference.
 
-**Your existing scripts continue to work.** The old flat imports remain as
-compatibility aliases, and each refers to exactly the same objects as the new
-names. Importing a legacy flat module or the ``plotting``, ``meshing``, or
-``msh.builtin_meshes`` compatibility packages now emits a ``FutureWarning``
-with a suggested public ``numbat`` import. The warning does not mean the
-import has stopped working; migrate your scripts when convenient. No removal
-release is scheduled by this warning alone.
+**Update existing scripts before running them.** Legacy flat modules and the
+``plotting``, ``meshing``, and ``msh.builtin_meshes`` compatibility packages
+raise ``ImportError`` with the corresponding public ``numbat`` import path.
 
 What does *not* change:
 
