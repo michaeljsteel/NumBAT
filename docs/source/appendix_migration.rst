@@ -9,8 +9,19 @@ Appendix: Migrating scripts to the ``numbat`` package
 Overview
 ========
 
-Earlier versions of |NUMBAT| were used by adding the ``backend`` directory to
-``sys.path`` and then importing a collection of flat modules:
+As of |NUMBAT| version 2.4.0, the internal code has been reorganized into a structured package
+``numbat_core``. The public interface is now provided by the ``numbat`` package,
+which exposes the user-facing pieces under clear names. The tutorials and examples in ``examples/`` now use these new imports. A frozen copy of the original scripts is kept in
+``examples_legacy/`` for reference.
+
+In version 2.4.0, you can continue to use old scripts with the legacy flat imports, but they will emit a ``FutureWarning``. The warning does not mean the import has stopped working; migrate your scripts when convenient. No removal release is scheduled by this warning alone.
+
+From version 2.5.0, the legacy flat imports will be removed, and scripts must use the new ``numbat`` package imports. A conversion tool is provided to help rewrite legacy imports in Python scripts and Jupyter notebooks. See the discussion below for details.
+
+Details
+========
+
+Prior to version 2.4.0, |NUMBAT| was used by adding the ``backend`` directory to ``sys.path`` and then importing a collection of flat modules:
 
 .. code-block:: python
 

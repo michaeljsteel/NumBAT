@@ -96,6 +96,13 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.4
+-----------
+
+Version 2.4.0 introduces a substantial change to the package interface for |NUMBAT| new structured package ``numbat_core`` and a public interface ``numbat``. The tutorials and examples in ``examples/`` now use these new imports. A frozen copy of the original scripts is kept in ``examples_legacy/`` for reference.
+
+A full description of the changes and a migration guide is available in :ref:`chap-migration-label`.
+
 Version 2.0
 -----------
 
