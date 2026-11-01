@@ -42,7 +42,6 @@ SIMULATION_FACADE_PAIRS = [
     ("modecalcs", "numbat_core.solvers.modecalcs"),
     ("integration", "numbat_core.solvers.integration"),
     ("simresult", "numbat_core.solvers.simresult"),
-    ("numbat", "numbat_core.api.application"),
     ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
 ]
 

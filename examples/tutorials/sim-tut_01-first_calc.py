@@ -11,9 +11,8 @@ sys.path.append(str(Path('../../backend')))
 
 
 import numbat
-import integration
-
-import materials
+from numbat import materials
+from numbat.solvers import integration
 
 
 # Naming conventions

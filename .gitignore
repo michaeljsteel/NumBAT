@@ -52,6 +52,20 @@ examples/josab_tutorial/*-fields
 examples/lit_examples/*-fields
 examples/tutorials/*-fields
 
+examples_legacy/josab_tutorial/*.png
+examples_legacy/lit_examples/*.png
+examples_legacy/tutorials/*.png
+examples_legacy/tutorials/*.txt
+examples_legacy/tutorials/tut_03b-disp
+examples_legacy/tutorials/tut_*/*
+examples_legacy/lit_examples/lit_*/*
+examples_legacy/josab_tutorial/josab_*/*
+examples_legacy/josab_tutorial/*-fields
+examples_legacy/lit_examples/*-fields
+examples_legacy/tutorials/*-fields
+examples_legacy/**/__pycache__/
+examples_legacy/**/numbat_tmp/
+
 
 docs/build/*
 *.mod

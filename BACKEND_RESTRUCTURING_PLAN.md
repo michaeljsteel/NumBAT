@@ -348,6 +348,15 @@ from numbat.mesh import FemMesh
 Deprecate specialist flat imports only over one or more releases, and update
 tutorials incrementally rather than all at once.
 
+**Implemented:** `backend/numbat/` is now a package that replaces the flat
+`numbat.py`. It re-exports every name of `numbat_core.api.application`
+(including private names, via module `__getattr__`) and adds the submodules
+`numbat.materials`, `numbat.mesh`, `numbat.geometry` and `numbat.solvers`.
+No new `Simulation` name was introduced. Pip packaging is deferred; `backend`
+remains an import root. `examples_legacy/` is a frozen copy of the tracked
+example scripts using the old flat imports, kept to document migration;
+`examples/` is updated incrementally (tut 01 converted first).
+
 ## Do not do these things
 
 - Do not require `import backend.numbat`; existing code intentionally treats
