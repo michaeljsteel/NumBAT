@@ -22,7 +22,7 @@
 
 import copy
 
-import materials
+from numbat_core.materials import materials
 from fortran import nb_fortran
 from numbat_core.solvers.modecalcs import ac_mode_calculation, em_mode_calculation
 from numbat_core import reporting, runtime
