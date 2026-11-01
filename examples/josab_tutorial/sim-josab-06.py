@@ -10,10 +10,10 @@ import numpy as np
 from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 import numbat
-import materials
-import modecalcs
-import integration
-import plotgain
+from numbat import materials
+from numbat.solvers import modecalcs
+from numbat.solvers import integration
+from numbat import plotting
 
 
 import starter

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import matplotlib.patches as mplpatches
 
-from usermesh import UserGeometryBase
+from numbat.mesh import UserGeometryBase
 
 
 class EllipticalRod(UserGeometryBase):

@@ -16,9 +16,9 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-import integration
+from numbat.solvers import integration
 
-import materials
+from numbat import materials
 
 # Geometric Parameters - all in nm.
 lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.

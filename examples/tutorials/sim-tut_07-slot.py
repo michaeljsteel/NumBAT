@@ -10,11 +10,11 @@ from pathlib import Path
 sys.path.append(str(Path("../../backend")))
 
 import numbat
-import materials
-import nbgmsh
+from numbat import materials
+from numbat.mesh import MailData
 
-import integration
-from nbtypes import SI_GHz
+from numbat.solvers import integration
+from numbat.types import SI_GHz
 
 import starter
 
@@ -59,7 +59,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     lc_bkg=0.05, lc_refine_1=1.0 * refine_fac, lc_refine_2=1.0 * refine_fac,)
 
 #wguide.plot_mesh(prefix)
-gm = nbgmsh.MailData(wguide.mesh_mail_fname)
+gm = MailData(wguide.mesh_mail_fname)
 gm.plot_mesh('tt')
 
 pl_ref = wguide.get_structure_plotter_refractive_index()

@@ -59,6 +59,12 @@ for n in ('NumBATApp', 'load_simulation', 'register_waveguide_directory',
         "from numbat.geometry import Structure; import structure; assert Structure is structure.Structure",
         "from numbat.solvers import EMSimulation, ACSimulation, Simulation, Mode, EMSimResult; import modecalcs; assert EMSimulation is modecalcs.EMSimulation",
         "import numbat.materials, numbat.mesh, numbat.geometry, numbat.solvers",
+        "from numbat.types import SI_GHz, twopi, PointGroup",
+        "from numbat.mesh import MailData; import nbgmsh; assert MailData is nbgmsh.MailData",
+        "from numbat.parallel import launch_worker_processes_and_wait, launch_worker_threads_and_wait",
+        "from numbat.plotting import Decorator; import plotgain; assert Decorator is plotgain.Decorator",
+        "from numbat.plotting.ipython import img_single, img_pair, img_triple",
+        "import numbat.utils",
     ],
 )
 def test_public_submodules(stmt):

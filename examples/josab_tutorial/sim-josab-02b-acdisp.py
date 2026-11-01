@@ -13,9 +13,9 @@ import numpy as np
 from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 import numbat
-import materials
-import modecalcs
-import integration
+from numbat import materials
+from numbat.solvers import modecalcs
+from numbat.solvers import integration
 
 
 import starter
