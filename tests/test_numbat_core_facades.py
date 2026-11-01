@@ -95,3 +95,50 @@ assert old is new
 """
     res = _run(code)
     assert res.returncode == 0, res.stderr
+
+
+@pytest.mark.parametrize(
+    "legacy_import, replacement",
+    [
+        ("import nbtypes", "numbat.types"),
+        ("import materials", "numbat.materials"),
+        ("import plotting.profiles", "numbat.plotting"),
+        ("import meshing.templates", "numbat.mesh"),
+        ("import msh.builtin_meshes.basic", "numbat.mesh"),
+    ],
+)
+def test_legacy_import_warns_at_user_import(legacy_import, replacement):
+    code = f"""
+import warnings
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    {legacy_import}
+
+deprecation_warnings = [
+    warning for warning in caught
+    if issubclass(warning.category, FutureWarning)
+]
+assert len(deprecation_warnings) == 1, deprecation_warnings
+warning = deprecation_warnings[0]
+assert warning.filename == "<string>", warning.filename
+assert warning.lineno == 5, warning.lineno
+assert {replacement!r} in str(warning.message), warning.message
+"""
+    res = _run(code)
+    assert res.returncode == 0, res.stderr
+
+
+def test_public_import_does_not_warn():
+    code = """
+import warnings
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    import numbat.types
+
+assert not [
+    warning for warning in caught
+    if issubclass(warning.category, FutureWarning)
+], caught
+"""
+    res = _run(code)
+    assert res.returncode == 0, res.stderr

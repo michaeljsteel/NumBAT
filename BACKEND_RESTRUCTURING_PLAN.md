@@ -25,8 +25,9 @@ combine it with behaviour changes, broad formatting, or unrelated refactors.
 ## Proposed destination
 
 Introduce `backend/numbat_core` as the internal package during the transition.
-Keep the current top-level modules as compatibility facades until a later,
-explicit deprecation release.
+Keep the current top-level modules as compatibility facades during the
+deprecation period. They emit `FutureWarning` messages pointing users toward
+the public `numbat` package; removal requires a separate compatibility decision.
 
 ```text
 backend/
@@ -185,7 +186,8 @@ For each move:
    ```
 
 4. Run import and smoke tests.
-5. Do not emit deprecation warnings yet.
+5. Emit `FutureWarning` messages from legacy facades with the suggested
+   public `numbat` import, while preserving the old import behavior.
 
 ### Phase 3: Consolidate mesh infrastructure
 
@@ -247,17 +249,11 @@ Migrate this phase in the following order:
 5. Test the built-in manifest, a registered external user-waveguide directory,
    Gmsh template resolution, mesh generation, and geometry pickle round trips.
 
-Do not change the built-in manifest's initial module path:
-
-```json
-"module": "msh.builtin_meshes"
-```
-
-The facade keeps this metadata valid while implementations move internally.
-The template loader now uses ordinary `import_module()` calls, so it already
-accepts either the legacy facade path or `numbat_core.mesh.builtin`; test both
-paths with equivalent manifests. Change the shipped manifest to the internal
-path only in a later, explicit compatibility release.
+The shipped built-in manifest uses `numbat_core.mesh.builtin` so NumBAT's
+forward path does not trigger a deprecation warning during startup. The
+`msh.builtin_meshes` facade remains importable for existing scripts and
+serialized references. The template loader accepts both module paths; test
+both paths with equivalent manifests.
 
 ### Phase 4: Consolidate plotting
 

@@ -39,7 +39,9 @@ def test_builtin_waveguide_index_uses_normal_import_path():
     )
 
     assert waveguides
-    assert all(waveguide["module"] == "msh.builtin_meshes" for waveguide in waveguides)
+    assert all(
+        waveguide["module"] == "numbat_core.mesh.builtin" for waveguide in waveguides
+    )
     assert all("wg_impl" not in waveguide for waveguide in waveguides)
     assert all(
         waveguide["wg_template_cls"].__module__.startswith("numbat_core.mesh.builtin")

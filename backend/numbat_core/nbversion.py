@@ -2,7 +2,7 @@
 from pathlib import Path
 
 NUMBAT_VERSION_MAJ=2
-NUMBAT_VERSION_MIN=3
+NUMBAT_VERSION_MIN=4
 NUMBAT_VERSION_MIC=0
 
 ######################################

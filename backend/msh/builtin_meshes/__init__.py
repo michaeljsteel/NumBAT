@@ -1,5 +1,6 @@
 """Compatibility facade for built-in NumBAT geometry templates."""
 
+from numbat_core._deprecation import warn_legacy_import
 from numbat_core.mesh.builtin import (
     CircOnion,
     CircOnion1,
@@ -28,3 +29,5 @@ from numbat_core.mesh.builtin import (
     TwoIncl,
     TwoInclVert,
 )
+
+warn_legacy_import("msh.builtin_meshes", "numbat.mesh")

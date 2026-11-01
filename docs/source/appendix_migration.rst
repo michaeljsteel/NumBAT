@@ -28,8 +28,11 @@ reference.
 
 **Your existing scripts continue to work.** The old flat imports remain as
 compatibility aliases, and each refers to exactly the same objects as the new
-names. They are expected to be deprecated over the next one or two releases,
-so we recommend migrating when convenient.
+names. Importing a legacy flat module or the ``plotting``, ``meshing``, or
+``msh.builtin_meshes`` compatibility packages now emits a ``FutureWarning``
+with a suggested public ``numbat`` import. The warning does not mean the
+import has stopped working; migrate your scripts when convenient. No removal
+release is scheduled by this warning alone.
 
 What does *not* change:
 
@@ -63,6 +66,9 @@ Old import                                         New import
                                                    (and use ``plotting.<name>`` in place of ``plotgain.<name>``)
 ``from plotgain import Decorator``                 ``from numbat.plotting import Decorator``
 ``from plotting.ipythontools import ...``          ``from numbat.plotting.ipython import ...``
+``import plotting``                                ``from numbat import plotting``
+``import meshing``                                 ``from numbat import mesh``
+``import msh.builtin_meshes``                      ``from numbat import mesh``
 =================================================  =========================================================
 
 The new package also offers ``numbat.mesh.FemMesh`` and the simulation and
