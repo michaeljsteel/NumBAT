@@ -23,7 +23,7 @@ import numbat
 from numbat.types import SI_GHz
 from numbat import materials
 
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 from numbat import plotting
 import starter
 
@@ -71,7 +71,7 @@ def modes_n_gain(wwguide):
     simres_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=simres_EM_pump)
 
     # Calculate interaction integrals and SBS gain.
-    gain_box = integration.get_gains_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
+    gain_box = sbsgain.get_gains_and_qs(simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC,
         EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 
     print('Process %d: completed mode calculation for width a_x = %.3f' % (

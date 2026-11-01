@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.append(str(Path('../backend')))
 
 import numbat
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 from numbat import materials
 
@@ -137,7 +137,7 @@ print('\nPlotting acoustic modes')
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-gain = integration.get_gains_and_qs(
+gain = sbsgain.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
     EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 # Save the gain calculation results
@@ -151,7 +151,7 @@ gain = integration.get_gains_and_qs(
 # included in NumBAT. Note that the Fortran routines are much faster!
 # Also shows how field data can be imported (in this case from Comsol) and used.
 comsol_mode_indices = 5  # Number of modes contained in data file.
-#SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = integration.gain_python(
+#SBS_gain_PE_py, alpha_py, SBS_gain_PE_comsol, alpha_comsol = sbsgain.gain_python(
 #    simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, 'comsol_ac_modes_1-5.dat',
 #    comsol_mode_indices=comsol_mode_indices)
 

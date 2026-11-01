@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 from numbat import materials
 from numbat.types import SI_GHz
@@ -75,7 +75,7 @@ for i_ac, q_ac in enumerate(np.linspace(0.0, q_AC, nu_qs)):
         [np.real(x) for x in sim_AC.nu_AC_all() if abs(np.real(x)) > abs(np.imag(x))])
 
     if symmetries_working:
-        sym_list = integration.symmetries(sim_AC)
+        sym_list = sbsgain.symmetries(sim_AC)
         for i in range(len(prop_AC_modes)):
             Nu = v_Nu[i]/SI_GHz
             if sym_list[i][0] == 1 and sym_list[i][1] == 1 and sym_list[i][2] == 1:

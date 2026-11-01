@@ -19,10 +19,10 @@ The API consists of several core modules\:
   - ``voigt``, for manipulating tensor quantities.
   - ``structure``, for constructing waveguides from materials;
   - ``modecalcs``, for the core calculation of electromagnetic and acoustic modes;
-  - ``integration``, for performing calculations relating to SBS gain;
+  - ``sbsgain``, for performing calculations relating to SBS gain;
   - ``plotting``, for creating output plots of modes and gain functions.
 
-For the most part, users should only encounter the ``numat`` and ``integration`` modules.
+For the most part, users should only encounter the ``numat`` and ``sbsgain`` modules.
 
 numbat module
 =============
@@ -90,12 +90,12 @@ The ``modecalcs`` module is responsible for the core engine to construct and sol
     :undoc-members:
     :show-inheritance:
 
-integration module
-==================
+sbsgain module
+==============
 
-The ``integration`` module is responsible for calculating gain and loss information from existing mode data.
+The ``sbsgain`` module is responsible for calculating gain and loss information from existing mode data.
 
-.. automodule:: integration
+.. automodule:: numbat_core.solvers.sbsgain
     :members:
     :undoc-members:
     :show-inheritance:
@@ -109,6 +109,5 @@ The ``plotting`` module is responsible for generating all standard graphs.
     :members:
     :undoc-members:
     :show-inheritance:
-
 
 

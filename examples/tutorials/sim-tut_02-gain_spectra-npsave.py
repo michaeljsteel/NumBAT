@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 from numbat import materials
 
@@ -143,7 +143,7 @@ simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
 fixed_Q=300
-gain = integration.get_gains_and_qs(
+gain = sbsgain.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
     EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=fixed_Q)
 

@@ -17,7 +17,7 @@ sys.path.append(str(Path('../../backend')))
 import numbat
 from numbat import materials
 
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 import starter
 
@@ -119,7 +119,7 @@ simres_AC.plot_modes(xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
 # Calculate the acoustic loss from our fields.
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-gain_box = integration.get_gains_and_qs(
+gain_box = sbsgain.get_gains_and_qs(
     simres_EM_pump, simres_EM_Stokes, simres_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
     EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 

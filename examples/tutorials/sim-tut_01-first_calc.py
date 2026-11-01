@@ -12,7 +12,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 
 # Naming conventions
@@ -134,7 +134,7 @@ set_q_factor = 1000.
 # as well as just for PE, and just for MB. Also calculate acoustic loss alpha.
 
 
-gain = integration.get_gains_and_qs(
+gain = sbsgain.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC, EM_mode_index_pump=EM_mode_index_pump,
     EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 

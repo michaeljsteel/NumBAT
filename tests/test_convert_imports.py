@@ -18,7 +18,8 @@ spec.loader.exec_module(conv)
 def test_line_rules():
     cl = lambda s: conv.convert_line(s)[0]
     assert cl("import materials") == "from numbat import materials"
-    assert cl("  import integration  # x") == "  from numbat.solvers import integration  # x"
+    assert cl("  import integration  # x") == "  from numbat.solvers import sbsgain as integration  # x"
+    assert cl("from integration import GainProps") == "from numbat.solvers import GainProps"
     assert cl("import materials as m") == "from numbat import materials as m"
     assert cl("import plotgain") == "from numbat import plotting as plotgain"
     assert cl("from nbtypes import SI_GHz, twopi") == "from numbat.types import SI_GHz, twopi"
@@ -51,7 +52,7 @@ def test_converted_imports_resolve():
     code = """
 import numbat
 from numbat import materials, plotting as plotgain, mesh as nbgmsh
-from numbat.solvers import integration, modecalcs, modes, simresult
+from numbat.solvers import integration, modecalcs, modes, sbsgain, simresult
 from numbat.geometry import structure
 from numbat.types import SI_GHz
 """

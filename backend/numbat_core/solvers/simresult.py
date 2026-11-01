@@ -21,7 +21,7 @@ import copy
 
 import numpy as np
 
-from numbat_core.solvers import integration
+from numbat_core.solvers import sbsgain as integration
 from fortran import nb_fortran
 from numbat_core.solvers.modes import ModeAC, ModeEM, ModeInterpolator
 from numbat_core import reporting

@@ -16,7 +16,7 @@ sys.path.append(str(Path('../../backend')))
 import numbat
 from numbat import materials
 
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 import starter
 
@@ -105,7 +105,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     sim_AC = wguide.calc_AC_modes(num_modes_AC, q_AC, EM_sim=sim_EM_pump)
 
     # Calculate interaction integrals and SBS gain.
-    gain_box= integration.get_gains_and_qs(
+    gain_box= sbsgain.get_gains_and_qs(
         sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
         EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index)
 

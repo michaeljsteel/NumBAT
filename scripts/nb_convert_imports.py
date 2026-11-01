@@ -25,7 +25,7 @@ from pathlib import Path
 # legacy module -> (new package, new module name or None for "from X import names")
 IMPORT_MODULES = {
     "materials": ("numbat", "materials"),
-    "integration": ("numbat.solvers", "integration"),
+    "integration": ("numbat.solvers", "sbsgain"),
     "modecalcs": ("numbat.solvers", "modecalcs"),
     "modes": ("numbat.solvers", "modes"),
     "simresult": ("numbat.solvers", "simresult"),
@@ -43,7 +43,7 @@ FROM_MODULES = {
     "usermesh": "numbat.mesh",
     "plotgain": "numbat.plotting",
     "materials": "numbat.materials",
-    "integration": "numbat.solvers.integration",
+    "integration": "numbat.solvers",
     "modecalcs": "numbat.solvers.modecalcs",
     "structure": "numbat.geometry",
     "plotting.ipythontools": "numbat.plotting.ipython",

@@ -61,7 +61,7 @@ Old import                                         New import
 =================================================  =========================================================
 ``import numbat``                                  ``import numbat`` (unchanged)
 ``import materials``                               ``from numbat import materials``
-``import integration``                             ``from numbat.solvers import integration``
+``import integration``                             ``from numbat.solvers import sbsgain as integration``
 ``import modecalcs``                               ``from numbat.solvers import modecalcs``
 ``import modes``                                   ``from numbat.solvers import modes``
 ``import simresult``                               ``from numbat.solvers import simresult``

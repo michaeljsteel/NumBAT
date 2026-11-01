@@ -13,7 +13,7 @@ import numbat
 from numbat import materials
 from numbat.mesh import MailData
 
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 from numbat.types import SI_GHz
 
 import starter
@@ -144,7 +144,7 @@ for m, nu in enumerate(v_nu):
 
 set_q_factor = 1000.0
 
-gain_box = integration.get_gains_and_qs(
+gain_box = sbsgain.get_gains_and_qs(
     simres_EM_pump,
     simres_EM_Stokes,
     simres_AC,

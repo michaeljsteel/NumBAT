@@ -314,7 +314,7 @@ numbat_core/
 ├── solvers/
 │   ├── modes.py
 │   ├── modecalcs.py
-│   ├── integration.py
+│   ├── sbsgain.py
 │   └── simresult.py
 └── api/
     └── application.py

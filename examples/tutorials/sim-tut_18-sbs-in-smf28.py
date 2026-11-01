@@ -12,7 +12,7 @@ sys.path.append(str(Path('../../backend')))
 import numbat
 from numbat import materials
 
-from numbat.solvers import integration
+from numbat.solvers import sbsgain
 
 import starter
 
@@ -136,7 +136,7 @@ set_q_factor = 1000.
 print('\nCalculating gains')
 # Calculate interaction integrals and SBS gain for PE and MB effects combined,
 # as well as just for PE, and just for MB.
-gain_box = integration.get_gains_and_qs(
+gain_box = sbsgain.get_gains_and_qs(
     sim_EM_pump, sim_EM_Stokes, sim_AC, q_AC,
     EM_mode_index_pump=EM_mode_index_pump, EM_mode_index_Stokes=EM_mode_index_Stokes, AC_mode_index=AC_mode_index, fixed_Q=set_q_factor)
 

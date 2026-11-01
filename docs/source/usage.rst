@@ -55,7 +55,7 @@ The sequence of operations (annotated in the source code below as Step 1, Step 2
 
 #. Display the elastic frequencies in Hz using ``modecalcs.nu_AC_all()``.
 
-#. Use ``integration.get_gains_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
+#. Use ``sbsgain.get_gains_and_qs()`` to generate a ``GainProps`` object containing information on the total SBS gain, contributions from photoelasticity and moving boundary effects, and the elastic loss.
 
 #. Extract desired values from the gain properties and print them to the screen.
 
@@ -141,7 +141,6 @@ As with our first example above, most |NUMBAT| scripts proceed with a standard s
 * solving electromagnetic and acoustic modes
 
 * calculating gain and other derived quantities
-
 
 
 

@@ -34,7 +34,7 @@ Gain Spectra
 
 
 The Brillouin gain spectra and plotted using the functions
-``integration.get_gains_and_qs()`` and ``GainProps.plot_spectra()``.
+``sbsgain.get_gains_and_qs()`` and ``GainProps.plot_spectra()``.
 The results are contained in the file ``tut_02-gain_spectra.png`` which can be viewed in any image viewer. On Linux, for instance you can use ::
 
      $ eog tut_02_gain_spectra.png
@@ -516,4 +516,3 @@ The shape of the simulation domain and the compactness of the mode makes the def
 .. raw:: latex
 
     \clearpage
-

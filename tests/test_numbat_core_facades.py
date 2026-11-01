@@ -31,7 +31,7 @@ FACADE_PAIRS = [
     ("usermesh", "numbat_core.geometry.usermesh"),
     ("modes", "numbat_core.solvers.modes"),
     ("modecalcs", "numbat_core.solvers.modecalcs"),
-    ("integration", "numbat_core.solvers.integration"),
+    ("integration", "numbat_core.solvers.sbsgain"),
     ("simresult", "numbat_core.solvers.simresult"),
     ("numbat", "numbat_core.api.application"),
     ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
@@ -42,7 +42,7 @@ SIMULATION_FACADE_PAIRS = [
     ("usermesh", "numbat_core.geometry.usermesh"),
     ("modes", "numbat_core.solvers.modes"),
     ("modecalcs", "numbat_core.solvers.modecalcs"),
-    ("integration", "numbat_core.solvers.integration"),
+    ("integration", "numbat_core.solvers.sbsgain"),
     ("simresult", "numbat_core.solvers.simresult"),
     ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
 ]
@@ -102,6 +102,7 @@ assert old is new
     [
         ("import nbtypes", "numbat.types"),
         ("import materials", "numbat.materials"),
+        ("import integration", "numbat.solvers.sbsgain"),
         ("import plotting.profiles", "numbat.plotting"),
         ("import meshing.templates", "numbat.mesh"),
         ("import msh.builtin_meshes.basic", "numbat.mesh"),
