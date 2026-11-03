@@ -124,7 +124,7 @@ m_apex_dist=5*peak_ht_um # comfortably large to be displaced. Convert peak_ht to
 for m in range(num_modes_AC):
     md = simres_AC.get_mode(m)
     md = simres_AC.mode_set[m]
-    md.set_width_r0_reference(0, peak_ht_um/2) # set width reference to top of triangle # this part done in m!
+    md.set_width_r0_reference((0, peak_ht_um/2)) # set width reference to top of triangle # this part done in m!
     md.analyse_mode()
     v_widy[m] = md.wy()
     v_w2[m] = md.w0()
