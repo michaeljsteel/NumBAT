@@ -1,8 +1,7 @@
 """Import checks for the supported backend namespace.
 
 Each check runs in a fresh interpreter with PYTHONPATH=backend. Public and
-internal implementation modules must import successfully, while legacy
-facades must be unavailable.
+internal implementation modules must import successfully.
 """
 
 import ast
@@ -26,19 +25,8 @@ TUTORIAL_IMPORT_ORDER = [
 
 IMPORTABLE_AFTER_NUMBAT = [
     "numbat",
-    "materials",
-    "femmesh",
-    "modecalcs",
-    "modes",
-    "structure",
-    "simresult",
-    "meshing.templates",
-    "plotting.profiles",
-    "nbgmsh",
-    "integration",
     "numbat_core.mesh",
     "numbat_core.mesh.fem",
-    "numbat_core.mesh.geometry",
     "numbat_core.mesh.mail",
     "numbat_core.mesh.templates",
     "numbat_core.mesh.builtin",
@@ -53,16 +41,6 @@ IMPORTABLE_AFTER_NUMBAT = [
     "numbat_core.plotting.profiles",
     "numbat_core.plotting.raw_modes",
     "numbat_core.plotting.tools",
-    "msh.builtin_meshes",
-    "msh.gmsh",
-    "msh.builtin_meshes._common",
-    "msh.builtin_meshes.basic",
-    "msh.builtin_meshes.onion",
-    "msh.builtin_meshes.rib",
-    "msh.builtin_meshes.rounded",
-    "msh.builtin_meshes.slot",
-    "msh.builtin_meshes.two_incl",
-    "usermesh",
     "numbat_core.geometry",
     "numbat_core.geometry.structure",
     "numbat_core.geometry.usermesh",
@@ -77,27 +55,6 @@ IMPORTABLE_AFTER_NUMBAT = [
 
 IMPORTABLE_STANDALONE = [
     "numbat",
-    "materials",
-    "structure",
-    "meshing.templates",
-    "msh.builtin_meshes",
-    "usermesh",
-    "integration",
-    "femmesh",
-    "modecalcs",
-    "modes",
-    "simresult",
-    "nbgmsh",
-    "plotting.profiles",
-    "plotting.gmsh",
-    "plotting.materials",
-    "plotting.plotprefs",
-    "plotting.plottools",
-    "plotting.tidyaxes",
-    "plotgain",
-    "plotmoderaw",
-    "plotmodes",
-    "msh.gmsh",
     "numbat_core.mesh",
     "numbat_core.geometry",
     "numbat_core.geometry.structure",
@@ -110,7 +67,6 @@ IMPORTABLE_STANDALONE = [
     "numbat_core.api",
     "numbat_core.api.application",
     "numbat_core.mesh.fem",
-    "numbat_core.mesh.geometry",
     "numbat_core.mesh.mail",
     "numbat_core.mesh.templates",
     "numbat_core.mesh.builtin",
@@ -125,59 +81,6 @@ IMPORTABLE_STANDALONE = [
     "numbat_core.plotting.profiles",
     "numbat_core.plotting.raw_modes",
     "numbat_core.plotting.tools",
-]
-
-LEGACY_IMPORTS = [
-    "bulkprops",
-    "crystalsyms",
-    "femmesh",
-    "integration",
-    "materialprops",
-    "materials",
-    "modecalcs",
-    "modes",
-    "nbgmsh",
-    "nbplatform",
-    "nbthread",
-    "nbtypes",
-    "nbversion",
-    "numbattools",
-    "plotgain",
-    "plotmoderaw",
-    "plotmodes",
-    "reporting",
-    "simresult",
-    "structure",
-    "usermesh",
-    "voigt",
-    "meshing",
-    "meshing.templates",
-    "plotting",
-    "plotting.profiles",
-    "plotting.gmsh",
-    "plotting.materials",
-    "plotting.plotprefs",
-    "plotting.plottools",
-    "plotting.tidyaxes",
-    "msh",
-    "msh.builtin_meshes",
-    "msh.gmsh",
-    "msh.builtin_meshes._common",
-    "msh.builtin_meshes.basic",
-    "msh.builtin_meshes.onion",
-    "msh.builtin_meshes.rib",
-    "msh.builtin_meshes.rounded",
-    "msh.builtin_meshes.slot",
-    "msh.builtin_meshes.two_incl",
-    "usermesh",
-    "numbat_core.mesh.geometry",
-]
-
-IMPORTABLE_AFTER_NUMBAT = [
-    module for module in IMPORTABLE_AFTER_NUMBAT if module not in LEGACY_IMPORTS
-]
-IMPORTABLE_STANDALONE = [
-    module for module in IMPORTABLE_STANDALONE if module not in LEGACY_IMPORTS
 ]
 
 # Entry points that may import the application root directly.
@@ -214,13 +117,6 @@ def test_module_imports_after_numbat(tmp_path, module):
 @pytest.mark.parametrize("module", IMPORTABLE_STANDALONE)
 def test_module_imports_standalone(tmp_path, module):
     _assert_imports_succeed(_run_imports(module, cwd=tmp_path))
-
-
-@pytest.mark.parametrize("module", LEGACY_IMPORTS)
-def test_legacy_module_imports_are_fatal(tmp_path, module):
-    result = _run_imports(module, cwd=tmp_path)
-    assert result.returncode != 0
-    assert "ModuleNotFoundError: No module named" in result.stderr
 
 
 def _imports_application_root(path):

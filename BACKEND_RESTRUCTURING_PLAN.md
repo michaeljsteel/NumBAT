@@ -277,8 +277,8 @@ numbat_core/plotting/
 ```
 
 The legacy flat modules and `plotting/` package were retired after the
-compatibility period. Their former source files are retained only under
-`_leg_fac_` names, so their old import paths are unavailable:
+compatibility period. Their source files were removed, so their old import
+paths are unavailable:
 
 | Legacy path              | Internal implementation                |
 | ------------------------ | -------------------------------------- |

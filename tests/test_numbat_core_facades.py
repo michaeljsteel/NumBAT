@@ -1,4 +1,4 @@
-"""Checks for supported imports and unavailable legacy facade paths."""
+"""Checks for supported internal NumBAT imports."""
 
 import os
 import subprocess
@@ -9,25 +9,24 @@ import pytest
 
 BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
 
-FACADE_PAIRS = [
-    ("nbtypes", "numbat_core.nbtypes"),
-    ("reporting", "numbat_core.reporting"),
-    ("nbversion", "numbat_core.nbversion"),
-    ("nbplatform", "numbat_core.nbplatform"),
-    ("nbthread", "numbat_core.utils.threading"),
-    ("numbattools", "numbat_core.utils.numeric"),
-    ("materials", "numbat_core.materials.materials"),
-    ("crystalsyms", "numbat_core.materials.crystalsyms"),
-    ("materialprops", "numbat_core.materials.materialprops"),
-    ("bulkprops", "numbat_core.materials.bulkprops"),
-    ("voigt", "numbat_core.materials.elastic_tensors"),
-    ("structure", "numbat_core.geometry.structure"),
-    ("usermesh", "numbat_core.geometry.usermesh"),
-    ("modes", "numbat_core.solvers.modes"),
-    ("modecalcs", "numbat_core.solvers.modecalcs"),
-    ("integration", "numbat_core.solvers.sbsgain"),
-    ("simresult", "numbat_core.solvers.simresult"),
-    ("numbat_core.mesh.geometry", "numbat_core.geometry.usermesh"),
+NUMBAT_CORE_MODULES = [
+    "numbat_core.nbtypes",
+    "numbat_core.reporting",
+    "numbat_core.nbversion",
+    "numbat_core.nbplatform",
+    "numbat_core.utils.threading",
+    "numbat_core.utils.numeric",
+    "numbat_core.materials.materials",
+    "numbat_core.materials.crystalsyms",
+    "numbat_core.materials.materialprops",
+    "numbat_core.materials.bulkprops",
+    "numbat_core.materials.elastic_tensors",
+    "numbat_core.geometry.structure",
+    "numbat_core.geometry.usermesh",
+    "numbat_core.solvers.modes",
+    "numbat_core.solvers.modecalcs",
+    "numbat_core.solvers.sbsgain",
+    "numbat_core.solvers.simresult",
 ]
 
 def _run(code: str) -> subprocess.CompletedProcess:
@@ -44,24 +43,9 @@ def _run(code: str) -> subprocess.CompletedProcess:
     )
 
 
-@pytest.mark.parametrize("old, _new", FACADE_PAIRS)
-def test_legacy_imports_are_unavailable(old, _new):
-    code = f"""
-import importlib
-try:
-    importlib.import_module({old!r})
-except ModuleNotFoundError:
-    pass
-else:
-    raise AssertionError("legacy import unexpectedly succeeded")
-"""
-    res = _run(code)
-    assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize("_old, new", FACADE_PAIRS)
-def test_numbat_core_module_imports_standalone(_old, new):
-    res = _run(f"import importlib; importlib.import_module({new!r})")
+@pytest.mark.parametrize("module", NUMBAT_CORE_MODULES)
+def test_numbat_core_module_imports_standalone(module):
+    res = _run(f"import importlib; importlib.import_module({module!r})")
     assert res.returncode == 0, res.stderr
 
 

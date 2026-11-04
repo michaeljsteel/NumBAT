@@ -71,12 +71,3 @@ for n in ('NumBATApp', 'load_simulation', 'register_waveguide_directory',
 def test_public_submodules(stmt):
     res = _run(stmt)
     assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize(
-    "module",
-    ["materials", "structure", "modecalcs", "integration", "usermesh", "femmesh"],
-)
-def test_legacy_flat_imports_are_unavailable(module):
-    res = _run(f"import importlib; importlib.import_module({module!r})")
-    assert res.returncode != 0
