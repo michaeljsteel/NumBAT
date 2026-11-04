@@ -21,9 +21,9 @@ import matplotlib.ticker as ticker
 import numpy as np
 from matplotlib.axes import Axes
 
-from numbat_core import reporting
-from numbat_core.materials.bulkprops import solve_christoffel
-from numbat_core.plotting import tools as plottools
+from .. import reporting
+from numbat.materials.bulkprops import solve_christoffel
+from numbat.plotting import tools as plottools
 
 
 def make_axes_square(ext0: float, ax: Axes, flip_x: bool = False, flip_y: bool = False) -> None:

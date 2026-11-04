@@ -21,8 +21,8 @@ import uuid
 from importlib import import_module
 from pathlib import Path
 
-from numbat_core import reporting
-from numbat_core.utils.numeric import is_real_number
+from .. import reporting
+from numbat.utils.numeric import is_real_number
 
 
 def _rebuild_imported_geometry(module_name, class_name, state):

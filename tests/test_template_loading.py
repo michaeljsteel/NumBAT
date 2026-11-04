@@ -11,12 +11,12 @@ import pytest
 
 sys.path.append("backend")
 
-from numbat_core.mesh import templates
-from numbat_core.mesh.builtin import RoundedBowtie, RoundedWedge
-from numbat_core.mesh.templates import _load_waveguide_templates
+from numbat.mesh import templates
+from numbat.mesh.builtin import RoundedBowtie, RoundedWedge
+from numbat.mesh.templates import _load_waveguide_templates
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-BUILTIN_WAVEGUIDE_DIRECTORY = PROJECT_ROOT / "backend" / "numbat_core" / "mesh" / "builtin"
+BUILTIN_WAVEGUIDE_DIRECTORY = PROJECT_ROOT / "backend" / "numbat" / "mesh" / "builtin"
 BUILTIN_TEMPLATE_DIRECTORY = BUILTIN_WAVEGUIDE_DIRECTORY / "geo"
 EXTERNAL_TEMPLATE_DIRECTORY = PROJECT_ROOT / "examples" / "user_waveguides"
 ROUNDED_BOWTIE_PARAMETERS = {
@@ -40,11 +40,11 @@ def test_builtin_waveguide_index_uses_normal_import_path():
 
     assert waveguides
     assert all(
-        waveguide["module"] == "numbat_core.mesh.builtin" for waveguide in waveguides
+        waveguide["module"] == "numbat.mesh.builtin" for waveguide in waveguides
     )
     assert all("wg_impl" not in waveguide for waveguide in waveguides)
     assert all(
-        waveguide["wg_template_cls"].__module__.startswith("numbat_core.mesh.builtin")
+        waveguide["wg_template_cls"].__module__.startswith("numbat.mesh.builtin")
         for waveguide in waveguides
     )
 
@@ -55,14 +55,14 @@ def test_internal_builtin_waveguide_module_path_is_supported(tmp_path):
         (BUILTIN_WAVEGUIDE_DIRECTORY / "builtin_waveguides.json").read_text()
     )
     for waveguide in builtin_manifest["wguides"]:
-        waveguide["module"] = "numbat_core.mesh.builtin"
+        waveguide["module"] = "numbat.mesh.builtin"
     manifest_path.write_text(json.dumps(builtin_manifest))
 
     waveguides = _load_waveguide_templates(manifest_path)
 
     assert waveguides
     assert all(
-        waveguide["wg_template_cls"].__module__.startswith("numbat_core.mesh.builtin")
+        waveguide["wg_template_cls"].__module__.startswith("numbat.mesh.builtin")
         for waveguide in waveguides
     )
 

@@ -23,7 +23,7 @@ import collections.abc as abc
 from typing import Any, Sequence, Mapping, Optional, Tuple, Union
 from numpy.typing import NDArray
 
-from numbat_core import reporting
+from .. import reporting
 
 def is_real_number(x: Any) -> bool:
     """Return True if ``x`` is a real scalar (Python or numpy real)."""

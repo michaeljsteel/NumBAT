@@ -34,10 +34,10 @@ import numpy as np
 from scipy import interpolate
 
 from fortran import nb_fortran
-from numbat_core import reporting
-from numbat_core.nbtypes import SI_permittivity_eps0
-from numbat_core.plotting import gain as plotgain
-from numbat_core.utils.numeric import np_min_max, process_fortran_return
+from .. import reporting
+from numbat.nbtypes import SI_permittivity_eps0
+from numbat.plotting import gain as plotgain
+from numbat.utils.numeric import np_min_max, process_fortran_return
 
 
 class GainProps(object):

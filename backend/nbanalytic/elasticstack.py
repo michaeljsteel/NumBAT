@@ -9,10 +9,10 @@ from numpy.typing import NDArray
 
 from nbanalytic.elasticfieldconversions import uvec3_phi_to_poynting_S3_piezo, uvec3_to_poynting_S3
 from nbanalytic.elasticmodeplots import ModeFunction1D, QuantLabel
-from numbat_core import nbtypes
-from numbat_core.nbtypes import SI_GHz, SI_kmps
-from numbat_core.plotting import tools as nbpt
-from numbat_core.utils import numeric as nbt
+import numbat.nbtypes as nbtypes
+from numbat.nbtypes import SI_GHz, SI_kmps
+from numbat.plotting import tools as nbpt
+from numbat.utils import numeric as nbt
 from numtools.optimize import BracketError, bracket_minima, find_bracketed_minima
 
 g_norms = nbtypes.NormalisationConstants()

@@ -1,5 +1,7 @@
-"""Internal mesh construction, template, and geometry support."""
+"""Mesh construction, template, and geometry support."""
 
-from numbat_core.geometry.usermesh import UserGeometryBase
+from ..geometry.usermesh import UserGeometryBase
+from .fem import FemMesh
+from .mail import MailData
 
-__all__ = ["UserGeometryBase"]
+__all__ = ["FemMesh", "MailData", "UserGeometryBase"]

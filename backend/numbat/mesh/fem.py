@@ -26,10 +26,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 
-from numbat_core import reporting, runtime
-from numbat_core.mesh import mail
-from numbat_core.nbtypes import SI_to_gmpercc, SI_um
-from numbat_core.utils.numeric import is_float_pair, is_real_number, np_min_max
+from .. import reporting, runtime
+from numbat.mesh import mail
+from numbat.nbtypes import SI_to_gmpercc, SI_um
+from numbat.utils.numeric import is_float_pair, is_real_number, np_min_max
 
 
 def validate_1D_cut_format(

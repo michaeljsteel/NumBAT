@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
-from numbat_core import runtime
+from numbat import runtime
 
 
 def test_scratch_dir_is_created_in_working_directory(tmp_path, monkeypatch):
@@ -34,7 +34,7 @@ def test_structure_does_not_write_into_source_tree():
     structure_src = (
         Path(__file__).resolve().parents[1]
         / "backend"
-        / "numbat_core"
+        / "numbat"
         / "geometry"
         / "structure.py"
     ).read_text()

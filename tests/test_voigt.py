@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append("backend")
 
-from numbat_core.materials.elastic_tensors import (
+from numbat.materials.elastic_tensors import (
     PlainTensor2_ij,
     VoigtTensor3_iJ,
     VoigtTensor4_IJ,

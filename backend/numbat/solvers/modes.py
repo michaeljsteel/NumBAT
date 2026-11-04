@@ -16,13 +16,13 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 
-from numbat_core import reporting, runtime
-from numbat_core.mesh import fem as femmesh
-from numbat_core.nbtypes import FieldCode, FieldTag, FieldType, SI_um, SI_vacuum_impedance_Z0
-from numbat_core.plotting import modes as plotmodes
-from numbat_core.plotting import raw_modes as plotmoderaw
-from numbat_core.plotting import tools as plottools
-from numbat_core.utils.numeric import int2D_trapz
+from .. import reporting, runtime
+from numbat.mesh import fem as femmesh
+from numbat.nbtypes import FieldCode, FieldTag, FieldType, SI_um, SI_vacuum_impedance_Z0
+from numbat.plotting import modes as plotmodes
+from numbat.plotting import raw_modes as plotmoderaw
+from numbat.plotting import tools as plottools
+from numbat.utils.numeric import int2D_trapz
 
 
 def check_allowed_plot_components(comps):

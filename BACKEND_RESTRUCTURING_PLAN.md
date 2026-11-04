@@ -24,20 +24,12 @@ combine it with behaviour changes, broad formatting, or unrelated refactors.
 
 ## Proposed destination
 
-Introduce `backend/numbat_core` as the internal package during the transition.
-Keep the current top-level modules as compatibility facades during the
-deprecation period. They emit `FutureWarning` messages pointing users toward
-the public `numbat` package; removal requires a separate compatibility decision.
+Use `backend/numbat` as the single public and implementation package. Legacy
+flat modules and the intermediate implementation package have been removed.
 
 ```text
 backend/
-├── numbat.py                     # Legacy public entry point / facade
-├── materials.py                  # Legacy facade
-├── femmesh.py                    # Legacy facade
-├── modes.py                      # Legacy facade
-├── ...
-│
-├── numbat_core/
+├── numbat/
 │   ├── __init__.py
 │   ├── runtime/
 │   │   ├── app.py
@@ -135,7 +127,7 @@ Do not move production files yet.
 
 ### Phase 1: Create boundaries before core moves
 
-Create `numbat_core.runtime` and move or extract low-level application-runtime
+Create `numbat.runtime` and move or extract low-level application-runtime
 concerns there.
 
 The immediate objective is to remove imports of `numbat` from low-level mesh
@@ -163,16 +155,16 @@ Suggested early candidates:
 
 | Current area                                | Proposed internal area                       |
 | ------------------------------------------- | -------------------------------------------- |
-| `reporting`, `nbversion`, `nbplatform`      | `numbat_core` top level (see note below)     |
-| `nbtypes`                                   | `numbat_core.nbtypes`                        |
-| `numbattools`                               | `numbat_core.utils.numeric`                  |
-| `bulkprops`, `materialprops`, `crystalsyms` | `numbat_core.materials`                      |
-| `voigt`                                     | `numbat_core.materials.elastic_tensors`      |
+| `reporting`, `nbversion`, `nbplatform`      | `numbat` top level (see note below)     |
+| `nbtypes`                                   | `numbat.nbtypes`                        |
+| `numbattools`                               | `numbat.utils.numeric`                  |
+| `bulkprops`, `materialprops`, `crystalsyms` | `numbat.materials`                      |
+| `voigt`                                     | `numbat.materials.elastic_tensors`      |
 
 `numtools` does not exist in this repository and was not moved. `reporting`,
-`nbversion`, and `nbplatform` sit at the top level of `numbat_core` rather than
-under `runtime/`, because `numbat_core.runtime` is a module, not a package.
-`nbtypes` was not in the original table. It moves so that `numbat_core` does
+`nbversion`, and `nbplatform` sit at the top level of `numbat` rather than
+under `runtime/`, because `numbat.runtime` is a module, not a package.
+`nbtypes` was not in the original table. It moves so that `numbat` does
 not import flat modules. `voigt_old.py` is left untouched.
 
 For each move:
@@ -182,7 +174,7 @@ For each move:
 3. Retain a top-level facade, for example:
 
    ```python
-   from numbat_core.materials.bulkprops import *
+   from numbat.materials.bulkprops import *
    ```
 
 4. Run import and smoke tests.
@@ -191,7 +183,7 @@ For each move:
 
 ### Phase 3: Consolidate mesh infrastructure
 
-The following related components should eventually become `numbat_core.mesh`:
+The following related components should eventually become `numbat.mesh`:
 
 - `meshing/`;
 - `msh/`;
@@ -202,7 +194,7 @@ The following related components should eventually become `numbat_core.mesh`:
 Suggested internal structure:
 
 ```text
-numbat_core/mesh/
+numbat/mesh/
 ├── fem.py
 ├── mail.py
 ├── geometry.py
@@ -236,20 +228,20 @@ compatibility resources for user models.
 Migrate this phase in the following order:
 
 1. Move the implementations of `usermesh.py`, `nbgmsh.py`, `femmesh.py`, and
-   `meshing/templates.py` to `numbat_core.mesh`, then replace their top-level
+   `meshing/templates.py` to `numbat.mesh`, then replace their top-level
    modules and the `meshing` package with re-exporting facades.
-2. Move the built-in family modules to `numbat_core.mesh.builtin`, retaining
+2. Move the built-in family modules to `numbat.mesh.builtin`, retaining
    `msh.builtin_meshes` as a facade that re-exports every built-in class.
 3. Package the built-in manifest and `.geo` files with the internal mesh
    package. Provide a resource-path helper so built-in template discovery does
    not rely on `backend/msh` being the implementation location.
-4. Update internal consumers to import `numbat_core.mesh.*`; preserve the
+4. Update internal consumers to import `numbat.mesh.*`; preserve the
    existing flat imports and `msh.builtin_meshes.*` imports for tutorials,
    existing scripts, and serialized built-in geometries.
 5. Test the built-in manifest, a registered external user-waveguide directory,
    Gmsh template resolution, mesh generation, and geometry pickle round trips.
 
-The shipped built-in manifest uses `numbat_core.mesh.builtin` so NumBAT's
+The shipped built-in manifest uses `numbat.mesh.builtin` so NumBAT's
 forward path does not trigger a deprecation warning during startup. The
 `msh.builtin_meshes` facade remains importable for existing scripts and
 serialized references. The template loader accepts both module paths; test
@@ -257,10 +249,10 @@ both paths with equivalent manifests.
 
 ### Phase 4: Consolidate plotting
 
-Move all plotting implementations to `numbat_core.plotting`:
+Move all plotting implementations to `numbat.plotting`:
 
 ```text
-numbat_core/plotting/
+numbat/plotting/
 ├── axes.py
 ├── fields.py
 ├── gain.py
@@ -282,24 +274,24 @@ paths are unavailable:
 
 | Legacy path              | Internal implementation                |
 | ------------------------ | -------------------------------------- |
-| `plotmodes.py`           | `numbat_core.plotting.modes`           |
-| `plotmoderaw.py`         | `numbat_core.plotting.raw_modes`       |
-| `plotgain.py`            | `numbat_core.plotting.gain`            |
-| `plotting/plotprefs.py`  | `numbat_core.plotting.preferences`     |
-| `plotting/plottools.py`  | `numbat_core.plotting.tools`           |
-| `plotting/tidyaxes.py`   | `numbat_core.plotting.axes`            |
-| `plotting/profiles.py`   | `numbat_core.plotting.profiles`        |
-| `plotting/gmsh.py`       | `numbat_core.plotting.mesh`            |
-| `msh/gmsh.py`            | `numbat_core.plotting.mesh`            |
+| `plotmodes.py`           | `numbat.plotting.modes`           |
+| `plotmoderaw.py`         | `numbat.plotting.raw_modes`       |
+| `plotgain.py`            | `numbat.plotting.gain`            |
+| `plotting/plotprefs.py`  | `numbat.plotting.preferences`     |
+| `plotting/plottools.py`  | `numbat.plotting.tools`           |
+| `plotting/tidyaxes.py`   | `numbat.plotting.axes`            |
+| `plotting/profiles.py`   | `numbat.plotting.profiles`        |
+| `plotting/gmsh.py`       | `numbat.plotting.mesh`            |
+| `msh/gmsh.py`            | `numbat.plotting.mesh`            |
 
-Before moving the modules, remove plotting behavior from `numbat_core.mesh`.
-`FEMScalarFieldPlotter` belongs in `numbat_core.plotting.fields`, and MAIL
-mesh rendering belongs in `numbat_core.plotting.mesh`; `FemMesh` and
+Before moving the modules, remove plotting behavior from `numbat.mesh`.
+`FEMScalarFieldPlotter` belongs in `numbat.plotting.fields`, and MAIL
+mesh rendering belongs in `numbat.plotting.mesh`; `FemMesh` and
 `MailData` remain pure mesh representations. Move MSH file parsing to
-`numbat_core.mesh.gmsh_io`, then have plotting consume that API.
+`numbat.mesh.gmsh_io`, then have plotting consume that API.
 
-Update all implementation imports to use `numbat_core.plotting.*` and retain
-no `numbat_core.plotting` imports under `numbat_core.mesh`. Add headless
+Update all implementation imports to use `numbat.plotting.*` and retain
+no `numbat.plotting` imports under `numbat.mesh`. Add headless
 rendering tests and verify both legacy and internal module paths resolve to
 the same module objects.
 
@@ -309,7 +301,7 @@ After mesh and plotting no longer import the application root, move the
 simulation modules as a coherent group:
 
 ```text
-numbat_core/
+numbat/
 ├── geometry/
 │   ├── structure.py
 │   └── usermesh.py
@@ -327,8 +319,8 @@ follow rather than precede the low-level and mesh migrations.
 
 Retire the legacy flat imports (`structure`, `usermesh`, `modes`, `modecalcs`,
 `integration`, `simresult`, and `numbat`) once users have migrated to the
-public package. The former `numbat_core.mesh.geometry` path is likewise
-retired in favour of `numbat_core.geometry.usermesh`.
+public package. The former `numbat.mesh.geometry` path is likewise
+retired in favour of `numbat.geometry.usermesh`.
 
 ### Phase 6: Introduce the modern public package
 
@@ -347,7 +339,7 @@ Specialist flat imports are no longer available. Update tutorials
 incrementally to use the public package rather than compatibility aliases.
 
 **Implemented:** `backend/numbat/` is now a package that replaces the flat
-`numbat.py`. It re-exports every name of `numbat_core.api.application`
+`numbat.py`. It re-exports every name of `numbat.api.application`
 (including private names, via module `__getattr__`) and adds the submodules
 `numbat.materials`, `numbat.mesh`, `numbat.geometry` and `numbat.solvers`.
 No new `Simulation` name was introduced. Pip packaging is deferred; `backend`
@@ -371,7 +363,7 @@ example scripts using the old flat imports, kept to document migration;
 The first restructuring branch should contain only:
 
 1. import smoke tests;
-2. `numbat_core.runtime`;
+2. `numbat.runtime`;
 3. migration of reporting, platform/version, and numerical utility modules;
 4. top-level compatibility facades;
 5. conversion of a small number of internal consumers to the new paths.

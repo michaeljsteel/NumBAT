@@ -18,9 +18,9 @@ import numpy as np
 import numpy.random as nprand
 import copy
 
-from numbat_core.nbtypes import unit_x, unit_y, unit_z
-from numbat_core import reporting
-from numbat_core.utils import numeric as nbtools
+from numbat.nbtypes import unit_x, unit_y, unit_z
+from .. import reporting
+from numbat.utils import numeric as nbtools
 
 # Array that converts between 4th rank tensors in terms of x,y,z and Voigt notation
 #               [[xx,xy,xz], [yx,yy,yz], [zx,zy,zz]]

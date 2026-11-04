@@ -34,7 +34,7 @@ import sys
 import time
 from pathlib import Path
 
-from numbat_core import nbplatform
+from .. import nbplatform
 
 try:
     from fortran import nb_fortran
@@ -46,11 +46,11 @@ except ImportError:
           """)
     sys.exit(1)
 
-from numbat_core.geometry import structure
-from numbat_core.solvers.modecalcs import Simulation
-from numbat_core import nbversion, reporting, runtime
-from numbat_core.mesh import templates as mshtemplates
-from numbat_core.plotting.preferences import PlotPrefs
+from .. import nbversion, reporting, runtime
+from ..geometry import structure
+from ..mesh import templates as mshtemplates
+from ..plotting.preferences import PlotPrefs
+from ..solvers.modecalcs import Simulation
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'

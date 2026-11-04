@@ -25,8 +25,8 @@ from numpy.typing import NDArray
 
 import numtools.rootbracket as ntrb
 from nbanalytic.elasticmodeplots import ModeFunction1D
-from numbat_core.nbtypes import NormalisationConstants, SI_GHz
-from numbat_core.plotting.tools import get_rgb_for_poln
+from numbat.nbtypes import NormalisationConstants, SI_GHz
+from numbat.plotting.tools import get_rgb_for_poln
 
 # Example use
 # explore/me/badribs/rib_saw.py

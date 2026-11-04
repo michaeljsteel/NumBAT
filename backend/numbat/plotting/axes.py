@@ -5,7 +5,7 @@ from typing import Optional, Union
 from matplotlib.axes import Axes
 from matplotlib.colorbar import Colorbar
 
-from numbat_core import runtime
+from .. import runtime
 
 
 class TidyAxes:

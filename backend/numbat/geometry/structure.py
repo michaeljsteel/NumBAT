@@ -22,16 +22,16 @@
 
 import copy
 
-from numbat_core.materials import materials
+from numbat.materials import materials
 from fortran import nb_fortran
-from numbat_core.solvers.modecalcs import ac_mode_calculation, em_mode_calculation
-from numbat_core import reporting, runtime
-from numbat_core.materials.materialprops import ElasticProps, OpticalProps
-from numbat_core.mesh import templates as mshtemplates
-from numbat_core.nbtypes import SI_nm
-from numbat_core.plotting import mesh as pltgmsh
-from numbat_core.plotting import profiles as pltprof
-from numbat_core.utils.numeric import run_subprocess
+from numbat.solvers.modecalcs import ac_mode_calculation, em_mode_calculation
+from .. import reporting, runtime
+from numbat.materials.materialprops import ElasticProps, OpticalProps
+from numbat.mesh import templates as mshtemplates
+from numbat.nbtypes import SI_nm
+from numbat.plotting import mesh as pltgmsh
+from numbat.plotting import profiles as pltprof
+from numbat.utils.numeric import run_subprocess
 
 
 class Structure:

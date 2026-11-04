@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random
 
-from numbat_core.nbtypes import SI_um
-from numbat_core.plotting import tools as plottools
+from numbat.nbtypes import SI_um
+from numbat.plotting import tools as plottools
 
 
 def do_raw_fem_mode_plot(l_comps, mode_interpolator, fem_mesh, fem_evecs, mode_num):

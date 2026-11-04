@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageOps
 
-from numbat_core import runtime
+from .. import runtime
 
 
 def get_rgb_for_poln(px, py, pz):

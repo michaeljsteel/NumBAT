@@ -16,8 +16,8 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 import numbat
 from numbat import materials
 from numbat.geometry import UserGeometryBase
+from numbat.mesh import templates
 from numbat.solvers import EMSimResult
-from numbat_core.mesh import templates
 
 RECT_DOMAIN_NM = 1500.0
 BUILTIN_SHAPES = [
@@ -66,7 +66,7 @@ def test_builtin_waveguide_construction(nbapp):
 
     assert wg.inc_shape == "rectangular"
     assert wg.wg_geom._shape_name == "rectangular"
-    assert type(wg.wg_geom).__module__.startswith("numbat_core.mesh.builtin")
+    assert type(wg.wg_geom).__module__.startswith("numbat.mesh.builtin")
     assert np.real(wg.get_material("a").refindex_n) > 3.0
 
 

@@ -21,11 +21,11 @@ import copy
 
 import numpy as np
 
-from numbat_core.solvers import sbsgain as integration
+from numbat.solvers import sbsgain as integration
 from fortran import nb_fortran
-from numbat_core.solvers.modes import ModeAC, ModeEM, ModeInterpolator
-from numbat_core import reporting
-from numbat_core.nbtypes import (
+from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
+from .. import reporting
+from numbat.nbtypes import (
     FieldTag,
     FieldType,
     PointGroup,
@@ -33,8 +33,8 @@ from numbat_core.nbtypes import (
     SymRep,
     twopi,
 )
-from numbat_core.plotting import modes as plotmodes
-from numbat_core.plotting.tools import progressBar
+from numbat.plotting import modes as plotmodes
+from numbat.plotting.tools import progressBar
 
 
 class SimResult:

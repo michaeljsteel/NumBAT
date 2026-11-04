@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from numbat_core import runtime
-from numbat_core.mesh.gmsh_io import read_msh2_mesh
-from numbat_core.mesh.mail import MailData
-from numbat_core.plotting import tools as plottools
-from numbat_core.plotting.axes import TidyAxes
-from numbat_core.plotting.tools import save_and_close_figure
-from numbat_core.utils.numeric import f2f_with_subs, run_subprocess
+from .. import runtime
+from numbat.mesh.gmsh_io import read_msh2_mesh
+from numbat.mesh.mail import MailData
+from numbat.plotting import tools as plottools
+from numbat.plotting.axes import TidyAxes
+from numbat.plotting.tools import save_and_close_figure
+from numbat.utils.numeric import f2f_with_subs, run_subprocess
 
 
 def plot_mail_mesh(mesh_mail_fname: Path | str, outpref: Optional[str]) -> None:

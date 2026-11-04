@@ -9,7 +9,7 @@ import pytest
 
 sys.path.append("backend")
 
-from numbat_core.mesh.builtin import RoundedWedge3, RoundedWedge4, RoundedWedge6
+from numbat.mesh.builtin import RoundedWedge3, RoundedWedge4, RoundedWedge6
 
 WEDGE_CLASSES = [(RoundedWedge3, 3, 90.0, 60.0), (RoundedWedge4, 4, 45.0, 45.0), (RoundedWedge6, 6, 0.0, 30.0)]
 

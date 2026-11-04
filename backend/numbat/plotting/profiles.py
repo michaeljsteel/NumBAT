@@ -2,10 +2,10 @@ import matplotlib as plt
 import numpy as np
 import scipy
 
-from numbat_core import reporting
-from numbat_core.mesh import mail as nbgmsh
-from numbat_core.plotting import tools as plottools
-from numbat_core.plotting.fields import FEMScalarFieldPlotter
+from .. import reporting
+from numbat.mesh import mail as nbgmsh
+from numbat.plotting import tools as plottools
+from numbat.plotting.fields import FEMScalarFieldPlotter
 
 
 def _make_dielectric_plotter(wguide, optical_props, as_epsilon, n_points):

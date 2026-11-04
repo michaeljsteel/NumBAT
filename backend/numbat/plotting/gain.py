@@ -21,11 +21,11 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from numbat_core import reporting, runtime
-from numbat_core.nbtypes import SI_GHz
-from numbat_core.plotting.axes import TidyAxes
-from numbat_core.plotting.modes import Decorator
-from numbat_core.plotting.tools import save_and_close_figure
+from .. import reporting, runtime
+from numbat.nbtypes import SI_GHz
+from numbat.plotting.axes import TidyAxes
+from numbat.plotting.modes import Decorator
+from numbat.plotting.tools import save_and_close_figure
 
 
 def gain_spectra(sim_AC, SBS_gain, SBS_gain_PE, SBS_gain_MB, v_linewidth_Hz, q_AC,

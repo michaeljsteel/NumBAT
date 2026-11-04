@@ -2,7 +2,7 @@
 
 ``backend/numbat/`` replaces the legacy flat ``numbat.py``. It must expose
 every name the old module did, and the preferred submodules must resolve to
-the same objects as the ``numbat_core`` implementation. Runs in a fresh
+the same objects as the ``numbat`` implementation. Runs in a fresh
 interpreter with PYTHONPATH=backend.
 """
 
@@ -38,7 +38,7 @@ def test_numbat_is_a_package():
 def test_every_legacy_application_name_is_available():
     code = """
 import numbat
-import numbat_core.api.application as app
+import numbat.api.application as app
 names = [n for n in dir(app) if not (n.startswith('__') and n.endswith('__'))]
 missing = [n for n in names if not hasattr(numbat, n)]
 assert not missing, missing

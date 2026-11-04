@@ -16,7 +16,7 @@
 import numpy as np
 import scipy.linalg
 
-from numbat_core.materials import elastic_tensors as voigt
+from numbat.materials import elastic_tensors as voigt
 
 
 def power_flux_christoffel(kapv, v_p, evec, c_stiff):

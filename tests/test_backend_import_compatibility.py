@@ -25,62 +25,62 @@ TUTORIAL_IMPORT_ORDER = [
 
 IMPORTABLE_AFTER_NUMBAT = [
     "numbat",
-    "numbat_core.mesh",
-    "numbat_core.mesh.fem",
-    "numbat_core.mesh.mail",
-    "numbat_core.mesh.templates",
-    "numbat_core.mesh.builtin",
-    "numbat_core.plotting",
-    "numbat_core.plotting.axes",
-    "numbat_core.plotting.fields",
-    "numbat_core.plotting.gain",
-    "numbat_core.plotting.materials",
-    "numbat_core.plotting.mesh",
-    "numbat_core.plotting.modes",
-    "numbat_core.plotting.preferences",
-    "numbat_core.plotting.profiles",
-    "numbat_core.plotting.raw_modes",
-    "numbat_core.plotting.tools",
-    "numbat_core.geometry",
-    "numbat_core.geometry.structure",
-    "numbat_core.geometry.usermesh",
-    "numbat_core.solvers",
-    "numbat_core.solvers.modes",
-    "numbat_core.solvers.modecalcs",
-    "numbat_core.solvers.sbsgain",
-    "numbat_core.solvers.simresult",
-    "numbat_core.api",
-    "numbat_core.api.application",
+    "numbat.mesh",
+    "numbat.mesh.fem",
+    "numbat.mesh.mail",
+    "numbat.mesh.templates",
+    "numbat.mesh.builtin",
+    "numbat.plotting",
+    "numbat.plotting.axes",
+    "numbat.plotting.fields",
+    "numbat.plotting.gain",
+    "numbat.plotting.materials",
+    "numbat.plotting.mesh",
+    "numbat.plotting.modes",
+    "numbat.plotting.preferences",
+    "numbat.plotting.profiles",
+    "numbat.plotting.raw_modes",
+    "numbat.plotting.tools",
+    "numbat.geometry",
+    "numbat.geometry.structure",
+    "numbat.geometry.usermesh",
+    "numbat.solvers",
+    "numbat.solvers.modes",
+    "numbat.solvers.modecalcs",
+    "numbat.solvers.sbsgain",
+    "numbat.solvers.simresult",
+    "numbat.api",
+    "numbat.api.application",
 ]
 
 IMPORTABLE_STANDALONE = [
     "numbat",
-    "numbat_core.mesh",
-    "numbat_core.geometry",
-    "numbat_core.geometry.structure",
-    "numbat_core.geometry.usermesh",
-    "numbat_core.solvers",
-    "numbat_core.solvers.modes",
-    "numbat_core.solvers.modecalcs",
-    "numbat_core.solvers.sbsgain",
-    "numbat_core.solvers.simresult",
-    "numbat_core.api",
-    "numbat_core.api.application",
-    "numbat_core.mesh.fem",
-    "numbat_core.mesh.mail",
-    "numbat_core.mesh.templates",
-    "numbat_core.mesh.builtin",
-    "numbat_core.plotting",
-    "numbat_core.plotting.axes",
-    "numbat_core.plotting.fields",
-    "numbat_core.plotting.gain",
-    "numbat_core.plotting.materials",
-    "numbat_core.plotting.mesh",
-    "numbat_core.plotting.modes",
-    "numbat_core.plotting.preferences",
-    "numbat_core.plotting.profiles",
-    "numbat_core.plotting.raw_modes",
-    "numbat_core.plotting.tools",
+    "numbat.mesh",
+    "numbat.geometry",
+    "numbat.geometry.structure",
+    "numbat.geometry.usermesh",
+    "numbat.solvers",
+    "numbat.solvers.modes",
+    "numbat.solvers.modecalcs",
+    "numbat.solvers.sbsgain",
+    "numbat.solvers.simresult",
+    "numbat.api",
+    "numbat.api.application",
+    "numbat.mesh.fem",
+    "numbat.mesh.mail",
+    "numbat.mesh.templates",
+    "numbat.mesh.builtin",
+    "numbat.plotting",
+    "numbat.plotting.axes",
+    "numbat.plotting.fields",
+    "numbat.plotting.gain",
+    "numbat.plotting.materials",
+    "numbat.plotting.mesh",
+    "numbat.plotting.modes",
+    "numbat.plotting.preferences",
+    "numbat.plotting.profiles",
+    "numbat.plotting.raw_modes",
+    "numbat.plotting.tools",
 ]
 
 # Entry points that may import the application root directly.
@@ -141,18 +141,18 @@ def test_low_level_modules_do_not_import_application_root():
 
 
 def test_mesh_modules_do_not_import_internal_plotting():
-    mesh_dir = BACKEND_DIR / "numbat_core" / "mesh"
+    mesh_dir = BACKEND_DIR / "numbat" / "mesh"
     offenders = []
     for path in sorted(mesh_dir.rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module and node.module.startswith(
-                "numbat_core.plotting"
+                "numbat.plotting"
             ):
                 offenders.append(str(path.relative_to(BACKEND_DIR)))
                 break
             if isinstance(node, ast.Import) and any(
-                alias.name.startswith("numbat_core.plotting") for alias in node.names
+                alias.name.startswith("numbat.plotting") for alias in node.names
             ):
                 offenders.append(str(path.relative_to(BACKEND_DIR)))
                 break

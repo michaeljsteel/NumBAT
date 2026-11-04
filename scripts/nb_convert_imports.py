@@ -49,7 +49,7 @@ FROM_MODULES = {
     "plotting.ipythontools": "numbat.plotting.ipython",
 }
 
-LEGACY_NAMES = set(IMPORT_MODULES) | set(FROM_MODULES) | {"numbat_core"}
+LEGACY_NAMES = set(IMPORT_MODULES) | set(FROM_MODULES) | {"numbat"}
 
 RE_IMPORT = re.compile(r"^(?P<ind>\s*)import\s+(?P<mod>[A-Za-z_][\w]*)(?:\s+as\s+(?P<as>\w+))?\s*(?P<tail>#.*)?$")
 RE_FROM = re.compile(r"^(?P<ind>\s*)from\s+(?P<mod>[\w.]+)\s+import\s+(?P<rest>.+)$")

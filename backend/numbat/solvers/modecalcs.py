@@ -18,17 +18,17 @@
 import numpy as np
 
 from fortran import nb_fortran
-from numbat_core import reporting
-from numbat_core.mesh.fem import FemMesh
-from numbat_core.nbtypes import (
+from .. import reporting
+from numbat.mesh.fem import FemMesh
+from numbat.nbtypes import (
     QAcMethod,
     SI_nm,
     twopi,
 )
 
 #import yep
-from numbat_core.utils.numeric import process_fortran_return
-from numbat_core.solvers.simresult import ACSimResult, EMSimResult
+from numbat.utils.numeric import process_fortran_return
+from numbat.solvers.simresult import ACSimResult, EMSimResult
 
 
 class Simulation:

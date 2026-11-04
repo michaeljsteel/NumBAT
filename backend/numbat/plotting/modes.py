@@ -22,10 +22,10 @@ import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from numbat_core import runtime
-from numbat_core.nbtypes import FieldTag, FieldType, SI_GHz, SI_THz, SI_um, twopi
-from numbat_core.plotting.axes import TidyAxes
-from numbat_core.plotting.tools import save_and_close_figure
+from .. import runtime
+from numbat.nbtypes import FieldTag, FieldType, SI_GHz, SI_THz, SI_um, twopi
+from numbat.plotting.axes import TidyAxes
+from numbat.plotting.tools import save_and_close_figure
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):

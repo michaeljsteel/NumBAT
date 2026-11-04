@@ -14,7 +14,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
-from numbat_core.nbtypes import CrystalGroup, unit_x, unit_y, unit_z
+from numbat.nbtypes import CrystalGroup, unit_x, unit_y, unit_z
 
 def construct_crystal_for_symmetry_class(crystal_class, symmetry_group=None):
     match crystal_class:

@@ -11,10 +11,10 @@ import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 import numpy as np
 
-from numbat_core import runtime
-from numbat_core.mesh.fem import FemMesh, validate_1D_cut_format
-from numbat_core.plotting import tools as plottools
-from numbat_core.utils.numeric import np_min_max
+from .. import runtime
+from numbat.mesh.fem import FemMesh, validate_1D_cut_format
+from numbat.plotting import tools as plottools
+from numbat.utils.numeric import np_min_max
 
 
 class FEMScalarFieldPlotter:

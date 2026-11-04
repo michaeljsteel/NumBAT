@@ -19,7 +19,7 @@ import traceback
 from importlib import import_module
 from pathlib import Path
 
-from numbat_core import reporting
+from .. import reporting
 
 g_waveguide_templates = {}   # module level dictionary of waveguide template name to implementing class
 _registered_waveguide_directories = []

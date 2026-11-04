@@ -9,6 +9,6 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
 def test_public_plotting_modules_alias_internal_implementations():
     public = importlib.import_module("numbat.plotting")
-    internal_modes = importlib.import_module("numbat_core.plotting.modes")
+    internal_modes = importlib.import_module("numbat.plotting.modes")
 
     assert public.Decorator is internal_modes.Decorator

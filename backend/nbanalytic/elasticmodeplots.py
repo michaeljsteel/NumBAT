@@ -39,9 +39,9 @@ from matplotlib.axes import Axes as MplAxes
 from matplotlib.figure import Figure
 from numpy.typing import NDArray
 
-from numbat_core.nbtypes import SI_GHz, SI_kmps, SI_um
-from numbat_core.plotting import preferences as nbpp
-from numbat_core.plotting import tools as nbpt
+from numbat.nbtypes import SI_GHz, SI_kmps, SI_um
+from numbat.plotting import preferences as nbpp
+from numbat.plotting import tools as nbpt
 
 twopi = 2 * math.pi
 

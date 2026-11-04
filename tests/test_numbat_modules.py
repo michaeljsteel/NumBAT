@@ -9,24 +9,24 @@ import pytest
 
 BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
 
-NUMBAT_CORE_MODULES = [
-    "numbat_core.nbtypes",
-    "numbat_core.reporting",
-    "numbat_core.nbversion",
-    "numbat_core.nbplatform",
-    "numbat_core.utils.threading",
-    "numbat_core.utils.numeric",
-    "numbat_core.materials.materials",
-    "numbat_core.materials.crystalsyms",
-    "numbat_core.materials.materialprops",
-    "numbat_core.materials.bulkprops",
-    "numbat_core.materials.elastic_tensors",
-    "numbat_core.geometry.structure",
-    "numbat_core.geometry.usermesh",
-    "numbat_core.solvers.modes",
-    "numbat_core.solvers.modecalcs",
-    "numbat_core.solvers.sbsgain",
-    "numbat_core.solvers.simresult",
+NUMBAT_MODULES = [
+    "numbat.nbtypes",
+    "numbat.reporting",
+    "numbat.nbversion",
+    "numbat.nbplatform",
+    "numbat.utils.threading",
+    "numbat.utils.numeric",
+    "numbat.materials.materials",
+    "numbat.materials.crystalsyms",
+    "numbat.materials.materialprops",
+    "numbat.materials.bulkprops",
+    "numbat.materials.elastic_tensors",
+    "numbat.geometry.structure",
+    "numbat.geometry.usermesh",
+    "numbat.solvers.modes",
+    "numbat.solvers.modecalcs",
+    "numbat.solvers.sbsgain",
+    "numbat.solvers.simresult",
 ]
 
 def _run(code: str) -> subprocess.CompletedProcess:
@@ -43,8 +43,8 @@ def _run(code: str) -> subprocess.CompletedProcess:
     )
 
 
-@pytest.mark.parametrize("module", NUMBAT_CORE_MODULES)
-def test_numbat_core_module_imports_standalone(module):
+@pytest.mark.parametrize("module", NUMBAT_MODULES)
+def test_numbat_module_imports_standalone(module):
     res = _run(f"import importlib; importlib.import_module({module!r})")
     assert res.returncode == 0, res.stderr
 

@@ -1,4 +1,4 @@
-from numbat_core.geometry.usermesh import UserGeometryBase
+from numbat.geometry.usermesh import UserGeometryBase
 
 
 class Slot(UserGeometryBase):
