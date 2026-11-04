@@ -1,13 +1,13 @@
 project(
   'NumBAT Fortran backend',
   ['fortran', 'c'],
-  version: '2.5.1', # this has to match the version in numbat_core/nbversion.py
+  version: '2.5.2', # this has to match the version in numbat_core/nbversion.py
   meson_version: '>1.4.0',
 )
 
 version_output = run_command(
   find_program('python3'),
-  files('../numbat_core/nbversion.py'),
+  files('../numbat/nbversion.py'),
   check: true,
 )
 project_version = version_output.stdout().strip()
