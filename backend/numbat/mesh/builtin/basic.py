@@ -22,12 +22,16 @@ class Circular(UserGeometryBase):
             3,
         )
 
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
+        gmshfile, _nelts = _process_one_and_two_incls(self._d_params)
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
 
     def apply_parameters(self):
-
         subs = _process_one_and_two_incls_subs(self._gmsh_template_filename)
+        if self.get_param("inc_a_y") is None:
+            subs = [
+                (old, new, "inc_a_x") if parameter == "inc_a_y" else (old, new, parameter)
+                for old, new, parameter in subs
+            ]
         subs.append(("rect = 1;", "rect = %d;", "0"))  # apply circularness
 
         return subs
@@ -69,7 +73,7 @@ class Rectangular(UserGeometryBase):
             3,
         )
 
-        gmshfile, nelts = _process_one_and_two_incls(self._d_params)
+        gmshfile, _nelts = _process_one_and_two_incls(self._d_params)
 
         self._gmsh_template_filename = gmshfile  # special case where Circular and Rectangular share common gmshfile, so geom name and geom file are different
 

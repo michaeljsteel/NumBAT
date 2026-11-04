@@ -12,7 +12,7 @@ import pytest
 sys.path.append("backend")
 
 from numbat.mesh import templates
-from numbat.mesh.builtin import RoundedBowtie, RoundedWedge
+from numbat.mesh.builtin import Circular, RoundedBowtie, RoundedWedge
 from numbat.mesh.templates import _load_waveguide_templates
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +32,28 @@ ROUNDED_BOWTIE_PARAMETERS = {
     "lc_refine_2": 2,
     "rad_wg": 1000,
 }
+
+
+def test_circular_geometry_defaults_vertical_diameter_to_horizontal_diameter():
+    geometry = Circular(
+        {
+            "domain_x": 16000.0,
+            "domain_y": 16000.0,
+            "inc_a_x": 8000.0,
+            "lc_bkg": 0.1,
+            "lc_refine_1": 4.0,
+            "lc_refine_2": 4.0,
+        },
+        {},
+    )
+    geometry.init_geometry()
+
+    geo = geometry.make_geometry(BUILTIN_TEMPLATE_DIRECTORY)
+
+    assert "a1 = 8000.000000;" in geo
+    assert "a1y = 8000.000000;" in geo
+    assert "rect = 0;" in geo
+
 
 def test_builtin_waveguide_index_uses_normal_import_path():
     waveguides = _load_waveguide_templates(
