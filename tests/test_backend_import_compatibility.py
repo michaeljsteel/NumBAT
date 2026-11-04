@@ -2,7 +2,7 @@
 
 Each check runs in a fresh interpreter with PYTHONPATH=backend. Public and
 internal implementation modules must import successfully, while legacy
-facades must report their replacement import paths.
+facades must be unavailable.
 """
 
 import ast
@@ -128,24 +128,38 @@ IMPORTABLE_STANDALONE = [
 ]
 
 LEGACY_IMPORTS = [
-    "materials",
+    "bulkprops",
+    "crystalsyms",
     "femmesh",
+    "integration",
+    "materialprops",
+    "materials",
     "modecalcs",
     "modes",
-    "structure",
+    "nbgmsh",
+    "nbplatform",
+    "nbthread",
+    "nbtypes",
+    "nbversion",
+    "numbattools",
+    "plotgain",
+    "plotmoderaw",
+    "plotmodes",
+    "reporting",
     "simresult",
+    "structure",
+    "usermesh",
+    "voigt",
+    "meshing",
     "meshing.templates",
+    "plotting",
     "plotting.profiles",
     "plotting.gmsh",
     "plotting.materials",
     "plotting.plotprefs",
     "plotting.plottools",
     "plotting.tidyaxes",
-    "plotgain",
-    "plotmoderaw",
-    "plotmodes",
-    "nbgmsh",
-    "integration",
+    "msh",
     "msh.builtin_meshes",
     "msh.gmsh",
     "msh.builtin_meshes._common",
@@ -204,9 +218,9 @@ def test_module_imports_standalone(tmp_path, module):
 
 @pytest.mark.parametrize("module", LEGACY_IMPORTS)
 def test_legacy_module_imports_are_fatal(tmp_path, module):
-    result = _run_imports("numbat", module, cwd=tmp_path)
+    result = _run_imports(module, cwd=tmp_path)
     assert result.returncode != 0
-    assert "is no longer supported; use '" in result.stderr
+    assert "ModuleNotFoundError: No module named" in result.stderr
 
 
 def _imports_application_root(path):

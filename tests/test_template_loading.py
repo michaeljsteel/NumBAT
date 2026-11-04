@@ -11,9 +11,9 @@ import pytest
 
 sys.path.append("backend")
 
-from meshing import templates
-from meshing.templates import _load_waveguide_templates
-from msh.builtin_meshes import RoundedBowtie, RoundedWedge
+from numbat_core.mesh import templates
+from numbat_core.mesh.builtin import RoundedBowtie, RoundedWedge
+from numbat_core.mesh.templates import _load_waveguide_templates
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 BUILTIN_WAVEGUIDE_DIRECTORY = PROJECT_ROOT / "backend" / "numbat_core" / "mesh" / "builtin"

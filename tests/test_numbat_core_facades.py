@@ -1,4 +1,4 @@
-"""Checks for supported imports and fatal legacy-import errors."""
+"""Checks for supported imports and unavailable legacy facade paths."""
 
 import os
 import subprocess
@@ -40,17 +40,18 @@ def _run(code: str) -> subprocess.CompletedProcess:
         env=env,
         cwd=BACKEND_DIR,
         timeout=120,
+        check=False,
     )
 
 
 @pytest.mark.parametrize("old, _new", FACADE_PAIRS)
-def test_legacy_imports_are_fatal(old, _new):
+def test_legacy_imports_are_unavailable(old, _new):
     code = f"""
 import importlib
 try:
     importlib.import_module({old!r})
-except ImportError as exc:
-    assert "no longer supported" in str(exc), exc
+except ModuleNotFoundError:
+    pass
 else:
     raise AssertionError("legacy import unexpectedly succeeded")
 """
@@ -61,30 +62,6 @@ else:
 @pytest.mark.parametrize("_old, new", FACADE_PAIRS)
 def test_numbat_core_module_imports_standalone(_old, new):
     res = _run(f"import importlib; importlib.import_module({new!r})")
-    assert res.returncode == 0, res.stderr
-
-
-@pytest.mark.parametrize(
-    "legacy_import, replacement",
-    [
-        ("import nbtypes", "numbat.types"),
-        ("import materials", "numbat.materials"),
-        ("import integration", "numbat.solvers.sbsgain"),
-        ("import plotting.profiles", "numbat.plotting"),
-        ("import meshing.templates", "numbat.mesh"),
-        ("import msh.builtin_meshes.basic", "numbat.mesh"),
-    ],
-)
-def test_legacy_import_reports_replacement(legacy_import, replacement):
-    code = f"""
-try:
-    {legacy_import}
-except ImportError as exc:
-    assert {replacement!r} in str(exc), exc
-else:
-    raise AssertionError("legacy import unexpectedly succeeded")
-"""
-    res = _run(code)
     assert res.returncode == 0, res.stderr
 
 

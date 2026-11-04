@@ -26,6 +26,7 @@ def _run(code: str) -> subprocess.CompletedProcess:
         env=env,
         cwd=BACKEND_DIR,
         timeout=120,
+        check=False,
     )
 
 
@@ -54,15 +55,15 @@ for n in ('NumBATApp', 'load_simulation', 'register_waveguide_directory',
 @pytest.mark.parametrize(
     "stmt",
     [
-        "from numbat.materials import Material; import materials; assert Material is materials.Material",
-        "from numbat.mesh import FemMesh, UserGeometryBase; import femmesh, usermesh; assert FemMesh is femmesh.FemMesh and UserGeometryBase is usermesh.UserGeometryBase",
-        "from numbat.geometry import Structure; import structure; assert Structure is structure.Structure",
-        "from numbat.solvers import EMSimulation, ACSimulation, Simulation, Mode, EMSimResult; import modecalcs; assert EMSimulation is modecalcs.EMSimulation",
+        "from numbat.materials import Material; assert Material",
+        "from numbat.mesh import FemMesh, UserGeometryBase; assert FemMesh and UserGeometryBase",
+        "from numbat.geometry import Structure; assert Structure",
+        "from numbat.solvers import EMSimulation, ACSimulation, Simulation, Mode, EMSimResult; assert EMSimulation and ACSimulation and Simulation and Mode and EMSimResult",
         "import numbat.materials, numbat.mesh, numbat.geometry, numbat.solvers",
         "from numbat.types import SI_GHz, twopi, PointGroup",
-        "from numbat.mesh import MailData; import nbgmsh; assert MailData is nbgmsh.MailData",
+        "from numbat.mesh import MailData; assert MailData",
         "from numbat.parallel import launch_worker_processes_and_wait, launch_worker_threads_and_wait",
-        "from numbat.plotting import Decorator; import plotgain; assert Decorator is plotgain.Decorator",
+        "from numbat.plotting import Decorator; assert Decorator",
         "from numbat.plotting.ipython import img_single, img_pair, img_triple",
         "import numbat.utils",
     ],
@@ -72,6 +73,10 @@ def test_public_submodules(stmt):
     assert res.returncode == 0, res.stderr
 
 
-def test_legacy_flat_imports_still_work_after_numbat_package():
-    res = _run("import numbat, materials, structure, modecalcs, integration, usermesh, femmesh")
-    assert res.returncode == 0, res.stderr
+@pytest.mark.parametrize(
+    "module",
+    ["materials", "structure", "modecalcs", "integration", "usermesh", "femmesh"],
+)
+def test_legacy_flat_imports_are_unavailable(module):
+    res = _run(f"import importlib; importlib.import_module({module!r})")
+    assert res.returncode != 0

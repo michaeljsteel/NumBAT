@@ -1,11 +1,12 @@
-import sys
-sys.path.append('backend')
 import copy
+import sys
+from math import pi
 
 import numpy as np
 
-import materials
-from math import pi
+sys.path.append("backend")
+
+from numbat import materials
 
 mat_iso='SiO2_2023_Steel'
 mat_cubic='Si_1970_Auld'
@@ -52,6 +53,4 @@ def test_cubic_material_satisfies_symmetries():
         c1 = tmat.stiffness_c_IJ.value().copy()
 
         np.testing.assert_allclose(c0, c1, atol=atol)
-
-
 

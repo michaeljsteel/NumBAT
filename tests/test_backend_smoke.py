@@ -13,11 +13,11 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
-import materials
 import numbat
-import simresult
-from meshing import templates
-from usermesh import UserGeometryBase
+from numbat import materials
+from numbat.geometry import UserGeometryBase
+from numbat.solvers import EMSimResult
+from numbat_core.mesh import templates
 
 RECT_DOMAIN_NM = 1500.0
 BUILTIN_SHAPES = [
@@ -92,7 +92,7 @@ def test_em_simulation_object_is_constructed(nbapp):
 
     sim = wg.calc_EM_modes(2, 1550.0, n_eff_guess)
 
-    assert isinstance(sim, simresult.EMSimResult)
+    assert isinstance(sim, EMSimResult)
     neff_0 = np.real(sim.neff(0))
     neff_1 = np.real(sim.neff(1))
     assert np.isfinite(neff_0) and np.isfinite(neff_1)

@@ -276,7 +276,9 @@ numbat_core/plotting/
     └── gmsh/
 ```
 
-The legacy flat modules and `plotting/` package remain compatibility aliases:
+The legacy flat modules and `plotting/` package were retired after the
+compatibility period. Their former source files are retained only under
+`_leg_fac_` names, so their old import paths are unavailable:
 
 | Legacy path              | Internal implementation                |
 | ------------------------ | -------------------------------------- |
@@ -323,10 +325,10 @@ numbat_core/
 This phase includes the largest and most interconnected modules, so it should
 follow rather than precede the low-level and mesh migrations.
 
-Keep the legacy flat imports (`structure`, `usermesh`, `modes`, `modecalcs`,
-`integration`, `simresult`, and `numbat`) as aliases to these implementations.
-The former `numbat_core.mesh.geometry` path should likewise remain an alias to
-`numbat_core.geometry.usermesh`.
+Retire the legacy flat imports (`structure`, `usermesh`, `modes`, `modecalcs`,
+`integration`, `simresult`, and `numbat`) once users have migrated to the
+public package. The former `numbat_core.mesh.geometry` path is likewise
+retired in favour of `numbat_core.geometry.usermesh`.
 
 ### Phase 6: Introduce the modern public package
 
@@ -341,8 +343,8 @@ from numbat.materials import Material
 from numbat.mesh import FemMesh
 ```
 
-Deprecate specialist flat imports only over one or more releases, and update
-tutorials incrementally rather than all at once.
+Specialist flat imports are no longer available. Update tutorials
+incrementally to use the public package rather than compatibility aliases.
 
 **Implemented:** `backend/numbat/` is now a package that replaces the flat
 `numbat.py`. It re-exports every name of `numbat_core.api.application`
