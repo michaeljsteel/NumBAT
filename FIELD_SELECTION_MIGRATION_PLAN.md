@@ -236,6 +236,8 @@ field-data dictionary format.
 
 ## Phase 3: Introduce One Field-Resolution Policy
 
+**Status: Complete**
+
 ### Objective
 
 Replace `FieldCode`'s implicit `force_AC` role with an explicit policy.

@@ -46,6 +46,22 @@ def field_symbol(field_type):
     return _FIELD_SYMBOLS[FieldType.parse(field_type)]
 
 
+def resolve_field_type(requested, *, simulation_is_acoustic):
+    """Resolve the field family available for a simulation domain.
+
+    Acoustic simulations always expose displacement fields, irrespective of an
+    electric or magnetic field request.
+
+    Examples:
+        >>> resolve_field_type("EM_H", simulation_is_acoustic=False)
+        <FieldType.EM_H: 'EM_H'>
+        >>> resolve_field_type(FieldType.EM_E, simulation_is_acoustic=True)
+        <FieldType.AC: 'AC'>
+    """
+    field_type = FieldType.parse(requested)
+    return FieldType.AC if simulation_is_acoustic else field_type
+
+
 def storage_key(selection):
     """Return the field-data storage key for a typed selection.
 

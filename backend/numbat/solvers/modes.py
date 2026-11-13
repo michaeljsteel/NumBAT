@@ -1,5 +1,3 @@
-import sys
-
 # Copyright (C) 2017-2025  Michael Steel, Bjorn Sturmberg, Kokou Dossou.
 # NumBAT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .. import reporting, runtime
-from numbat.field_selection import complex_storage_keys, storage_key
+from numbat.field_selection import complex_storage_keys, resolve_field_type, storage_key
 from numbat.mesh import fem as femmesh
 from numbat.nbtypes import (
     ComplexPart,
-    FieldCode,
     FieldComponent,
     FieldSelection,
     FieldTag,
@@ -295,12 +292,11 @@ class Mode:
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
 
-        fc = FieldCode(field_type, self.is_AC())
-        ft = fc.as_field_type()
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
         plot_params['field_type'] = ft  # awkward way to get the correct filename
 
         self._interpolate_mode_2D(n_pts, ft)
-        self._plot_me_2D(n_pts, comps, fc, plot_params, ax)
+        self._plot_me_2D(n_pts, comps, ft, plot_params, ax)
 
         #self.clear_mode_plot_data()
 
@@ -330,8 +326,7 @@ class Mode:
         if prefix: plot_params['prefix'] = prefix
 
         femmesh.validate_1D_cut_format(s_cut, val1, val2)
-        fc = FieldCode(field_type, self.is_AC())
-        ft = fc.as_field_type()
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
 
         plot_params['field_type'] = ft  # awkward way to get the correct filename
 
@@ -344,10 +339,10 @@ class Mode:
         else:
             xlab = '$z$ (μm)'
 
-        self._plot_mode_1D_gencut(comps, fc, ft, xlab, s_cut, plot_params)
+        self._plot_mode_1D_gencut(comps, ft, xlab, s_cut, plot_params)
 
 
-    def _plot_mode_1D_gencut(self, comps, fc, ft, xlab, cut, plot_params):
+    def _plot_mode_1D_gencut(self, comps, ft, xlab, cut, plot_params):
 
         logx = plot_params.get('logx', False)
         logy = plot_params.get('logy', False)
@@ -378,7 +373,7 @@ class Mode:
         ax.set_ylabel('fields')
         ax.legend()
 
-        fn = plotmodes.modeplot_filename_1D(fc, plot_params, self.mode_num, cut, label='')
+        fn = plotmodes.modeplot_filename_1D(ft, plot_params, self.mode_num, cut, label='')
 
         plottools.save_and_close_figure(fig, fn)
 
@@ -403,7 +398,7 @@ class Mode:
         self.d_fields_1D = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
 
 
-    def _plot_me_2D(self, n_pts, comps, field_code, plot_params, ax=None):
+    def _plot_me_2D(self, n_pts, comps, field_type, plot_params, ax=None):
 
         # TODO: weirdly, we only ax != None when there is one component to plot
         if ax is not None and len(comps) != 1:
@@ -417,11 +412,11 @@ class Mode:
 
         decorator.set_for_multi()
         # TODO this is a kludgy way of doing this. send it through separately
-        #plot_params['EM_AC'] = field_code.as_field_type()
+        #plot_params['EM_AC'] = field_type
 
         # can't do multiplots on a provided axis (would need a provided figure)
         if ax is None:
-            plotmodes.plot_all_components(field_code, mh.xy_out, self.d_fields_2D,
+            plotmodes.plot_all_components(field_type, mh.xy_out, self.d_fields_2D,
                                           plot_params, self.sim_result, self.mode_num)
 
         # Individual component plots
@@ -430,8 +425,8 @@ class Mode:
             decorator.set_for_single()
             # options are ['x', 'y', 'z', 'a', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = FieldTag.make_from_field_and_component(field_code.as_field_type(), comp)
-                plotmodes.plot_one_component(field_code,
+                cc = FieldTag.make_from_field_and_component(field_type, comp)
+                plotmodes.plot_one_component(field_type,
                     mh.xy_out, self.d_fields_2D, plot_params, self.mode_num, cc, ax)
 
 
@@ -589,6 +584,7 @@ class Mode:
            :param array m_Imfz: Matrix of imaginary part of fz.
            '''
 
+        ft = resolve_field_type(ft, simulation_is_acoustic=self.is_AC())
         self._interpolate_mode_2D(n_pts, ft)
 
         self.analysed = True
@@ -649,7 +645,7 @@ class Mode:
         x0 = int2D_trapz(m_xmod, dx, dy)/s_f          # unit = um
         y0 = int2D_trapz(m_ymod, dx, dy)/s_f
 
-        # This just makes the outdata look cleaner on plots, by avoiding a -0.000. 
+        # This just makes the outdata look cleaner on plots, by avoiding a -0.000.
         # But is changing actual values of r0 !
        # if abs(x0) < 1e-6:
        #     x0 = 0.0
@@ -672,7 +668,7 @@ class Mode:
         #print('cols', m_yud[:,0])
         #print('rows', m_yud[0,:])
         #print('colsb', m_yud[:,0]-w_y0)
-        #print('\nrowsa', 
+        #print('\nrowsa',
         #      np.transpose(np.array([
         #          m_yud[0,:],
         #      np.sum(m_y2mod, axis=0)/s_f*dx*dy,
@@ -695,7 +691,7 @@ class Mode:
     def write_mode(self, prefix='', n_points=501,
                    field_type=FieldType.EM_E):
 
-        ft = FieldType.AC if self.is_AC() else FieldType(field_type)
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
 
         self._interpolate_mode_2D(n_points, ft)
 
@@ -721,6 +717,9 @@ class Mode:
     def write_mode_1D(self, s_cut, val1, val2=None, n_points=501,
                       prefix='', field_type=FieldType.EM_E):
 
+        field_type = resolve_field_type(
+            field_type, simulation_is_acoustic=self.is_AC()
+        )
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
         pref=str(runtime.outdir_fields_path(prefix))
@@ -755,6 +754,9 @@ class Mode:
 
     def get_mode_1D(self, s_cut, val1, val2=None, n_points=501, field_type=FieldType.EM_E):
 
+        field_type = resolve_field_type(
+            field_type, simulation_is_acoustic=self.is_AC()
+        )
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
         #pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
@@ -786,7 +788,7 @@ class Mode:
         '''Plot the requested field components on the sim mesh with no interpolation.'''
 
         simres = self.sim_result
-        fem_evecs = simres.fem_evecs_for_ft(self.field_code.as_field_type())
+        fem_evecs = simres.fem_evecs_for_ft(self.field_type)
         plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_interpolator,
                                          self.sim_result.fem_mesh, fem_evecs, self.mode_num)
 
@@ -802,7 +804,7 @@ class ModeEM(Mode):
 
     def __init__(self, sim, m):
         super().__init__(sim, m)
-        self.field_code = FieldCode(FieldType.EM_E)
+        self.field_type = FieldType.EM_E
 
     def __str__(self):
         s = f'EM mode # {self.mode_num}'
@@ -820,7 +822,7 @@ class ModeAC(Mode):
     def __init__(self, sim, m):
         super().__init__(sim, m)
 
-        self.field_code = FieldCode(FieldType.AC)
+        self.field_type = FieldType.AC
 
         self.gain = {}  # { (EM_p_i, EM_s_j): gain}
         self.gain_PE = {}

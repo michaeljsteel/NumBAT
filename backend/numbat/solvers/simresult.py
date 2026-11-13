@@ -21,6 +21,7 @@ import copy
 
 import numpy as np
 
+from numbat.field_selection import resolve_field_type
 from numbat.solvers import sbsgain as integration
 from fortran import nb_fortran
 from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
@@ -270,7 +271,8 @@ class SimResult:
         d_args = locals()
         del d_args['self']
 
-        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
+        ftag = FieldTag.make_from_field(ft)
         if ftag.is_EM_H():
             self.make_H_fields()
 
@@ -299,11 +301,11 @@ class SimResult:
         plot_params = plotmodes.PlotParams2D()
 
         plot_params.update(d_args)
-        plot_params['field_type'] = ftag.as_field_type()
+        plot_params['field_type'] = ft
 
         for m in progressBar(md_range, prefix="  Progress:", length=20):
                 self.get_mode(m).plot_mode(comps,
-                                           ftag.as_field_type(), plot_params = plot_params)
+                                           ft, plot_params = plot_params)
 
     def plot_modes_1D(self,
         scut,
@@ -324,7 +326,8 @@ class SimResult:
         logy=False,
     ):
 
-        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
+        ftag = FieldTag.make_from_field(ft)
         if ftag.is_EM_H():
             self.make_H_fields()
 
@@ -347,7 +350,7 @@ class SimResult:
         plot_params = plotmodes.PlotParams1D()
         plot_params.update(
             {
-                'field_type': ftag.as_field_type(),
+                'field_type': ft,
                 'num_ticks': num_ticks,
                 'prefix': prefix,
                 'suffix': suffix,
@@ -362,7 +365,7 @@ class SimResult:
 
         for m in progressBar(md_range, prefix="  Progress:", length=20):
             self.get_mode(m).plot_mode_1D(scut, val1, val2, comps,
-                                          ftag.as_field_type(),
+                                          ft,
                                           plot_params=plot_params)
 
     def write_modes(self, prefix='', field_type = FieldType.EM_E, mode_indices=None, n_points=501):
@@ -376,7 +379,8 @@ class SimResult:
                 n_points: dimension of rectangular grid
         """
 
-        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
+        ftag = FieldTag.make_from_field(ft)
 
         if ftag.is_EM_H():
             self.make_H_fields()
@@ -385,7 +389,7 @@ class SimResult:
         md_range = mode_indices if mode_indices is not None else range(self.n_modes)
 
         for m in md_range:
-            self.get_mode(m).write_mode(prefix, n_points, ftag.as_field_type())
+            self.get_mode(m).write_mode(prefix, n_points, ft)
 
     def write_modes_1D(self, s_cut, val1, val2=None, mode_indices=None, prefix='',
                        n_points=501, field_type = FieldType.EM_E):
@@ -393,7 +397,8 @@ class SimResult:
 
         #ft = FieldType.AC if self.is_AC() else field_type
 
-        ftag = FieldTag.make_from_field(field_type, self.is_AC())
+        ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
+        ftag = FieldTag.make_from_field(ft)
 
         if ftag.is_EM_H():
             self.make_H_fields()
@@ -403,7 +408,7 @@ class SimResult:
 
         for m in md_range:
             self.get_mode(m).write_mode_1D(s_cut, val1, val2,
-                                           n_points, prefix, ftag.as_field_type())
+                                           n_points, prefix, ft)
 
 
 class EMSimResult(SimResult):

@@ -18,6 +18,7 @@
 
 
 import math
+import warnings
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from numpy import array
@@ -214,12 +215,17 @@ class FieldSelection:
     def with_part(self, complex_part):
         return FieldSelection(self.field_type, self.component, complex_part)
 
-# Internal
 class FieldCode:
     def __init__(self, ft, force_AC=False):
-        if not isinstance(ft, FieldType):
-            ft = FieldType(ft)
-        self._ft = FieldType.AC if force_AC else ft
+        """Create a deprecated compatibility wrapper for a resolved field type."""
+        from numbat.field_selection import resolve_field_type
+
+        warnings.warn(
+            "FieldCode is deprecated; use resolve_field_type() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._ft = resolve_field_type(ft, simulation_is_acoustic=force_AC)
 
     def is_EM(self):
         return self._ft in (FieldType.EM_E, FieldType.EM_H)

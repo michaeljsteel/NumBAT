@@ -27,6 +27,7 @@ from numbat.nbtypes import (
     FieldComponent,
     FieldSelection,
     FieldTag,
+    FieldType,
     SI_GHz,
     SI_THz,
     SI_um,
@@ -38,10 +39,10 @@ from numbat.plotting.tools import save_and_close_figure
 from .. import runtime
 
 
-def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
+def modeplot_filename_2D(field_type, plps, mode_index, label='', cut=''):
     pref=plps['prefix']
     suf = plps['suffix']
-    comp = field_code.as_str()
+    comp = FieldType.parse(field_type).name
 
     fullpref = str(runtime.outdir_fields_path(prefix=pref))
     filestart = f'{fullpref}/{comp}_mode_{mode_index:02d}'
@@ -57,9 +58,9 @@ def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
     return fn
 
 # TODO: allow a suffix to label multiple cut planes
-def modeplot_filename_1D(field_code, plps, mode_index, cut, label=''):
+def modeplot_filename_1D(field_type, plps, mode_index, cut, label=''):
 
-    return modeplot_filename_2D(field_code, plps, mode_index, label, cut)
+    return modeplot_filename_2D(field_type, plps, mode_index, label, cut)
 
 
 def field_type_to_intensity_code(ft):
@@ -600,7 +601,7 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
 
 
 
-def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data summary
+def write_mode_data(ax, plps, sim_result, mode_index, field_type):  # mode data summary
 
     decorator = plps['decorator']
     fs = decorator.get_property('data_label_fs')
@@ -671,7 +672,7 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
     lines2.append( r'$\mathbf{{r}}_0:$ '+ f'({r0x:.3f}, {r0y:.3f}) ' +r'μm')
     lines2.append( f'$(w_x, w_y):$ ({wx:.3f}, {wy:.3f}) ' + r'μm')
 
-    if field_code.is_EM_H():
+    if field_type == FieldType.EM_H:
         lines2.append( r'$H$ field multiplied by $Z_0=376.7\, \Omega$')
 
     sc = sim_result.symmetry_classification(mode_index)
@@ -727,7 +728,7 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_code):  # mode data 
         ty0 -= dy
 
 
-def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index):
+def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index):
     decorator = plps['decorator']
     figsz = decorator['figsize']
     hs = decorator['subplots_hspace']
@@ -762,9 +763,9 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
         ax_uv = axs[2, 0]  # the intensity
         axs_comp = axs[:, 1:].flatten()  # the components
 
-    write_mode_data(ax_md_data, plps, sim_result, mode_index, field_code)  # mode data summary
+    write_mode_data(ax_md_data, plps, sim_result, mode_index, field_type)  # mode data summary
 
-    ft = field_code.as_field_type()
+    ft = field_type
 
     scal_comp = 'a' if mod_is_amp else 'i'  # intensity or amplitude plot
     ftag_scal = FieldTag.make_from_field_and_component(ft, scal_comp)
@@ -793,13 +794,13 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
         plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=cc)  # the scalar plots
 
 
-    fig_fname = modeplot_filename_2D(field_code, plps, mode_index)
+    fig_fname = modeplot_filename_2D(field_type, plps, mode_index)
     save_and_close_figure(fig, fig_fname)
 
 
 
 
-def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=None):
+def plot_one_component(field_type, d_xy, v_fields, plps, mode_index, cc, axis=None):
     decorator = plps['decorator']
     fig=None # a problem for passed in axes
     if axis is None:
@@ -810,7 +811,7 @@ def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=No
 
     if cc.is_transverse():
         ftag_transvec = cc
-        ft = field_code.as_field_type()
+        ft = field_type
         ftag_scal = FieldTag.make_from_field_and_component(ft, 'a')
     else:
         ftag_transvec = None
@@ -820,5 +821,5 @@ def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=No
                             ftag_scalar=ftag_scal, ftag_vector=ftag_transvec, is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
-        fig_fname = modeplot_filename_2D(field_code, plps, mode_index, cc._user_code)
+        fig_fname = modeplot_filename_2D(field_type, plps, mode_index, cc._user_code)
         save_and_close_figure(fig, fig_fname)

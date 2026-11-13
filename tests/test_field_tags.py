@@ -10,6 +10,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 from numbat.field_selection import (
     complex_storage_keys,
     field_symbol,
+    resolve_field_type,
     selection_from_storage_key,
     storage_key,
 )
@@ -28,7 +29,8 @@ from numbat.solvers.modes import _field_tags_for_1D_plot, check_allowed_plot_com
 @pytest.mark.parametrize("field_type", list(FieldType))
 def test_legacy_field_type_inputs_remain_supported(field_type):
     assert FieldType.from_str(field_type.value) is field_type
-    assert FieldCode(field_type.value).as_field_type() is field_type
+    with pytest.deprecated_call(match="FieldCode is deprecated"):
+        assert FieldCode(field_type.value).as_field_type() is field_type
     assert FieldTag.make_from_field(field_type.value).as_field_type() is field_type
 
 
@@ -168,6 +170,34 @@ def test_complex_storage_keys_preserve_real_imaginary_order():
 def test_field_storage_conversion_rejects_invalid_input(function, argument, message):
     with pytest.raises((TypeError, ValueError), match=message):
         function(argument)
+
+
+@pytest.mark.parametrize(
+    ("requested", "simulation_is_acoustic", "expected"),
+    [
+        (FieldType.EM_E, False, FieldType.EM_E),
+        (FieldType.EM_H, False, FieldType.EM_H),
+        (FieldType.AC, True, FieldType.AC),
+        (FieldType.EM_E, True, FieldType.AC),
+        ("EM_H", True, FieldType.AC),
+    ],
+)
+def test_resolve_field_type_uses_the_simulation_domain(
+    requested, simulation_is_acoustic, expected
+):
+    assert (
+        resolve_field_type(requested, simulation_is_acoustic=simulation_is_acoustic)
+        is expected
+    )
+
+
+def test_field_code_delegates_to_the_resolver():
+    with pytest.deprecated_call(match="FieldCode is deprecated"):
+        field_code = FieldCode(FieldType.EM_H, force_AC=True)
+
+    assert field_code.is_AC()
+    assert not field_code.is_EM()
+    assert field_code.as_field_type() is FieldType.AC
 
 
 @pytest.mark.parametrize(
