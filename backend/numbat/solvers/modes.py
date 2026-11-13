@@ -37,11 +37,32 @@ from numbat.utils.numeric import int2D_trapz
 from .. import reporting, runtime
 
 
+def normalize_plot_components(comps):
+    """Return supported plot components as `FieldComponent` values.
+
+    Both legacy strings and `FieldComponent` members are accepted. Intensity is
+    intentionally unavailable until interpolated 1D and 2D field data both
+    provide an intensity array.
+    """
+    try:
+        components = tuple(FieldComponent.parse(component) for component in comps)
+    except ValueError as exc:
+        reporting.report_and_exit(
+            f"Unknown field component in 'comps' argument to plot_mode(): {exc}"
+        )
+
+    if FieldComponent.INTENSITY in components:
+        reporting.report_and_exit(
+            "The 'i' intensity component is not yet available for public mode plots; "
+            "use 'a' for field magnitude."
+        )
+
+    return components
+
+
 def check_allowed_plot_components(comps):
-    for c in comps:
-        if c not in ('x', 'y', 'z', 't', 'a'):
-            reporting.report_and_exit(f"Unknown field component flag '{c}' in 'comps' argument to plot_mode()." +
-            "\nAllowed values are 'x', 'y', 'z', 't' (transverse vector plot), 'a' (absolute value).")
+    """Compatibility wrapper for `normalize_plot_components`."""
+    return normalize_plot_components(comps)
 
 
 def _field_storage_key(field_type, component, complex_part=None):
@@ -128,8 +149,8 @@ class ModeInterpolator:
             _field_storage_key(field_type, FieldComponent.X, ComplexPart.SECONDARY): m_ImFx,
             _field_storage_key(field_type, FieldComponent.Y, ComplexPart.PRIMARY): m_ReFy,
             _field_storage_key(field_type, FieldComponent.Y, ComplexPart.SECONDARY): m_ImFy,
-            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.PRIMARY): m_ReFz,
-            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.SECONDARY): m_ImFz,
+            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.PRIMARY): m_ImFz,
+            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.SECONDARY): m_ReFz,
             _field_storage_key(field_type, FieldComponent.MAGNITUDE): m_AbsF,
         }
 
@@ -290,8 +311,13 @@ class Mode:
 
     def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='',
                   plot_params=plotmodes.PlotParams2D()):
+        """Plot selected components using strings or `FieldComponent` values.
 
-        check_allowed_plot_components(comps)
+        Supported components are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`,
+        `TRANSVERSE`/`"t"`, and `MAGNITUDE`/`"a"`.
+        """
+
+        comps = normalize_plot_components(comps)
 
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
@@ -306,7 +332,6 @@ class Mode:
 
     def plot_mode_H(self, comps=(), ax=None, n_pts=501, decorator=None):
         """Plot magnetic field for EM modes."""
-        check_allowed_plot_components(comps)
         self.plot_mode(comps, field_type=FieldType.EM_H, ax=ax, n_pts=n_pts, decorator=decorator)
 
 
@@ -318,6 +343,10 @@ class Mode:
 
         s_cut is a string determining the cut direction, with allowed values: 'x', 'y', or 'line'.
 
+        Field components may be legacy strings or `FieldComponent` values.
+        Supported values are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`,
+        `TRANSVERSE`/`"t"`, and `MAGNITUDE`/`"a"`.
+
         For s_cut='x', the function is plotted along y at fixed x=val1, where val1 is a float.
 
         For s_cut='y', the function is plotted along x at fixed x=val1, where val1 is a float.
@@ -325,7 +354,7 @@ class Mode:
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
 
-        check_allowed_plot_components(comps)
+        comps = normalize_plot_components(comps)
 
         if prefix: plot_params['prefix'] = prefix
 
@@ -352,7 +381,12 @@ class Mode:
         logy = plot_params.get('logy', False)
 
         if not len(comps):
-            comps = ['x', 'y', 'z', 'a']
+            comps = (
+                FieldComponent.X,
+                FieldComponent.Y,
+                FieldComponent.Z,
+                FieldComponent.MAGNITUDE,
+            )
 
         selections = selections_for_1d_plot(
             ft, comps, include_secondary=not plot_params['suppress_imimre']
@@ -362,10 +396,7 @@ class Mode:
         v_genx = self.mode_interpolator.v_x_axis
 
 
-        show_magnitude = any(
-            FieldComponent.parse(component) == FieldComponent.MAGNITUDE
-            for component in comps
-        )
+        show_magnitude = FieldComponent.MAGNITUDE in comps
         for selection in selections:
             lc = plotmodes.line_color(selection)
             ls = plotmodes.line_style(selection, show_magnitude=show_magnitude)

@@ -340,6 +340,8 @@ Remove mutable `FieldTag` from the plotting flow.
 
 ## Phase 5: Upgrade Public Component Inputs
 
+**Status: Complete**
+
 ### Objective
 
 Make enums the documented API while retaining existing strings.
@@ -373,6 +375,10 @@ Make enums the documented API while retaining existing strings.
    - If yes, support `comps=("i",)`, calculate `Fi`, and document it.
    - If no, reject `i` at public plotting boundaries with a specific message
      while retaining the type for internal future use.
+
+   **Decision:** Intensity remains unavailable in public `comps` input because
+   interpolated 1D and 2D data do not both supply an `Fi` array. Public `"i"`
+   input raises an explicit error directing users to magnitude (`"a"`).
 5. Update relevant docstrings and plotting tutorials to show enum-first usage,
    while documenting string compatibility.
 

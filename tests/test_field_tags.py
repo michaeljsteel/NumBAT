@@ -3,6 +3,7 @@
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
@@ -30,7 +31,12 @@ from numbat.plotting.modes import (
     line_style,
     tex_label,
 )
-from numbat.solvers.modes import check_allowed_plot_components, selections_for_1d_plot
+from numbat.solvers.modes import (
+    ModeInterpolator,
+    check_allowed_plot_components,
+    normalize_plot_components,
+    selections_for_1d_plot,
+)
 
 
 @pytest.mark.parametrize("field_type", list(FieldType))
@@ -43,8 +49,38 @@ def test_legacy_field_type_inputs_remain_supported(field_type):
 
 @pytest.mark.parametrize("component", ("x", "y", "z", "t", "a"))
 def test_legacy_plot_component_inputs_remain_supported(component):
-    check_allowed_plot_components((component,))
+    assert check_allowed_plot_components((component,)) == (
+        FieldComponent.parse(component),
+    )
     assert FieldTag.make_from_field_and_component(FieldType.EM_E, component)
+
+
+def test_plot_component_strings_and_enums_normalize_identically():
+    legacy = normalize_plot_components(("x", "y", "a", "t"))
+    typed = normalize_plot_components(
+        (
+            FieldComponent.X,
+            FieldComponent.Y,
+            FieldComponent.MAGNITUDE,
+            FieldComponent.TRANSVERSE,
+        )
+    )
+
+    assert legacy == typed
+    assert [
+        storage_key(selection)
+        for selection in selections_for_1d_plot(FieldType.EM_E, legacy, include_secondary=False)
+    ] == [
+        storage_key(selection)
+        for selection in selections_for_1d_plot(FieldType.EM_E, typed, include_secondary=False)
+    ]
+
+
+def test_plot_component_intensity_reports_that_it_is_not_yet_supported(caplog):
+    with pytest.raises(SystemExit):
+        normalize_plot_components(("i",))
+
+    assert "intensity component is not yet available" in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -156,6 +192,26 @@ def test_complex_storage_keys_preserve_real_imaginary_order():
     assert complex_storage_keys(FieldType.EM_E, FieldComponent.X) == ("Fxr", "Fxi")
     assert complex_storage_keys(FieldType.EM_E, FieldComponent.Y) == ("Fyr", "Fyi")
     assert complex_storage_keys(FieldType.EM_E, FieldComponent.Z) == ("Fzr", "Fzi")
+
+
+def test_interpolated_z_fields_preserve_primary_imaginary_convention():
+    class SimulationResult:
+        def get_mode_fields_on_fem_mesh(self, mode_index, field_type):
+            return (
+                np.array([1 + 2j]),
+                np.array([3 + 4j]),
+                np.array([5 + 6j]),
+                np.array([7.0]),
+            )
+
+    interpolator = object.__new__(ModeInterpolator)
+    interpolator.sim_result = SimulationResult()
+    interpolator.interper_f_1D = lambda field: field
+
+    fields = interpolator.interpolate_mode_i(0, FieldType.EM_E, dims=1)
+
+    assert fields["Fzi"].tolist() == [6.0]
+    assert fields["Fzr"].tolist() == [5.0]
 
 
 @pytest.mark.parametrize(
