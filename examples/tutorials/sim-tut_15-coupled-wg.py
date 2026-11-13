@@ -11,6 +11,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 
 
 
@@ -88,7 +89,13 @@ print("n_eff", np.round(n_eff_sim, 4))
 
 sim_EM_pump.plot_modes(mode_indices=range(8), contours=True, ticks=True, quiver_points=20)
 
-sim_EM_pump.plot_modes(mode_indices=range(8), contours=True, field_type='EM_H', ticks=True, quiver_points=20)
+sim_EM_pump.plot_modes(
+    mode_indices=range(8),
+    contours=True,
+    field_type=FieldType.EM_H,
+    ticks=True,
+    quiver_points=20,
+)
 
 # Acoustic wavevector
 q_AC = np.real(sim_EM_pump.kz_EM(EM_mode_index_pump) -

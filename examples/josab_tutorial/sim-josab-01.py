@@ -16,6 +16,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 from numbat.solvers import modecalcs
 from numbat.solvers import integration
 from numbat import plotting
@@ -85,7 +86,7 @@ sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 print("Plotting EM fields ")
 
-sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump], field_type='EM_E', num_ticks=3,
+sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump], field_type=FieldType.EM_E, num_ticks=3,
                           xlim_min=0.1, xlim_max=0.1, ylim_min=0.1, ylim_max=0.1, )
 
 # Calculate the EM effective index of the waveguide.
@@ -165,4 +166,3 @@ absQtot = pow(absQtot2, 1 / 2)
 print(f"Total coupling |Qtot| [J/m]: {np.real(absQtot):.4e}")
 
 print(nbapp.final_report())
-

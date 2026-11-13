@@ -11,6 +11,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 
 from numbat.solvers import sbsgain
 
@@ -81,7 +82,7 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (mode_index = 0) mode.
 
-for ft in ('EM_E', 'EM_H'):
+for ft in (FieldType.EM_E, FieldType.EM_H):
     simres_EM_pump.plot_modes(mode_indices=range(10), field_type = ft)
 
 # Acoustic wavevector

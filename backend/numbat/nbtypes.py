@@ -21,9 +21,9 @@ import math
 import warnings
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
-from numpy import array
-import scipy.constants as const
 
+import scipy.constants as const
+from numpy import array
 
 #### Natural constants ########################################################
 
@@ -248,6 +248,15 @@ class FieldCode:
     def as_field_type(self):
         return self._ft
 
+
+def _warn_field_tag_deprecated(stacklevel):
+    warnings.warn(
+        "FieldTag is deprecated; use FieldSelection and plotting helpers instead.",
+        DeprecationWarning,
+        stacklevel=stacklevel,
+    )
+
+
 class PointGroup(IntEnum):
     Unknown = 1
     C2V = auto()
@@ -287,19 +296,22 @@ class PiezoSupport(IntEnum):
 
 
 class FieldTag:
-    '''Class for transferring between user readable and code name versions of field components.'''
+    """Deprecated compatibility adapter for legacy field-component code."""
 
     @staticmethod  # make plain module method
     def make_from_field(ft, force_AC=False):
-        '''Create a FieldTag from just the field type. Defaults to x component.'''
+        """Create a deprecated `FieldTag` compatibility adapter."""
+        _warn_field_tag_deprecated(stacklevel=2)
 
         if force_AC:
             ft=FieldType.AC
-        return FieldTag.make_from_field_and_component(ft, 'x')
+        return FieldTag.make_from_field_and_component(ft, 'x', _warn=False)
 
     @staticmethod  # make plain module method
-    def make_from_field_and_component(ft, cc):
-        '''Create a FieldTag from the field type and component suffix x, y, z, a, i, t.'''
+    def make_from_field_and_component(ft, cc, *, _warn=True):
+        """Create a deprecated `FieldTag` compatibility adapter."""
+        if _warn:
+            _warn_field_tag_deprecated(stacklevel=2)
 
         if not isinstance(ft, FieldType):
             ft = FieldType(ft)
@@ -310,25 +322,29 @@ class FieldTag:
             uc = 'H'+cc
         else:
             uc = 'u'+cc
-        return FieldTag(uc)
+        return FieldTag(uc, _warn=False)
 
 
     @staticmethod
-    def make_from_field_and_Fcode(ft, fc):
-        '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.
-
-        The fc can override the preference for major real/imag part.'''
+    def make_from_field_and_Fcode(ft, fc, *, _warn=True):
+        """Create a deprecated `FieldTag` compatibility adapter from a storage key."""
+        if _warn:
+            _warn_field_tag_deprecated(stacklevel=2)
         from numbat.field_selection import selection_from_storage_key
 
-        return FieldTag.make_from_selection(selection_from_storage_key(ft, fc))
+        return FieldTag.make_from_selection(
+            selection_from_storage_key(ft, fc), _warn=False
+        )
 
     @staticmethod
-    def make_from_selection(selection):
+    def make_from_selection(selection, *, _warn=True):
         """Create a FieldTag compatibility adapter from a typed field selection."""
+        if _warn:
+            _warn_field_tag_deprecated(stacklevel=2)
         from numbat.field_selection import field_symbol, storage_key
 
         user_code = f"{field_symbol(selection.field_type)}{selection.component.value}"
-        return FieldTag(user_code, storage_key(selection))
+        return FieldTag(user_code, storage_key(selection), _warn=False)
 
     @staticmethod
     def reim_major(fi):
@@ -351,20 +367,10 @@ class FieldTag:
             return None
 
 
-    def __init__(self, uc, fc=''):
-        '''Make FieldTag knowing the actual field component Ex, Ey, Ez, Et, Ea, Ei, ux, uy etc.
-
-           By default, the tag is set to the dominant real/imag part of the field component.
-           This can be overridden or changed later using set_to_major() or set_to_minor().
-
-           Args:
-              uc: str  - User-friendly field component code.
-              fc: str  - Field-agnostic symbol indicating rea/imag/a/t part of whichever field is active.
-
-           A user code (uc) is one of Ex, Ey, Ez, Et, Ea, Ei, Hx, Hy, Hz, Ht, Ha, Hi, ux, uy, uz, ut, ua, ui.
-
-           A field code (fc) is one of Fxr, Fxi, Fyr, Fyi, Fzr, Fzi, Ft, Fa, Fi.
-        '''
+    def __init__(self, uc, fc='', *, _warn=True):
+        """Create a deprecated compatibility adapter from legacy field codes."""
+        if _warn:
+            _warn_field_tag_deprecated(stacklevel=2)
 
         self._user_code = uc
         self._F = uc[0]    # E, H, or u
@@ -524,7 +530,8 @@ class FieldTag:
 
     def clone_as(self, cc):
         """Create new FieldTag with same field but component cc of ['x', 'y', 'z', 'a', 't']"""
-        tag = FieldTag.make_from_field_and_component(self._field_type, cc)
+        _warn_field_tag_deprecated(stacklevel=2)
+        tag = FieldTag.make_from_field_and_component(self._field_type, cc, _warn=False)
         return tag
 
     def as_field_type(self):

@@ -16,6 +16,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 
 from numbat.solvers import sbsgain
 
@@ -81,15 +82,15 @@ for m in range(num_modes_EM_pump):
 n_eff_sim = np.real(simres_EM_pump.neff(0))
 print("n_eff", np.round(n_eff_sim, 4))
 
-# # Plot the E fields of the EM modes fields - specified with field_type='EM_E'.
+# # Plot the E fields of the EM modes fields - specified with FieldType.EM_E.
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (mode_index = 0) mode.
 # npzfile = np.load('wguide_data.npz', allow_pickle=True)
 # npzfile = np.load('wguide_data2.npz', allow_pickle=True)
 # simres_EM_Stokes = npzfile['simres_EM_Stokes'].tolist()
 
-simres_EM_pump.plot_modes(mode_indices=range(10), field_type='EM_E')
-simres_EM_pump.plot_modes(mode_indices=range(10), field_type='EM_H')
+simres_EM_pump.plot_modes(mode_indices=range(10), field_type=FieldType.EM_E)
+simres_EM_pump.plot_modes(mode_indices=range(10), field_type=FieldType.EM_H)
 
 # Acoustic wavevector
 q_AC = np.real(simres_EM_pump.kz_EM(EM_mode_index_pump) -

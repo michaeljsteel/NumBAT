@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 
 import numbat
-from numbat.types import SI_GHz
+from numbat.types import FieldType, SI_GHz
 from numbat.plotting import Decorator
 from numbat import plotting
 from numbat.solvers import integration
@@ -196,14 +196,14 @@ sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 print("starting EM field plotting ")
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
-                       ylim_min=0.435, ylim_max=0.435, field_type='EM_E', num_ticks=3,
+                       ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_E, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
                        comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)
 
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
-                       ylim_min=0.435, ylim_max=0.435, field_type='EM_H', num_ticks=3,
+                       ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_H, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
                        comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)

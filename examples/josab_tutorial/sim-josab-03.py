@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 from numbat.solvers import modecalcs
 from numbat.solvers import integration
 from numbat import plotting
@@ -90,11 +91,11 @@ print("n_eff = ", np.round(n_eff_sim, 4))
 sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 
 # Generate images for the EM modes involved in the calculation
-# note: use field_type='EM_H' for magnetic H field
+# note: use field_type=FieldType.EM_H for magnetic H field
 print("Plotting EM fields ")
 
 sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump],
-                         field_type='EM_E', num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
+                         field_type=FieldType.EM_E, num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
                           quiver_points=40,
                          n_points=1000, colorbar=True)
 

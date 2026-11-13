@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.filterwarnings("ignore:FieldTag is deprecated")
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
 from numbat.field_selection import (
@@ -44,7 +46,15 @@ def test_legacy_field_type_inputs_remain_supported(field_type):
     assert FieldType.from_str(field_type.value) is field_type
     with pytest.deprecated_call(match="FieldCode is deprecated"):
         assert FieldCode(field_type.value).as_field_type() is field_type
-    assert FieldTag.make_from_field(field_type.value).as_field_type() is field_type
+    with pytest.deprecated_call(match="FieldTag is deprecated"):
+        assert FieldTag.make_from_field(field_type.value).as_field_type() is field_type
+
+
+def test_field_tag_legacy_construction_warns_and_remains_functional():
+    with pytest.deprecated_call(match="FieldTag is deprecated"):
+        tag = FieldTag("Ex")
+
+    assert tag.as_selection() == FieldSelection.primary(FieldType.EM_E, FieldComponent.X)
 
 
 @pytest.mark.parametrize("component", ("x", "y", "z", "t", "a"))

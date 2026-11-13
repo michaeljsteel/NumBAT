@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.append(str(Path('../../backend')))
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 from numbat.solvers import modecalcs
 from numbat.solvers import integration
 from numbat import plotting
@@ -81,7 +82,7 @@ sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 print("Starting EM field plotting ")
 sim_EM_pump.plot_modes(
     mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
-    field_type="EM_E",
+    field_type=FieldType.EM_E,
     num_ticks=3,
     xlim_min=0.2,
     xlim_max=0.2,

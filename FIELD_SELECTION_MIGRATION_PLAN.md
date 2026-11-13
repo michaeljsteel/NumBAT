@@ -395,6 +395,8 @@ and plot metadata.
 
 ## Phase 6: Deprecate Legacy Types
 
+**Status: Complete**
+
 ### Objective
 
 Give downstream users a stable transition path before removal.

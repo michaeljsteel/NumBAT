@@ -99,7 +99,15 @@ Release notes
 Version 2.6.0
 -------------
 
-This version has replaced the internal code for handling field components. The FieldCode interface will shortly be deprecated and replaced with a new interface.
+This version replaces the internal code for handling field components with
+``FieldSelection`` and ``FieldComponent``. ``FieldCode`` and ``FieldTag`` are
+still available for one compatibility release, but direct construction and
+legacy factory calls now emit ``DeprecationWarning``. New code should use
+``FieldSelection``, ``FieldComponent``, and the helpers in
+``numbat.field_selection`` and ``numbat.plotting.modes``.
+
+See :ref:`field-selection-migration-label` for a replacement table and
+examples.
 
 Version 2.4
 -----------

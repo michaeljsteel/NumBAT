@@ -11,6 +11,7 @@ sys.path.append(str(Path('../../backend')))
 
 import numbat
 from numbat import materials
+from numbat.types import FieldType
 
 from numbat.solvers import sbsgain
 
@@ -96,7 +97,7 @@ sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
                            ticks=True, quiver_points=20)
 
 sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, mode_indices=range(10), contours=True, field_type='EM_H',
+                          ylim_max=0.3, mode_indices=range(10), contours=True, field_type=FieldType.EM_H,
                            ticks=True, quiver_points=20)
 
 # Acoustic wavevector

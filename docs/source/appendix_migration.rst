@@ -23,6 +23,31 @@ Details
 ========
 
 
+.. _field-selection-migration-label:
+
+Field selection migration
+-------------------------
+
+The legacy ``FieldCode`` and ``FieldTag`` classes remain available during the
+2.6 compatibility period. They emit ``DeprecationWarning`` when constructed or
+created through a legacy factory. Replace them with immutable typed selections:
+
+========================================================  ======================================================================
+Legacy API                                                Replacement
+========================================================  ======================================================================
+``FieldCode(field_type, force_AC)``                       ``resolve_field_type(field_type, simulation_is_acoustic=...)``
+``FieldTag.make_from_field_and_component(ft, "x")``       ``FieldSelection.primary(ft, FieldComponent.X)``
+``tag.set_to_minor()``                                    ``selection.with_part(ComplexPart.SECONDARY)``
+``tag.component_as_F()``                                  ``storage_key(selection)``
+``tag.get_tex_plot_label()``                              ``tex_label(selection)``
+``tag.linecolor()``                                       ``line_color(selection)``
+``tag.linestyle(comps)``                                  ``line_style(selection, show_magnitude=...)``
+========================================================  ======================================================================
+
+For plotting components, prefer ``FieldComponent`` values such as
+``FieldComponent.X``. Existing ``"x"``, ``"y"``, ``"z"``, ``"t"``, and
+``"a"`` string inputs remain supported during the compatibility period.
+
 Prior to version 2.4.0, |NUMBAT| was used by adding the ``backend`` directory to ``sys.path`` and then importing a collection of flat modules:
 
 .. code-block:: python
