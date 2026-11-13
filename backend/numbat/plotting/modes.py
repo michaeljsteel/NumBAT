@@ -22,10 +22,20 @@ import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .. import runtime
-from numbat.nbtypes import FieldTag, SI_GHz, SI_THz, SI_um, twopi
+from numbat.field_selection import selection_from_storage_key, storage_key
+from numbat.nbtypes import (
+    FieldComponent,
+    FieldSelection,
+    FieldTag,
+    SI_GHz,
+    SI_THz,
+    SI_um,
+    twopi,
+)
 from numbat.plotting.axes import TidyAxes
 from numbat.plotting.tools import save_and_close_figure
+
+from .. import runtime
 
 
 def modeplot_filename_2D(field_code, plps, mode_index, label='', cut=''):
@@ -454,17 +464,18 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     qslice_x, qslice_y = _make_quiver_slices(v_x, v_y, plps, deftrim)
 
-    #print('pts', n_pts_x, n_pts_y, m_x.shape, m_y.shape, v_fields['Fxr'].shape, qslice_x, qslice_y)
     v_x_q = v_x[qslice_x]
     v_y_q = v_y[qslice_y]
     m_x_q = (m_x.T)[qslice_x[:, np.newaxis], qslice_y]  # TODO: track down why m_x/y need .T but fields don't
     m_y_q = (m_y.T)[qslice_x[:, np.newaxis], qslice_y]
 
     # TODO: why no transpose on these fields?
-    m_ReEx_q = v_fields['Fxr'][qslice_x[:, np.newaxis], qslice_y]
-    m_ReEy_q = v_fields['Fyr'][qslice_x[:, np.newaxis], qslice_y]
-    #m_ImEx_q = v_fields['Fxi'][qslice_x[:, np.newaxis], qslice_y]
-    #m_ImEy_q = v_fields['Fyi'][qslice_x[:, np.newaxis], qslice_y]
+    m_ReEx_q = v_fields[
+        storage_key(FieldSelection.primary(cc.as_field_type(), FieldComponent.X))
+    ][qslice_x[:, np.newaxis], qslice_y]
+    m_ReEy_q = v_fields[
+        storage_key(FieldSelection.primary(cc.as_field_type(), FieldComponent.Y))
+    ][qslice_x[:, np.newaxis], qslice_y]
 
 
     vecarrow_col = runtime.plot_prefs().vector_field_arrow_color(cc)
@@ -771,7 +782,7 @@ def plot_all_components(field_code, d_xy, v_plots, plps, sim_result, mode_index)
 
     axi = 0
     for flab in v_plots.keys():
-        cc = FieldTag.make_from_field_and_Fcode(ft, flab)
+        cc = FieldTag.make_from_selection(selection_from_storage_key(ft, flab))
 
         if not cc.is_signed_field(): continue  # already done vector and energy plots
 
@@ -811,4 +822,3 @@ def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=No
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename_2D(field_code, plps, mode_index, cc._user_code)
         save_and_close_figure(fig, fig_fname)
-

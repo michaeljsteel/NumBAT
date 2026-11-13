@@ -17,8 +17,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .. import reporting, runtime
+from numbat.field_selection import complex_storage_keys, storage_key
 from numbat.mesh import fem as femmesh
-from numbat.nbtypes import FieldCode, FieldTag, FieldType, SI_um, SI_vacuum_impedance_Z0
+from numbat.nbtypes import (
+    ComplexPart,
+    FieldCode,
+    FieldComponent,
+    FieldSelection,
+    FieldTag,
+    FieldType,
+    SI_um,
+    SI_vacuum_impedance_Z0,
+)
 from numbat.plotting import modes as plotmodes
 from numbat.plotting import raw_modes as plotmoderaw
 from numbat.plotting import tools as plottools
@@ -30,6 +40,10 @@ def check_allowed_plot_components(comps):
         if c not in ('x', 'y', 'z', 't', 'a'):
             reporting.report_and_exit(f"Unknown field component flag '{c}' in 'comps' argument to plot_mode()." +
             "\nAllowed values are 'x', 'y', 'z', 't' (transverse vector plot), 'a' (absolute value).")
+
+
+def _field_storage_key(field_type, component, complex_part=None):
+    return storage_key(FieldSelection(field_type, component, complex_part))
 
 
 def _field_tags_for_1D_plot(ft, comps, include_minor):
@@ -108,10 +122,15 @@ class ModeInterpolator:
         m_ImFy = interper_f(v_Fy6p.imag)
         m_ReFz = interper_f(v_Fz6p.real)
 
-        d_fields = {'Fxr': m_ReFx, 'Fxi': m_ImFx,
-                    'Fyr': m_ReFy, 'Fyi': m_ImFy,
-                    'Fzr': m_ReFz, 'Fzi': m_ImFz,
-                    'Fa': m_AbsF}
+        d_fields = {
+            _field_storage_key(field_type, FieldComponent.X, ComplexPart.PRIMARY): m_ReFx,
+            _field_storage_key(field_type, FieldComponent.X, ComplexPart.SECONDARY): m_ImFx,
+            _field_storage_key(field_type, FieldComponent.Y, ComplexPart.PRIMARY): m_ReFy,
+            _field_storage_key(field_type, FieldComponent.Y, ComplexPart.SECONDARY): m_ImFy,
+            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.PRIMARY): m_ReFz,
+            _field_storage_key(field_type, FieldComponent.Z, ComplexPart.SECONDARY): m_ImFz,
+            _field_storage_key(field_type, FieldComponent.MAGNITUDE): m_AbsF,
+        }
 
         if field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
             for m_F in d_fields.values():   # Do this when they are first made
@@ -590,9 +609,18 @@ class Mode:
         mFs = self.d_fields_2D  # the incoming fields, not necessarily normalised in any way
 
         # unit = [|F|^2], mag. \approx 1
-        m_Fx2 = mFs['Fxr']**2 + mFs['Fxi']**2
-        m_Fy2 = mFs['Fyr']**2 + mFs['Fyi']**2
-        m_Fz2 = mFs['Fzr']**2 + mFs['Fzi']**2
+        m_Fx2 = (
+            mFs[_field_storage_key(ft, FieldComponent.X, ComplexPart.PRIMARY)]**2
+            + mFs[_field_storage_key(ft, FieldComponent.X, ComplexPart.SECONDARY)]**2
+        )
+        m_Fy2 = (
+            mFs[_field_storage_key(ft, FieldComponent.Y, ComplexPart.PRIMARY)]**2
+            + mFs[_field_storage_key(ft, FieldComponent.Y, ComplexPart.SECONDARY)]**2
+        )
+        m_Fz2 = (
+            mFs[_field_storage_key(ft, FieldComponent.Z, ComplexPart.PRIMARY)]**2
+            + mFs[_field_storage_key(ft, FieldComponent.Z, ComplexPart.SECONDARY)]**2
+        )
         m_Fall2 = m_Fx2 + m_Fy2 + m_Fz2          # unit = [|F|^2]
 
         # unit = [|F|^2] um^2, mag. \approx 1
@@ -704,19 +732,24 @@ class Mode:
 
         v_genx = self.mode_interpolator.v_x_axis
         nr = len(v_genx)
-        nc = 8 # v_genx, vFxr, Fxi, Fyr, Fyi, Fzr, Fzi, Fa
+        selections = (
+            FieldSelection.primary(field_type, FieldComponent.X),
+            FieldSelection.secondary(field_type, FieldComponent.X),
+            FieldSelection.primary(field_type, FieldComponent.Y),
+            FieldSelection.secondary(field_type, FieldComponent.Y),
+            FieldSelection.secondary(field_type, FieldComponent.Z),
+            FieldSelection.primary(field_type, FieldComponent.Z),
+            FieldSelection.magnitude(field_type),
+        )
+        field_keys = [storage_key(selection) for selection in selections]
+        nc = len(field_keys) + 1
 
         flds = np.zeros([nr,nc], dtype=np.float64)
-        header='x Fxr Fxi Fyr Fyi Fzr Fzi Fa'
+        header = 'x ' + ' '.join(field_keys)
 
         flds[:,0] = v_genx
-        flds[:,1] = self.d_fields_1D['Fxr']
-        flds[:,2] = self.d_fields_1D['Fxi']
-        flds[:,3] = self.d_fields_1D['Fyr']
-        flds[:,4] = self.d_fields_1D['Fyi']
-        flds[:,5] = self.d_fields_1D['Fzr']
-        flds[:,6] = self.d_fields_1D['Fzi']
-        flds[:,7] = self.d_fields_1D['Fa']
+        for index, key in enumerate(field_keys, start=1):
+            flds[:,index] = self.d_fields_1D[key]
 
         np.savetxt(fname, flds, header=header, fmt='%16.8f')
 
@@ -738,10 +771,12 @@ class Mode:
         flds = np.zeros([nr,nc], dtype=np.complex128)
         #header='x Fxr Fxi Fyr Fyi Fzr Fzi Fa'
 
-        flds[:,0] = self.d_fields_1D['Fxr'] + 1j * self.d_fields_1D['Fxi']
-        flds[:,1] = self.d_fields_1D['Fyr'] + 1j * self.d_fields_1D['Fyi']
-        flds[:,2] = self.d_fields_1D['Fzr'] + 1j * self.d_fields_1D['Fzi']
-        flds[:,3] = self.d_fields_1D['Fa']
+        for index, component in enumerate(
+            (FieldComponent.X, FieldComponent.Y, FieldComponent.Z)
+        ):
+            real_key, imaginary_key = complex_storage_keys(field_type, component)
+            flds[:,index] = self.d_fields_1D[real_key] + 1j * self.d_fields_1D[imaginary_key]
+        flds[:,3] = self.d_fields_1D[_field_storage_key(field_type, FieldComponent.MAGNITUDE)]
 
         #np.savetxt(fname, flds, header=header, fmt='%16.8f')
         return v_genx, flds
@@ -802,7 +837,8 @@ class ModeAC(Mode):
 
 def _write_one_component_to_file(md_index, longpref, ftag, s_xy, d_fields):
 
-    fc = ftag.component_as_F() # eg 'Fabs'
+    selection = ftag.as_selection()
+    fc = storage_key(selection)
 
     if ftag.is_abs() or ftag.is_intens():  # a real valued quantity
         fname = longpref+'.txt'
@@ -812,8 +848,7 @@ def _write_one_component_to_file(md_index, longpref, ftag, s_xy, d_fields):
 
     else:
         fname = longpref+'_re.txt'
-        tagmaj = f'F{ftag._xyz}r'
-        tagmin = f'F{ftag._xyz}i'
+        tagmaj, tagmin = complex_storage_keys(selection.field_type, selection.component)
 
         fld = d_fields[tagmaj]  # eg 'Fxr'
         header=f'Mode {md_index:02d}, {fc}_re, ' + s_xy

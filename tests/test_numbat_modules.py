@@ -14,6 +14,7 @@ NUMBAT_MODULES = [
     "numbat.reporting",
     "numbat.nbversion",
     "numbat.nbplatform",
+    "numbat.field_selection",
     "numbat.utils.threading",
     "numbat.utils.numeric",
     "numbat.materials.materials",

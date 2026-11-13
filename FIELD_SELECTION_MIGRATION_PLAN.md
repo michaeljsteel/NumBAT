@@ -172,6 +172,8 @@ Add the new model without changing public plotting behaviour.
 
 ## Phase 2: Centralize Representation and Storage Keys
 
+**Status: Complete**
+
 ### Objective
 
 Eliminate scattered `Fxr`/`Fyi` mapping tables while preserving the existing

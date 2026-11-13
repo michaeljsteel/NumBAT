@@ -7,6 +7,12 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
+from numbat.field_selection import (
+    complex_storage_keys,
+    field_symbol,
+    selection_from_storage_key,
+    storage_key,
+)
 from numbat.nbtypes import (
     ComplexPart,
     FieldCode,
@@ -108,6 +114,60 @@ def test_field_selection_is_immutable():
 
     with pytest.raises(AttributeError):
         selection.component = FieldComponent.Y
+
+
+@pytest.mark.parametrize(
+    ("field_type", "symbol"),
+    [(FieldType.EM_E, "E"), (FieldType.EM_H, "H"), (FieldType.AC, "u")],
+)
+def test_field_symbol_uses_the_expected_display_symbol(field_type, symbol):
+    assert field_symbol(field_type) == symbol
+
+
+@pytest.mark.parametrize(
+    ("selection", "expected_key"),
+    [
+        (FieldSelection.primary(FieldType.EM_E, FieldComponent.X), "Fxr"),
+        (FieldSelection.secondary(FieldType.EM_E, FieldComponent.X), "Fxi"),
+        (FieldSelection.primary(FieldType.EM_H, FieldComponent.Y), "Fyr"),
+        (FieldSelection.secondary(FieldType.EM_H, FieldComponent.Y), "Fyi"),
+        (FieldSelection.primary(FieldType.AC, FieldComponent.Z), "Fzi"),
+        (FieldSelection.secondary(FieldType.AC, FieldComponent.Z), "Fzr"),
+        (FieldSelection.transverse(FieldType.EM_E), "Ft"),
+        (FieldSelection.magnitude(FieldType.EM_H), "Fa"),
+        (FieldSelection.intensity(FieldType.AC), "Fi"),
+    ],
+)
+def test_field_selection_storage_keys_round_trip(selection, expected_key):
+    assert storage_key(selection) == expected_key
+    assert selection_from_storage_key(selection.field_type, expected_key) == selection
+
+
+def test_complex_storage_keys_preserve_real_imaginary_order():
+    assert complex_storage_keys(FieldType.EM_E, FieldComponent.X) == ("Fxr", "Fxi")
+    assert complex_storage_keys(FieldType.EM_E, FieldComponent.Y) == ("Fyr", "Fyi")
+    assert complex_storage_keys(FieldType.EM_E, FieldComponent.Z) == ("Fzr", "Fzi")
+
+
+@pytest.mark.parametrize(
+    ("function", "argument", "message"),
+    [
+        (storage_key, FieldType.EM_E, "selection must be a FieldSelection"),
+        (
+            lambda value: selection_from_storage_key(FieldType.EM_E, value),
+            "Fq",
+            "Unknown field-data storage key",
+        ),
+        (
+            lambda value: complex_storage_keys(FieldType.EM_E, value),
+            FieldComponent.MAGNITUDE,
+            "is not a Cartesian field component",
+        ),
+    ],
+)
+def test_field_storage_conversion_rejects_invalid_input(function, argument, message):
+    with pytest.raises((TypeError, ValueError), match=message):
+        function(argument)
 
 
 @pytest.mark.parametrize(

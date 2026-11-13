@@ -312,20 +312,17 @@ class FieldTag:
         '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.
 
         The fc can override the preference for major real/imag part.'''
-        if not isinstance(ft, FieldType):
-            ft = FieldType(ft)
+        from numbat.field_selection import selection_from_storage_key
 
-        if ft == FieldType.EM_E:
-            uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
-                  'Fzr': 'Ez', 'Fzi': 'Ez', 'Fa': 'Ea', 'Fi': 'Ei', 'Ft': 'Et'}[fc]
-        elif ft == FieldType.EM_H:
-            uc = {'Fxr': 'Hx', 'Fxi': 'Hx', 'Fyr': 'Hy', 'Fyi': 'Hy',
-                  'Fzr': 'Hz', 'Fzi': 'Hz', 'Fa': 'Ha', 'Fi': 'Hi', 'Ft': 'Ht'}[fc]
-        else:
-            uc = {'Fxr': 'ux', 'Fxi': 'ux', 'Fyr': 'uy', 'Fyi': 'uy',
-                  'Fzr': 'uz', 'Fzi': 'uz', 'Fa': 'ua', 'Fi': 'ui', 'Ft': 'ut'}[fc]
+        return FieldTag.make_from_selection(selection_from_storage_key(ft, fc))
 
-        return FieldTag(uc, fc)
+    @staticmethod
+    def make_from_selection(selection):
+        """Create a FieldTag compatibility adapter from a typed field selection."""
+        from numbat.field_selection import field_symbol, storage_key
+
+        user_code = f"{field_symbol(selection.field_type)}{selection.component.value}"
+        return FieldTag(user_code, storage_key(selection))
 
     @staticmethod
     def reim_major(fi):
@@ -453,7 +450,15 @@ class FieldTag:
         return mincoF
 
     def component_as_F(self):
-        return self._f_code
+        from numbat.field_selection import storage_key
+
+        return storage_key(self.as_selection())
+
+    def as_selection(self):
+        """Return the typed field selection represented by this compatibility tag."""
+        from numbat.field_selection import selection_from_storage_key
+
+        return selection_from_storage_key(self._field_type, self._f_code)
 
     def get_tex_plot_label(self):
         lab = {'Fx': r'Re[ $F_x$ ]', 'Fy': r'Re[ $F_y$ ]', 'Fz': r'Im[ $F_z$ ]',
