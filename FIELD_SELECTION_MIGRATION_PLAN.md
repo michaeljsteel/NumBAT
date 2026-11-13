@@ -283,6 +283,8 @@ Replace `FieldCode`'s implicit `force_AC` role with an explicit policy.
 
 ## Phase 4: Migrate Plotting to `FieldSelection`
 
+**Status: Complete**
+
 ### Objective
 
 Remove mutable `FieldTag` from the plotting flow.

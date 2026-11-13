@@ -22,8 +22,15 @@ from numbat.nbtypes import (
     FieldTag,
     FieldType,
 )
-from numbat.plotting.modes import field_type_to_intensity_code, field_type_to_vector_code
-from numbat.solvers.modes import _field_tags_for_1D_plot, check_allowed_plot_components
+from numbat.plotting.modes import (
+    field_display_name,
+    field_type_to_intensity_code,
+    field_type_to_vector_code,
+    line_color,
+    line_style,
+    tex_label,
+)
+from numbat.solvers.modes import check_allowed_plot_components, selections_for_1d_plot
 
 
 @pytest.mark.parametrize("field_type", list(FieldType))
@@ -201,25 +208,68 @@ def test_field_code_delegates_to_the_resolver():
 
 
 @pytest.mark.parametrize(
-    ("field_type", "expected_component", "expected_code"),
+    ("selection", "expected_label", "expected_color", "expected_style"),
     [
-        (FieldType.EM_E, "Ei", "Fi"),
-        (FieldType.EM_H, "Hi", "Fi"),
-        (FieldType.AC, "ui", "Fi"),
+        (
+            FieldSelection.primary(FieldType.EM_E, FieldComponent.X),
+            "Re[ $E_x$ ]",
+            "blue",
+            "dashed",
+        ),
+        (
+            FieldSelection.secondary(FieldType.EM_H, FieldComponent.Z),
+            "Re[ $H_z$ ]",
+            "brown",
+            "dotted",
+        ),
+        (FieldSelection.magnitude(FieldType.AC), "$|\\vec u|$", "red", "solid"),
+        (FieldSelection.intensity(FieldType.EM_E), "$|\\vec E|^2$", "red", "solid"),
+        (FieldSelection.transverse(FieldType.EM_H), "$\\vec H_t$", None, "solid"),
+    ],
+)
+def test_field_selection_plot_presentation(
+    selection, expected_label, expected_color, expected_style
+):
+    assert tex_label(selection) == expected_label
+    assert line_color(selection) == expected_color
+    assert line_style(selection, show_magnitude=True) == expected_style
+
+
+@pytest.mark.parametrize(
+    ("field_type", "expected_name"),
+    [
+        (FieldType.EM_E, "electric"),
+        (FieldType.EM_H, "magnetic"),
+        (FieldType.AC, "displacement"),
+    ],
+)
+def test_field_display_names(field_type, expected_name):
+    assert field_display_name(field_type) == expected_name
+
+
+@pytest.mark.parametrize(
+    ("field_type", "expected_code"),
+    [
+        (FieldType.EM_E, "Fi"),
+        (FieldType.EM_H, "Fi"),
+        (FieldType.AC, "Fi"),
     ],
 )
 def test_field_type_to_intensity_code_uses_supported_intensity_key(
-    field_type, expected_component, expected_code
+    field_type, expected_code
 ):
-    tag = field_type_to_intensity_code(field_type)
+    selection = field_type_to_intensity_code(field_type)
 
-    assert tag.field_component() == expected_component
-    assert tag.component_as_F() == expected_code
+    assert selection == FieldSelection.intensity(field_type)
+    assert storage_key(selection) == expected_code
 
 
 @pytest.mark.parametrize("field_type", list(FieldType))
 def test_field_type_to_vector_code_uses_supported_vector_key(field_type):
-    assert field_type_to_vector_code(field_type).component_as_F() == "Ft"
+    selection = field_type_to_vector_code(field_type)
+
+    assert selection == FieldSelection.transverse(field_type)
+    assert storage_key(selection) == "Ft"
 
 
 def test_field_tag_normalizes_string_field_type_for_storage_key_conversion():
@@ -250,11 +300,16 @@ def test_field_tag_rejects_minor_part_for_derived_quantities(component):
         tag.set_to_minor()
 
 
-def test_1d_plot_tags_keep_primary_components_and_skip_derived_minors():
-    tags = _field_tags_for_1D_plot(
-        FieldType.EM_E, ("x", "y", "a", "t"), include_minor=True
+def test_1d_plot_selections_keep_primary_components_and_skip_derived_secondaries():
+    selections = selections_for_1d_plot(
+        FieldType.EM_E, ("x", "y", "a", "t"), include_secondary=True
     )
 
-    assert [tag.component_as_F() for tag in tags] == ["Fxr", "Fyr", "Fa", "Ft", "Fxi", "Fyi"]
-    assert tags[0] is not tags[4]
-    assert tags[1] is not tags[5]
+    assert [storage_key(selection) for selection in selections] == [
+        "Fxr",
+        "Fyr",
+        "Fa",
+        "Ft",
+        "Fxi",
+        "Fyi",
+    ]

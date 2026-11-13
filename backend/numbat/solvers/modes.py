@@ -14,14 +14,17 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .. import reporting, runtime
-from numbat.field_selection import complex_storage_keys, resolve_field_type, storage_key
+from numbat.field_selection import (
+    complex_storage_keys,
+    field_symbol,
+    resolve_field_type,
+    storage_key,
+)
 from numbat.mesh import fem as femmesh
 from numbat.nbtypes import (
     ComplexPart,
     FieldComponent,
     FieldSelection,
-    FieldTag,
     FieldType,
     SI_um,
     SI_vacuum_impedance_Z0,
@@ -30,6 +33,8 @@ from numbat.plotting import modes as plotmodes
 from numbat.plotting import raw_modes as plotmoderaw
 from numbat.plotting import tools as plottools
 from numbat.utils.numeric import int2D_trapz
+
+from .. import reporting, runtime
 
 
 def check_allowed_plot_components(comps):
@@ -43,19 +48,18 @@ def _field_storage_key(field_type, component, complex_part=None):
     return storage_key(FieldSelection(field_type, component, complex_part))
 
 
-def _field_tags_for_1D_plot(ft, comps, include_minor):
-    tags = [FieldTag.make_from_field_and_component(ft, comp) for comp in comps]
-    if not include_minor:
-        return tags
+def selections_for_1d_plot(ft, comps, include_secondary):
+    selections = [plotmodes.selection_for_component(ft, comp) for comp in comps]
+    if not include_secondary:
+        return selections
 
-    minor_tags = []
-    for tag in tags:
-        if tag.minor_component() is not None:
-            minor_tag = FieldTag(tag.field_component())
-            minor_tag.set_to_minor()
-            minor_tags.append(minor_tag)
+    secondary_selections = [
+        selection.with_part(ComplexPart.SECONDARY)
+        for selection in selections
+        if selection.is_cartesian
+    ]
 
-    return tags + minor_tags
+    return selections + secondary_selections
 
 
 class ModeInterpolator:
@@ -350,22 +354,26 @@ class Mode:
         if not len(comps):
             comps = ['x', 'y', 'z', 'a']
 
-        all_tags = _field_tags_for_1D_plot(
-            ft, comps, include_minor=not plot_params['suppress_imimre']
+        selections = selections_for_1d_plot(
+            ft, comps, include_secondary=not plot_params['suppress_imimre']
         )
 
         fig, ax = plt.subplots()
         v_genx = self.mode_interpolator.v_x_axis
 
 
-        for tag in all_tags:
-            lc = tag.linecolor()
-            ls = tag.linestyle(comps)
-            co = tag.component_as_F()
+        show_magnitude = any(
+            FieldComponent.parse(component) == FieldComponent.MAGNITUDE
+            for component in comps
+        )
+        for selection in selections:
+            lc = plotmodes.line_color(selection)
+            ls = plotmodes.line_style(selection, show_magnitude=show_magnitude)
+            co = storage_key(selection)
 
             v_y = self.d_fields_1D[co]
             if logy: v_y = np.abs(v_y)
-            ax.plot(v_genx, v_y, label=tag.get_tex_plot_label(), color=lc, linestyle=ls)
+            ax.plot(v_genx, v_y, label=plotmodes.tex_label(selection), color=lc, linestyle=ls)
             if logx: ax.set_xscale('log')
             if logy: ax.set_yscale('log')
 
@@ -425,7 +433,7 @@ class Mode:
             decorator.set_for_single()
             # options are ['x', 'y', 'z', 'a', 't']
             for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = FieldTag.make_from_field_and_component(field_type, comp)
+                cc = plotmodes.selection_for_component(field_type, comp)
                 plotmodes.plot_one_component(field_type,
                     mh.xy_out, self.d_fields_2D, plot_params, self.mode_num, cc, ax)
 
@@ -705,14 +713,15 @@ class Mode:
 
         ccs = ('x', 'y', 'z')
         for cc in ccs:
-            ftag = FieldTag.make_from_field_and_component(ft, cc)
-            ftlab = ftag.field_type_label()
+            selection = FieldSelection.primary(ft, FieldComponent.parse(cc))
+            ftlab = plotmodes.field_type_label(ft)
             pref=str(runtime.outdir_fields_path(prefix))
 
-            longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{ftag.field_component()}'
+            component_label = f"{field_symbol(ft)}{selection.component.value}"
+            longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{component_label}'
 
             _write_one_component_to_file(self.mode_num,
-                                         longpref, ftag, s_xy, self.d_fields_2D)
+                                         longpref, selection, s_xy, self.d_fields_2D)
 
     def write_mode_1D(self, s_cut, val1, val2=None, n_points=501,
                       prefix='', field_type=FieldType.EM_E):
@@ -723,8 +732,7 @@ class Mode:
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
         pref=str(runtime.outdir_fields_path(prefix))
-        ftag = FieldTag.make_from_field(field_type)
-        ftlab = ftag.field_type_label()
+        ftlab = plotmodes.field_type_label(field_type)
 
         longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{s_cut}cut'
         fname = longpref+'.txt'
@@ -760,12 +768,6 @@ class Mode:
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
         #pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
-        #ftag = FieldTag.make_from_field(field_type)
-        #ftlab = ftag.field_type_label()
-
-        #longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{s_cut}cut'
-        #fname = longpref+'.txt'
-
         v_genx = self.mode_interpolator.v_x_axis
         nr = len(v_genx)
         nc = 4 # vFx, Fy, Fz, Fa
@@ -837,12 +839,11 @@ class ModeAC(Mode):
         return s
 
 
-def _write_one_component_to_file(md_index, longpref, ftag, s_xy, d_fields):
+def _write_one_component_to_file(md_index, longpref, selection, s_xy, d_fields):
 
-    selection = ftag.as_selection()
     fc = storage_key(selection)
 
-    if ftag.is_abs() or ftag.is_intens():  # a real valued quantity
+    if selection.is_derived:
         fname = longpref+'.txt'
         fld = d_fields[fc]
         header=f'Mode {md_index:02d}, {fc}, '  + s_xy

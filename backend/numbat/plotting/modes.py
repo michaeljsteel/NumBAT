@@ -22,11 +22,11 @@ import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np
 
-from numbat.field_selection import selection_from_storage_key, storage_key
+from numbat.field_selection import field_symbol, selection_from_storage_key, storage_key
 from numbat.nbtypes import (
+    ComplexPart,
     FieldComponent,
     FieldSelection,
-    FieldTag,
     FieldType,
     SI_GHz,
     SI_THz,
@@ -64,10 +64,62 @@ def modeplot_filename_1D(field_type, plps, mode_index, cut, label=''):
 
 
 def field_type_to_intensity_code(ft):
-    return FieldTag.make_from_field_and_component(ft, 'i')
+    return FieldSelection.intensity(ft)
 
 def field_type_to_vector_code(ft):
-    return FieldTag.make_from_field_and_component(ft, 't')
+    return FieldSelection.transverse(ft)
+
+
+def field_display_name(field_type):
+    return {
+        FieldType.EM_E: "electric",
+        FieldType.EM_H: "magnetic",
+        FieldType.AC: "displacement",
+    }[FieldType.parse(field_type)]
+
+
+def domain_display_name(field_type):
+    return "acoustic" if FieldType.parse(field_type) == FieldType.AC else "optical"
+
+
+def field_type_label(field_type):
+    return "AC" if FieldType.parse(field_type) == FieldType.AC else "EM"
+
+
+def tex_label(selection):
+    if selection.is_cartesian:
+        primary_is_real = selection.component in (FieldComponent.X, FieldComponent.Y)
+        is_real = (selection.complex_part == ComplexPart.PRIMARY) == primary_is_real
+        part = "Re" if is_real else "Im"
+        return f"{part}[ ${field_symbol(selection.field_type)}_{selection.component.value}$ ]"
+    if selection.component == FieldComponent.MAGNITUDE:
+        return f"$|\\vec {field_symbol(selection.field_type)}|$"
+    if selection.component == FieldComponent.INTENSITY:
+        return f"$|\\vec {field_symbol(selection.field_type)}|^2$"
+    return f"$\\vec {field_symbol(selection.field_type)}_t$"
+
+
+def line_color(selection):
+    if selection.component in (FieldComponent.MAGNITUDE, FieldComponent.INTENSITY):
+        return "red"
+    return {
+        FieldComponent.X: "blue",
+        FieldComponent.Y: "green",
+        FieldComponent.Z: "brown",
+    }.get(selection.component)
+
+
+def line_style(selection, *, show_magnitude):
+    if selection.is_derived or not show_magnitude:
+        return "solid"
+    return "dotted" if selection.complex_part == ComplexPart.SECONDARY else "dashed"
+
+
+def selection_for_component(field_type, component):
+    component = FieldComponent.parse(component)
+    if component in (FieldComponent.X, FieldComponent.Y, FieldComponent.Z):
+        return FieldSelection.primary(field_type, component)
+    return FieldSelection(field_type, component)
 
 
 
@@ -278,14 +330,14 @@ def get_quiver_skip_range(npts, skip):
     return np.array(range(j0, npts, skip))
 
 
-def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
+def add_contour_plot(fig, ax, d_xy, c_field, selection, plps, decorator):
 
     logamp = plps['logamp']
 
-    cmap_signed = runtime.plot_prefs().cmap_field_signed(ftag_cont)
-    cmap_unsigned = runtime.plot_prefs().cmap_field_unsigned(ftag_cont)
+    cmap_signed = runtime.plot_prefs().cmap_field_signed(selection)
+    cmap_unsigned = runtime.plot_prefs().cmap_field_unsigned(selection)
 
-    cont_signed = ftag_cont.is_signed_field()
+    cont_signed = selection.is_cartesian
     #cmap = cmap_signed if (cont_signed and not logamp) else cmap_unsigned
     cmap = cmap_signed if cont_signed else cmap_unsigned
 
@@ -297,9 +349,9 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
     # transpose because arrays
     cont_field = (c_field).copy().T
 
-    if ftag_cont.is_abs():
+    if selection.component == FieldComponent.MAGNITUDE:
         cont_field = np.abs(cont_field)
-    elif ftag_cont.is_intens():
+    elif selection.component == FieldComponent.INTENSITY:
         cont_field = np.abs(cont_field)**2
 
     logmax=5  # show up to 5 orders of magnitude contrast
@@ -328,8 +380,8 @@ def add_contour_plot(fig, ax, d_xy, c_field, ftag_cont, plps, decorator):
 
     common_amp = True and cont_signed
 
-    if decorator.get_cmap_limits(ftag_cont._xyz) is not None:
-        (act_zlo, act_zhi) = decorator.get_cmap_limits(ftag_cont._xyz)
+    if decorator.get_cmap_limits(selection.component.value) is not None:
+        (act_zlo, act_zhi) = decorator.get_cmap_limits(selection.component.value)
         tsnorm = mplcolors.TwoSlopeNorm(
             vmin=act_zlo, vmax=act_zhi, vcenter=(act_zlo+act_zhi)/2)
 
@@ -440,11 +492,11 @@ def _make_quiver_slices(v_x, v_y, plps, deftrim):
 
     return qslice_x, qslice_y
 
-def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
+def add_quiver_plot(fig, ax, d_xy, v_fields, selection, plps, decorator, do_cont):
 
 
     # give a little space around elastic profiles
-    deftrim = -0.1 if cc._F=='u' else -0.05
+    deftrim = -0.1 if selection.field_type == FieldType.AC else -0.05
 
     v_x, v_y, m_x, m_y = d_xy.values()
 
@@ -472,14 +524,14 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
 
     # TODO: why no transpose on these fields?
     m_ReEx_q = v_fields[
-        storage_key(FieldSelection.primary(cc.as_field_type(), FieldComponent.X))
+        storage_key(FieldSelection.primary(selection.field_type, FieldComponent.X))
     ][qslice_x[:, np.newaxis], qslice_y]
     m_ReEy_q = v_fields[
-        storage_key(FieldSelection.primary(cc.as_field_type(), FieldComponent.Y))
+        storage_key(FieldSelection.primary(selection.field_type, FieldComponent.Y))
     ][qslice_x[:, np.newaxis], qslice_y]
 
 
-    vecarrow_col = runtime.plot_prefs().vector_field_arrow_color(cc)
+    vecarrow_col = runtime.plot_prefs().vector_field_arrow_color(selection)
     vecarrow_scale = runtime.plot_prefs().vecplot_arrow_scale
     vecarrow_width = runtime.plot_prefs().vecplot_arrow_width
     vecarrow_hw = runtime.plot_prefs().vecplot_arrow_headwidth
@@ -515,35 +567,40 @@ def add_quiver_plot(fig, ax, d_xy, v_fields, cc, plps, decorator, do_cont):
         ax.set_ylim(v_y_q[0], v_y_q[-1])
 
 
-def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, ftag_vector=None,
+def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, scalar_selection=None, vector_selection=None,
                             is_single_plot=False):
 
-    is_AC = (ftag_scalar and ftag_scalar.is_AC()) or (ftag_vector and ftag_vector.is_AC())
+    is_AC = (
+        scalar_selection and scalar_selection.field_type == FieldType.AC
+    ) or (
+        vector_selection and vector_selection.field_type == FieldType.AC
+    )
 
-    do_cont = ftag_scalar is not None
-    do_quiv = ftag_vector is not None
+    do_cont = scalar_selection is not None
+    do_quiv = vector_selection is not None
 
     decorator = plps['decorator']
 
     cbar = None
     if do_cont:
 
-        # terrible hack. v_fields doesn't have an 'Fi' member
-        # But add_contour_plot will square it up because of the ftag_scalar value
-        # So we push the v_fields index back to '_a'
-        ftsc = ftag_scalar.component_as_F()
-        if ftsc[1]=='i':
-            ftsc=ftsc[0]+'a'
+        data_selection = scalar_selection
+        if scalar_selection.component == FieldComponent.INTENSITY:
+            data_selection = FieldSelection.magnitude(scalar_selection.field_type)
 
-
-        im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftsc],
-                                       ftag_scalar, plps, decorator)
-        #im_co, cbar = add_contour_plot(fig, ax, d_xy, v_fields[ftag_scalar.component_as_F()],
-        #                               ftag_scalar, plps, decorator)
+        im_co, cbar = add_contour_plot(
+            fig,
+            ax,
+            d_xy,
+            v_fields[storage_key(data_selection)],
+            scalar_selection,
+            plps,
+            decorator,
+        )
 
     if do_quiv:
         add_quiver_plot(fig, ax, d_xy, v_fields,
-                        ftag_vector, plps, decorator, do_cont)
+                        vector_selection, plps, decorator, do_cont)
 
     # Adjustments to the visible plot domain
 
@@ -565,8 +622,8 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, ftag_scalar=None, fta
 
 
     labs = []
-    if do_cont: labs.append(ftag_scalar.get_tex_plot_label())
-    if do_quiv: labs.append(ftag_vector.get_tex_plot_label())
+    if do_cont: labs.append(tex_label(scalar_selection))
+    if do_quiv: labs.append(tex_label(vector_selection))
     comp_label = ', '.join(labs)
 
     #lw = decorator.get_property('linewidth')# TODO: Unused
@@ -768,30 +825,37 @@ def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index)
     ft = field_type
 
     scal_comp = 'a' if mod_is_amp else 'i'  # intensity or amplitude plot
-    ftag_scal = FieldTag.make_from_field_and_component(ft, scal_comp)
-    ftag_transvec = FieldTag.make_from_field_and_component(ft, 't')
+    scalar_selection = selection_for_component(ft, scal_comp)
+    vector_selection = FieldSelection.transverse(ft)
 
     if plps['hide_vector_field']:
-        ftag_transjoint = None
+        joint_vector_selection = None
     else:
-        ftag_transjoint = ftag_transvec
+        joint_vector_selection = vector_selection
 
     plot_contour_and_quiver(fig, ax_ut, d_xy, v_plots, plps,
-                            ftag_scalar=ftag_scal, ftag_vector=ftag_transjoint)
+                            scalar_selection=scalar_selection,
+                            vector_selection=joint_vector_selection)
 
-    plot_contour_and_quiver(fig, ax_uv, d_xy, v_plots, plps, ftag_vector=ftag_transvec)
+    plot_contour_and_quiver(
+        fig, ax_uv, d_xy, v_plots, plps, vector_selection=vector_selection
+    )
 
     axi = 0
     for flab in v_plots.keys():
-        cc = FieldTag.make_from_selection(selection_from_storage_key(ft, flab))
+        selection = selection_from_storage_key(ft, flab)
 
-        if not cc.is_signed_field(): continue  # already done vector and energy plots
+        if not selection.is_cartesian:
+            continue
 
         # don't plot what will likely be pure zero fields
-        if (hide_minors and not cc.is_minor()): continue
+        if hide_minors and selection.complex_part == ComplexPart.SECONDARY:
+            continue
 
         ax = axs_comp[axi]; axi += 1
-        plot_contour_and_quiver(fig, ax, d_xy, v_plots, plps, ftag_scalar=cc)  # the scalar plots
+        plot_contour_and_quiver(
+            fig, ax, d_xy, v_plots, plps, scalar_selection=selection
+        )
 
 
     fig_fname = modeplot_filename_2D(field_type, plps, mode_index)
@@ -800,7 +864,7 @@ def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index)
 
 
 
-def plot_one_component(field_type, d_xy, v_fields, plps, mode_index, cc, axis=None):
+def plot_one_component(field_type, d_xy, v_fields, plps, mode_index, selection, axis=None):
     decorator = plps['decorator']
     fig=None # a problem for passed in axes
     if axis is None:
@@ -809,17 +873,19 @@ def plot_one_component(field_type, d_xy, v_fields, plps, mode_index, cc, axis=No
     else:
         ax = axis
 
-    if cc.is_transverse():
-        ftag_transvec = cc
-        ft = field_type
-        ftag_scal = FieldTag.make_from_field_and_component(ft, 'a')
+    if selection.is_vector:
+        vector_selection = selection
+        scalar_selection = FieldSelection.magnitude(field_type)
     else:
-        ftag_transvec = None
-        ftag_scal = cc
+        vector_selection = None
+        scalar_selection = selection
 
     plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps,
-                            ftag_scalar=ftag_scal, ftag_vector=ftag_transvec, is_single_plot=True)
+                            scalar_selection=scalar_selection,
+                            vector_selection=vector_selection,
+                            is_single_plot=True)
 
     if axis is None:  # If user passed in the axis, they can look after saving.
-        fig_fname = modeplot_filename_2D(field_type, plps, mode_index, cc._user_code)
+        component_label = f"{field_symbol(selection.field_type)}{selection.component.value}"
+        fig_fname = modeplot_filename_2D(field_type, plps, mode_index, component_label)
         save_and_close_figure(fig, fig_fname)

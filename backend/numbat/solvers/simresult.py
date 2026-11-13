@@ -21,13 +21,9 @@ import copy
 
 import numpy as np
 
-from numbat.field_selection import resolve_field_type
-from numbat.solvers import sbsgain as integration
 from fortran import nb_fortran
-from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
-from .. import reporting
+from numbat.field_selection import resolve_field_type
 from numbat.nbtypes import (
-    FieldTag,
     FieldType,
     PointGroup,
     SI_speed_c,
@@ -36,6 +32,10 @@ from numbat.nbtypes import (
 )
 from numbat.plotting import modes as plotmodes
 from numbat.plotting.tools import progressBar
+from numbat.solvers import sbsgain as integration
+from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
+
+from .. import reporting
 
 
 class SimResult:
@@ -272,12 +272,11 @@ class SimResult:
         del d_args['self']
 
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
-        ftag = FieldTag.make_from_field(ft)
-        if ftag.is_EM_H():
+        if ft == FieldType.EM_H:
             self.make_H_fields()
 
-        domain_s = ftag.domain_type_as_str()
-        field_s = ftag.field_type_as_str()
+        domain_s = plotmodes.domain_display_name(ft)
+        field_s = plotmodes.field_display_name(ft)
 
         # mode_indices can be list or string or nothing
         #print(mode_indices, type(mode_indices), isinstance(mode_indices, collections.abc.Sequence))
@@ -327,12 +326,11 @@ class SimResult:
     ):
 
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
-        ftag = FieldTag.make_from_field(ft)
-        if ftag.is_EM_H():
+        if ft == FieldType.EM_H:
             self.make_H_fields()
 
-        domain_s = ftag.domain_type_as_str()
-        field_s = ftag.field_type_as_str()
+        domain_s = plotmodes.domain_display_name(ft)
+        field_s = plotmodes.field_display_name(ft)
 
 
         md_range = mode_indices if mode_indices is not None else range(self.n_modes)
@@ -380,9 +378,7 @@ class SimResult:
         """
 
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
-        ftag = FieldTag.make_from_field(ft)
-
-        if ftag.is_EM_H():
+        if ft == FieldType.EM_H:
             self.make_H_fields()
 
 
@@ -398,9 +394,7 @@ class SimResult:
         #ft = FieldType.AC if self.is_AC() else field_type
 
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
-        ftag = FieldTag.make_from_field(ft)
-
-        if ftag.is_EM_H():
+        if ft == FieldType.EM_H:
             self.make_H_fields()
 
 

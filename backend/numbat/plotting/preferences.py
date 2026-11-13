@@ -3,8 +3,9 @@ import tomllib
 from pathlib import Path
 from typing import Optional
 
+from numbat.nbtypes import FieldSelection, FieldType
+
 from .. import reporting
-from numbat.nbtypes import FieldTag
 
 
 def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
@@ -164,22 +165,21 @@ class PlotPrefs:
         self.d_single.update(self._user_settings['single_plots'])
 
 
-    def cmap_field_signed(self, ftag: FieldTag) -> str:
-        if ftag.is_EM():
+    def cmap_field_signed(self, selection: FieldSelection) -> str:
+        if selection.field_type != FieldType.AC:
             return self.cmap_em_field_signed
         else:
             return self.cmap_ac_field_signed
 
-    def cmap_field_unsigned(self, ftag: FieldTag) -> str:
-        if ftag.is_EM():
+    def cmap_field_unsigned(self, selection: FieldSelection) -> str:
+        if selection.field_type != FieldType.AC:
             return self.cmap_em_field_unsigned
         else:
             return self.cmap_ac_field_unsigned
 
-    def vector_field_arrow_color(self, ftag: FieldTag) -> str:
-        if ftag.is_EM():
+    def vector_field_arrow_color(self, selection: FieldSelection) -> str:
+        if selection.field_type != FieldType.AC:
             return self.vecplot_arrow_color_em
         else:
             return self.vecplot_arrow_color_ac
-
 
