@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from .. import runtime
-from numbat.nbtypes import FieldTag, FieldType, SI_GHz, SI_THz, SI_um, twopi
+from numbat.nbtypes import FieldTag, SI_GHz, SI_THz, SI_um, twopi
 from numbat.plotting.axes import TidyAxes
 from numbat.plotting.tools import save_and_close_figure
 
@@ -53,12 +53,10 @@ def modeplot_filename_1D(field_code, plps, mode_index, cut, label=''):
 
 
 def field_type_to_intensity_code(ft):
-    return {FieldType.EM_E: FieldTag('Eabs'), FieldType.EM_H: FieldTag(
-        'Habs'), FieldType.AC: FieldTag('uabs')}[ft]
+    return FieldTag.make_from_field_and_component(ft, 'i')
 
 def field_type_to_vector_code(ft):
-    return  {FieldType.EM_E: FieldTag('Et'), FieldType.EM_H: FieldTag(
-        'Ht'), FieldType.AC: FieldTag('ut')}[ft]
+    return FieldTag.make_from_field_and_component(ft, 't')
 
 
 
@@ -813,6 +811,4 @@ def plot_one_component(field_code, d_xy, v_fields, plps, mode_index, cc, axis=No
     if axis is None:  # If user passed in the axis, they can look after saving.
         fig_fname = modeplot_filename_2D(field_code, plps, mode_index, cc._user_code)
         save_and_close_figure(fig, fig_fname)
-
-
 

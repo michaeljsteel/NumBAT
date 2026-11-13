@@ -31,6 +31,22 @@ def check_allowed_plot_components(comps):
             reporting.report_and_exit(f"Unknown field component flag '{c}' in 'comps' argument to plot_mode()." +
             "\nAllowed values are 'x', 'y', 'z', 't' (transverse vector plot), 'a' (absolute value).")
 
+
+def _field_tags_for_1D_plot(ft, comps, include_minor):
+    tags = [FieldTag.make_from_field_and_component(ft, comp) for comp in comps]
+    if not include_minor:
+        return tags
+
+    minor_tags = []
+    for tag in tags:
+        if tag.minor_component() is not None:
+            minor_tag = FieldTag(tag.field_component())
+            minor_tag.set_to_minor()
+            minor_tags.append(minor_tag)
+
+    return tags + minor_tags
+
+
 class ModeInterpolator:
     '''Helper class for plotting modes.
        Factors common info from Simulation that each mode can draw on, but we only need to do once for each Sim.
@@ -317,18 +333,12 @@ class Mode:
         logx = plot_params.get('logx', False)
         logy = plot_params.get('logy', False)
 
-        tags=[]
         if not len(comps):
             comps = ['x', 'y', 'z', 'a']
 
-        tags = [FieldTag.make_from_field_and_component(ft, comp) for comp in comps]
-
-        # add minor tag components if required
-        all_tags = tags.copy()
-        if not plot_params['suppress_imimre']:
-            for tag in tags:
-                tag.set_to_minor()
-                all_tags.append(tag)
+        all_tags = _field_tags_for_1D_plot(
+            ft, comps, include_minor=not plot_params['suppress_imimre']
+        )
 
         fig, ax = plt.subplots()
         v_genx = self.mode_interpolator.v_x_axis

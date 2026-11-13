@@ -18,6 +18,7 @@
 
 
 import math
+from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
 from numpy import array
 import scipy.constants as const
@@ -95,16 +96,123 @@ class FieldType(Enum):
     EM_H = 'EM_H'
     AC = 'AC'
 
-    @staticmethod
-    def from_str(lab):
-        if lab == 'EM_E':
-            return FieldType.EM_E
-        elif lab == 'EM_H':
-            return FieldType.EM_H
-        elif lab == 'AC':
-            return FieldType.AC
-        else:
-            raise ValueError("The value of field_type must be either 'AC', 'EM_E' or 'EM_H'.")
+    @classmethod
+    def parse(cls, value):
+        if isinstance(value, cls):
+            return value
+
+        try:
+            return cls(value)
+        except ValueError as exc:
+            allowed = ", ".join(member.value for member in cls)
+            raise ValueError(f"field_type must be one of: {allowed}.") from exc
+
+    @classmethod
+    def from_str(cls, lab):
+        return cls.parse(lab)
+
+
+class FieldComponent(Enum):
+    X = 'x'
+    Y = 'y'
+    Z = 'z'
+    TRANSVERSE = 't'
+    MAGNITUDE = 'a'
+    INTENSITY = 'i'
+
+    @classmethod
+    def parse(cls, value):
+        if isinstance(value, cls):
+            return value
+
+        try:
+            return cls(value)
+        except ValueError as exc:
+            allowed = ", ".join(member.value for member in cls)
+            raise ValueError(f"field component must be one of: {allowed}.") from exc
+
+
+class ComplexPart(Enum):
+    PRIMARY = 'primary'
+    SECONDARY = 'secondary'
+
+    @classmethod
+    def parse(cls, value):
+        if isinstance(value, cls):
+            return value
+
+        try:
+            return cls(value)
+        except ValueError as exc:
+            allowed = ", ".join(member.value for member in cls)
+            raise ValueError(f"complex part must be one of: {allowed}.") from exc
+
+
+@dataclass(frozen=True)
+class FieldSelection:
+    field_type: FieldType
+    component: FieldComponent
+    complex_part: ComplexPart | None = None
+
+    def __post_init__(self):
+        field_type = FieldType.parse(self.field_type)
+        component = FieldComponent.parse(self.component)
+        complex_part = (
+            None if self.complex_part is None else ComplexPart.parse(self.complex_part)
+        )
+
+        is_cartesian = component in (
+            FieldComponent.X,
+            FieldComponent.Y,
+            FieldComponent.Z,
+        )
+        if is_cartesian and complex_part is None:
+            raise ValueError("Cartesian field components require a complex part.")
+        if not is_cartesian and complex_part is not None:
+            raise ValueError("Derived field quantities must not specify a complex part.")
+
+        object.__setattr__(self, 'field_type', field_type)
+        object.__setattr__(self, 'component', component)
+        object.__setattr__(self, 'complex_part', complex_part)
+
+    @classmethod
+    def primary(cls, field_type, component):
+        return cls(field_type, component, ComplexPart.PRIMARY)
+
+    @classmethod
+    def secondary(cls, field_type, component):
+        return cls(field_type, component, ComplexPart.SECONDARY)
+
+    @classmethod
+    def magnitude(cls, field_type):
+        return cls(field_type, FieldComponent.MAGNITUDE)
+
+    @classmethod
+    def intensity(cls, field_type):
+        return cls(field_type, FieldComponent.INTENSITY)
+
+    @classmethod
+    def transverse(cls, field_type):
+        return cls(field_type, FieldComponent.TRANSVERSE)
+
+    @property
+    def is_cartesian(self):
+        return self.component in (
+            FieldComponent.X,
+            FieldComponent.Y,
+            FieldComponent.Z,
+        )
+
+    @property
+    def is_derived(self):
+        return not self.is_cartesian
+
+    @property
+    def is_vector(self):
+        return self.component == FieldComponent.TRANSVERSE
+
+    def with_part(self, complex_part):
+        return FieldSelection(self.field_type, self.component, complex_part)
 
 # Internal
 class FieldCode:
@@ -204,6 +312,9 @@ class FieldTag:
         '''Create a FieldTag from the real/imag-aware but field-agnostic component Fxr, Fxi, etc and the field type.
 
         The fc can override the preference for major real/imag part.'''
+        if not isinstance(ft, FieldType):
+            ft = FieldType(ft)
+
         if ft == FieldType.EM_E:
             uc = {'Fxr': 'Ex', 'Fxi': 'Ex', 'Fyr': 'Ey', 'Fyi': 'Ey',
                   'Fzr': 'Ez', 'Fzi': 'Ez', 'Fa': 'Ea', 'Fi': 'Ei', 'Ft': 'Et'}[fc]
@@ -310,7 +421,13 @@ class FieldTag:
 
     def is_transverse(self): return self._user_code in ('Et', 'Ht', 'ut')
 
-    def is_minor(self): return self._f_code in ('Fxr', 'Fyr', 'Fzi')
+    def is_secondary_component(self):
+        """Return whether this tag selects the secondary real/imaginary component."""
+        return self._f_code in ('Fxi', 'Fyi', 'Fzr')
+
+    def is_minor(self):
+        """Return whether this tag selects the minor real/imaginary component."""
+        return self.is_secondary_component()
 
 
     def major_component(self):
@@ -330,6 +447,8 @@ class FieldTag:
     def minor_component_as_F(self):
         """Returns the minor component of the field in F notation."""
         minco = self.minor_component()
+        if minco is None:
+            raise ValueError(f"{self._user_code} has no minor real/imaginary component.")
         mincoF = 'F' + minco[1:]
         return mincoF
 
@@ -376,7 +495,7 @@ class FieldTag:
         if not mixed:
             return 'solid'
 
-        return 'dashed' if self.is_minor() else 'dotted'
+        return 'dotted' if self.is_secondary_component() else 'dashed'
 
     def linecolor(self):
         """Field amplitudes have standard colours."""

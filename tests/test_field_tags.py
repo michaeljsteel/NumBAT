@@ -1,0 +1,170 @@
+"""Regression tests for field selection and plot representation helpers."""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
+
+from numbat.nbtypes import (
+    ComplexPart,
+    FieldCode,
+    FieldComponent,
+    FieldSelection,
+    FieldTag,
+    FieldType,
+)
+from numbat.plotting.modes import field_type_to_intensity_code, field_type_to_vector_code
+from numbat.solvers.modes import _field_tags_for_1D_plot, check_allowed_plot_components
+
+
+@pytest.mark.parametrize("field_type", list(FieldType))
+def test_legacy_field_type_inputs_remain_supported(field_type):
+    assert FieldType.from_str(field_type.value) is field_type
+    assert FieldCode(field_type.value).as_field_type() is field_type
+    assert FieldTag.make_from_field(field_type.value).as_field_type() is field_type
+
+
+@pytest.mark.parametrize("component", ("x", "y", "z", "t", "a"))
+def test_legacy_plot_component_inputs_remain_supported(component):
+    check_allowed_plot_components((component,))
+    assert FieldTag.make_from_field_and_component(FieldType.EM_E, component)
+
+
+@pytest.mark.parametrize(
+    ("field_type", "component", "complex_part"),
+    [
+        ("EM_E", "x", "primary"),
+        (FieldType.EM_H, FieldComponent.Y, ComplexPart.SECONDARY),
+        ("AC", "z", ComplexPart.PRIMARY),
+    ],
+)
+def test_field_selection_normalizes_supported_input_forms(field_type, component, complex_part):
+    selection = FieldSelection(field_type, component, complex_part)
+
+    assert isinstance(selection.field_type, FieldType)
+    assert isinstance(selection.component, FieldComponent)
+    assert isinstance(selection.complex_part, ComplexPart)
+
+
+@pytest.mark.parametrize(
+    ("parser", "value", "message"),
+    [
+        (FieldType.parse, "EM_D", "field_type must be one of"),
+        (FieldComponent.parse, "q", "field component must be one of"),
+        (ComplexPart.parse, "imaginary", "complex part must be one of"),
+    ],
+)
+def test_field_selection_parsers_reject_unknown_values(parser, value, message):
+    with pytest.raises(ValueError, match=message):
+        parser(value)
+
+
+@pytest.mark.parametrize(
+    "selection",
+    [
+        FieldSelection.primary(FieldType.EM_E, FieldComponent.X),
+        FieldSelection.secondary(FieldType.EM_H, FieldComponent.Z),
+        FieldSelection.magnitude(FieldType.AC),
+        FieldSelection.intensity(FieldType.EM_E),
+        FieldSelection.transverse(FieldType.EM_H),
+    ],
+)
+def test_field_selection_factory_methods(selection):
+    assert isinstance(selection, FieldSelection)
+
+
+def test_field_selection_properties_and_part_transformation():
+    selection = FieldSelection.primary(FieldType.EM_E, FieldComponent.X)
+    secondary = selection.with_part(ComplexPart.SECONDARY)
+
+    assert selection.is_cartesian
+    assert not selection.is_derived
+    assert not selection.is_vector
+    assert secondary.complex_part == ComplexPart.SECONDARY
+    assert secondary != selection
+    assert FieldSelection.transverse(FieldType.EM_E).is_vector
+    assert FieldSelection.magnitude(FieldType.EM_E).is_derived
+
+
+@pytest.mark.parametrize(
+    ("component", "complex_part", "message"),
+    [
+        (FieldComponent.X, None, "Cartesian field components require"),
+        (FieldComponent.MAGNITUDE, ComplexPart.PRIMARY, "Derived field quantities must not"),
+        (FieldComponent.TRANSVERSE, ComplexPart.SECONDARY, "Derived field quantities must not"),
+    ],
+)
+def test_field_selection_rejects_invalid_component_part_combinations(
+    component, complex_part, message
+):
+    with pytest.raises(ValueError, match=message):
+        FieldSelection(FieldType.EM_E, component, complex_part)
+
+
+def test_field_selection_is_immutable():
+    selection = FieldSelection.primary(FieldType.EM_E, FieldComponent.X)
+
+    with pytest.raises(AttributeError):
+        selection.component = FieldComponent.Y
+
+
+@pytest.mark.parametrize(
+    ("field_type", "expected_component", "expected_code"),
+    [
+        (FieldType.EM_E, "Ei", "Fi"),
+        (FieldType.EM_H, "Hi", "Fi"),
+        (FieldType.AC, "ui", "Fi"),
+    ],
+)
+def test_field_type_to_intensity_code_uses_supported_intensity_key(
+    field_type, expected_component, expected_code
+):
+    tag = field_type_to_intensity_code(field_type)
+
+    assert tag.field_component() == expected_component
+    assert tag.component_as_F() == expected_code
+
+
+@pytest.mark.parametrize("field_type", list(FieldType))
+def test_field_type_to_vector_code_uses_supported_vector_key(field_type):
+    assert field_type_to_vector_code(field_type).component_as_F() == "Ft"
+
+
+def test_field_tag_normalizes_string_field_type_for_storage_key_conversion():
+    tag = FieldTag.make_from_field_and_Fcode("EM_E", "Fxr")
+
+    assert tag.field_component() == "Ex"
+    assert tag.component_as_F() == "Fxr"
+
+
+def test_field_tag_secondary_component_and_style_are_consistent():
+    primary = FieldTag("Ex")
+    secondary = FieldTag("Ex")
+    secondary.set_to_minor()
+
+    assert not primary.is_minor()
+    assert not primary.is_secondary_component()
+    assert secondary.is_minor()
+    assert secondary.is_secondary_component()
+    assert primary.linestyle(("x", "a")) == "dashed"
+    assert secondary.linestyle(("x", "a")) == "dotted"
+
+
+@pytest.mark.parametrize("component", ("a", "i", "t"))
+def test_field_tag_rejects_minor_part_for_derived_quantities(component):
+    tag = FieldTag.make_from_field_and_component(FieldType.EM_E, component)
+
+    with pytest.raises(ValueError, match="has no minor"):
+        tag.set_to_minor()
+
+
+def test_1d_plot_tags_keep_primary_components_and_skip_derived_minors():
+    tags = _field_tags_for_1D_plot(
+        FieldType.EM_E, ("x", "y", "a", "t"), include_minor=True
+    )
+
+    assert [tag.component_as_F() for tag in tags] == ["Fxr", "Fyr", "Fa", "Ft", "Fxi", "Fyi"]
+    assert tags[0] is not tags[4]
+    assert tags[1] is not tags[5]

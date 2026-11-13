@@ -11,7 +11,7 @@ sys.path.append(str(Path("../../backend")))
 
 import numbat
 from numbat import materials
-from numbat.mesh import MailData
+#from numbat.mesh import MailData
 
 from numbat.solvers import sbsgain
 from numbat.types import SI_GHz
@@ -58,9 +58,9 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
     material_bkg=mat_vac, material_a=mat_slot, material_b=mat_slab, material_c=mat_ribs,
     lc_bkg=0.05, lc_refine_1=1.0 * refine_fac, lc_refine_2=1.0 * refine_fac,)
 
-#wguide.plot_mesh(prefix)
-gm = MailData(wguide.mesh_mail_fname)
-gm.plot_mesh('tt')
+wguide.plot_mesh(prefix)
+#gm = MailData(wguide.mesh_mail_fname)
+#gm.plot_mesh('tt')
 
 pl_ref = wguide.get_structure_plotter_refractive_index()
 pl_ref.make_plot_2D(prefix)

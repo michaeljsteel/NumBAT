@@ -4,12 +4,15 @@ PYTHON=python
 all: tut01 tut02 tut03a tut03b tut04 tut05 tut06a tut06b \
 		tut07 tut08 tut11a  tut11b tut12 tut13 tut14
 
+all1: tut01 tut02 tut03a tut03b tut04 tut05 tut06a tut06b 
+all2: tut07 tut08 tut11a  tut11b tut12 tut13 tut14
+
 allfast: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b \
 		ftut07 ftut08  ftut11a  ftut12 ftut13
 
 fast1: tut01 tut02 tut03a ftut03b ftut04 ftut05 ftut06a ftut06b
-#fast2:	ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13
-fast2:	ftut11a  ftut12 ftut13
+fast2:	ftut06a ftut06b ftut07 ftut08 ftut09 ftut11a  ftut12 ftut13
+#fast2:	ftut11a  ftut12 ftut13
 
 slow: tut12 tut13 tut14
 
@@ -135,4 +138,5 @@ clean:
 	-rm -rf ./tut*fields ./ftut*fields ./__pycache__
 	-rm -rf ./tut*out ./tut*.txt ./ftut*.txt
 	-rm -rf numbat_tmp
+	-rm tut_03b-disp
 
