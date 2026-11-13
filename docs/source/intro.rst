@@ -96,6 +96,11 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.6.0
+-------------
+
+This version has replaced the internal code for handling field components. The FieldCode interface will shortly be deprecated and replaced with a new interface.
+
 Version 2.4
 -----------
 
