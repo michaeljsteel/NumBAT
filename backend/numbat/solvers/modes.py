@@ -27,7 +27,6 @@ from numbat.nbtypes import (
     FieldType,
     SI_um,
     SI_vacuum_impedance_Z0,
-    parse_field_components,
 )
 from numbat.plotting import mode_rendering
 from numbat.plotting import modes as plotmodes
@@ -38,39 +37,13 @@ from .. import reporting, runtime
 
 
 def normalize_plot_components(comps):
-    """Return supported plot components as `FieldComponent` values.
-
-    `comps` may be a compact string such as `"exyat"` or an iterable of
-    `FieldComponent` members and one-character string codes.
-    """
-    try:
-        components = parse_field_components(comps)
-    except ValueError as exc:
-        reporting.report_and_exit(
-            f"Unknown field component in 'comps' argument to plot_mode(): {exc}"
-        )
-
-    return components
+    """Compatibility wrapper for the rendering component normalizer."""
+    return mode_rendering.normalize_plot_components(comps)
 
 
 def split_plot_components(comps):
-    """Return whether to plot the 2D overview and its individual components.
-
-    An empty specification retains the default overview-only behavior.
-    `FieldComponent.EVERYTHING` requests the overview when individual
-    components have been specified.
-    """
-    components = normalize_plot_components(comps)
-    if not components:
-        return True, ()
-
-    include_overview = FieldComponent.EVERYTHING in components
-    individual_components = tuple(
-        component
-        for component in components
-        if component is not FieldComponent.EVERYTHING
-    )
-    return include_overview, individual_components
+    """Compatibility wrapper for the 2D rendering request splitter."""
+    return mode_rendering.split_plot_components(comps)
 
 
 def check_allowed_plot_components(comps):
@@ -332,7 +305,7 @@ class Mode:
         and `MAGNITUDE`/`"a"`.
         """
 
-        include_overview, comps = split_plot_components(comps)
+        include_overview, comps = mode_rendering.split_plot_components(comps)
 
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
@@ -381,11 +354,7 @@ class Mode:
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
 
-        comps = normalize_plot_components(comps)
-        if FieldComponent.EVERYTHING in comps:
-            reporting.report_and_exit(
-                "The 'e' overview component is available only for 2D mode plots."
-            )
+        comps = mode_rendering.components_for_1d_plot(comps)
 
         if prefix: plot_params['prefix'] = prefix
 

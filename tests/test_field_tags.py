@@ -28,7 +28,13 @@ from numbat.nbtypes import (
     SI_vacuum_impedance_Z0,
     parse_field_components,
 )
-from numbat.plotting.mode_rendering import render_mode_1d, render_mode_2d
+from numbat.plotting.mode_rendering import (
+    components_for_1d_plot,
+    normalize_plot_components,
+    render_mode_1d,
+    render_mode_2d,
+    split_plot_components,
+)
 from numbat.plotting.modes import (
     add_contour_plot,
     field_display_name,
@@ -39,12 +45,9 @@ from numbat.plotting.modes import (
     tex_label,
 )
 from numbat.solvers.modes import (
-    Mode,
     ModeInterpolator,
     check_allowed_plot_components,
-    normalize_plot_components,
     selections_for_1d_plot,
-    split_plot_components,
 )
 from numbat.solvers.simresult import SimResult
 
@@ -186,7 +189,7 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
 
 def test_overview_component_is_rejected_for_1d_and_supplied_axes():
     with pytest.raises(SystemExit):
-        Mode.plot_mode_1D(object(), "x", 0, comps="e")
+        components_for_1d_plot("e")
 
     with pytest.raises(SystemExit):
         render_mode_2d(

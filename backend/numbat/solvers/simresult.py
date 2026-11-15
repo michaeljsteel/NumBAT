@@ -30,10 +30,11 @@ from numbat.nbtypes import (
     SymRep,
     twopi,
 )
+from numbat.plotting import mode_rendering
 from numbat.plotting import modes as plotmodes
 from numbat.plotting.tools import progressBar
 from numbat.solvers import sbsgain as integration
-from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator, normalize_plot_components
+from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
 
 from .. import reporting
 
@@ -274,7 +275,7 @@ class SimResult:
             modal_gains (float array): Pre-calculated gain for each acoustic mode given chosen optical fields.
         """
 
-        comps = normalize_plot_components(comps)
+        comps = mode_rendering.normalize_plot_components(comps)
 
         if 'ivals' in kwargs:
             reporting.deprecated_parameter_exit('ivals', 'mode_indices',
@@ -343,7 +344,7 @@ class SimResult:
         magnitude. `EVERYTHING`/`"e"` is available only for 2D mode plots.
         """
 
-        comps = normalize_plot_components(comps)
+        comps = mode_rendering.components_for_1d_plot(comps)
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
         if ft == FieldType.EM_H:
             self.make_H_fields()

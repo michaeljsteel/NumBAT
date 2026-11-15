@@ -243,6 +243,8 @@ not select decorators or call plotting primitives directly.
 
 ### Phase 3: Move Plot-Request Policy
 
+**Status: Complete**
+
 Move plot-specific `comps` interpretation from `solvers/modes.py` into
 `plotting/mode_rendering.py`.
 

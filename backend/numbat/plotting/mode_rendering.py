@@ -4,9 +4,44 @@ import matplotlib.pyplot as plt
 
 from numbat import reporting
 from numbat.field_selection import storage_key
-from numbat.nbtypes import ComplexPart, FieldComponent
+from numbat.nbtypes import ComplexPart, FieldComponent, parse_field_components
 from numbat.plotting import modes as mode_presentation
 from numbat.plotting import tools as plottools
+
+
+def normalize_plot_components(comps):
+    """Return supported plotting components as `FieldComponent` values."""
+    try:
+        return parse_field_components(comps)
+    except ValueError as exc:
+        reporting.report_and_exit(
+            f"Unknown field component in 'comps' argument to plot_mode(): {exc}"
+        )
+
+
+def split_plot_components(comps):
+    """Return whether to render the 2D overview and individual components."""
+    components = normalize_plot_components(comps)
+    if not components:
+        return True, ()
+
+    include_overview = FieldComponent.EVERYTHING in components
+    individual_components = tuple(
+        component
+        for component in components
+        if component is not FieldComponent.EVERYTHING
+    )
+    return include_overview, individual_components
+
+
+def components_for_1d_plot(comps):
+    """Normalize 1D components and reject the 2D overview directive."""
+    components = normalize_plot_components(comps)
+    if FieldComponent.EVERYTHING in components:
+        reporting.report_and_exit(
+            "The 'e' overview component is available only for 2D mode plots."
+        )
+    return components
 
 
 def selections_for_1d_plot(field_type, components, *, include_secondary):
