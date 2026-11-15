@@ -96,6 +96,15 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.6.1
+-------------
+
+Mode plotting now accepts compact component specifications such as
+``comps="exyti"`` as well as ``FieldComponent`` values. ``e`` requests the
+combined 2D overview, while ``i`` plots field intensity. Field-type examples
+now use ``FieldType`` values. ``FieldCode`` and ``FieldTag`` remain available
+with deprecation warnings during the compatibility period.
+
 Version 2.6.0
 -------------
 
