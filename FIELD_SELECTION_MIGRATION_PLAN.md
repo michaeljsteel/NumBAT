@@ -36,6 +36,7 @@ class FieldComponent(Enum):
     TRANSVERSE = "t"
     MAGNITUDE = "a"
     INTENSITY = "i"
+    EVERYTHING = "e"
 
 
 class ComplexPart(Enum):
@@ -67,6 +68,28 @@ Validation invariants:
 - `X`, `Y`, and `Z` require `complex_part`.
 - `TRANSVERSE`, `MAGNITUDE`, and `INTENSITY` require `complex_part=None`.
 - Invalid states raise a useful `ValueError` during construction.
+- `EVERYTHING` is a 2D plotting directive, not a physical field selection. It
+  must be removed before `FieldSelection` construction or storage-key lookup.
+
+### Public component specifications
+
+Public plotting accepts either compact strings or typed iterables:
+
+```python
+comps="exyti"
+comps=(FieldComponent.EVERYTHING, FieldComponent.X, FieldComponent.INTENSITY)
+```
+
+Both forms normalize through:
+
+```python
+FieldComponentSpec = str | Iterable[FieldComponent | str]
+parse_field_components(spec) -> tuple[FieldComponent, ...]
+```
+
+The compact component codes are `x`, `y`, `z`, `t`, `a`, `i`, and `e`.
+`e` is valid only for 2D mode plotting; it requests the combined overview in
+addition to any individual component plots.
 
 Provide concise constructors:
 
@@ -100,8 +123,10 @@ Document precisely what must remain supported before changing implementation.
 |---|---:|---|
 | `FieldType.EM_E`, `EM_H`, or `AC` | Yes | `FieldType` |
 | `"EM_E"`, `"EM_H"`, or `"AC"` | Yes | `FieldType` |
-| `"x"`, `"y"`, `"z"`, `"t"`, or `"a"` in `comps` | Yes | `FieldComponent` |
-| `"i"` in APIs that support intensity | Yes | `FieldComponent.INTENSITY` |
+| Compact `comps` strings such as `"xyat"` | Yes | `FieldComponent` tuple |
+| `FieldComponent` tuples | Yes | `FieldComponent` tuple |
+| `"i"` in `comps` | Yes | `FieldComponent.INTENSITY` |
+| `"e"` in 2D `comps` | Yes | 2D overview directive |
 | Existing `FieldTag` passed to internal plotting helpers | Yes, initially | Compatibility adapter |
 | `Fxr`, `Fxi`, and similar data keys | Yes, internal only | Storage-key adapter |
 
@@ -344,20 +369,21 @@ Remove mutable `FieldTag` from the plotting flow.
 
 ### Objective
 
-Make enums the documented API while retaining existing strings.
+Support concise compact strings and typed enum iterables through one public
+component-specification interface.
 
 ### Work
 
 1. Update public documentation and annotations to conceptually accept:
 
    ```python
-   comps: Sequence[FieldComponent | str] = ()
+   comps: FieldComponentSpec = ()
    ```
 
 2. Parse public component input once at the boundary:
 
    ```python
-   components = tuple(FieldComponent.parse(component) for component in comps)
+   components = parse_field_components(comps)
    ```
 
 3. Preserve default components exactly:
@@ -371,31 +397,37 @@ Make enums the documented API while retaining existing strings.
    )
    ```
 
-4. Decide whether public intensity support is ready:
-   - If yes, support `comps=("i",)`, calculate `Fi`, and document it.
-   - If no, reject `i` at public plotting boundaries with a specific message
-     while retaining the type for internal future use.
-
-   **Decision:** Intensity remains unavailable in public `comps` input because
-   interpolated 1D and 2D data do not both supply an `Fi` array. Public `"i"`
-   input raises an explicit error directing users to magnitude (`"a"`).
-5. Update relevant docstrings and plotting tutorials to show enum-first usage,
-   while documenting string compatibility.
+4. Implement public intensity support:
+   - Produce `Fi = Fa**2` in both 1D and 2D interpolated field dictionaries,
+     after magnetic `Z0` scaling has been applied.
+   - Permit `comps="i"` and `FieldComponent.INTENSITY`.
+   - Render `Fi` directly instead of squaring `Fa` as a rendering fallback.
+   - Add regression tests for interpolated data, H-field scaling, and 2D
+     rendering.
+5. Update relevant docstrings and plotting tutorials to show both:
+   - compact component strings for concise calls;
+   - enum iterables for programmatic, type-safe calls.
+6. Preserve existing field-export schemas. `Fi` is available in interpolated
+   field dictionaries and plotting, but adding it to text exports is deferred
+   to the dedicated mode-export extraction. That work must explicitly define
+   and document the export schema rather than changing it incidentally.
 
 ### Tests
 
-For each supported public plot API, test an old string call and an enum call
-that resolve to identical selections, storage-key access, filenames, labels,
-and plot metadata.
+For each supported public plot API, test a compact string call and an enum
+call that resolve to identical selections and plot metadata. Cover 2D overview
+routing, intensity, and 1D rejection of `e`.
 
 ### Exit criteria
 
-- New documentation uses enums first.
-- Existing string inputs remain covered by regression tests.
+- Documentation presents compact and enum forms as supported alternatives.
+- Public plotting boundaries preserve equivalent compact-string and enum
+  requests.
+- Existing one-character component strings remain covered by regression tests.
 
 ## Phase 6: Deprecate Legacy Types
 
-**Status: Complete**
+**Status: Implementation complete; deprecation lifecycle pending**
 
 ### Objective
 
@@ -429,9 +461,14 @@ Give downstream users a stable transition path before removal.
    - a released version has exposed warnings;
    - removal is covered by regression tests.
 
-### Exit criteria
+### Implementation exit criteria
 
-- The public migration window has elapsed.
+- Direct `FieldCode` and `FieldTag` use emits deprecation warnings.
+- Production code uses the typed field-selection API.
+
+### Future removal criteria
+
+- The public migration window has elapsed in a released version.
 - `FieldCode` and `FieldTag` can be removed without repository callers.
 
 ## Test Strategy
@@ -460,6 +497,8 @@ Add targeted tests for:
 - electric EM plots;
 - magnetic EM plots;
 - acoustic displacement plots;
+- `SimResult.plot_modes` compact-string and enum requests;
+- `SimResult.plot_modes_1D` compact-string and enum requests;
 - default 1D component plots;
 - 1D plots with secondary components;
 - magnitude and vector-only requests;

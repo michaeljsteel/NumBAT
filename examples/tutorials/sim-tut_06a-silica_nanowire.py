@@ -73,7 +73,7 @@ for (i, kz) in enumerate(v_kz): print(f'{i:3d}  {np.real(kz):.4e}')
 
 #simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
 simres_EM_pump.plot_modes(mode_indices=range(5), xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim,
-                          comps=('x','y','t'))
+                          comps="exyt")
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(simres_EM_pump.neff(0))

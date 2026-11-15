@@ -351,8 +351,6 @@ def add_contour_plot(fig, ax, d_xy, c_field, selection, plps, decorator):
 
     if selection.component == FieldComponent.MAGNITUDE:
         cont_field = np.abs(cont_field)
-    elif selection.component == FieldComponent.INTENSITY:
-        cont_field = np.abs(cont_field)**2
 
     logmax=5  # show up to 5 orders of magnitude contrast
     if logamp:
@@ -583,16 +581,11 @@ def plot_contour_and_quiver(fig, ax, d_xy, v_fields, plps, scalar_selection=None
 
     cbar = None
     if do_cont:
-
-        data_selection = scalar_selection
-        if scalar_selection.component == FieldComponent.INTENSITY:
-            data_selection = FieldSelection.magnitude(scalar_selection.field_type)
-
         im_co, cbar = add_contour_plot(
             fig,
             ax,
             d_xy,
-            v_fields[storage_key(data_selection)],
+            v_fields[storage_key(scalar_selection)],
             scalar_selection,
             plps,
             decorator,

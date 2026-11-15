@@ -19,8 +19,10 @@
 
 import math
 import warnings
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum, IntEnum, auto
+from typing import TypeAlias
 
 import scipy.constants as const
 from numpy import array
@@ -120,6 +122,7 @@ class FieldComponent(Enum):
     TRANSVERSE = 't'
     MAGNITUDE = 'a'
     INTENSITY = 'i'
+    EVERYTHING = 'e'
 
     @classmethod
     def parse(cls, value):
@@ -131,6 +134,34 @@ class FieldComponent(Enum):
         except ValueError as exc:
             allowed = ", ".join(member.value for member in cls)
             raise ValueError(f"field component must be one of: {allowed}.") from exc
+
+
+FieldComponentSpec: TypeAlias = str | Iterable[FieldComponent | str]
+
+
+def parse_field_components(spec: FieldComponentSpec) -> tuple[FieldComponent, ...]:
+    """Normalize a compact or typed field-component specification.
+
+    A string specifies components character-by-character, while an iterable can
+    contain ``FieldComponent`` members or their one-character string codes.
+
+    Examples:
+        >>> [component.value for component in parse_field_components("exyat")]
+        ['e', 'x', 'y', 'a', 't']
+        >>> [component.value for component in parse_field_components(
+        ...     (FieldComponent.X, FieldComponent.Z)
+        ... )]
+        ['x', 'z']
+    """
+    try:
+        components = tuple(FieldComponent.parse(component) for component in spec)
+    except TypeError as exc:
+        raise ValueError(
+            "field components must be a compact string or an iterable of "
+            "FieldComponent values or one-character string codes."
+        ) from exc
+
+    return components
 
 
 class ComplexPart(Enum):

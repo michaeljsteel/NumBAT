@@ -28,6 +28,7 @@ from numbat.nbtypes import (
     FieldType,
     SI_um,
     SI_vacuum_impedance_Z0,
+    parse_field_components,
 )
 from numbat.plotting import modes as plotmodes
 from numbat.plotting import raw_modes as plotmoderaw
@@ -40,24 +41,37 @@ from .. import reporting, runtime
 def normalize_plot_components(comps):
     """Return supported plot components as `FieldComponent` values.
 
-    Both legacy strings and `FieldComponent` members are accepted. Intensity is
-    intentionally unavailable until interpolated 1D and 2D field data both
-    provide an intensity array.
+    `comps` may be a compact string such as `"exyat"` or an iterable of
+    `FieldComponent` members and one-character string codes.
     """
     try:
-        components = tuple(FieldComponent.parse(component) for component in comps)
+        components = parse_field_components(comps)
     except ValueError as exc:
         reporting.report_and_exit(
             f"Unknown field component in 'comps' argument to plot_mode(): {exc}"
         )
 
-    if FieldComponent.INTENSITY in components:
-        reporting.report_and_exit(
-            "The 'i' intensity component is not yet available for public mode plots; "
-            "use 'a' for field magnitude."
-        )
-
     return components
+
+
+def split_plot_components(comps):
+    """Return whether to plot the 2D overview and its individual components.
+
+    An empty specification retains the default overview-only behavior.
+    `FieldComponent.EVERYTHING` requests the overview when individual
+    components have been specified.
+    """
+    components = normalize_plot_components(comps)
+    if not components:
+        return True, ()
+
+    include_overview = FieldComponent.EVERYTHING in components
+    individual_components = tuple(
+        component
+        for component in components
+        if component is not FieldComponent.EVERYTHING
+    )
+    return include_overview, individual_components
 
 
 def check_allowed_plot_components(comps):
@@ -157,6 +171,10 @@ class ModeInterpolator:
         if field_type == FieldType.EM_H:  # scale H fields by Z0 to get common units and amplitude with E
             for m_F in d_fields.values():   # Do this when they are first made
                 m_F *= SI_vacuum_impedance_Z0
+
+        d_fields[_field_storage_key(field_type, FieldComponent.INTENSITY)] = (
+            m_AbsF**2
+        )
 
         return d_fields
 
@@ -311,13 +329,18 @@ class Mode:
 
     def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='',
                   plot_params=plotmodes.PlotParams2D()):
-        """Plot selected components using strings or `FieldComponent` values.
+        """Plot selected components using a compact string or `FieldComponent` values.
 
-        Supported components are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`,
-        `TRANSVERSE`/`"t"`, and `MAGNITUDE`/`"a"`.
+        With no components, write the combined field overview. Use a compact
+        string such as ``comps="exyat"`` or an iterable such as
+        ``comps=(FieldComponent.EVERYTHING, FieldComponent.X)`` to request
+        the overview and individual component plots. Without `EVERYTHING`,
+        only individual component plots are written. Supported individual
+        components are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`, `TRANSVERSE`/`"t"`,
+        and `MAGNITUDE`/`"a"`.
         """
 
-        comps = normalize_plot_components(comps)
+        include_overview, comps = split_plot_components(comps)
 
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
@@ -326,7 +349,7 @@ class Mode:
         plot_params['field_type'] = ft  # awkward way to get the correct filename
 
         self._interpolate_mode_2D(n_pts, ft)
-        self._plot_me_2D(n_pts, comps, ft, plot_params, ax)
+        self._plot_me_2D(n_pts, include_overview, comps, ft, plot_params, ax)
 
         #self.clear_mode_plot_data()
 
@@ -343,9 +366,11 @@ class Mode:
 
         s_cut is a string determining the cut direction, with allowed values: 'x', 'y', or 'line'.
 
-        Field components may be legacy strings or `FieldComponent` values.
-        Supported values are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`,
-        `TRANSVERSE`/`"t"`, and `MAGNITUDE`/`"a"`.
+        Field components may be a compact string such as ``comps="xyat"`` or
+        an iterable of `FieldComponent` values. Supported values are
+        `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`, `TRANSVERSE`/`"t"`, and
+        `MAGNITUDE`/`"a"`. `EVERYTHING`/`"e"` is available only for 2D mode
+        plotting and is rejected here.
 
         For s_cut='x', the function is plotted along y at fixed x=val1, where val1 is a float.
 
@@ -355,6 +380,10 @@ class Mode:
         """
 
         comps = normalize_plot_components(comps)
+        if FieldComponent.EVERYTHING in comps:
+            reporting.report_and_exit(
+                "The 'e' overview component is available only for 2D mode plots."
+            )
 
         if prefix: plot_params['prefix'] = prefix
 
@@ -437,11 +466,15 @@ class Mode:
         self.d_fields_1D = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
 
 
-    def _plot_me_2D(self, n_pts, comps, field_type, plot_params, ax=None):
+    def _plot_me_2D(
+        self, n_pts, include_overview, comps, field_type, plot_params, ax=None
+    ):
 
-        # TODO: weirdly, we only ax != None when there is one component to plot
-        if ax is not None and len(comps) != 1:
-            reporting.report_and_exit('When providing an axis to plot on, must specify exactly one modal component.')
+        if ax is not None and (include_overview or len(comps) != 1):
+            reporting.report_and_exit(
+                "When providing an axis to plot on, specify exactly one individual "
+                "modal component and do not request the 'e' overview component."
+            )
 
         mh = self.mode_interpolator
 
@@ -449,12 +482,8 @@ class Mode:
         decorator = plot_params['decorator']
         # All components in one plot
 
-        decorator.set_for_multi()
-        # TODO this is a kludgy way of doing this. send it through separately
-        #plot_params['EM_AC'] = field_type
-
-        # can't do multiplots on a provided axis (would need a provided figure)
-        if ax is None:
+        if include_overview:
+            decorator.set_for_multi()
             plotmodes.plot_all_components(field_type, mh.xy_out, self.d_fields_2D,
                                           plot_params, self.sim_result, self.mode_num)
 

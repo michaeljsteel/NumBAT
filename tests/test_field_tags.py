@@ -2,6 +2,7 @@
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -24,8 +25,11 @@ from numbat.nbtypes import (
     FieldSelection,
     FieldTag,
     FieldType,
+    SI_vacuum_impedance_Z0,
+    parse_field_components,
 )
 from numbat.plotting.modes import (
+    add_contour_plot,
     field_display_name,
     field_type_to_intensity_code,
     field_type_to_vector_code,
@@ -34,11 +38,14 @@ from numbat.plotting.modes import (
     tex_label,
 )
 from numbat.solvers.modes import (
+    Mode,
     ModeInterpolator,
     check_allowed_plot_components,
     normalize_plot_components,
     selections_for_1d_plot,
+    split_plot_components,
 )
+from numbat.solvers.simresult import SimResult
 
 
 @pytest.mark.parametrize("field_type", list(FieldType))
@@ -66,7 +73,7 @@ def test_legacy_plot_component_inputs_remain_supported(component):
 
 
 def test_plot_component_strings_and_enums_normalize_identically():
-    legacy = normalize_plot_components(("x", "y", "a", "t"))
+    compact = normalize_plot_components("xyat")
     typed = normalize_plot_components(
         (
             FieldComponent.X,
@@ -76,21 +83,226 @@ def test_plot_component_strings_and_enums_normalize_identically():
         )
     )
 
-    assert legacy == typed
+    assert compact == typed
     assert [
         storage_key(selection)
-        for selection in selections_for_1d_plot(FieldType.EM_E, legacy, include_secondary=False)
+        for selection in selections_for_1d_plot(FieldType.EM_E, compact, include_secondary=False)
     ] == [
         storage_key(selection)
         for selection in selections_for_1d_plot(FieldType.EM_E, typed, include_secondary=False)
     ]
 
 
-def test_plot_component_intensity_reports_that_it_is_not_yet_supported(caplog):
-    with pytest.raises(SystemExit):
-        normalize_plot_components(("i",))
+def test_field_component_spec_parses_compact_and_mixed_iterable_forms():
+    assert parse_field_components("exyat") == (
+        FieldComponent.EVERYTHING,
+        FieldComponent.X,
+        FieldComponent.Y,
+        FieldComponent.MAGNITUDE,
+        FieldComponent.TRANSVERSE,
+    )
+    assert parse_field_components(("x", FieldComponent.Y, "a")) == (
+        FieldComponent.X,
+        FieldComponent.Y,
+        FieldComponent.MAGNITUDE,
+    )
 
-    assert "intensity component is not yet available" in caplog.text
+
+def test_plot_component_split_defaults_to_the_overview_only():
+    assert split_plot_components(()) == (True, ())
+
+
+def test_plot_component_split_separates_overview_from_individual_components():
+    assert split_plot_components("exyt") == (
+        True,
+        (FieldComponent.X, FieldComponent.Y, FieldComponent.TRANSVERSE),
+    )
+    assert split_plot_components("xyt") == (
+        False,
+        (FieldComponent.X, FieldComponent.Y, FieldComponent.TRANSVERSE),
+    )
+
+
+def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
+    monkeypatch,
+):
+    class Decorator:
+        def __init__(self):
+            self.calls = []
+
+        def set_for_multi(self):
+            self.calls.append("multi")
+
+        def set_for_single(self):
+            self.calls.append("single")
+
+    calls = []
+    monkeypatch.setattr(
+        "numbat.plotting.modes.plot_all_components",
+        lambda *args: calls.append(("overview", args)),
+    )
+    monkeypatch.setattr(
+        "numbat.plotting.modes.plot_one_component",
+        lambda *args: calls.append(("component", args[5])),
+    )
+    mode = SimpleNamespace(
+        mode_interpolator=SimpleNamespace(xy_out=None),
+        d_fields_2D={},
+        sim_result=None,
+        mode_num=0,
+    )
+    decorator = Decorator()
+    plot_params = {"decorator": decorator}
+
+    Mode._plot_me_2D(
+        mode,
+        0,
+        True,
+        (FieldComponent.X, FieldComponent.Y),
+        FieldType.EM_E,
+        plot_params,
+    )
+
+    assert calls[0][0] == "overview"
+    assert [call[1].component for call in calls[1:]] == [
+        FieldComponent.X,
+        FieldComponent.Y,
+    ]
+    assert decorator.calls == ["multi", "single"]
+
+    calls.clear()
+    decorator.calls.clear()
+    Mode._plot_me_2D(
+        mode,
+        0,
+        False,
+        (FieldComponent.X,),
+        FieldType.EM_E,
+        plot_params,
+    )
+
+    assert [call[0] for call in calls] == ["component"]
+    assert decorator.calls == ["single"]
+
+
+def test_overview_component_is_rejected_for_1d_and_supplied_axes():
+    with pytest.raises(SystemExit):
+        Mode.plot_mode_1D(object(), "x", 0, comps="e")
+
+    with pytest.raises(SystemExit):
+        Mode._plot_me_2D(
+            object(),
+            0,
+            True,
+            (FieldComponent.X,),
+            FieldType.EM_E,
+            {},
+            ax=object(),
+        )
+
+
+@pytest.mark.parametrize("spec", (FieldComponent.X, 42))
+def test_field_component_spec_rejects_non_iterable_values(spec):
+    with pytest.raises(ValueError, match="compact string or an iterable"):
+        parse_field_components(spec)
+
+
+def test_plot_component_intensity_is_supported():
+    assert normalize_plot_components("i") == (FieldComponent.INTENSITY,)
+
+
+def test_plot_modes_normalizes_compact_and_typed_component_requests(monkeypatch):
+    class Mode:
+        def plot_mode(self, comps, field_type, plot_params):
+            calls.append((comps, field_type, plot_params["field_type"]))
+
+    calls = []
+    mode = Mode()
+    sim_result = SimpleNamespace(
+        is_AC=lambda: False,
+        n_modes=1,
+        get_mode=lambda index: mode,
+        get_mode_interpolator=lambda: SimpleNamespace(
+            define_plot_grid_2D=lambda **kwargs: None
+        ),
+    )
+    monkeypatch.setattr(
+        "numbat.solvers.simresult.progressBar",
+        lambda values, **kwargs: values,
+    )
+
+    SimResult.plot_modes(
+        sim_result,
+        mode_indices=[0],
+        field_type=FieldType.EM_E,
+        comps="exi",
+    )
+    SimResult.plot_modes(
+        sim_result,
+        mode_indices=[0],
+        field_type=FieldType.EM_E,
+        comps=(
+            FieldComponent.EVERYTHING,
+            FieldComponent.X,
+            FieldComponent.INTENSITY,
+        ),
+    )
+
+    expected_components = (
+        FieldComponent.EVERYTHING,
+        FieldComponent.X,
+        FieldComponent.INTENSITY,
+    )
+    assert [(comps, field_type) for comps, field_type, _ in calls] == [
+        (expected_components, FieldType.EM_E),
+        (expected_components, FieldType.EM_E),
+    ]
+    assert all(plot_field_type is FieldType.EM_E for _, _, plot_field_type in calls)
+
+
+def test_plot_modes_1d_normalizes_compact_and_typed_component_requests(monkeypatch):
+    class Mode:
+        def plot_mode_1D(self, scut, val1, val2, comps, field_type, plot_params):
+            calls.append((scut, val1, val2, comps, field_type, plot_params["field_type"]))
+
+    calls = []
+    mode = Mode()
+    sim_result = SimpleNamespace(
+        is_AC=lambda: False,
+        n_modes=1,
+        get_mode=lambda index: mode,
+        get_mode_interpolator=lambda: SimpleNamespace(
+            define_plot_grid_2D=lambda **kwargs: None
+        ),
+    )
+    monkeypatch.setattr(
+        "numbat.solvers.simresult.progressBar",
+        lambda values, **kwargs: values,
+    )
+
+    SimResult.plot_modes_1D(
+        sim_result,
+        "x",
+        0,
+        mode_indices=[0],
+        field_type=FieldType.EM_E,
+        comps="ai",
+    )
+    SimResult.plot_modes_1D(
+        sim_result,
+        "x",
+        0,
+        mode_indices=[0],
+        field_type=FieldType.EM_E,
+        comps=(FieldComponent.MAGNITUDE, FieldComponent.INTENSITY),
+    )
+
+    expected_components = (FieldComponent.MAGNITUDE, FieldComponent.INTENSITY)
+    assert [(scut, val1, val2, comps, field_type) for scut, val1, val2, comps, field_type, _ in calls] == [
+        ("x", 0, None, expected_components, FieldType.EM_E),
+        ("x", 0, None, expected_components, FieldType.EM_E),
+    ]
+    assert all(plot_field_type is FieldType.EM_E for *_, plot_field_type in calls)
 
 
 @pytest.mark.parametrize(
@@ -222,6 +434,74 @@ def test_interpolated_z_fields_preserve_primary_imaginary_convention():
 
     assert fields["Fzi"].tolist() == [6.0]
     assert fields["Fzr"].tolist() == [5.0]
+    assert fields["Fi"].tolist() == [49.0]
+
+
+def test_interpolated_magnetic_intensity_uses_scaled_field_magnitude():
+    class SimulationResult:
+        def get_mode_fields_on_fem_mesh(self, mode_index, field_type):
+            return (
+                np.array([1 + 2j]),
+                np.array([3 + 4j]),
+                np.array([5 + 6j]),
+                np.array([2.0]),
+            )
+
+    interpolator = object.__new__(ModeInterpolator)
+    interpolator.sim_result = SimulationResult()
+    interpolator.interper_f_1D = lambda field: field
+
+    fields = interpolator.interpolate_mode_i(0, FieldType.EM_H, dims=1)
+
+    assert fields["Fa"].tolist() == [2.0 * SI_vacuum_impedance_Z0]
+    assert fields["Fi"].tolist() == [(2.0 * SI_vacuum_impedance_Z0) ** 2]
+
+
+def test_intensity_contour_uses_interpolated_intensity_without_resquaring(
+    monkeypatch,
+):
+    class Axis:
+        def imshow(self, field, **kwargs):
+            self.field = field
+            return object()
+
+    class Decorator:
+        def get_cmap_limits(self, component):
+            return None
+
+    class PlotPreferences:
+        def cmap_field_signed(self, selection):
+            return "signed"
+
+        def cmap_field_unsigned(self, selection):
+            return "unsigned"
+
+    monkeypatch.setattr(
+        "numbat.plotting.modes.runtime.plot_prefs", lambda: PlotPreferences()
+    )
+    axis = Axis()
+    intensity = np.array([[4.0, 9.0]])
+    add_contour_plot(
+        None,
+        axis,
+        {
+            "v_x": np.array([0.0, 1.0]),
+            "v_y": np.array([0.0]),
+            "m_x": np.array([[0.0, 1.0]]),
+            "m_y": np.array([[0.0, 0.0]]),
+        },
+        intensity,
+        FieldSelection.intensity(FieldType.EM_E),
+        {
+            "logamp": False,
+            "colorbar": False,
+            "contours": False,
+            "contour_lst": None,
+        },
+        Decorator(),
+    )
+
+    assert np.array_equal(axis.field, intensity.T)
 
 
 @pytest.mark.parametrize(
@@ -368,13 +648,14 @@ def test_field_tag_rejects_minor_part_for_derived_quantities(component):
 
 def test_1d_plot_selections_keep_primary_components_and_skip_derived_secondaries():
     selections = selections_for_1d_plot(
-        FieldType.EM_E, ("x", "y", "a", "t"), include_secondary=True
+        FieldType.EM_E, ("x", "y", "a", "i", "t"), include_secondary=True
     )
 
     assert [storage_key(selection) for selection in selections] == [
         "Fxr",
         "Fyr",
         "Fa",
+        "Fi",
         "Ft",
         "Fxi",
         "Fyi",

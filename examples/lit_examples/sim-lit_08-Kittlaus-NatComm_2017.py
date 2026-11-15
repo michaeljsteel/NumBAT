@@ -199,14 +199,14 @@ sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_E, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
-                       comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)
+                       comps="exyzat", n_points=2000, colorbar=True)
 
 sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
                        ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_H, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
-                       comps=('x', 'y', 'z', 'a', 't'), n_points=2000, colorbar=True)
+                       comps="exyzat", n_points=2000, colorbar=True)
 
 # Print the wavevectors of EM modes.
 print('k_z of EM modes \n', np.round(np.real(sim_EM_pump.kz_EM_all()), 4))

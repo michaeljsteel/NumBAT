@@ -248,11 +248,14 @@ class SimResult:
 
             field_type (FieldType or str): `EM_E`, `EM_H`, or `AC`.
 
-            comps (sequence of FieldComponent or str): Components to plot.
-                Use enum values such as `FieldComponent.X` in new code; legacy
-                strings `"x"`, `"y"`, `"z"`, `"t"`, and `"a"` remain
-                supported. Intensity (`"i"`) is not yet available because
-                interpolated 1D and 2D field data do not both provide it.
+            comps (str or sequence of FieldComponent or str): Components to
+                plot. With no `comps` value, write the combined field overview.
+                Use a compact string such as ``"exyat"`` or enum values such
+                as ``(FieldComponent.EVERYTHING, FieldComponent.X)`` to write
+                the overview and individual component files. Without
+                `EVERYTHING`/`"e"`, only individual component files are
+                written. Intensity is available as `INTENSITY`/`"i"` and is
+                the squared field magnitude.
 
             num_ticks  (int): Number of tick marks
 
@@ -334,9 +337,10 @@ class SimResult:
     ):
         """Plot 1D cuts using enum or legacy-string field components.
 
-        `comps` accepts `FieldComponent.X`, `Y`, `Z`, `TRANSVERSE`, and
-        `MAGNITUDE`, or the compatible strings `"x"`, `"y"`, `"z"`, `"t"`,
-        and `"a"`. Intensity (`"i"`) is not yet available for public plots.
+        `comps` accepts a compact string such as ``"xyat"`` or an iterable of
+        `FieldComponent.X`, `Y`, `Z`, `TRANSVERSE`, and `MAGNITUDE` values.
+        `INTENSITY`/`"i"` is also supported and is the squared field
+        magnitude. `EVERYTHING`/`"e"` is available only for 2D mode plots.
         """
 
         comps = normalize_plot_components(comps)
