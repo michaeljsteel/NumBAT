@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 
+from numbat import reporting
 from numbat.field_selection import storage_key
 from numbat.nbtypes import ComplexPart, FieldComponent
 from numbat.plotting import modes as mode_presentation
@@ -85,3 +86,51 @@ def render_mode_1d(
         field_type, plot_params, mode_index, cut, label=""
     )
     plottools.save_and_close_figure(fig, filename)
+
+
+def render_mode_2d(
+    *,
+    field_type,
+    coordinates,
+    fields,
+    include_overview,
+    components,
+    simulation_result,
+    mode_index,
+    plot_params,
+    axis=None,
+):
+    """Render selected 2D mode components and optionally their overview."""
+    if axis is not None and (include_overview or len(components) != 1):
+        reporting.report_and_exit(
+            "When providing an axis to plot on, specify exactly one individual "
+            "modal component and do not request the 'e' overview component."
+        )
+
+    decorator = plot_params["decorator"]
+    if include_overview:
+        decorator.set_for_multi()
+        mode_presentation.plot_all_components(
+            field_type,
+            coordinates,
+            fields,
+            plot_params,
+            simulation_result,
+            mode_index,
+        )
+
+    if components:
+        decorator.set_for_single()
+        for component in components:
+            selection = mode_presentation.selection_for_component(
+                field_type, component
+            )
+            mode_presentation.plot_one_component(
+                field_type,
+                coordinates,
+                fields,
+                plot_params,
+                mode_index,
+                selection,
+                axis,
+            )

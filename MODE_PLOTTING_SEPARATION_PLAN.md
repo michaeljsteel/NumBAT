@@ -213,6 +213,8 @@ Before moving code:
 
 ### Phase 1: Extract 1D Rendering
 
+**Status: Complete**
+
 Move direct Matplotlib construction from `Mode._plot_mode_1D_gencut` into
 `plotting/mode_rendering.py`.
 
@@ -227,6 +229,8 @@ Keep shared presentation helpers in `plotting/modes.py` during this phase;
 their extraction precedes the later `modes_2d.py` rename.
 
 ### Phase 2: Extract 2D Render Orchestration
+
+**Status: Complete**
 
 Move `Mode._plot_me_2D` output routing to `render_mode_2d`.
 

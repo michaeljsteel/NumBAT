@@ -341,7 +341,17 @@ class Mode:
         plot_params['field_type'] = ft  # awkward way to get the correct filename
 
         self._interpolate_mode_2D(n_pts, ft)
-        self._plot_me_2D(n_pts, include_overview, comps, ft, plot_params, ax)
+        mode_rendering.render_mode_2d(
+            field_type=ft,
+            coordinates=self.mode_interpolator.xy_out,
+            fields=self.d_fields_2D,
+            include_overview=include_overview,
+            components=comps,
+            simulation_result=self.sim_result,
+            mode_index=self.mode_num,
+            plot_params=plot_params,
+            axis=ax,
+        )
 
         #self.clear_mode_plot_data()
 
@@ -423,41 +433,6 @@ class Mode:
         mh.define_plot_grid_1D(s_cut, val1, val2, n_pts)
 
         self.d_fields_1D = mh.interpolate_mode_i(self.mode_num, field_type, dims=1)
-
-
-    def _plot_me_2D(
-        self, n_pts, include_overview, comps, field_type, plot_params, ax=None
-    ):
-
-        if ax is not None and (include_overview or len(comps) != 1):
-            reporting.report_and_exit(
-                "When providing an axis to plot on, specify exactly one individual "
-                "modal component and do not request the 'e' overview component."
-            )
-
-        mh = self.mode_interpolator
-
-        #decorator = mh.plot_params['decorator']
-        decorator = plot_params['decorator']
-        # All components in one plot
-
-        if include_overview:
-            decorator.set_for_multi()
-            plotmodes.plot_all_components(field_type, mh.xy_out, self.d_fields_2D,
-                                          plot_params, self.sim_result, self.mode_num)
-
-        # Individual component plots
-
-        if len(comps):
-            decorator.set_for_single()
-            # options are ['x', 'y', 'z', 'a', 't']
-            for comp in comps:  # change so this takes field type and just the x,y,z...
-                cc = plotmodes.selection_for_component(field_type, comp)
-                plotmodes.plot_one_component(field_type,
-                    mh.xy_out, self.d_fields_2D, plot_params, self.mode_num, cc, ax)
-
-
-
 
 
     def add_mode_data(self, d):

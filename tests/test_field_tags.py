@@ -28,7 +28,7 @@ from numbat.nbtypes import (
     SI_vacuum_impedance_Z0,
     parse_field_components,
 )
-from numbat.plotting.mode_rendering import render_mode_1d
+from numbat.plotting.mode_rendering import render_mode_1d, render_mode_2d
 from numbat.plotting.modes import (
     add_contour_plot,
     field_display_name,
@@ -146,22 +146,18 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
         "numbat.plotting.modes.plot_one_component",
         lambda *args: calls.append(("component", args[5])),
     )
-    mode = SimpleNamespace(
-        mode_interpolator=SimpleNamespace(xy_out=None),
-        d_fields_2D={},
-        sim_result=None,
-        mode_num=0,
-    )
     decorator = Decorator()
     plot_params = {"decorator": decorator}
 
-    Mode._plot_me_2D(
-        mode,
-        0,
-        True,
-        (FieldComponent.X, FieldComponent.Y),
-        FieldType.EM_E,
-        plot_params,
+    render_mode_2d(
+        field_type=FieldType.EM_E,
+        coordinates=None,
+        fields={},
+        include_overview=True,
+        components=(FieldComponent.X, FieldComponent.Y),
+        simulation_result=None,
+        mode_index=0,
+        plot_params=plot_params,
     )
 
     assert calls[0][0] == "overview"
@@ -173,13 +169,15 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
 
     calls.clear()
     decorator.calls.clear()
-    Mode._plot_me_2D(
-        mode,
-        0,
-        False,
-        (FieldComponent.X,),
-        FieldType.EM_E,
-        plot_params,
+    render_mode_2d(
+        field_type=FieldType.EM_E,
+        coordinates=None,
+        fields={},
+        include_overview=False,
+        components=(FieldComponent.X,),
+        simulation_result=None,
+        mode_index=0,
+        plot_params=plot_params,
     )
 
     assert [call[0] for call in calls] == ["component"]
@@ -191,14 +189,16 @@ def test_overview_component_is_rejected_for_1d_and_supplied_axes():
         Mode.plot_mode_1D(object(), "x", 0, comps="e")
 
     with pytest.raises(SystemExit):
-        Mode._plot_me_2D(
-            object(),
-            0,
-            True,
-            (FieldComponent.X,),
-            FieldType.EM_E,
-            {},
-            ax=object(),
+        render_mode_2d(
+            field_type=FieldType.EM_E,
+            coordinates=None,
+            fields={},
+            include_overview=True,
+            components=(FieldComponent.X,),
+            simulation_result=None,
+            mode_index=0,
+            plot_params={},
+            axis=object(),
         )
 
 
