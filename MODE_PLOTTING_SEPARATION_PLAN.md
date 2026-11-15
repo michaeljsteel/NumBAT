@@ -49,8 +49,10 @@ solvers/
     mode_sampling.py        Field interpolation and sampling-grid management
 
 plotting/
-    modes.py                Existing low-level mode drawing primitives
+    mode_presentation.py    Future shared labels, styles, and display helpers
+    modes_2d.py             Future low-level 2D mode drawing primitives
     mode_rendering.py       New 1D/2D mode render orchestration
+    modes.py                Compatibility re-export module
     raw_modes.py            Existing raw FEM plotting
 
 io/
@@ -127,18 +129,38 @@ The render functions should receive typed field selections, field arrays,
 coordinates, `PlotParams`, and only the mode/simulation metadata needed for
 titles and overview annotations.
 
-### `plotting/modes.py`
+### `plotting/mode_presentation.py`
 
-Keep this as the low-level 2D presentation module:
+Eventually extract shared, dimension-independent presentation helpers:
 
-- `FieldSelection` presentation helpers;
-- filename generation;
+- `FieldSelection` labels;
+- line colours and styles;
+- field and domain display names;
+- field-component-to-selection conversion;
+- shared mode-plot filename construction.
+
+This keeps `modes_2d.py` accurately named while supporting 1D rendering
+without a dependency on 2D drawing code.
+
+### `plotting/modes_2d.py`
+
+Rename the current low-level 2D drawing implementation to `modes_2d.py` only
+after the shared presentation helpers have been extracted. It will own:
+
 - contour and quiver drawing;
 - overview layout;
 - individual-component drawing.
 
-Do not move 1D orchestration here merely because it is mode-related; that
-would make this existing large module a new catch-all.
+### `plotting/modes.py`
+
+Retain `modes.py` as a compatibility re-export module after the rename:
+
+- update NumBAT's internal imports to use the explicit new modules;
+- preserve existing external `numbat.plotting.modes` imports;
+- defer any import-path deprecation decision to a later release.
+
+Do not move 1D orchestration into `modes_2d.py` merely because it is
+mode-related; that would make the renamed module another catch-all.
 
 ### `io/mode_fields.py`
 
@@ -201,6 +223,8 @@ The solver-facing method remains as a compatibility wrapper that:
 3. delegates to `render_mode_1d`.
 
 Success criterion: `solvers/modes.py` no longer imports `matplotlib.pyplot`.
+Keep shared presentation helpers in `plotting/modes.py` during this phase;
+their extraction precedes the later `modes_2d.py` rename.
 
 ### Phase 2: Extract 2D Render Orchestration
 

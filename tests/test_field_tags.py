@@ -28,6 +28,7 @@ from numbat.nbtypes import (
     SI_vacuum_impedance_Z0,
     parse_field_components,
 )
+from numbat.plotting.mode_rendering import render_mode_1d
 from numbat.plotting.modes import (
     add_contour_plot,
     field_display_name,
@@ -209,6 +210,68 @@ def test_field_component_spec_rejects_non_iterable_values(spec):
 
 def test_plot_component_intensity_is_supported():
     assert normalize_plot_components("i") == (FieldComponent.INTENSITY,)
+
+
+def test_1d_renderer_writes_requested_component_curves(monkeypatch):
+    class Axis:
+        def __init__(self):
+            self.curves = []
+
+        def plot(self, x_values, y_values, **kwargs):
+            self.curves.append((x_values, y_values, kwargs))
+
+        def set_xscale(self, scale):
+            self.xscale = scale
+
+        def set_yscale(self, scale):
+            self.yscale = scale
+
+        def set_xlabel(self, label):
+            self.xlabel = label
+
+        def set_ylabel(self, label):
+            self.ylabel = label
+
+        def legend(self):
+            self.has_legend = True
+
+    axis = Axis()
+    saved_filenames = []
+    monkeypatch.setattr(
+        "numbat.plotting.mode_rendering.plt.subplots",
+        lambda: (object(), axis),
+    )
+    monkeypatch.setattr(
+        "numbat.plotting.mode_rendering.mode_presentation.modeplot_filename_1D",
+        lambda *args, **kwargs: "mode-cut.png",
+    )
+    monkeypatch.setattr(
+        "numbat.plotting.mode_rendering.plottools.save_and_close_figure",
+        lambda figure, filename: saved_filenames.append(filename),
+    )
+
+    render_mode_1d(
+        field_type=FieldType.EM_E,
+        fields={"Fxr": np.array([1.0, 2.0]), "Fi": np.array([4.0, 9.0])},
+        x_axis=np.array([0.0, 1.0]),
+        components=(FieldComponent.X, FieldComponent.INTENSITY),
+        x_label="$y$ (μm)",
+        cut="x",
+        mode_index=0,
+        plot_params={
+            "logx": False,
+            "logy": False,
+            "suppress_imimre": True,
+            "prefix": "",
+            "suffix": "",
+        },
+    )
+
+    assert [curve[1].tolist() for curve in axis.curves] == [[1.0, 2.0], [4.0, 9.0]]
+    assert axis.xlabel == "$y$ (μm)"
+    assert axis.ylabel == "fields"
+    assert axis.has_legend
+    assert saved_filenames == ["mode-cut.png"]
 
 
 def test_plot_modes_normalizes_compact_and_typed_component_requests(monkeypatch):

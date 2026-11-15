@@ -11,7 +11,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 from math import sqrt
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from numbat.field_selection import (
@@ -30,9 +29,9 @@ from numbat.nbtypes import (
     SI_vacuum_impedance_Z0,
     parse_field_components,
 )
+from numbat.plotting import mode_rendering
 from numbat.plotting import modes as plotmodes
 from numbat.plotting import raw_modes as plotmoderaw
-from numbat.plotting import tools as plottools
 from numbat.utils.numeric import int2D_trapz
 
 from .. import reporting, runtime
@@ -84,17 +83,10 @@ def _field_storage_key(field_type, component, complex_part=None):
 
 
 def selections_for_1d_plot(ft, comps, include_secondary):
-    selections = [plotmodes.selection_for_component(ft, comp) for comp in comps]
-    if not include_secondary:
-        return selections
-
-    secondary_selections = [
-        selection.with_part(ComplexPart.SECONDARY)
-        for selection in selections
-        if selection.is_cartesian
-    ]
-
-    return selections + secondary_selections
+    """Compatibility wrapper for the 1D rendering selection builder."""
+    return mode_rendering.selections_for_1d_plot(
+        ft, comps, include_secondary=include_secondary
+    )
 
 
 class ModeInterpolator:
@@ -401,49 +393,16 @@ class Mode:
         else:
             xlab = '$z$ (μm)'
 
-        self._plot_mode_1D_gencut(comps, ft, xlab, s_cut, plot_params)
-
-
-    def _plot_mode_1D_gencut(self, comps, ft, xlab, cut, plot_params):
-
-        logx = plot_params.get('logx', False)
-        logy = plot_params.get('logy', False)
-
-        if not len(comps):
-            comps = (
-                FieldComponent.X,
-                FieldComponent.Y,
-                FieldComponent.Z,
-                FieldComponent.MAGNITUDE,
-            )
-
-        selections = selections_for_1d_plot(
-            ft, comps, include_secondary=not plot_params['suppress_imimre']
+        mode_rendering.render_mode_1d(
+            field_type=ft,
+            fields=self.d_fields_1D,
+            x_axis=self.mode_interpolator.v_x_axis,
+            components=comps,
+            x_label=xlab,
+            cut=s_cut,
+            mode_index=self.mode_num,
+            plot_params=plot_params,
         )
-
-        fig, ax = plt.subplots()
-        v_genx = self.mode_interpolator.v_x_axis
-
-
-        show_magnitude = FieldComponent.MAGNITUDE in comps
-        for selection in selections:
-            lc = plotmodes.line_color(selection)
-            ls = plotmodes.line_style(selection, show_magnitude=show_magnitude)
-            co = storage_key(selection)
-
-            v_y = self.d_fields_1D[co]
-            if logy: v_y = np.abs(v_y)
-            ax.plot(v_genx, v_y, label=plotmodes.tex_label(selection), color=lc, linestyle=ls)
-            if logx: ax.set_xscale('log')
-            if logy: ax.set_yscale('log')
-
-        ax.set_xlabel(xlab)
-        ax.set_ylabel('fields')
-        ax.legend()
-
-        fn = plotmodes.modeplot_filename_1D(ft, plot_params, self.mode_num, cut, label='')
-
-        plottools.save_and_close_figure(fig, fn)
 
 
     def _interpolate_mode_2D(self, n_pts, field_type):
