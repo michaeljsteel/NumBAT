@@ -81,7 +81,7 @@ size or calculated aspect ratio.
 
 ## Mode-Data Placement
 
-The mode-data panel is offset northwest by 20% of its physical diagonal after
+The mode-data panel is offset northwest by 10% of its physical diagonal after
 the overview grid is created. The offset is bounded by the figure canvas so
 the panel remains visible.
 

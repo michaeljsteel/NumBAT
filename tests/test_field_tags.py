@@ -287,7 +287,7 @@ def test_mode_data_panel_is_offset_northwest_by_its_physical_diagonal():
     moved = ax.get_position()
 
     panel_diagonal = np.hypot(original.width * 10, original.height * 8)
-    diagonal_component = 0.2 * panel_diagonal / np.sqrt(2)
+    diagonal_component = 0.1 * panel_diagonal / np.sqrt(2)
 
     assert moved.x0 == pytest.approx(original.x0 - diagonal_component / 10)
     assert moved.y0 == pytest.approx(original.y0 + diagonal_component / 8)
@@ -351,7 +351,7 @@ def test_wide_mode_data_uses_a_single_sequential_column():
     text_positions = [text.get_position() for text in ax.texts]
     assert all(x == pytest.approx(0.05) for x, _ in text_positions[1:])
     assert [y for _, y in text_positions] == pytest.approx(
-        [0.91, 0.83, 0.75, 0.67, 0.59, 0.51, 0.43, 0.35]
+        [0.89, 0.79, 0.69, 0.59, 0.49, 0.39, 0.29, 0.19]
     )
 
 

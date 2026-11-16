@@ -290,6 +290,8 @@ displacement fields.
 
 ### Phase 1: Selection and Native P2 Gradient Foundation
 
+**Status: Complete**
+
 1. Add `StrainComponent`, `StrainSelection`, storage keys, labels, parsing,
    ordering, and display-primary mapping.
 2. Add P2 reference basis functions and reference derivatives in Python.
