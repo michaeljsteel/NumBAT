@@ -25,7 +25,7 @@ from numbat.field_selection import (
     resolve_field_type,
     storage_key,
 )
-from numbat.io import mode_fields
+from numbat.io import mode_fields, strain_fields
 from numbat.mesh import fem as femmesh
 from numbat.nbtypes import (
     ComplexPart,
@@ -589,6 +589,29 @@ class ModeAC(Mode):
             plot_params["trim"] = trim
 
         components = parse_strain_components(comps)
+        coordinates, fields = self._sample_strain_2d(n_pts)
+        strain_rendering.render_strain_2d(
+            coordinates=coordinates,
+            fields=fields,
+            components=components,
+            simulation_result=self.sim_result,
+            mode_index=self.mode_num,
+            plot_params=plot_params,
+            axis=ax,
+        )
+
+    def write_strain(self, prefix="", n_pts=501):
+        """Write sampled native-FEM acoustic strain as twelve 2D text files."""
+        coordinates, fields = self._sample_strain_2d(n_pts)
+        strain_fields.write_strain_fields_2d(
+            prefix=prefix,
+            mode_index=self.mode_num,
+            coordinates=coordinates,
+            fields=fields,
+        )
+
+    def _sample_strain_2d(self, n_pts):
+        """Sample all physical strain parts onto the standard 2D plot grid."""
         mode_interpolator = self.mode_interpolator
         mode_interpolator.define_plot_grid_2D(n_pts=n_pts)
         shift_x, shift_y = self.sim_result.get_xyshift()
@@ -612,12 +635,4 @@ class ModeAC(Mode):
             fields[real_key] = values.real
             fields[imaginary_key] = values.imag
 
-        strain_rendering.render_strain_2d(
-            coordinates=mode_interpolator.xy_out,
-            fields=fields,
-            components=components,
-            simulation_result=self.sim_result,
-            mode_index=self.mode_num,
-            plot_params=plot_params,
-            axis=ax,
-        )
+        return mode_interpolator.xy_out, fields

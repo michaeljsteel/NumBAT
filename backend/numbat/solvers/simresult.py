@@ -694,6 +694,14 @@ class ACSimResult(SimResult):
                 comps=comps, n_pts=n_points, plot_params=plot_params
             )
 
+    def write_strain_modes(self, mode_indices=None, n_points=501, prefix=""):
+        """Write native-FEM acoustic strain grids for selected acoustic modes."""
+        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
+        for mode_index in mode_range:
+            self.get_mode(mode_index).write_strain(
+                prefix=prefix, n_pts=n_points
+            )
+
 
     def fem_evecs_for_ft(self, ft):
         return self.fem_evecs

@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
 import numbat.solvers.modes as modes_module
+from numbat.io import strain_fields
 from numbat.plotting import strain_rendering
 from numbat.plotting.modes import PlotParams2D
 from numbat.plotting.strain_native import plot_native_strain_component
@@ -319,3 +320,75 @@ def test_ac_simresult_strain_plot_routes_shared_plot_parameters():
     assert calls[0]["plot_params"]["suffix"] == "test"
     assert calls[0]["plot_params"]["trim"] == (0.1, 0.2, 0.3, 0.4)
     assert not calls[0]["plot_params"]["colorbar"]
+
+
+def test_strain_2d_export_writes_all_physical_parts(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "numbat.io.strain_fields.outdir_fields_path",
+        lambda prefix: tmp_path,
+    )
+    fields = {}
+    for index, component in enumerate(StrainComponent):
+        real_key, imaginary_key = complex_storage_keys(component)
+        fields[real_key] = np.full((2, 3), index + 1.0)
+        fields[imaginary_key] = np.full((2, 3), -(index + 1.0))
+
+    strain_fields.write_strain_fields_2d(
+        prefix="ignored",
+        mode_index=2,
+        coordinates={"v_x": np.array((0.0, 1.0)), "v_y": np.array((0.0, 2.0, 4.0))},
+        fields=fields,
+    )
+
+    expected_files = {
+        f"AC_strain_mode_02_S{component.value}_{part}.txt"
+        for component in StrainComponent
+        for part in ("re", "im")
+    }
+    assert {path.name for path in tmp_path.iterdir()} == expected_files
+    for component in StrainComponent:
+        real_key, imaginary_key = complex_storage_keys(component)
+        for suffix, key in (("re", real_key), ("im", imaginary_key)):
+            output = tmp_path / f"AC_strain_mode_02_S{component.value}_{suffix}.txt"
+            assert f"Mode 02, {key}" in output.read_text()
+            np.testing.assert_allclose(np.loadtxt(output), fields[key])
+
+
+def test_mode_ac_strain_export_uses_shared_sampled_grid(monkeypatch):
+    coordinates = {"v_x": np.array((0.0, 1.0)), "v_y": np.array((0.0, 1.0))}
+    fields = {"Sxxr": np.ones((2, 2))}
+    mode = ModeAC.__new__(ModeAC)
+    mode.mode_num = 3
+    mode._sample_strain_2d = lambda n_pts: (coordinates, fields)
+    captured = {}
+    monkeypatch.setattr(
+        modes_module.strain_fields,
+        "write_strain_fields_2d",
+        lambda **kwargs: captured.update(kwargs),
+    )
+
+    mode.write_strain(prefix="strain-", n_pts=17)
+
+    assert captured["prefix"] == "strain-"
+    assert captured["mode_index"] == 3
+    assert captured["coordinates"] is coordinates
+    assert captured["fields"] is fields
+
+
+def test_ac_simresult_strain_export_routes_selected_modes():
+    calls = []
+
+    class Mode:
+        def write_strain(self, **kwargs):
+            calls.append(kwargs)
+
+    sim_result = SimpleNamespace(n_modes=2, get_mode=lambda _: Mode())
+
+    ACSimResult.write_strain_modes(
+        sim_result,
+        mode_indices=(1,),
+        n_points=29,
+        prefix="strain-",
+    )
+
+    assert calls == [{"prefix": "strain-", "n_pts": 29}]

@@ -344,16 +344,23 @@ Validation:
 
 ### Phase 4: 2D Export
 
-1. Implement strain 2D text serialization.
-2. Add stable filenames, headers, and real/imaginary output for all six
+Status: complete.
+
+1. [x] Implement strain 2D text serialization.
+2. [x] Add stable filenames, headers, and real/imaginary output for all six
    components.
-3. Document the schema.
+3. [x] Document the schema.
+
+Each mode writes twelve files named
+``AC_strain_mode_{mode:02d}_S{ij}_{re|im}.txt``. Each file contains one
+``(x, y)``-indexed sampled grid and a header with the mode index, physical
+strain storage key (for example ``Sxzr``), and sampled ``v_x``/``v_y`` bounds.
 
 Validation:
 
-- all twelve output files are produced per mode;
-- headers and array shapes match the selected sample grid;
-- exported values agree with sampled plot data.
+- [x] All twelve output files are produced per mode.
+- [x] Headers and array shapes match the selected sample grid.
+- [x] Exported values agree with sampled plot data.
 
 ### Phase 5: 1D Cuts, Plots, and Export
 
