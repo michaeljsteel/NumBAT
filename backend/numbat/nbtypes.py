@@ -368,14 +368,14 @@ class FieldTag:
         )
 
     @staticmethod
-    def make_from_selection(selection, *, _warn=True):
+    def make_from_selection(field_sel, *, _warn=True):
         """Create a FieldTag compatibility adapter from a typed field selection."""
         if _warn:
             _warn_field_tag_deprecated(stacklevel=2)
         from numbat.field_selection import field_symbol, storage_key
 
-        user_code = f"{field_symbol(selection.field_type)}{selection.component.value}"
-        return FieldTag(user_code, storage_key(selection), _warn=False)
+        user_code = f"{field_symbol(field_sel.field_type)}{field_sel.component.value}"
+        return FieldTag(user_code, storage_key(field_sel), _warn=False)
 
     @staticmethod
     def reim_major(fi):

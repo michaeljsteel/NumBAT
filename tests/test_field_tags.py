@@ -38,12 +38,14 @@ from numbat.plotting.mode_rendering import (
     split_plot_components,
 )
 from numbat.plotting.modes import (
+    PlotParams2D,
     add_contour_plot,
     field_display_name,
     field_type_to_intensity_code,
     field_type_to_vector_code,
     line_color,
     line_style,
+    select_overview_layout,
     tex_label,
 )
 from numbat.solvers.mode_sampling import ModeInterpolator as SamplingModeInterpolator
@@ -125,6 +127,46 @@ def test_plot_component_split_separates_overview_from_individual_components():
         False,
         (FieldComponent.X, FieldComponent.Y, FieldComponent.TRANSVERSE),
     )
+
+
+def test_auto_overview_layout_matches_six_panel_cell_aspect_to_waveguide():
+    params = PlotParams2D()
+    wide_waveguide = {
+        "v_x": np.array([0.0, 5.0]),
+        "v_y": np.array([0.0, 1.0]),
+    }
+    tall_waveguide = {
+        "v_x": np.array([0.0, 0.2]),
+        "v_y": np.array([0.0, 1.0]),
+    }
+
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, wide_waveguide, params, hide_minors=True
+        )
+        == "wide"
+    )
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, tall_waveguide, params, hide_minors=True
+        )
+        == "tall"
+    )
+
+
+def test_overview_layout_honors_legacy_and_explicit_overrides():
+    params = PlotParams2D()
+    d_xy = {"v_x": np.array([0.0, 5.0]), "v_y": np.array([0.0, 1.0])}
+
+    params["overview_layout"] = "tall"
+    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=True) == "tall"
+
+    params["wide_mode"] = True
+    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=True) == "wide"
+
+    params["wide_mode"] = None
+    params["overview_layout"] = "auto"
+    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=False) == "tall"
 
 
 def test_2d_plot_component_selection_controls_overview_and_individual_outputs(

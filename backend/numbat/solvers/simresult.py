@@ -225,7 +225,8 @@ class SimResult:
         mod_is_amp=True,  # plot amplitude (True) or intensity (False) in all comp mode plots
         logamp=False,
         decorator=None,
-        wide_mode=False,
+        overview_layout="auto",
+        wide_mode=None,
         **kwargs
     ):
         """Plot E or H fields of EM mode, or the AC modes displacement fields.
@@ -263,6 +264,14 @@ class SimResult:
             contours  (bool): Controls contours being overlaid on fields
 
             contour_lst  (list): Specify contour values
+
+            overview_layout (str): Combined-overview layout: ``"auto"``,
+                ``"tall"``, or ``"wide"``. ``"auto"`` selects a six-panel
+                template based on the displayed waveguide aspect ratio.
+
+            wide_mode (bool or None): Legacy explicit override for the
+                combined overview. ``True`` selects wide, ``False`` selects
+                tall, and ``None`` uses ``overview_layout``.
 
             stress_fields  (bool): Calculate acoustic stress fields
 
