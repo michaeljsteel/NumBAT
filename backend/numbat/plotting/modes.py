@@ -797,7 +797,7 @@ def configure_overview_subplots(
     fig.subplots_adjust(**adjustments)
 
 
-def offset_mode_data_panel(fig, ax, fraction=0.2):
+def offset_mode_data_panel(fig, ax, fraction=0.1):
     """Move the mode-data panel northwest by a fraction of its physical diagonal."""
     position = ax.get_position()
     figure_width, figure_height = fig.get_size_inches()
@@ -824,7 +824,7 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_type, layout):
 
     x0 = .05
     yhi = .99
-    dy = .08 if wide_mode else .10
+    dy = .10 if wide_mode else .08
     y0 = yhi-dy
 
     ax.set_xlim(0, 1)
