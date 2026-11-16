@@ -94,7 +94,7 @@ else:
 sim_EM_pump.analyse_symmetries(PointGroup.C2V)
 #sim_EM_pump.set_r0_offset(3.0e-6, -2.250e-6)
 
-sim_EM_pump.plot_modes( xlim_min=0.2, xlim_max=0.2, mode_indices=[EM_mode_index_pump], ylim_min=0.2, ylim_max=0.2, num_ticks=3, ticks=True,)
+sim_EM_pump.plot_modes(trim=(0.2, 0.2, 0.2, 0.2), mode_indices=[EM_mode_index_pump], num_ticks=3, ticks=True,)
 
 if not reuse_fields:
     sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
@@ -131,7 +131,7 @@ else:
 
 sim_AC.analyse_symmetries(PointGroup.C2V)
 #sim_AC.set_r0_offset(3.0e-6, -2.250e-6)
-sim_AC.plot_modes(num_ticks=3, xlim_min=0.1, xlim_max=0.1)
+sim_AC.plot_modes(num_ticks=3, trim=(0.1, -0.1, 0.1, -0.1))
 
 # Print the frequencies of AC modes.
 v_nu = sim_AC.nu_AC_all()

@@ -194,16 +194,16 @@ sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
 print("starting EM field plotting ")
-sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
+sim_EM_pump.plot_modes(trim=(0.4, 0.435, 0.4, 0.435),
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
-                       ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_E, num_ticks=3,
+                       field_type=FieldType.EM_E, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
                        comps="exyzat", n_points=2000, colorbar=True)
 
-sim_EM_pump.plot_modes(xlim_min=0.4, xlim_max=0.4,
+sim_EM_pump.plot_modes(trim=(0.4, 0.435, 0.4, 0.435),
                        mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
-                       ylim_min=0.435, ylim_max=0.435, field_type=FieldType.EM_H, num_ticks=3,
+                       field_type=FieldType.EM_H, num_ticks=3,
 
                        decorator=emdecorate, quiver_points=20,
                        comps="exyzat", n_points=2000, colorbar=True)
@@ -234,7 +234,7 @@ selected_AC_modes = [7, 13, 23]
 print("AC modes selected for field plotting", selected_AC_modes)
 print("plotting acoustic modes")
 sim_AC.plot_modes(mode_indices=selected_AC_modes,
-                  num_ticks=3, xlim_min=-.05, xlim_max=-0.05, ylim_min=-.1, ylim_max=-0.1,
+                  num_ticks=3, trim=(-.05, -.1, -.05, -.1),
                   quiver_points=20, decorator=acdecorate, colorbar=True)
 
 

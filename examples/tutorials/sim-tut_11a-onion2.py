@@ -114,7 +114,7 @@ for m in range(num_modes_AC):
 
 #simres_AC.calc_acoustic_losses()
 
-simres_AC.plot_modes(xlim_min=-.1, xlim_max=-.1, ylim_min=-.1, ylim_max=-.1,
+simres_AC.plot_modes(trim=(-.1, -.1, -.1, -.1),
                            mode_indices=range(num_modes_AC), quiver_points=20)
 
 # Calculate the acoustic loss from our fields.

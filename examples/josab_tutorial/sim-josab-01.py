@@ -87,7 +87,7 @@ sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 print("Plotting EM fields ")
 
 sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump], field_type=FieldType.EM_E, num_ticks=3,
-                          xlim_min=0.1, xlim_max=0.1, ylim_min=0.1, ylim_max=0.1, )
+                          trim=(0.1, 0.1, 0.1, 0.1), )
 
 # Calculate the EM effective index of the waveguide.
 n_eff_sim = np.real(sim_EM_pump.neff(0))

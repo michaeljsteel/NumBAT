@@ -96,6 +96,15 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.6.2
+-------------
+
+For 2D EM and acoustic mode plots, use
+``trim=(left, bottom, right, top)`` to specify fractional plot-boundary
+trimming. The legacy ``xlim_min``, ``ylim_min``, ``xlim_max``, and
+``ylim_max`` arguments remain supported for one compatibility period, but
+now emit ``DeprecationWarning`` when supplied.
+
 Version 2.6.1
 -------------
 
@@ -114,6 +123,8 @@ still available for one compatibility release, but direct construction and
 legacy factory calls now emit ``DeprecationWarning``. New code should use
 ``FieldSelection``, ``FieldComponent``, and the helpers in
 ``numbat.field_selection`` and ``numbat.plotting.modes``.
+
+
 
 See :ref:`field-selection-migration-label` for a replacement table and
 examples.

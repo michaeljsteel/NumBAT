@@ -326,18 +326,21 @@ Validation:
 
 ### Phase 3: Standard 2D Sampling and Six-Panel Plot
 
-1. Add rectangular-grid sampling from the native strain evaluator.
-2. Add a dedicated six-panel 2D overview and individual-component plot
+Status: complete.
+
+1. [x] Add rectangular-grid sampling from the native strain evaluator.
+2. [x] Add a dedicated six-panel 2D overview and individual-component plot
    support.
-3. Apply the agreed display-primary mapping and signed colour maps.
-4. Integrate public 2D plotting APIs.
+3. [x] Apply the agreed display-primary mapping and signed colour maps.
+4. [x] Integrate public 2D plotting APIs.
 
 Validation:
 
-- plot values agree with analytical strain at selected grid points;
-- panel order and default real/imaginary parts are correct;
-- trim, frame, title, colourbar, prefix, and explicit component options work;
-- EM calls fail clearly.
+- [x] Plot values agree with analytical strain at selected grid points.
+- [x] Panel order and default real/imaginary parts are correct.
+- [x] Trim, frame, title, colourbar, prefix, and explicit component options
+  work.
+- [x] EM calls fail clearly.
 
 ### Phase 4: 2D Export
 

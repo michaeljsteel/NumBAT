@@ -99,7 +99,7 @@ if doem:
     # npzfile = np.load(prefix+'-wguide_data2.npz', allow_pickle=True)
     # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-    sim_EM_pump.plot_modes(xlim_min=0.43, xlim_max=0.43, mode_indices=[EM_mode_index_pump],
+    sim_EM_pump.plot_modes(trim=(0.43, -0.05, 0.43, -0.05), mode_indices=[EM_mode_index_pump],
                         n_points=2000, quiver_points=10,  decorator=emdecorate)
 
     # Print the wavevectors of EM modes.

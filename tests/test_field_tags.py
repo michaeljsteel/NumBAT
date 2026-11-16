@@ -1,6 +1,7 @@
 """Regression tests for field selection and plot representation helpers."""
 
 import sys
+import warnings
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -49,10 +50,44 @@ from numbat.plotting.modes import (
     line_style,
     offset_mode_data_panel,
     overview_figure_size,
+    resolve_plot_trim,
     select_overview_layout,
     tex_label,
     write_mode_data,
 )
+
+
+def test_plot_trim_tuple_overrides_legacy_limits_and_validates_shape():
+    plot_params = PlotParams2D()
+    plot_params.update({
+        "xlim_min": 0.1,
+        "xlim_max": 0.2,
+        "ylim_min": 0.3,
+        "ylim_max": 0.4,
+    })
+
+    with pytest.deprecated_call(match="xlim_min.*deprecated"):
+        assert resolve_plot_trim(plot_params, -0.05) == (0.1, 0.3, 0.2, 0.4)
+
+    plot_params["trim"] = (0.5, 0.6, 0.7, 0.8)
+    with pytest.deprecated_call(match="xlim_min.*deprecated"):
+        assert resolve_plot_trim(plot_params, -0.05) == (0.5, 0.6, 0.7, 0.8)
+
+    plot_params["trim"] = (0.1, 0.2, 0.3)
+    with pytest.deprecated_call(match="xlim_min.*deprecated"):
+        with pytest.raises(ValueError, match="four-item"):
+            resolve_plot_trim(plot_params, -0.05)
+
+
+def test_plot_trim_tuple_does_not_warn_without_legacy_limits():
+    plot_params = PlotParams2D()
+    plot_params["trim"] = (0.1, 0.2, 0.3, 0.4)
+
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always")
+        assert resolve_plot_trim(plot_params, -0.05) == (0.1, 0.2, 0.3, 0.4)
+
+    assert caught_warnings == []
 from numbat.solvers.mode_sampling import ModeInterpolator as SamplingModeInterpolator
 from numbat.solvers.modes import Mode as BaseMode
 from numbat.solvers.modes import ModeInterpolator
@@ -552,6 +587,35 @@ def test_plot_modes_normalizes_compact_and_typed_component_requests(monkeypatch)
         (expected_components, FieldType.EM_E),
     ]
     assert all(plot_field_type is FieldType.EM_E for _, _, plot_field_type in calls)
+
+
+def test_plot_modes_forwards_canonical_trim_tuple(monkeypatch):
+    calls = []
+
+    class Mode:
+        def plot_mode(self, comps, field_type, plot_params):
+            calls.append(plot_params["trim"])
+
+    sim_result = SimpleNamespace(
+        is_AC=lambda: False,
+        n_modes=1,
+        get_mode=lambda index: Mode(),
+        get_mode_interpolator=lambda: SimpleNamespace(
+            define_plot_grid_2D=lambda **kwargs: None
+        ),
+    )
+    monkeypatch.setattr(
+        "numbat.solvers.simresult.progressBar",
+        lambda values, **kwargs: values,
+    )
+
+    SimResult.plot_modes(
+        sim_result,
+        mode_indices=[0],
+        trim=(0.1, 0.2, 0.3, 0.4),
+    )
+
+    assert calls == [(0.1, 0.2, 0.3, 0.4)]
 
 
 def test_plot_modes_1d_normalizes_compact_and_typed_component_requests(monkeypatch):

@@ -93,7 +93,7 @@ print('\nPlotting EM fields')
 #trim=0.4
 trim=0
 sim_EM_pump.plot_modes(mode_indices=range(5),
-        xlim_min=trim, xlim_max=trim, ylim_min=trim, ylim_max=trim)
+        trim=(trim, trim, trim, trim))
 
 # Display the wavevectors of EM modes.
 v_kz=sim_EM_pump.kz_EM_all()

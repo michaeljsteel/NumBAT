@@ -95,7 +95,7 @@ sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 print("Plotting EM fields ")
 
 sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump],
-                         field_type=FieldType.EM_E, num_ticks=3,xlim_min=0.2, xlim_max=0.2, ylim_min=0.2, ylim_max=0.2,
+                         field_type=FieldType.EM_E, num_ticks=3, trim=(0.2, 0.2, 0.2, 0.2),
                           quiver_points=40,
                          n_points=1000, colorbar=True)
 

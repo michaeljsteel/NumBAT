@@ -88,8 +88,8 @@ print(f'\nThe fundamental optical mode has effective index n_eff = {n_eff_sim:.6
 
 # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args,
 # which specify the fraction of the axis to remove from the plot.
-# For instance xlim_min=0.2 will remove 20% of the x axis from the left outer edge
-# to the center. xlim_max=0.2 will remove 20% from the right outer edge towards the center.
+# The trim tuple is ordered (left, bottom, right, top); for example,
+# trim=(0.2, 0, 0, 0) removes 20% from the left outer edge towards the center.
 # This leaves just the inner 60% of the unit cell displayed in the plot.
 # The ylim variables perform the equmode_indexent actions on the y axis.
 
@@ -100,12 +100,11 @@ simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
 
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
-#simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, mode_indices=range(4))
+#simres_EM_pump.plot_modes(trim=(0.2, 0.2, 0.2, 0.2), mode_indices=range(4))
 
 # Plot the H field of the pump mode
-#simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-#                          ylim_max=0.2, mode_indices=range(4),
+#simres_EM_pump.plot_modes(trim=(0.2, 0.2, 0.2, 0.2),
+#                          mode_indices=range(4),
 #                          field_type='EM_H')
 
 # Acoustic wavevector
@@ -128,7 +127,7 @@ for (i, nu) in enumerate(v_nu):
 
 # The AC modes are calculated on a subset of the full unitcell,
 # which excludes vacuum regions, so there is usually no need to restrict the area plotted
-# with xlim_min, xlim_max etc.
+# with trim=(left, bottom, right, top).
 
 print('\nPlotting acoustic modes')
 #simres_AC.plot_modes(contours=True, quiver_points=20, mode_indices=range(10))

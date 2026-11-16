@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 import numpy as np
+from matplotlib.tri import Triangulation
 
 from numbat.strain_selection import (
     StrainComponent,
@@ -212,6 +213,67 @@ def sample_native_strain(samples, points, tolerance=1e-12):
                 break
 
     return sampled
+
+
+class NativeStrainInterpolator:
+    """Fast element-local strain interpolator for dense plot or cut samples."""
+
+    def __init__(self, samples):
+        self.samples = samples
+        self.local_triangles = samples.subtriangles()
+        local_coordinates = samples.flattened_coordinates()
+        unique_coordinates, inverse = np.unique(
+            local_coordinates, axis=0, return_inverse=True
+        )
+        self._triangulation = Triangulation(
+            unique_coordinates[:, 0],
+            unique_coordinates[:, 1],
+            inverse[self.local_triangles],
+        )
+        self._finder = self._triangulation.get_trifinder()
+        self._triangle_coordinates = local_coordinates[self.local_triangles]
+        self._triangle_values = samples.values.reshape(-1, 6)[
+            self.local_triangles
+        ]
+
+    def __call__(self, points):
+        """Return native one-sided strain samples, using NaN outside the mesh."""
+        points = np.asarray(points, dtype=float)
+        if points.ndim != 2 or points.shape[1] != 2:
+            raise ValueError("points must have shape (n_points, 2).")
+
+        triangle_indices = self._finder(points[:, 0], points[:, 1])
+        sampled = np.full(
+            (len(points), 6), np.nan + 1j * np.nan, dtype=np.complex128
+        )
+        valid = triangle_indices >= 0
+        if not np.any(valid):
+            return sampled
+
+        triangle_coordinates = self._triangle_coordinates[triangle_indices[valid]]
+        origins = triangle_coordinates[:, 0]
+        transforms = np.stack((
+            triangle_coordinates[:, 1] - origins,
+            triangle_coordinates[:, 2] - origins,
+        ), axis=-1)
+        second_third = np.linalg.solve(
+            transforms, (points[valid] - origins)[..., np.newaxis]
+        ).squeeze(-1)
+        barycentric = np.column_stack((
+            1 - second_third.sum(axis=1),
+            second_third,
+        ))
+        sampled[valid] = np.einsum(
+            "ni,nij->nj",
+            barycentric,
+            self._triangle_values[triangle_indices[valid]],
+        )
+        return sampled
+
+
+def make_native_strain_interpolator(samples):
+    """Create a cached fast interpolator for native strain samples."""
+    return NativeStrainInterpolator(samples)
 
 
 def calculate_mode_strain(sim_result, mode_index, reference_points=P2_REFERENCE_NODES):

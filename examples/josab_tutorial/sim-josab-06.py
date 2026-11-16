@@ -82,10 +82,7 @@ sim_EM_pump.plot_modes(
     mode_indices=[EM_mode_index_pump, EM_mode_index_Stokes],
     field_type=FieldType.EM_E,
     num_ticks=3,
-    xlim_min=0.4,
-    xlim_max=0.4,
-    ylim_min=0.4,
-    ylim_max=0.4,
+    trim=(0.4, 0.4, 0.4, 0.4),
     n_points=1000,
     colorbar=True,
 )

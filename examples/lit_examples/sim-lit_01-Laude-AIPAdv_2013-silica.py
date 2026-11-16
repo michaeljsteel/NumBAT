@@ -63,8 +63,8 @@ if recalc:
     sim_EM_pump.save_simulation(prefix+'_pump')
     sim_EM_Stokes.save_simulation(prefix+'_pump')
 
-    sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, mode_indices=[EM_mode_index_pump],
-                         ylim_min=0.2, ylim_max=0.2, )
+    sim_EM_pump.plot_modes(trim=(0.2, 0.2, 0.2, 0.2),
+                         mode_indices=[EM_mode_index_pump], )
 else:
     sim_EM_pump = numbat.load_simulation(prefix+'_pump')
     sim_EM_Stokes = numbat.load_simulation(prefix+'_pump')

@@ -63,8 +63,8 @@ sim_EM_Stokes = sim_EM_pump.clone_as_forward_modes()
 # npzfile = np.load('wguide_data2.npz')
 # sim_EM_Stokes = npzfile['sim_EM_Stokes'].tolist()
 
-sim_EM_pump.plot_modes(xlim_min=0.45, xlim_max=0.45,
-                         mode_indices=[EM_mode_index_pump], ylim_min=0.45, ylim_max=0.45, n_points=1500, )
+sim_EM_pump.plot_modes(trim=(0.45, 0.45, 0.45, 0.45),
+                         mode_indices=[EM_mode_index_pump], n_points=1500, )
 
 # Print the wavevectors of EM modes.
 kzs = sim_EM_pump.kz_EM_all()

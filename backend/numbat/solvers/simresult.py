@@ -207,6 +207,7 @@ class SimResult:
         comps=(),
         prefix="",
         suffix="",
+        trim=None,
         xlim_min=None,
         xlim_max=None,
         ylim_min=None,
@@ -240,6 +241,11 @@ class SimResult:
 
             n_points  (int): The number of points across unitcell to
                 interpolate the field onto
+
+            trim (tuple[float, float, float, float]): Fractions to trim from
+                the left, bottom, right, and top plot bounds. When supplied,
+                this takes precedence over the legacy ``xlim_*`` and
+                ``ylim_*`` arguments.
 
             xlim_min  (float): Limit plotted xrange to xlim_min:(1-xlim_max) of unitcell
 
@@ -651,6 +657,42 @@ class ACSimResult(SimResult):
 
     def is_AC(self):
         return True
+
+    def plot_strain_modes(
+        self,
+        mode_indices=None,
+        n_points=501,
+        comps=(),
+        prefix="",
+        suffix="",
+        trim=None,
+        ticks=True,
+        title=True,
+        frame=True,
+        colorbar=True,
+        decorator=None,
+    ):
+        """Plot native-FEM acoustic strain for selected acoustic modes.
+
+        `trim=(left, bottom, right, top)` trims the displayed plot bounds by
+        fractional amounts.
+        """
+        plot_params = plotmodes.PlotParams2D()
+        plot_params.update({
+            "prefix": prefix,
+            "suffix": suffix,
+            "trim": trim,
+            "ticks": ticks,
+            "title": title,
+            "frame": frame,
+            "colorbar": colorbar,
+            "decorator": decorator,
+        })
+        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
+        for mode_index in mode_range:
+            self.get_mode(mode_index).plot_strain(
+                comps=comps, n_pts=n_points, plot_params=plot_params
+            )
 
 
     def fem_evecs_for_ft(self, ft):

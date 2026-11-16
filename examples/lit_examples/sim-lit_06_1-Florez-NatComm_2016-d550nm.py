@@ -108,8 +108,8 @@ if doem:
         sim_EM_pump = npzfile['sim_EM_pump'].tolist()
     sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
-    sim_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, mode_indices=range(6),
-                        ylim_min=0.2, ylim_max=0.2, decorator=emdecorate,
+    sim_EM_pump.plot_modes(trim=(0.2, 0.2, 0.2, 0.2), mode_indices=range(6),
+                        decorator=emdecorate,
                         )
 
     # Print the wavevectors of EM modes.
@@ -138,7 +138,7 @@ else:
     sim_AC = npzfile['sim_AC'].tolist()
 
 sim_AC.plot_modes(mode_indices=range(10),
-                    xlim_min=-.1, ylim_min=-.1, xlim_max=-.1, ylim_max=-.1,
+                    trim=(-.1, -.1, -.1, -.1),
                     decorator=acdecorate)
 
 # Print the frequencies of AC modes.

@@ -89,7 +89,7 @@ sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 # Generating images for the EM modes involved in the calculation
 print("Plotting EM fields ")
-sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump], num_ticks=3,xlim_min=0.4, xlim_max=0.4, ylim_min=0.4, ylim_max=0.4,
+sim_EM_pump.plot_modes(mode_indices=[EM_mode_index_pump], num_ticks=3, trim=(0.4, 0.4, 0.4, 0.4),
                           quiver_points=40, n_points=1000, colorbar=True)
 
 # Calculating the EM effective index of the waveguide.

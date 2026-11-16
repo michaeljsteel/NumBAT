@@ -28,6 +28,19 @@ class StrainComponent(Enum):
             raise ValueError(f"strain component must be one of: {allowed}.") from exc
 
 
+def parse_strain_components(spec):
+    """Normalize strain components from typed values or comma-separated names."""
+    if isinstance(spec, str):
+        spec = spec.replace(",", " ").split()
+    try:
+        return tuple(StrainComponent.parse(component) for component in spec)
+    except TypeError as exc:
+        raise ValueError(
+            "strain components must be an iterable of StrainComponent values "
+            "or component names."
+        ) from exc
+
+
 _DISPLAY_PRIMARY_PART = {
     StrainComponent.XX: "r",
     StrainComponent.YY: "r",

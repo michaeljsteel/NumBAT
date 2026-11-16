@@ -17,6 +17,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import warnings
 
 import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
@@ -262,7 +263,8 @@ class PlotParams2D(PlotParams):
     def __init__(self):
         super().__init__()
 
-        self.update({'xlim_min': None, 'xlim_max': None,
+        self.update({'trim': None,
+                     'xlim_min': None, 'xlim_max': None,
                      'ylim_min': None, 'ylim_max': None,
                       'aspect': 1.0,
                       'ticks': True, 'num_ticks': None,
@@ -278,6 +280,45 @@ class PlotParams2D(PlotParams):
                       'wide_mode': None,
                       'colorbar_allowance': 0.15,
                       })
+
+
+def resolve_plot_trim(plps, default_trim):
+    """Return left, bottom, right, and top plot-boundary fractions."""
+    legacy_keys = ("xlim_min", "ylim_min", "xlim_max", "ylim_max")
+    legacy_values = tuple(plps.get(key, None) for key in legacy_keys)
+    if any(value is not None for value in legacy_values):
+        warnings.warn(
+            "xlim_min, ylim_min, xlim_max, and ylim_max are deprecated; "
+            "use trim=(left, bottom, right, top) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    trim = plps.get("trim", None)
+    if trim is not None:
+        try:
+            left, bottom, right, top = tuple(trim)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "trim must be a four-item (left, bottom, right, top) tuple."
+            ) from exc
+        try:
+            values = tuple(float(value) for value in (left, bottom, right, top))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "trim values must be finite numeric fractions."
+            ) from exc
+        if not np.all(np.isfinite(values)):
+            raise ValueError("trim values must be finite numeric fractions.")
+        return values
+
+    return (
+        plps.get("xlim_min", default_trim, override_None=True),
+        plps.get("ylim_min", default_trim, override_None=True),
+        plps.get("xlim_max", default_trim, override_None=True),
+        plps.get("ylim_max", default_trim, override_None=True),
+    )
+
 
 class PlotParams1D(PlotParams):
 
@@ -479,10 +520,7 @@ def _make_quiver_slices(v_x, v_y, plps, deftrim):
     #  or along the whole x range before trimming.
     # We choose the latter so trim doesn't change the spacing
 
-    xlmi = plps.get('xlim_min', deftrim, override_None=True)
-    xlma = plps.get('xlim_max', deftrim, override_None=True)
-    ylmi = plps.get('ylim_min', deftrim, override_None=True)
-    ylma = plps.get('ylim_max', deftrim, override_None=True)
+    xlmi, ylmi, xlma, ylma = resolve_plot_trim(plps, deftrim)
 
     quiver_skip_x = int(round(n_pts_x/quiver_points_x * (1-xlmi-xlma)))
     quiver_skip_y = int(round(n_pts_y/quiver_points_y * (1-ylmi-ylma)))
@@ -602,10 +640,7 @@ def plot_contour_and_quiver(
     # Adjustments to the visible plot domain
 
     deftrim = -.1 if is_AC else -0.05
-    xlmi = plps.get('xlim_min', deftrim, override_None=True)
-    xlma = plps.get('xlim_max', deftrim, override_None=True)
-    ylmi = plps.get('ylim_min', deftrim, override_None=True)
-    ylma = plps.get('ylim_max', deftrim, override_None=True)
+    xlmi, ylmi, xlma, ylma = resolve_plot_trim(plps, deftrim)
 
     if xlmi != 0 or xlma != 0:
         xmin, xmax = ax.get_xlim()
@@ -659,10 +694,11 @@ def _displayed_waveguide_aspect(field_type, d_xy, plps):
     v_x = d_xy["v_x"]
     v_y = d_xy["v_y"]
     default_trim = -0.1 if FieldType.parse(field_type) == FieldType.AC else -0.05
-    x_fraction = 1 - plps.get("xlim_min", default_trim, override_None=True)
-    x_fraction -= plps.get("xlim_max", default_trim, override_None=True)
-    y_fraction = 1 - plps.get("ylim_min", default_trim, override_None=True)
-    y_fraction -= plps.get("ylim_max", default_trim, override_None=True)
+    xlim_min, ylim_min, xlim_max, ylim_max = resolve_plot_trim(
+        plps, default_trim
+    )
+    x_fraction = 1 - xlim_min - xlim_max
+    y_fraction = 1 - ylim_min - ylim_max
     waveguide_aspect = abs(
         (v_x[-1] - v_x[0]) * x_fraction / ((v_y[-1] - v_y[0]) * y_fraction)
     )

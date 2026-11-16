@@ -33,10 +33,18 @@ from numbat.nbtypes import (
     FieldSelection,
     FieldType,
 )
-from numbat.plotting import mode_rendering
+from numbat.plotting import mode_rendering, strain_rendering
 from numbat.plotting import modes as plotmodes
 from numbat.plotting import raw_modes as plotmoderaw
-from numbat.solvers.mode_sampling import ModeInterpolator
+from numbat.solvers import strain_sampling
+from numbat.solvers.mode_sampling import ModeInterpolator  # noqa: F401
+from numbat.strain_selection import (
+    complex_storage_keys as strain_complex_storage_keys,
+)
+from numbat.strain_selection import (
+    component_index,
+    parse_strain_components,
+)
 from numbat.utils.numeric import int2D_trapz
 
 from .. import reporting
@@ -82,7 +90,7 @@ class Mode:
         self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-    def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='', plot_params=None):
+    def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='', plot_params=None, trim=None):
         """Plot selected components using a compact string or `FieldComponent` values.
 
         With no components, write the combined field overview. Use a compact
@@ -92,6 +100,10 @@ class Mode:
         only individual component plots are written. Supported individual
         components are `X`/`"x"`, `Y`/`"y"`, `Z`/`"z"`, `TRANSVERSE`/`"t"`,
         and `MAGNITUDE`/`"a"`.
+
+        `trim=(left, bottom, right, top)` trims the displayed plot bounds by
+        fractional amounts and takes precedence over legacy limit keys in
+        `plot_params`.
         """
 
         include_overview, comps = mode_rendering.split_plot_components(comps)
@@ -101,6 +113,7 @@ class Mode:
 
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
+        if trim is not None: plot_params["trim"] = trim
 
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
         plot_params['field_type'] = ft  # awkward way to get the correct filename
@@ -559,3 +572,52 @@ class ModeAC(Mode):
     def __repr__(self):
         s = f'ModeAC(simres, mode_num={self.mode_num})'
         return s
+
+    def plot_strain(
+        self, comps=(), ax=None, n_pts=501, prefix="", plot_params=None, trim=None
+    ):
+        """Plot native-FEM acoustic strain on the standard 2D sampling grid.
+
+        `trim=(left, bottom, right, top)` trims the displayed plot bounds by
+        fractional amounts.
+        """
+        if plot_params is None:
+            plot_params = plotmodes.PlotParams2D()
+        if prefix:
+            plot_params["prefix"] = prefix
+        if trim is not None:
+            plot_params["trim"] = trim
+
+        components = parse_strain_components(comps)
+        mode_interpolator = self.mode_interpolator
+        mode_interpolator.define_plot_grid_2D(n_pts=n_pts)
+        shift_x, shift_y = self.sim_result.get_xyshift()
+        sample_points = np.column_stack((
+            mode_interpolator.xy_raw["m_x"].flatten("F") - shift_x,
+            mode_interpolator.xy_raw["m_y"].flatten("F") - shift_y,
+        ))
+        native_samples = strain_sampling.calculate_mode_strain(
+            self.sim_result, self.mode_num
+        )
+        sampled_values = strain_sampling.make_native_strain_interpolator(
+            native_samples
+        )(sample_points)
+
+        nx = len(mode_interpolator.xy_out["v_x"])
+        ny = len(mode_interpolator.xy_out["v_y"])
+        fields = {}
+        for component in strain_sampling.StrainComponent:
+            real_key, imaginary_key = strain_complex_storage_keys(component)
+            values = sampled_values[:, component_index(component)].reshape(nx, ny)
+            fields[real_key] = values.real
+            fields[imaginary_key] = values.imag
+
+        strain_rendering.render_strain_2d(
+            coordinates=mode_interpolator.xy_out,
+            fields=fields,
+            components=components,
+            simulation_result=self.sim_result,
+            mode_index=self.mode_num,
+            plot_params=plot_params,
+            axis=ax,
+        )

@@ -97,10 +97,7 @@ else:
 
 simres_EM_pump.plot_modes(
     quiver_points=20,
-    xlim_min=0.0,
-    xlim_max=0.0,
-    ylim_min=0.0,
-    ylim_max=0.0,
+    trim=(0.0, 0.0, 0.0, 0.0),
     aspect=1.5,
     hide_vector_field=True,
 )

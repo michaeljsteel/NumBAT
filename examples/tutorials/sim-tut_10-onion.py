@@ -92,12 +92,12 @@ print("n_eff", np.round(n_eff_sim, 4))
 # # Plot the E fields of the EM modes fields
 # # Zoom in on the central region (of big unitcell) with xlim_, ylim_ args.
 # # Only plot fields of fundamental (mode_index = 0) mode.
-sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, mode_indices=range(10), contours=True,
+sim_EM_pump.plot_modes(trim=(0.3, 0.3, 0.3, 0.3),
+                          mode_indices=range(10), contours=True,
                            ticks=True, quiver_points=20)
 
-sim_EM_pump.plot_modes(xlim_min=0.3, xlim_max=0.3, ylim_min=0.3,
-                          ylim_max=0.3, mode_indices=range(10), contours=True, field_type=FieldType.EM_H,
+sim_EM_pump.plot_modes(trim=(0.3, 0.3, 0.3, 0.3),
+                          mode_indices=range(10), contours=True, field_type=FieldType.EM_H,
                            ticks=True, quiver_points=20)
 
 # Acoustic wavevector
