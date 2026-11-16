@@ -5,6 +5,8 @@ from dataclasses import dataclass
 import numpy as np
 from matplotlib.tri import Triangulation
 
+from numbat.mesh.fem import validate_1D_cut_format
+from numbat.nbtypes import SI_um
 from numbat.strain_selection import (
     StrainComponent,
     component_index,
@@ -215,6 +217,39 @@ def sample_native_strain(samples, points, tolerance=1e-12):
     return sampled
 
 
+def strain_cut_points(sim_result, s_cut, val1, val2, n_points):
+    """Return a displayed cut axis and matching native-FEM evaluation points."""
+    validate_1D_cut_format(s_cut, val1, val2)
+    if n_points < 2:
+        raise ValueError("n_points must be at least 2 for a strain cut.")
+
+    x_min, x_max, y_min, y_max = sim_result.fem_mesh.get_xy_limits()
+    match s_cut.lower():
+        case "x":
+            y_points = np.linspace(y_min, y_max, n_points)
+            x_points = val1 * SI_um + np.zeros(n_points)
+        case "y":
+            x_points = np.linspace(x_min, x_max, n_points)
+            y_points = val1 * SI_um + np.zeros(n_points)
+        case "line":
+            x_points = np.linspace(val1[0] * SI_um, val2[0] * SI_um, n_points)
+            y_points = np.linspace(val1[1] * SI_um, val2[1] * SI_um, n_points)
+
+    shift_x, shift_y = sim_result.get_xyshift()
+    displayed_x = x_points - shift_x
+    displayed_y = y_points - shift_y
+    if s_cut.lower() == "x":
+        cut_axis = displayed_y
+    elif s_cut.lower() == "y":
+        cut_axis = displayed_x
+    else:
+        cut_axis = np.hypot(
+            displayed_x - displayed_x[0], displayed_y - displayed_y[0]
+        )
+
+    return cut_axis / SI_um, np.column_stack((x_points, y_points))
+
+
 class NativeStrainInterpolator:
     """Fast element-local strain interpolator for dense plot or cut samples."""
 
@@ -297,3 +332,14 @@ def calculate_mode_strain(sim_result, mode_index, reference_points=P2_REFERENCE_
             sim_result.fem_mesh, "v_el_2_mat_idx", None
         ),
     )
+
+
+def sample_mode_strain_cut(
+    sim_result, mode_index, s_cut, val1, val2=None, n_points=501
+):
+    """Sample a native one-sided acoustic strain cut for one mode."""
+    cut_axis, points = strain_cut_points(
+        sim_result, s_cut, val1, val2, n_points
+    )
+    samples = calculate_mode_strain(sim_result, mode_index)
+    return cut_axis, sample_native_strain(samples, points)

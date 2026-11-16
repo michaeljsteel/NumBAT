@@ -23,7 +23,9 @@ from numbat.solvers.strain_sampling import (
     calculate_element_strain,
     calculate_mode_strain,
     make_native_strain_interpolator,
+    sample_mode_strain_cut,
     sample_native_strain,
+    strain_cut_points,
 )
 from numbat.strain_selection import (
     StrainComponent,
@@ -244,6 +246,94 @@ def test_fast_native_interpolator_matches_reference_sampler_away_from_interface(
     )
 
 
+def test_strain_cut_points_match_standard_x_y_and_line_axes(monkeypatch):
+    monkeypatch.setattr("numbat.solvers.strain_sampling.SI_um", 1.0)
+    sim_result = SimpleNamespace(
+        fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 2.0, 0.0, 4.0)),
+        get_xyshift=lambda: (0.5, 1.0),
+    )
+
+    x_axis, x_points = strain_cut_points(sim_result, "x", 1.0, None, 3)
+    y_axis, y_points = strain_cut_points(sim_result, "y", 2.0, None, 3)
+    line_axis, line_points = strain_cut_points(
+        sim_result, "line", (0.0, 0.0), (3.0, 4.0), 2
+    )
+
+    np.testing.assert_allclose(x_axis, (-1.0, 1.0, 3.0))
+    np.testing.assert_allclose(x_points, ((1.0, 0.0), (1.0, 2.0), (1.0, 4.0)))
+    np.testing.assert_allclose(y_axis, (-0.5, 0.5, 1.5))
+    np.testing.assert_allclose(y_points, ((0.0, 2.0), (1.0, 2.0), (2.0, 2.0)))
+    np.testing.assert_allclose(line_axis, (0.0, 5.0))
+    np.testing.assert_allclose(line_points, ((0.0, 0.0), (3.0, 4.0)))
+
+
+def test_native_strain_cut_preserves_first_interface_side(monkeypatch):
+    monkeypatch.setattr("numbat.solvers.strain_sampling.SI_um", 1.0)
+    samples = _interface_strain_samples()
+    sim_result = SimpleNamespace(
+        fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 1.0, 0.0, 1.0)),
+        get_xyshift=lambda: (0.0, 0.0),
+    )
+    monkeypatch.setattr(
+        "numbat.solvers.strain_sampling.calculate_mode_strain",
+        lambda *_: samples,
+    )
+
+    cut_axis, values = sample_mode_strain_cut(
+        sim_result, 0, "x", 0.5, n_points=3
+    )
+
+    np.testing.assert_allclose(cut_axis, (0.0, 0.5, 1.0))
+    np.testing.assert_allclose(
+        values,
+        sample_native_strain(samples, np.column_stack((np.full(3, 0.5), cut_axis))),
+    )
+
+
+@pytest.mark.parametrize(
+    ("s_cut", "val1", "val2", "expected_points"),
+    [
+        ("x", 0.25, None, ((0.25, 0.0), (0.25, 0.5), (0.25, 1.0))),
+        ("y", 0.75, None, ((0.0, 0.75), (0.5, 0.75), (1.0, 0.75))),
+        ("line", (0.0, 0.0), (1.0, 1.0), ((0.0, 0.0), (0.5, 0.5), (1.0, 1.0))),
+    ],
+)
+def test_native_strain_cuts_match_affine_values(
+    monkeypatch, s_cut, val1, val2, expected_points
+):
+    monkeypatch.setattr("numbat.solvers.strain_sampling.SI_um", 1.0)
+    samples = _interface_strain_samples()
+    coordinates = samples.coordinates
+    for component_index in range(6):
+        values = (
+            coordinates[..., 0]
+            + 2 * coordinates[..., 1]
+            + component_index
+            + 1j * (coordinates[..., 0] - coordinates[..., 1])
+        )
+        samples.values[..., component_index] = values
+    sim_result = SimpleNamespace(
+        fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 1.0, 0.0, 1.0)),
+        get_xyshift=lambda: (0.0, 0.0),
+    )
+    monkeypatch.setattr(
+        "numbat.solvers.strain_sampling.calculate_mode_strain",
+        lambda *_: samples,
+    )
+
+    _, values = sample_mode_strain_cut(
+        sim_result, 0, s_cut, val1, val2, n_points=3
+    )
+
+    points = np.asarray(expected_points)
+    expected = np.column_stack([
+        points[:, 0] + 2 * points[:, 1] + component_index
+        + 1j * (points[:, 0] - points[:, 1])
+        for component_index in range(6)
+    ])
+    np.testing.assert_allclose(values, expected)
+
+
 def test_mode_ac_strain_plot_samples_native_values_and_routes_components(monkeypatch):
     class ModeInterpolator:
         def __init__(self):
@@ -392,3 +482,101 @@ def test_ac_simresult_strain_export_routes_selected_modes():
     )
 
     assert calls == [{"prefix": "strain-", "n_pts": 29}]
+
+
+def test_strain_1d_export_uses_documented_twelve_column_order(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "numbat.io.strain_fields.outdir_fields_path",
+        lambda prefix: tmp_path,
+    )
+    fields = {}
+    for index, component in enumerate(StrainComponent):
+        real_key, imaginary_key = complex_storage_keys(component)
+        fields[real_key] = np.full(2, index + 1.0)
+        fields[imaginary_key] = np.full(2, -(index + 1.0))
+
+    strain_fields.write_strain_fields_1d(
+        prefix="ignored",
+        mode_index=2,
+        cut="line",
+        x_axis=np.array((0.0, 1.0)),
+        fields=fields,
+    )
+
+    output = tmp_path / "AC_strain_mode_02_linecut.txt"
+    expected_keys = [
+        key
+        for component in StrainComponent
+        for key in complex_storage_keys(component)
+    ]
+    assert output.read_text().splitlines()[0].endswith("x " + " ".join(expected_keys))
+    data = np.loadtxt(output)
+    assert data.shape == (2, 13)
+    np.testing.assert_allclose(data[:, 1], fields["Sxxr"])
+    np.testing.assert_allclose(data[:, -1], fields["Sxyi"])
+
+
+def test_mode_ac_strain_1d_plot_routes_native_cut_fields(monkeypatch):
+    mode = ModeAC.__new__(ModeAC)
+    mode.mode_num = 3
+    x_axis = np.array((0.0, 1.0))
+    fields = {"Sxyr": np.ones(2)}
+    mode._sample_strain_1d = lambda *args: (x_axis, fields)
+    captured = {}
+    monkeypatch.setattr(
+        modes_module.strain_rendering,
+        "render_strain_1d",
+        lambda **kwargs: captured.update(kwargs),
+    )
+
+    mode.plot_strain_1D("y", 0.25, comps="xy", n_pts=17)
+
+    assert captured["x_axis"] is x_axis
+    assert captured["fields"] is fields
+    assert captured["components"] == (StrainComponent.XY,)
+    assert captured["x_label"] == "$x$ (μm)"
+    assert captured["cut"] == "y"
+
+
+def test_ac_simresult_strain_1d_facades_route_selected_modes():
+    plot_calls = []
+    write_calls = []
+
+    class Mode:
+        def plot_strain_1D(self, *args, **kwargs):
+            plot_calls.append((args, kwargs))
+
+        def write_strain_1D(self, *args, **kwargs):
+            write_calls.append((args, kwargs))
+
+    sim_result = SimpleNamespace(n_modes=2, get_mode=lambda _: Mode())
+
+    ACSimResult.plot_strain_modes_1D(
+        sim_result,
+        "line",
+        (0.0, 0.0),
+        (1.0, 1.0),
+        mode_indices=(1,),
+        n_points=29,
+        comps=(StrainComponent.XY,),
+        prefix="strain-",
+        suffix="test",
+    )
+    ACSimResult.write_strain_modes_1D(
+        sim_result,
+        "x",
+        0.25,
+        mode_indices=(1,),
+        n_points=31,
+        prefix="strain-",
+    )
+
+    assert len(plot_calls) == 1
+    assert plot_calls[0][0] == ("line", (0.0, 0.0), (1.0, 1.0))
+    assert plot_calls[0][1]["comps"] == (StrainComponent.XY,)
+    assert plot_calls[0][1]["n_pts"] == 29
+    assert plot_calls[0][1]["plot_params"]["prefix"] == "strain-"
+    assert plot_calls[0][1]["plot_params"]["suffix"] == "test"
+    assert write_calls == [
+        (("x", 0.25, None), {"n_pts": 31, "prefix": "strain-"})
+    ]

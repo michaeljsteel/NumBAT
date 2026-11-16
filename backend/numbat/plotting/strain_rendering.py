@@ -43,6 +43,15 @@ def _strain_plot_filename(plot_params, mode_index, label=""):
     )
 
 
+def _strain_cut_filename(plot_params, mode_index, cut):
+    output_directory = outdir_fields_path(prefix=plot_params["prefix"])
+    suffix = f"_{plot_params['suffix']}" if plot_params["suffix"] else ""
+    return (
+        f"{output_directory}/AC_strain_mode_{mode_index:02d}_{cut}cut"
+        f"{suffix}{plotfile_ext()}"
+    )
+
+
 def _plot_component(ax, coordinates, fields, selection, plot_params):
     values = fields[storage_key(selection)]
     finite_values = values[np.isfinite(values)]
@@ -129,3 +138,34 @@ def render_strain_2d(
                     plot_params, mode_index, label=selection.component.value
                 ),
             )
+
+
+def render_strain_1d(
+    *,
+    x_axis,
+    fields,
+    components,
+    x_label,
+    cut,
+    mode_index,
+    plot_params,
+):
+    """Render a sampled 1D strain cut using display-primary components."""
+    if not components:
+        components = tuple(StrainComponent)
+
+    fig, axis = plt.subplots()
+    for component in components:
+        selection = StrainSelection.primary(component)
+        axis.plot(
+            x_axis,
+            fields[storage_key(selection)],
+            label=tex_label(selection),
+        )
+
+    axis.set_xlabel(x_label)
+    axis.set_ylabel("strain")
+    axis.legend()
+    plottools.save_and_close_figure(
+        fig, _strain_cut_filename(plot_params, mode_index, cut)
+    )

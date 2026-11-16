@@ -364,17 +364,25 @@ Validation:
 
 ### Phase 5: 1D Cuts, Plots, and Export
 
-1. Add direct native strain sampling for `x`, `y`, and arbitrary line cuts.
-2. Add 1D component plots.
-3. Add one-file-per-cut strain export.
-4. Add public `ModeAC` and `ACSimResult` façade methods.
+Status: complete.
+
+1. [x] Add direct native strain sampling for `x`, `y`, and arbitrary line cuts.
+2. [x] Add 1D component plots.
+3. [x] Add one-file-per-cut strain export.
+4. [x] Add public `ModeAC` and `ACSimResult` façade methods.
+
+Each cut writes one file named
+``AC_strain_mode_{mode:02d}_{cut}cut.txt``. Its columns are
+``x Sxxr Sxxi Syyr Syyi Szzr Szzi Syzr Syzi Sxzr Sxzi Sxyr Sxyi``.
+Cuts use the deterministic native sampler: an interface point receives the
+first matching local subtriangle's value, without averaging across materials.
 
 Validation:
 
-- all cut directions agree with analytical values;
-- each exported file contains x plus twelve strain columns in the documented
-  order;
-- line cuts crossing interfaces follow the documented one-sided rule.
+- [x] All cut directions agree with analytical values.
+- [x] Each exported file contains x plus twelve strain columns in the
+  documented order.
+- [x] Line cuts crossing interfaces follow the documented one-sided rule.
 
 ### Phase 6: Legacy Cleanup and Documentation
 

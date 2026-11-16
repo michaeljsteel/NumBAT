@@ -32,3 +32,25 @@ def write_strain_fields_2d(*, prefix, mode_index, coordinates, fields):
                 fields[key],
                 header=f"Mode {mode_index:02d}, {key}, {coordinate_summary}",
             )
+
+
+def write_strain_fields_1d(*, prefix, mode_index, cut, x_axis, fields):
+    """Write all physical strain parts for one sampled cut in a single file."""
+    output_directory = outdir_fields_path(prefix=prefix)
+    filename = f"{output_directory}/AC_strain_mode_{mode_index:02d}_{cut}cut.txt"
+    field_keys = [
+        key
+        for component in StrainComponent
+        for key in complex_storage_keys(component)
+    ]
+    output = np.empty((len(x_axis), len(field_keys) + 1), dtype=np.float64)
+    output[:, 0] = x_axis
+    for index, key in enumerate(field_keys, start=1):
+        output[:, index] = fields[key]
+
+    np.savetxt(
+        filename,
+        output,
+        header="x " + " ".join(field_keys),
+        fmt="%16.8f",
+    )

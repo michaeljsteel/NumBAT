@@ -702,6 +702,47 @@ class ACSimResult(SimResult):
                 prefix=prefix, n_pts=n_points
             )
 
+    def plot_strain_modes_1D(
+        self,
+        s_cut,
+        val1,
+        val2=None,
+        mode_indices=None,
+        n_points=501,
+        comps=(),
+        prefix="",
+        suffix="",
+    ):
+        """Plot 1D native strain cuts for selected acoustic modes."""
+        plot_params = plotmodes.PlotParams1D()
+        plot_params.update({"prefix": prefix, "suffix": suffix})
+        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
+        for mode_index in mode_range:
+            self.get_mode(mode_index).plot_strain_1D(
+                s_cut,
+                val1,
+                val2,
+                comps=comps,
+                n_pts=n_points,
+                plot_params=plot_params,
+            )
+
+    def write_strain_modes_1D(
+        self,
+        s_cut,
+        val1,
+        val2=None,
+        mode_indices=None,
+        n_points=501,
+        prefix="",
+    ):
+        """Write 1D native strain cuts for selected acoustic modes."""
+        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
+        for mode_index in mode_range:
+            self.get_mode(mode_index).write_strain_1D(
+                s_cut, val1, val2, n_pts=n_points, prefix=prefix
+            )
+
 
     def fem_evecs_for_ft(self, ft):
         return self.fem_evecs

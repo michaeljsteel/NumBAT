@@ -610,6 +610,43 @@ class ModeAC(Mode):
             fields=fields,
         )
 
+    def plot_strain_1D(
+        self, s_cut, val1, val2=None, comps=(), n_pts=501, prefix="", plot_params=None
+    ):
+        """Plot display-primary strain components along an acoustic mode cut."""
+        if plot_params is None:
+            plot_params = plotmodes.PlotParams1D()
+        if prefix:
+            plot_params["prefix"] = prefix
+
+        components = parse_strain_components(comps)
+        x_axis, fields = self._sample_strain_1d(s_cut, val1, val2, n_pts)
+        x_label = {
+            "x": "$y$ (μm)",
+            "y": "$x$ (μm)",
+            "line": "$z$ (μm)",
+        }[s_cut.lower()]
+        strain_rendering.render_strain_1d(
+            x_axis=x_axis,
+            fields=fields,
+            components=components,
+            x_label=x_label,
+            cut=s_cut,
+            mode_index=self.mode_num,
+            plot_params=plot_params,
+        )
+
+    def write_strain_1D(self, s_cut, val1, val2=None, n_pts=501, prefix=""):
+        """Write all physical strain parts along an acoustic mode cut."""
+        x_axis, fields = self._sample_strain_1d(s_cut, val1, val2, n_pts)
+        strain_fields.write_strain_fields_1d(
+            prefix=prefix,
+            mode_index=self.mode_num,
+            cut=s_cut,
+            x_axis=x_axis,
+            fields=fields,
+        )
+
     def _sample_strain_2d(self, n_pts):
         """Sample all physical strain parts onto the standard 2D plot grid."""
         mode_interpolator = self.mode_interpolator
@@ -628,11 +665,27 @@ class ModeAC(Mode):
 
         nx = len(mode_interpolator.xy_out["v_x"])
         ny = len(mode_interpolator.xy_out["v_y"])
+        values = sampled_values.reshape(nx, ny, len(strain_sampling.StrainComponent))
+        return mode_interpolator.xy_out, self._strain_fields_from_values(values)
+
+    def _sample_strain_1d(self, s_cut, val1, val2, n_pts):
+        """Sample all physical strain parts along a native one-sided cut."""
+        x_axis, values = strain_sampling.sample_mode_strain_cut(
+            self.sim_result,
+            self.mode_num,
+            s_cut,
+            val1,
+            val2,
+            n_points=n_pts,
+        )
+        return x_axis, self._strain_fields_from_values(values)
+
+    @staticmethod
+    def _strain_fields_from_values(values):
         fields = {}
         for component in strain_sampling.StrainComponent:
             real_key, imaginary_key = strain_complex_storage_keys(component)
-            values = sampled_values[:, component_index(component)].reshape(nx, ny)
-            fields[real_key] = values.real
-            fields[imaginary_key] = values.imag
-
-        return mode_interpolator.xy_out, fields
+            component_values = values[..., component_index(component)]
+            fields[real_key] = component_values.real
+            fields[imaginary_key] = component_values.imag
+        return fields
