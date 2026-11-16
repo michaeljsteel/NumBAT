@@ -38,6 +38,11 @@ _DISPLAY_PRIMARY_PART = {
 }
 
 
+def component_index(component):
+    """Return the Voigt-order array index for one strain component."""
+    return tuple(StrainComponent).index(StrainComponent.parse(component))
+
+
 @dataclass(frozen=True)
 class StrainSelection:
     """One displayed real or imaginary strain component."""

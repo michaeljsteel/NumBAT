@@ -309,6 +309,8 @@ Validation:
 
 ### Phase 2: Native Mesh Inspection and Interface Policy
 
+**Status: Complete**
+
 1. Add an internal native strain data object with element-local values and
    geometry.
 2. Add a mesh diagnostic renderer using triangle faces or subtriangles.

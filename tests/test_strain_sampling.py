@@ -6,13 +6,17 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from matplotlib.figure import Figure
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
+from numbat.plotting.strain_native import plot_native_strain_component
 from numbat.solvers.strain_sampling import (
     P2_REFERENCE_NODES,
+    NativeStrainSamples,
     calculate_element_strain,
     calculate_mode_strain,
+    sample_native_strain,
 )
 from numbat.strain_selection import (
     StrainComponent,
@@ -21,6 +25,36 @@ from numbat.strain_selection import (
     selection_from_storage_key,
     storage_key,
 )
+
+
+def _interface_strain_samples():
+    coordinates = np.array((
+        (
+            (0.0, 0.0),
+            (1.0, 0.0),
+            (0.0, 1.0),
+            (0.5, 0.0),
+            (0.5, 0.5),
+            (0.0, 0.5),
+        ),
+        (
+            (1.0, 0.0),
+            (1.0, 1.0),
+            (0.0, 1.0),
+            (1.0, 0.5),
+            (0.5, 1.0),
+            (0.5, 0.5),
+        ),
+    ))
+    values = np.empty((2, 6, 6), dtype=np.complex128)
+    values[0, :, :] = 1 + 2j
+    values[1, :, :] = 3 + 4j
+    return NativeStrainSamples(
+        reference_points=P2_REFERENCE_NODES,
+        coordinates=coordinates,
+        values=values,
+        element_material_indices=np.array((1, 2)),
+    )
 
 
 def test_strain_selection_primary_storage_matches_acoustic_phase_convention():
@@ -134,3 +168,31 @@ def test_mode_strain_uses_acoustic_fem_storage_and_element_coordinates():
     np.testing.assert_allclose(
         samples.coordinates, coordinates[np.newaxis]
     )
+
+
+def test_native_strain_sampling_preserves_interface_jump_and_selects_first_side():
+    samples = _interface_strain_samples()
+
+    sampled = sample_native_strain(
+        samples,
+        np.array(((0.25, 0.75), (0.1, 0.1), (2.0, 2.0))),
+    )
+
+    np.testing.assert_allclose(sampled[0], np.full(6, 1 + 2j))
+    np.testing.assert_allclose(sampled[1], np.full(6, 1 + 2j))
+    assert np.all(np.isnan(sampled[2]))
+    assert samples.subtriangles().shape == (8, 3)
+    assert samples.element_material_indices.tolist() == [1, 2]
+
+
+def test_native_strain_renderer_preserves_local_display_values():
+    samples = _interface_strain_samples()
+    fig = Figure(figsize=(4, 3))
+    ax = fig.add_subplot()
+
+    _, _, colorbar = plot_native_strain_component(
+        samples, StrainSelection.primary(StrainComponent.YZ), ax=ax
+    )
+
+    assert len(ax.collections) == 1
+    assert colorbar.mappable.get_array().shape == (12,)
