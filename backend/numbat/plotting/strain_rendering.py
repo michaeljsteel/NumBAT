@@ -16,6 +16,8 @@ from numbat.strain_selection import (
 _OVERVIEW_SELECTIONS = tuple(
     StrainSelection.primary(component) for component in StrainComponent
 )
+_STRAIN_DISPLAY_SCALE = 1e-6
+_STRAIN_DISPLAY_UNIT = r"$\mathrm{M}\epsilon$"
 
 
 def _apply_trim_limits(ax, plot_params):
@@ -52,8 +54,23 @@ def _strain_cut_filename(plot_params, mode_index, cut):
     )
 
 
+def _add_mode_label(fig, mode_index):
+    fig.text(
+        0.01,
+        0.99,
+        f"Mode {mode_index}\nStrain [{_STRAIN_DISPLAY_UNIT}]",
+        horizontalalignment="left",
+        verticalalignment="top",
+    )
+
+
+def _add_colorbar(fig, ax, image):
+    colorbar_axis = ax.inset_axes([1.04, 0.1, 0.05, 0.8])
+    return fig.colorbar(image, cax=colorbar_axis)
+
+
 def _plot_component(ax, coordinates, fields, selection, plot_params):
-    values = fields[storage_key(selection)]
+    values = fields[storage_key(selection)] * _STRAIN_DISPLAY_SCALE
     finite_values = values[np.isfinite(values)]
     limit = np.max(np.abs(finite_values)) if len(finite_values) else 1.0
     if limit == 0:
@@ -106,13 +123,14 @@ def render_strain_2d(
     if not components:
         decorator.set_for_multi()
         fig, axes = plt.subplots(2, 3, figsize=decorator["figsize"])
+        _add_mode_label(fig, mode_index)
         images = [
             _plot_component(ax, coordinates, fields, selection, plot_params)
             for ax, selection in zip(axes.flat, _OVERVIEW_SELECTIONS)
         ]
         if plot_params["colorbar"]:
             for ax, image in zip(axes.flat, images):
-                fig.colorbar(image, ax=ax)
+                _add_colorbar(fig, ax, image)
         fig.tight_layout()
         plottools.save_and_close_figure(
             fig, _strain_plot_filename(plot_params, mode_index)
@@ -126,11 +144,12 @@ def render_strain_2d(
             fig, component_axis = plt.subplots(figsize=decorator["figsize"])
         else:
             fig, component_axis = axis.figure, axis
+        _add_mode_label(fig, mode_index)
         image = _plot_component(
             component_axis, coordinates, fields, selection, plot_params
         )
         if axis is None and plot_params["colorbar"]:
-            fig.colorbar(image, ax=component_axis)
+            _add_colorbar(fig, component_axis, image)
         if axis is None:
             plottools.save_and_close_figure(
                 fig,
@@ -159,12 +178,12 @@ def render_strain_1d(
         selection = StrainSelection.primary(component)
         axis.plot(
             x_axis,
-            fields[storage_key(selection)],
+            fields[storage_key(selection)] * _STRAIN_DISPLAY_SCALE,
             label=tex_label(selection),
         )
 
     axis.set_xlabel(x_label)
-    axis.set_ylabel("strain")
+    axis.set_ylabel(f"Strain [{_STRAIN_DISPLAY_UNIT}]")
     axis.legend()
     plottools.save_and_close_figure(
         fig, _strain_cut_filename(plot_params, mode_index, cut)

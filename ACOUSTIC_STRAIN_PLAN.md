@@ -386,13 +386,13 @@ Validation:
 
 ### Phase 6: Legacy Cleanup and Documentation
 
-1. Replace the broken current `Mode.plot_strain` implementation with a
-   compatibility wrapper to the new API, or deprecate/remove it according to
-   the public API decision made during implementation.
-2. Remove or leave archived the obsolete rectangular-gradient code without
-   making it reachable.
-3. Add user documentation and examples for 2D plots, 1D cuts, and exports.
-4. Add standalone import coverage for new solver, plotting, I/O, and
+Status: complete.
+
+1. [x] Remove the broken base `Mode.plot_strain` hook; strain is now exposed
+   only by `ModeAC`.
+2. [x] Leave the obsolete rectangular-gradient code archived and unreachable.
+3. [x] Add user documentation and examples for 2D plots, 1D cuts, and exports.
+4. [x] Add standalone import coverage for new solver, plotting, I/O, and
    selection modules.
 
 ## Non-Goals for the Initial Feature

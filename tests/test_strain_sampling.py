@@ -15,7 +15,7 @@ from numbat.io import strain_fields
 from numbat.plotting import strain_rendering
 from numbat.plotting.modes import PlotParams2D
 from numbat.plotting.strain_native import plot_native_strain_component
-from numbat.solvers.modes import ModeAC
+from numbat.solvers.modes import Mode, ModeAC, ModeEM
 from numbat.solvers.simresult import ACSimResult
 from numbat.solvers.strain_sampling import (
     P2_REFERENCE_NODES,
@@ -84,6 +84,13 @@ def test_strain_selection_primary_storage_matches_acoustic_phase_convention():
             f"S{component.value}r",
             f"S{component.value}i",
         )
+
+
+def test_strain_api_is_available_only_on_acoustic_modes():
+    assert not hasattr(Mode, "plot_strain")
+    assert not hasattr(ModeEM, "plot_strain")
+    assert hasattr(ModeAC, "plot_strain")
+    assert not hasattr(modes_module.ModeInterpolator, "plot_strain_mode_i")
 
 
 def test_native_p2_strain_matches_an_affine_displacement_on_curvilinear_element():
@@ -235,6 +242,33 @@ def test_strain_renderer_applies_standard_acoustic_trim_limits():
     assert axis.get_ylim() == pytest.approx((0.25, 1.0))
 
 
+def test_strain_renderer_uses_megastrain_scale_and_compact_colorbar():
+    figure = Figure()
+    axis = figure.subplots()
+    plot_params = PlotParams2D()
+    plot_params.update({"ticks": False, "title": False, "frame": False})
+
+    image = strain_rendering._plot_component(
+        axis,
+        {"v_x": np.array((0.0, 1.0)), "v_y": np.array((0.0, 1.0))},
+        {"Sxxr": np.full((2, 2), 2e6)},
+        StrainSelection.primary(StrainComponent.XX),
+        plot_params,
+    )
+    colorbar = strain_rendering._add_colorbar(figure, axis, image)
+    strain_rendering._add_mode_label(figure, 7)
+    figure.canvas.draw()
+
+    np.testing.assert_allclose(image.get_array(), np.full((2, 2), 2.0))
+    assert colorbar.ax.get_ylabel() == ""
+    assert colorbar.ax.get_position().height == pytest.approx(
+        0.8 * axis.get_position().height
+    )
+    assert [(text.get_position(), text.get_text()) for text in figure.texts] == [
+        ((0.01, 0.99), "Mode 7\nStrain [$\\mathrm{M}\\epsilon$]")
+    ]
+
+
 def test_fast_native_interpolator_matches_reference_sampler_away_from_interface():
     samples = _interface_strain_samples()
     points = np.array(((0.1, 0.1), (0.9, 0.9), (2.0, 2.0)))
@@ -383,14 +417,21 @@ def test_mode_ac_strain_plot_samples_native_values_and_routes_components(monkeyp
     assert captured["plot_params"]["trim"] == (0.1, 0.2, 0.3, 0.4)
 
 
-def test_ac_simresult_strain_plot_routes_shared_plot_parameters():
+def test_ac_simresult_strain_plot_routes_shared_plot_parameters(monkeypatch):
     calls = []
+    progress_calls = []
 
     class Mode:
         def plot_strain(self, **kwargs):
             calls.append(kwargs)
 
     sim_result = SimpleNamespace(n_modes=2, get_mode=lambda _: Mode())
+    monkeypatch.setattr(
+        "numbat.solvers.simresult.progressBar",
+        lambda values, **kwargs: (
+            progress_calls.append((tuple(values), kwargs)) or values
+        ),
+    )
 
     ACSimResult.plot_strain_modes(
         sim_result,
@@ -410,6 +451,22 @@ def test_ac_simresult_strain_plot_routes_shared_plot_parameters():
     assert calls[0]["plot_params"]["suffix"] == "test"
     assert calls[0]["plot_params"]["trim"] == (0.1, 0.2, 0.3, 0.4)
     assert not calls[0]["plot_params"]["colorbar"]
+    assert progress_calls == [((1,), {"prefix": "  Progress:", "length": 20})]
+
+
+def test_ac_simresult_strain_plot_accepts_all_mode_convenience_request():
+    calls = []
+
+    class Mode:
+        def plot_strain(self, **kwargs):
+            calls.append(kwargs)
+
+    sim_result = SimpleNamespace(n_modes=2, get_mode=lambda _: Mode())
+
+    ACSimResult.plot_strain_modes(sim_result, mode_indices="All", n_points=29)
+
+    assert len(calls) == 2
+    assert all(call["n_pts"] == 29 for call in calls)
 
 
 def test_strain_2d_export_writes_all_physical_parts(monkeypatch, tmp_path):
@@ -538,9 +595,59 @@ def test_mode_ac_strain_1d_plot_routes_native_cut_fields(monkeypatch):
     assert captured["cut"] == "y"
 
 
-def test_ac_simresult_strain_1d_facades_route_selected_modes():
+def test_strain_1d_renderer_uses_megastrain_scale(monkeypatch):
+    class Axis:
+        def __init__(self):
+            self.curves = []
+
+        def plot(self, x_values, y_values, **kwargs):
+            self.curves.append((x_values, y_values, kwargs))
+
+        def set_xlabel(self, label):
+            self.x_label = label
+
+        def set_ylabel(self, label):
+            self.y_label = label
+
+        def legend(self):
+            self.has_legend = True
+
+    axis = Axis()
+    monkeypatch.setattr(
+        strain_rendering.plt,
+        "subplots",
+        lambda: (object(), axis),
+    )
+    monkeypatch.setattr(
+        strain_rendering,
+        "_strain_cut_filename",
+        lambda *args: "strain-cut.png",
+    )
+    monkeypatch.setattr(
+        strain_rendering.plottools,
+        "save_and_close_figure",
+        lambda *args: None,
+    )
+
+    strain_rendering.render_strain_1d(
+        x_axis=np.array((0.0, 1.0)),
+        fields={"Sxxr": np.array((1e6, 2e6))},
+        components=(StrainComponent.XX,),
+        x_label="$x$ (μm)",
+        cut="y",
+        mode_index=0,
+        plot_params={"prefix": "", "suffix": ""},
+    )
+
+    np.testing.assert_allclose(axis.curves[0][1], (1.0, 2.0))
+    assert axis.y_label == r"Strain [$\mathrm{M}\epsilon$]"
+    assert axis.has_legend
+
+
+def test_ac_simresult_strain_1d_facades_route_selected_modes(monkeypatch):
     plot_calls = []
     write_calls = []
+    progress_calls = []
 
     class Mode:
         def plot_strain_1D(self, *args, **kwargs):
@@ -550,6 +657,12 @@ def test_ac_simresult_strain_1d_facades_route_selected_modes():
             write_calls.append((args, kwargs))
 
     sim_result = SimpleNamespace(n_modes=2, get_mode=lambda _: Mode())
+    monkeypatch.setattr(
+        "numbat.solvers.simresult.progressBar",
+        lambda values, **kwargs: (
+            progress_calls.append((tuple(values), kwargs)) or values
+        ),
+    )
 
     ACSimResult.plot_strain_modes_1D(
         sim_result,
@@ -577,6 +690,7 @@ def test_ac_simresult_strain_1d_facades_route_selected_modes():
     assert plot_calls[0][1]["n_pts"] == 29
     assert plot_calls[0][1]["plot_params"]["prefix"] == "strain-"
     assert plot_calls[0][1]["plot_params"]["suffix"] == "test"
+    assert progress_calls == [((1,), {"prefix": "  Progress:", "length": 20})]
     assert write_calls == [
         (("x", 0.25, None), {"n_pts": 31, "prefix": "strain-"})
     ]

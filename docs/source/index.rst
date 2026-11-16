@@ -27,6 +27,8 @@ Release date: |today|
 
    tutorial
 
+   strain
+
    waveguides
 
    bulk_crystal_modes

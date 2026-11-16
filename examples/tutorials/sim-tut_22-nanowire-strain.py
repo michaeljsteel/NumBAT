@@ -83,10 +83,19 @@ v_nu=simres_AC.nu_AC_all()
 print('\n Freq of AC modes (GHz):')
 for (i, nu) in enumerate(v_nu): print(f'{i:3d}  {np.real(nu)*1e-9:.5f}')
 
-md = simres_AC.get_mode(0)
-md.plot_strain_1D("x", 0)
-md.plot_strain_1D("y", 0)
 
-md.write_strain()
+#md = simres_AC.get_mode(0)
+#md.plot_strain_1D("x", 0)
+#md.plot_strain_1D("y", 0)
+#md.plot_strain()
+#md.write_strain()
+
+print('Plotting strain fields...')
+
+#simres_AC.plot_strain_modes_1D("x", 0)
+#simres_AC.plot_strain_modes_1D("y", 0)
+simres_AC.plot_strain_modes()
+
+
 
 print(nbapp.final_report())

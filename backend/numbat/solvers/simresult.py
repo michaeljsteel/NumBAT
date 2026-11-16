@@ -675,7 +675,8 @@ class ACSimResult(SimResult):
         """Plot native-FEM acoustic strain for selected acoustic modes.
 
         `trim=(left, bottom, right, top)` trims the displayed plot bounds by
-        fractional amounts.
+        fractional amounts. Omit ``mode_indices`` or pass ``"All"`` to plot
+        every acoustic mode; otherwise pass an iterable of mode indices.
         """
         plot_params = plotmodes.PlotParams2D()
         plot_params.update({
@@ -688,8 +689,15 @@ class ACSimResult(SimResult):
             "colorbar": colorbar,
             "decorator": decorator,
         })
-        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
-        for mode_index in mode_range:
+        mode_range = (
+            range(self.n_modes)
+            if mode_indices is None
+            or (isinstance(mode_indices, str) and mode_indices == "All")
+            else mode_indices
+        )
+        for mode_index in progressBar(
+            mode_range, prefix="  Progress:", length=20
+        ):
             self.get_mode(mode_index).plot_strain(
                 comps=comps, n_pts=n_points, plot_params=plot_params
             )
@@ -713,11 +721,22 @@ class ACSimResult(SimResult):
         prefix="",
         suffix="",
     ):
-        """Plot 1D native strain cuts for selected acoustic modes."""
+        """Plot 1D native strain cuts for selected acoustic modes.
+
+        Omit ``mode_indices`` or pass ``"All"`` to plot every acoustic mode;
+        otherwise pass an iterable of mode indices.
+        """
         plot_params = plotmodes.PlotParams1D()
         plot_params.update({"prefix": prefix, "suffix": suffix})
-        mode_range = range(self.n_modes) if mode_indices is None else mode_indices
-        for mode_index in mode_range:
+        mode_range = (
+            range(self.n_modes)
+            if mode_indices is None
+            or (isinstance(mode_indices, str) and mode_indices == "All")
+            else mode_indices
+        )
+        for mode_index in progressBar(
+            mode_range, prefix="  Progress:", length=20
+        ):
             self.get_mode(mode_index).plot_strain_1D(
                 s_cut,
                 val1,

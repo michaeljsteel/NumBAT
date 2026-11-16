@@ -529,13 +529,6 @@ class Mode:
             comps, self.sim_result.fem_mesh, fem_evecs, self.mode_num
         )
 
-    def plot_strain(self):
-        if not self.sim_result.is_AC():
-            print("Doing strain in an EM sim.!")
-        print('doing strain')
-        self.mode_interpolator.plot_strain_mode_i(self.mode_num)
-
-
 class ModeEM(Mode):
     '''Class representing a single electromagnetic (EM) mode.'''
 
@@ -554,7 +547,11 @@ class ModeEM(Mode):
 
 
 class ModeAC(Mode):
-    '''Class representing a single acoustic (AC) mode.'''
+    """Class representing a single acoustic (AC) mode.
+
+    Native-FEM strain plotting and export are available only on acoustic
+    modes through the ``plot_strain*`` and ``write_strain*`` methods.
+    """
 
     def __init__(self, sim, m):
         super().__init__(sim, m)
@@ -579,7 +576,9 @@ class ModeAC(Mode):
         """Plot native-FEM acoustic strain on the standard 2D sampling grid.
 
         `trim=(left, bottom, right, top)` trims the displayed plot bounds by
-        fractional amounts.
+        fractional amounts. With no ``comps``, writes the six-component
+        display-primary overview; use a string such as ``"xx,yz"`` for
+        selected individual component figures.
         """
         if plot_params is None:
             plot_params = plotmodes.PlotParams2D()
@@ -613,7 +612,11 @@ class ModeAC(Mode):
     def plot_strain_1D(
         self, s_cut, val1, val2=None, comps=(), n_pts=501, prefix="", plot_params=None
     ):
-        """Plot display-primary strain components along an acoustic mode cut."""
+        """Plot display-primary strain components along an acoustic mode cut.
+
+        ``s_cut`` accepts ``"x"``, ``"y"``, or ``"line"`` with the same
+        coordinate conventions as ``plot_mode_1D``.
+        """
         if plot_params is None:
             plot_params = plotmodes.PlotParams1D()
         if prefix:
