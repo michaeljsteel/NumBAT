@@ -23,7 +23,7 @@ from numbat.nbtypes import SI_um
 from numbat.plotting import tools as plottools
 
 
-def do_raw_fem_mode_plot(l_comps, mode_interpolator, fem_mesh, fem_evecs, mode_num):
+def do_raw_fem_mode_plot(l_comps, fem_mesh, fem_evecs, mode_num):
 
     prefix = 'ttraw'
 

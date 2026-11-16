@@ -34,6 +34,7 @@ from numbat.plotting.mode_rendering import (
     normalize_plot_components,
     render_mode_1d,
     render_mode_2d,
+    selections_for_1d_plot,
     split_plot_components,
 )
 from numbat.plotting.modes import (
@@ -46,11 +47,8 @@ from numbat.plotting.modes import (
     tex_label,
 )
 from numbat.solvers.mode_sampling import ModeInterpolator as SamplingModeInterpolator
-from numbat.solvers.modes import (
-    ModeInterpolator,
-    check_allowed_plot_components,
-    selections_for_1d_plot,
-)
+from numbat.solvers.modes import Mode as BaseMode
+from numbat.solvers.modes import ModeInterpolator
 from numbat.solvers.simresult import SimResult
 
 
@@ -72,7 +70,7 @@ def test_field_tag_legacy_construction_warns_and_remains_functional():
 
 @pytest.mark.parametrize("component", ("x", "y", "z", "t", "a"))
 def test_legacy_plot_component_inputs_remain_supported(component):
-    assert check_allowed_plot_components((component,)) == (
+    assert normalize_plot_components((component,)) == (
         FieldComponent.parse(component),
     )
     assert FieldTag.make_from_field_and_component(FieldType.EM_E, component)
@@ -534,6 +532,28 @@ def test_mode_sampler_reuses_the_cached_2d_interpolation_grid():
     assert len(fem_mesh.interpolator_calls) == 1
     _, _, nx, ny = fem_mesh.interpolator_calls[0]
     assert (nx, ny) == (14, 7)
+
+
+def test_raw_fem_plotting_does_not_pass_an_unused_mode_sampler(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "numbat.plotting.raw_modes.do_raw_fem_mode_plot",
+        lambda *args: calls.append(args),
+    )
+    fem_mesh = object()
+    fem_eigenvectors = object()
+    mode = SimpleNamespace(
+        sim_result=SimpleNamespace(
+            fem_evecs_for_ft=lambda field_type: fem_eigenvectors,
+            fem_mesh=fem_mesh,
+        ),
+        field_type=FieldType.EM_E,
+        mode_num=2,
+    )
+
+    BaseMode.plot_mode_raw_fem(mode, ("x", "y"))
+
+    assert calls == [(("x", "y"), fem_mesh, fem_eigenvectors, 2)]
 
 
 def test_2d_field_export_preserves_component_filenames_and_headers(

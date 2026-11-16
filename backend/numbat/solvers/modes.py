@@ -42,30 +42,8 @@ from numbat.utils.numeric import int2D_trapz
 from .. import reporting
 
 
-def normalize_plot_components(comps):
-    """Compatibility wrapper for the rendering component normalizer."""
-    return mode_rendering.normalize_plot_components(comps)
-
-
-def split_plot_components(comps):
-    """Compatibility wrapper for the 2D rendering request splitter."""
-    return mode_rendering.split_plot_components(comps)
-
-
-def check_allowed_plot_components(comps):
-    """Compatibility wrapper for `normalize_plot_components`."""
-    return normalize_plot_components(comps)
-
-
 def _field_storage_key(field_type, component, complex_part=None):
     return storage_key(FieldSelection(field_type, component, complex_part))
-
-
-def selections_for_1d_plot(ft, comps, include_secondary):
-    """Compatibility wrapper for the 1D rendering selection builder."""
-    return mode_rendering.selections_for_1d_plot(
-        ft, comps, include_secondary=include_secondary
-    )
 
 
 class Mode:
@@ -96,16 +74,15 @@ class Mode:
 
         self.mode_interpolator = self.sim_result.get_mode_interpolator()
 
-        self.clear_mode_plot_data()
+        self.clear_interpolation_data()
 
-    def clear_mode_plot_data(self):
-        for k in self.d_fields_2D.keys():
+    def clear_interpolation_data(self):
+        for k in self.d_fields_2D:
             self.d_fields_2D[k] = None
         self.interpolated_2D = {FieldType.EM_E: False,
                              FieldType.EM_H: False, FieldType.AC: False}
 
-    def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='',
-                  plot_params=plotmodes.PlotParams2D()):
+    def plot_mode(self, comps=(), field_type=FieldType.EM_E, ax=None, n_pts=501, decorator=None, prefix='', plot_params=None):
         """Plot selected components using a compact string or `FieldComponent` values.
 
         With no components, write the combined field overview. Use a compact
@@ -118,6 +95,9 @@ class Mode:
         """
 
         include_overview, comps = mode_rendering.split_plot_components(comps)
+
+        if plot_params is None:
+            plot_params = plotmodes.PlotParams2D()
 
         if prefix: plot_params['prefix'] = prefix
         if decorator is not None: plot_params['decorator'] = decorator
@@ -146,8 +126,7 @@ class Mode:
 
 
 
-    def plot_mode_1D(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501, prefix='',
-        plot_params=plotmodes.PlotParams2D()):
+    def plot_mode_1D(self, s_cut, val1, val2=None, comps=(), field_type=FieldType.EM_E, n_pts=501, prefix='', plot_params=None):
 
         """Make a 1D plot of the field components of this mode along a line.
 
@@ -165,6 +144,9 @@ class Mode:
 
         For s_cut='line', the function is plotted along a straight line from val1 to val2, where the latter are float tuples (x0,y0) and (x1,y1).
         """
+
+        if plot_params is None:
+            plot_params = plotmodes.PlotParams2D()
 
         comps = mode_rendering.components_for_1d_plot(comps)
 
@@ -530,8 +512,9 @@ class Mode:
 
         simres = self.sim_result
         fem_evecs = simres.fem_evecs_for_ft(self.field_type)
-        plotmoderaw.do_raw_fem_mode_plot(comps, self.mode_interpolator,
-                                         self.sim_result.fem_mesh, fem_evecs, self.mode_num)
+        plotmoderaw.do_raw_fem_mode_plot(
+            comps, self.sim_result.fem_mesh, fem_evecs, self.mode_num
+        )
 
     def plot_strain(self):
         if not self.sim_result.is_AC():
