@@ -96,6 +96,20 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.6.3
+-------------
+
+Acoustic strain post-processing is now supported from native quadratic FEM
+displacement data. ``ACSimResult.plot_strain_modes`` produces six-component
+2D strain plots in megastrain (``Mε``), while
+``plot_strain_modes_1D`` supports ``x``, ``y``, and arbitrary line cuts.
+Matching 2D and 1D text exports are available through
+``write_strain_modes`` and ``write_strain_modes_1D``. Interface samples retain
+a deterministic one-sided native value rather than averaging across
+materials. See :doc:`strain` for usage and file schemas.
+
+See tutorial 22 in ``examples/tutorials/`` for a demonstration of the new strain plotting and export capabilities.
+
 Version 2.6.2
 -------------
 
