@@ -9,16 +9,23 @@
 # GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+"""Mode-domain state, analysis, and public compatibility façades.
+
+Field sampling, rendering, and field-file serialization are delegated to
+dedicated solver, plotting, and I/O modules. The compatibility helper imports
+in this module preserve established public `Mode` and `ModeInterpolator`
+entry points.
+"""
 from math import sqrt
 
 import numpy as np
 
 from numbat.field_selection import (
     complex_storage_keys,
-    field_symbol,
     resolve_field_type,
     storage_key,
 )
+from numbat.io import mode_fields
 from numbat.mesh import fem as femmesh
 from numbat.nbtypes import (
     ComplexPart,
@@ -32,7 +39,7 @@ from numbat.plotting import raw_modes as plotmoderaw
 from numbat.solvers.mode_sampling import ModeInterpolator
 from numbat.utils.numeric import int2D_trapz
 
-from .. import reporting, runtime
+from .. import reporting
 
 
 def normalize_plot_components(comps):
@@ -62,7 +69,11 @@ def selections_for_1d_plot(ft, comps, include_secondary):
 
 
 class Mode:
-    '''This is a base class for both EM and AC modes.'''
+    """Base domain object for electromagnetic and acoustic modes.
+
+    It owns mode state and analysis while delegating sampled field production,
+    rendering, and text export to dedicated modules.
+    """
 
     def __init__(self, simres, m):
         self.sim_result = simres
@@ -466,26 +477,13 @@ class Mode:
         ft = resolve_field_type(field_type, simulation_is_acoustic=self.is_AC())
 
         self._interpolate_mode_2D(n_points, ft)
-
-        md_interp = self.mode_interpolator
-
-        # TODO sort out wanting H fields on a singl direct call to this fnc
-
-        v_x = md_interp.xy_out['v_x']
-        v_y = md_interp.xy_out['v_y']
-        s_xy= f'vx: [{v_x[0]:.6f},{v_x[-1]:.6f}: {len(v_x)}], ' + f'vy: [{v_y[0]:.6f},{v_y[-1]:.6f}: {len(v_y)}]'
-
-        ccs = ('x', 'y', 'z')
-        for cc in ccs:
-            selection = FieldSelection.primary(ft, FieldComponent.parse(cc))
-            ftlab = plotmodes.field_type_label(ft)
-            pref=str(runtime.outdir_fields_path(prefix))
-
-            component_label = f"{field_symbol(ft)}{selection.component.value}"
-            longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{component_label}'
-
-            _write_one_component_to_file(self.mode_num,
-                                         longpref, selection, s_xy, self.d_fields_2D)
+        mode_fields.write_mode_fields_2d(
+            prefix=prefix,
+            field_type=ft,
+            mode_index=self.mode_num,
+            coordinates=self.mode_interpolator.xy_out,
+            fields=self.d_fields_2D,
+        )
 
     def write_mode_1D(self, s_cut, val1, val2=None, n_points=501,
                       prefix='', field_type=FieldType.EM_E):
@@ -494,35 +492,14 @@ class Mode:
             field_type, simulation_is_acoustic=self.is_AC()
         )
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
-
-        pref=str(runtime.outdir_fields_path(prefix))
-        ftlab = plotmodes.field_type_label(field_type)
-
-        longpref=f'{pref}/{ftlab}_mode_{self.mode_num:02d}_{s_cut}cut'
-        fname = longpref+'.txt'
-
-        v_genx = self.mode_interpolator.v_x_axis
-        nr = len(v_genx)
-        selections = (
-            FieldSelection.primary(field_type, FieldComponent.X),
-            FieldSelection.secondary(field_type, FieldComponent.X),
-            FieldSelection.primary(field_type, FieldComponent.Y),
-            FieldSelection.secondary(field_type, FieldComponent.Y),
-            FieldSelection.secondary(field_type, FieldComponent.Z),
-            FieldSelection.primary(field_type, FieldComponent.Z),
-            FieldSelection.magnitude(field_type),
+        mode_fields.write_mode_fields_1d(
+            prefix=prefix,
+            field_type=field_type,
+            mode_index=self.mode_num,
+            cut=s_cut,
+            x_axis=self.mode_interpolator.v_x_axis,
+            fields=self.d_fields_1D,
         )
-        field_keys = [storage_key(selection) for selection in selections]
-        nc = len(field_keys) + 1
-
-        flds = np.zeros([nr,nc], dtype=np.float64)
-        header = 'x ' + ' '.join(field_keys)
-
-        flds[:,0] = v_genx
-        for index, key in enumerate(field_keys, start=1):
-            flds[:,index] = self.d_fields_1D[key]
-
-        np.savetxt(fname, flds, header=header, fmt='%16.8f')
 
     def get_mode_1D(self, s_cut, val1, val2=None, n_points=501, field_type=FieldType.EM_E):
 
@@ -531,7 +508,6 @@ class Mode:
         )
         self._interpolate_mode_1D(s_cut, val1, val2, n_points, field_type)
 
-        #pref=str(numbat.NumBATApp().outdir_fields_path(prefix))
         v_genx = self.mode_interpolator.v_x_axis
         nr = len(v_genx)
         nc = 4 # vFx, Fy, Fz, Fa
@@ -546,7 +522,6 @@ class Mode:
             flds[:,index] = self.d_fields_1D[real_key] + 1j * self.d_fields_1D[imaginary_key]
         flds[:,3] = self.d_fields_1D[_field_storage_key(field_type, FieldComponent.MAGNITUDE)]
 
-        #np.savetxt(fname, flds, header=header, fmt='%16.8f')
         return v_genx, flds
 
 
@@ -601,27 +576,3 @@ class ModeAC(Mode):
     def __repr__(self):
         s = f'ModeAC(simres, mode_num={self.mode_num})'
         return s
-
-
-def _write_one_component_to_file(md_index, longpref, selection, s_xy, d_fields):
-
-    fc = storage_key(selection)
-
-    if selection.is_derived:
-        fname = longpref+'.txt'
-        fld = d_fields[fc]
-        header=f'Mode {md_index:02d}, {fc}, '  + s_xy
-        np.savetxt(fname, fld,header=header)
-
-    else:
-        fname = longpref+'_re.txt'
-        tagmaj, tagmin = complex_storage_keys(selection.field_type, selection.component)
-
-        fld = d_fields[tagmaj]  # eg 'Fxr'
-        header=f'Mode {md_index:02d}, {fc}_re, ' + s_xy
-        np.savetxt(fname, fld,header=header)
-
-        fname = longpref+'_im.txt'
-        fld = d_fields[tagmin]  # eg 'Fxr'
-        header=f'Mode {md_index:02d}, {fc}_im, ' + s_xy
-        np.savetxt(fname, fld,header=header)

@@ -1,4 +1,7 @@
-"""Sampling and interpolation of solver mode fields."""
+"""Sampling and interpolation of solver mode fields.
+
+This solver-only module does not construct figures or serialize output files.
+"""
 
 import numpy as np
 

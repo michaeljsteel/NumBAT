@@ -274,18 +274,59 @@ Provide a compatibility import or alias if external users can import
 
 ### Phase 5: Extract Field Export
 
+**Status: Complete**
+
 Move `_write_one_component_to_file`, `write_mode`, and `write_mode_1D`
 serialization work into `io/mode_fields.py`.
 
-Decide and document the exported derived-field schema, including whether
-`Fi` is emitted for 1D and/or 2D exports.
+The existing export schema is intentionally preserved:
+
+- 2D export writes real and imaginary Cartesian components;
+- 1D export writes Cartesian components and `Fa`;
+- `Fi` remains available for sampled data and plotting, but is not emitted
+  until a deliberate, documented export-schema revision.
 
 ### Phase 6: Clean Up and Document
 
-- remove now-unused solver-to-plotting imports;
-- update module and class docstrings;
-- document architectural boundaries for contributors;
-- deprecate compatibility aliases only in a future release, if warranted.
+**Status: Complete**
+
+- Remove unused solver-to-plotting imports. The remaining rendering and raw-FEM
+  plotting imports in `solvers/modes.py` are required by public compatibility
+  wrappers and remain intentional.
+- Update module and class docstrings to describe the façade boundaries.
+- Document architectural boundaries in the module docstrings and this plan for
+  contributors.
+- Retain compatibility imports such as
+  `numbat.solvers.modes.ModeInterpolator` without warnings. Evaluate
+  deprecation only in a future release after downstream import usage is known.
+
+## Implemented Architecture
+
+The completed extraction has these boundaries:
+
+```text
+solvers/modes.py
+    Mode domain state, analysis, public compatibility façades
+    -> solvers/mode_sampling.py
+    -> plotting/mode_rendering.py
+    -> io/mode_fields.py
+
+solvers/mode_sampling.py
+    FEM grid creation, interpolation, unit scaling, sampled field dictionaries
+
+plotting/mode_rendering.py
+    Plot request policy and 1D/2D rendering orchestration
+
+plotting/modes.py
+    Existing low-level 2D contours, quivers, layouts, and presentation helpers
+
+io/mode_fields.py
+    Stable 1D and 2D text-export schemas
+```
+
+`solvers/modes.py` continues to import rendering and raw-FEM helpers only to
+preserve the established `Mode` public methods. It no longer creates figures,
+builds interpolation grids, or serializes text field files directly.
 
 ## Compatibility Requirements
 

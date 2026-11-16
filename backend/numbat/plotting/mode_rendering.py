@@ -1,4 +1,8 @@
-"""High-level rendering of sampled mode fields."""
+"""High-level rendering of sampled mode fields.
+
+This module owns plot-request policy and rendering orchestration but receives
+already-sampled field data from the solver layer.
+"""
 
 import matplotlib.pyplot as plt
 

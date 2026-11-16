@@ -18,6 +18,7 @@ from numbat.field_selection import (
     selection_from_storage_key,
     storage_key,
 )
+from numbat.io import mode_fields
 from numbat.nbtypes import (
     ComplexPart,
     FieldCode,
@@ -533,6 +534,77 @@ def test_mode_sampler_reuses_the_cached_2d_interpolation_grid():
     assert len(fem_mesh.interpolator_calls) == 1
     _, _, nx, ny = fem_mesh.interpolator_calls[0]
     assert (nx, ny) == (14, 7)
+
+
+def test_2d_field_export_preserves_component_filenames_and_headers(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        "numbat.io.mode_fields.runtime.outdir_fields_path",
+        lambda prefix: tmp_path,
+    )
+    fields = {
+        "Fxr": np.array([[1.0]]),
+        "Fxi": np.array([[2.0]]),
+        "Fyr": np.array([[3.0]]),
+        "Fyi": np.array([[4.0]]),
+        "Fzr": np.array([[5.0]]),
+        "Fzi": np.array([[6.0]]),
+    }
+
+    mode_fields.write_mode_fields_2d(
+        prefix="ignored",
+        field_type=FieldType.EM_E,
+        mode_index=2,
+        coordinates={"v_x": np.array([0.0, 1.0]), "v_y": np.array([0.0, 1.0])},
+        fields=fields,
+    )
+
+    expected_files = {
+        "EM_mode_02_Ex_re.txt",
+        "EM_mode_02_Ex_im.txt",
+        "EM_mode_02_Ey_re.txt",
+        "EM_mode_02_Ey_im.txt",
+        "EM_mode_02_Ez_re.txt",
+        "EM_mode_02_Ez_im.txt",
+    }
+    assert {path.name for path in tmp_path.iterdir()} == expected_files
+    assert "Mode 02, Fzi_re" in (tmp_path / "EM_mode_02_Ez_re.txt").read_text()
+    assert "Mode 02, Fzi_im" in (tmp_path / "EM_mode_02_Ez_im.txt").read_text()
+
+
+def test_1d_field_export_preserves_the_magnitude_only_derived_schema(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(
+        "numbat.io.mode_fields.runtime.outdir_fields_path",
+        lambda prefix: tmp_path,
+    )
+    fields = {
+        "Fxr": np.array([1.0, 2.0]),
+        "Fxi": np.array([3.0, 4.0]),
+        "Fyr": np.array([5.0, 6.0]),
+        "Fyi": np.array([7.0, 8.0]),
+        "Fzr": np.array([9.0, 10.0]),
+        "Fzi": np.array([11.0, 12.0]),
+        "Fa": np.array([13.0, 14.0]),
+        "Fi": np.array([169.0, 196.0]),
+    }
+
+    mode_fields.write_mode_fields_1d(
+        prefix="ignored",
+        field_type=FieldType.EM_E,
+        mode_index=2,
+        cut="x",
+        x_axis=np.array([0.0, 1.0]),
+        fields=fields,
+    )
+
+    output = tmp_path / "EM_mode_02_xcut.txt"
+    header = output.read_text().splitlines()[0]
+    assert header.endswith("Fxr Fxi Fyr Fyi Fzr Fzi Fa")
+    assert "Fi" not in header
+    assert np.loadtxt(output).shape == (2, 8)
 
 
 def test_interpolated_magnetic_intensity_uses_scaled_field_magnitude():
