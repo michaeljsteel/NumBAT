@@ -44,6 +44,7 @@ from numbat.plotting.modes import (
     line_style,
     tex_label,
 )
+from numbat.solvers.mode_sampling import ModeInterpolator as SamplingModeInterpolator
 from numbat.solvers.modes import (
     ModeInterpolator,
     check_allowed_plot_components,
@@ -501,6 +502,37 @@ def test_interpolated_z_fields_preserve_primary_imaginary_convention():
     assert fields["Fzi"].tolist() == [6.0]
     assert fields["Fzr"].tolist() == [5.0]
     assert fields["Fi"].tolist() == [49.0]
+
+
+def test_mode_interpolator_remains_import_compatible():
+    assert ModeInterpolator is SamplingModeInterpolator
+
+
+def test_mode_sampler_reuses_the_cached_2d_interpolation_grid():
+    class FemMesh:
+        def __init__(self):
+            self.interpolator_calls = []
+
+        def get_xy_limits(self):
+            return (0.0, 2.0, 0.0, 1.0)
+
+        def make_interpolator_for_grid(self, x_values, y_values, nx, ny):
+            self.interpolator_calls.append((x_values, y_values, nx, ny))
+            return lambda field: field
+
+    fem_mesh = FemMesh()
+    simulation_result = SimpleNamespace(
+        fem_mesh=fem_mesh,
+        get_xyshift=lambda: (0.0, 0.0),
+    )
+    sampler = SamplingModeInterpolator(simulation_result)
+
+    sampler.define_plot_grid_2D(n_pts=10)
+    sampler.define_plot_grid_2D(n_pts=10)
+
+    assert len(fem_mesh.interpolator_calls) == 1
+    _, _, nx, ny = fem_mesh.interpolator_calls[0]
+    assert (nx, ny) == (14, 7)
 
 
 def test_interpolated_magnetic_intensity_uses_scaled_field_magnitude():

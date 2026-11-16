@@ -256,6 +256,8 @@ semantics are owned by the renderer.
 
 ### Phase 4: Extract Field Sampling
 
+**Status: Complete**
+
 Move `ModeInterpolator` to `solvers/mode_sampling.py`.
 
 Preserve:
