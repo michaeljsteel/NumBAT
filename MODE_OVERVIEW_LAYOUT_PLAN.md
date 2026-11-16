@@ -53,7 +53,9 @@ For overviews that suppress secondary components:
    spans, including configured plot trimming.
 2. Estimate each current template's field-cell aspect ratio from the figure
    dimensions and grid shape.
-3. Select the template whose aspect is closest on a logarithmic ratio scale.
+3. Use the wide template only when the displayed waveguide aspect ratio is
+   greater than 2, then select the closest template on a logarithmic ratio
+   scale.
 4. Keep the existing figure sizes and panel contents unchanged.
 
 The nine-panel automatic layout remains the current tall arrangement. Explicit
@@ -61,9 +63,27 @@ The nine-panel automatic layout remains the current tall arrangement. Explicit
 
 ## Phase 2: Bounded Adaptive Figure Dimensions
 
-After observing Phase 1 outputs, optionally adjust the figure width/height
-ratio while preserving a bounded total figure area. This should improve
-extreme waveguide aspect ratios without generating unreasonably large files.
+**Status: Complete**
+
+Adjust the figure width/height ratio while preserving the original template
+area. The calculated ratio is capped at 1.5 times or two-thirds of the
+template ratio, preventing extreme waveguides from generating unreasonably
+wide or tall files.
+
+The calculation reserves a configurable ``colorbar_allowance`` for each
+overview column in addition to the existing subplot spacing. The default is
+``0.15`` field-panel widths and is ignored when colourbars are disabled.
+
+Tall layouts with a displayed waveguide aspect ratio in the inclusive
+``0.8`` to ``1.25`` range reduce inter-panel and outer vertical whitespace
+to make the field panels 1.2 times larger without changing the overall figure
+size or calculated aspect ratio.
+
+## Mode-Data Placement
+
+The mode-data panel is offset northwest by 20% of its physical diagonal after
+the overview grid is created. The offset is bounded by the figure canvas so
+the panel remains visible.
 
 ## Phase 3: Named Nine-Panel Mosaics
 

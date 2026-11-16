@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from matplotlib.figure import Figure
 
 pytestmark = pytest.mark.filterwarnings("ignore:FieldTag is deprecated")
 
@@ -40,13 +41,17 @@ from numbat.plotting.mode_rendering import (
 from numbat.plotting.modes import (
     PlotParams2D,
     add_contour_plot,
+    configure_overview_subplots,
     field_display_name,
     field_type_to_intensity_code,
     field_type_to_vector_code,
     line_color,
     line_style,
+    offset_mode_data_panel,
+    overview_figure_size,
     select_overview_layout,
     tex_label,
+    write_mode_data,
 )
 from numbat.solvers.mode_sampling import ModeInterpolator as SamplingModeInterpolator
 from numbat.solvers.modes import Mode as BaseMode
@@ -142,13 +147,13 @@ def test_auto_overview_layout_matches_six_panel_cell_aspect_to_waveguide():
 
     assert (
         select_overview_layout(
-            FieldType.EM_E, wide_waveguide, params, hide_minors=True
+            FieldType.EM_E, wide_waveguide, params, hide_secondary_comps=True
         )
         == "wide"
     )
     assert (
         select_overview_layout(
-            FieldType.EM_E, tall_waveguide, params, hide_minors=True
+            FieldType.EM_E, tall_waveguide, params, hide_secondary_comps=True
         )
         == "tall"
     )
@@ -159,14 +164,195 @@ def test_overview_layout_honors_legacy_and_explicit_overrides():
     d_xy = {"v_x": np.array([0.0, 5.0]), "v_y": np.array([0.0, 1.0])}
 
     params["overview_layout"] = "tall"
-    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=True) == "tall"
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, d_xy, params, hide_secondary_comps=True
+        )
+        == "tall"
+    )
 
     params["wide_mode"] = True
-    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=True) == "wide"
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, d_xy, params, hide_secondary_comps=True
+        )
+        == "wide"
+    )
 
     params["wide_mode"] = None
     params["overview_layout"] = "auto"
-    assert select_overview_layout(FieldType.EM_E, d_xy, params, hide_minors=False) == "tall"
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, d_xy, params, hide_secondary_comps=False
+        )
+        == "tall"
+    )
+
+
+def test_auto_overview_layout_requires_a_waveguide_aspect_above_two_for_wide():
+    params = PlotParams2D()
+    square_to_wide = {
+        "v_x": np.array([0.0, 2.0]),
+        "v_y": np.array([0.0, 1.0]),
+    }
+    clearly_wide = {
+        "v_x": np.array([0.0, 2.1]),
+        "v_y": np.array([0.0, 1.0]),
+    }
+
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, square_to_wide, params, hide_secondary_comps=True
+        )
+        == "tall"
+    )
+    assert (
+        select_overview_layout(
+            FieldType.EM_E, clearly_wide, params, hide_secondary_comps=True
+        )
+        == "wide"
+    )
+
+
+def test_overview_figure_size_reserves_colorbar_space_with_bounded_area():
+    params = PlotParams2D()
+    d_xy = {"v_x": np.array([0.0, 0.6]), "v_y": np.array([0.0, 1.0])}
+
+    with_colorbar = overview_figure_size(
+        FieldType.EM_E, d_xy, params, hide_secondary_comps=True, layout="tall"
+    )
+    params["colorbar"] = False
+    without_colorbar = overview_figure_size(
+        FieldType.EM_E, d_xy, params, hide_secondary_comps=True, layout="tall"
+    )
+
+    base_width, base_height = params["decorator"]["figsize"]
+    assert with_colorbar[0] > without_colorbar[0]
+    assert with_colorbar[0] * with_colorbar[1] == pytest.approx(
+        base_width * base_height
+    )
+    assert with_colorbar[0] / with_colorbar[1] <= (base_width / base_height) * 1.5
+
+
+def test_overview_figure_size_rejects_negative_colorbar_allowance():
+    params = PlotParams2D()
+    params["colorbar_allowance"] = -0.1
+    d_xy = {"v_x": np.array([0.0, 1.0]), "v_y": np.array([0.0, 1.0])}
+
+    with pytest.raises(ValueError, match="colorbar_allowance"):
+        overview_figure_size(
+            FieldType.EM_E, d_xy, params, hide_secondary_comps=True, layout="tall"
+        )
+
+
+def test_tall_square_overviews_keep_the_original_figure_area():
+    params = PlotParams2D()
+    square_waveguide = {"v_x": np.array([0.0, 1.25]), "v_y": np.array([0.0, 1.0])}
+
+    square_size = overview_figure_size(
+        FieldType.EM_E,
+        square_waveguide,
+        params,
+        hide_secondary_comps=True,
+        layout="tall",
+    )
+
+    base_width, base_height = params["decorator"]["figsize"]
+    assert square_size[0] * square_size[1] == pytest.approx(base_width * base_height)
+
+
+def test_tall_square_overviews_enlarge_panels_by_reducing_whitespace():
+    fig = Figure(figsize=(10, 8))
+    fig.subplots(2, 3)
+    original = fig.subplotpars
+    original_axes_height = (original.top - original.bottom) / (2 + 0.2)
+
+    configure_overview_subplots(
+        fig, "tall", waveguide_aspect=1.0, rows=2, columns=3,
+        hspace=0.2, wspace=1.2,
+    )
+
+    adjusted = fig.subplotpars
+    adjusted_axes_height = (adjusted.top - adjusted.bottom) / (2 + adjusted.hspace)
+    assert adjusted.wspace == pytest.approx(0.75)
+    assert adjusted_axes_height == pytest.approx(original_axes_height * 1.2)
+
+
+def test_mode_data_panel_is_offset_northwest_by_its_physical_diagonal():
+    fig = Figure(figsize=(10, 8))
+    ax = fig.add_subplot()
+    ax.set_position((0.3, 0.3, 0.3, 0.3))
+    original = ax.get_position()
+    offset_mode_data_panel(fig, ax)
+    moved = ax.get_position()
+
+    panel_diagonal = np.hypot(original.width * 10, original.height * 8)
+    diagonal_component = 0.2 * panel_diagonal / np.sqrt(2)
+
+    assert moved.x0 == pytest.approx(original.x0 - diagonal_component / 10)
+    assert moved.y0 == pytest.approx(original.y0 + diagonal_component / 8)
+    assert moved.width == pytest.approx(original.width)
+    assert moved.height == pytest.approx(original.height)
+
+
+def test_wide_mode_data_uses_a_single_sequential_column():
+    class Decorator:
+        def get_property(self, _):
+            return 10
+
+    class Mode:
+        def analyse_mode(self):
+            pass
+
+        def field_fracs(self):
+            return (0.1, 0.2, 0.3, 0.4)
+
+        def center_of_mass(self):
+            return (0.0, 0.0)
+
+        def second_moment_widths(self):
+            return (1.0, 1.0, 0.0)
+
+        def get_mode_data(self):
+            return {}
+
+    class SimResult:
+        omega_EM = 1.0
+
+        def get_all_modes(self):
+            return (Mode(),)
+
+        def is_EM(self):
+            return True
+
+        def kz_EM(self, _):
+            return 1.0
+
+        def neff(self, _):
+            return 1.0
+
+        def ngroup_EM_available(self):
+            return False
+
+        def symmetry_classification(self, _):
+            return ()
+
+    fig = Figure(figsize=(10, 8))
+    ax = fig.add_subplot()
+    write_mode_data(
+        ax,
+        {"decorator": Decorator()},
+        SimResult(),
+        mode_index=0,
+        field_type=FieldType.EM_E,
+        layout="wide",
+    )
+
+    text_positions = [text.get_position() for text in ax.texts]
+    assert all(x == pytest.approx(0.05) for x, _ in text_positions[1:])
+    assert [y for _, y in text_positions] == pytest.approx(
+        [0.91, 0.83, 0.75, 0.67, 0.59, 0.51, 0.43, 0.35]
+    )
 
 
 def test_2d_plot_component_selection_controls_overview_and_individual_outputs(

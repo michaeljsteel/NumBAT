@@ -227,6 +227,7 @@ class SimResult:
         decorator=None,
         overview_layout="auto",
         wide_mode=None,
+        colorbar_allowance=0.15,
         **kwargs
     ):
         """Plot E or H fields of EM mode, or the AC modes displacement fields.
@@ -272,6 +273,10 @@ class SimResult:
             wide_mode (bool or None): Legacy explicit override for the
                 combined overview. ``True`` selects wide, ``False`` selects
                 tall, and ``None`` uses ``overview_layout``.
+
+            colorbar_allowance (float): Horizontal colourbar spacing reserved
+                per overview column as a fraction of a field-panel width.
+                It is ignored when ``colorbar`` is false.
 
             stress_fields  (bool): Calculate acoustic stress fields
 

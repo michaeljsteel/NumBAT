@@ -276,6 +276,7 @@ class PlotParams2D(PlotParams):
                       'quiver_points': 30,
                       'overview_layout': 'auto',
                       'wide_mode': None,
+                      'colorbar_allowance': 0.15,
                       })
 
 class PlotParams1D(PlotParams):
@@ -654,20 +655,7 @@ def plot_contour_and_quiver(
 
 
 
-def select_overview_layout(field_type, d_xy, plps, hide_minors):
-    """Choose a combined-overview layout from explicit or automatic settings."""
-    wide_mode = plps.get("wide_mode", None)
-    if wide_mode is not None:
-        return "wide" if wide_mode else "tall"
-
-    layout = plps.get("overview_layout", "auto")
-    if layout not in ("auto", "tall", "wide"):
-        raise ValueError(
-            "overview_layout must be one of: 'auto', 'tall', or 'wide'."
-        )
-    if layout != "auto" or not hide_minors:
-        return "tall" if layout == "auto" else layout
-
+def _displayed_waveguide_aspect(field_type, d_xy, plps):
     v_x = d_xy["v_x"]
     v_y = d_xy["v_y"]
     default_trim = -0.1 if FieldType.parse(field_type) == FieldType.AC else -0.05
@@ -678,16 +666,153 @@ def select_overview_layout(field_type, d_xy, plps, hide_minors):
     waveguide_aspect = abs(
         (v_x[-1] - v_x[0]) * x_fraction / ((v_y[-1] - v_y[0]) * y_fraction)
     )
-    if waveguide_aspect <= 0:
+    return waveguide_aspect
+
+
+def _overview_grid_shape(layout, hide_secondary_comps):
+    if layout == "tall":
+        return (2 if hide_secondary_comps else 3), 3
+    return 3, (2 if hide_secondary_comps else 3)
+
+
+def _colorbar_allowance(plps):
+    if not plps["colorbar"]:
+        return 0.0
+
+    try:
+        allowance = float(plps.get("colorbar_allowance", 0.15))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("colorbar_allowance must be a non-negative number.") from exc
+    if allowance < 0:
+        raise ValueError("colorbar_allowance must be a non-negative number.")
+    return allowance
+
+
+def _overview_width_units(layout, hide_secondary_comps, plps):
+    _, columns = _overview_grid_shape(layout, hide_secondary_comps)
+    return (
+        columns
+        + (columns - 1) * plps["decorator"]["subplots_wspace"]
+        + columns * _colorbar_allowance(plps)
+    )
+
+
+def _overview_base_figsize(layout, plps):
+    figure_width, figure_height = plps["decorator"]["figsize"]
+    if layout == "wide":
+        figure_width *= 1.5
+    return figure_width, figure_height
+
+
+def _overview_cell_aspect(layout, hide_secondary_comps, plps):
+    figure_width, figure_height = _overview_base_figsize(layout, plps)
+    rows, _ = _overview_grid_shape(layout, hide_secondary_comps)
+    return figure_width * rows / (figure_height * _overview_width_units(
+        layout, hide_secondary_comps, plps
+    ))
+
+
+_SQUARE_TALL_ASPECT_RANGE = (0.8, 1.25)
+_SQUARE_TALL_PANEL_SCALE = 1.2
+
+
+def select_overview_layout(field_type, d_xy, plps, hide_secondary_comps):
+    """Choose a combined-overview layout from explicit or automatic settings."""
+    wide_mode = plps.get("wide_mode", None)
+    if wide_mode is not None:
+        return "wide" if wide_mode else "tall"
+
+    layout = plps.get("overview_layout", "auto")
+    if layout not in ("auto", "tall", "wide"):
+        raise ValueError(
+            "overview_layout must be one of: 'auto', 'tall', or 'wide'."
+        )
+    if layout != "auto" or not hide_secondary_comps:
+        return "tall" if layout == "auto" else layout
+
+    waveguide_aspect = _displayed_waveguide_aspect(field_type, d_xy, plps)
+    if waveguide_aspect <= 2:
         return "tall"
 
-    figure_width, figure_height = plps["decorator"]["figsize"]
-    tall_cell_aspect = figure_width * 2 / (figure_height * 3)
-    wide_cell_aspect = figure_width * 1.5 * 3 / (figure_height * 2)
-
-    tall_score = abs(np.log(tall_cell_aspect / waveguide_aspect))
-    wide_score = abs(np.log(wide_cell_aspect / waveguide_aspect))
+    tall_score = abs(
+        np.log(_overview_cell_aspect("tall", hide_secondary_comps, plps) / waveguide_aspect)
+    )
+    wide_score = abs(
+        np.log(_overview_cell_aspect("wide", hide_secondary_comps, plps) / waveguide_aspect)
+    )
     return "wide" if wide_score < tall_score else "tall"
+
+
+def overview_figure_size(field_type, d_xy, plps, hide_secondary_comps, layout):
+    """Return a bounded figure size that targets equal-aspect field panels."""
+    base_width, base_height = _overview_base_figsize(layout, plps)
+    waveguide_aspect = _displayed_waveguide_aspect(field_type, d_xy, plps)
+    if waveguide_aspect <= 0:
+        return base_width, base_height
+
+    base_aspect = base_width / base_height
+    rows, _ = _overview_grid_shape(layout, hide_secondary_comps)
+    target_aspect = waveguide_aspect * _overview_width_units(
+        layout, hide_secondary_comps, plps
+    ) / rows
+    bounded_aspect = np.clip(target_aspect, base_aspect / 1.5, base_aspect * 1.5)
+    figure_area = base_width * base_height
+    return (
+        np.sqrt(figure_area * bounded_aspect),
+        np.sqrt(figure_area / bounded_aspect),
+    )
+
+
+def configure_overview_subplots(
+        fig, layout, waveguide_aspect, rows, columns, hspace, wspace):
+    """Apply overview spacing while enlarging near-square tall field panels."""
+    adjustments = {"hspace": hspace, "wspace": wspace}
+    if (
+        layout == "tall"
+        and _SQUARE_TALL_ASPECT_RANGE[0]
+        <= waveguide_aspect
+        <= _SQUARE_TALL_ASPECT_RANGE[1]
+    ):
+        adjusted_wspace = (
+            (columns + (columns - 1) * wspace) / _SQUARE_TALL_PANEL_SCALE
+            - columns
+        ) / (columns - 1)
+        subplot_params = fig.subplotpars
+        current_axes_height = (
+            (subplot_params.top - subplot_params.bottom)
+            / (rows + (rows - 1) * hspace)
+        )
+        adjusted_hspace = 0.05
+        adjusted_height = current_axes_height * _SQUARE_TALL_PANEL_SCALE * (
+            rows + (rows - 1) * adjusted_hspace
+        )
+        vertical_centre = (subplot_params.top + subplot_params.bottom) / 2
+        adjustments.update({
+            "hspace": adjusted_hspace,
+            "wspace": adjusted_wspace,
+            "bottom": vertical_centre - adjusted_height / 2,
+            "top": vertical_centre + adjusted_height / 2,
+        })
+
+    fig.subplots_adjust(**adjustments)
+
+
+def offset_mode_data_panel(fig, ax, fraction=0.2):
+    """Move the mode-data panel northwest by a fraction of its physical diagonal."""
+    position = ax.get_position()
+    figure_width, figure_height = fig.get_size_inches()
+    panel_diagonal = np.hypot(
+        position.width * figure_width, position.height * figure_height
+    )
+    diagonal_component = fraction * panel_diagonal / np.sqrt(2)
+    shift_x = diagonal_component / figure_width
+    shift_y = diagonal_component / figure_height
+    ax.set_position((
+        max(0, position.x0 - shift_x),
+        min(1 - position.height, position.y0 + shift_y),
+        position.width,
+        position.height,
+    ))
 
 
 def write_mode_data(ax, plps, sim_result, mode_index, field_type, layout):
@@ -697,21 +822,14 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_type, layout):
 
     wide_mode = layout == "wide"
 
-    if wide_mode:
-        x0_1 = 0.05
-        x0_2 = 0.55
-        yhi = .85
-    else:
-        x0_1 = x0_2 = .05
-        yhi = .99
-
-    dy = .12
+    x0 = .05
+    yhi = .99
+    dy = .08 if wide_mode else .10
     y0 = yhi-dy
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, yhi)
-    asp = 0.25 if wide_mode else 1.0
-    ax.set_aspect(asp)
+    ax.set_aspect("auto")
     ax.axis('off')
 
     mode = sim_result.get_all_modes()[mode_index]
@@ -727,10 +845,10 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_type, layout):
     (wx, wy, w0) = mode.second_moment_widths() # In units of um
 
 
-    _write_line(x0_1-.05, y0, f'Mode properties: m={mode_index}', fs+2); y0 -= dy
+    _write_line(x0-.05, y0, f'Mode properties: m={mode_index}', fs+2); y0 -= dy
 
     lines=[]
-    lines2=[] # second column if needed
+    lines2=[]
 
     if sim_result.is_EM():
         lines.append( r'$\omega/(2\pi)$: ' + f'{sim_result.omega_EM/(twopi*SI_THz):.5f} THz')
@@ -808,35 +926,34 @@ def write_mode_data(ax, plps, sim_result, mode_index, field_type, layout):
 
     ty0 = y0
     for line in lines:
-        _write_line(x0_1, ty0, line)
+        _write_line(x0, ty0, line)
         ty0 -= dy
 
-    if wide_mode:
-        ty0 = y0
     for line in lines2:
-        _write_line(x0_2, ty0, line)
+        _write_line(x0, ty0, line)
         ty0 -= dy
 
 
 def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index):
     decorator = plps['decorator']
-    figsz = decorator['figsize']
     hs = decorator['subplots_hspace']
     ws = decorator['subplots_wspace']
 
     decorator.set_waveguide(sim_result._structure.wg_geom)
 
-    hide_minors = plps['suppress_imimre']
+    hide_secondary_comps = plps['suppress_imimre']
     mod_is_amp = plps['mod_is_amp']
 
-    layout = select_overview_layout(field_type, d_xy, plps, hide_minors)
+    layout = select_overview_layout(field_type, d_xy, plps, hide_secondary_comps)
     tall_layout = layout == "tall"
+    figsz = overview_figure_size(field_type, d_xy, plps, hide_secondary_comps, layout)
+    waveguide_aspect = _displayed_waveguide_aspect(field_type, d_xy, plps)
 
     if tall_layout:
-        rows = 2 if hide_minors else 3
+        rows = 2 if hide_secondary_comps else 3
+        columns = 3
 
-        fig, axs = plt.subplots(rows, 3, figsize=figsz)
-        fig.subplots_adjust(hspace=hs, wspace=ws)
+        fig, axs = plt.subplots(rows, columns, figsize=figsz)
 
         ax_md_data = axs[0, 0]  # mode data summary
         ax_ut = axs[0, 1]  # the whole field
@@ -844,16 +961,20 @@ def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index)
         axs_comp = axs[1:, :].flatten()  # the components
 
     else:
-        cols = 2 if hide_minors else 3
+        rows = 3
+        columns = 2 if hide_secondary_comps else 3
 
-        fig, axs = plt.subplots(3, cols, figsize=(figsz[0]*1.5, figsz[1]))
-        fig.subplots_adjust(hspace=hs, wspace=ws)
+        fig, axs = plt.subplots(rows, columns, figsize=figsz)
 
         ax_md_data = axs[0, 0]  # mode data summary
         ax_ut = axs[1, 0]  # the whole field
         ax_uv = axs[2, 0]  # the intensity
         axs_comp = axs[:, 1:].flatten()  # the components
 
+    configure_overview_subplots(
+        fig, layout, waveguide_aspect, rows, columns, hs, ws
+    )
+    offset_mode_data_panel(fig, ax_md_data)
     write_mode_data(ax_md_data, plps, sim_result, mode_index, field_type, layout)
 
     ft = field_type
@@ -883,7 +1004,7 @@ def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index)
             continue
 
         # don't plot what will likely be pure zero fields
-        if hide_minors and field_sel.complex_part == ComplexPart.SECONDARY:
+        if hide_secondary_comps and field_sel.complex_part == ComplexPart.SECONDARY:
             continue
 
         ax = axs_comp[axi]; axi += 1

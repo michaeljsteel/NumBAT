@@ -106,7 +106,7 @@ simres_EM_pump.get_mode(0).plot_mode_raw_fem(['x','y'])
 print('\nPlotting EM fields')
 # Plot the E field of the pump mode
 simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
-                          ylim_max=0.2, mode_indices=range(4))
+                          ylim_max=0.2, mode_indices=range(4), overview_layout="wide")
 
 # Plot the H field of the pump mode
 #simres_EM_pump.plot_modes(xlim_min=0.2, xlim_max=0.2, ylim_min=0.2,
