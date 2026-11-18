@@ -29,6 +29,7 @@ import numpy as np
 
 from .. import reporting, runtime
 from numbat.mesh import mail
+from numbat.mesh.ac_trimming import ACMeshTrimmer
 from numbat.mesh.mesh_data import MeshArrays
 from numbat.nbtypes import SI_to_gmpercc, SI_um
 from numbat.utils.numeric import is_float_pair, is_real_number, np_min_max
@@ -602,6 +603,17 @@ class FemMesh:
             return None
         return self._node_physindex.copy()
 
+    def get_element_convert_table(self) -> Optional[dict]:
+        """Get mapping from AC element indices to original EM element indices.
+        
+        Only populated for AC meshes trimmed from EM meshes.
+        
+        Returns:
+            Dict mapping AC element index (int) -> EM element index (int), or None if not an AC mesh.
+            Used to translate between trimmed AC mesh and full EM mesh.
+        """
+        return self._el_convert_tbl
+
     def build_from_gmsh_mail(self, wguide: Any) -> None:
         """Load the electromagnetic mesh and physical coordinates from a waveguide.
 
@@ -725,85 +737,27 @@ class FemMesh:
 
         el_props = wguide.elastic_props
 
-        # Use new accessors to get EM mesh data
-        n_msh_el = em_fem.num_elements()
-        m_elnd_to_mshpt = em_fem.get_all_element_connectivity()
-        v_mshpt_xy = em_fem.get_all_node_coordinates()
-        type_el_em = em_fem.get_all_element_materials()
+        # Use ACMeshTrimmer to extract and remap AC mesh from EM mesh
+        trim_data = ACMeshTrimmer.trim_em_mesh_to_ac(em_fem, el_props)
 
-        type_el_AC = []  # material index for each element (length = n_msh_el)
-
-        #  fortran ordered table
-        m_elnd_to_mshpt_AC_tmp = np.zeros(np.shape(m_elnd_to_mshpt), dtype=np.int64)
-
-        el_convert_tbl = {}
-
-        # Find all elements that have elastic properties (basically drop vacuum borders)
-        n_msh_el_AC = 0
-        for el in range(n_msh_el):
-            mat_idx = type_el_em[el]
-
-            if el_props.is_elastic_material_index(mat_idx):
-
-                type_el_AC.append(
-                    el_props.active_material_index(mat_idx)
-                )  # could do this and if test with try/catch
-
-                el_convert_tbl[n_msh_el_AC] = el
-                m_elnd_to_mshpt_AC_tmp[:, n_msh_el_AC] = m_elnd_to_mshpt[:, el]
-                n_msh_el_AC += 1
-
-        # Now we have the elastic elements, need to get all the nodes encompassed by these elements
-        # Each node appearing once. (To essentially make the top half of the mail file.)
-
-        nodes_AC_mul = []  # Find every elastic node allowing multiple entries
-        for el in range(n_msh_el_AC):  # for each elastic element
-            nodes_AC_mul.extend(m_elnd_to_mshpt_AC_tmp[:6, el])
-
-        # Now remove the multiple nodes
-        nodes_AC = list(set(nodes_AC_mul))
-        n_msh_pts_AC = len(nodes_AC)  # number of mesh points in acoustic grid
-
-        # Now map the unique nodes to start from zero
-        d_nodes_2_acnodes = {}  # rename to  d_nodes_2_acnodes
-        for i in range(n_msh_pts_AC):
-            d_nodes_2_acnodes[nodes_AC[i]] = i
-
-        # Creating finalised m_elnd_to_mshpt.
-        m_elnd_to_mshpt_AC = []
-        for i in range(6):
-            el_tbl = []
-            for el in range(n_msh_el_AC):
-                el_tbl.append(d_nodes_2_acnodes[m_elnd_to_mshpt_AC_tmp[i][el]])
-            m_elnd_to_mshpt_AC.append(el_tbl)
-
-        m_elnd_to_mshpt_AC = (
-            np.array(m_elnd_to_mshpt_AC) + 1
-        )  # list to np array and adjust to fortran indexing
-
-        # Find the physical x-y coordinates of the chosen AC nodes.
-        v_mshpt_xy_AC = np.zeros((2, n_msh_pts_AC))
-        for node in nodes_AC:
-            v_mshpt_xy_AC[:, d_nodes_2_acnodes[node]] = v_mshpt_xy[:, node - 1]
-
+        # Store trimmed mesh data in FemMesh
+        self._el_convert_tbl = trim_data.element_convert_table
+        self._n_msh_pts = trim_data.num_nodes
+        self._n_msh_el = trim_data.num_elements
+        self._m_elnd_to_mshpt = trim_data.element_node_connectivity
+        self._v_el_2_mat_idx = trim_data.element_materials
+        self._v_mshpt_xy = trim_data.node_coordinates
+        
         # AC FEM uses Neumann B.C.s so node_physindex is totally irrelevant!
-        node_physindex_AC = np.zeros(n_msh_pts_AC)
-
-        self._el_convert_tbl = el_convert_tbl
-        self._n_msh_pts = n_msh_pts_AC
-        self._n_msh_el = n_msh_el_AC
-        self._m_elnd_to_mshpt = m_elnd_to_mshpt_AC
-        self._v_el_2_mat_idx = type_el_AC
-        self._v_mshpt_xy = v_mshpt_xy_AC
-        self._node_physindex = node_physindex_AC
+        self._node_physindex = np.zeros(trim_data.num_nodes)
 
         # Set extents from loaded coordinates
-        if v_mshpt_xy_AC.shape[1] > 0:
+        if trim_data.node_coordinates.shape[1] > 0:
             self._extents = [
-                np.min(v_mshpt_xy_AC[0, :]),
-                np.max(v_mshpt_xy_AC[0, :]),
-                np.min(v_mshpt_xy_AC[1, :]),
-                np.max(v_mshpt_xy_AC[1, :]),
+                np.min(trim_data.node_coordinates[0, :]),
+                np.max(trim_data.node_coordinates[0, :]),
+                np.min(trim_data.node_coordinates[1, :]),
+                np.max(trim_data.node_coordinates[1, :]),
             ]
 
         self._report_ac_mesh_properties(el_props)
@@ -819,21 +773,16 @@ class FemMesh:
     def _report_ac_mesh_properties(self, el_props):
 
         print(
-            f"\n The final elastic sim mesh has {self._n_msh_pts} nodes, {self._n_msh_el} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
+            f"\n The final elastic sim mesh has {self._n_msh_pts} nodes, {self._n_msh_el} mesh elements and {len(self._v_el_2_mat_idx)} element types (materials)."
         )
 
-        print(" The material index table is:", el_props.typ_el_AC, "\n")
+        print(" The material index table is:", self._v_el_2_mat_idx, "\n")
         print(f" There are {el_props.n_mats_ac} active materials:")
         for mat in el_props.v_acoustic_mats:
             vphases = mat.Vac_phase()
             print(
                 f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc, v_i = [{vphases[0]:.4f}, {vphases[1]:.4f}, {vphases[2]:.4f}] km/s.'
             )
-
-        # print("AC mesh properties:")
-        # print("  type_el", self.v_el_2_mat_idx)
-        # print("  typ_el_AC", el_props.typ_el_AC)
-        # print("  el_convert_tbl", self.el_convert_tbl)
         # print("  elt2nodes index map", self.m_elnd_to_mshpt)
 
 
