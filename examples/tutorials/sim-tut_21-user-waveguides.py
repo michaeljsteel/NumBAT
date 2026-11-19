@@ -19,7 +19,7 @@ print("\nCommencing NumBAT tutorial 21")
 numbat.register_waveguide_directory(PROJECT_ROOT / "examples" / "user_waveguides")
 
 prefix = "tut_21"
-lambda_nm = 1550
+lambda_um = 1.550
 
 # All geometric dimensions are in nm.
 domain_x = 4000
@@ -52,7 +52,7 @@ wguide.plot_mesh(prefix)
 wguide.plot_refractive_index_profile(prefix)
 
 # Solve the optical modes of the externally supplied EllipticalRod geometry.
-sim_em = wguide.calc_EM_modes(num_modes_em, lambda_nm, n_eff=1.4)
+sim_em = wguide.calc_EM_modes(num_modes_em, lambda_um, n_eff=1.4)
 sim_em.plot_modes(mode_indices=[0])
 
 print("\nOptical effective indices:")

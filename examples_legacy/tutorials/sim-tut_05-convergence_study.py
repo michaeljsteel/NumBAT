@@ -54,7 +54,7 @@ def finish_plot(fig, ax1, ax2, ylabl, ylabr, suffix):
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 #domain_x = 2.5*lambda_nm
 domain_x = 1000
 domain_y = domain_x
@@ -96,7 +96,7 @@ for i_lc, lc_ref in enumerate(lc_list):
     n_eff = wguide.get_material('a').refindex_n-0.1
 
     # Calculate Electromagnetic modes.
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
     sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
     # Calculate Acoustic modes.

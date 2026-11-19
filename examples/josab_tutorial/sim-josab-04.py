@@ -28,7 +28,7 @@ import starter
 
 # Specify Geometric Parameters - all in [nm].
 wl_nm = 1550
-domain_x = 3.01 * wl_nm
+domain_x = 3.01 * wl_um * 1000
 domain_y = domain_x
 inc_a_x = 450  # Waveguide widths.
 inc_a_y = 200

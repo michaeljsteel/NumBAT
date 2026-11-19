@@ -18,7 +18,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 core_a = 8e3
 clad_a = 125e3
 clad_a = 30e3
@@ -77,7 +77,7 @@ recalc_fields=True     # run the calculation from scratch
 
 # Calculate Electromagnetic Modes
 if recalc_fields:
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
+    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff=n_eff)
     sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 #    sim_EM_pump.save_simulation('tut_18_pump')

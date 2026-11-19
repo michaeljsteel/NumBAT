@@ -48,7 +48,7 @@ emdecorate = EMDecorator()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-domain_x = 5*wl_nm
+domain_x = 5*wl_um * 1000
 domain_y = 0.5*domain_x
 inc_a_x = 485
 inc_a_y = 230

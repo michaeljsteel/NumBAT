@@ -21,7 +21,7 @@ from numbat.solvers import sbsgain
 from numbat import materials
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.
+lambda_um = 1.550  # Wavelength of EM wave in vacuum.
 
 # Unit cell must be large to ensure fields are near-zero at boundary.
 domain_x = 2000.0
@@ -69,7 +69,7 @@ if reuse_old_fields:
     simres_EM_pump = numbat.load_simulation('tut02_em_pump')
     simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
 else:
-    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
     simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
     print('\nSaving EM fields')
     simres_EM_pump.save_simulation('tut02_em_pump')

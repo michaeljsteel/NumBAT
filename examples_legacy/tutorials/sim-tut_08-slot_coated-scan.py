@@ -27,7 +27,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 domain_x = 2500
 domain_x = 5000
 domain_y = 1500
@@ -81,7 +81,7 @@ def ac_mode_freqs(wid_x):
     n_eff = wguide.get_material('a').refindex_n-0.1
 
     # Calculate Electromagnetic modes.
-    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
+    sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff=n_eff)
     sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
     #sim_EM_pump.plot_modes(mode_indices=range(5))
 

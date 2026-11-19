@@ -21,7 +21,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 domain_x = 2000
 domain_y = 1000
 inc_a_x = 450
@@ -58,7 +58,7 @@ wguide = nbapp.make_structure(
 # Expected effective index of fundamental guided mode.
 n_eff = wguide.get_material("a").refindex_n - 0.1
 
-sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
 sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
 # Will scan from forward to backward SBS so need to know q_AC of backward SBS.

@@ -13,7 +13,7 @@ from numbat import materials
 
 np.set_printoptions( precision=4)
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 domain_x = 5*lambda_nm
 domain_y = domain_x
 inc_a_x = 550

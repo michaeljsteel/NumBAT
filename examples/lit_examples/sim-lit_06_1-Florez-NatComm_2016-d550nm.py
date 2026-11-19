@@ -65,7 +65,7 @@ start = time.time()
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-domain_x = 2*wl_nm
+domain_x = 2*wl_um * 1000
 domain_y = domain_x
 inc_a_x = 550  # Diameter
 inc_a_y = inc_a_x

@@ -21,6 +21,7 @@
 #TODO: reduce number of imports
 
 import copy
+import warnings
 
 from numbat.materials import materials
 from fortran import nb_fortran
@@ -268,14 +269,19 @@ class Structure:
         pltgmsh.check_mesh(self.msh_location_out, self.msh_name)
 
 
-    def calc_EM_modes(self, num_modes, wl_nm, n_eff, Stokes=False, debug=False,
+    def calc_EM_modes(self, num_modes, wl_um=1.55,
+                      n_eff=None, Stokes=False, debug=False, wl_nm=None,
                       **args):
         """ Run a simulation to find the Structure's EM modes.
 
             Args:
                 num_modes  (int): Number of EM modes to solve for.
 
-                wl_nm  (float): Wavelength of EM wave in vacuum in nanometres.
+                wl_nm  (float): Deprecated vacuum wavelength in nanometres.
+
+                wl_um (float): Vacuum wavelength in micrometres, passed as a
+                    keyword argument. Defaults to 1.55 if neither wavelength
+                    is provided. If both are provided, ``wl_nm`` takes precedence.
 
                 n_eff  (float): Guesstimated effective index of
                     fundamental mode, will be origin of FEM search.
@@ -283,7 +289,21 @@ class Structure:
             Returns:
                 ``EMSimResult`` object
         """
-        return em_mode_calculation(self, num_modes, wl_nm, n_eff, Stokes, debug, **args)
+        if n_eff is None:
+            raise TypeError("calc_EM_modes() requires an n_eff estimate")
+
+        if wl_um> 100:
+            raise ValueError("calc_EM_modes() now expects a wavelength argument wl_um in microns, not nm. Use wl_um=wl_nm/1000.")
+
+        if wl_nm is not None:
+            warnings.warn(
+                "wl_nm is deprecated; use wl_um instead (wl_um = wl_nm / 1000).",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            wl_um = wl_nm / 1000.0
+
+        return em_mode_calculation(self, num_modes, wl_um, n_eff, Stokes, debug, **args)
 
     def calc_AC_modes(self, num_modes, q_AC,
                       shift_Hz=None, EM_sim=None, bcs=None, debug=False, **args):

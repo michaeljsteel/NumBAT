@@ -20,7 +20,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 domain_x = 2.*lambda_nm
 domain_y = .5*domain_x
 inc_a_x = 800
@@ -66,7 +66,7 @@ new_calcs = True
 # Calculate Electromagnetic modes.
 if new_calcs:
   sim_EM_pump = wguide.calc_EM_modes(
-      num_modes_EM_pump, lambda_nm, n_eff, calc_EM_mode_energy=True)
+      num_modes_EM_pump, lambda_um, n_eff, calc_EM_mode_energy=True)
   sim_EM_Stokes = sim_EM_pump.clone_as_backward_modes()
 
   sim_EM_pump.save_simulation('tut_14_pump')

@@ -26,7 +26,7 @@ print('\n\nCommencing NumBAT tutorial 1')
 # Step 2
 # Geometric Parameters - all in nm.
 
-lambda_nm = 1550.0  # Wavelength of EM wave in vacuum.
+lambda_um = 1.550  # Wavelength of EM wave in vacuum.
 
 # Waveguide widths.
 inc_a_x = 300.0
@@ -83,7 +83,7 @@ wguide.plot_refractive_index_profile(prefix)
 # We provide an estimated effective index of the fundamental guided mode to steer the solver.
 n_eff = wguide.get_material('a').refindex_n-0.1
 
-sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+sim_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
 
 # Report the exact effective index of the fundamental mode
 n_eff_sim = np.real(sim_EM_pump.neff(0))

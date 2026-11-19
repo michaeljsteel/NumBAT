@@ -15,6 +15,7 @@
 
 
 
+
 import numpy as np
 
 from fortran import nb_fortran
@@ -23,6 +24,7 @@ from numbat.mesh.fem import FemMesh
 from numbat.nbtypes import (
     QAcMethod,
     SI_nm,
+    SI_um,
     twopi,
 )
 
@@ -35,14 +37,15 @@ class Simulation:
     """Class for calculating the electromagnetic and/or acoustic modes of a ``Struct`` object."""
 
     def __init__(self, structure, num_modes, debug):
-        """Sets up the problem for the mode calculation at a given optical wavelength `wl_nm` or acoustic wavenumber `q_AC`.
+        """Sets up the problem for the mode calculation at an optical wavelength or acoustic wavenumber `q_AC`.
 
         For electromagnetic problems, the tool solves for the effective index or wavenumber at a given wavelength.
         For acoustic problems, the tool solves for the acoustic frequency at a given wavenumber.
 
           :param Simulation structure: The waveguide structure to be solved.
           :param int num_modes: The number of modes to be found.
-          :param float wl_nm: For electromagnetic problems, the vacuum wavelength in nanometers.
+          :param float wl_um: For electromagnetic problems, the vacuum wavelength in micrometres.
+          :param float wl_nm: Deprecated vacuum wavelength in nanometres.
           :param float n_eff: For electromagnetic problems, an estimated effective index to begin the eigenvalue search.
           :param float shift_Hz: For acoustic problems, an estimated frequency offset to begin the eigenvalue search.
           :param float q_AC: For acoustic problems, the acoustic wavevector of the mode.
@@ -108,7 +111,7 @@ class EMSimulation(Simulation):
         self,
         structure,
         num_modes=20,
-        wl_nm=1550,
+        wl_um=1.55,
         n_eff_target=None,
         Stokes=False,
         #calc_EM_mode_energy=False,
@@ -119,8 +122,10 @@ class EMSimulation(Simulation):
 
         super().__init__(structure, num_modes, debug)
 
+        self.wl_um = wl_um
+
         # independent frequency variable
-        self.lambda_m = wl_nm * SI_nm
+        self.lambda_m = self.wl_um * SI_um
         self.k_0 = 2 * np.pi / self.lambda_m
 
         # simulation control parameters
@@ -392,7 +397,7 @@ class ACSimulation(Simulation):
         self.ls_material = None
 
         self.fem_mesh = FemMesh()
-        
+
         if simres_EM is not None:
             # Use EM mesh from previous EM calculation
             self.fem_mesh.ac_build_from_em(structure, simres_EM.fem_mesh)
@@ -742,9 +747,9 @@ class ACSimulation(Simulation):
 
 
 
-def em_mode_calculation(wg, num_modes, wl_nm, n_eff, Stokes, debug, **args):
+def em_mode_calculation(wg, num_modes, wl_um, n_eff, Stokes, debug, **args):
 
-    sim = EMSimulation(wg, num_modes=num_modes, wl_nm=wl_nm,
+    sim = EMSimulation(wg, num_modes=num_modes, wl_um=wl_um,
                         n_eff_target=n_eff, Stokes=Stokes, debug=debug, **args)
 
 

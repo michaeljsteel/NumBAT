@@ -34,7 +34,7 @@ num_cores = os.cpu_count()
 num_cores = 4
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 inc_shape = 'rectangular'
 
 num_modes_EM_pump = 30
@@ -62,7 +62,7 @@ def modes_n_gain(wwguide):
     n_eff = (wguide.get_material('a').refindex_n-0.1) * width/known_geo
 
     # Calculate Electromagnetic modes.
-    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
     simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
     q_AC = np.real(simres_EM_pump.kz_EM(EM_mode_index_pump) -
                    simres_EM_Stokes.kz_EM(EM_mode_index_Stokes))

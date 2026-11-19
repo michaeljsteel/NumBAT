@@ -34,7 +34,7 @@ wl_nm = 1550 # Wavelength of EM wave in vacuum.
 inc_a_x = 450 # Waveguide widths.
 inc_a_y = 200
 # Unit cell dimensions must be sufficiently large to ensure fields are zero at outermost boundary.
-domain_x = 3.01*wl_nm
+domain_x = 3.01*wl_um * 1000
 domain_y = domain_x #be careful to ensure not whole integer(8) multiples
 inc_shape = 'rectangular' # Shape of the waveguide.
 

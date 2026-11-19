@@ -21,7 +21,7 @@ import starter
 
 # Geometric Parameters - all in nm.
 wl_nm = 1550
-domain_x = 2*wl_nm
+domain_x = 2*wl_um * 1000
 domain_y = 0.7*domain_x
 ped_base_w = 450
 ped_h = 230

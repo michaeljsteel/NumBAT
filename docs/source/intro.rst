@@ -96,6 +96,22 @@ the current github tree and that your problem is still present with that version
 Release notes
 =============
 
+Version 2.6.5
+-------------
+
+The free space wavelength parameter is now specified in microns rather than nanometers and renamed to lambda_um. This change is reflected in the tutorials and examples, and will be applied to user scripts in a future release.
+
+A warning will be flagged if the entered wavelength is larger than 100.0 suggesting that the user may have entered the wavelength in nanometers rather than microns.
+
+The same thing will soon happen to spatial dimensions.
+
+This is an awkward change for user scripts but preferable to bring the entire system to one set of length units.
+
+Version 2.6.4
+-------------
+
+It is no longer necessary to run an electromagnetic simulation before an acoustic simulation.
+
 Version 2.6.3
 -------------
 

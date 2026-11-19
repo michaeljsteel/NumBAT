@@ -22,6 +22,14 @@ discussion below for details.
 Details
 ========
 
+EM wavelength units
+-------------------
+
+``wl_nm`` is deprecated in EM mode calculations. Use ``wl_um`` in
+micrometres instead; for example, replace ``wl_nm=1550`` with
+``wl_um=1.55``. Existing nanometre calls continue to work and emit a
+``DeprecationWarning``. If both are supplied, ``wl_nm`` takes precedence.
+
 
 .. _field-selection-migration-label:
 

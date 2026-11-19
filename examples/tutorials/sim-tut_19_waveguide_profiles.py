@@ -11,7 +11,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-#lambda_nm = 1550
+#lambda_um = 1.550
 lambda_nm = 1000
 domain_x = lambda_nm * 1.5
 domain_y = domain_x*.6
@@ -44,7 +44,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y,
                         lc_bkg=lc_bkg, lc_refine_1=lc_norm, lc_refine_2=lc_corner)
 
 
-#simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, 2)
+#simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, 2)
 
 
 #wguide.plot_refractive_index_profile(prefix, as_epsilon=True)

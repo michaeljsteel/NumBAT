@@ -21,7 +21,7 @@ import starter
 
 
 # Geometric Parameters - all in nm.
-lambda_nm = 1550
+lambda_um = 1.550
 #lambda_nm = 1000
 domain_x = lambda_nm
 domain_y = domain_x
@@ -71,7 +71,7 @@ if use_old_fields:
     simres_EM_pump = numbat.load_simulation('tut_06bpump')
     simres_EM_Stokes = numbat.load_simulation('tut_06bstokes')
 else:
-    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_nm, n_eff=n_eff)
+    simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff=n_eff)
     simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
 
     simres_EM_pump.save_simulation('tut_06bpump')
