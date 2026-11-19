@@ -741,7 +741,7 @@ class FemMesh:
         self.element_node_connectivity = trim_data.element_node_connectivity
         self.element_materials = trim_data.element_materials
         self.node_coordinates = trim_data.node_coordinates
-        
+
         # AC FEM uses Neumann B.C.s so node_physical_indices is totally irrelevant!
         self.node_physical_indices = np.zeros(trim_data.num_nodes)
 
@@ -760,8 +760,9 @@ class FemMesh:
         """Builds the FemMesh for an acoustic simulation directly from the Mail mesh file.
 
         This creates the full EM mesh, then trims it for AC analysis without
-        running the EM eigensolve. Used when ACSimulation is called without
-        an existing EM SimResult.
+        running the EM eigensolve. The resulting coordinates are in metres,
+        as for an AC mesh built from an EM SimResult. Used when ACSimulation
+        is called without an existing EM SimResult.
 
         Args:
             wguide: Waveguide structure providing its ``.mail`` mesh filename,
@@ -781,18 +782,19 @@ class FemMesh:
         self.num_elements = trim_data.num_elements
         self.element_node_connectivity = trim_data.element_node_connectivity
         self.element_materials = trim_data.element_materials
-        self.node_coordinates = trim_data.node_coordinates
+        # The Mail-based Python mesh is in micrometres; the AC solver needs metres.
+        self.node_coordinates = trim_data.node_coordinates * SI_um
 
         # AC FEM uses Neumann B.C.s so node_physical_indices is totally irrelevant!
         self.node_physical_indices = np.zeros(trim_data.num_nodes)
 
         # Set extents from loaded coordinates
-        if trim_data.node_coordinates.shape[1] > 0:
+        if self.node_coordinates.shape[1] > 0:
             self._extents = [
-                np.min(trim_data.node_coordinates[0, :]),
-                np.max(trim_data.node_coordinates[0, :]),
-                np.min(trim_data.node_coordinates[1, :]),
-                np.max(trim_data.node_coordinates[1, :]),
+                np.min(self.node_coordinates[0, :]),
+                np.max(self.node_coordinates[0, :]),
+                np.min(self.node_coordinates[1, :]),
+                np.max(self.node_coordinates[1, :]),
             ]
 
         self._report_ac_mesh_properties(el_props)
