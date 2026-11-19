@@ -437,7 +437,8 @@ def do_main():
 
     # move to solve_elastic_rod_numerical
     # solve one EM step to prep the waveguide meshing
-    simres_EM = wguide.calc_EM_modes(40, 1550, 1.5)
+    #simres_EM = wguide.calc_EM_modes(40, 1550, 1.5)
+    simres_EM=None
 
     solve_elastic_dispersion(prefix, ssys, wguide, simres_EM, rcore, mat_core)
 
