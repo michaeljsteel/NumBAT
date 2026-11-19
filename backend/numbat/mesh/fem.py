@@ -213,198 +213,206 @@ class FemMesh:
 
         # Number of mesh nodes (points) in the FEM calculation
         # (Different to original underlying mesh because of elt sub-triangulation)
-        self._n_msh_pts = 0
+        # Fortran: n_msh_pts
+        self.num_nodes = 0
 
         # Number of elements in .msh mesh file
-        self._n_msh_el = 0
+        # Fortran: n_msh_el
+        self.num_elements = 0
 
         #
         # Quantities made by python
         #
 
-        # Array[0:n_msh_el] of index of elt's material into list of active em or materials.
+        # Array[0:num_elements] of index of elt's material into list of active em or materials.
         #    Values in range:  em simulation - [1, optical_props.n_mats_em]
         #                      ac simulation - [1, elastic_props.n_mats_ac]
-        self._v_el_2_mat_idx = None
+        # Fortran: type_el or v_el_2_mat_idx
+        self.element_materials = None
 
         # An elastic el_conv_tbl_n (a dictionary!), completely diff to self.type_el
         # AC-specific: should be moved to ElasticProperties
+        # Fortran: (no direct mapping)
         self._typ_el_AC = None
 
         #
         # Quantities made by fortran
         #
-        # Map of each element to its 6 nodes by node index (1..6). shape = (6, n_msh_el])
-        self._m_elnd_to_mshpt = None
+        # Map of each element to its 6 nodes by node index (1..6). shape = (6, num_elements])
+        # Fortran: m_elnd_to_mshpt
+        self.element_node_connectivity = None
 
-        # Line or surface index of a node [1..num_gmsh_types],     shape = (n_msh_pts,1)
-        self._node_physindex = None
+        # Line or surface index of a node [1..num_gmsh_types],     shape = (num_nodes,1)
+        # Fortran: type_nod
+        self.node_physical_indices = None
 
-        # physical scaled x-y, locations of every node             shape= (n_msh_pts,2)
-        self._v_mshpt_xy = None
+        # physical scaled x-y, locations of every node             shape = (2, num_nodes)
+        # Fortran: v_mshpt_xy
+        self.node_coordinates = None
 
         # Nodes per each element (is always 6)
-        self.n_nodes = 6
+        self.nodes_per_element = 6
 
         self._ac_mesh_from_em = True  # Always True
 
         # Dict map of elastically active mesh elements into original em mesh elements.
-        #    Length: n_msh_el(ac).   Values in [1..n_msh_el(em)]
+        #    Length: num_elements(ac).   Values in [1..num_elements(em)]
         # AC-specific: should be moved to MaterialMeshMapping
-        self._el_convert_tbl = None
+        # Fortran: (no direct mapping)
+        self.element_convert_table = None
 
-        # measured from nbgmsh to have them early before we know v_mshpt_xy
+        # measured from nbgmsh to have them early before we know node_coordinates
         self._extents = None
 
     # =========================================================================
     # DEPRECATED PROPERTIES - For backward compatibility only
-    # Use the new accessor methods instead (e.g., num_nodes() instead of n_msh_pts)
+    # Use the new direct attributes or accessor methods instead
     # =========================================================================
 
     @property
     def n_msh_pts(self) -> int:
-        """Deprecated: Use num_nodes() instead."""
+        """Deprecated: Use num_nodes directly instead."""
         warnings.warn(
-            "Direct access to n_msh_pts is deprecated. Use num_nodes() instead.",
+            "Direct access to n_msh_pts is deprecated. Use num_nodes directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._n_msh_pts
+        return self.num_nodes
 
     @n_msh_pts.setter
     def n_msh_pts(self, value: int) -> None:
-        """Deprecated: Use num_nodes() instead."""
+        """Deprecated: Use num_nodes directly instead."""
         warnings.warn(
             "Direct assignment to n_msh_pts is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._n_msh_pts = value
+        self.num_nodes = value
 
     @property
     def n_msh_el(self) -> int:
-        """Deprecated: Use num_elements() instead."""
+        """Deprecated: Use num_elements directly instead."""
         warnings.warn(
-            "Direct access to n_msh_el is deprecated. Use num_elements() instead.",
+            "Direct access to n_msh_el is deprecated. Use num_elements directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._n_msh_el
+        return self.num_elements
 
     @n_msh_el.setter
     def n_msh_el(self, value: int) -> None:
-        """Deprecated: Use num_elements() instead."""
+        """Deprecated: Use num_elements directly instead."""
         warnings.warn(
             "Direct assignment to n_msh_el is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._n_msh_el = value
+        self.num_elements = value
 
     @property
     def v_el_2_mat_idx(self) -> Optional[np.ndarray]:
-        """Deprecated: Use element_material_index() or get_all_element_materials() instead."""
+        """Deprecated: Use element_materials directly instead."""
         warnings.warn(
             "Direct access to v_el_2_mat_idx is deprecated. "
-            "Use element_material_index(i_el) or get_all_element_materials() instead.",
+            "Use element_materials directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._v_el_2_mat_idx
+        return self.element_materials
 
     @v_el_2_mat_idx.setter
     def v_el_2_mat_idx(self, value: Optional[np.ndarray]) -> None:
-        """Deprecated: Use element_material_index() instead."""
+        """Deprecated: Use element_materials directly instead."""
         warnings.warn(
             "Direct assignment to v_el_2_mat_idx is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._v_el_2_mat_idx = value
+        self.element_materials = value
 
     @property
     def m_elnd_to_mshpt(self) -> Optional[np.ndarray]:
-        """Deprecated: Use element_node_indices() instead."""
+        """Deprecated: Use element_node_connectivity directly instead."""
         warnings.warn(
             "Direct access to m_elnd_to_mshpt is deprecated. "
-            "Use element_node_indices(i_el) or get_all_element_connectivity() instead.",
+            "Use element_node_connectivity directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._m_elnd_to_mshpt
+        return self.element_node_connectivity
 
     @m_elnd_to_mshpt.setter
     def m_elnd_to_mshpt(self, value: Optional[np.ndarray]) -> None:
-        """Deprecated: Use element_node_indices() instead."""
+        """Deprecated: Use element_node_connectivity directly instead."""
         warnings.warn(
             "Direct assignment to m_elnd_to_mshpt is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._m_elnd_to_mshpt = value
+        self.element_node_connectivity = value
 
     @property
     def v_mshpt_xy(self) -> Optional[np.ndarray]:
-        """Deprecated: Use get_node_coordinate() or get_all_node_coordinates() instead."""
+        """Deprecated: Use node_coordinates directly instead."""
         warnings.warn(
             "Direct access to v_mshpt_xy is deprecated. "
-            "Use get_node_coordinate(i_node) or get_all_node_coordinates() instead.",
+            "Use node_coordinates directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._v_mshpt_xy
+        return self.node_coordinates
 
     @v_mshpt_xy.setter
     def v_mshpt_xy(self, value: Optional[np.ndarray]) -> None:
-        """Deprecated: Use get_node_coordinate() instead."""
+        """Deprecated: Use node_coordinates directly instead."""
         warnings.warn(
             "Direct assignment to v_mshpt_xy is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._v_mshpt_xy = value
+        self.node_coordinates = value
 
     @property
     def node_physindex(self) -> Optional[np.ndarray]:
-        """Deprecated: Use node_physical_index() instead."""
+        """Deprecated: Use node_physical_indices directly instead."""
         warnings.warn(
             "Direct access to node_physindex is deprecated. "
-            "Use node_physical_index(i_node) instead.",
+            "Use node_physical_indices directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._node_physindex
+        return self.node_physical_indices
 
     @node_physindex.setter
     def node_physindex(self, value: Optional[np.ndarray]) -> None:
-        """Deprecated: Use node_physical_index() instead."""
+        """Deprecated: Use node_physical_indices directly instead."""
         warnings.warn(
             "Direct assignment to node_physindex is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._node_physindex = value
+        self.node_physical_indices = value
 
     @property
     def el_convert_tbl(self) -> Optional[dict]:
-        """Deprecated: This should be in MaterialMeshMapping, not FemMesh."""
+        """Deprecated: Use element_convert_table directly instead."""
         warnings.warn(
             "Direct access to el_convert_tbl is deprecated. "
-            "This property will move to MaterialMeshMapping in a future version.",
+            "Use element_convert_table directly instead.",
             DeprecationWarning,
             stacklevel=2
         )
-        return self._el_convert_tbl
+        return self.element_convert_table
 
     @el_convert_tbl.setter
     def el_convert_tbl(self, value: Optional[dict]) -> None:
-        """Deprecated: This should be in MaterialMeshMapping, not FemMesh."""
+        """Deprecated: Use element_convert_table directly instead."""
         warnings.warn(
             "Direct assignment to el_convert_tbl is deprecated.",
             DeprecationWarning,
             stacklevel=2
         )
-        self._el_convert_tbl = value
+        self.element_convert_table = value
 
     @property
     def typ_el_AC(self) -> Optional[Any]:
@@ -468,24 +476,10 @@ class FemMesh:
         self._ac_mesh_from_em = value
 
     # =========================================================================
-    # NEW PUBLIC ACCESSORS - Recommended API
+    # PUBLIC ACCESSORS - Recommended API
+    # Note: num_nodes and num_elements are direct integer attributes.
+    # For detailed access patterns, use the methods below.
     # =========================================================================
-
-    def num_nodes(self) -> int:
-        """Return total number of mesh nodes.
-        
-        Returns:
-            Number of nodes in the mesh.
-        """
-        return self._n_msh_pts
-
-    def num_elements(self) -> int:
-        """Return total number of mesh elements.
-        
-        Returns:
-            Number of elements in the mesh.
-        """
-        return self._n_msh_el
 
     def get_node_coordinate(self, node_idx: int) -> tuple[float, float]:
         """Get (x, y) coordinate of a single node.
@@ -499,11 +493,11 @@ class FemMesh:
         Raises:
             ValueError: If node_idx is out of bounds.
         """
-        if self._v_mshpt_xy is None:
+        if self.node_coordinates is None:
             raise RuntimeError("Mesh coordinates not loaded")
-        if node_idx < 0 or node_idx >= self._n_msh_pts:
-            raise ValueError(f"Node index {node_idx} out of bounds [0, {self._n_msh_pts})")
-        return (float(self._v_mshpt_xy[0, node_idx]), float(self._v_mshpt_xy[1, node_idx]))
+        if node_idx < 0 or node_idx >= self.num_nodes:
+            raise ValueError(f"Node index {node_idx} out of bounds [0, {self.num_nodes})")
+        return (float(self.node_coordinates[0, node_idx]), float(self.node_coordinates[1, node_idx]))
 
     def get_all_node_coordinates(self) -> np.ndarray:
         """Return array of all node coordinates.
@@ -512,9 +506,9 @@ class FemMesh:
             Array of shape (2, n_nodes) where [:, i] is (x, y) of node i.
             Returns a copy to prevent modification of internal data.
         """
-        if self._v_mshpt_xy is None:
+        if self.node_coordinates is None:
             raise RuntimeError("Mesh coordinates not loaded")
-        return self._v_mshpt_xy.copy()
+        return self.node_coordinates.copy()
 
     def element_node_indices(self, elem_idx: int) -> np.ndarray:
         """Get 6 node indices for an element.
@@ -528,11 +522,11 @@ class FemMesh:
         Raises:
             ValueError: If elem_idx is out of bounds.
         """
-        if self._m_elnd_to_mshpt is None:
+        if self.element_node_connectivity is None:
             raise RuntimeError("Element connectivity not loaded")
-        if elem_idx < 0 or elem_idx >= self._n_msh_el:
-            raise ValueError(f"Element index {elem_idx} out of bounds [0, {self._n_msh_el})")
-        return self._m_elnd_to_mshpt[:, elem_idx]
+        if elem_idx < 0 or elem_idx >= self.num_elements:
+            raise ValueError(f"Element index {elem_idx} out of bounds [0, {self.num_elements})")
+        return self.element_node_connectivity[:, elem_idx]
 
     def get_all_element_connectivity(self) -> np.ndarray:
         """Return element-to-node mapping for all elements.
@@ -541,9 +535,9 @@ class FemMesh:
             Array of shape (6, n_elements) containing 1-based node indices.
             Returns a copy to prevent modification of internal data.
         """
-        if self._m_elnd_to_mshpt is None:
+        if self.element_node_connectivity is None:
             raise RuntimeError("Element connectivity not loaded")
-        return self._m_elnd_to_mshpt.copy()
+        return self.element_node_connectivity.copy()
 
     def element_material_index_1based(self, elem_idx: int) -> int:
         """Get 1-based material index for an element (Fortran convention).
@@ -557,11 +551,11 @@ class FemMesh:
         Raises:
             ValueError: If elem_idx is out of bounds.
         """
-        if self._v_el_2_mat_idx is None:
+        if self.element_materials is None:
             raise RuntimeError("Element material mapping not loaded")
-        if elem_idx < 0 or elem_idx >= self._n_msh_el:
-            raise ValueError(f"Element index {elem_idx} out of bounds [0, {self._n_msh_el})")
-        return int(self._v_el_2_mat_idx[elem_idx])
+        if elem_idx < 0 or elem_idx >= self.num_elements:
+            raise ValueError(f"Element index {elem_idx} out of bounds [0, {self.num_elements})")
+        return int(self.element_materials[elem_idx])
 
     def get_all_element_materials(self) -> np.ndarray:
         """Return material index for all elements (1-based, Fortran convention).
@@ -570,9 +564,9 @@ class FemMesh:
             Array of shape (n_elements,) with 1-based material indices.
             Returns a copy to prevent modification of internal data.
         """
-        if self._v_el_2_mat_idx is None:
+        if self.element_materials is None:
             raise RuntimeError("Element material mapping not loaded")
-        return self._v_el_2_mat_idx.copy()
+        return self.element_materials.copy()
 
     def node_physical_index(self, node_idx: int) -> int:
         """Get physical boundary index for a node (EM meshes only).
@@ -586,11 +580,11 @@ class FemMesh:
         Raises:
             ValueError: If node_idx is out of bounds.
         """
-        if self._node_physindex is None:
+        if self.node_physical_indices is None:
             raise RuntimeError("Node physical indices not loaded (AC mesh?)")
-        if node_idx < 0 or node_idx >= self._n_msh_pts:
-            raise ValueError(f"Node index {node_idx} out of bounds [0, {self._n_msh_pts})")
-        return int(self._node_physindex[node_idx])
+        if node_idx < 0 or node_idx >= self.num_nodes:
+            raise ValueError(f"Node index {node_idx} out of bounds [0, {self.num_nodes})")
+        return int(self.node_physical_indices[node_idx])
 
     def get_all_node_physical_indices(self) -> Optional[np.ndarray]:
         """Return physical boundary indices for all nodes (EM meshes only).
@@ -599,9 +593,9 @@ class FemMesh:
             Array of shape (n_nodes,) with physical indices, or None if not set.
             Returns a copy to prevent modification of internal data.
         """
-        if self._node_physindex is None:
+        if self.node_physical_indices is None:
             return None
-        return self._node_physindex.copy()
+        return self.node_physical_indices.copy()
 
     def get_element_convert_table(self) -> Optional[dict]:
         """Get mapping from AC element indices to original EM element indices.
@@ -612,7 +606,7 @@ class FemMesh:
             Dict mapping AC element index (int) -> EM element index (int), or None if not an AC mesh.
             Used to translate between trimmed AC mesh and full EM mesh.
         """
-        return self._el_convert_tbl
+        return self.element_convert_table
 
     def build_from_gmsh_mail(self, wguide: Any) -> None:
         """Load the electromagnetic mesh and physical coordinates from a waveguide.
@@ -631,25 +625,25 @@ class FemMesh:
 
         # mesh = wguide.get_mail_mesh_data()
 
-        self._v_el_2_mat_idx = mesh.v_elts_mat
+        self.element_materials = mesh.v_elts_mat
 
         # Electromagnetic so the mesh properties come straight from the Mail file.
-        self._n_msh_pts = mesh.n_msh_pts
-        self._n_msh_el = mesh.n_msh_elts
+        self.num_nodes = mesh.n_msh_pts
+        self.num_elements = mesh.n_msh_elts
 
-        self._m_elnd_to_mshpt = mesh.v_elts[:, :6].T
-        self._v_mshpt_xy = np.zeros([2, self._n_msh_pts])
+        self.element_node_connectivity = mesh.v_elts[:, :6].T
+        self.node_coordinates = np.zeros([2, self.num_nodes])
 
         # Messy: Mail file does not include the domain scaling which is in nm, not microns
         # Everything including yvalues is scaled by domain_x, not domain_y
-        self._v_mshpt_xy[0, :] = mesh.v_x * wguide.domain_x * 0.001
-        self._v_mshpt_xy[1, :] = (mesh.v_y * wguide.domain_x * 0.001)
+        self.node_coordinates[0, :] = mesh.v_x * wguide.domain_x * 0.001
+        self.node_coordinates[1, :] = (mesh.v_y * wguide.domain_x * 0.001)
 
         self._extents = [
-            np.min(self._v_mshpt_xy[0, :]),
-            np.max(self._v_mshpt_xy[0, :]),
-            np.min(self._v_mshpt_xy[1, :]),
-            np.max(self._v_mshpt_xy[1, :]),
+            np.min(self.node_coordinates[0, :]),
+            np.max(self.node_coordinates[0, :]),
+            np.min(self.node_coordinates[1, :]),
+            np.max(self.node_coordinates[1, :]),
         ]
 
         self._report_em_mesh_properties(wguide)
@@ -657,7 +651,7 @@ class FemMesh:
     def _report_em_mesh_properties(self, wguide):
         opt_props = wguide.optical_props
         print(
-            f"\n The final EM sim mesh has {self._n_msh_pts} nodes, {self._n_msh_el} elements and {opt_props.n_mats_em} element types (materials)."
+            f"\n The final EM sim mesh has {self.num_nodes} nodes, {self.num_elements} elements and {opt_props.n_mats_em} element types (materials)."
         )
 
         #matvals = list(wguide.d_materials.values())[: opt_props.n_mats_em]
@@ -680,18 +674,18 @@ class FemMesh:
         """Store electromagnetic mesh arrays returned by the Fortran solver.
 
         Args:
-            type_el: Per-element Fortran material indices.
-            node_physindex: Per-node physical-boundary indices.
-            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping.
-            v_mshpt_xy: Physical x and y coordinates of mesh nodes.
+            type_el: Per-element Fortran material indices (Fortran: type_el).
+            node_physindex: Per-node physical-boundary indices (Fortran: type_nod).
+            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping (Fortran: m_elnd_to_mshpt).
+            v_mshpt_xy: Physical x and y coordinates of mesh nodes (Fortran: v_mshpt_xy).
         """
 
-        self._v_el_2_mat_idx = type_el
-        self._m_elnd_to_mshpt = m_elnd_to_mshpt
-        self._v_mshpt_xy = v_mshpt_xy
-        self._node_physindex = node_physindex
-        self._n_msh_pts = v_mshpt_xy.shape[1]
-        self._n_msh_el = type_el.shape[0]
+        self.element_materials = type_el
+        self.element_node_connectivity = m_elnd_to_mshpt
+        self.node_coordinates = v_mshpt_xy
+        self.node_physical_indices = node_physindex
+        self.num_nodes = v_mshpt_xy.shape[1]
+        self.num_elements = type_el.shape[0]
 
         # Set extents from loaded coordinates
         if v_mshpt_xy.shape[1] > 0:
@@ -708,16 +702,16 @@ class FemMesh:
         """Store acoustic mesh arrays returned by the Fortran solver.
 
         Args:
-            type_el: Per-element Fortran material indices.
-            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping.
-            v_mshpt_xy: Physical x and y coordinates of mesh nodes.
+            type_el: Per-element Fortran material indices (Fortran: type_el).
+            m_elnd_to_mshpt: Six-node element-to-mesh-node mapping (Fortran: m_elnd_to_mshpt).
+            v_mshpt_xy: Physical x and y coordinates of mesh nodes (Fortran: v_mshpt_xy).
         """
 
-        self._v_el_2_mat_idx = type_el
-        self._m_elnd_to_mshpt = m_elnd_to_mshpt
-        self._v_mshpt_xy = v_mshpt_xy
-        self._n_msh_pts = v_mshpt_xy.shape[1]
-        self._n_msh_el = type_el.shape[0]
+        self.element_materials = type_el
+        self.element_node_connectivity = m_elnd_to_mshpt
+        self.node_coordinates = v_mshpt_xy
+        self.num_nodes = v_mshpt_xy.shape[1]
+        self.num_elements = type_el.shape[0]
 
         # Set extents from loaded coordinates
         if v_mshpt_xy.shape[1] > 0:
@@ -741,15 +735,56 @@ class FemMesh:
         trim_data = ACMeshTrimmer.trim_em_mesh_to_ac(em_fem, el_props)
 
         # Store trimmed mesh data in FemMesh
-        self._el_convert_tbl = trim_data.element_convert_table
-        self._n_msh_pts = trim_data.num_nodes
-        self._n_msh_el = trim_data.num_elements
-        self._m_elnd_to_mshpt = trim_data.element_node_connectivity
-        self._v_el_2_mat_idx = trim_data.element_materials
-        self._v_mshpt_xy = trim_data.node_coordinates
+        self.element_convert_table = trim_data.element_convert_table
+        self.num_nodes = trim_data.num_nodes
+        self.num_elements = trim_data.num_elements
+        self.element_node_connectivity = trim_data.element_node_connectivity
+        self.element_materials = trim_data.element_materials
+        self.node_coordinates = trim_data.node_coordinates
         
-        # AC FEM uses Neumann B.C.s so node_physindex is totally irrelevant!
-        self._node_physindex = np.zeros(trim_data.num_nodes)
+        # AC FEM uses Neumann B.C.s so node_physical_indices is totally irrelevant!
+        self.node_physical_indices = np.zeros(trim_data.num_nodes)
+
+        # Set extents from loaded coordinates
+        if trim_data.node_coordinates.shape[1] > 0:
+            self._extents = [
+                np.min(trim_data.node_coordinates[0, :]),
+                np.max(trim_data.node_coordinates[0, :]),
+                np.min(trim_data.node_coordinates[1, :]),
+                np.max(trim_data.node_coordinates[1, :]),
+            ]
+
+        self._report_ac_mesh_properties(el_props)
+
+    def ac_build_from_gmsh_mail(self, wguide: Any) -> None:
+        """Builds the FemMesh for an acoustic simulation directly from the Mail mesh file.
+
+        This creates the full EM mesh, then trims it for AC analysis without
+        running the EM eigensolve. Used when ACSimulation is called without
+        an existing EM SimResult.
+
+        Args:
+            wguide: Waveguide structure providing its ``.mail`` mesh filename,
+                domain dimensions, elastic material properties, and optical
+                material properties (needed for mesh trimming).
+        """
+        # First, build the full EM mesh from the Mail file
+        self.build_from_gmsh_mail(wguide)
+
+        # Then trim it for AC using the elastic properties
+        el_props = wguide.elastic_props
+        trim_data = ACMeshTrimmer.trim_em_mesh_to_ac(self, el_props)
+
+        # Replace EM mesh with trimmed AC mesh
+        self.element_convert_table = trim_data.element_convert_table
+        self.num_nodes = trim_data.num_nodes
+        self.num_elements = trim_data.num_elements
+        self.element_node_connectivity = trim_data.element_node_connectivity
+        self.element_materials = trim_data.element_materials
+        self.node_coordinates = trim_data.node_coordinates
+
+        # AC FEM uses Neumann B.C.s so node_physical_indices is totally irrelevant!
+        self.node_physical_indices = np.zeros(trim_data.num_nodes)
 
         # Set extents from loaded coordinates
         if trim_data.node_coordinates.shape[1] > 0:
@@ -764,19 +799,19 @@ class FemMesh:
 
     def get_xy_limits(self) -> tuple[float, float, float, float]:
         """Return minimum and maximum physical coordinates of the mesh."""
-        if self._v_mshpt_xy is None:
+        if self.node_coordinates is None:
             raise RuntimeError("Mesh not loaded")
-        x_min, x_max = np_min_max(self._v_mshpt_xy[0, :])
-        y_min, y_max = np_min_max(self._v_mshpt_xy[1, :])
+        x_min, x_max = np_min_max(self.node_coordinates[0, :])
+        y_min, y_max = np_min_max(self.node_coordinates[1, :])
         return x_min, x_max, y_min, y_max
 
     def _report_ac_mesh_properties(self, el_props):
 
         print(
-            f"\n The final elastic sim mesh has {self._n_msh_pts} nodes, {self._n_msh_el} mesh elements and {len(self._v_el_2_mat_idx)} element types (materials)."
+            f"\n The final elastic sim mesh has {self.num_nodes} nodes, {self.num_elements} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
         )
 
-        print(" The material index table is:", self._v_el_2_mat_idx, "\n")
+        print(" The material index table is:", el_props.typ_el_AC, "\n")
         print(f" There are {el_props.n_mats_ac} active materials:")
         for mat in el_props.v_acoustic_mats:
             vphases = mat.Vac_phase()
@@ -793,11 +828,11 @@ class FemMesh:
             Triangle-node indices in six-node element ordering and global
             mesh-node ordering, respectively.
         """
-        if self._m_elnd_to_mshpt is None:
+        if self.element_node_connectivity is None:
             raise RuntimeError("Element connectivity not loaded")
 
         v_triang6p = []
-        for idx in range(0, 6 * self._n_msh_el, 6):
+        for idx in range(0, 6 * self.num_elements, 6):
             triangles = [
                 [idx + 0, idx + 3, idx + 5],
                 [idx + 1, idx + 4, idx + 3],
@@ -806,11 +841,11 @@ class FemMesh:
             ]
             v_triang6p.extend(triangles)
 
-        # v_triang1p maps the same triangles to the actual nodes defined by Gmsh, of which there are only n__pt
-        tabnod_py = self._m_elnd_to_mshpt.T - 1  # shift fortran to python indexing
+        # v_triang1p maps the same triangles to the actual nodes defined by Gmsh, of which there are only num_nodes
+        tabnod_py = self.element_node_connectivity.T - 1  # shift fortran to python indexing
 
         v_triang1p = []
-        for i_el in np.arange(self._n_msh_el):
+        for i_el in np.arange(self.num_elements):
             triangles = [
                 [tabnod_py[i_el, 0], tabnod_py[i_el, 3], tabnod_py[i_el, 5]],
                 [tabnod_py[i_el, 1], tabnod_py[i_el, 4], tabnod_py[i_el, 3]],
@@ -856,14 +891,14 @@ class FemMesh:
         # This is for testing only. Normally turn off
         check_tris = False
         if check_tris:
-            check_triangulation(self._v_mshpt_xy[0, :], self._v_mshpt_xy[1, :], v_triang1p)
+            check_triangulation(self.node_coordinates[0, :], self.node_coordinates[1, :], v_triang1p)
 
         v_x6p, v_y6p = self.get_fullmesh_nodes_xy()
 
         # triangulations:  x and y coords of all points, list of triangles defined by triples of indices of the points
         tri_triang6p = matplotlib.tri.Triangulation(v_x6p, v_y6p, v_triang6p)
         tri_triang1p = matplotlib.tri.Triangulation(
-            self._v_mshpt_xy[0, :], self._v_mshpt_xy[1, :], v_triang1p
+            self.node_coordinates[0, :], self.node_coordinates[1, :], v_triang1p
         )
 
         draw_triangulation = False
@@ -872,11 +907,11 @@ class FemMesh:
                 v_x6p / SI_um, v_y6p / SI_um, v_triang6p
             )
             pl_tri_triang1p = matplotlib.tri.Triangulation(
-                self._v_mshpt_xy[0, :] / SI_um, self._v_mshpt_xy[1, :] / SI_um, v_triang1p
+                self.node_coordinates[0, :] / SI_um, self.node_coordinates[1, :] / SI_um, v_triang1p
             )
 
             self._save_triangulation_plots(
-                pl_tri_triang1p, pl_tri_triang6p, self._v_mshpt_xy / SI_um
+                pl_tri_triang1p, pl_tri_triang6p, self.node_coordinates / SI_um
             )
 
         # The trifinder only works with triang1p, not triang6p.
@@ -936,19 +971,19 @@ class FemMesh:
 
         Used only by the raw mode plotter in plotmoderaw.py.
         """
-        if self._m_elnd_to_mshpt is None or self._v_mshpt_xy is None:
+        if self.element_node_connectivity is None or self.node_coordinates is None:
             raise RuntimeError("Mesh not loaded")
 
-        v_x6p = np.zeros(6 * self._n_msh_el)
-        v_y6p = np.zeros(6 * self._n_msh_el)
+        v_x6p = np.zeros(6 * self.num_elements)
+        v_y6p = np.zeros(6 * self.num_elements)
 
-        tabnod_py = self._m_elnd_to_mshpt.T - 1  # shift fortran to python indexing
+        tabnod_py = self.element_node_connectivity.T - 1  # shift fortran to python indexing
 
         i = 0
-        for i_el in range(self._n_msh_el):
+        for i_el in range(self.num_elements):
             for i_node in range(6):
                 i_ex = tabnod_py[i_el, i_node]
-                v_x6p[i], v_y6p[i] = self._v_mshpt_xy[:, i_ex]
+                v_x6p[i], v_y6p[i] = self.node_coordinates[:, i_ex]
                 i += 1
 
         return v_x6p, v_y6p

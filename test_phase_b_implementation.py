@@ -55,8 +55,8 @@ class MockFemMesh:
     
     def __init__(self, num_nodes=10, num_elements=4, elastic_material_indices=None):
         """Create a simple test mesh."""
-        self.num_nodes_ = num_nodes
-        self.num_elements_ = num_elements
+        self.num_nodes = num_nodes
+        self.num_elements = num_elements
         self.elastic_indices = elastic_material_indices or [2, 3]
         
         # Simple node coordinates arranged in a grid
@@ -77,12 +77,6 @@ class MockFemMesh:
         # Elements 0, 2 -> elastic (material 2, 3)
         # Elements 1, 3 -> vacuum (material 1)
         self._element_materials = np.array([2, 1, 3, 1], dtype=np.int64)
-    
-    def num_elements(self):
-        return self.num_elements_
-    
-    def num_nodes(self):
-        return self.num_nodes_
     
     def get_all_node_coordinates(self):
         return self._node_coordinates.copy()
@@ -216,7 +210,7 @@ class TestACMeshTrimmer:
         assert len(trim_data.node_convert_table) == trim_data.num_nodes
         # All values should be valid 0-based EM node indices
         for ac_idx, em_idx in trim_data.node_convert_table.items():
-            assert 0 <= em_idx < em_mesh.num_nodes()
+            assert 0 <= em_idx < em_mesh.num_nodes
             assert 0 <= ac_idx < trim_data.num_nodes
 
 
@@ -239,9 +233,9 @@ class TestFemMeshACBuildFromEM:
         ac_mesh.ac_build_from_em(wg, em_mesh)
         
         # Verify mesh properties are set
-        assert ac_mesh.num_elements() > 0
-        assert ac_mesh.num_nodes() > 0
-        assert ac_mesh.num_elements() <= 2  # Only 2 elastic elements
+        assert ac_mesh.num_elements > 0
+        assert ac_mesh.num_nodes > 0
+        assert ac_mesh.num_elements <= 2  # Only 2 elastic elements
     
     def test_ac_build_sets_element_convert_table(self):
         """Verify element conversion table is set after trimming."""
@@ -255,10 +249,10 @@ class TestFemMeshACBuildFromEM:
         # Element convert table should be populated
         convert_table = ac_mesh.get_element_convert_table()
         assert convert_table is not None
-        assert len(convert_table) == ac_mesh.num_elements()
+        assert len(convert_table) == ac_mesh.num_elements
         # All values should map to valid EM elements
         for ac_idx, em_idx in convert_table.items():
-            assert 0 <= em_idx < em_mesh.num_elements()
+            assert 0 <= em_idx < em_mesh.num_elements
     
     def test_ac_build_maintains_coordinates(self):
         """Verify AC mesh coordinates are properly extracted."""
@@ -273,7 +267,7 @@ class TestFemMeshACBuildFromEM:
         coords = ac_mesh.get_all_node_coordinates()
         assert np.all(np.isfinite(coords))
         # Should have correct shape
-        assert coords.shape == (2, ac_mesh.num_nodes())
+        assert coords.shape == (2, ac_mesh.num_nodes)
     
     def test_ac_build_deprecated_property_access(self):
         """Verify backward compatibility with deprecated el_convert_tbl property."""
@@ -310,7 +304,7 @@ class TestPhaseABackwardCompatibility:
         ac_mesh.ac_build_from_em(wg, em_mesh)
         
         # Should return positive integer
-        n_el = ac_mesh.num_elements()
+        n_el = ac_mesh.num_elements
         assert isinstance(n_el, int)
         assert n_el > 0
     
@@ -324,7 +318,7 @@ class TestPhaseABackwardCompatibility:
         ac_mesh.ac_build_from_em(wg, em_mesh)
         
         # Should return positive integer
-        n_pts = ac_mesh.num_nodes()
+        n_pts = ac_mesh.num_nodes
         assert isinstance(n_pts, int)
         assert n_pts > 0
     
@@ -338,7 +332,7 @@ class TestPhaseABackwardCompatibility:
         ac_mesh.ac_build_from_em(wg, em_mesh)
         
         coords = ac_mesh.get_all_node_coordinates()
-        assert coords.shape == (2, ac_mesh.num_nodes())
+        assert coords.shape == (2, ac_mesh.num_nodes)
         assert np.all(np.isfinite(coords))
     
     def test_get_all_element_connectivity_works(self):
@@ -351,11 +345,11 @@ class TestPhaseABackwardCompatibility:
         ac_mesh.ac_build_from_em(wg, em_mesh)
         
         connectivity = ac_mesh.get_all_element_connectivity()
-        assert connectivity.shape == (6, ac_mesh.num_elements())
+        assert connectivity.shape == (6, ac_mesh.num_elements)
         # Should be Fortran-indexed (>= 1)
         assert np.all(connectivity >= 1)
         # Should be valid node indices
-        assert np.all(connectivity <= ac_mesh.num_nodes())
+        assert np.all(connectivity <= ac_mesh.num_nodes)
 
 
 # ============================================================================

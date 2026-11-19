@@ -190,8 +190,8 @@ class EMSimulation(Simulation):
             ARPACK_tol,
             EM_FEM_debug,
             fm.mesh_mail_fname,
-            fm.n_msh_pts,
-            fm.n_msh_el,
+            fm.num_nodes,
+            fm.num_elements,
             #opt_props.n_mats_em,   # f2py figures this out from v_refindex, probably because not using f2py(depends)
             opt_props.v_refindexn,
             shortrun
@@ -237,10 +237,10 @@ class EMSimulation(Simulation):
             resm = nb_fortran.em_mode_power_sz_analytic(
                 self.k_0,
                 self.n_modes,
-                fm.n_msh_el,
-                fm.n_msh_pts,
-                fm.m_elnd_to_mshpt,
-                fm.v_mshpt_xy,
+                fm.num_elements,
+                fm.num_nodes,
+                fm.element_node_connectivity,
+                fm.node_coordinates,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -256,10 +256,10 @@ class EMSimulation(Simulation):
             resm = nb_fortran.em_mode_power_sz_quadrature(
                 self.k_0,
                 self.n_modes,
-                fm.n_msh_el,
-                fm.n_msh_pts,
-                fm.m_elnd_to_mshpt,
-                fm.v_mshpt_xy,
+                fm.num_elements,
+                fm.num_nodes,
+                fm.element_node_connectivity,
+                fm.node_coordinates,
                 self.eigs_kz,
                 self.fem_evecs,
             )
@@ -293,12 +293,12 @@ class EMSimulation(Simulation):
                 # # Integration by quadrature. Slowest.
                 resm = nb_fortran.em_mode_act_energy_quadrature(
                     self.n_modes,
-                    fm.n_msh_el,
-                    fm.n_msh_pts,
-                    fm.m_elnd_to_mshpt,
-                    fm.v_mshpt_xy,
+                    fm.num_elements,
+                    fm.num_nodes,
+                    fm.element_node_connectivity,
+                    fm.node_coordinates,
                     opt_props.n_mats_em,
-                    fm.v_el_2_mat_idx,
+                    fm.element_materials,
                     opt_props.v_refindexn,
                     self.fem_evecs,
                 )
@@ -392,7 +392,14 @@ class ACSimulation(Simulation):
         self.ls_material = None
 
         self.fem_mesh = FemMesh()
-        self.fem_mesh.ac_build_from_em(structure, self.simres_EM.fem_mesh)
+        
+        if simres_EM is not None:
+            # Use EM mesh from previous EM calculation
+            self.fem_mesh.ac_build_from_em(structure, simres_EM.fem_mesh)
+        else:
+            # Build AC mesh directly from Mail file without EM eigensolve
+            self.fem_mesh.ac_build_from_gmsh_mail(structure)
+
 
 
     def is_AC(self):
@@ -443,12 +450,12 @@ class ACSimulation(Simulation):
             elastic_props.rho,
             fm.ac_mesh_from_em,
             fm.mesh_mail_fname,
-            #fm.n_msh_pts,           #f2py figures out from arrays
-            #fm.n_msh_el,            #f2py figures out from arrays
-            fm.node_physindex,  # => fort: type_nod
-            fm.m_elnd_to_mshpt,       # => fort: m_elnd_to_mshpt
-            fm.v_el_2_mat_idx,  # => fort: type_el
-            fm.v_mshpt_xy,         # => fort: v_mshpt_xy
+            #fm.num_nodes,           #f2py figures out from arrays
+            #fm.num_elements,            #f2py figures out from arrays
+            fm.node_physical_indices,  # => fort: type_nod
+            fm.element_node_connectivity,       # => fort: m_elnd_to_mshpt
+            fm.element_materials,  # => fort: type_el
+            fm.node_coordinates,         # => fort: v_mshpt_xy
         )
 
         (
@@ -464,16 +471,16 @@ class ACSimulation(Simulation):
 
                 # Retrieve the material properties of each mesh point.
         self.ls_material = nb_fortran.array_material_ac(
-            fm.n_msh_el,
+            fm.num_elements,
             elastic_props.n_mats_ac,
-            fm.v_el_2_mat_idx,
+            fm.element_materials,
             elastic_props.rho,
             elastic_props.c_IJ,
             elastic_props.p_ijkl,
             elastic_props.eta_ijkl,
         )
 
-        # TODO: ls_material is isotropic parts of all elastic properties (repeated 6 times) by mesh elt: [10 x 6 xn_msh_el]
+        # TODO: ls_material is isotropic parts of all elastic properties (repeated 6 times) by mesh elt: [10 x 6 xnum_elements]
         # rho, c11, c12, c44, p11, p12, p44, eta11, eta12, eta44
         # doesn't seem very useful. May as well turn off.
 
@@ -497,12 +504,12 @@ class ACSimulation(Simulation):
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                 resm = nb_fortran.ac_mode_power_analytic(
                     self.n_modes,
-                    fm.n_msh_el,
-                    fm.n_msh_pts,
-                    fm.v_mshpt_xy,
-                    fm.m_elnd_to_mshpt,
+                    fm.num_elements,
+                    fm.num_nodes,
+                    fm.node_coordinates,
+                    fm.element_node_connectivity,
                     elastic_props.n_mats_ac,
-                    fm.v_el_2_mat_idx,
+                    fm.element_materials,
                     elastic_props.c_IJ,
                     self.q_AC,
                     Omega_AC,
@@ -519,12 +526,12 @@ class ACSimulation(Simulation):
                 # Integration by quadrature. Slowest.
                 resm = nb_fortran.ac_mode_power_quadrature(
                     self.n_modes,
-                    fm.n_msh_el,
-                    fm.n_msh_pts,
-                    fm.v_mshpt_xy,
-                    fm.m_elnd_to_mshpt,
+                    fm.num_elements,
+                    fm.num_nodes,
+                    fm.node_coordinates,
+                    fm.element_node_connectivity,
                     elastic_props.n_mats_ac,
-                    fm.v_el_2_mat_idx,
+                    fm.element_materials,
                     #elastic_props.c_IJ,
                     #elastic_props.c_ijkz,
                     elastic_props.c_zjkl,
@@ -550,13 +557,13 @@ class ACSimulation(Simulation):
             # Semi-analytic integration. Fastest!
             resm = nb_fortran.ac_mode_energy_analytic(
                 self.n_modes,
-                fm.n_msh_el,
-                fm.n_msh_pts,
-                #fm.n_nodes,
-                fm.m_elnd_to_mshpt,
-                fm.v_mshpt_xy,
+                fm.num_elements,
+                fm.num_nodes,
+                #fm.num_nodes,
+                fm.element_node_connectivity,
+                fm.node_coordinates,
                 elastic_props.n_mats_ac,
-                fm.v_el_2_mat_idx,
+                fm.element_materials,
                 elastic_props.rho,
                 Omega_AC,
                 self.fem_evecs,
@@ -573,13 +580,13 @@ class ACSimulation(Simulation):
             # Integration by quadrature. Slowest.
             resm = nb_fortran.ac_mode_energy_quadrature(
                 self.n_modes,
-                fm.n_msh_el,
-                fm.n_msh_pts,
-                fm.v_mshpt_xy,
-                #fm.n_nodes,
-                fm.m_elnd_to_mshpt,
+                fm.num_elements,
+                fm.num_nodes,
+                fm.node_coordinates,
+                #fm.num_nodes,
+                fm.element_node_connectivity,
                 elastic_props.n_mats_ac,
-                fm.v_el_2_mat_idx,
+                fm.element_materials,
                 elastic_props.rho,
                 Omega_AC,
                 self.fem_evecs,
@@ -656,12 +663,12 @@ class ACSimulation(Simulation):
             if tstruc.using_linear_elements():
                 resm = nb_fortran.ac_alpha_analytic(
                     self.n_modes,
-                    fm.n_msh_el,
-                    fm.n_msh_pts,
-                    fm.m_elnd_to_mshpt,
-                    fm.v_mshpt_xy,
+                    fm.num_elements,
+                    fm.num_nodes,
+                    fm.element_node_connectivity,
+                    fm.node_coordinates,
                     elastic_props.n_mats_ac,
-                    fm.v_el_2_mat_idx,
+                    fm.element_materials,
                     elastic_props.eta_ijkl,
                     self.q_AC,
                     Omega_AC,
@@ -681,12 +688,12 @@ class ACSimulation(Simulation):
                 # overlap = np.zeros(self.n_modes, dtype=complex)
                 resm = nb_fortran.ac_alpha_quadrature(
                     self.n_modes,
-                    fm.n_msh_el,
-                    fm.n_msh_pts,
-                    fm.v_mshpt_xy,
-                    fm.m_elnd_to_mshpt,
+                    fm.num_elements,
+                    fm.num_nodes,
+                    fm.node_coordinates,
+                    fm.element_node_connectivity,
                     elastic_props.n_mats_ac,
-                    fm.v_el_2_mat_idx,
+                    fm.element_materials,
                     elastic_props.eta_ijkl,
                     self.q_AC,
                     Omega_AC,

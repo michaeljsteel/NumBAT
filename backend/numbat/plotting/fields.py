@@ -105,7 +105,7 @@ class FEMScalarFieldPlotter:
 
     def n_elts(self) -> int:  # NAME PROBLEMATIC
         """Return the number of finite elements in the underlying mesh."""
-        return self.fem_mesh.n_msh_el
+        return self.fem_mesh.num_elements
 
     def fill_quantity_by_material_index(self, mati_to_scalars: np.ndarray) -> None:
         """Populate scalar fields from values indexed by material.
@@ -121,7 +121,7 @@ class FEMScalarFieldPlotter:
         else:
             mati_to_vals = np.expand_dims(copy.deepcopy(mati_to_scalars), axis=1)
 
-        n_elts = self.fem_mesh.n_msh_el
+        n_elts = self.fem_mesh.num_elements
         self.scalar_fields = []
         for i in range(self.dim):
             t_scalar_field = np.zeros([6, n_elts], dtype=np.float64)

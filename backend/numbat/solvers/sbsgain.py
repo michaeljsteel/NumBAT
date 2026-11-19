@@ -491,19 +491,20 @@ def gain_and_qs(
     #opt_props = struc.optical_props
     el_props = struc.elastic_props
 
-    nnodes = fem_ac.n_nodes
+    # Number of nodes per element for EM fields (6 lower-order nodes from P2 elements)
+    nnodes = 6
 
     trimmed_EM_pump_field = np.zeros(
-        (ncomps, nnodes, n_modes_EM_pump, fem_ac.n_msh_el), dtype=complex
+        (ncomps, nnodes, n_modes_EM_pump, fem_ac.num_elements), dtype=complex
     )
     trimmed_EM_Stokes_field = np.zeros(
-        (ncomps, nnodes, n_modes_EM_Stokes, fem_ac.n_msh_el), dtype=complex
+        (ncomps, nnodes, n_modes_EM_Stokes, fem_ac.num_elements), dtype=complex
     )
 
     # We want EM fields on the AC grid and only the first six FEM nodes per elt
     # of the full 13 FEM
-    for el in range(fem_ac.n_msh_el):
-        new_el = fem_ac.el_convert_tbl[el]
+    for el in range(fem_ac.num_elements):
+        new_el = fem_ac.element_convert_table[el]
         trimmed_EM_pump_field[:, :, :, el] = sim_EM_pump.fem_evecs[:, :6, :, new_el]
         trimmed_EM_Stokes_field[:, :, :, el] = sim_EM_Stokes.fem_evecs[:, :6, :, new_el]
 
@@ -528,12 +529,12 @@ def gain_and_qs(
         EM_mode_index_pump_fortran,
         EM_mode_index_Stokes_fortran,
         AC_mode_index_fortran,
-        fem_ac.n_msh_el,
-        fem_ac.n_msh_pts,
-        fem_ac.m_elnd_to_mshpt,
-        fem_ac.v_mshpt_xy,
+        fem_ac.num_elements,
+        fem_ac.num_nodes,
+        fem_ac.element_node_connectivity,
+        fem_ac.node_coordinates,
         elastic_props.n_mats_ac,
-        fem_ac.v_el_2_mat_idx,
+        fem_ac.element_materials,
         elastic_props.p_ijkl,
         q_AC,
         trimmed_EM_pump_field,
@@ -600,12 +601,12 @@ def gain_and_qs(
         EM_mode_index_pump_fortran,
         EM_mode_index_Stokes_fortran,
         AC_mode_index_fortran,
-        fem_ac.n_msh_el,
-        fem_ac.n_msh_pts,
-        fem_ac.m_elnd_to_mshpt,
-        fem_ac.v_mshpt_xy,
+        fem_ac.num_elements,
+        fem_ac.num_nodes,
+        fem_ac.element_node_connectivity,
+        fem_ac.node_coordinates,
         elastic_props.n_mats_ac,
-        fem_ac.v_el_2_mat_idx,
+        fem_ac.element_materials,
         typ_select_in,
         typ_select_out,
         trimmed_EM_pump_field,
@@ -673,9 +674,9 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
     # field mapping
     x_tmp = []
     y_tmp = []
-    for i in np.arange(simres.n_msh_pts):
-        x_tmp.append(simres.v_mshpt_xy[0, i])
-        y_tmp.append(simres.v_mshpt_xy[1, i])
+    for i in np.arange(simres.num_nodes):
+        x_tmp.append(simres.node_coordinates[0, i])
+        y_tmp.append(simres.node_coordinates[1, i])
     x_min, x_max = np_min_max(x_tmp)
     y_min, y_max = np_min_max(y_tmp)
 
@@ -694,21 +695,21 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
     v_y = np.array(v_y)
 
     # unrolling data for the interpolators
-    m_elnd_to_mshpt = simres.m_elnd_to_mshpt.T
-    v_mshpt_xy = simres.v_mshpt_xy.T
+    m_elnd_to_mshpt = simres.element_node_connectivity.T
+    v_mshpt_xy = simres.node_coordinates.T
 
     sym_list = []
 
     for mode_index in range(len(simres.eigs_kz)):
         # dense triangulation with multiple points
-        v_x6p = np.zeros(6 * simres.n_msh_el)
-        v_y6p = np.zeros(6 * simres.n_msh_el)
-        v_Ex6p = np.zeros(6 * simres.n_msh_el, dtype=np.complex128)
-        v_Ey6p = np.zeros(6 * simres.n_msh_el, dtype=np.complex128)
+        v_x6p = np.zeros(6 * simres.num_elements)
+        v_y6p = np.zeros(6 * simres.num_elements)
+        v_Ex6p = np.zeros(6 * simres.num_elements, dtype=np.complex128)
+        v_Ey6p = np.zeros(6 * simres.num_elements, dtype=np.complex128)
         v_triang6p = []
 
         i = 0
-        for i_el in np.arange(simres.n_msh_el):
+        for i_el in np.arange(simres.num_elements):
             # triangles
             idx = np.arange(6 * i_el, 6 * (i_el + 1))
             triangles = [
@@ -731,7 +732,7 @@ def symmetries(simres, n_points=10, negligible_threshold=1e-5):
 
         # dense triangulation with unique points
         v_triang1p = []
-        for i_el in np.arange(simres.n_msh_el):
+        for i_el in np.arange(simres.num_elements):
             # triangles
             triangles = [
                 [

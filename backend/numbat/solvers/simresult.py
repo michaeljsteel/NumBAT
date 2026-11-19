@@ -482,10 +482,10 @@ class EMSimResult(SimResult):
         self.fem_evecs_H = nb_fortran.h_mode_field_ez(
             self.k_0,
             n_modes,
-            fm.n_msh_el,
-            fm.n_msh_pts,
-            fm.m_elnd_to_mshpt,
-            fm.v_mshpt_xy,
+            fm.num_elements,
+            fm.num_nodes,
+            fm.element_node_connectivity,
+            fm.node_coordinates,
             self.eigs_kz,
             self.fem_evecs,
         )

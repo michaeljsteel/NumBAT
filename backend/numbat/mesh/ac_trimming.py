@@ -76,76 +76,82 @@ class ACMeshTrimmer:
             ValueError: If trimming results in no acoustic elements
         """
         # Extract full EM mesh data using accessors
-        n_msh_el_em = em_fem_mesh.num_elements()
-        m_elnd_to_mshpt_em = em_fem_mesh.get_all_element_connectivity()
-        v_mshpt_xy_em = em_fem_mesh.get_all_node_coordinates()
-        type_el_em = em_fem_mesh.get_all_element_materials()
+        # Fortran: n_msh_el, m_elnd_to_mshpt, v_mshpt_xy, type_el
+        num_elements_em = em_fem_mesh.num_elements
+        element_node_connectivity_em = em_fem_mesh.get_all_element_connectivity()
+        node_coordinates_em = em_fem_mesh.get_all_node_coordinates()
+        element_materials_em = em_fem_mesh.get_all_element_materials()
         
         # Phase 1: Filter elements to keep only those with elastic materials
-        type_el_ac = []  # Material index for each AC element
-        m_elnd_to_mshpt_ac_tmp = np.zeros(
-            np.shape(m_elnd_to_mshpt_em), dtype=np.int64
+        # Fortran: type_el
+        element_materials_ac = []  # Material index for each AC element
+        # Fortran: m_elnd_to_mshpt
+        element_node_connectivity_ac_tmp = np.zeros(
+            np.shape(element_node_connectivity_em), dtype=np.int64
         )
-        el_convert_tbl = {}  # Maps AC element index -> EM element index
+        element_convert_table = {}  # Maps AC element index -> EM element index
         
-        n_msh_el_ac = 0
-        for el in range(n_msh_el_em):
-            mat_idx = type_el_em[el]
+        num_elements_ac = 0
+        for el in range(num_elements_em):
+            mat_idx = element_materials_em[el]
             
             if elastic_props.is_elastic_material_index(mat_idx):
-                type_el_ac.append(
+                element_materials_ac.append(
                     elastic_props.active_material_index(mat_idx)
                 )
-                el_convert_tbl[n_msh_el_ac] = el
-                m_elnd_to_mshpt_ac_tmp[:, n_msh_el_ac] = m_elnd_to_mshpt_em[:, el]
-                n_msh_el_ac += 1
+                element_convert_table[num_elements_ac] = el
+                element_node_connectivity_ac_tmp[:, num_elements_ac] = element_node_connectivity_em[:, el]
+                num_elements_ac += 1
         
-        if n_msh_el_ac == 0:
+        if num_elements_ac == 0:
             raise ValueError(
                 "AC mesh trimming produced no elastic elements. "
                 "Check that elastic_props.is_elastic_material_index() identifies at least one material."
             )
         
         # Phase 2: Extract unique nodes used by AC elements
-        nodes_ac_mul = []  # Collect all nodes (with duplicates)
-        for el in range(n_msh_el_ac):
-            nodes_ac_mul.extend(m_elnd_to_mshpt_ac_tmp[:6, el])
+        ac_nodes_with_duplicates = []  # Collect all nodes (with duplicates)
+        for el in range(num_elements_ac):
+            ac_nodes_with_duplicates.extend(element_node_connectivity_ac_tmp[:6, el])
         
         # Remove duplicates and sort for consistent ordering
         # Note: nodes are 1-based Fortran indices at this point
-        nodes_ac_1based = sorted(set(nodes_ac_mul))
+        ac_nodes_1based = sorted(set(ac_nodes_with_duplicates))
         # Convert to 0-based Python indices for the mapping
-        nodes_ac = [n - 1 for n in nodes_ac_1based]
-        n_msh_pts_ac = len(nodes_ac)
+        ac_nodes_0based = [n - 1 for n in ac_nodes_1based]
+        num_nodes_ac = len(ac_nodes_0based)
         
-        # Phase 3: Create node remapping table (0-based EM node index -> 0-based AC node index)
-        d_nodes_2_acnodes = {}  # Maps 1-based EM node idx (from connectivity) -> 0-based AC node idx
-        node_convert_tbl = {}  # Maps 0-based AC node idx -> 0-based EM node idx
-        for i, em_node_idx_0based in enumerate(nodes_ac):
+        # Phase 3: Create node remapping table (1-based EM node idx from connectivity -> 0-based AC node idx)
+        # Fortran: n_msh_pts (for num_nodes_ac)
+        em_node_to_ac_node_map = {}  # Maps 1-based EM node idx (from connectivity) -> 0-based AC node idx
+        node_convert_table = {}  # Maps 0-based AC node idx -> 0-based EM node idx
+        for i, em_node_idx_0based in enumerate(ac_nodes_0based):
             em_node_idx_1based = em_node_idx_0based + 1
-            d_nodes_2_acnodes[em_node_idx_1based] = i
-            node_convert_tbl[i] = em_node_idx_0based
+            em_node_to_ac_node_map[em_node_idx_1based] = i
+            node_convert_table[i] = em_node_idx_0based
         
         # Phase 4: Remap element connectivity to use AC node indices
-        m_elnd_to_mshpt_ac = []
+        # Fortran: m_elnd_to_mshpt
+        element_node_connectivity_ac = []
         for i in range(6):
             el_tbl = []
-            for el in range(n_msh_el_ac):
-                el_tbl.append(d_nodes_2_acnodes[m_elnd_to_mshpt_ac_tmp[i][el]])
-            m_elnd_to_mshpt_ac.append(el_tbl)
+            for el in range(num_elements_ac):
+                el_tbl.append(em_node_to_ac_node_map[element_node_connectivity_ac_tmp[i][el]])
+            element_node_connectivity_ac.append(el_tbl)
         
         # Convert to numpy array and adjust to Fortran indexing (1-based)
-        m_elnd_to_mshpt_ac = np.array(m_elnd_to_mshpt_ac, dtype=np.int64) + 1
+        element_node_connectivity_ac = np.array(element_node_connectivity_ac, dtype=np.int64) + 1
         
         # Phase 5: Extract coordinates for AC nodes
-        v_mshpt_xy_ac = np.zeros((2, n_msh_pts_ac))
-        for ac_node_idx, em_node_idx_0based in enumerate(nodes_ac):
-            v_mshpt_xy_ac[:, ac_node_idx] = v_mshpt_xy_em[:, em_node_idx_0based]
+        # Fortran: v_mshpt_xy
+        node_coordinates_ac = np.zeros((2, num_nodes_ac))
+        for ac_node_idx, em_node_idx_0based in enumerate(ac_nodes_0based):
+            node_coordinates_ac[:, ac_node_idx] = node_coordinates_em[:, em_node_idx_0based]
         
         return ACMeshTrimData(
-            element_node_connectivity=m_elnd_to_mshpt_ac,
-            node_coordinates=v_mshpt_xy_ac,
-            element_materials=type_el_ac,
-            element_convert_table=el_convert_tbl,
-            node_convert_table=node_convert_tbl,
+            element_node_connectivity=element_node_connectivity_ac,
+            node_coordinates=node_coordinates_ac,
+            element_materials=element_materials_ac,
+            element_convert_table=element_convert_table,
+            node_convert_table=node_convert_table,
         )

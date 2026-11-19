@@ -180,8 +180,8 @@ def calculate_element_strain(
 
 
 def _element_coordinates(fem_mesh):
-    node_indices = fem_mesh.m_elnd_to_mshpt.T - 1
-    return np.transpose(fem_mesh.v_mshpt_xy[:, node_indices], (1, 2, 0))
+    node_indices = fem_mesh.element_node_connectivity.T - 1
+    return np.transpose(fem_mesh.node_coordinates[:, node_indices], (1, 2, 0))
 
 
 def sample_native_strain(samples, points, tolerance=1e-12):
