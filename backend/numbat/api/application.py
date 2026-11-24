@@ -387,6 +387,18 @@ def NumBATPlotPrefs():
     return runtime.plot_prefs()
 
 
+def reload_plot_preferences(user_settings_file='', ignore_user_settings=False):
+    """Reload and replace the global plot preferences.
+
+    By default, preferences are read from the standard ``numbat.toml``
+    locations. Pass ``user_settings_file`` to load a specific file, or set
+    ``ignore_user_settings`` to restore NumBAT defaults.
+    """
+    prefs = PlotPrefs(user_settings_file, ignore_user_settings)
+    runtime.set_plot_prefs(prefs)
+    return prefs
+
+
 git_hash = runtime.git_hash
 version = runtime.version
 

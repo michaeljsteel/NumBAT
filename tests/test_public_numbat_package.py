@@ -52,6 +52,32 @@ for n in ('NumBATApp', 'load_simulation', 'register_waveguide_directory',
     assert res.returncode == 0, res.stderr
 
 
+def test_reload_plot_preferences_replaces_global_preferences(tmp_path):
+    first_prefs = tmp_path / "first.toml"
+    first_prefs.write_text(
+        '[all_plots]\nem_colormap_signed = "viridis"\nvector_arrow_scale = 4\n'
+        '[single_plots]\ntitle_fs = 20\n'
+    )
+    second_prefs = tmp_path / "second.toml"
+    second_prefs.write_text('[all_plots]\nac_colormap_signed = "plasma"\n')
+    code = f"""
+import numbat
+prefs = numbat.reload_plot_preferences({str(first_prefs)!r})
+assert numbat.NumBATPlotPrefs() is prefs
+assert prefs.cmap_em_field_signed == 'viridis'
+assert prefs.vecplot_arrow_scale == 4
+assert prefs.d_single['title_fs'] == 20
+prefs = numbat.reload_plot_preferences({str(second_prefs)!r})
+assert numbat.NumBATPlotPrefs() is prefs
+assert prefs.cmap_ac_field_signed == 'plasma'
+assert prefs.cmap_em_field_signed == 'seismic'
+assert prefs.vecplot_arrow_scale == 10
+assert prefs.d_single['title_fs'] == 16
+"""
+    res = _run(code)
+    assert res.returncode == 0, res.stderr
+
+
 @pytest.mark.parametrize(
     "stmt",
     [

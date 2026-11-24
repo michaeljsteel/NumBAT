@@ -20,6 +20,12 @@ either as ``~/.numbat.toml`` on Linux or MacOS, or ``numbat.toml`` on Windows.
 You can also places copies of this file in any working directory to override
 your normal defaults for a particular set of calculations.
 
+After changing the file while NumBAT is running, call
+``numbat.reload_plot_preferences()`` to reload the settings and replace the
+global plot preferences. Pass a file path to load a specific file, or set
+``ignore_user_settings=True`` to restore the NumBAT defaults. Preferences are
+used by subsequent plots; existing figures are not changed.
+
 
 Specifying and using anistropic materials
 
@@ -239,7 +245,6 @@ Required tensor components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 WRITE ME
-
 
 
 
