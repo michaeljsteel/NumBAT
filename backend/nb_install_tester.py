@@ -70,7 +70,7 @@ def check_shared_libs():
     if not is_windows():
         return True
 
-    req_libs = ['arpack.dll', 'mkl_intel_thread.2.dll' , 'mkl_rt.2.dll' , 'svml_dispmd.dll' , 'libifcoremd.dll' , 'libifportmd.dll' , 'libmmd.dll' , 'python313.dll' , 'libumfpack.dll' , 'libspqr.dll' , 'libcholmod.dll' , 'libklu.dll' , 'libcxsparse.dll' , 'libamd.dll' , 'libcamd.dll' , 'libbtf.dll' , 'libccolamd.dll' , 'libcolamd.dll' , 'libldl.dll']
+    req_libs = ['arpack.dll', 'mkl_intel_thread.3.dll' , 'mkl_rt.3.dll' , 'svml_dispmd.dll' , 'libifcoremd.dll' , 'libifportmd.dll' , 'libmmd.dll' , 'python313.dll' , 'libumfpack.dll' , 'libspqr.dll' , 'libcholmod.dll' , 'libklu.dll' , 'libcxsparse.dll' , 'libamd.dll' , 'libcamd.dll' , 'libbtf.dll' , 'libccolamd.dll' , 'libcolamd.dll' , 'libldl.dll']
 
     print('\nChecking required shared libraries...')
     all_found = True
