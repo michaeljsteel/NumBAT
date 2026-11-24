@@ -235,16 +235,13 @@ def strain_cut_points(sim_result, s_cut, val1, val2, n_points):
             x_points = np.linspace(val1[0] * SI_um, val2[0] * SI_um, n_points)
             y_points = np.linspace(val1[1] * SI_um, val2[1] * SI_um, n_points)
 
-    shift_x, shift_y = sim_result.get_xyshift()
-    displayed_x = x_points - shift_x
-    displayed_y = y_points - shift_y
     if s_cut.lower() == "x":
-        cut_axis = displayed_y
+        cut_axis = y_points
     elif s_cut.lower() == "y":
-        cut_axis = displayed_x
+        cut_axis = x_points
     else:
         cut_axis = np.hypot(
-            displayed_x - displayed_x[0], displayed_y - displayed_y[0]
+            x_points - x_points[0], y_points - y_points[0]
         )
 
     return cut_axis / SI_um, np.column_stack((x_points, y_points))

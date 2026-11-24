@@ -87,11 +87,10 @@ In [`structure.py`](backend/numbat/geometry/structure.py):
   to state µm.
 - Ensure positional and keyword arguments use the same new convention,
   including the old `unitcell_x` and `unitcell_y` aliases if retained.
-- Update `set_xyshift_em()` and `set_xyshift_ac()` to accept µm and store
-  metres using `SI_um`. Their values feed plotting via
-  [`mode_sampling.py`](backend/numbat/solvers/mode_sampling.py).
-- Update examples such as the onion tutorial that derive shifts from
-  `domain_x`.
+- Update the creation-time `translation=(x, y)` argument to use µm, and
+  adjust its conversion to normalised Gmsh coordinates and wireframe plotting.
+  The former separate EM/AC plotting-shift setters have been removed.
+- Update examples that provide translation or derive it from `domain_x`.
 
 The migration must cover more than standard inclusion dimensions: slab widths
 and heights, coating thicknesses, gaps, separations, radii, offsets, and
@@ -220,7 +219,7 @@ Build tests around physical equivalence, not just changed strings:
    circular, rib/slot, onion, rounded, and external templates; check bounds,
    connectivity/material regions, and ratios.
 4. **Plotting:** check outline dimensions, material plot axes, mode-plot limits,
-   and EM/AC shifts in µm.
+   and shared structure translation in µm.
 5. **Mesh paths:** check the initial plotting mesh is in µm; solved EM mesh and
    both direct and EM-derived AC meshes are in metres. Extend
    [`test_ac_mesh_units.py`](tests/test_ac_mesh_units.py) with new-unit inputs.
@@ -235,7 +234,7 @@ Build tests around physical equivalence, not just changed strings:
 
 1. Decide the breaking-change/legacy policy and saved-result expectations.
 2. Capture baseline cases and add equivalence tests.
-3. Change the core unit boundaries and shifts.
+3. Change the core unit boundaries and structure translation.
 4. Migrate built-in geometry classes and templates together.
 5. Migrate the user-waveguide example, documentation, and active examples.
 6. Run mesh, plotting, and real-solver comparisons; address remaining cases

@@ -114,12 +114,6 @@ class SimResult:
             self._mode_interpolator = ModeInterpolator(self)
         return self._mode_interpolator
 
-    def get_xyshift(self):
-        if self.is_EM():
-            return self._structure.shift_em_x, self._structure.shift_em_y
-        else:
-            return self._structure.shift_ac_x, self._structure.shift_ac_y
-
     # this is clumsy and only works if called after modes have been calced.
     def set_r0_offset(self, rx, ry):
         # print('set_r0_offset is depreacated')

@@ -654,10 +654,9 @@ class ModeAC(Mode):
         """Sample all physical strain parts onto the standard 2D plot grid."""
         mode_interpolator = self.mode_interpolator
         mode_interpolator.define_plot_grid_2D(n_pts=n_pts)
-        shift_x, shift_y = self.sim_result.get_xyshift()
         sample_points = np.column_stack((
-            mode_interpolator.xy_raw["m_x"].flatten("F") - shift_x,
-            mode_interpolator.xy_raw["m_y"].flatten("F") - shift_y,
+            mode_interpolator.xy_raw["m_x"].flatten("F"),
+            mode_interpolator.xy_raw["m_y"].flatten("F"),
         ))
         native_samples = strain_sampling.calculate_mode_strain(
             self.sim_result, self.mode_num

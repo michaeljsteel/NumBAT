@@ -20,7 +20,7 @@ import starter
 
 # Geometric Parameters - all in nm.
 lambda_um = 1.550
-domain_x = 3.5*lambda_nm
+domain_x = 3.5*lambda_um*1000
 domain_y = domain_x
 inc_shape = 'onion'
 
@@ -55,11 +55,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x=d_lo,
                            lc_bkg=.1, lc_refine_1=5.0*refine_fac, lc_refine_2=5.0*refine_fac)
 
 # wguide.check_mesh()
-# Move origin to nominal centre of waveguide, y adjustment needs refinement based on mesh template.
-# Note different shifts are allowed for EM and acoustic, because acoustic domain excludes vacuum regions
-# Shifts are in nm
-wguide.set_xyshift_em(-domain_x*.5, domain_y*.5)
-wguide.set_xyshift_ac(-domain_x*.5, domain_y*.5)
+# The square onion template is already centred at the origin.
 
 # wguide.plot_mesh()
 

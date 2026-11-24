@@ -12,12 +12,13 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 import numbat
 from numbat import materials, runtime
 from numbat.geometry.structure import Structure
+from numbat.mesh import templates
 from numbat.mesh.fem import FemMesh
 from numbat.mesh.gmsh_io import read_msh2_mesh
 from numbat.mesh.mail import MailData
-from numbat.mesh import templates
 from numbat.plotting.modes import PlotParams2D
-from numbat.solvers.modecalcs import ACSimulation
+from numbat.solvers import sbsgain, strain_sampling
+from numbat.solvers.modecalcs import ACSimulation, Simulation
 
 
 @pytest.fixture
@@ -175,7 +176,7 @@ def test_translation_preserves_geometry_and_material_regions(
         )
 
 
-def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp):
+def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp, tmp_path, monkeypatch):
     with pytest.warns(UserWarning, match="point-based"):
         structure = build_rectangular(nbapp, translation=(200.0, -100.0))
 
@@ -203,7 +204,37 @@ def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp):
         rtol=1e-9, atol=1e-3,
     )
 
+    direct_ac.calc_field_energies()
     direct_ac.make_result()
+    prefix = str(tmp_path / "translated_ac")
+    direct_ac.save_simulation(prefix)
+    restored = Simulation.load_simulation(prefix)
+    assert restored.structure.translation == (200.0, -100.0)
+    np.testing.assert_allclose(restored.fem_mesh.get_xy_limits(), direct_mesh.get_xy_limits())
+
+    profile = structure.get_structure_plotter_refractive_index(n_points=31)
+    profile_limits = profile.fem_mesh.get_xy_limits()
+    np.testing.assert_allclose(
+        [profile.v_x[0], profile.v_x[-1], profile.v_y[0], profile.v_y[-1]],
+        profile_limits,
+    )
+    profile_files = profile.make_plot_2D(
+        str(tmp_path / "translated-refractive-index")
+    )
+    assert profile_files and all(Path(filename).is_file() for filename in profile_files)
+
+    monkeypatch.chdir(tmp_path)
+    mesh_plot_files = structure.plot_mesh("translated-mesh", keep_singles=True)
+    assert len(mesh_plot_files) == 3
+    assert all(Path(filename).is_file() for filename in mesh_plot_files)
+
+    gain = sbsgain.get_gains_and_qs(
+        em, em, direct_ac.get_sim_result(), 1e7, fixed_Q=1000
+    )
+    total_gain = gain.gain_total_all()
+    assert np.all(np.isfinite(total_gain))
+    assert np.any(np.abs(total_gain) > 0)
+
     for mode, is_strain in (
         (em.get_mode(0), False), (direct_ac.get_sim_result().get_mode(0), True)
     ):
@@ -213,6 +244,16 @@ def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp):
         params["logamp"] = False
         if is_strain:
             mode.plot_strain(comps="xx", ax=ax, n_pts=31, plot_params=params)
+            coordinates, fields = mode._sample_strain_2d(31)
+            ix, iy = len(coordinates["v_x"]) // 2, len(coordinates["v_y"]) // 2
+            point = np.array([[
+                coordinates["v_x"][ix] * 1e-6,
+                coordinates["v_y"][iy] * 1e-6,
+            ]])
+            native = strain_sampling.calculate_mode_strain(mode.sim_result, mode.mode_num)
+            expected = strain_sampling.sample_native_strain(native, point)[0, 0].real
+            assert np.isfinite(expected)
+            np.testing.assert_allclose(fields["Sxxr"][ix, iy], expected)
         else:
             mode.plot_mode(comps="x", ax=ax, n_pts=31, plot_params=params)
         patch = ax.patches[-1]

@@ -114,16 +114,14 @@ class ModeInterpolator:
         n_pts_x = int(n_pts * abs(x_max - x_min) / np.sqrt(area))
         n_pts_y = int(n_pts * abs(y_max - y_min) / np.sqrt(area))
 
-        shiftx, shifty = self.sim_result.get_xyshift()
-
         v_x = np.linspace(x_min, x_max, n_pts_x)
         v_y = np.linspace(y_min, y_max, n_pts_y)
         m_x, m_y = np.meshgrid(v_x, v_y)
 
         self.xy_raw = {"v_x": v_x, "v_y": v_y, "m_x": m_x, "m_y": m_y}
 
-        v_x_out = (v_x + shiftx) / SI_um
-        v_y_out = (v_y + shifty) / SI_um
+        v_x_out = v_x / SI_um
+        v_y_out = v_y / SI_um
         m_x_out, m_y_out = np.meshgrid(v_x_out, v_y_out)
 
         self.xy_out = {
@@ -134,14 +132,10 @@ class ModeInterpolator:
         }
 
         print(
-            "Structure has raw domain (x,y) = "
-            f" [{v_x[0] / SI_um:.5f}, {v_x[-1] / SI_um:.5f}] x"
-            f" [{v_y[0] / SI_um:.5f}, {v_y[-1] / SI_um:.5f}] (μm),"
-            "\n             mapped to (x',y') = "
+            "Structure domain (x,y) = "
             f" [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x"
             f" [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)"
         )
-        return shiftx, shifty
 
     def define_plot_grid_2D(self, n_pts=501):
         """Define an interpolation grid for a nominal ``n_pts**2`` samples."""
@@ -149,10 +143,10 @@ class ModeInterpolator:
             return
 
         fem_mesh = self.sim_result.fem_mesh
-        shiftx, shifty = self._choose_plot_points(n_pts)
+        self._choose_plot_points(n_pts)
 
-        v_x_flat = self.xy_raw["m_x"].flatten("F") - shiftx
-        v_y_flat = self.xy_raw["m_y"].flatten("F") - shifty
+        v_x_flat = self.xy_raw["m_x"].flatten("F")
+        v_y_flat = self.xy_raw["m_y"].flatten("F")
 
         nx, ny = len(self.xy_out["v_x"]), len(self.xy_out["v_y"])
         self.interper_f_2D = fem_mesh.make_interpolator_for_grid(
@@ -184,10 +178,6 @@ class ModeInterpolator:
         self.interper_f_1D = fem_mesh.make_interpolator_for_grid(
             v_x_flat, v_y_flat, nx, 1
         )
-
-        shiftx, shifty = self.sim_result.get_xyshift()
-        v_x_flat -= shiftx
-        v_y_flat -= shifty
 
         v_z_1D = np.sqrt(
             (v_x_flat - v_x_flat[0]) ** 2 + (v_y_flat - v_y_flat[0]) ** 2

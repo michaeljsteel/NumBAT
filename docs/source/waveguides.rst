@@ -100,10 +100,6 @@ calculations.
 
 .. warning::
 
-   The existing ``set_xyshift_em`` and ``set_xyshift_ac`` plotting offsets are
-   still applied separately and can cause an additional shift. A nonzero
-   translation emits a warning during this transition.
-
    Translation operates on Gmsh geometry points after the geometry script is
    generated. Custom scripts must support this point-based operation; scripts
    that generate meshes before the translation or use geometry and mesh

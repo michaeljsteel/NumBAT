@@ -33,7 +33,6 @@ from numbat.solvers.modecalcs import ac_mode_calculation, em_mode_calculation
 from .. import reporting, runtime
 from numbat.materials.materialprops import ElasticProps, OpticalProps
 from numbat.mesh import templates as mshtemplates
-from numbat.nbtypes import SI_nm
 from numbat.plotting import mesh as pltgmsh
 from numbat.plotting import profiles as pltprof
 from numbat.utils.numeric import is_real_number, run_subprocess
@@ -144,13 +143,6 @@ class Structure:
         # needed before building
         self.symmetry_flag = int(kwargs.get('symmetry_flag', 0))
 
-        # Minor stuff
-        self.shift_em_x = 0  # user requested offsets to coord-system
-        self.shift_em_y = 0
-        self.shift_ac_x = 0  # user requested offsets to coord-system
-        self.shift_ac_y = 0
-
-
     def __init__(self, *largs, **kwargs):
         """Initialise the Structure object."""
 
@@ -183,21 +175,11 @@ class Structure:
 
         self.elastic_props = ElasticProps(self, self.symmetry_flag)
 
-
     def get_material(self, k):
         return self.d_materials[k]
 
     def get_optical_materials(self):
         return list(self.d_materials.values())[: self.optical_props.n_mats_em]
-
-    def set_xyshift_em(self, x, y):
-        # Sets shift in grid from user perspective in nm
-        self.shift_em_x = x * SI_nm
-        self.shift_em_y = y * SI_nm
-
-    def set_xyshift_ac(self, x, y):
-        self.shift_ac_x = x * SI_nm
-        self.shift_ac_y = y * SI_nm
 
     def using_linear_elements(self):
         return self.inc_shape in self.linear_element_shapes
@@ -255,8 +237,7 @@ class Structure:
                 raise ValueError("translation normalised by domain_x must be finite.")
             geo_str += f'\nTranslate {{{tx:.17g}, {ty:.17g}, 0}} {{ Point{{:}}; }}\n'
             warnings.warn(
-                "Custom Gmsh geometry must support point-based translation. "
-                "Legacy EM and AC plotting shifts still apply separately.",
+                "Custom Gmsh geometry must support point-based translation.",
                 UserWarning,
                 stacklevel=2,
             )

@@ -167,8 +167,8 @@ def test_mode_strain_uses_acoustic_fem_storage_and_element_coordinates():
     fem_evecs = np.zeros((3, 6, 1, 1), dtype=np.complex128)
     fem_evecs[:, :, 0, 0] = displacements[0].T
     fem_mesh = SimpleNamespace(
-        m_elnd_to_mshpt=np.arange(1, 7, dtype=np.int64)[:, np.newaxis],
-        v_mshpt_xy=coordinates.T,
+        element_node_connectivity=np.arange(1, 7, dtype=np.int64)[:, np.newaxis],
+        node_coordinates=coordinates.T,
     )
     sim_result = SimpleNamespace(
         is_AC=lambda: True,
@@ -284,7 +284,6 @@ def test_strain_cut_points_match_standard_x_y_and_line_axes(monkeypatch):
     monkeypatch.setattr("numbat.solvers.strain_sampling.SI_um", 1.0)
     sim_result = SimpleNamespace(
         fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 2.0, 0.0, 4.0)),
-        get_xyshift=lambda: (0.5, 1.0),
     )
 
     x_axis, x_points = strain_cut_points(sim_result, "x", 1.0, None, 3)
@@ -293,9 +292,9 @@ def test_strain_cut_points_match_standard_x_y_and_line_axes(monkeypatch):
         sim_result, "line", (0.0, 0.0), (3.0, 4.0), 2
     )
 
-    np.testing.assert_allclose(x_axis, (-1.0, 1.0, 3.0))
+    np.testing.assert_allclose(x_axis, (0.0, 2.0, 4.0))
     np.testing.assert_allclose(x_points, ((1.0, 0.0), (1.0, 2.0), (1.0, 4.0)))
-    np.testing.assert_allclose(y_axis, (-0.5, 0.5, 1.5))
+    np.testing.assert_allclose(y_axis, (0.0, 1.0, 2.0))
     np.testing.assert_allclose(y_points, ((0.0, 2.0), (1.0, 2.0), (2.0, 2.0)))
     np.testing.assert_allclose(line_axis, (0.0, 5.0))
     np.testing.assert_allclose(line_points, ((0.0, 0.0), (3.0, 4.0)))
@@ -306,7 +305,6 @@ def test_native_strain_cut_preserves_first_interface_side(monkeypatch):
     samples = _interface_strain_samples()
     sim_result = SimpleNamespace(
         fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 1.0, 0.0, 1.0)),
-        get_xyshift=lambda: (0.0, 0.0),
     )
     monkeypatch.setattr(
         "numbat.solvers.strain_sampling.calculate_mode_strain",
@@ -348,7 +346,6 @@ def test_native_strain_cuts_match_affine_values(
         samples.values[..., component_index] = values
     sim_result = SimpleNamespace(
         fem_mesh=SimpleNamespace(get_xy_limits=lambda: (0.0, 1.0, 0.0, 1.0)),
-        get_xyshift=lambda: (0.0, 0.0),
     )
     monkeypatch.setattr(
         "numbat.solvers.strain_sampling.calculate_mode_strain",
@@ -387,7 +384,7 @@ def test_mode_ac_strain_plot_samples_native_values_and_routes_components(monkeyp
     mode = ModeAC.__new__(ModeAC)
     mode.mode_num = 0
     mode.mode_interpolator = mode_interpolator
-    mode.sim_result = SimpleNamespace(get_xyshift=lambda: (0.0, 0.0))
+    mode.sim_result = SimpleNamespace()
     captured = {}
 
     monkeypatch.setattr(

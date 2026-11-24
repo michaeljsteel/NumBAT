@@ -30,6 +30,18 @@ micrometres instead; for example, replace ``wl_nm=1550`` with
 ``wl_um=1.55``. Existing nanometre calls continue to work and emit a
 ``DeprecationWarning``. If both are supplied, ``wl_nm`` takes precedence.
 
+Structure coordinate shifts
+---------------------------
+
+``set_xyshift_em`` and ``set_xyshift_ac`` have been removed. Specify a single
+``translation=(x, y)`` in nanometres when creating the structure instead.
+This moves the mesh and wireframe together, with positive values moving in
+the positive coordinate direction. EM and AC calculations share this origin;
+separate old plotting offsets cannot in general be converted automatically.
+Review the original geometry and cut coordinates when migrating a script.
+
+The independent ``set_r0_offset`` and width-reference APIs remain unchanged.
+
 
 .. _field-selection-migration-label:
 
@@ -79,7 +91,8 @@ raise ``ImportError`` with the corresponding public ``numbat`` import path.
 What does *not* change:
 
 - You still add the ``backend`` directory to ``sys.path`` (or set ``PYTHONPATH``).
-- All function, class and method names, and all calculation results, are unchanged.
+- Apart from the migrations described above, function, class and method names,
+  and calculation results, are unchanged.
 - ``numbat.NumBATApp``, ``numbat.load_simulation`` and every other name that
   used to be available as ``numbat.<name>`` still is.
 - Saved simulation results and meshes load as before.

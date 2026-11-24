@@ -816,10 +816,7 @@ def test_mode_sampler_reuses_the_cached_2d_interpolation_grid():
             return lambda field: field
 
     fem_mesh = FemMesh()
-    simulation_result = SimpleNamespace(
-        fem_mesh=fem_mesh,
-        get_xyshift=lambda: (0.0, 0.0),
-    )
+    simulation_result = SimpleNamespace(fem_mesh=fem_mesh)
     sampler = SamplingModeInterpolator(simulation_result)
 
     sampler.define_plot_grid_2D(n_pts=10)
