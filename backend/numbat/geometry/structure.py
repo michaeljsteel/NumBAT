@@ -236,11 +236,6 @@ class Structure:
             if not math.isfinite(tx) or not math.isfinite(ty):
                 raise ValueError("translation normalised by domain_x must be finite.")
             geo_str += f'\nTranslate {{{tx:.17g}, {ty:.17g}, 0}} {{ Point{{:}}; }}\n'
-            warnings.warn(
-                "Custom Gmsh geometry must support point-based translation.",
-                UserWarning,
-                stacklevel=2,
-            )
 
         path_geo_out = self.msh_location_out / msh_inst_fname
 
