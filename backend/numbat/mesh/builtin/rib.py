@@ -137,7 +137,7 @@ class TrapezoidalRib(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -161,6 +161,7 @@ class TrapezoidalRib(UserGeometryBase):
                 [-slab_w / 2, -slab_h],
             ]
         )
+        vertices += delta_xy
 
         ax.add_patch(
             mplpatches.Polygon(
@@ -217,7 +218,7 @@ class Rib(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -239,6 +240,7 @@ class Rib(UserGeometryBase):
                 [-slab_w / 2, -slab_h],
             ]
         )
+        vertices += delta_xy
 
         ax.add_patch(
             mplpatches.Polygon(
@@ -481,7 +483,7 @@ class RibMkII(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -511,6 +513,7 @@ class RibMkII(UserGeometryBase):
                 #[-slab_w / 2, -slab_h],
             ]
         )
+        vertices += delta_xy
 
         ax.add_patch(
             mplpatches.Polygon(

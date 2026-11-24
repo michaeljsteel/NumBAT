@@ -19,7 +19,7 @@ class TwoIncl(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -36,7 +36,7 @@ class TwoIncl(UserGeometryBase):
         if shape == "circular":
             ax.add_patch(
                 mplpatches.Circle(
-                    (-sep / 2, 0),
+                    (-sep / 2 + delta_xy[0], delta_xy[1]),
                     widl,
                     facecolor=None,
                     fill=False,
@@ -47,7 +47,7 @@ class TwoIncl(UserGeometryBase):
 
             ax.add_patch(
                 mplpatches.Circle(
-                    (sep / 2, yoff),
+                    (sep / 2 + delta_xy[0], yoff + delta_xy[1]),
                     widr,
                     facecolor=None,
                     fill=False,
@@ -59,7 +59,10 @@ class TwoIncl(UserGeometryBase):
         else:
             ax.add_patch(
                 mplpatches.Rectangle(
-                    (-sep / 2 - widl / 2, -hgtl / 2),
+                    (
+                        -sep / 2 - widl / 2 + delta_xy[0],
+                        -hgtl / 2 + delta_xy[1],
+                    ),
                     widl,
                     hgtl,
                     facecolor=None,
@@ -71,7 +74,10 @@ class TwoIncl(UserGeometryBase):
 
             ax.add_patch(
                 mplpatches.Rectangle(
-                    (sep / 2 - widr / 2, yoff - hgtr / 2),
+                    (
+                        sep / 2 - widr / 2 + delta_xy[0],
+                        yoff - hgtr / 2 + delta_xy[1],
+                    ),
                     widr,
                     hgtr,
                     facecolor=None,
@@ -162,7 +168,7 @@ class TwoInclVert(UserGeometryBase):
 
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -174,10 +180,10 @@ class TwoInclVert(UserGeometryBase):
         xsep = self.get_param("inc_sep_x") * nmtoum
         ysep = self.get_param("inc_sep_y") * nmtoum
 
-        xu = -xsep / 2 - widu / 2
-        yu = ysep / 2 - hgtu / 2
-        xl = xsep / 2 - widl / 2
-        yl = -ysep / 2 - hgtu / 2
+        xu = -xsep / 2 - widu / 2 + delta_xy[0]
+        yu = ysep / 2 - hgtu / 2 + delta_xy[1]
+        xl = xsep / 2 - widl / 2 + delta_xy[0]
+        yl = -ysep / 2 - hgtu / 2 + delta_xy[1]
 
         ax.add_patch(
             mplpatches.Rectangle(

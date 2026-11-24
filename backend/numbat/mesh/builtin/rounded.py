@@ -367,7 +367,7 @@ class RoundedBowtie(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         geometry = _valid_wedge_geometry(
             self.get_param("rad_tip"),
             self.get_param("alpha_tip"),
@@ -379,8 +379,8 @@ class RoundedBowtie(UserGeometryBase):
 
         for outline in (right_outline, right_outline * np.array([-1, 1])):
             ax.plot(
-                outline[:, 0] * nmtoum,
-                outline[:, 1] * nmtoum,
+                outline[:, 0] * nmtoum + delta_xy[0],
+                outline[:, 1] * nmtoum + delta_xy[1],
                 color=styles["edgecolor"],
                 linewidth=styles["linewidth"],
             )
@@ -452,7 +452,7 @@ class RoundedWedge(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         alpha_tip = self.get_param("alpha_tip")
         bowlen_l = self.get_param("bowlen_l")
         rad_tip = self.get_param("rad_tip")
@@ -479,8 +479,8 @@ class RoundedWedge(UserGeometryBase):
         )
 
         ax.plot(
-            outline[:, 0] * nmtoum,
-            outline[:, 1] * nmtoum,
+            outline[:, 0] * nmtoum + delta_xy[0],
+            outline[:, 1] * nmtoum + delta_xy[1],
             color=styles["edgecolor"],
             linewidth=styles["linewidth"],
         )
@@ -561,14 +561,14 @@ class _RoundedWedgeN(UserGeometryBase):
             + k * 360.0 / self._num_wedges
         )
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         outline = _right_wedge_outline(self._single_wedge_geometry())
 
         for k in range(self._num_wedges):
             x, y = _rotate(outline[:, 0], outline[:, 1], np.radians(self._wedge_angle_deg(k)))
             ax.plot(
-                x * nmtoum,
-                y * nmtoum,
+                x * nmtoum + delta_xy[0],
+                y * nmtoum + delta_xy[1],
                 color=styles["edgecolor"],
                 linewidth=styles["linewidth"],
             )

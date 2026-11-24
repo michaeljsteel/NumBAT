@@ -175,6 +175,19 @@ def test_translation_preserves_geometry_and_material_regions(
             np.tile((0.15, -0.075), (2, 1)), atol=1e-10,
         )
 
+    styles = {"edgecolor": "black", "linewidth": 1}
+    original_axis, shifted_axis = Figure().subplots(), Figure().subplots()
+    original.wg_geom.draw_mpl_frame(original_axis, styles)
+    shifted.wg_geom.draw_mpl_frame(shifted_axis, styles, (0.3, -0.15))
+    if not original_axis.patches and not original_axis.lines:
+        assert not shifted_axis.patches and not shifted_axis.lines
+        return
+    np.testing.assert_allclose(
+        shifted_axis.dataLim.extents - original_axis.dataLim.extents,
+        (0.3, -0.15, 0.3, -0.15),
+        atol=1e-12,
+    )
+
 
 def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp, tmp_path, monkeypatch):
     with pytest.warns(UserWarning, match="point-based"):

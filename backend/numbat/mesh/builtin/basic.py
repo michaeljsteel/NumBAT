@@ -36,7 +36,7 @@ class Circular(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
 
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
@@ -44,7 +44,7 @@ class Circular(UserGeometryBase):
         rad = self.get_param("inc_a_x") * 0.5
 
         circ = mplpatches.Circle(
-            (0, 0),
+            delta_xy,
             rad * nmtoum,
             facecolor=None,
             fill=False,
@@ -82,7 +82,7 @@ class Rectangular(UserGeometryBase):
 
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
 
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
@@ -92,7 +92,7 @@ class Rectangular(UserGeometryBase):
 
         ax.add_patch(
             mplpatches.Rectangle(
-                (-wid / 2, -hgt / 2),
+                (-wid / 2 + delta_xy[0], -hgt / 2 + delta_xy[1]),
                 wid,
                 hgt,
                 facecolor=None,
@@ -178,7 +178,7 @@ class Triangular(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         EDGE_COLOR = styles['edgecolor']
         LINEWIDTH = styles['linewidth']
 
@@ -188,6 +188,7 @@ class Triangular(UserGeometryBase):
         vertices = np.array(
             [[-wid / 2, -hgt / 2], [-wid / 2 + xoff, hgt / 2], [wid / 2, -hgt / 2]]
         )
+        vertices += delta_xy
 
         ax.add_patch(
             mplpatches.Polygon(

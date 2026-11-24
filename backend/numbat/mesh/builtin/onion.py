@@ -32,7 +32,7 @@ def make_onion_subs():
     return subs
 
 
-def draw_onion_frame(ax, umb, styles):
+def draw_onion_frame(ax, umb, styles, delta_xy=(0.0, 0.0)):
     EDGE_COLOR = styles['edgecolor']
     LINEWIDTH = styles['linewidth']
 
@@ -65,7 +65,7 @@ def draw_onion_frame(ax, umb, styles):
                 rad += lwid
             ax.add_patch(
                 mplpatches.Circle(
-                    (0, 0),
+                    delta_xy,
                     rad * nmtoum,
                     facecolor=None,
                     fill=False,
@@ -107,8 +107,8 @@ class Onion(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class Onion1(UserGeometryBase):
@@ -148,8 +148,8 @@ class Onion1(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class Onion2(UserGeometryBase):
@@ -195,8 +195,8 @@ class Onion2(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class Onion3(UserGeometryBase):
@@ -244,8 +244,8 @@ class Onion3(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class CircOnion(UserGeometryBase):
@@ -325,8 +325,8 @@ class CircOnion(UserGeometryBase):
         return dims_ok, msg
 
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class CircOnion1(UserGeometryBase):
@@ -351,8 +351,8 @@ class CircOnion1(UserGeometryBase):
         subs = make_onion_subs()
         return subs
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
     def check_dimensions(self):
         dom_x = self.get_param("domain_x")
@@ -412,8 +412,8 @@ class CircOnion2(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)
 
 
 class CircOnion3(UserGeometryBase):
@@ -460,5 +460,5 @@ class CircOnion3(UserGeometryBase):
         dims_ok = not len(msg)
         return dims_ok, msg
 
-    def draw_mpl_frame(self, ax, styles):
-        draw_onion_frame(ax, self, styles)
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
+        draw_onion_frame(ax, self, styles, delta_xy)

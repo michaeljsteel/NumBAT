@@ -60,35 +60,22 @@ address it there rather than silently accepting a partially translated geometry.
 The generated `.geo`, `.msh`, and `.mail` should all represent the translated
 geometry. No Fortran interface change is planned.
 
-## 3. Translate wireframe artists centrally
+## 3. Pass translation to wireframe hooks
 
-Keep the existing user hook unchanged:
+Update the user hook to accept the structure translation:
 
 ```python
-draw_mpl_frame(self, ax, styles)
+draw_mpl_frame(self, ax, styles, delta_xy)
 ```
 
-It continues to draw in its **untranslated template coordinates**. The framework
-applies the structure translation afterward.
+The framework passes `delta_xy=(dx, dy)` in micrometres, matching the plotting
+coordinates used by the hook. The hook applies the offset to its own geometry
+before creating Matplotlib artists. Update built-ins, examples, and custom
+waveguide documentation together. This keeps translation explicit and avoids
+framework-side artist discovery and transform manipulation.
 
-In [`add_waveguide_border()`](backend/numbat/plotting/modes.py):
-
-1. Record the axes' existing children.
-2. Call the geometry's `draw_mpl_frame()` hook.
-3. Identify only the newly added artists.
-4. Apply the physical translation, converted to plot units (µm), to those
-   artists in **data coordinates**.
-5. Leave pre-existing axes artists untouched.
-
-The supplied built-ins and external example currently use Matplotlib patches
-and lines. Implement and test those first, preserving their existing local
-transforms, styles, and clipping. For other artist types—especially collections
-with separate offset transforms—either add tested support or raise a clear
-error for a nonzero translation. Do not silently leave them behind.
-
-Tests should include a patch with its own local transform, a line, multiple
-artists, and an artist that existed before the hook. Applying `set_transform()`
-to a patch is not necessarily equivalent to doing so for a line.
+Test that the hook receives the correct offset and that representative built-in
+and custom outlines align with the translated geometry.
 
 ## 4. Remove the old coordinate shifts
 
@@ -138,8 +125,7 @@ different purpose. Document that distinction.
 
 ### Plot and sampling tests
 
-- Framework-translated line and patch wireframes align with the translated
-  geometry and do not alter existing artists.
+- Wireframe hooks receive translation in micrometres and apply it to outlines.
 - 2D mode and strain samples use the intended mesh points.
 - x, y, and arbitrary-line cuts, including exported coordinate columns.
 - Refractive-index/material profiles and mesh plots use the same coordinates.

@@ -106,10 +106,11 @@ calculations.
    controls that do not follow translated points may not produce the intended
    result.
 
-The optional ``draw_mpl_frame`` hook should draw its outline in the original
-template coordinates, in micrometres. NumBAT translates newly added line and
-patch artists to match the structure. For nonzero translations, these artists
-must use the axes' data coordinates; other artist types are not yet supported.
+The optional ``draw_mpl_frame(self, ax, styles, delta_xy)`` hook receives the
+structure translation as ``delta_xy=(dx, dy)`` in micrometres. Apply this
+offset to the coordinates used to draw the outline; the hook is responsible
+for applying the same offset to every artist it creates. This permits any
+Matplotlib artist type and avoids framework-managed artist transforms.
 
 
 The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/docs/source/images/make_meshfigs.py``.
@@ -448,9 +449,11 @@ shows substitutions for these common parameters.
 
 For source-tree waveguides, override ``gmsh_template_path`` to return the
 template alongside the Python module, as above. An optional
-``draw_mpl_frame(self, ax, styles)`` method can add an outline to optical and
-elastic mode-profile plots. The built-in ``Circular``, ``Rectangular``, and
-``TwoIncl`` classes in ``builtin_meshes.py`` provide useful models.
+``draw_mpl_frame(self, ax, styles, delta_xy)`` method can add an outline to
+optical and elastic mode-profile plots. The ``delta_xy`` offset is in
+micrometres and should be applied to all outline coordinates. The built-in
+``Circular``, ``Rectangular``, and ``TwoIncl`` classes in ``builtin_meshes.py``
+provide useful models.
 
 Gmsh ``.geo`` template
 ^^^^^^^^^^^^^^^^^^^^^^

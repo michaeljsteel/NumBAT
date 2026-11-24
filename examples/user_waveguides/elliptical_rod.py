@@ -38,10 +38,10 @@ class EllipticalRod(UserGeometryBase):
             ("lc_refine_2 = lc/1;", "lc_refine_2 = lc/%f;", "lc_refine_2"),
         ]
 
-    def draw_mpl_frame(self, ax, styles):
+    def draw_mpl_frame(self, ax, styles, delta_xy=(0.0, 0.0)):
         ax.add_patch(
             mplpatches.Ellipse(
-                (0, 0),
+                delta_xy,
                 self.get_param("inc_a_x") / 1000,
                 self.get_param("inc_a_y") / 1000,
                 facecolor="none",

@@ -40,6 +40,11 @@ the positive coordinate direction. EM and AC calculations share this origin;
 separate old plotting offsets cannot in general be converted automatically.
 Review the original geometry and cut coordinates when migrating a script.
 
+Custom waveguide ``draw_mpl_frame`` overrides now receive a third
+``delta_xy`` argument in micrometres. Apply it to the outline coordinates
+before drawing; built-in templates and the in-tree custom example follow this
+contract.
+
 The independent ``set_r0_offset`` and width-reference APIs remain unchanged.
 
 
