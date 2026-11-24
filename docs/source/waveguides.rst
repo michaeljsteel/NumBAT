@@ -89,6 +89,28 @@ identify the mesh geometry template files in the directory
 ``<prefix>_msh_template.geo`` which define the structures and can give ideas
 for developing new structure files.
 
+Structure translation
+^^^^^^^^^^^^^^^^^^^^^
+
+The optional ``translation=(x, y)`` argument to ``make_structure`` moves the
+generated geometry by the given amounts in nanometres. Positive values move
+points in the corresponding positive coordinate direction. The default is
+``(0, 0)``; the same translated mesh is used for electromagnetic and acoustic
+calculations.
+
+.. warning::
+
+   This feature is being introduced in stages: mode and strain plot wireframes
+   are not yet translated. A nonzero translation emits a warning. The existing
+   ``set_xyshift_em`` and ``set_xyshift_ac`` plotting offsets are still applied
+   separately and can cause an additional shift.
+
+   Translation operates on Gmsh geometry points after the geometry script is
+   generated. Custom scripts must support this point-based operation; scripts
+   that generate meshes before the translation or use geometry and mesh
+   controls that do not follow translated points may not produce the intended
+   result.
+
 
 The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/docs/source/images/make_meshfigs.py``.
 

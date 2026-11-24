@@ -21,7 +21,11 @@
 #TODO: reduce number of imports
 
 import copy
+import math
 import warnings
+from collections.abc import Sequence
+
+import numpy as np
 
 from numbat.materials import materials
 from fortran import nb_fortran
@@ -32,7 +36,7 @@ from numbat.mesh import templates as mshtemplates
 from numbat.nbtypes import SI_nm
 from numbat.plotting import mesh as pltgmsh
 from numbat.plotting import profiles as pltprof
-from numbat.utils.numeric import run_subprocess
+from numbat.utils.numeric import is_real_number, run_subprocess
 
 
 class Structure:
@@ -44,6 +48,11 @@ class Structure:
 
             domain_y  (float):
                 The vertical period of the unit cell in nanometers. If None, domain_y = domain_x.
+
+            translation (pair of float):
+                Translation of the geometry in nanometers. The default is
+                ``(0, 0)``; positive values move the geometry in the
+                corresponding positive coordinate direction.
 
             inc_shape  (str):
                 Shape of inclusions that have template mesh, currently:
@@ -88,6 +97,24 @@ class Structure:
             reporting.report_and_exit('Must provide an inc_shape argument to make_structure()')
 
         self.all_params = copy.deepcopy(kwargs)
+        translation = self.all_params.pop('translation', (0, 0))
+        if (
+            not isinstance(translation, (Sequence, np.ndarray))
+            or isinstance(translation, (str, bytes))
+            or (isinstance(translation, np.ndarray) and translation.ndim != 1)
+            or len(translation) != 2
+            or not all(
+                is_real_number(value) and not isinstance(value, (bool, np.bool_))
+                for value in translation
+            )
+        ):
+            raise ValueError("translation must be a pair of finite real numbers.")
+        try:
+            self.translation = tuple(float(value) for value in translation)
+        except OverflowError as exc:
+            raise ValueError("translation must be a pair of finite real numbers.") from exc
+        if not all(math.isfinite(value) for value in self.translation):
+            raise ValueError("translation must be a pair of finite real numbers.")
         self.all_params['lc'] = self.all_params['lc_bkg']   # aim to move to pure lc_bkg and delete this
 
         del self.all_params['direct_call']
@@ -219,6 +246,21 @@ class Structure:
 
         # create string in .geo format from the template file with all parameters adjusted for our design
         geo_str = self.wg_geom.make_geometry(self.msh_location_in)
+
+        if self.translation != (0.0, 0.0):
+            if not math.isfinite(self.domain_x) or self.domain_x <= 0:
+                raise ValueError("domain_x must be finite and positive for translation.")
+            tx, ty = (value / self.domain_x for value in self.translation)
+            if not math.isfinite(tx) or not math.isfinite(ty):
+                raise ValueError("translation normalised by domain_x must be finite.")
+            geo_str += f'\nTranslate {{{tx:.17g}, {ty:.17g}, 0}} {{ Point{{:}}; }}\n'
+            warnings.warn(
+                "Structure translation moves the mesh, but mode and strain "
+                "plot wireframes are not yet translated. Custom Gmsh geometry "
+                "must support point-based translation.",
+                UserWarning,
+                stacklevel=2,
+            )
 
         path_geo_out = self.msh_location_out / msh_inst_fname
 

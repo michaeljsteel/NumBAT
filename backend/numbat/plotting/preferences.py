@@ -31,7 +31,7 @@ def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
                 break
 
     if user_file:
-        print(f'Loading plot preferences from {user_file}.')
+        print(f'Loading plot preferences from {user_file.resolve()}.')
         try:
             with open(user_file, 'rb') as fin:
                 user_settings = tomllib.load(fin)
@@ -182,4 +182,3 @@ class PlotPrefs:
             return self.vecplot_arrow_color_em
         else:
             return self.vecplot_arrow_color_ac
-

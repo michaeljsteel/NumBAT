@@ -381,11 +381,9 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_sel, plps, decorator):
     cmap_signed = runtime.plot_prefs().cmap_field_signed(field_sel)
     cmap_unsigned = runtime.plot_prefs().cmap_field_unsigned(field_sel)
 
-    cont_signed = field_sel.is_cartesian
-    #cmap = cmap_signed if (cont_signed and not logamp) else cmap_unsigned
-    cmap = cmap_signed if cont_signed else cmap_unsigned
-
-
+    is_signed_quantity = field_sel.is_cartesian
+    #cmap = cmap_signed if (is_signed_quantity and not logamp) else cmap_unsigned
+    cmap = cmap_signed if is_signed_quantity else cmap_unsigned
 
     v_x, v_y, m_X, m_Y = list(d_xy.values())
 
@@ -420,7 +418,7 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_sel, plps, decorator):
 
     d_kw = {'origin':'lower', 'extent':extents, 'interpolation':interp, 'cmap':cmap}
 
-    common_amp = True and cont_signed
+    common_amp = True and is_signed_quantity
 
     if decorator.get_cmap_limits(field_sel.component.value) is not None:
         (act_zlo, act_zhi) = decorator.get_cmap_limits(field_sel.component.value)
@@ -430,7 +428,7 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_sel, plps, decorator):
         d_kw['norm'] = tsnorm
     elif logamp:
         vma = logmax
-        if cont_signed:
+        if is_signed_quantity:
             vmi = -logmax
         else:
             vmi=0
@@ -447,7 +445,7 @@ def add_contour_plot(fig, ax, d_xy, c_field, field_sel, plps, decorator):
             act_zhi = np.nanmax(cont_field)
 
         vma = max(abs(act_zlo), abs(act_zhi))
-        vmi = -vma if cont_signed else 0.0
+        vmi = -vma if is_signed_quantity else 0.0
 
         d_kw['vmin'] = vmi
         d_kw['vmax'] = vma

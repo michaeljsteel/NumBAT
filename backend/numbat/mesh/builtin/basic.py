@@ -168,12 +168,12 @@ class Triangular(UserGeometryBase):
         msg = ""
 
         if base_wid >= dom_x:
-            msg += "Waveguide base width (base_width) is larger than the domain width (domain_x).\n"
+            msg += f"Waveguide base width (base_width={base_wid}) is larger than the domain width (domain_x={dom_x}).\n"
 
         if peak_locx < -dom_x / 2 or peak_locx > dom_x / 2:
             msg += "Waveguide peak is outside the x-domain (domain_x).\n"
-        if peak_height > dom_y / 2 or peak_height < -dom_y / 2:
-            msg += "Waveguide height (peak_height) is too large for the domain height (domain_y).\n"
+        if peak_height > dom_y  or peak_height < -dom_y :
+            msg += "Waveguide height (peak_height={peak_height}) is too large for the domain height (domain_y={dom_y}).\n"
 
         dims_ok = not len(msg)
         return dims_ok, msg
