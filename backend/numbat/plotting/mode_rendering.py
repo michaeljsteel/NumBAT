@@ -147,6 +147,7 @@ def render_mode_2d(
         )
 
     decorator = plot_params["decorator"]
+    decorator.configure_waveguide(simulation_result._structure)
     if include_overview:
         decorator.set_for_multi()
         mode_presentation.plot_all_components(

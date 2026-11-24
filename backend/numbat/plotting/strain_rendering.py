@@ -118,7 +118,7 @@ def render_strain_2d(
         )
 
     decorator = plot_params["decorator"]
-    decorator.set_waveguide(simulation_result._structure.wg_geom)
+    decorator.configure_waveguide(simulation_result._structure)
 
     if not components:
         decorator.set_for_multi()

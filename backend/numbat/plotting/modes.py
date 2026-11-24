@@ -21,6 +21,9 @@ import warnings
 
 import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
+from matplotlib.transforms import Affine2D
 import numpy as np
 
 from numbat.field_selection import field_symbol, selection_from_storage_key, storage_key
@@ -30,6 +33,7 @@ from numbat.nbtypes import (
     FieldSelection,
     FieldType,
     SI_GHz,
+    SI_nm,
     SI_THz,
     SI_um,
     twopi,
@@ -160,6 +164,7 @@ class Decorator(object):
         self._cmap_limits = {}
         self._title = ''
         self._waveguide = None
+        self._wireframe_translation = (0.0, 0.0)
 
     def __getitem__(self, kw):
         return self._props[kw]
@@ -169,6 +174,14 @@ class Decorator(object):
 
     def set_waveguide(self, wg):
         self._waveguide = wg
+        self._wireframe_translation = (0.0, 0.0)
+
+    def configure_waveguide(self, structure):
+        """Set the geometry and its translation in plot coordinates."""
+        self.set_waveguide(structure.wg_geom)
+        # Older saved structures predate the creation-time translation.
+        translation = getattr(structure, "translation", (0.0, 0.0))
+        self._wireframe_translation = tuple(value * SI_nm / SI_um for value in translation)
 
     def add_waveguide_border(self, ax):
         plprefs = runtime.plot_prefs()
@@ -181,8 +194,33 @@ class Decorator(object):
             styles['linewidth'] = plprefs.WG_FRAME_LINEWIDTH_SUBFIG
 
 
-        #if self._waveguide is not None:
+        existing_artists = set(ax.get_children())
         self._waveguide.draw_mpl_frame(ax, styles)
+        if self._wireframe_translation == (0.0, 0.0):
+            return
+
+        artists = [artist for artist in ax.get_children() if artist not in existing_artists]
+        transforms = []
+        for artist in artists:
+            if isinstance(artist, Patch):
+                transform = artist.get_data_transform()
+            elif isinstance(artist, Line2D):
+                transform = artist.get_transform()
+            else:
+                raise TypeError(
+                    f"Cannot translate wireframe artist {type(artist).__name__}; "
+                    "draw_mpl_frame must add lines or patches in data coordinates."
+                )
+            if not transform.contains_branch(ax.transData):
+                raise ValueError(
+                    "Cannot translate wireframe artist whose transform does not "
+                    "use the axes' data coordinates."
+                )
+            transforms.append((artist, transform))
+
+        shift = Affine2D().translate(*self._wireframe_translation)
+        for artist, transform in transforms:
+            artist.set_transform(transform - ax.transData + shift + ax.transData)
 
     def _get_props(self):
         return self._props
@@ -972,8 +1010,6 @@ def plot_all_components(field_type, d_xy, v_plots, plps, sim_result, mode_index)
     decorator = plps['decorator']
     hs = decorator['subplots_hspace']
     ws = decorator['subplots_wspace']
-
-    decorator.set_waveguide(sim_result._structure.wg_geom)
 
     hide_secondary_comps = plps['suppress_imimre']
     mod_is_amp = plps['mod_is_amp']

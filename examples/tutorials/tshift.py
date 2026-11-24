@@ -43,7 +43,7 @@ wguide = nbapp.make_structure(inc_shape, domain_x, domain_y, inc_a_x, inc_a_y,
                         material_bkg=materials.make_material("Vacuum"),
                         material_a=materials.make_material("SiO2_2016_Smith"),
                         lc_bkg=.05, lc_refine_1=1.5*refine_fac, lc_refine_2=1.5*refine_fac,
-                              translation=(1000,1000))
+                              translation=(500,0))
 
 wguide.plot_refractive_index_profile(prefix)
 

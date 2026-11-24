@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from matplotlib.figure import Figure
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "backend"))
 
@@ -15,6 +16,7 @@ from numbat.mesh.fem import FemMesh
 from numbat.mesh.gmsh_io import read_msh2_mesh
 from numbat.mesh.mail import MailData
 from numbat.mesh import templates
+from numbat.plotting.modes import PlotParams2D
 from numbat.solvers.modecalcs import ACSimulation
 
 
@@ -61,7 +63,7 @@ def mesh_bounds(mesh):
 @pytest.mark.parametrize("translation", [(200.0, -100.0), (-125.0, 230.0)])
 def test_translated_rectangular_geometry_mesh_and_mail(nbapp, translation):
     original = build_rectangular(nbapp)
-    with pytest.warns(UserWarning, match="wireframe"):
+    with pytest.warns(UserWarning, match="point-based"):
         shifted = build_rectangular(nbapp, translation=translation)
 
     assert shifted.translation == translation
@@ -149,7 +151,7 @@ def test_translation_preserves_geometry_and_material_regions(
         **parameters,
     }
     original = nbapp.make_structure(shape, **args)
-    with pytest.warns(UserWarning, match="wireframe"):
+    with pytest.warns(UserWarning, match="point-based"):
         shifted = nbapp.make_structure(shape, translation=(300.0, -150.0), **args)
 
     def region_bounds(wguide):
@@ -174,7 +176,7 @@ def test_translation_preserves_geometry_and_material_regions(
 
 
 def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp):
-    with pytest.warns(UserWarning, match="wireframe"):
+    with pytest.warns(UserWarning, match="point-based"):
         structure = build_rectangular(nbapp, translation=(200.0, -100.0))
 
     em = structure.calc_EM_modes(20, wl_um=1.55, n_eff=3.38)
@@ -200,3 +202,23 @@ def test_translated_mesh_reaches_em_and_both_ac_paths(nbapp):
         np.sort(np.real(em_ac.eigs_nu)), np.sort(np.real(direct_ac.eigs_nu)),
         rtol=1e-9, atol=1e-3,
     )
+
+    direct_ac.make_result()
+    for mode, is_strain in (
+        (em.get_mode(0), False), (direct_ac.get_sim_result().get_mode(0), True)
+    ):
+        ax = Figure().subplots()
+        params = PlotParams2D()
+        params["colorbar"] = False
+        params["logamp"] = False
+        if is_strain:
+            mode.plot_strain(comps="xx", ax=ax, n_pts=31, plot_params=params)
+        else:
+            mode.plot_mode(comps="x", ax=ax, n_pts=31, plot_params=params)
+        patch = ax.patches[-1]
+        vertices = ax.transData.inverted().transform(
+            patch.get_transform().transform([[0, 0], [1, 1]])
+        )
+        np.testing.assert_allclose(
+            vertices, [[0.05, -0.24], [0.35, 0.04]], atol=1e-12
+        )

@@ -255,9 +255,8 @@ class Structure:
                 raise ValueError("translation normalised by domain_x must be finite.")
             geo_str += f'\nTranslate {{{tx:.17g}, {ty:.17g}, 0}} {{ Point{{:}}; }}\n'
             warnings.warn(
-                "Structure translation moves the mesh, but mode and strain "
-                "plot wireframes are not yet translated. Custom Gmsh geometry "
-                "must support point-based translation.",
+                "Custom Gmsh geometry must support point-based translation. "
+                "Legacy EM and AC plotting shifts still apply separately.",
                 UserWarning,
                 stacklevel=2,
             )

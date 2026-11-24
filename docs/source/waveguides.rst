@@ -100,16 +100,20 @@ calculations.
 
 .. warning::
 
-   This feature is being introduced in stages: mode and strain plot wireframes
-   are not yet translated. A nonzero translation emits a warning. The existing
-   ``set_xyshift_em`` and ``set_xyshift_ac`` plotting offsets are still applied
-   separately and can cause an additional shift.
+   The existing ``set_xyshift_em`` and ``set_xyshift_ac`` plotting offsets are
+   still applied separately and can cause an additional shift. A nonzero
+   translation emits a warning during this transition.
 
    Translation operates on Gmsh geometry points after the geometry script is
    generated. Custom scripts must support this point-based operation; scripts
    that generate meshes before the translation or use geometry and mesh
    controls that do not follow translated points may not produce the intended
    result.
+
+The optional ``draw_mpl_frame`` hook should draw its outline in the original
+template coordinates, in micrometres. NumBAT translates newly added line and
+patch artists to match the structure. For nonzero translations, these artists
+must use the axes' data coordinates; other artist types are not yet supported.
 
 
 The |NUMBAT| code for creating all these structures can be found  in ``<NumBAT>/docs/source/images/make_meshfigs.py``.

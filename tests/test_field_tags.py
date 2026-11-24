@@ -397,6 +397,9 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
         def __init__(self):
             self.calls = []
 
+        def configure_waveguide(self, structure):
+            self.structure = structure
+
         def set_for_multi(self):
             self.calls.append("multi")
 
@@ -421,7 +424,7 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
         fields={},
         include_overview=True,
         components=(FieldComponent.X, FieldComponent.Y),
-        simulation_result=None,
+        simulation_result=SimpleNamespace(_structure="test structure"),
         mode_index=0,
         plot_params=plot_params,
     )
@@ -432,6 +435,7 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
         FieldComponent.Y,
     ]
     assert decorator.calls == ["multi", "single"]
+    assert decorator.structure == "test structure"
 
     calls.clear()
     decorator.calls.clear()
@@ -441,7 +445,7 @@ def test_2d_plot_component_selection_controls_overview_and_individual_outputs(
         fields={},
         include_overview=False,
         components=(FieldComponent.X,),
-        simulation_result=None,
+        simulation_result=SimpleNamespace(_structure="test structure"),
         mode_index=0,
         plot_params=plot_params,
     )
