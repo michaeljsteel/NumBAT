@@ -144,3 +144,47 @@ print("unexpected return")
     assert "H_mode_field_Ez" not in quiet.stdout
     assert "unexpected return" not in normal.stdout
     assert "unexpected return" not in quiet.stdout
+
+
+def test_compiled_fortran_success_and_log_capture(tmp_path):
+    probe = _run(
+        "from fortran import nb_fortran; "
+        "print(int(hasattr(nb_fortran, 'flush_fortran_stdout')))"
+    )
+    assert probe.returncode == 0, probe.stderr
+    if probe.stdout.strip() != "1":
+        pytest.skip("rebuild the Fortran backend to verify native output")
+
+    result = _run(
+        f"""
+from pathlib import Path
+import numbat
+from numbat import materials
+from numbat.utils.fortran_output import call_fortran
+from fortran import nb_fortran
+
+app = numbat.NumBATApp("output", outdir={str(tmp_path)!r},
+                       ignore_user_settings=True, verbosity="quiet")
+wg = app.make_structure("rectangular", 1500., 1500., 300., 280.,
+                        material_bkg=materials.make_material("Vacuum"),
+                        material_a=materials.make_material("Si_2016_Smith"),
+                        lc_bkg=0.2, lc_refine_1=2.5, lc_refine_2=2.5)
+prefix = str(Path(wg.mesh_mail_fname).with_suffix(""))
+def convert():
+    err, message = call_fortran(nb_fortran.conv_gmsh, prefix, True)
+    assert err == 0, message
+
+app.set_verbosity("normal")
+convert()
+app.set_verbosity("quiet")
+convert()
+app.start_output_capture()
+convert()
+app.stop_output_capture()
+print("conversion completed")
+"""
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.count("Node check fresh from gmsh:") == 1
+    assert "conversion completed" in result.stdout
+    assert "Node check fresh from gmsh:" in (tmp_path / "output_log.txt").read_text()
