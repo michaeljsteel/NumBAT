@@ -1,3 +1,5 @@
+from numtools.output import OutputLevel, nbprint
+
 from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -415,11 +417,11 @@ class ElasticBoundaryCondition:
                     break
 
         if len(ev_good) != hdim:
-            print(
-                f"Unexpected number of good eigenvalues {len(ev_good)} in semi-infinite layer:"
+            nbprint(
+                f"Unexpected number of good eigenvalues {len(ev_good)} in semi-infinite layer:", level=OutputLevel.ALWAYS
             )
-            print(
-                f" Om:{Om:.4f}, Vp:{Vp:.4f}, (ngrow={ngrow}, ndecay={ndecay}, nfwd={nfwd}, ngood={len(ev_good)})."
+            nbprint(
+                f" Om:{Om:.4f}, Vp:{Vp:.4f}, (ngrow={ngrow}, ndecay={ndecay}, nfwd={nfwd}, ngood={len(ev_good)}).", level=OutputLevel.ALWAYS
             )
             for vprop, nm in (
                 (v_is_growing, "growing"),
@@ -429,8 +431,8 @@ class ElasticBoundaryCondition:
 
                 for iev in vprop.nonzero()[0]:
                     Sx, Sy, Sz = v_poynting_Sav[iev, :] * 100
-                    print(
-                        f"  ev[{iev}] = {eigvals[iev]: 12.5f} {nm},  Svec=({Sx:7.3f},{Sy:7.3f},{Sz:7.3f})"
+                    nbprint(
+                        f"  ev[{iev}] = {eigvals[iev]: 12.5f} {nm},  Svec=({Sx:7.3f},{Sy:7.3f},{Sz:7.3f})", level=OutputLevel.ALWAYS
                     )
 
         # order the eigensolutions
@@ -779,19 +781,19 @@ class ElasticStack:
 
         l_braks = bracket_minima(v_Vp, np.abs(v_det))
 
-        print(f"\nAt {label_scanstep}:")
+        nbprint(f"\nAt {label_scanstep}:")
         if vBulks is not None:
-            print(f"  Vbulks: {vBulks[2]:.6f},  {vBulks[1]:.6f},  {vBulks[0]:.6f}")
+            nbprint(f"  Vbulks: {vBulks[2]:.6f},  {vBulks[1]:.6f},  {vBulks[0]:.6f}")
 
         show_brack = False and show_progress
         if show_brack:
-            print(f"\n  Found {len(l_braks)} brackets:")
+            nbprint(f"\n  Found {len(l_braks)} brackets:")
 
             for br in l_braks:
                 (xm1, fm1), (x0, f0), (xp1, fp1) = np.array(
                     br
                 ).tolist()  # awkward but converts to plain floats
-                print(
+                nbprint(
                     f"    [{xm1:.5f}, {x0:.5f}, {xp1:.5f}] with f=[{fm1:.3e}, {f0:.3e}, {fp1:.3e}]"
                 )
 
@@ -807,13 +809,13 @@ class ElasticStack:
 
         l_mins = find_bracketed_minima(minfunc, l_braks)
         if show_progress:
-            print(f"  Found {len(l_mins)} minima:")
+            nbprint(f"  Found {len(l_mins)} minima:")
             for v, f in l_mins:
                 bulkdist = ""
                 if vBulks is not None:
                     dbulk = np.min(np.abs(vBulks-v))
                     bulkdist= f", dist to bulk mode = {dbulk:.3e}"
-                print(f"    Vp={v:.9f} km/s, Det(f)={f:.4e}{bulkdist}")
+                nbprint(f"    Vp={v:.9f} km/s, Det(f)={f:.4e}{bulkdist}")
 
         max_det = np.max(np.abs(v_det))
 
@@ -838,11 +840,11 @@ class ElasticStack:
 
         n_dropped = len(l_mins_bad_threshold) + len(l_mins_bad_singval)
         if show_progress and n_dropped > 0:
-            print(f"  Dropping {n_dropped} modes:")
+            nbprint(f"  Dropping {n_dropped} modes:")
             for v, f in l_mins_bad_singval:
-                print(f"    Vp={v:.3f} m/s has multiple small singular values.")
+                nbprint(f"    Vp={v:.3f} m/s has multiple small singular values.")
             for v, f in l_mins_bad_threshold:
-                print(
+                nbprint(
                     f"    Vp={v:.3f} has relative det minimum f={f:.3e} above detmin_thresh={fmin_norm_thresh:.3e}:"
                 )
 
@@ -1010,24 +1012,24 @@ class ElasticStack:
         u, s, vh = npla.svd(mat_G_ij)
 
         if show_progress:
-            print("Det check:", npla.det(mat_G_ij))
-            print("SVD check:", s)
+            nbprint("Det check:", npla.det(mat_G_ij))
+            nbprint("SVD check:", s)
 
         nsmall = np.sum(
             s < thresh_singval * np.max(s)
         )  # Limited contrast precision in SVD
 
         if show_progress:
-            print("Num small singular values:", nsmall)
+            nbprint("Num small singular values:", nsmall)
 
         if nsmall == 0:
-            print(f"Warning: largish singular values found for mode at Omega={Om:.3e}, Vs={vP:.3e}: not a mode?")
-            print('S values:', s)
+            nbprint(f"Warning: largish singular values found for mode at Omega={Om:.3e}, Vs={vP:.3e}: not a mode?", level=OutputLevel.ALWAYS)
+            nbprint('S values:', s, level=OutputLevel.ALWAYS)
             v_psi0 = None
 
         if nsmall > 1:
-            print(
-                "Warning: Multiple small singular values found - may be non-genuine mode."
+            nbprint(
+                "Warning: Multiple small singular values found - may be non-genuine mode.", level=OutputLevel.ALWAYS
             )
 
         v_psi0s = []
@@ -1043,7 +1045,7 @@ class ElasticStack:
             v_psi0s.append((v_psi0, t_rel_singval))
             if show_progress:
                 with np.printoptions(precision=4, suppress=True, linewidth=200):
-                    print(
+                    nbprint(
                         f"Initial field at y=0:\n null vec: {v_null}\n psi0:  {v_psi0}"
                     )
 

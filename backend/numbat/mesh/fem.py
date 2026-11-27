@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import OutputLevel, nbprint
+
 import copy
 import itertools
 import warnings
@@ -650,7 +652,7 @@ class FemMesh:
 
     def _report_em_mesh_properties(self, wguide):
         opt_props = wguide.optical_props
-        print(
+        nbprint(
             f"\n The final EM sim mesh has {self.num_nodes} nodes, {self.num_elements} elements and {opt_props.n_mats_em} element types (materials)."
         )
 
@@ -658,10 +660,10 @@ class FemMesh:
         matvals = wguide.get_optical_materials()
 
         #print(" The material index table is:", opt_props.el_conv_table_n, "\n")
-        print(f" There are {opt_props.n_mats_em} active materials:")
+        nbprint(f" There are {opt_props.n_mats_em} active materials:")
         for im, m in enumerate(matvals):
             # +1 because materials are reported by their Fortran index
-            print(f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.')
+            nbprint(f'  {m.material_name+",":20} n = {opt_props.v_refindexn[im]:.5f}, mat. index = {im+1}.')
 
 
     def store_fortran_em_mesh_properties(
@@ -809,15 +811,15 @@ class FemMesh:
 
     def _report_ac_mesh_properties(self, el_props):
 
-        print(
+        nbprint(
             f"\n The final elastic sim mesh has {self.num_nodes} nodes, {self.num_elements} mesh elements and {len(el_props.typ_el_AC)} element types (materials)."
         )
 
-        print(" The material index table is:", el_props.typ_el_AC, "\n")
-        print(f" There are {el_props.n_mats_ac} active materials:")
+        nbprint(" The material index table is:", el_props.typ_el_AC, "\n")
+        nbprint(f" There are {el_props.n_mats_ac} active materials:")
         for mat in el_props.v_acoustic_mats:
             vphases = mat.Vac_phase()
-            print(
+            nbprint(
                 f'   {mat.material_name+",":20} rho = {mat.rho*SI_to_gmpercc:.3f} g/cc, v_i = [{vphases[0]:.4f}, {vphases[1]:.4f}, {vphases[2]:.4f}] km/s.'
             )
         # print("  elt2nodes index map", self.m_elnd_to_mshpt)
@@ -1004,7 +1006,7 @@ def check_triangulation(vx: np.ndarray, vy: np.ndarray, triangs: Sequence[Sequen
         triangs: Node-index triples defining the triangles to inspect.
     """
     # are points unique
-    print("\n\nChecking triangulation goodness")
+    nbprint("\n\nChecking triangulation goodness")
     npts = len(vx)
     dsepmin = 1e6
     dsi = 0
@@ -1017,7 +1019,7 @@ def check_triangulation(vx: np.ndarray, vy: np.ndarray, triangs: Sequence[Sequen
                 dsi = i
                 dsj = j
 
-    print("  Closest space of triangle points was", dsepmin)
+    nbprint("  Closest space of triangle points was", dsepmin)
     if dsepmin < 1e-11:
         msg = f"Point collision at {dsi}, {dsj}: ({vx[dsi]},{vy[dsi]}) =  ({vx[dsj]},{vy[dsj]})."
         msg += "\nIt seems the mesh grid reordering has failed."
@@ -1029,11 +1031,11 @@ def check_triangulation(vx: np.ndarray, vy: np.ndarray, triangs: Sequence[Sequen
     for tri in triangs:
         stri = str(tri)
         if stri in s_vtri:
-            print("        Double triangle at", stri)
+            nbprint("        Double triangle at", stri, level=OutputLevel.ALWAYS)
             clean = False
         else:
             s_vtri.add(stri)
     if clean:
-        print("  No doubled triangles found")
+        nbprint("  No doubled triangles found")
     else:
-        print("  Found doubled triangles")
+        nbprint("  Found doubled triangles", level=OutputLevel.ALWAYS)

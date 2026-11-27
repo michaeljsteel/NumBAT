@@ -1,5 +1,7 @@
 # functions for python notebooks
 
+from numbat.reporting import OutputLevel, nbprint
+
 import time
 from pathlib import Path
 
@@ -12,10 +14,10 @@ def img_single(fn1, cap='', height=300):
         try:
             fp = Path(fn)
         except:
-            print(f"File arguments must be strings or path objects.\n Received: {fn}.")
+            nbprint(f"File arguments must be strings or path objects.\n Received: {fn}.", level=OutputLevel.ALWAYS)
             return
         if not fp.exists():
-            print(f"Can't find image file {fn}.")
+            nbprint(f"Can't find image file {fn}.", level=OutputLevel.ALWAYS)
             return
 
     cache_buster=int(time.time() * 1000)
@@ -35,10 +37,10 @@ def img_pair(fn1, fn2, cap1='', cap2='', height1=300, height2=300):
         try:
             fp = Path(fn)
         except:
-            print(f"File arguments must be strings or path objects.\n Received: {fn}.")
+            nbprint(f"File arguments must be strings or path objects.\n Received: {fn}.", level=OutputLevel.ALWAYS)
             return
         if not fp.exists():
-            print(f"Can't find image file {fn}.")
+            nbprint(f"Can't find image file {fn}.", level=OutputLevel.ALWAYS)
             return
 
     cache_buster=int(time.time() * 1000)
@@ -63,10 +65,10 @@ def img_triple(fn1, fn2, fn3, cap1='', cap2='', cap3='', height1=300, height2=30
         try:
             fp = Path(fn)
         except:
-            print(f"File arguments must be strings or path objects.\n Received: {fn}.")
+            nbprint(f"File arguments must be strings or path objects.\n Received: {fn}.", level=OutputLevel.ALWAYS)
             return
         if not fp.exists():
-            print(f"Can't find image file {fn}.")
+            nbprint(f"Can't find image file {fn}.", level=OutputLevel.ALWAYS)
             return
 
     cache_buster=int(time.time() * 1000)

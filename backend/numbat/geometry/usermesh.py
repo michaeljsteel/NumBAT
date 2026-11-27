@@ -16,6 +16,8 @@
 
 """User-defined simulation geometry base class."""
 
+from numbat.reporting import OutputLevel, nbprint
+
 import os
 import uuid
 from importlib import import_module
@@ -195,12 +197,12 @@ class UserGeometryBase():
     # Methods to be overridden by derived classes
 
     def init_geometry(self):
-        print('IMPLEMENT ME', __file__, 'make_geometry')
+        nbprint('IMPLEMENT ME', __file__, 'make_geometry', level=OutputLevel.ALWAYS)
         raise NotImplementedError('UserGeometryBase.init_geometry() must be overriden')
         return ''
 
     def apply_parameters(self):
-        print('IMPLEMENT ME', __file__, 'make_geometry')
+        nbprint('IMPLEMENT ME', __file__, 'make_geometry', level=OutputLevel.ALWAYS)
         raise NotImplementedError('UserGeometryBase.apply_parameters() must be overriden')
         return ''
 

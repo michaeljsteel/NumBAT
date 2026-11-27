@@ -15,6 +15,9 @@
 
 """Thread and process helpers used by NumBAT."""
 
+from numbat.reporting import OutputLevel, nbprint
+from numbat import reporting
+
 import threading
 import multiprocessing
 import traceback
@@ -67,7 +70,7 @@ class CalcThread(threading.Thread):
             task = None
             try:
                 if self.verbose:
-                    print(
+                    nbprint(
                         "{0} encountered remaining work queue lengths: ({1}, {2}).".format(
                             self.name, self.q_work_noshare.qsize(), self.q_work.qsize()
                         )
@@ -85,11 +88,11 @@ class CalcThread(threading.Thread):
 
             except queue.Empty:
                 if self.verbose:
-                    print(f"{self.name} out of work, wrapping up.")
+                    nbprint(f"{self.name} out of work, wrapping up.")
                 break
 
             if self.verbose:
-                print(
+                nbprint(
                     f"{self.name} is starting task i={task[0]}, needs plotting: ",
                     self.doing_plot_work,
                 )
@@ -104,14 +107,14 @@ class CalcThread(threading.Thread):
                 if (
                     task == MAGIC_TASK
                 ):  # complete immediately to try and release the GIL
-                    print(f"{self.name} is doing the magic task!")
+                    nbprint(f"{self.name} is doing the magic task!")
                     # res = MAGIC_TASK
 
                 else:
                     res = self.f_work(task)  # Here is the main piece of work
 
                     if self.verbose:
-                        print(f"{self.name} produced outcome: ", res)
+                        nbprint(f"{self.name} produced outcome: ", res)
 
                     self.q_result.put(res)
 
@@ -126,9 +129,9 @@ class CalcThread(threading.Thread):
                     # print('\n\n{0} has called td {1} times.'.format(self.name, self.td))
 
             except Exception as err:
-                print(
+                nbprint(
                     f"\n\n{self.name} has encountered an exception on task {task[0]}:",
-                    str(err),
+                    str(err), level=OutputLevel.ALWAYS,
                 )
                 traceback.print_exception(err)
                 break
@@ -142,8 +145,8 @@ def run_in_current_thread(task_func, q_result, q_work, verbose=False):
 
     total_tasks = q_work.qsize()
     for i_task in range(total_tasks):
-        print('\n\n----------------------------------------')
-        print(f'Starting task {i_task+1} of {total_tasks}.\n\n')
+        nbprint('\n\n----------------------------------------')
+        nbprint(f'Starting task {i_task+1} of {total_tasks}.\n\n')
         task = q_work.get(block=True, timeout=5)
         res = task_func(task)  # Here is the main piece of work
         q_result.put(res)
@@ -167,19 +170,19 @@ def launch_worker_threads_and_wait(num_workers, task_func, q_result,
 
     num_workers = min(num_workers, total_tasks)
     if report_progress:
-        print(f"Assigning {total_tasks} tasks across {num_workers} threads.")
+        nbprint(f"Assigning {total_tasks} tasks across {num_workers} threads.")
 
     threads = []
     for i in range(num_workers):
-        print("Looking at starting thread", i)
+        nbprint("Looking at starting thread", i)
 
         # If there _is_ a non-Null q_work_noshare, only thread 1 should see it
         qwns = q_work_noshare if (i == 0) else None
 
         th = CalcThread(q_work, q_result, task_func, qwns, verbose)
-        print("Starting thread:", th.name)
+        nbprint("Starting thread:", th.name)
         th.start()
-        print("Done starting thread:", th.name)
+        nbprint("Done starting thread:", th.name)
         threads.append(th)
 
     tm_st = time.time()
@@ -210,21 +213,21 @@ def launch_worker_threads_and_wait(num_workers, task_func, q_result,
                     tm_togo = (tm_cu - tm_st) * (1 - frac_done) / frac_done
                     tm_togo_s = datetime.timedelta(seconds=round(tm_togo))
 
-                    print(
+                    nbprint(
                         f"\nTasks completed: {tasks_done}/{total_tasks} = {frac_done*100:.1f} %.",
                         f"  Estimated time remaining: {tm_togo_s}.",
                     )
                 else:
-                    print(f"(\nTasks completed: 0/{total_tasks}.")
+                    nbprint(f"(\nTasks completed: 0/{total_tasks}.")
 
             if not th.is_alive():
-                print(
+                nbprint(
                     f"Main thread has joined thread {th.name}. ",
                     f"There are {threading.active_count()-1} workers remaining.",
                 )
                 break
 
-    print("All tasks completed and worker threads terminated.")
+    nbprint("All tasks completed and worker threads terminated.")
 
 
 _use_fork_for_closures = False
@@ -272,15 +275,17 @@ class CalcProcess(multiprocessing.Process):
         self.ptd = 0
 
         self.verbose = verbose
+        self.output_verbosity = reporting.get_verbosity()
 
         multiprocessing.Process.__init__(self)
 
     def run(self):
+        reporting.set_verbosity(self.output_verbosity)
         while True:
             task = None
             try:
                 if self.verbose:
-                    print(
+                    nbprint(
                         f"{self.name} encountered remaining work queue length: {self.q_work.qsize()}."
                     )
 
@@ -293,11 +298,11 @@ class CalcProcess(multiprocessing.Process):
 
             except queue.Empty:
                 if self.verbose:
-                    print(f"{self.name} out of work, wrapping up.")
+                    nbprint(f"{self.name} out of work, wrapping up.")
                 break
 
             if self.verbose:
-                print(f"{self.name} is starting task i={task[0]}.")
+                nbprint(f"{self.name} is starting task i={task[0]}.")
 
             try:
                 res = self.f_work(task)  # Here is the main piece of work
@@ -310,14 +315,14 @@ class CalcProcess(multiprocessing.Process):
                 self.td += 1
 
             except Exception as err:
-                print(
+                nbprint(
                     f"\n\n{self.name} has encountered an exception on task {task[0]}:",
-                    str(err),
+                    str(err), level=OutputLevel.ALWAYS,
                 )
                 traceback.print_exception(err)
                 break
 
-        print(f"{self.name} has exhausted its work queue and is exiting.")
+        nbprint(f"{self.name} has exhausted its work queue and is exiting.")
 
 
 def launch_worker_processes_and_wait(num_workers, task_func,
@@ -341,9 +346,9 @@ def launch_worker_processes_and_wait(num_workers, task_func,
         num_workers = min(num_workers, total_tasks)
 
         if report_progress:
-            print(f"Assigning {total_tasks} tasks across {num_workers} processes.")
+            nbprint(f"Assigning {total_tasks} tasks across {num_workers} processes.")
     else:
-        print("Performing calculation in single processor mode.")
+        nbprint("Performing calculation in single processor mode.")
         num_workers = 1
 
     processes = []
@@ -355,7 +360,7 @@ def launch_worker_processes_and_wait(num_workers, task_func,
             pr = _CalcProcessFork(q_work, q_result, task_func, verbose)
         else:
             pr = CalcProcess(q_work, q_result, task_func, verbose)
-        print("Starting process:", pr.name)
+        nbprint("Starting process:", pr.name)
         if do_multiproc:
             pr.start()
             processes.append(pr)
@@ -388,7 +393,7 @@ def launch_worker_processes_and_wait(num_workers, task_func,
                 frac_started = tasks_started / total_tasks
                 frac_completed = tasks_completed / total_tasks
 
-                print(
+                nbprint(
                     f"\nTasks commenced: {tasks_started}/{total_tasks} = {frac_started*100:.1f} %;",
                     f" completed: {tasks_completed}/{total_tasks} = {frac_completed*100:.1f} %;",
                     end="",
@@ -397,15 +402,15 @@ def launch_worker_processes_and_wait(num_workers, task_func,
                 if frac_completed > 0:
                     tm_togo = (tm_cu - tm_st) * (1 - frac_completed) / frac_completed
                     tm_togo_s = datetime.timedelta(seconds=round(tm_togo))
-                    print(f"  Estimated time remaining: {tm_togo_s}.")
+                    nbprint(f"  Estimated time remaining: {tm_togo_s}.")
                 else:
-                    print("\n")
+                    nbprint("\n")
 
             if not pr.is_alive():
-                print(
+                nbprint(
                     f"Main process has joined process {pr.name}. ",
                     f"There are {len(multiprocessing.active_children())} workers remaining.",
                 )
                 break
 
-    print("All tasks completed and worker process terminated.")
+    nbprint("All tasks completed and worker process terminated.")

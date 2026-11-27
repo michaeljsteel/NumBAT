@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import nbprint
+
 import numpy as np
 
 
@@ -65,7 +67,7 @@ class MailData:
         #s += ' Node types:\n' + str(self.v_node_physindex)
         #s += ' Node table:\n' + str(self.v_elts)
 
-        print(s)
+        nbprint(s)
 
 
     def _parse_lines(self, lines):

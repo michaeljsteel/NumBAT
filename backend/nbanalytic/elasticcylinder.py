@@ -33,6 +33,8 @@ and on analytic results for Pochhammer-Chree/Rayleigh-Lamb type modes in
 cylindrical structures.
 """
 
+from numtools.output import OutputLevel, nbprint
+
 import math
 from typing import Tuple
 from numpy.typing import NDArray
@@ -381,11 +383,11 @@ class ElasticIsotropicCylinder(object):
                     v_Om[imode] = root
                     imode += 1
                 else:
-                    print(
+                    nbprint(
                         f"Brent and bisection unable to converge for p={m}, "
                         f"q={q*1e-6:.4f}/um, "
                         f"nu in [{last_Om/(2e9*math.pi):.6f}, {t_Om/(2e9*math.pi):.6f}] GHz, "
-                        f"err in [{last_res:.4e}, {t_res:.4e}]. "
+                        f"err in [{last_res:.4e}, {t_res:.4e}]. ", level=OutputLevel.ALWAYS
                     )
 
         # This dispersion relation tends to exhibit double roots that may not trigger a bracketing.
@@ -420,8 +422,8 @@ class ElasticIsotropicCylinder(object):
                     # Guard against near-zero curvature (would cause divide-by-zero)
                     if np.abs(a) > 1e-15:
                         v_Om[imode] = Om[qrt] - b / (2 * a) * (Om[1] - Om[0])
-                        print(
-                            f"Found an additional double root for p={m} at nu={v_Om[imode]/(1e9*twopi):.4e}."
+                        nbprint(
+                            f"Found an additional double root for p={m} at nu={v_Om[imode]/(1e9*twopi):.4e}.", level=OutputLevel.ALWAYS
                         )
                     imode += 1
 

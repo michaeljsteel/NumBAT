@@ -13,6 +13,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numbat.reporting import OutputLevel, nbprint
+
 import json
 import sys
 import traceback
@@ -195,4 +197,4 @@ def print_waveguide_help(inc_shape):
             # Instantiate the class that defines this waveguide model
             wg_geom = wg['wg_template_cls'](None, None)
             wg_geom.init_geometry()
-            print(wg_geom.get_parameter_help_summary())
+            nbprint(wg_geom.get_parameter_help_summary(), level=OutputLevel.ALWAYS)

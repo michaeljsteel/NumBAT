@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import OutputLevel, nbprint
+
 import copy
 import warnings
 
@@ -222,7 +224,7 @@ class Decorator(object):
         try:
             ans = self._props[lab]
         except Exception:
-            print(f'Warning: unknown fontsize label "{lab}" in Decorator::get_property()')
+            nbprint(f'Warning: unknown fontsize label "{lab}" in Decorator::get_property()', level=OutputLevel.ALWAYS)
         return ans
 
     def set_property(self, label, prop):

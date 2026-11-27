@@ -20,6 +20,8 @@
 
 #TODO: reduce number of imports
 
+from numbat.reporting import nbprint
+
 import copy
 import math
 import warnings
@@ -36,6 +38,7 @@ from numbat.mesh import templates as mshtemplates
 from numbat.plotting import mesh as pltgmsh
 from numbat.plotting import profiles as pltprof
 from numbat.utils.numeric import is_real_number, run_subprocess
+from numbat.utils.fortran_output import call_fortran
 from numbat.utils.logcapture import redirect_output_to_file
 
 
@@ -226,7 +229,7 @@ class Structure:
         """Instantiates generic template gmsh file to aspecific gmsh then runs conv_gmsh
         to generate the NumBAT .mail file."""
 
-        print(' Calling Gmsh: ', end='')
+        nbprint(' Calling Gmsh: ', end='')
 
         msh_tmpl_fname = self.wg_geom.gmsh_template_filename()  # template we're reading from
         msh_inst_fname = self.wg_geom.get_instance_filename()      # unique name for this instance
@@ -256,7 +259,7 @@ class Structure:
 
         # And now to NumBAT .mail format
         assertions_on = False
-        err_no, err_msg = nb_fortran.conv_gmsh(str(path_geo_out), assertions_on)
+        err_no, err_msg = call_fortran(nb_fortran.conv_gmsh, str(path_geo_out), assertions_on)
         if err_no:
             s = f'Terminating after Fortran error in processing .geo file "{path_geo_out}.geo".'
             if len(err_msg):
@@ -363,7 +366,6 @@ class Structure:
             Returns:
                 ``ACSimResult`` object
         """
-
 
         with redirect_output_to_file(runtime.outpath() if redirect_to_log else None):
             return ac_mode_calculation(self, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args)

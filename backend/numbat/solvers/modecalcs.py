@@ -16,6 +16,8 @@
 
 
 
+from numbat.reporting import OutputLevel, nbprint
+
 import numpy as np
 
 from fortran import nb_fortran
@@ -30,6 +32,7 @@ from numbat.nbtypes import (
 
 #import yep
 from numbat.utils.numeric import process_fortran_return
+from numbat.utils.fortran_output import call_fortran
 from numbat.solvers.simresult import ACSimResult, EMSimResult
 
 
@@ -161,7 +164,7 @@ class EMSimulation(Simulation):
 
         if self.n_modes < 20:
             self.n_modes = 20
-            print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
+            nbprint("Warning: ARPACK needs >= 20 modes so set num_modes=20.", level=OutputLevel.ALWAYS)
 
 
         E_H_field = 1  # Selected formulation (1=E-Field, 2=H-Field)
@@ -177,13 +180,13 @@ class EMSimulation(Simulation):
 
         EM_FEM_debug = 0
 
-        print(
+        nbprint(
             " Boundary conditions:",
             str({0: "Dirichlet", 1: "Neumann", 2: "Periodic"}[bnd_cdn_i]),
         )
 
         #yep.start('emsolve.prof')
-        resm = nb_fortran.calc_em_modes(
+        resm = call_fortran(nb_fortran.calc_em_modes,
             self.n_modes,
             self.lambda_m,
             self.d_in_m,
@@ -229,17 +232,17 @@ class EMSimulation(Simulation):
         #opt_props = tstruc.optical_props
 
         # Calc unnormalised power in each EM mode Kokou equiv. of Eq. 8.
-        print("  Calculating EM mode powers...")
+        nbprint("  Calculating EM mode powers...")
 
         # These quantities are of order 10^-16 W:
         #   Efield ~ .25/m, P= (\epsilon c /2) n |E|^2 A, with A~ 1 um^2
         #   If we moved to microns as unit of length, with E~0.25 V/um, c=3e14 and A~1 um^2,
         #    we would have powers of order 1 W
         if tstruc.using_linear_elements():
-            print('using linear elements')
+            nbprint('using linear elements')
             # Integration using analytically evaluated basis function integrals. Fast.
             #self.EM_mode_power = nb_fortran.em_mode_energy_int_v2_ez(
-            resm = nb_fortran.em_mode_power_sz_analytic(
+            resm = call_fortran(nb_fortran.em_mode_power_sz_analytic,
                 self.k_0,
                 self.n_modes,
                 fm.num_elements,
@@ -252,13 +255,13 @@ class EMSimulation(Simulation):
             (self.EM_mode_power, ) = process_fortran_return(resm, "finding linear element EM mode power")
         else:
             if not tstruc.using_curvilinear_elements():
-                print(
+                nbprint(
                     "Warning: em_mode_energy_int - not sure if mesh contains curvi-linear elements",
-                    "\n using slow quadrature integration by default.\n\n",
+                    "\n using slow quadrature integration by default.\n\n", level=OutputLevel.ALWAYS,
                 )
             # Integration by quadrature. Slowest.
-            print('using curvilinear elements')
-            resm = nb_fortran.em_mode_power_sz_quadrature(
+            nbprint('using curvilinear elements')
+            resm = call_fortran(nb_fortran.em_mode_power_sz_quadrature,
                 self.k_0,
                 self.n_modes,
                 fm.num_elements,
@@ -291,12 +294,12 @@ class EMSimulation(Simulation):
 
 
         if self.calc_EM_mode_energy:
-            print("Calculating EM mode energies...")
+            nbprint("Calculating EM mode energies...")
 
             if True or tstruc.using_linear_elements():
 
                 # # Integration by quadrature. Slowest.
-                resm = nb_fortran.em_mode_act_energy_quadrature(
+                resm = call_fortran(nb_fortran.em_mode_act_energy_quadrature,
                     self.n_modes,
                     fm.num_elements,
                     fm.num_nodes,
@@ -310,8 +313,8 @@ class EMSimulation(Simulation):
                 (self.EM_mode_energy, ) = process_fortran_return(resm,
                      "finding curvilinear element EM mode energy")
             else:
-                print(
-                    "\n\n FEM routine em_mode_e_energy_int is not implemented for this structure. Can't find group index. \n\n"
+                nbprint(
+                    "\n\n FEM routine em_mode_e_energy_int is not implemented for this structure. Can't find group index. \n\n", level=OutputLevel.ALWAYS
                 )
                 self.EM_mode_energy = np.zeros(self.n_modes, dtype=float)
 
@@ -337,7 +340,7 @@ class EMSimulation(Simulation):
                        z-direction, eg the Stokes wave in backward SBS.
         """
 
-        print("\n\nCalculating EM modes:")
+        nbprint("\n\nCalculating EM modes:")
 
 
 
@@ -417,13 +420,13 @@ class ACSimulation(Simulation):
 
         if self.n_modes < 20:
             self.n_modes = 20
-            print("Warning: ARPACK needs >= 20 modes so set num_modes=20.")
+            nbprint("Warning: ARPACK needs >= 20 modes so set num_modes=20.", level=OutputLevel.ALWAYS)
 
         # Parameters that control how FEM routine runs
         # Boundary conditions (0=Dirichlet,1=Neumann,2=domain_x)
         bnd_cdn_i = 0
         if bcs == "Open":
-            print("Attempting open elastic boundary conditions.")
+            nbprint("Attempting open elastic boundary conditions.")
             # icond = 1  # TODO: DO THIS ACTUILLY WORK?
 
         itermax = 30  # Maximum number of iterations for convergence
@@ -439,7 +442,7 @@ class ACSimulation(Simulation):
         #show_mem_est = False
 
         # TODO: rmove _AC suffixes from fm.fields_AC
-        resm = nb_fortran.calc_ac_modes(
+        resm = call_fortran(nb_fortran.calc_ac_modes,
             self.n_modes,
             self.q_AC,
             self.d_in_m,
@@ -475,7 +478,7 @@ class ACSimulation(Simulation):
         self.fem_mesh.store_fortran_ac_mesh_properties(type_el_out, m_elnd_to_mshpt_out, v_mshpt_xy_out)
 
                 # Retrieve the material properties of each mesh point.
-        self.ls_material = nb_fortran.array_material_ac(
+        self.ls_material = call_fortran(nb_fortran.array_material_ac,
             fm.num_elements,
             elastic_props.n_mats_ac,
             fm.element_materials,
@@ -504,10 +507,10 @@ class ACSimulation(Simulation):
         elastic_props = self.structure.elastic_props
 
         if True or self.calc_AC_mode_power:
-            print("Doing AC mode power")
+            nbprint("Doing AC mode power")
             if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
-                resm = nb_fortran.ac_mode_power_analytic(
+                resm = call_fortran(nb_fortran.ac_mode_power_analytic,
                     self.n_modes,
                     fm.num_elements,
                     fm.num_nodes,
@@ -524,12 +527,12 @@ class ACSimulation(Simulation):
                 #print("AC mode powers analytic", self.AC_mode_power)
             else:
                 if not tstruc.using_curvilinear_elements():
-                    print(
+                    nbprint(
                         "Warning: ac_mode_power_int - not sure if mesh contains curvi-linear elements",
-                        "\n using slow quadrature integration by default.\n\n",
+                        "\n using slow quadrature integration by default.\n\n", level=OutputLevel.ALWAYS,
                     )
                 # Integration by quadrature. Slowest.
-                resm = nb_fortran.ac_mode_power_quadrature(
+                resm = call_fortran(nb_fortran.ac_mode_power_quadrature,
                     self.n_modes,
                     fm.num_elements,
                     fm.num_nodes,
@@ -550,7 +553,7 @@ class ACSimulation(Simulation):
 
     def calc_field_energies(self):
 # Calc unnormalised elastic energy in each AC mode - PRA Eq. 16.
-        print("Doing AC mode energy")
+        nbprint("Doing AC mode energy")
         fm = self.fem_mesh
         tstruc = self.structure
         elastic_props = self.structure.elastic_props
@@ -560,7 +563,7 @@ class ACSimulation(Simulation):
         # This quantity is of order 10^12 since the integration units of (microns)^2 are not accounted for
         if tstruc.using_linear_elements():
             # Semi-analytic integration. Fastest!
-            resm = nb_fortran.ac_mode_energy_analytic(
+            resm = call_fortran(nb_fortran.ac_mode_energy_analytic,
                 self.n_modes,
                 fm.num_elements,
                 fm.num_nodes,
@@ -578,12 +581,12 @@ class ACSimulation(Simulation):
 
         else:
             if not tstruc.using_curvilinear_elements():
-                print(
+                nbprint(
                     "Warning: ac_mode_elastic_energy_int - not sure if mesh contains curvi-linear elements",
-                    "\n using slow quadrature integration by default.\n\n",
+                    "\n using slow quadrature integration by default.\n\n", level=OutputLevel.ALWAYS,
                 )
             # Integration by quadrature. Slowest.
-            resm = nb_fortran.ac_mode_energy_quadrature(
+            resm = call_fortran(nb_fortran.ac_mode_energy_quadrature,
                 self.n_modes,
                 fm.num_elements,
                 fm.num_nodes,
@@ -612,7 +615,7 @@ class ACSimulation(Simulation):
         AC_mode_energy: the elastic power in the acoutic modes.
         """
 
-        print("\n\nCalculating elastic modes")
+        nbprint("\n\nCalculating elastic modes")
 
 
         self.do_main_eigensolve(bcs)
@@ -666,10 +669,10 @@ class ACSimulation(Simulation):
             self.Q_method = QAcMethod.Intrinsic
 
             # Calc alpha (loss) Eq. 45
-            print("Acoustic loss calculation with intrinsic losses")
+            nbprint("Acoustic loss calculation with intrinsic losses")
 
             if tstruc.using_linear_elements():
-                resm = nb_fortran.ac_alpha_analytic(
+                resm = call_fortran(nb_fortran.ac_alpha_analytic,
                     self.n_modes,
                     fm.num_elements,
                     fm.num_nodes,
@@ -687,14 +690,14 @@ class ACSimulation(Simulation):
                 (alpha,) = process_fortran_return(resm, "finding ac alpha analytic")
             else:
                 if not tstruc.using_curvilinear_elements():
-                    print(
+                    nbprint(
                         "Warning: ac_alpha_int - not sure if mesh contains curvi-linear elements",
-                        "\n using slow quadrature integration by default.\n\n",
+                        "\n using slow quadrature integration by default.\n\n", level=OutputLevel.ALWAYS,
                     )
 
                 # not sure why this is needed by ac_alpha_int
                 # overlap = np.zeros(self.n_modes, dtype=complex)
-                resm = nb_fortran.ac_alpha_quadrature(
+                resm = call_fortran(nb_fortran.ac_alpha_quadrature,
                     self.n_modes,
                     fm.num_elements,
                     fm.num_nodes,
@@ -718,7 +721,7 @@ class ACSimulation(Simulation):
             self.ac_Qmech =  0.5 * (np.real(Omega_AC) / self.ac_alpha_t) * np.ones(self.n_modes)
 
         else:
-            print("Acoustic losses calculated from specified fixed Q.")
+            nbprint("Acoustic losses calculated from specified fixed Q.")
             self.Q_method = QAcMethod.Fixed
             # factor of a 1/2 because alpha is for power!
             # alpha [1/m] = Omega_AC/(2*vg*fixed_Q) = q_AC/fixed_Q
@@ -757,7 +760,7 @@ def em_mode_calculation(wg, num_modes, wl_um, n_eff, Stokes, debug, **args):
 
 
     if args.get('shortrun', False ):
-        print('Got short for EM')
+        nbprint('Got short for EM')
     else:
         args['shortrun'] = False
 

@@ -1,3 +1,5 @@
+from numbat.reporting import nbprint
+
 import matplotlib as plt
 import numpy as np
 import scipy
@@ -72,14 +74,14 @@ def get_structure_plotter_acoustic_velocity(wguide, d_materials, n_points=500):
 
 def plot_refractive_index_profile_rough(mesh_mail_fname, d_materials,
                                         prefix, n_points = 200, as_epsilon=False):
-        print('\n\nPlotting ref index')
+        nbprint('\n\nPlotting ref index')
 
         mail = nbgmsh.MailData(mesh_mail_fname)
         v_x, v_y = mail.v_centx, mail.v_centy
         v_elt_indices = mail.v_elts[:,-1]  # the elt number column
         v_refindex = 0*v_x
 
-        print('Mesh props', mail.n_msh_pts, mail.n_msh_elts)
+        nbprint('Mesh props', mail.n_msh_pts, mail.n_msh_elts)
 
         uniq_elts = set(list(v_elt_indices))
 

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import OutputLevel, nbprint
+
 import math
 import numpy as np
 import numpy.random as nprand
@@ -411,7 +413,7 @@ def _make_rotation_Bond_matrix(matR, urfac, llfac):
                        Returns None if matR is not a 3x3 matrix.
     """
     if matR.shape != (3, 3):
-        print("Error: Input matrix matR must be a 3x3 NumPy array.")
+        nbprint("Error: Input matrix matR must be a 3x3 NumPy array.", level=OutputLevel.ALWAYS)
         return None
 
     M = np.zeros((6, 6))
@@ -1087,8 +1089,8 @@ class VoigtTensor4_IJ(object):
         Print the raw data of the tensor for debugging purposes.
         """
 
-        print(f'\nVoigt tensor {self._physical_name}, tensor {self._param_nm}')
-        print(self.mat)
+        nbprint(f'\nVoigt tensor {self._physical_name}, tensor {self._param_nm}', level=OutputLevel.ALWAYS)
+        nbprint(self.mat, level=OutputLevel.ALWAYS)
 
     def value(self):
         """

@@ -24,6 +24,8 @@
 # - print optical props
 
 
+from numbat.reporting import OutputLevel, nbprint
+
 import copy
 import json
 import math
@@ -682,7 +684,7 @@ class Material(object):
         try:
             self.crystal_class = CrystalGroup[json_data["crystal_class"]]
         except ValueError as exc:
-            print("Unknown crystal class in material data file")
+            nbprint("Unknown crystal class in material data file", level=OutputLevel.ALWAYS)
             raise BadMaterialFileError(
                 f"Unknown crystal class in material data file {fname}"
             ) from exc

@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import nbprint
+
 import numpy as np
 import scipy.linalg
 
@@ -145,7 +147,7 @@ def solve_dielectric(vkap, m_diel):
     m_B[2,2] = 0.0
 
     vout = scipy.linalg.eig(m_A, b=m_B)
-    print(vout)
+    nbprint(vout)
 
     nmax = 5
     v_n = np.linspace(2,3,100)

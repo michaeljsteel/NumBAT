@@ -1,3 +1,5 @@
+from numbat.reporting import nbprint
+
 import numpy as np
 
 class OpticalProps:
@@ -123,7 +125,7 @@ class ElasticProps:
                 self.rho[k_typ] = t_ac.rho
 
                 if False and symmetry_flag:  # is it actually worth making this saving?
-                    print('Surprise: using symmetry_flag tensor buildings.')
+                    nbprint('Surprise: using symmetry_flag tensor buildings.')
                     self.c_IJ[0, 0, k_typ] = t_ac_c_IJ[1, 1]
                     self.c_IJ[1, 1, k_typ] = t_ac_c_IJ[1, 1]
                     self.c_IJ[2, 2, k_typ] = t_ac_c_IJ[1, 1]

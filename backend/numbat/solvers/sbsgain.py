@@ -27,6 +27,8 @@ accessing gain and loss data, as well as functions for performing the necessary 
 
 
 
+from numbat.reporting import OutputLevel, nbprint
+
 import csv
 
 import matplotlib
@@ -38,6 +40,7 @@ from .. import reporting
 from numbat.nbtypes import SI_permittivity_eps0
 from numbat.plotting import gain as plotgain
 from numbat.utils.numeric import np_min_max, process_fortran_return
+from numbat.utils.fortran_output import call_fortran
 
 
 class GainProps(object):
@@ -454,8 +457,8 @@ def gain_and_qs(
     # coeff numerical integration
 
     if not new_call_format:
-        print(
-            "Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()"
+        nbprint(
+            "Note:, integration.gain_and_qs() is deprecated.  You are encouraraged to switch to the Gain() interface provided by integration.get_gains_and_qs()", level=OutputLevel.ALWAYS
         )
 
     if EM_mode_index_pump == "All":
@@ -516,12 +519,12 @@ def gain_and_qs(
 
     is_curvi = False
     if struc.using_linear_elements():
-        print("\n Photoelastic calc: linear elements")
+        nbprint("\n Photoelastic calc: linear elements")
     else:
-        print("\n Photoelastic calc: curvilinear elements")
+        nbprint("\n Photoelastic calc: curvilinear elements")
         is_curvi = True
 
-    resm = nb_fortran.photoelastic_int_common(
+    resm = call_fortran(nb_fortran.photoelastic_int_common,
         is_curvi,
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
@@ -591,10 +594,10 @@ def gain_and_qs(
         typ_select_out = 2
     elif typ_select_out is None:
         typ_select_out = -1
-    print("\n Moving boundary calc")
+    nbprint("\n Moving boundary calc")
 
 
-    resm = nb_fortran.moving_boundary(
+    resm = call_fortran(nb_fortran.moving_boundary,
         sim_EM_pump.n_modes,
         sim_EM_Stokes.n_modes,
         sim_AC.n_modes,

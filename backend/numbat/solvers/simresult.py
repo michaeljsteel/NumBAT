@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import OutputLevel, nbprint
+
 import collections.abc
 import copy
 
@@ -35,6 +37,7 @@ from numbat.plotting import modes as plotmodes
 from numbat.plotting.tools import progressBar
 from numbat.solvers import sbsgain as integration
 from numbat.solvers.modes import ModeAC, ModeEM, ModeInterpolator
+from numbat.utils.fortran_output import call_fortran
 
 from .. import reporting
 
@@ -171,7 +174,7 @@ class SimResult:
 
     def analyse_symmetries(self, ptgrp):
 
-        print("Analyse symmetries is out of action")
+        nbprint("Analyse symmetries is out of action", level=OutputLevel.ALWAYS)
         return
         self.point_group = ptgrp
         symlist = integration.symmetries(self)
@@ -187,11 +190,11 @@ class SimResult:
                 elif sym == (-1, -1, 1):
                     self.sym_reps.append(SymRep.B3)
                 else:
-                    print("Warning: Unknown symmetry pattern", sym)
+                    nbprint("Warning: Unknown symmetry pattern", sym, level=OutputLevel.ALWAYS)
                     self.sym_reps.append(SymRep.Unknown)
 
         else:
-            print("unknown symmetry properties in mode_calcs")
+            nbprint("unknown symmetry properties in mode_calcs", level=OutputLevel.ALWAYS)
 
     def plot_modes(
         self,
@@ -316,9 +319,9 @@ class SimResult:
         ntoplot = len(md_range)
 
         if ntoplot > 1:
-            print(f"Plotting {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
+            nbprint(f"Plotting {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
         else:
-            print(f"Plotting {field_s} field of {domain_s} mode m={md_range[0]}.")
+            nbprint(f"Plotting {field_s} field of {domain_s} mode m={md_range[0]}.")
 
         md_interp = self.get_mode_interpolator()
         md_interp.define_plot_grid_2D(n_pts=n_points)
@@ -372,9 +375,9 @@ class SimResult:
         ntoplot = len(md_range)
 
         if ntoplot > 1:
-            print(f"Plotting 1D cuts of {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
+            nbprint(f"Plotting 1D cuts of {field_s} fields of {ntoplot} {domain_s} modes in range m=[{md_range[0]},{md_range[-1]}]:")
         else:
-            print(f"Plotting 1D cut of {field_s} field of {domain_s} mode m={md_range[0]}.")
+            nbprint(f"Plotting 1D cut of {field_s} field of {domain_s} mode m={md_range[0]}.")
 
         md_interp = self.get_mode_interpolator()
         md_interp.define_plot_grid_2D(n_pts=n_points)
@@ -473,7 +476,7 @@ class EMSimResult(SimResult):
         n_modes = len(self.eigs_kz)
         fm = self.fem_mesh
 
-        self.fem_evecs_H = nb_fortran.h_mode_field_ez(
+        self.fem_evecs_H = call_fortran(nb_fortran.h_mode_field_ez,
             self.k_0,
             n_modes,
             fm.num_elements,
@@ -518,9 +521,9 @@ class EMSimResult(SimResult):
         """
 
         if not self.ngroup_EM_available():
-            print(
+            nbprint(
                 """EM group index requires calculation of mode energy and mode power when calculating EM modes.
-               Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simulation"""
+               Set calc_EM_mode_energy=True and calc_AC_mode_power=True in call to Simulation""", level=OutputLevel.ALWAYS
             )
             ng = 0
 
@@ -540,9 +543,9 @@ class EMSimResult(SimResult):
         :rtype: array(float)
         """
         if not self.ngroup_EM_available():
-            print(
+            nbprint(
                 """EM group index requires calculation of mode energy and mode power when calculating EM modes.
-               Set calc_EM_mode_energy=True in call to calc_EM_modes"""
+               Set calc_EM_mode_energy=True in call to calc_EM_modes""", level=OutputLevel.ALWAYS
             )
             return np.zeros(len(self.eigs_kz), dtype=float)
         vg = np.real(self.EM_mode_power / self.EM_mode_energy)
@@ -809,9 +812,9 @@ class ACSimResult(SimResult):
     def vg_AC(self, m):
         """Return group velocity of AC mode m in m/s"""
         if self.AC_mode_energy is None or self.AC_mode_power is None:
-            print(
+            nbprint(
                 """AC group velocity requires calculation of mode energy and mode power when calculating AC modes.
-               Set calc_AC_mode_power=True in call to calc_AC_modes"""
+               Set calc_AC_mode_power=True in call to calc_AC_modes""", level=OutputLevel.ALWAYS
             )
             return 0
         vg = np.real(self.AC_mode_power[m] / self.AC_mode_energy[m])
@@ -821,9 +824,9 @@ class ACSimResult(SimResult):
         """Return group velocity of all AC modes in m/s"""
 
         if self.AC_mode_energy is None or self.AC_mode_power is None:
-            print(
+            nbprint(
                 """AC group velocity requires calculation of mode energy and mode power when calculating AC modes.
-               Set calc_AC_mode_power=True in call to calc_AC_modes"""
+               Set calc_AC_mode_power=True in call to calc_AC_modes""", level=OutputLevel.ALWAYS
             )
             return np.zeros(len(self.eigs_nu), dtype=float)
         vg = np.real(self.AC_mode_power / self.AC_mode_energy)

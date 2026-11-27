@@ -3,6 +3,8 @@
 This solver-only module does not construct figures or serialize output files.
 """
 
+from numbat.reporting import nbprint
+
 import numpy as np
 
 from numbat.field_selection import storage_key
@@ -131,7 +133,7 @@ class ModeInterpolator:
             "m_y": m_y_out,
         }
 
-        print(
+        nbprint(
             "Structure domain (x,y) = "
             f" [{v_x_out[0]:.5f}, {v_x_out[-1]:.5f}] x"
             f" [{v_y_out[0]:.5f}, {v_y_out[-1]:.5f}] (μm)"

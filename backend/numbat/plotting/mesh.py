@@ -1,3 +1,5 @@
+from numbat.reporting import OutputLevel, nbprint
+
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -52,10 +54,10 @@ def plot_gmesh_wireframe(
     cmd = [gmsh_exe, f"{msh_name}.geo", scr_out.name]
 
     cmd_flat = ' '.join(cmd)
-    print(f'Calling gmsh cmd: "{cmd_flat}"')
+    nbprint(f'Calling gmsh cmd: "{cmd_flat}"')
     exit_code = run_subprocess(cmd, "Gmsh", cwd=str(msh_loc_out))
     if exit_code:
-        print(f'Gmsh plot command "{cmd_flat}" returned error code {exit_code}.')
+        nbprint(f'Gmsh plot command "{cmd_flat}" returned error code {exit_code}.', level=OutputLevel.ALWAYS)
 
     # tidy it up
     fin_out = fn_out.with_suffix(".png")
@@ -93,12 +95,12 @@ def plot_gmesh_mesh(
 
     cmd = [gmsh_exe, f"{msh_name}.msh", scr_out.name]
     cmd_flat = ' '.join(cmd)
-    print(f'Calling gmsh cmd: "{cmd_flat}" in cwd="{str(msh_loc_out)}"')
+    nbprint(f'Calling gmsh cmd: "{cmd_flat}" in cwd="{str(msh_loc_out)}"')
 
     exit_code = run_subprocess(cmd, "Gmsh", cwd=str(msh_loc_out))
 
     if exit_code:
-        print(f'Gmsh plot command "{cmd_flat}" returned error code {exit_code}.')
+        nbprint(f'Gmsh plot command "{cmd_flat}" returned error code {exit_code}.', level=OutputLevel.ALWAYS)
 
     # tidy
     fin_out = fn_out.with_suffix(".png")
@@ -130,7 +132,7 @@ def _render_gmsh_png(
 
     cmd = [gmsh_exe, "-nopopup", f"{msh_name}{input_suffix}", render_script.name]
     cmd_flat = " ".join(cmd)
-    print(f'Calling Gmsh render command: "{cmd_flat}" in cwd="{msh_loc_out}"')
+    nbprint(f'Calling Gmsh render command: "{cmd_flat}" in cwd="{msh_loc_out}"')
     exit_code = run_subprocess(cmd, "Gmsh", cwd=str(msh_loc_out), exit_on_fail=False)
     if exit_code:
         raise RuntimeError(f'Gmsh render command failed with exit code {exit_code}: "{cmd_flat}"')

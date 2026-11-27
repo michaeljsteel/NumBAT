@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numtools.output import OutputLevel, nbprint
+
 import math
 import sys
 from typing import Any, Callable, List, Optional, Sequence, Tuple
@@ -389,7 +391,7 @@ class ElasticIsotropicFreeSlab:
 
         for ombrak in ombraks:
             if drfunc(ombrak[0]) * drfunc(ombrak[1]) > 0:
-                print("False bracket", ombrak, drfunc(ombrak[0]), drfunc(ombrak[1]))
+                nbprint("False bracket", ombrak, drfunc(ombrak[0]), drfunc(ombrak[1]), level=OutputLevel.ALWAYS)
                 continue
 
             om_sol = sciopt.root_scalar(drfunc, bracket=ombrak)
@@ -429,7 +431,7 @@ class ElasticIsotropicFreeSlab:
         qbraks.reverse()
         for qbrak in qbraks:
             if drfunc(qbrak[0]) * drfunc(qbrak[1]) > 0:
-                print("False bracket", qbrak, drfunc(qbrak[0]), drfunc(qbrak[1]))
+                nbprint("False bracket", qbrak, drfunc(qbrak[0]), drfunc(qbrak[1]), level=OutputLevel.ALWAYS)
                 continue
 
             q_sol = sciopt.root_scalar(drfunc, bracket=qbrak)

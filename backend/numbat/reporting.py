@@ -13,28 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import sys
 import datetime
 
-g_logger=None
+from numtools.output import OutputLevel, Verbosity, get_verbosity, nbprint, set_verbosity
 
-
-
-def init_logger():
-    global g_logger
-    g_logger=logging.getLogger('NumBAT log')
 
 def report(msg):
-    if g_logger is None:
-        init_logger()
-    g_logger.warning(msg)
+    nbprint(f"Warning: {msg}", file=sys.stderr, level=OutputLevel.ALWAYS)
 
 def report_and_exit(msg):
-    if g_logger is None:
-        init_logger()
-    g_logger.error('\nFatal error: \n %s\n\n', msg)
-#g_logger.error('from logger')
+    nbprint(f'\nFatal error: \n {msg}\n\n', file=sys.stderr, level=OutputLevel.ALWAYS)
     sys.exit(1)
 
 def deprecated_function(fold, fnew, extra=''):
@@ -44,7 +33,7 @@ def deprecated_function(fold, fnew, extra=''):
     if extra:
         msg+='\n'+extra
 
-    print(msg)
+    nbprint(msg, level=OutputLevel.ALWAYS)
     #report_and_exit(msg)
 
 def deprecated_parameter_exit(pold, pnew, func, extra=''):
@@ -61,7 +50,7 @@ def deprecated_parameter_warning(pold, pnew, func, extra=''):
     if extra:
         msg+='\n'+extra
 
-    print(msg)
+    nbprint(msg, level=OutputLevel.ALWAYS)
 
 
 def assertion(assertion_ok, msg, severity='fatal'):
@@ -108,4 +97,4 @@ def report_warnings():
 def register_warning(s):
     g_warnings.add_warning(s)
 
-    print(s)
+    nbprint(f"Warning: {s}", level=OutputLevel.ALWAYS)

@@ -27,6 +27,8 @@ Copyright (C) 2017-2025  Michael Steel.
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
+from numbat.reporting import nbprint
+
 import math
 from datetime import datetime
 from pathlib import Path
@@ -233,7 +235,7 @@ def progressBar(sequence, prefix='', suffix='', decimals=1, length=100, fill='x'
         percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
         filledLength = int(length * iteration // total)
         bar = fill * filledLength + '-' * (length - filledLength)
-        print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
+        nbprint(f'\r{prefix} |{bar}| {percent}% {suffix}', end=printEnd)
 
     if len(sequence) > 1:
         printProgressBar(0)  # Initial Call
@@ -242,5 +244,5 @@ def progressBar(sequence, prefix='', suffix='', decimals=1, length=100, fill='x'
             printProgressBar(i + 1)
     else:
         yield sequence[0]
-    print()  # Print New Line on Complete
+    nbprint()  # Print New Line on Complete
 

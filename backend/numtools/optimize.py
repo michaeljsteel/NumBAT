@@ -1,3 +1,5 @@
+from numtools.output import OutputLevel, nbprint
+
 import scipy.optimize as sciopt
 
 class BracketError(Exception):
@@ -101,7 +103,7 @@ def find_bracketed_minima(minfunc, l_braks):
              #   print(f"Minimum {res.x} found outside bracket {xm1, xp1}.", res)
             l_mins.append((res.x, res.fun))
         else:
-            print(f"Failed to find minimum in bracket {xm1, xp1}.")
-            print(f"  Message: {res.message}")
+            nbprint(f"Failed to find minimum in bracket {xm1, xp1}.", level=OutputLevel.ALWAYS)
+            nbprint(f"  Message: {res.message}", level=OutputLevel.ALWAYS)
 
     return l_mins

@@ -1,4 +1,6 @@
 
+from numbat.reporting import nbprint
+
 import tomllib
 from pathlib import Path
 from typing import Optional
@@ -31,14 +33,14 @@ def _load_user_settings_file(user_settings_file: str = '') -> Optional[dict]:
                 break
 
     if user_file:
-        print(f'Loading plot preferences from {user_file.resolve()}.')
+        nbprint(f'Loading plot preferences from {user_file.resolve()}.')
         try:
             with open(user_file, 'rb') as fin:
                 user_settings = tomllib.load(fin)
         except tomllib.TOMLDecodeError as e:
             reporting.report_and_exit(f"Error decoding the TOML file at {user_file}: {e}")
     else:
-        print('Using default NumBAT plot prefs.')
+        nbprint('Using default NumBAT plot prefs.')
         user_settings = {}
 
     return user_settings
@@ -71,7 +73,7 @@ class PlotPrefs:
         self._user_settings = {}
 
         if ignore_user_settings:
-            print('Ignoring any user setting files and using NumBAT default preferences.')
+            nbprint('Ignoring any user setting files and using NumBAT default preferences.')
         else:
             self._user_settings = _load_user_settings_file(user_settings_file)
 

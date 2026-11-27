@@ -26,6 +26,8 @@ Key classes and functions:
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from numbat.reporting import OutputLevel, Verbosity, nbprint
+
 import atexit
 import datetime
 import os
@@ -40,11 +42,11 @@ from .. import nbplatform
 try:
     from fortran import nb_fortran
 except ImportError:
-    print("""
+    nbprint("""
           NumBAT can't load the backend Fortran module that implements the finite element solvers!
           Are you sure you have compiled the module?
           See the installation chapter of the manual for details.
-          """)
+          """, level=OutputLevel.ALWAYS)
     sys.exit(1)
 
 from .. import nbversion, reporting, runtime
@@ -52,6 +54,7 @@ from ..geometry import structure
 from ..mesh import templates as mshtemplates
 from ..plotting.preferences import PlotPrefs
 from ..solvers.modecalcs import Simulation
+from ..utils.fortran_output import call_fortran
 from ..utils.logcapture import redirect_output_to_file
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
@@ -105,7 +108,8 @@ class NumBATApp(metaclass=_SingletonMeta):
 
     def __init__(self, outprefix='nbtmp', outdir='.',
                  user_settings_file='',
-                 ignore_user_settings=False
+                 ignore_user_settings=False,
+                 verbosity: Verbosity | str = Verbosity.NORMAL,
                  ):
         """
         Initialize the NumBAT application singleton.
@@ -115,10 +119,11 @@ class NumBATApp(metaclass=_SingletonMeta):
             outdir (str): Output directory.
             user_settings_file (str): Path to user settings file.
             ignore_user_settings (bool): If True, ignore user settings file.
+            verbosity (Verbosity or str): ``quiet``, ``normal`` (default), or ``detailed``.
         """
 
 
-        reporting.init_logger()
+        reporting.set_verbosity(verbosity)
         self._start_time=time.time()
         self._check_versions()
 
@@ -177,6 +182,19 @@ class NumBATApp(metaclass=_SingletonMeta):
         Return the current plot file extension as a string.
         """
         return runtime.plotfile_ext()
+
+    def set_verbosity(self, verbosity: Verbosity | str):
+        """Set NumBAT Python output to ``quiet``, ``normal``, or ``detailed``.
+
+        Quiet suppresses ordinary NumBAT messages and Fortran stdout, except
+        when NumBAT log capture is active. Fortran stdout may include fatal
+        diagnostics; use normal verbosity to investigate unexpected exits.
+        """
+        reporting.set_verbosity(verbosity)
+
+    def verbosity(self):
+        """Return the current NumBAT Python output verbosity."""
+        return reporting.get_verbosity()
 
     # Only needed to change prefix at some point
     def set_outprefix(self, s): # change to getter/setter
@@ -365,7 +383,7 @@ class NumBATApp(metaclass=_SingletonMeta):
         if int(py_ver[0])<3 or int(py_ver[1])<10:
             reporting.report_and_exit('NumBAT must be run with a Python version of 3.11 or later.')
 
-        s_fortver = str(nb_fortran.get_fortran_compiled_nb_version(), "utf-8")
+        s_fortver = str(call_fortran(nb_fortran.get_fortran_compiled_nb_version), "utf-8")
         version_match = s_fortver == nbversion.NUMBAT_VERSION_STR_MMM
         if not version_match:
             reporting.report_and_exit(

@@ -5,6 +5,13 @@ import ctypes
 import os
 import sys
 
+_capture_depth = 0
+
+
+def output_capture_active():
+    """Return whether a NumBAT file-descriptor log capture is active."""
+    return _capture_depth > 0
+
 
 def _flush_all():
     for s in (sys.stdout, sys.stderr, sys.__stdout__, sys.__stderr__):
@@ -30,6 +37,17 @@ def redirect_output_to_file(log_prefix=None):
         yield None
         return
 
+    global _capture_depth
+    with _redirect_output_to_file(log_prefix) as logname:
+        _capture_depth += 1
+        try:
+            yield logname
+        finally:
+            _capture_depth -= 1
+
+
+@contextlib.contextmanager
+def _redirect_output_to_file(log_prefix):
     logname = f"{log_prefix}_log.txt"
     _flush_all()
     try:

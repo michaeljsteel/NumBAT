@@ -1,5 +1,11 @@
 ! Let python know the compiled version of the code
 ! To check git changes that have been pulled but not built
+subroutine flush_fortran_stdout(status)
+   use, intrinsic :: iso_fortran_env, only: output_unit
+   integer, intent(out) :: status
+   flush(output_unit, iostat=status)
+end subroutine flush_fortran_stdout
+
 subroutine get_fortran_compiled_nb_version(ver_str)
    use numbatmod
 

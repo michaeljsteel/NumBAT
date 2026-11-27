@@ -110,6 +110,46 @@ To save the results from a simulation that are displayed upon execution (the pri
 
     $ python3 ./sim-tut_01-first_calc.py | tee log-simo.log
 
+To reduce NumBAT's Python output, for example in a notebook, select a verbosity
+when creating the application or change it later::
+
+    nbapp = numbat.NumBATApp(verbosity="quiet")
+    # Run calculations with fewer NumBAT messages.
+    nbapp.set_verbosity("normal")
+    nbapp.set_verbosity("detailed")
+
+``normal`` is the default. ``quiet`` suppresses ordinary progress and result
+details, but retains warnings, errors and explicitly requested displays.
+``normal`` preserves the existing Python messages, and ``detailed`` also
+enables messages marked as detailed. Quiet mode also suppresses stdout during
+NumBAT's Fortran calls, but leaves stderr visible. The Fortran backend must be
+rebuilt after updating to this version.
+
+Some Fortran routines write fatal diagnostics to stdout and terminate the
+process, occasionally with a zero exit status. **These diagnostics are hidden
+in quiet mode**; switch to normal verbosity if a calculation unexpectedly
+terminates. Suppression redirects the process's stdout while each Fortran
+call runs, so output from other threads or subprocesses during that interval
+can also be hidden. NumBAT serializes its own Fortran calls, but cannot control
+unrelated threads. External program output outside a Fortran call is unaffected.
+Your own ``print`` calls outside those calls are unaffected.
+
+NumBAT's Python code uses ``numbat.nbprint`` for these messages. It accepts
+the usual ``print`` arguments, plus ``level="normal"`` (the default),
+``level="detailed"``, or ``level="always"`` for warnings and explicitly
+requested displays. ``nbprint`` writes to the current Python output stream, so
+notebook output capture can see its messages.
+
+The equivalent enums can also be used instead of strings::
+
+    nbapp.set_verbosity(numbat.Verbosity.QUIET)
+    numbat.nbprint("A warning", level=numbat.OutputLevel.ALWAYS)
+
+``nbapp.verbosity()`` continues to return the verbosity as a string.
+Warnings and fatal errors issued by NumBAT's reporting functions are written
+through ``nbprint`` rather than the Python ``"NumBAT log"`` logger; logging
+handlers attached to that logger no longer receive those messages.
+
 Alternatively, redirect standard output and standard error from within a
 script, including output from C and Fortran code::
 
@@ -121,6 +161,9 @@ script, including output from C and Fortran code::
     print("This is displayed on the terminal again.")
 
 Capture is process-wide and remains active until stopped or the program exits.
+While NumBAT log capture is active, Fortran stdout is written to the log even
+in quiet mode. This also applies to the per-calculation ``redirect_to_log``
+option.
 Starting capture overwrites the log; an optional prefix can be supplied to
 ``start_output_capture(prefix="other")``. Starting capture again while it is
 active raises ``RuntimeError``. Changes to the application's output directory
@@ -160,4 +203,3 @@ As with our first example above, most |NUMBAT| scripts proceed with a standard s
 * solving electromagnetic and acoustic modes
 
 * calculating gain and other derived quantities
-
