@@ -35,6 +35,8 @@ import platform
 import shutil
 import sys
 import time
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 
 from .. import nbplatform
@@ -195,6 +197,20 @@ class NumBATApp(metaclass=_SingletonMeta):
     def verbosity(self):
         """Return the current NumBAT Python output verbosity."""
         return reporting.get_verbosity()
+
+    @contextmanager
+    def verbosity_at(self, verbosity: Verbosity | str = Verbosity.QUIET) -> Generator[None, None, None]:
+        """Temporarily set process-wide verbosity, restoring it on exit.
+
+        Defaults to quiet. Nested scopes restore their enclosing setting, even
+        if an exception occurs. Concurrent threads share the same verbosity.
+        """
+        previous = self.verbosity()
+        self.set_verbosity(verbosity)
+        try:
+            yield
+        finally:
+            self.set_verbosity(previous)
 
     # Only needed to change prefix at some point
     def set_outprefix(self, s): # change to getter/setter

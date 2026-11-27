@@ -98,6 +98,57 @@ def test_standalone_analytic_import_does_not_load_numbat():
     assert result.returncode == 0, result.stderr
 
 
+def test_temporary_verbosity_context(tmp_path):
+    code = f"""
+import contextlib
+import io
+import numbat
+
+app = numbat.NumBATApp(outdir={str(tmp_path)!r}, ignore_user_settings=True)
+assert app.verbosity() == "normal"
+scope = app.verbosity_at()
+assert app.verbosity() == "normal"
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    numbat.nbprint("before")
+    with scope:
+        assert app.verbosity() == "quiet"
+        numbat.nbprint("hidden")
+        numbat.nbprint("warning", level=numbat.OutputLevel.ALWAYS)
+        with app.verbosity_at(numbat.Verbosity.DETAILED):
+            assert app.verbosity() == "detailed"
+            numbat.nbprint("detail", level=numbat.OutputLevel.DETAILED)
+        assert app.verbosity() == "quiet"
+        with app.verbosity_at("normal"):
+            numbat.nbprint("nested")
+        assert app.verbosity() == "quiet"
+    numbat.nbprint("after")
+assert out.getvalue() == "before\\nwarning\\ndetail\\nnested\\nafter\\n"
+assert app.verbosity() == "normal"
+
+try:
+    with app.verbosity_at("detailed"):
+        app.set_verbosity("quiet")
+        raise RuntimeError("expected")
+except RuntimeError as exc:
+    assert str(exc) == "expected"
+else:
+    raise AssertionError("exception not propagated")
+assert app.verbosity() == "normal"
+
+try:
+    with app.verbosity_at("invalid"):
+        raise AssertionError("invalid scope entered")
+except ValueError:
+    pass
+else:
+    raise AssertionError("invalid verbosity accepted")
+assert app.verbosity() == "normal"
+"""
+    result = _run(["-c", code])
+    assert result.returncode == 0, result.stderr
+
+
 def test_output_enums_and_string_compatibility(tmp_path):
     code = f"""
 import contextlib

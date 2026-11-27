@@ -118,6 +118,20 @@ when creating the application or change it later::
     nbapp.set_verbosity("normal")
     nbapp.set_verbosity("detailed")
 
+To change verbosity temporarily, use a context manager::
+
+    with nbapp.verbosity_at():  # Defaults to quiet
+        # Run calculations with fewer messages.
+        pass
+
+    with nbapp.verbosity_at(numbat.Verbosity.DETAILED):
+        # Run calculations with detailed messages.
+        pass
+
+The previous verbosity is restored on exit, including if an exception occurs.
+Scopes may be nested. Like ``set_verbosity``, the setting is shared by threads
+in the process; overlapping scopes in different threads are not independent.
+
 ``normal`` is the default. ``quiet`` suppresses ordinary progress and result
 details, but retains warnings, errors and explicitly requested displays.
 ``normal`` preserves the existing Python messages, and ``detailed`` also
