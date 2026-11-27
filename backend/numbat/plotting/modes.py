@@ -19,6 +19,7 @@
 import copy
 import warnings
 
+import cmasher as cmr
 import matplotlib.colors as mplcolors
 import matplotlib.pyplot as plt
 import numpy as np

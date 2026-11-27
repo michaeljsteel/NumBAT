@@ -74,11 +74,13 @@ if reuse_old_fields:
     simres_EM_pump = numbat.load_simulation('tut02_em_pump')
     simres_EM_Stokes = numbat.load_simulation('tut02_em_stokes')
 else:
+    print('Doing EM modes')
     simres_EM_pump = wguide.calc_EM_modes(num_modes_EM_pump, lambda_um, n_eff)
     simres_EM_Stokes = simres_EM_pump.clone_as_backward_modes()
     print('\nSaving EM fields')
     simres_EM_pump.save_simulation('tut02_em_pump')
     simres_EM_Stokes.save_simulation('tut02_em_stokes')
+
 
 # Print the wavevectors of EM modes.
 v_kz = simres_EM_pump.kz_EM_all()

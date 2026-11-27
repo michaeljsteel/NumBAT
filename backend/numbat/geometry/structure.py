@@ -36,6 +36,7 @@ from numbat.mesh import templates as mshtemplates
 from numbat.plotting import mesh as pltgmsh
 from numbat.plotting import profiles as pltprof
 from numbat.utils.numeric import is_real_number, run_subprocess
+from numbat.utils.logcapture import redirect_output_to_file
 
 
 class Structure:
@@ -117,6 +118,7 @@ class Structure:
         self.all_params['lc'] = self.all_params['lc_bkg']   # aim to move to pure lc_bkg and delete this
 
         del self.all_params['direct_call']
+        if 'redirect_to_log' in self.all_params: del self.all_params['redirect_to_log']
 
         if 'inc_shape' in self.all_params: del self.all_params['inc_shape']
         self.inc_shape = largs[0] if len(largs)>0 else kwargs['inc_shape']
@@ -166,14 +168,17 @@ class Structure:
             if k.startswith('material_') and k !='material_bkg':
                 self.d_materials[k[9:]] = v
 
-        n_mats_em = self._build_waveguide_geometry()
+        redirect_to_log = kwargs.get('redirect_to_log', False)
+        with redirect_output_to_file(runtime.outpath() if redirect_to_log else None):
 
-        # Build the whole mesh (A major step involving Fortran)
-        self._build_mesh()
+            n_mats_em = self._build_waveguide_geometry()
 
-        self.optical_props = OpticalProps(self.d_materials, n_mats_em, self.loss)
+            # Build the whole mesh (A major step involving Fortran)
+            self._build_mesh()
 
-        self.elastic_props = ElasticProps(self, self.symmetry_flag)
+            self.optical_props = OpticalProps(self.d_materials, n_mats_em, self.loss)
+
+            self.elastic_props = ElasticProps(self, self.symmetry_flag)
 
     def get_material(self, k):
         return self.d_materials[k]
@@ -288,7 +293,7 @@ class Structure:
 
     def calc_EM_modes(self, num_modes, wl_um=1.55,
                       n_eff=None, Stokes=False, debug=False, wl_nm=None,
-                      **args):
+                      redirect_to_log=False, **args):
         """ Run a simulation to find the Structure's EM modes.
 
             Args:
@@ -302,6 +307,11 @@ class Structure:
 
                 n_eff  (float): Guesstimated effective index of
                     fundamental mode, will be origin of FEM search.
+
+                redirect_to_log  (bool): If True, all stdout and stderr output
+                    (including from Fortran code) during the calculation is
+                    written to ``<outdir>/<prefix>_log.txt`` instead of the console,
+                    where the prefix is the application's output prefix.
 
             Returns:
                 ``EMSimResult`` object
@@ -320,10 +330,12 @@ class Structure:
             )
             wl_um = wl_nm / 1000.0
 
-        return em_mode_calculation(self, num_modes, wl_um, n_eff, Stokes, debug, **args)
+        with redirect_output_to_file(runtime.outpath() if redirect_to_log else None):
+            return em_mode_calculation(self, num_modes, wl_um, n_eff, Stokes, debug, **args)
 
     def calc_AC_modes(self, num_modes, q_AC,
-                      shift_Hz=None, EM_sim=None, bcs=None, debug=False, **args):
+                      shift_Hz=None, EM_sim=None, bcs=None, debug=False,
+                      redirect_to_log=False, **args):
         """ Run a simulation to find the Structure's acoustic modes.
 
             Args:
@@ -343,11 +355,18 @@ class Structure:
                     can be constructed from this.
                     This is done by removing vacuum regions.
 
+                redirect_to_log  (bool): If True, all stdout and stderr output
+                    (including from Fortran code) during the calculation is
+                    written to ``<outdir>/<prefix>_log.txt`` instead of the console,
+                    where the prefix is the application's output prefix.
+
             Returns:
                 ``ACSimResult`` object
         """
 
-        return ac_mode_calculation(self, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args)
+
+        with redirect_output_to_file(runtime.outpath() if redirect_to_log else None):
+            return ac_mode_calculation(self, num_modes, q_AC, shift_Hz, EM_sim, bcs, debug, **args)
 
 
     # def _make_refindex_plotter(self, as_epsilon, n_points):

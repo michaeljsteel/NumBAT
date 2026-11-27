@@ -504,7 +504,7 @@ class ACSimulation(Simulation):
         elastic_props = self.structure.elastic_props
 
         if True or self.calc_AC_mode_power:
-            print("doing AC mode power")
+            print("Doing AC mode power")
             if tstruc.using_linear_elements():
                 # Semi-analytic integration following KD 9/9/16 notes. Fastest!
                 resm = nb_fortran.ac_mode_power_analytic(
@@ -617,11 +617,14 @@ class ACSimulation(Simulation):
 
         self.do_main_eigensolve(bcs)
 
-        self.calc_field_powers()
+        skip_powers = False
 
-        self.calc_field_energies()
+        if not skip_powers:
+            self.calc_field_powers()
 
-        self.calc_acoustic_losses()
+            self.calc_field_energies()
+
+            self.calc_acoustic_losses()
 
         self.make_result()
 

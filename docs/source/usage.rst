@@ -110,6 +110,25 @@ To save the results from a simulation that are displayed upon execution (the pri
 
     $ python3 ./sim-tut_01-first_calc.py | tee log-simo.log
 
+Alternatively, redirect standard output and standard error from within a
+script, including output from C and Fortran code::
+
+    nbapp = numbat.NumBATApp("simulation", "results")
+    log_path = nbapp.start_output_capture()
+    print("This is written to results/simulation_log.txt")
+    # Run calculations here.
+    nbapp.stop_output_capture()
+    print("This is displayed on the terminal again.")
+
+Capture is process-wide and remains active until stopped or the program exits.
+Starting capture overwrites the log; an optional prefix can be supplied to
+``start_output_capture(prefix="other")``. Starting capture again while it is
+active raises ``RuntimeError``. Changes to the application's output directory
+or prefix after capture starts do not change the active log. As with the
+per-calculation ``redirect_to_log`` option, this redirects file descriptors,
+not Python streams that have been independently replaced. A nested redirection
+to a different log temporarily sends output there instead.
+
 
 To have direct access to the simulation structure upon the completion of a script use::
 
@@ -141,6 +160,4 @@ As with our first example above, most |NUMBAT| scripts proceed with a standard s
 * solving electromagnetic and acoustic modes
 
 * calculating gain and other derived quantities
-
-
 

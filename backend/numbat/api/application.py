@@ -26,6 +26,7 @@ Key classes and functions:
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import atexit
 import datetime
 import os
 import platform
@@ -51,6 +52,7 @@ from ..geometry import structure
 from ..mesh import templates as mshtemplates
 from ..plotting.preferences import PlotPrefs
 from ..solvers.modecalcs import Simulation
+from ..utils.logcapture import redirect_output_to_file
 
 _envvar_gmsh_binary = 'NUMBAT_PATH_GMSH'
 _envvar_numbat_root = 'NUMBAT_ROOT_DIR'
@@ -130,6 +132,7 @@ class NumBATApp(metaclass=_SingletonMeta):
 
         self._outprefix=outprefix
         self.set_outdir(outdir)
+        self._output_capture = None
 
         #self._user_settings={}
 
@@ -224,6 +227,43 @@ class NumBATApp(metaclass=_SingletonMeta):
         """
         outpref = prefix if prefix else self._outprefix
         return str(Path(self._outdir, outpref))
+
+    def start_output_capture(self, prefix=''):
+        """Redirect process stdout and stderr to an output log until stopped.
+
+        The log is ``<outdir>/<prefix>_log.txt``, using the application's
+        output prefix by default. Starting capture overwrites an existing log.
+        Output from C and Fortran code using standard output/error is included.
+        Capture is process-wide and remains active until
+        :meth:`stop_output_capture` is called or the program exits.
+
+        Args:
+            prefix (str): Optional output prefix.
+        Returns:
+            str: Path to the log file.
+        Raises:
+            RuntimeError: If application output capture is already active.
+        """
+        if self._output_capture is not None:
+            raise RuntimeError("Application output capture is already active.")
+
+        capture = redirect_output_to_file(self.outpath(prefix))
+        logname = capture.__enter__()
+        self._output_capture = capture
+        atexit.register(self.stop_output_capture)
+        return logname
+
+    def stop_output_capture(self):
+        """Stop application output capture and restore stdout and stderr.
+
+        This does nothing if capture is not active.
+        """
+        if self._output_capture is None:
+            return
+        capture = self._output_capture
+        self._output_capture = None
+        atexit.unregister(self.stop_output_capture)
+        capture.__exit__(None, None, None)
 
     def outdir_fields_path(self, prefix=''):
         """
